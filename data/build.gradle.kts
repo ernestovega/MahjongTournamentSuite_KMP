@@ -33,10 +33,18 @@ kotlin {
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.contentNegotiation)
             implementation(libs.ktor.client.core)
             implementation(libs.ktor.serialization.kotlinxJson)
+        }
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
+        }
+        jvmMain.dependencies {
+            implementation(libs.ktor.client.cio)
+        }
+        wasmJsMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ApiConfiguration(
-    val baseUrl: String = "https://example.invalid",
+    var baseUrl: String = BackendConfig.functionsBaseUrl,
     val usesJsonContentNegotiation: Boolean = true,
 )
