@@ -1,0 +1,8 @@
+{
+  "projects": {
+    "default": "mahjong-tournament-suite",
+    "prod": "mahjong-tournament-suite"
+  },
+  "targets": {},
+  "etags": {}
+}

@@ -18,6 +18,9 @@ local.properties
 # Web tooling
 node_modules/
 
+# Firebase init scaffold (we deploy from firebase/functions)
+/functions/
+
 # Packaged/distribution outputs
 dist/
 out/
