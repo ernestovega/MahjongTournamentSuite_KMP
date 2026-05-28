@@ -15,6 +15,7 @@ data class Tournament(
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
     val createdByUid: String? = null,
+    val createdByName: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )

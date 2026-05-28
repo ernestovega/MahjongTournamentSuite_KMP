@@ -5,11 +5,13 @@ import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -26,7 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 @Composable
 fun DataTableHeaderRow(
@@ -129,6 +134,56 @@ fun RowActionsMenu(
                     item.onClick()
                 },
             )
+        }
+    }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun FlatDataTablePreview() {
+    MtsTheme(useDarkTheme = false) {
+        Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+            DataTableHeaderRow {
+                Text(
+                    text = "Column A",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "Column B",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "",
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.width(44.dp),
+                )
+            }
+            DataTableDivider()
+            DataTableRow {
+                Text(
+                    text = "Row A",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                Text(
+                    text = "Row B",
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.weight(1f),
+                )
+                RowActionsMenu(
+                    enabled = true,
+                    items = listOf(
+                        RowActionMenuItem("Open", onClick = {}),
+                        RowActionMenuItem("Delete", onClick = {}),
+                    ),
+                    modifier = Modifier.width(44.dp),
+                )
+            }
+            DataTableDivider()
         }
     }
 }

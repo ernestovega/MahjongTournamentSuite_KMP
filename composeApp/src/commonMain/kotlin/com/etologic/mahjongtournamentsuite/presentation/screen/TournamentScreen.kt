@@ -44,6 +44,7 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
@@ -371,15 +372,6 @@ fun TournamentScreen(
                             }
                         }
 
-                        if (hasUnsavedChanges) {
-                            item(key = "save-inline-spacer") {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(saveButtonHeight),
-                                )
-                            }
-                        }
                     }
 
                     if (showOverlaySave) {
@@ -425,12 +417,11 @@ private fun RoundTableSidebar(
             .fillMaxHeight()
             .widthIn(min = 260.dp, max = 360.dp),
     ) {
-        val colorScheme = MaterialTheme.colorScheme
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             if (rounds.isEmpty()) {
                 Text(
@@ -451,7 +442,7 @@ private fun RoundTableSidebar(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(end = 8.dp),
+                        .padding(end = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
@@ -480,20 +471,20 @@ private fun RoundTableSidebar(
                     modifier = Modifier
                         .fillMaxHeight()
                         .width(1.dp)
-                        .background(colorScheme.outlineVariant),
+                        .background(MaterialTheme.colorScheme.outlineVariant),
                 )
 
                 Column(
                     modifier = Modifier
                         .weight(1f)
                         .fillMaxHeight()
-                        .padding(start = 8.dp),
+                        .padding(start = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Text(
                         text = "Tables",
-                        style = MaterialTheme.typography.titleSmall,
-                        color = colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
 
                     when {
@@ -549,15 +540,14 @@ private fun RoundTableSidebarItem(
     enabled: Boolean,
     onClick: () -> Unit,
 ) {
-    val colorScheme = MaterialTheme.colorScheme
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         shape = MaterialTheme.shapes.small,
-        color = if (selected) colorScheme.secondaryContainer else colorScheme.surface,
-        contentColor = if (selected) colorScheme.onSecondaryContainer else colorScheme.onSurface,
-        tonalElevation = if (selected) 1.dp else 0.dp,
+        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+        tonalElevation = 0.dp,
     ) {
         Text(
             text = label,

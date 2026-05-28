@@ -21,6 +21,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.TableRoute
@@ -37,6 +39,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -310,5 +313,155 @@ fun TablesScreen(
                 },
             )
         }
+    }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun TablesScreenPreview() {
+    MtsTheme(useDarkTheme = false) {
+        AppScaffold(
+            title = "Tables",
+            subtitle = "preview-tournament",
+            isLoading = false,
+        ) {
+            ScreenColumn(
+                maxWidth = 1100.dp,
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                SectionCard(
+                    title = "Tables",
+                    subtitle = "All rounds",
+                    actions = {
+                        AppTextButton(enabled = true, onClick = {}) {
+                            Text("Filter")
+                        }
+                    },
+                    content = {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
+                            item {
+                                DataTableHeaderRow {
+                                    Text(
+                                        text = "Round",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(0.7f),
+                                    )
+                                    Text(
+                                        text = "Table",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(0.7f),
+                                    )
+                                    Text(
+                                        text = "Players",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(2.8f),
+                                    )
+                                    Text(
+                                        text = "Done",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(0.9f),
+                                    )
+                                    Text(
+                                        text = "Manual Results",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.weight(0.9f),
+                                    )
+                                    Text(
+                                        text = "",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        modifier = Modifier.width(44.dp),
+                                    )
+                                }
+                                DataTableDivider()
+                            }
+
+                            item {
+                                PreviewTableRow(
+                                    round = 1,
+                                    table = 1,
+                                    players = "101(T1) • 102(T1) • 103(T2) • 104(T2)",
+                                    done = true,
+                                    manualResults = false,
+                                )
+                            }
+                            item {
+                                DataTableDivider()
+                            }
+                            item {
+                                PreviewTableRow(
+                                    round = 1,
+                                    table = 2,
+                                    players = "105(T2) • 106(T3) • 107(T4) • 108(T4)",
+                                    done = false,
+                                    manualResults = true,
+                                )
+                            }
+                            item {
+                                DataTableDivider()
+                            }
+                        }
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun PreviewTableRow(
+    round: Int,
+    table: Int,
+    players: String,
+    done: Boolean,
+    manualResults: Boolean,
+) {
+    DataTableRow(onClick = {}) {
+        Text(
+            text = round.toString(),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(0.7f),
+        )
+        Text(
+            text = table.toString(),
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(0.7f),
+        )
+        Text(
+            text = players,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(2.8f),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+        )
+        Text(
+            text = if (done) "Yes" else "No",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(0.9f),
+        )
+        Text(
+            text = if (manualResults) "Yes" else "No",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(0.9f),
+        )
+        RowActionsMenu(
+            enabled = true,
+            items = listOf(
+                RowActionMenuItem(label = "Open", onClick = {}),
+                RowActionMenuItem(label = "Edit (coming soon)", enabled = false, onClick = {}),
+                RowActionMenuItem(label = "Delete (coming soon)", enabled = false, onClick = {}),
+            ),
+            modifier = Modifier.width(44.dp),
+        )
     }
 }

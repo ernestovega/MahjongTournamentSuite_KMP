@@ -188,6 +188,79 @@ class TableManagerEditorStateTest {
 
         assertTrue(editor.isCompleted)
     }
+
+    @Test
+    fun scoreBelowMinimumMarksHandInvalid() {
+        val hand = HandDraftState.from(sampleHand(handId = 1, winner = "1", loser = "2", score = "8"))
+
+        hand.updateHandScore("7")
+
+        assertTrue(hand.showValidationError)
+        assertTrue(hand.isResultSelectionInvalid)
+        assertEquals("This hand is invalid and cannot be marked as done or completed.", hand.validationErrorMessage)
+        assertEquals(listOf("The minimum score to win a hand is 8."), hand.validationDetailMessages)
+    }
+
+    @Test
+    fun chickenHandCannotExceedTwelvePointsWhenSelected() {
+        val hand = HandDraftState.from(sampleHand(handId = 1, winner = "1", loser = "2", score = "13"))
+
+        hand.updateChickenHand(true)
+
+        assertTrue(hand.showValidationError)
+        assertTrue(hand.isResultSelectionInvalid)
+        assertEquals("This hand is invalid and cannot be marked as done or completed.", hand.validationErrorMessage)
+        assertEquals(listOf("A chicken hand cannot score more than 12 points."), hand.validationDetailMessages)
+    }
+
+    @Test
+    fun raisingScoreAboveTwelveInvalidatesAlreadySelectedChickenHand() {
+        val hand = HandDraftState.from(sampleHand(handId = 1, winner = "1", loser = "2", score = "8"))
+
+        hand.updateChickenHand(true)
+        hand.updateHandScore("13")
+
+        assertTrue(hand.showValidationError)
+        assertTrue(hand.isResultSelectionInvalid)
+        assertEquals("This hand is invalid and cannot be marked as done or completed.", hand.validationErrorMessage)
+        assertEquals(listOf("A chicken hand cannot score more than 12 points."), hand.validationDetailMessages)
+    }
+
+    @Test
+    fun missingFieldsAreReportedAsSpecificValidationMessages() {
+        val hand = HandDraftState.from(sampleHand(handId = 1, winner = "", loser = "2", score = "8"))
+
+        assertTrue(hand.isResultSelectionInvalid)
+        assertEquals(
+            listOf(
+                "There are missing fields.",
+                "A loser cannot be selected without a winner.",
+            ),
+            hand.validationDetailMessages,
+        )
+    }
+
+    @Test
+    fun invalidHandCannotBeMarkedDone() {
+        val hand = HandDraftState.from(sampleHand(handId = 1, winner = "1", loser = "2", score = "7"))
+
+        hand.updateDoneState(true)
+
+        assertFalse(hand.isDone)
+        assertTrue(hand.isResultSelectionInvalid)
+    }
+
+    @Test
+    fun doneStateIsIncludedInHandPatch() {
+        val hand = sampleHand(handId = 1, winner = "1", loser = "2", score = "8")
+
+        val editor = HandDraftState.from(hand)
+        editor.isDone = true
+
+        val patch = editor.buildPatch()
+
+        assertEquals(true, patch["isDone"])
+    }
 }
 
 private fun sampleHand(
@@ -201,6 +274,7 @@ private fun sampleHand(
     playerLooserId = loser,
     handScore = score,
     isChickenHand = false,
+    isDone = false,
     playerEastPenalty = "",
     playerSouthPenalty = "",
     playerWestPenalty = "",

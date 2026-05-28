@@ -90,7 +90,6 @@ fun TournamentsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var deleteDialogTournament by remember { mutableStateOf<Tournament?>(null) }
-    var createdByNames by remember { mutableStateOf<Map<String, String>>(emptyMap()) }
 
     fun refresh() {
         coroutineScope.launch {
@@ -111,24 +110,6 @@ fun TournamentsScreen(
             when (val tournamentsResult = presenter.loadTournaments()) {
                 is AppResult.Success -> {
                     store.upsertTournaments(tournamentsResult.value)
-
-                    if (store.adminStatus.value?.isSuperadmin == true) {
-                        val uids = tournamentsResult.value
-                            .mapNotNull { it.createdByUid?.trim()?.takeIf(String::isNotBlank) }
-                            .distinct()
-                            .filterNot(createdByNames::containsKey)
-
-                        if (uids.isNotEmpty()) {
-                            val next = createdByNames.toMutableMap()
-                            for (uid in uids) {
-                                when (val lookup = presenter.lookupUser(uid)) {
-                                    is AppResult.Success -> next[uid] = lookup.value.toUiName()
-                                    is AppResult.Failure -> next[uid] = uid
-                                }
-                            }
-                            createdByNames = next.toMap()
-                        }
-                    }
                 }
 
                 is AppResult.Failure -> if (errorMessage == null) errorMessage =
@@ -260,13 +241,13 @@ fun TournamentsScreen(
                                             DataTableDivider()
                                         }
                                         items(tournaments, key = { it.id }) { tournament ->
-                                            TournamentTableRow(
-                                                tournament = tournament,
-                                                createdByName = tournament.createdByUid?.let { createdByNames[it] },
-                                                enabled = !isLoading,
-                                                cellMinWidth = cellMinWidth,
-                                                actionCellMinWidth = actionCellMinWidth,
-                                                showDelete = canDeleteTournaments,
+                                        TournamentTableRow(
+                                            tournament = tournament,
+                                            createdByName = tournament.createdByName,
+                                            enabled = !isLoading,
+                                            cellMinWidth = cellMinWidth,
+                                            actionCellMinWidth = actionCellMinWidth,
+                                            showDelete = canDeleteTournaments,
                                                 onClick = {
                                                     navController.navigate(
                                                         TournamentRoute(
@@ -454,9 +435,7 @@ private fun TournamentTableRow(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         BodyCell(
-            text = createdByName
-                ?: tournament.createdByUid?.takeIf(String::isNotBlank)
-                ?: "—",
+            text = createdByName ?: "—",
             minWidth = cellMinWidth,
             weight = 1.1f,
             style = MaterialTheme.typography.bodySmall,

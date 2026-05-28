@@ -4,6 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 @Composable
 fun AppTopBarActions(
@@ -23,4 +26,18 @@ fun AppTopBarActions(
             onRefresh?.let { AppTopBarButton("Refresh", it) }
             onNewTournament?.let { AppTopBarButton("New Tournament", it) }
         }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun AppTopBarActionsPreview() {
+    MtsTheme(useDarkTheme = false) {
+        AppTopBarActions(
+            onPlayers = {},
+            onPlayerTables = {},
+            onMembers = {},
+            onRefresh = {},
+            onNewTournament = {},
+        )
+    }
 }

@@ -9,6 +9,7 @@ export type TableHand = {
   playerLooserId: string;
   handScore: string;
   isChickenHand: boolean;
+  isDone: boolean;
   playerEastPenalty: string;
   playerSouthPenalty: string;
   playerWestPenalty: string;
@@ -61,16 +62,17 @@ export async function getTableWithHands(params: {
     const batch = db.batch();
     for (let handId = 1; handId <= 16; handId++) {
       const handRef = handsCollection.doc(String(handId));
-      batch.set(handRef, {
-        handId,
-        playerWinnerId: "",
-        playerLooserId: "",
-        handScore: "",
-        isChickenHand: false,
-        playerEastPenalty: "",
-        playerSouthPenalty: "",
-        playerWestPenalty: "",
-        playerNorthPenalty: "",
+        batch.set(handRef, {
+          handId,
+          playerWinnerId: "",
+          playerLooserId: "",
+          handScore: "",
+          isChickenHand: false,
+          isDone: false,
+          playerEastPenalty: "",
+          playerSouthPenalty: "",
+          playerWestPenalty: "",
+          playerNorthPenalty: "",
         createdAt: FieldValue.serverTimestamp(),
         updatedAt: FieldValue.serverTimestamp(),
       });
@@ -115,6 +117,7 @@ export async function getTableWithHands(params: {
       playerLooserId: String(d.get("playerLooserId") ?? ""),
       handScore: String(d.get("handScore") ?? ""),
       isChickenHand: Boolean(d.get("isChickenHand") ?? false),
+      isDone: Boolean(d.get("isDone") ?? false),
       playerEastPenalty: String(d.get("playerEastPenalty") ?? ""),
       playerSouthPenalty: String(d.get("playerSouthPenalty") ?? ""),
       playerWestPenalty: String(d.get("playerWestPenalty") ?? ""),

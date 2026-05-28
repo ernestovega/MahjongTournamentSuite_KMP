@@ -74,7 +74,7 @@ Membership is stored at:
 - `tournaments/{tournamentId}/players/{playerId}`
 - `tournaments/{tournamentId}/teams/{teamId}`
 - `tournaments/{tournamentId}/tables/{tableKey}` (tableKey: `{roundId}_{tableId}`)
-- `tournaments/{tournamentId}/tables/{tableKey}/hands/{handId}`
+- `tournaments/{tournamentId}/tables/{tableKey}/hands/{handId}` with hand fields including `isChickenHand` and `isDone`
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
 ## Refresh strategy (client)

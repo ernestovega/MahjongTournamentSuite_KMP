@@ -34,13 +34,14 @@ class TournamentPatchRequestDtoTest {
         val payload = HandPatchRequestDto(
             playerWinnerId = "12",
             isChickenHand = false,
+            isDone = true,
             handScore = "16",
         )
 
         val encoded = json.encodeToString(payload)
 
         assertEquals(
-            """{"playerWinnerId":"12","handScore":"16","isChickenHand":false}""",
+            """{"playerWinnerId":"12","handScore":"16","isChickenHand":false,"isDone":true}""",
             encoded,
         )
     }

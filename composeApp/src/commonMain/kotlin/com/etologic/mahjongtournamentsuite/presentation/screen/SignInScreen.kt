@@ -35,6 +35,8 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -48,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -218,6 +221,59 @@ fun SignInScreen(
                                 strokeWidth = 2.dp,
                             )
                         } else {
+                            Text("Sign in")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun SignInScreenPreview() {
+    MtsTheme(useDarkTheme = false) {
+        AppScaffold(
+            title = "Sign in",
+            leadingActions = { AppTopBarLeadingActions(showThemeToggle = true) },
+        ) {
+            ScreenColumn(
+                maxWidth = 520.dp,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
+            ) {
+                Text(
+                    text = "Use your email or EMA id to sign in. Accounts are invitation-only.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = "demo@example.com",
+                            onValueChange = {},
+                            label = { Text("Email or emaId") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                        )
+                        OutlinedTextField(
+                            value = "password",
+                            onValueChange = {},
+                            label = { Text("Password") },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                        )
+                        Button(
+                            enabled = true,
+                            onClick = {},
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
                             Text("Sign in")
                         }
                     }

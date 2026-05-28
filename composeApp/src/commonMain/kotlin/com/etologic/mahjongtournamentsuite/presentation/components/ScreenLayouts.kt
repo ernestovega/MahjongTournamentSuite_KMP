@@ -13,8 +13,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.Text
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 @Composable
 fun ScreenColumn(
@@ -40,5 +44,20 @@ fun ScreenColumn(
             horizontalAlignment = horizontalAlignment,
             content = content,
         )
+    }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun ScreenColumnPreview() {
+    MtsTheme(useDarkTheme = false) {
+        ScreenColumn(
+            maxWidth = 700.dp,
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            SectionCard(title = "One") { Text("First item") }
+            SectionCard(title = "Two") { Text("Second item") }
+        }
     }
 }

@@ -19,6 +19,7 @@ data class TournamentDto(
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
     val createdByUid: String? = null,
+    val createdByName: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
     // Backwards-compatible aliases (older backend / legacy Firestore docs).
@@ -137,6 +138,7 @@ data class TableHandDto(
     val playerLooserId: String = "",
     val handScore: String = "",
     val isChickenHand: Boolean = false,
+    val isDone: Boolean = false,
     val playerEastPenalty: String = "",
     val playerSouthPenalty: String = "",
     val playerWestPenalty: String = "",
@@ -182,6 +184,7 @@ data class HandPatchRequestDto(
     val playerLooserId: String? = null,
     val handScore: String? = null,
     val isChickenHand: Boolean? = null,
+    val isDone: Boolean? = null,
     val playerEastPenalty: String? = null,
     val playerSouthPenalty: String? = null,
     val playerWestPenalty: String? = null,

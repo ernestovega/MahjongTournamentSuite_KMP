@@ -45,6 +45,7 @@ class DefaultTournamentRepository(
                     numTries = dto.numTries,
                     isCompleted = dto.isCompleted,
                     createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
+                    createdByName = dto.createdByName.normalizedOrNull(),
                     createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
                     updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
                 )
@@ -92,6 +93,7 @@ class DefaultTournamentRepository(
                 numTries = dto.numTries,
                 isCompleted = dto.isCompleted,
                 createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
+                createdByName = dto.createdByName.normalizedOrNull(),
                 createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
                 updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
             )
@@ -294,6 +296,7 @@ class DefaultTournamentRepository(
                     playerLooserId = h.playerLooserId,
                     handScore = h.handScore,
                     isChickenHand = h.isChickenHand,
+                    isDone = h.isDone,
                     playerEastPenalty = h.playerEastPenalty,
                     playerSouthPenalty = h.playerSouthPenalty,
                     playerWestPenalty = h.playerWestPenalty,
@@ -454,6 +457,7 @@ private fun Map<String, Any?>.toHandPatchRequestDto(): HandPatchRequestDto = Han
     playerLooserId = stringOrNull("playerLooserId"),
     handScore = stringOrNull("handScore"),
     isChickenHand = booleanOrNull("isChickenHand"),
+    isDone = booleanOrNull("isDone"),
     playerEastPenalty = stringOrNull("playerEastPenalty"),
     playerSouthPenalty = stringOrNull("playerSouthPenalty"),
     playerWestPenalty = stringOrNull("playerWestPenalty"),

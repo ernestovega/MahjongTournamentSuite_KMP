@@ -3,6 +3,7 @@ import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/fi
 import { db } from "../firebase";
 import { Role } from "../models/role";
 import { badRequest, notFound } from "../api/httpError";
+import { getUserProfile } from "./usersService";
 
 export type Tournament = {
   id: string;
@@ -13,6 +14,7 @@ export type Tournament = {
   numTries: number;
   isCompleted: boolean;
   createdByUid: string | null;
+  createdByName: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -22,7 +24,39 @@ function toIsoString(value: unknown): string | null {
   return null;
 }
 
-function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Tournament {
+function formatDisplayName(email: string): string {
+  const rawName = email
+    .split("@", 1)[0]
+    .split(".").join(" ")
+    .split("_").join(" ")
+    .split("-").join(" ")
+    .trim()
+    .split(" ")
+    .filter((part) => part.trim().length > 0)
+    .map((part: string) => {
+      const lower = part.toLowerCase();
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+
+  return rawName.length > 0 ? rawName : email;
+}
+
+async function resolveCreatedByName(uid: string | null): Promise<string | null> {
+  if (uid == null || uid.trim().length === 0) return null;
+
+  try {
+    const profile = await getUserProfile(uid);
+    return formatDisplayName(profile.email);
+  } catch (_error) {
+    return null;
+  }
+}
+
+async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<Tournament> {
+  const createdByUid = (d.get("createdByUid") as string) ?? (d.get("createdBy") as string) ?? null;
+  const createdByName = (d.get("createdByName") as string) ?? await resolveCreatedByName(createdByUid);
+
   return {
     id: d.id,
     name: (d.get("name") as string) ?? "",
@@ -31,7 +65,8 @@ function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Tournament {
     numRounds: (d.get("numRounds") as number) ?? 0,
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
-    createdByUid: (d.get("createdByUid") as string) ?? null,
+    createdByUid,
+    createdByName,
     createdAt: toIsoString(d.get("createdAt")),
     updatedAt: toIsoString(d.get("updatedAt")),
   };
@@ -171,7 +206,7 @@ export async function createTournament(params: {
 
 export async function listAllTournaments(): Promise<Tournament[]> {
   const snap = await db.collection("tournaments").orderBy("updatedAt", "desc").get();
-  return snap.docs.map((d) => mapTournamentDoc(d));
+  return Promise.all(snap.docs.map((d) => mapTournamentDoc(d)));
 }
 
 function isDocRef(value: DocumentReference | null): value is DocumentReference {
@@ -187,9 +222,11 @@ export async function listTournamentsForUser(uid: string): Promise<Tournament[]>
   if (tournamentRefs.length === 0) return [];
 
   const tournamentSnaps = await db.getAll(...tournamentRefs);
-  return tournamentSnaps
-    .filter((t) => t.exists)
-    .map((d) => mapTournamentDoc(d));
+  return Promise.all(
+    tournamentSnaps
+      .filter((t) => t.exists)
+      .map((d) => mapTournamentDoc(d)),
+  );
 }
 
 export async function deleteTournament(tournamentId: string): Promise<void> {

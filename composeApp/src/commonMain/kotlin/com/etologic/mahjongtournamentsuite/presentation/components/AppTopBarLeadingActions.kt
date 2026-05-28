@@ -2,13 +2,16 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 
 @Composable
@@ -40,5 +43,25 @@ private fun ThemeModeToggleButton() {
             text = label,
             color = Color.White,
         )
+    }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun AppTopBarLeadingActionsPreview() {
+    val themeController = ThemeController(
+        preference = ThemePreference.Light,
+        isDarkTheme = false,
+        onTogglePreference = {},
+    )
+
+    CompositionLocalProvider(LocalThemeController provides themeController) {
+        MtsTheme(useDarkTheme = false) {
+            AppTopBarLeadingActions(
+                showThemeToggle = true,
+                onTimer = {},
+                onRanking = {},
+            )
+        }
     }
 }

@@ -12,8 +12,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 @Composable
 fun SectionCard(
@@ -58,6 +61,30 @@ fun SectionCard(
             }
 
             content()
+        }
+    }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun SectionCardPreview() {
+    MtsTheme(useDarkTheme = false) {
+        SectionCard(
+            title = "Section title",
+            subtitle = "Section subtitle",
+            actions = {
+                AppTextButton(onClick = {}) {
+                    Text("Action")
+                }
+            },
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text("Primary content line.")
+                Text(
+                    text = "Secondary detail line.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
     }
 }

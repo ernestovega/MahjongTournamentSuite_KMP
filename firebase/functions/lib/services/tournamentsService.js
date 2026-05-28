@@ -7,12 +7,42 @@ exports.deleteTournament = deleteTournament;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
+const usersService_1 = require("./usersService");
 function toIsoString(value) {
     if (value instanceof firestore_1.Timestamp)
         return value.toDate().toISOString();
     return null;
 }
-function mapTournamentDoc(d) {
+function formatDisplayName(email) {
+    const rawName = email
+        .split("@", 1)[0]
+        .split(".").join(" ")
+        .split("_").join(" ")
+        .split("-").join(" ")
+        .trim()
+        .split(" ")
+        .filter((part) => part.trim().length > 0)
+        .map((part) => {
+        const lower = part.toLowerCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+        .join(" ");
+    return rawName.length > 0 ? rawName : email;
+}
+async function resolveCreatedByName(uid) {
+    if (uid == null || uid.trim().length === 0)
+        return null;
+    try {
+        const profile = await (0, usersService_1.getUserProfile)(uid);
+        return formatDisplayName(profile.email);
+    }
+    catch (_error) {
+        return null;
+    }
+}
+async function mapTournamentDoc(d) {
+    const createdByUid = d.get("createdByUid") ?? d.get("createdBy") ?? null;
+    const createdByName = d.get("createdByName") ?? await resolveCreatedByName(createdByUid);
     return {
         id: d.id,
         name: d.get("name") ?? "",
@@ -21,7 +51,8 @@ function mapTournamentDoc(d) {
         numRounds: d.get("numRounds") ?? 0,
         numTries: d.get("numTries") ?? 0,
         isCompleted: d.get("isCompleted") ?? false,
-        createdByUid: d.get("createdByUid") ?? null,
+        createdByUid,
+        createdByName,
         createdAt: toIsoString(d.get("createdAt")),
         updatedAt: toIsoString(d.get("updatedAt")),
     };
@@ -139,7 +170,7 @@ async function createTournament(params) {
 }
 async function listAllTournaments() {
     const snap = await firebase_1.db.collection("tournaments").orderBy("updatedAt", "desc").get();
-    return snap.docs.map((d) => mapTournamentDoc(d));
+    return Promise.all(snap.docs.map((d) => mapTournamentDoc(d)));
 }
 function isDocRef(value) {
     return value != null;
@@ -152,9 +183,9 @@ async function listTournamentsForUser(uid) {
     if (tournamentRefs.length === 0)
         return [];
     const tournamentSnaps = await firebase_1.db.getAll(...tournamentRefs);
-    return tournamentSnaps
+    return Promise.all(tournamentSnaps
         .filter((t) => t.exists)
-        .map((d) => mapTournamentDoc(d));
+        .map((d) => mapTournamentDoc(d)));
 }
 async function deleteTournament(tournamentId) {
     const ref = firebase_1.db.collection("tournaments").doc(tournamentId);

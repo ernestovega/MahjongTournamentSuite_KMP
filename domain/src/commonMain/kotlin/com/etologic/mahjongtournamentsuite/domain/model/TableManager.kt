@@ -35,6 +35,7 @@ data class TableHand(
     val playerLooserId: String,
     val handScore: String,
     val isChickenHand: Boolean,
+    val isDone: Boolean,
     val playerEastPenalty: String,
     val playerSouthPenalty: String,
     val playerWestPenalty: String,

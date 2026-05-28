@@ -1,29 +1,44 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.CompositionLocalProvider
+import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 
 private val AppTopBarSidePadding = 8.dp
 private val AppLoadingBarHeight = 4.dp
@@ -121,10 +136,7 @@ fun AppScaffold(
         floatingActionButtonPosition = floatingActionButtonPosition,
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
-        Box(
-            modifier = Modifier
-                .padding(padding),
-        ) {
+        Box(modifier = Modifier.padding(padding)) {
             content()
         }
     }
@@ -138,15 +150,38 @@ private fun SlowLinearLoadingIndicator(
     val trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
     val indicatorColor = MaterialTheme.colorScheme.tertiary
     val shape = RoundedCornerShape(percent = 50)
+    val transition = rememberInfiniteTransition(label = "app-loading")
+    val phase by transition.animateFloat(
+        initialValue = -0.35f,
+        targetValue = 1.35f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 4200, easing = LinearEasing),
+        ),
+        label = "phase",
+    )
 
-    LinearProgressIndicator(
+    BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .height(height)
             .clip(shape),
-        color = indicatorColor,
-        trackColor = trackColor,
-    )
+    ) {
+        val barWidth = maxWidth * 0.35f
+        val barOffset = maxWidth * phase
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(height)
+                .background(trackColor),
+        )
+        Box(
+            modifier = Modifier
+                .width(barWidth)
+                .height(height)
+                .offset(x = barOffset)
+                .background(indicatorColor),
+        )
+    }
 }
 
 @Composable
@@ -156,5 +191,36 @@ private fun AppBackButton(onClick: () -> Unit) {
             text = "Back",
             color = Color.White,
         )
+    }
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun AppScaffoldPreview() {
+    val themeController = ThemeController(
+        preference = ThemePreference.Light,
+        isDarkTheme = false,
+        onTogglePreference = {},
+    )
+
+    CompositionLocalProvider(LocalThemeController provides themeController) {
+        MtsTheme(useDarkTheme = false) {
+            AppScaffold(
+                title = "Preview",
+                subtitle = "AppScaffold",
+                isLoading = true,
+                onBack = {},
+                leadingActions = {
+                    AppTopBarLeadingActions(showThemeToggle = true, onTimer = {}, onRanking = {})
+                },
+                actions = {
+                    AppTopBarActions(onPlayers = {}, onRefresh = {}, onNewTournament = {})
+                },
+            ) {
+                Box(modifier = Modifier.padding(24.dp)) {
+                    Text("Preview body.")
+                }
+            }
+        }
     }
 }

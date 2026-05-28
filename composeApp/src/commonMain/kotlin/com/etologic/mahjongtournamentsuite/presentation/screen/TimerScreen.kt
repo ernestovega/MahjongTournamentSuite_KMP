@@ -32,9 +32,12 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.delay
 
 @Composable
@@ -289,4 +292,12 @@ private fun formatHms(totalSeconds: Long): String {
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
     return "${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
+}
+
+@Preview(device = Devices.DESKTOP)
+@Composable
+private fun TimerStandaloneScreenPreview() {
+    MtsTheme(useDarkTheme = false) {
+        TimerStandaloneScreen()
+    }
 }
