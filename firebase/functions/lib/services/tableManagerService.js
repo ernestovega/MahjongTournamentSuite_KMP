@@ -62,7 +62,7 @@ async function getTableWithHands(params) {
         manualPlayerWestPoints: String(tableSnap.get("manualPlayerWestPoints") ?? ""),
         manualPlayerNorthPoints: String(tableSnap.get("manualPlayerNorthPoints") ?? ""),
         isCompleted: Boolean(tableSnap.get("isCompleted") ?? false),
-        useTotalsOnly: Boolean(tableSnap.get("useTotalsOnly") ?? false),
+        useTotalsOnly: Boolean(tableSnap.get("useTotalsOnly") ?? true),
         usePointsCalculation: Boolean(tableSnap.get("usePointsCalculation") ?? true),
     };
     const hands = handsSnap.docs

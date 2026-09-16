@@ -236,6 +236,8 @@ class DefaultTournamentRepository(
                     playerIds = dto.playerIds,
                     isCompleted = dto.isCompleted,
                     useTotalsOnly = dto.useTotalsOnly,
+                    usePointsCalculation = dto.usePointsCalculation,
+                    hasProgress = dto.hasProgress,
                 )
             }
         }

@@ -190,7 +190,7 @@ export async function createTournament(params: {
       manualPlayerWestPoints: "",
       manualPlayerNorthPoints: "",
       isCompleted: Boolean(table.isCompleted ?? false),
-      useTotalsOnly: Boolean(table.useTotalsOnly ?? false),
+      useTotalsOnly: Boolean(table.useTotalsOnly ?? true),
       usePointsCalculation: true,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),

@@ -34,8 +34,8 @@ fun AppTopBarLeadingActions(
 private fun ThemeModeToggleButton() {
     val themeController = LocalThemeController.current
     val label = when (themeController.preference) {
-        ThemePreference.Light -> "Light"
-        ThemePreference.Dark -> "Dark"
+        ThemePreference.Light -> "Dark"
+        ThemePreference.Dark -> "Light"
     }
 
     AppTextButton(onClick = themeController.onTogglePreference) {

@@ -63,6 +63,100 @@ class TableManagerEditorStateTest {
     }
 
     @Test
+    fun enablingManualPointsDisablesManualScores() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = true),
+            hands = emptyList(),
+        )
+
+        editor.enableManualPoints()
+
+        assertFalse(editor.useTotalsOnly)
+        assertFalse(editor.usePointsCalculation)
+    }
+
+    @Test
+    fun enablingManualScoresDisablesManualPoints() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = false, usePointsCalculation = false),
+            hands = emptyList(),
+        )
+
+        editor.enableManualTotals()
+
+        assertTrue(editor.useTotalsOnly)
+        assertTrue(editor.usePointsCalculation)
+    }
+
+    @Test
+    fun switchingModesKeepsManualScoresManualPointsAndHands() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(),
+            hands = listOf(sampleHand(handId = 1)),
+        )
+        val hand = editor.hands.single()
+        editor.playerEastScore = "33000"
+        editor.playerEastPoints = "4"
+        hand.setWinnerPlayerId("1")
+        hand.setLoserPlayerId("2")
+        hand.updateHandScore("16")
+
+        editor.enableManualTotals()
+        assertTrue(editor.useTotalsOnly)
+        assertTrue(editor.usePointsCalculation)
+        assertEquals("33000", editor.displayEastScore)
+
+        editor.enableManualPoints()
+        assertFalse(editor.useTotalsOnly)
+        assertFalse(editor.usePointsCalculation)
+        assertEquals("4", editor.displayEastPoints)
+        assertEquals("33000", editor.playerEastScore)
+
+        editor.disableManualPoints()
+        assertFalse(editor.useTotalsOnly)
+        assertTrue(editor.usePointsCalculation)
+        assertEquals("40", editor.displayEastScore)
+        assertEquals("1", hand.playerWinnerId)
+        assertEquals("2", hand.normalizedLoserId)
+        assertEquals("16", hand.handScore)
+
+        editor.enableManualTotals()
+        assertEquals("33000", editor.displayEastScore)
+        assertEquals("4", editor.playerEastPoints)
+
+        editor.enableManualPoints()
+        assertEquals("4", editor.displayEastPoints)
+        assertEquals("33000", editor.playerEastScore)
+    }
+
+    @Test
+    fun savePatchIncludesValuesFromInactiveModesAndHands() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(),
+            hands = listOf(sampleHand(handId = 1)),
+        )
+        val hand = editor.hands.single()
+        editor.playerEastScore = "33000"
+        editor.playerEastPoints = "4"
+        hand.setWinnerPlayerId("1")
+        hand.setLoserPlayerId("2")
+        hand.updateHandScore("16")
+
+        editor.enableManualPoints()
+
+        val tablePatch = editor.buildTablePatch()
+        val handPatch = editor.buildHandPatches().single().second
+
+        assertEquals("33000", tablePatch["manualPlayerEastScore"])
+        assertEquals("4", tablePatch["manualPlayerEastPoints"])
+        assertEquals(false, tablePatch["useTotalsOnly"])
+        assertEquals(false, tablePatch["usePointsCalculation"])
+        assertEquals("1", handPatch["playerWinnerId"])
+        assertEquals("2", handPatch["playerLooserId"])
+        assertEquals("16", handPatch["handScore"])
+    }
+
+    @Test
     fun disablingManualScoresPreservesManualValuesForReuse() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(useTotalsOnly = true),

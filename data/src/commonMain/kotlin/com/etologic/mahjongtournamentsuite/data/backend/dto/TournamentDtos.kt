@@ -93,7 +93,9 @@ data class TournamentTableDto(
     val tableId: Int,
     val playerIds: List<Int>,
     val isCompleted: Boolean = false,
-    val useTotalsOnly: Boolean = false,
+    val useTotalsOnly: Boolean = true,
+    val usePointsCalculation: Boolean = true,
+    val hasProgress: Boolean = false,
 )
 
 @Serializable
@@ -127,7 +129,7 @@ data class TableStateDto(
     val manualPlayerWestPoints: String = "",
     val manualPlayerNorthPoints: String = "",
     val isCompleted: Boolean = false,
-    val useTotalsOnly: Boolean = false,
+    val useTotalsOnly: Boolean = true,
     val usePointsCalculation: Boolean = true,
 )
 

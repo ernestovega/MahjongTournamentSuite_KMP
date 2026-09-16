@@ -157,7 +157,7 @@ async function createTournament(params) {
             manualPlayerWestPoints: "",
             manualPlayerNorthPoints: "",
             isCompleted: Boolean(table.isCompleted ?? false),
-            useTotalsOnly: Boolean(table.useTotalsOnly ?? false),
+            useTotalsOnly: Boolean(table.useTotalsOnly ?? true),
             usePointsCalculation: true,
             createdAt: firestore_1.FieldValue.serverTimestamp(),
             updatedAt: firestore_1.FieldValue.serverTimestamp(),

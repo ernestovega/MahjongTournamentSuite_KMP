@@ -30,11 +30,17 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.LaunchedEffect
@@ -251,6 +257,13 @@ fun TableManagerScreen(
                         editor.disableManualTotals()
                     }
                 },
+                onManualPointsChange = { checked ->
+                    if (checked) {
+                        editor.enableManualPoints()
+                    } else {
+                        editor.disableManualPoints()
+                    }
+                },
             )
         }
     }
@@ -261,8 +274,12 @@ internal fun TableManagerContent(
     editor: TableManagerEditorState,
     enabled: Boolean,
     playerNamesById: Map<Int, String> = emptyMap(),
-    onManualTotalsChange: (Boolean) -> Unit = { editor.useTotalsOnly = it },
-    onManualPointsChange: (Boolean) -> Unit = { editor.usePointsCalculation = !it },
+    onManualTotalsChange: (Boolean) -> Unit = { checked ->
+        if (checked) editor.enableManualTotals() else editor.disableManualTotals()
+    },
+    onManualPointsChange: (Boolean) -> Unit = { checked ->
+        if (checked) editor.enableManualPoints() else editor.disableManualPoints()
+    },
 ) {
     SeatPositionsSection(
         editor = editor,
@@ -338,7 +355,7 @@ private fun previewTableManagerEditorState(): TableManagerEditorState {
             playerWestPoints = "1",
             playerNorthPoints = "0",
             isCompleted = false,
-            useTotalsOnly = false,
+            useTotalsOnly = true,
             usePointsCalculation = true,
         ),
         hands = listOf(
@@ -430,6 +447,7 @@ private fun TotalScoreSection(
         actions = {
             LabeledSwitch(
                 label = "Manual Scores",
+                description = "When on, enter each player's final score yourself. It turns off Manual Points and disables Hands.",
                 checked = editor.useTotalsOnly,
                 enabled = enabled,
                 onCheckedChange = { onManualTotalsChange(it) },
@@ -468,6 +486,7 @@ private fun TablePointsSection(
         actions = {
             LabeledSwitch(
                 label = "Manual Points",
+                description = "When on, enter each player's table points yourself. It turns off Manual Scores and disables Hands.",
                 checked = !editor.usePointsCalculation,
                 enabled = enabled,
                 onCheckedChange = { onManualPointsChange(it) },
@@ -561,30 +580,34 @@ private fun HandsSection(
     enabled: Boolean,
     playerNamesById: Map<Int, String>,
 ) {
+    val isHandsActive = !editor.useTotalsOnly && editor.usePointsCalculation
     val handSubtotals = editor.cumulativeHandScoreSubtotals
     val rowNavigators = remember(editor.hands.map { it.handId }) {
         editor.hands.map { HandRowKeyboardNavigator() }
     }
     val firstEditableHandIndex = editor.hands.indexOfFirst { !editor.isCompleted && !it.isDone }
 
-    LaunchedEffect(enabled, editor.isCompleted, firstEditableHandIndex) {
-        if (!enabled) return@LaunchedEffect
+    LaunchedEffect(enabled, isHandsActive, editor.isCompleted, firstEditableHandIndex) {
+        if (!enabled || !isHandsActive) return@LaunchedEffect
         if (firstEditableHandIndex < 0) return@LaunchedEffect
         rowNavigators.getOrNull(firstEditableHandIndex)?.winner?.requestFocus()
     }
 
     SectionCard(
         title = "Hands",
-        subtitle = "${editor.hands.size} hands",
+        subtitle = if (isHandsActive) "${editor.hands.size} hands" else "Inactive while a manual mode is on",
         actions = {
             LabeledSwitch(
                 label = "Completed",
+                description = "When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.",
                 checked = editor.isCompleted,
-                enabled = enabled,
+                enabled = enabled && isHandsActive,
                 onCheckedChange = { editor.updateCompletedState(it) },
             )
         },
         content = {
+            if (!isHandsActive) return@SectionCard
+
             if (editor.hands.isEmpty()) {
                 Text(
                     text = "No hands found.",
@@ -625,8 +648,10 @@ private fun HandsSection(
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun LabeledSwitch(
     label: String,
+    description: String,
     checked: Boolean,
     enabled: Boolean,
     onCheckedChange: (Boolean) -> Unit,
@@ -645,6 +670,19 @@ private fun LabeledSwitch(
             enabled = enabled,
             onCheckedChange = onCheckedChange,
         )
+        TooltipBox(
+            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+            tooltip = { PlainTooltip { Text(description) } },
+            state = rememberTooltipState(),
+        ) {
+            IconButton(onClick = {}) {
+                Text(
+                    text = "ⓘ",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 
@@ -1791,6 +1829,21 @@ private fun moveHandFieldFocus(
     }.getOrDefault(false)
 }
 
+/**
+ * Holds the editable values for one table.
+ *
+ * The editor keeps hands, manual scores, and manual points at the same time. Switching modes only
+ * changes which values apply. It never clears values from an inactive mode.
+ *
+ * - Hands mode applies calculated hand totals and calculated table points.
+ * - Manual Scores applies manual scores and calculated table points.
+ * - Manual Points applies manual table points.
+ *
+ * Manual Scores and Manual Points cannot both be active. Either manual mode disables Hands.
+ * Saving writes all changed hand and manual values, including values from inactive modes. Loading
+ * the table again restores those values when the related mode becomes active. Discard restores the
+ * values from the last saved table state.
+ */
 @Stable
 internal class TableManagerEditorState private constructor(
     private val initialTable: TableState,
@@ -1929,10 +1982,20 @@ internal class TableManagerEditorState private constructor(
 
     fun enableManualTotals() {
         useTotalsOnly = true
+        usePointsCalculation = true
     }
 
     fun disableManualTotals() {
         useTotalsOnly = false
+    }
+
+    fun enableManualPoints() {
+        usePointsCalculation = false
+        useTotalsOnly = false
+    }
+
+    fun disableManualPoints() {
+        usePointsCalculation = true
     }
 
     fun updateCompletedState(value: Boolean) {

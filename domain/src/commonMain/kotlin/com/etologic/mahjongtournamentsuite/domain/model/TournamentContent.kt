@@ -16,4 +16,6 @@ data class TournamentTable(
     val playerIds: List<Int>,
     val isCompleted: Boolean,
     val useTotalsOnly: Boolean,
+    val usePointsCalculation: Boolean,
+    val hasProgress: Boolean,
 )

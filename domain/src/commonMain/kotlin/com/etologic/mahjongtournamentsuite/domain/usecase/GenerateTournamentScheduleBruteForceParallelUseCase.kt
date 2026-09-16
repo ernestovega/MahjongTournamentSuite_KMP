@@ -320,7 +320,9 @@ private fun generateTables(
                     tableId = currentTable,
                     playerIds = listOf(p1, p2, p3, p4),
                     isCompleted = false,
-                    useTotalsOnly = false,
+                    useTotalsOnly = true,
+                    usePointsCalculation = true,
+                    hasProgress = false,
                 ),
             )
         }

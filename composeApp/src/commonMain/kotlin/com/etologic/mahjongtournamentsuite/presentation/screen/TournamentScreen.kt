@@ -18,19 +18,27 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Card
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -84,6 +92,7 @@ fun TournamentScreen(
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var rounds by remember { mutableStateOf<List<TournamentRound>>(emptyList()) }
     var selectedRoundId by remember { mutableStateOf<Int?>(null) }
+    var allTables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var selectedTableId by remember { mutableStateOf<Int?>(null) }
     var playerNamesById by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
@@ -122,6 +131,7 @@ fun TournamentScreen(
         when (val tablesResult = presenter.loadTables(tournamentId, roundId)) {
             is AppResult.Success -> {
                 tables = tablesResult.value.sortedBy { it.tableId }
+                allTables = allTables.filterNot { it.roundId == roundId } + tables
                 selectedTableId = tables.firstOrNull()?.tableId
             }
 
@@ -186,9 +196,10 @@ fun TournamentScreen(
             return
         }
 
-        when (val tablesResult = presenter.loadTables(tournamentId, roundId)) {
+        when (val tablesResult = presenter.loadTables(tournamentId, roundId = null)) {
             is AppResult.Success -> {
-                tables = tablesResult.value.sortedBy { it.tableId }
+                allTables = tablesResult.value.sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
+                tables = allTables.filter { it.roundId == roundId }
             }
 
             is AppResult.Failure -> errorMessage = tablesResult.error.toUiMessage()
@@ -246,7 +257,7 @@ fun TournamentScreen(
                 }
             }
 
-            loadSelectedTable()
+            refresh()
             return true
         } finally {
             isLoading = false
@@ -326,6 +337,7 @@ fun TournamentScreen(
             ) {
                 RoundTableSidebar(
                     rounds = rounds,
+                    allTables = allTables,
                     selectedRoundId = selectedRoundId,
                     tables = tables,
                     selectedTableId = selectedTableId,
@@ -404,6 +416,7 @@ fun TournamentScreen(
 @Composable
 private fun RoundTableSidebar(
     rounds: List<TournamentRound>,
+    allTables: List<TournamentTable>,
     selectedRoundId: Int?,
     tables: List<TournamentTable>,
     selectedTableId: Int?,
@@ -445,11 +458,19 @@ private fun RoundTableSidebar(
                         .padding(end = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(
-                        text = "Rounds",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Rounds",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        CompletionStatusInfoIcon(
+                            description = "○ Empty: all tables are empty.\n◐ Progress: at least one table has data.\n✓ Manual: at least one table uses Manual Scores or Manual Points.\n✓✓ Completed: all tables are completed without a manual mode.",
+                        )
+                    }
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -459,6 +480,7 @@ private fun RoundTableSidebar(
                         items(rounds, key = { it.roundId }) { round ->
                             RoundTableSidebarItem(
                                 label = "Round ${round.roundId}",
+                                status = roundCompletionStatus(allTables.filter { it.roundId == round.roundId }),
                                 selected = round.roundId == selectedRoundId,
                                 enabled = enabled,
                                 onClick = { onSelectRound(round.roundId) },
@@ -481,11 +503,19 @@ private fun RoundTableSidebar(
                         .padding(start = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(
-                        text = "Tables",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = "Tables",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        CompletionStatusInfoIcon(
+                            description = "○ Empty: no table data.\n◐ Progress: table data exists.\n✓ Manual: Manual Scores or Manual Points is active.\n✓✓ Completed: hands are completed and no manual mode is active.",
+                        )
+                    }
 
                     when {
                         selectedRoundId == null -> {
@@ -512,13 +542,9 @@ private fun RoundTableSidebar(
                                 verticalArrangement = Arrangement.spacedBy(6.dp),
                             ) {
                                 items(tables, key = { it.tableId }) { table ->
-                                    val status = when {
-                                        table.isCompleted -> " ✓"
-                                        table.useTotalsOnly -> " Σ"
-                                        else -> ""
-                                    }
                                     RoundTableSidebarItem(
-                                        label = "Table ${table.tableId}$status",
+                                        label = "Table ${table.tableId}",
+                                        status = tableCompletionStatus(table),
                                         selected = table.tableId == selectedTableId,
                                         enabled = enabled,
                                         onClick = { onSelectTable(table.tableId) },
@@ -536,6 +562,7 @@ private fun RoundTableSidebar(
 @Composable
 private fun RoundTableSidebarItem(
     label: String,
+    status: CompletionStatus,
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -549,11 +576,59 @@ private fun RoundTableSidebarItem(
         contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
         tonalElevation = 0.dp,
     ) {
-        Text(
-            text = label,
+        Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-        )
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Text(text = label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+            Text(
+                text = status.symbol,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (selected) Color.Unspecified else status.color,
+            )
+        }
     }
+}
+
+private enum class CompletionStatus(
+    val symbol: String,
+    val color: Color,
+) {
+    Empty("○", Color.Gray),
+    InProgress("◐", Color(0xFFB26A00)),
+    Manual("✓", Color(0xFF1565C0)),
+    Completed("✓✓", Color(0xFF2E7D32)),
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun CompletionStatusInfoIcon(description: String) {
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = { PlainTooltip { Text(description) } },
+        state = rememberTooltipState(),
+    ) {
+        IconButton(onClick = {}) {
+            Text(
+                text = "ⓘ",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+private fun tableCompletionStatus(table: TournamentTable): CompletionStatus = when {
+    table.useTotalsOnly || !table.usePointsCalculation -> CompletionStatus.Manual
+    table.isCompleted -> CompletionStatus.Completed
+    table.hasProgress -> CompletionStatus.InProgress
+    else -> CompletionStatus.Empty
+}
+
+private fun roundCompletionStatus(tables: List<TournamentTable>): CompletionStatus = when {
+    tables.isEmpty() -> CompletionStatus.Empty
+    tables.any { tableCompletionStatus(it) == CompletionStatus.Manual } -> CompletionStatus.Manual
+    tables.all { tableCompletionStatus(it) == CompletionStatus.Completed } -> CompletionStatus.Completed
+    tables.any { tableCompletionStatus(it) == CompletionStatus.InProgress } -> CompletionStatus.InProgress
+    else -> CompletionStatus.Empty
 }
