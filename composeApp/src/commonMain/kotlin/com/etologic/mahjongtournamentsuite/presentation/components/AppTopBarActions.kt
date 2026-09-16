@@ -11,7 +11,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 @Composable
 fun AppTopBarActions(
     onPlayers: (() -> Unit)? = null,
-    onPlayerTables: (() -> Unit)? = null,
+    onPlayerBase: (() -> Unit)? = null,
     onMembers: (() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null,
     onNewTournament: (() -> Unit)? = null,
@@ -21,7 +21,7 @@ fun AppTopBarActions(
             horizontalArrangement = Arrangement.End,
         ) {
             onPlayers?.let { AppTopBarButton("Players", it) }
-            onPlayerTables?.let { AppTopBarButton("Player tables", it) }
+            onPlayerBase?.let { AppTopBarButton("Players", it) }
             onMembers?.let { AppTopBarButton("Members", it) }
             onRefresh?.let { AppTopBarButton("Refresh", it) }
             onNewTournament?.let { AppTopBarButton("New Tournament", it) }
@@ -34,7 +34,7 @@ private fun AppTopBarActionsPreview() {
     MtsTheme(useDarkTheme = false) {
         AppTopBarActions(
             onPlayers = {},
-            onPlayerTables = {},
+            onPlayerBase = {},
             onMembers = {},
             onRefresh = {},
             onNewTournament = {},

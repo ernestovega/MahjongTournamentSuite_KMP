@@ -69,6 +69,7 @@ Membership is stored at:
 - `users/{uid}`
 - `emaIdUsers/{emaId}`
 - `emaPlayers/{emaId}` (global pool, populated later by a scraper job)
+- `countries/{countryCode}` with `{ code, name }`, for example `ES` and `Spain`
 - `tournaments/{tournamentId}`
 - `tournaments/{tournamentId}/members/{uid}`
 - `tournaments/{tournamentId}/players/{playerId}`
@@ -76,6 +77,15 @@ Membership is stored at:
 - `tournaments/{tournamentId}/tables/{tableKey}` (tableKey: `{roundId}_{tableId}`)
 - `tournaments/{tournamentId}/tables/{tableKey}/hands/{handId}` with hand fields including `isChickenHand` and `isDone`
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
+
+## Seed countries
+
+The country picker reads `countries/{countryCode}` documents. To write the full ISO country list, set Application Default Credentials for the Firebase project, then run:
+
+```bash
+cd firebase/functions
+npm run seed:countries
+```
 
 ## Refresh strategy (client)
 

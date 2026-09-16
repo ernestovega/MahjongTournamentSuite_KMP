@@ -3,6 +3,8 @@ import express from "express";
 import { errorHandler } from "./middleware/errorHandler";
 import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
+import { countriesRouter } from "./routes/countries.routes";
+import { playersRouter } from "./routes/players.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
 
 export function buildApp(): express.Express {
@@ -26,6 +28,8 @@ export function buildApp(): express.Express {
   });
 
   app.use("/auth", authRouter());
+  app.use("/countries", countriesRouter());
+  app.use("/players", playersRouter());
   app.use("/admin", adminRouter());
   app.use("/tournaments", tournamentsRouter());
 

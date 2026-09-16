@@ -335,6 +335,24 @@ class TableManagerEditorStateTest {
     }
 
     @Test
+    fun incompleteSeatPositionsAreDetected() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(),
+            hands = emptyList(),
+        )
+
+        assertTrue(editor.hasCompleteSeatPositions)
+
+        editor.setSeatAssignment(0, "")
+
+        assertFalse(editor.hasCompleteSeatPositions)
+
+        editor.setSeatAssignment(0, "1")
+
+        assertTrue(editor.hasCompleteSeatPositions)
+    }
+
+    @Test
     fun invalidHandCannotBeMarkedDone() {
         val hand = HandDraftState.from(sampleHand(handId = 1, winner = "1", loser = "2", score = "7"))
 

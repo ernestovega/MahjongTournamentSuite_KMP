@@ -8,6 +8,8 @@ const express_1 = __importDefault(require("express"));
 const errorHandler_1 = require("./middleware/errorHandler");
 const admin_routes_1 = require("./routes/admin.routes");
 const auth_routes_1 = require("./routes/auth.routes");
+const countries_routes_1 = require("./routes/countries.routes");
+const players_routes_1 = require("./routes/players.routes");
 const tournaments_routes_1 = require("./routes/tournaments.routes");
 function buildApp() {
     const app = (0, express_1.default)();
@@ -26,6 +28,8 @@ function buildApp() {
         });
     });
     app.use("/auth", (0, auth_routes_1.authRouter)());
+    app.use("/countries", (0, countries_routes_1.countriesRouter)());
+    app.use("/players", (0, players_routes_1.playersRouter)());
     app.use("/admin", (0, admin_routes_1.adminRouter)());
     app.use("/tournaments", (0, tournaments_routes_1.tournamentsRouter)());
     app.use(errorHandler_1.errorHandler);

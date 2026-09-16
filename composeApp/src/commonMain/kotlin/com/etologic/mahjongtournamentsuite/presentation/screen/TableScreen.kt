@@ -281,6 +281,8 @@ internal fun TableManagerContent(
         if (checked) editor.enableManualPoints() else editor.disableManualPoints()
     },
 ) {
+    val dependentSectionsEnabled = enabled && editor.hasCompleteSeatPositions
+
     SeatPositionsSection(
         editor = editor,
         enabled = enabled,
@@ -291,7 +293,7 @@ internal fun TableManagerContent(
 
     TotalScoreSection(
         editor = editor,
-        enabled = enabled,
+        enabled = dependentSectionsEnabled,
         onManualTotalsChange = onManualTotalsChange,
     )
 
@@ -299,7 +301,7 @@ internal fun TableManagerContent(
 
     TablePointsSection(
         editor = editor,
-        enabled = enabled,
+        enabled = dependentSectionsEnabled,
         onManualPointsChange = onManualPointsChange,
     )
 
@@ -307,7 +309,7 @@ internal fun TableManagerContent(
 
     HandsSection(
         editor = editor,
-        enabled = enabled,
+        enabled = dependentSectionsEnabled,
         playerNamesById = playerNamesById,
     )
 }
@@ -444,6 +446,7 @@ private fun TotalScoreSection(
 ) {
     SectionCard(
         title = "Total Score",
+        subtitle = if (!editor.hasCompleteSeatPositions) "Select all seat positions first" else null,
         actions = {
             LabeledSwitch(
                 label = "Manual Scores",
@@ -483,6 +486,7 @@ private fun TablePointsSection(
 ) {
     SectionCard(
         title = "Table Points",
+        subtitle = if (!editor.hasCompleteSeatPositions) "Select all seat positions first" else null,
         actions = {
             LabeledSwitch(
                 label = "Manual Points",
@@ -581,6 +585,11 @@ private fun HandsSection(
     playerNamesById: Map<Int, String>,
 ) {
     val isHandsActive = !editor.useTotalsOnly && editor.usePointsCalculation
+    val subtitle = when {
+        !editor.hasCompleteSeatPositions -> "Select all seat positions first"
+        isHandsActive -> "${editor.hands.size} hands"
+        else -> "Inactive while a manual mode is on"
+    }
     val handSubtotals = editor.cumulativeHandScoreSubtotals
     val rowNavigators = remember(editor.hands.map { it.handId }) {
         editor.hands.map { HandRowKeyboardNavigator() }
@@ -595,7 +604,7 @@ private fun HandsSection(
 
     SectionCard(
         title = "Hands",
-        subtitle = if (isHandsActive) "${editor.hands.size} hands" else "Inactive while a manual mode is on",
+        subtitle = subtitle,
         actions = {
             LabeledSwitch(
                 label = "Completed",
@@ -1908,6 +1917,9 @@ internal class TableManagerEditorState private constructor(
 
     val hasInvalidHands: Boolean
         get() = hands.any { it.isResultSelectionInvalid }
+
+    val hasCompleteSeatPositions: Boolean
+        get() = currentSeatIds() != null
 
     val hasEastSeatChanged: Boolean get() = playerEastId.trim() != initialSeatAssignments.east
     val hasSouthSeatChanged: Boolean get() = playerSouthId.trim() != initialSeatAssignments.south

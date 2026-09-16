@@ -38,7 +38,7 @@ function adminRouter() {
     router.get("/whoami", requireAuth_1.requireAuth, async (_req, res, next) => {
         try {
             const decoded = res.locals.auth;
-            res.status(200).json({ uid: decoded.uid, superadmin: decoded.superadmin === true });
+            res.status(200).json({ uid: decoded.uid, admin: decoded.admin === true, superadmin: decoded.superadmin === true });
         }
         catch (e) {
             next(e);

@@ -1,6 +1,8 @@
 package com.etologic.mahjongtournamentsuite.data.backend
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
@@ -17,6 +19,10 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsRespon
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpsertMemberRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.WhoAmIResponseDto
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
@@ -121,6 +127,47 @@ class FunctionsBackendApi(
         tournamentId: String,
     ): TournamentPlayersResponseDto = get(
         path = "/tournaments/$tournamentId/players",
+        idToken = idToken,
+    )
+
+    /** Shared player base. The backend permits every signed-in user to read it. */
+    suspend fun listPlayers(idToken: String): PlayersResponseDto = get(
+        path = "/players",
+        idToken = idToken,
+    )
+
+    suspend fun createPlayer(
+        idToken: String,
+        request: CreatePlayerRequestDto,
+    ): PlayerDto = post(
+        path = "/players",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun updatePlayer(
+        idToken: String,
+        emaId: String,
+        request: UpdatePlayerRequestDto,
+    ): OkResponseDto = put(
+        path = "/players/$emaId",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun listCountries(idToken: String): CountriesResponseDto = get(
+        path = "/countries",
+        idToken = idToken,
+    )
+
+    suspend fun assignTournamentPlayer(
+        idToken: String,
+        tournamentId: String,
+        playerId: Int,
+        request: AssignTournamentPlayerRequestDto,
+    ): OkResponseDto = put(
+        path = "/tournaments/$tournamentId/players/$playerId",
+        requestBody = request,
         idToken = idToken,
     )
 

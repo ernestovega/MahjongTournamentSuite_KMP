@@ -116,6 +116,7 @@ async function createTournament(params) {
             id: player.id,
             name: player.name ?? `Player ${player.id}`,
             team: player.team,
+            country: player.country ?? "",
             createdAt: firestore_1.FieldValue.serverTimestamp(),
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });

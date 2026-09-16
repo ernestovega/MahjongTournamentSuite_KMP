@@ -70,11 +70,58 @@ data class TournamentPlayerDto(
     val id: Int,
     val name: String,
     val team: Int,
+    val country: String = "",
+    val assignedEmaId: String? = null,
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+data class AssignTournamentPlayerRequestDto(
+    val emaId: String? = null,
+)
+
+@Serializable
+data class PlayerDto(
+    val emaId: String,
+    val name: String,
+    val country: String = "",
+    val createdAt: String? = null,
+    val updatedAt: String? = null,
+)
+
+@Serializable
+data class PlayersResponseDto(
+    val players: List<PlayerDto>,
+)
+
+@Serializable
+data class CreatePlayerRequestDto(
+    val emaId: String,
+    val name: String,
+    val country: String,
+)
+
+@Serializable
+data class UpdatePlayerRequestDto(
+    val name: String,
+    val country: String,
 )
 
 @Serializable
 data class TournamentPlayersResponseDto(
     val players: List<TournamentPlayerDto>,
+)
+
+@Serializable
+data class CountryDto(
+    val code: String,
+    val name: String,
+)
+
+@Serializable
+data class CountriesResponseDto(
+    val countries: List<CountryDto>,
 )
 
 @Serializable
@@ -96,6 +143,7 @@ data class TournamentTableDto(
     val useTotalsOnly: Boolean = true,
     val usePointsCalculation: Boolean = true,
     val hasProgress: Boolean = false,
+    val hasValidManualTotals: Boolean = false,
 )
 
 @Serializable

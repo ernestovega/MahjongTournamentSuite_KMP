@@ -7,7 +7,8 @@ import { badRequest } from "../httpError";
 import { parseRole } from "../../models/role";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import { createTournament, deleteTournament, listAllTournaments, listTournamentsForUser } from "../../services/tournamentsService";
-import { listTournamentPlayers, listTournamentRounds, listTournamentTables } from "../../services/tournamentContentService";
+import { assignTournamentPlayer, listTournamentPlayers, listTournamentRounds, listTournamentTables } from "../../services/tournamentContentService";
+import { playerExists, validateEmaId } from "../../services/playersService";
 import { getTableWithHands, updateHand, updateTable } from "../../services/tableManagerService";
 
 export function tournamentsRouter(): Router {
@@ -73,9 +74,10 @@ export function tournamentsRouter(): Router {
         const id = Number(row?.id ?? NaN);
         const team = Number(row?.team ?? NaN);
         const playerName = row?.name == null ? undefined : String(row?.name);
+        const country = row?.country == null ? undefined : String(row?.country);
         if (!Number.isFinite(id) || !Number.isInteger(id)) throw badRequest("Invalid player id", { idx, value: row?.id });
         if (!Number.isFinite(team) || !Number.isInteger(team)) throw badRequest("Invalid player team", { idx, value: row?.team });
-        return { id, team, name: playerName };
+        return { id, team, name: playerName, country };
       });
 
       const parsedTables = (tables ?? []).map((t, idx) => {
@@ -139,6 +141,34 @@ export function tournamentsRouter(): Router {
       try {
         const members = await listTournamentMembers(req.params.tournamentId);
         res.status(200).json({ members });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.put(
+    "/:tournamentId/players/:playerId",
+    requireAuth,
+    requireTournamentRole("EDITOR"),
+    async (req, res, next) => {
+      try {
+        const playerId = Number(req.params.playerId);
+        const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
+        const rawEmaId = body?.emaId;
+        const emaId = rawEmaId == null ? null : validateEmaId(rawEmaId);
+
+        if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
+        if (emaId != null && !(await playerExists(emaId))) {
+          throw badRequest("EMA player does not exist");
+        }
+
+        await assignTournamentPlayer({
+          tournamentId: req.params.tournamentId,
+          playerId,
+          emaId,
+        });
+        res.status(200).json({ ok: true });
       } catch (e) {
         next(e);
       }

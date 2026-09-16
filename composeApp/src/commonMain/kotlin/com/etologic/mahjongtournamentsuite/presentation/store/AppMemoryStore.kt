@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.store
 
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
@@ -13,6 +14,7 @@ class AppMemoryStore {
     val profile = MutableStateFlow<UserProfile?>(null)
     val adminStatus = MutableStateFlow<AdminStatus?>(null)
     val tournaments = MutableStateFlow<List<Tournament>>(emptyList())
+    val players = MutableStateFlow<List<Player>>(emptyList())
 
     val tournamentPlayers = MutableStateFlow<Map<String, List<TournamentPlayer>>>(emptyMap())
     val tournamentRounds = MutableStateFlow<Map<String, List<TournamentRound>>>(emptyMap())
@@ -20,6 +22,10 @@ class AppMemoryStore {
 
     fun upsertTournaments(items: List<Tournament>) {
         tournaments.value = items
+    }
+
+    fun upsertBasePlayers(items: List<Player>) {
+        players.value = items
     }
 
     fun addTournament(item: Tournament) {
@@ -66,4 +72,3 @@ class AppMemoryStore {
         }
     }
 }
-

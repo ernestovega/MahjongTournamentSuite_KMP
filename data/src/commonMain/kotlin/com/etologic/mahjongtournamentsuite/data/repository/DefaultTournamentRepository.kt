@@ -9,8 +9,10 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoleDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
@@ -67,7 +69,7 @@ class DefaultTournamentRepository(
                 numPlayers = request.numPlayers,
                 numRounds = request.numRounds,
                 numTries = request.numTries,
-                players = request.players.map { p -> TournamentPlayerDto(id = p.id, name = p.name, team = p.team) },
+                players = request.players.map { p -> TournamentPlayerDto(id = p.id, name = p.name, team = p.team, country = p.country) },
                 tables = request.tables.map { t ->
                     TournamentTableDto(
                         roundId = t.roundId,
@@ -194,6 +196,10 @@ class DefaultTournamentRepository(
                     id = dto.id,
                     name = dto.name,
                     team = dto.team,
+                    country = dto.country,
+                    assignedEmaId = dto.assignedEmaId,
+                    createdAt = dto.createdAt,
+                    updatedAt = dto.updatedAt,
                 )
             }
         }
@@ -201,6 +207,42 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Listing tournament players failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun listCountries(): AppResult<List<Country>> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.listCountries(idToken).countries.map { dto ->
+                Country(code = dto.code, name = dto.name)
+            }
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Listing countries failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun assignTournamentPlayer(
+        tournamentId: String,
+        tournamentPlayerId: Int,
+        emaId: String?,
+    ): AppResult<Unit> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.assignTournamentPlayer(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                playerId = tournamentPlayerId,
+                request = AssignTournamentPlayerRequestDto(emaId = emaId),
+            )
+            Unit
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Assigning tournament player failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )
@@ -238,6 +280,7 @@ class DefaultTournamentRepository(
                     useTotalsOnly = dto.useTotalsOnly,
                     usePointsCalculation = dto.usePointsCalculation,
                     hasProgress = dto.hasProgress,
+                    hasValidManualTotals = dto.hasValidManualTotals,
                 )
             }
         }

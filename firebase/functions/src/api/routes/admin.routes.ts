@@ -41,8 +41,8 @@ export function adminRouter(): Router {
 
   router.get("/whoami", requireAuth, async (_req, res, next) => {
     try {
-      const decoded = res.locals.auth as { uid: string; superadmin?: boolean };
-      res.status(200).json({ uid: decoded.uid, superadmin: decoded.superadmin === true });
+      const decoded = res.locals.auth as { uid: string; admin?: boolean; superadmin?: boolean };
+      res.status(200).json({ uid: decoded.uid, admin: decoded.admin === true, superadmin: decoded.superadmin === true });
     } catch (e) {
       next(e);
     }

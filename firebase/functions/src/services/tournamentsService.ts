@@ -78,7 +78,7 @@ export async function createTournament(params: {
   numPlayers: number;
   numRounds: number;
   numTries: number;
-  players: Array<{ id: number; team: number; name?: string }>;
+  players: Array<{ id: number; team: number; name?: string; country?: string }>;
   tables: Array<{ roundId: number; tableId: number; playerIds: number[]; isCompleted?: boolean; useTotalsOnly?: boolean }>;
   createdByUid: string;
 }): Promise<Tournament> {
@@ -147,6 +147,7 @@ export async function createTournament(params: {
       id: player.id,
       name: player.name ?? `Player ${player.id}`,
       team: player.team,
+      country: player.country ?? "",
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });

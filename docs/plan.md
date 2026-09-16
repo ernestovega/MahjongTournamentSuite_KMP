@@ -49,7 +49,8 @@ _Last updated: 2026-04-11_
   - `users/{uid}`
   - `emaIdUsers/{emaId}` → `{ uid, email }`
 - Global player pool (future scraper output):
-  - `emaPlayers/{emaId}`
+- `emaPlayers/{emaId}`
+- `countries/{countryCode}` → `{ code, name }`
 - Tournament:
   - `tournaments/{tournamentId}`
   - `tournaments/{tournamentId}/members/{uid}`

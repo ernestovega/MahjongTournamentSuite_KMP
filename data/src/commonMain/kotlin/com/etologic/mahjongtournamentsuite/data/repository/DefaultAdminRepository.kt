@@ -23,6 +23,7 @@ class DefaultAdminRepository(
             val status = backendApi.whoAmI(idToken)
             AdminStatus(
                 uid = status.uid,
+                isAdmin = status.admin,
                 isSuperadmin = status.superadmin,
             )
         }

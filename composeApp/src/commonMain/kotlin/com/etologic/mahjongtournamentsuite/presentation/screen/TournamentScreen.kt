@@ -46,8 +46,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
-import com.etologic.mahjongtournamentsuite.presentation.MembersRoute
-import com.etologic.mahjongtournamentsuite.presentation.PlayerTablesRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -72,8 +70,6 @@ private sealed class PendingUnsavedAction {
     data class SelectRound(val roundId: Int) : PendingUnsavedAction()
     data class SelectTable(val tableId: Int) : PendingUnsavedAction()
     data object NavigatePlayers : PendingUnsavedAction()
-    data object NavigatePlayerTables : PendingUnsavedAction()
-    data object NavigateMembers : PendingUnsavedAction()
     data object OpenRankings : PendingUnsavedAction()
     data object OpenTimer : PendingUnsavedAction()
 }
@@ -271,8 +267,6 @@ fun TournamentScreen(
             is PendingUnsavedAction.SelectRound -> selectRound(action.roundId)
             is PendingUnsavedAction.SelectTable -> selectTable(action.tableId)
             PendingUnsavedAction.NavigatePlayers -> navController.navigate(PlayersRoute(tournamentId = tournamentId))
-            PendingUnsavedAction.NavigatePlayerTables -> navController.navigate(PlayerTablesRoute(tournamentId = tournamentId))
-            PendingUnsavedAction.NavigateMembers -> navController.navigate(MembersRoute(tournamentId = tournamentId))
             PendingUnsavedAction.OpenRankings -> openRankings(navController, tournamentId, tournamentName)
             PendingUnsavedAction.OpenTimer -> openTimer(navController)
         }
@@ -320,8 +314,6 @@ fun TournamentScreen(
         actions = {
             AppTopBarActions(
                 onPlayers = { requestUnsavedAction(PendingUnsavedAction.NavigatePlayers) },
-                onPlayerTables = { requestUnsavedAction(PendingUnsavedAction.NavigatePlayerTables) },
-                onMembers = { requestUnsavedAction(PendingUnsavedAction.NavigateMembers) },
                 onRefresh = { requestUnsavedAction(PendingUnsavedAction.Refresh) },
             )
         }
@@ -468,7 +460,7 @@ private fun RoundTableSidebar(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         CompletionStatusInfoIcon(
-                            description = "○ Empty: all tables are empty.\n◐ Progress: at least one table has data.\n✓ Manual: at least one table uses Manual Scores or Manual Points.\n✓✓ Completed: all tables are completed without a manual mode.",
+                            description = "○ Empty: all tables are empty.\n◐ Progress: at least one table has data.\n✓ Manual: at least one table has valid saved Manual Scores or Manual Points.\n✓✓ Completed: all tables are completed without a manual mode.",
                         )
                     }
                     LazyColumn(
@@ -513,7 +505,7 @@ private fun RoundTableSidebar(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         CompletionStatusInfoIcon(
-                            description = "○ Empty: no table data.\n◐ Progress: table data exists.\n✓ Manual: Manual Scores or Manual Points is active.\n✓✓ Completed: hands are completed and no manual mode is active.",
+                            description = "○ Empty: no table data.\n◐ Progress: table data exists.\n✓ Manual: valid Manual Scores or Manual Points are saved.\n✓✓ Completed: hands are completed and no manual mode is active.",
                         )
                     }
 
@@ -619,7 +611,7 @@ private fun CompletionStatusInfoIcon(description: String) {
 }
 
 private fun tableCompletionStatus(table: TournamentTable): CompletionStatus = when {
-    table.useTotalsOnly || !table.usePointsCalculation -> CompletionStatus.Manual
+    table.hasValidManualTotals -> CompletionStatus.Manual
     table.isCompleted -> CompletionStatus.Completed
     table.hasProgress -> CompletionStatus.InProgress
     else -> CompletionStatus.Empty

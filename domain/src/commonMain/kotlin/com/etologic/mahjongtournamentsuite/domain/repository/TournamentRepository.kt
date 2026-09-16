@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.domain.repository
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -32,6 +33,15 @@ interface TournamentRepository {
     ): AppResult<Unit>
 
     suspend fun listTournamentPlayers(tournamentId: String): AppResult<List<TournamentPlayer>>
+
+    suspend fun listCountries(): AppResult<List<Country>>
+
+    /** Assigns a shared EMA number to a generated tournament slot. Pass null to clear it. */
+    suspend fun assignTournamentPlayer(
+        tournamentId: String,
+        tournamentPlayerId: Int,
+        emaId: String?,
+    ): AppResult<Unit>
 
     suspend fun listTournamentRounds(tournamentId: String): AppResult<List<TournamentRound>>
 

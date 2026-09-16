@@ -9,12 +9,14 @@ import com.etologic.mahjongtournamentsuite.data.platform.providePlatformNameProv
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAdminRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAuthRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultGreetingRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
 import com.etologic.mahjongtournamentsuite.data.session.PlatformAuthSessionStore
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.GreetingRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
@@ -36,6 +38,7 @@ val dataModule = module {
     single<AuthRepository> { DefaultAuthRepository(get(), get(), get()) }
     single<AdminRepository> { DefaultAdminRepository(get(), get(), get()) }
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get()) }
+    single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get()) }
     single<PlatformNameProvider> { providePlatformNameProvider() }
     single<GreetingRepository> { DefaultGreetingRepository(get(), get(), get()) }
 }

@@ -26,10 +26,17 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +61,8 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
@@ -320,30 +329,28 @@ fun CreateTournamentScreen(
                                 onCheckedChange = ::setTeamsChecked,
                                 enabled = !isLoading,
                             )
-                            Text(
-                                text = "Teams",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .toggleable(
-                                        value = isTeams,
-                                        enabled = !isLoading,
-                                        role = Role.Switch,
-                                        interactionSource = teamsToggleInteractionSource,
-                                        indication = null,
-                                        onValueChange = ::setTeamsChecked,
-                                    ),
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = "Teams",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .toggleable(
+                                            value = isTeams,
+                                            enabled = !isLoading,
+                                            role = Role.Switch,
+                                            interactionSource = teamsToggleInteractionSource,
+                                            indication = null,
+                                            onValueChange = ::setTeamsChecked,
+                                        ),
+                                )
+                                SwitchInfoTooltip(
+                                    description = "When on, group players into teams of four. Players on the same team will not play together.\nWhen off, do not group players into teams.",
+                                )
+                            }
                         }
-
-                        Text(
-                            text = if (isTeams) {
-                                "\t * Group Players by teams of 4 people that won't play together."
-                            } else {
-                                "\t * Won't group players."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
 
                         Spacer(Modifier.size(16.dp))
 
@@ -358,30 +365,28 @@ fun CreateTournamentScreen(
                                 onCheckedChange = ::setHeavyCompute,
                                 enabled = !isLoading,
                             )
-                            Text(
-                                text = "Heavy computing",
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier
-                                    .toggleable(
-                                        value = isHeavy,
-                                        enabled = !isLoading,
-                                        role = Role.Switch,
-                                        interactionSource = computeToggleInteractionSource,
-                                        indication = null,
-                                        onValueChange = ::setHeavyCompute,
-                                    ),
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = "Heavy computing",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier
+                                        .toggleable(
+                                            value = isHeavy,
+                                            enabled = !isLoading,
+                                            role = Role.Switch,
+                                            interactionSource = computeToggleInteractionSource,
+                                            indication = null,
+                                            onValueChange = ::setHeavyCompute,
+                                        ),
+                                )
+                                SwitchInfoTooltip(
+                                    description = "When on, use more CPU to finish faster. Use this when you can leave the computer working.\nWhen off, use less CPU so you can keep using the computer while it runs.",
+                                )
+                            }
                         }
-
-                        Text(
-                            text = if (computeMode == CreateTournamentPresenter.ComputeMode.HEAVY) {
-                                "\t * Uses more CPU to finish faster. Best if you can leave the computer working."
-                            } else {
-                                "\t * Uses fewer parallel tries so you can keep using the computer while it runs."
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
 
                         Spacer(Modifier.size(8.dp))
                     },
@@ -522,6 +527,34 @@ fun CreateTournamentScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun SwitchInfoTooltip(description: String) {
+    val tooltipState = rememberTooltipState()
+    val coroutineScope = rememberCoroutineScope()
+
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        tooltip = { PlainTooltip { Text(description) } },
+        state = tooltipState,
+    ) {
+        IconButton(
+            onClick = {
+                coroutineScope.launch { tooltipState.show() }
+            },
+            modifier = Modifier.semantics {
+                contentDescription = "Show information: $description"
+            },
+        ) {
+            Text(
+                text = "ⓘ",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 }

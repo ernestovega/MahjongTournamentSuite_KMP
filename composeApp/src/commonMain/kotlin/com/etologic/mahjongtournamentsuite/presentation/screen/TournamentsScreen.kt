@@ -50,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.MembersRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -193,7 +194,12 @@ fun TournamentsScreen(
         },
         actions = {
             AppTopBarActions(
-                onMembers = { navController.navigate(MembersRoute()) },
+                onPlayerBase = { navController.navigate(PlayerBaseRoute) },
+                onMembers = if (adminStatus?.canEditPlayers == true) {
+                    { navController.navigate(MembersRoute()) }
+                } else {
+                    null
+                },
                 onRefresh = { refresh() },
                 onNewTournament = { navController.navigate(CreateTournamentRoute) },
             )

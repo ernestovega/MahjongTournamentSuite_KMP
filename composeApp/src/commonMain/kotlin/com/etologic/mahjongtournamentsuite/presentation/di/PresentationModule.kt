@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.MembersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
@@ -18,7 +19,8 @@ val presentationModule = module {
     factory { GenerateTournamentScheduleBruteForceParallelUseCase() }
     factory { CreateTournamentPresenter(get(), get(), get()) }
     factory { MembersPresenter(get(), get(), get()) }
-    factory { PlayersPresenter(get(), get()) }
+    factory { PlayersPresenter(get(), get(), get()) }
+    factory { PlayerBasePresenter(get(), get()) }
     factory { TablesPresenter(get(), get()) }
     factory { TableManagerPresenter(get(), get()) }
 }
