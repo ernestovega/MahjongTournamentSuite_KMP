@@ -15,16 +15,18 @@ fun AppTopBarActions(
     onMembers: (() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null,
     onNewTournament: (() -> Unit)? = null,
+    onNewPlayer: (() -> Unit)? = null,
 ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End,
         ) {
             onPlayers?.let { AppTopBarButton("Players", it) }
-            onPlayerBase?.let { AppTopBarButton("Players", it) }
+            onPlayerBase?.let { AppTopBarButton("EMA Players", it) }
             onMembers?.let { AppTopBarButton("Members", it) }
             onRefresh?.let { AppTopBarButton("Refresh", it) }
             onNewTournament?.let { AppTopBarButton("New Tournament", it) }
+            onNewPlayer?.let { AppTopBarButton("New Player", it) }
         }
 }
 
@@ -38,6 +40,7 @@ private fun AppTopBarActionsPreview() {
             onMembers = {},
             onRefresh = {},
             onNewTournament = {},
+            onNewPlayer = {},
         )
     }
 }

@@ -10,7 +10,7 @@ import { tournamentsRouter } from "./routes/tournaments.routes";
 export function buildApp(): express.Express {
   const app = express();
 
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "8mb" }));
 
   app.get("/health", (_req, res) => {
     res.status(200).json({ ok: true });
@@ -29,7 +29,7 @@ export function buildApp(): express.Express {
 
   app.use("/auth", authRouter());
   app.use("/countries", countriesRouter());
-  app.use("/players", playersRouter());
+  app.use("/ema-player-registry", playersRouter());
   app.use("/admin", adminRouter());
   app.use("/tournaments", tournamentsRouter());
 

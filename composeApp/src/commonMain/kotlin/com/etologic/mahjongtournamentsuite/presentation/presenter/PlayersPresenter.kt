@@ -21,6 +21,8 @@ class PlayersPresenter(
 
     suspend fun loadBasePlayers(): AppResult<List<Player>> = playerRepository.listPlayers()
 
+    suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
+
     suspend fun assignPlayer(
         tournamentId: String,
         tournamentPlayerId: Int,

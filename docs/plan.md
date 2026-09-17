@@ -49,7 +49,7 @@ _Last updated: 2026-04-11_
   - `users/{uid}`
   - `emaIdUsers/{emaId}` → `{ uid, email }`
 - Global player pool (future scraper output):
-- `emaPlayers/{emaId}`
+- `emaPlayerRegistry/{emaId}`
 - `countries/{countryCode}` → `{ code, name }`
 - Tournament:
   - `tournaments/{tournamentId}`
@@ -152,9 +152,9 @@ Preferred approach (cross-platform friendly):
 
 ## 5) Scraper (defer scheduling, keep manual)
 
-- Add a backend endpoint to fetch + parse the website HTML and update `emaPlayers/{emaId}`.
+- Keep the manual registry sync endpoint for deployments where EMA is reachable.
 - Trigger it from a button in the admin UI.
-- Later: schedule it via Firebase scheduled functions / Cloud Scheduler.
+- Run it manually from a local machine using live EMA pages when needed.
 
 ---
 

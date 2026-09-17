@@ -585,6 +585,10 @@ private fun HandsSection(
     playerNamesById: Map<Int, String>,
 ) {
     val isHandsActive = !editor.useTotalsOnly && editor.usePointsCalculation
+    var handsExpanded by remember { mutableStateOf(isHandsActive) }
+    LaunchedEffect(isHandsActive) {
+        handsExpanded = isHandsActive
+    }
     val subtitle = when {
         !editor.hasCompleteSeatPositions -> "Select all seat positions first"
         isHandsActive -> "${editor.hands.size} hands"
@@ -606,16 +610,21 @@ private fun HandsSection(
         title = "Hands",
         subtitle = subtitle,
         actions = {
-            LabeledSwitch(
-                label = "Completed",
-                description = "When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.",
-                checked = editor.isCompleted,
-                enabled = enabled && isHandsActive,
-                onCheckedChange = { editor.updateCompletedState(it) },
-            )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                LabeledSwitch(
+                    label = "Completed",
+                    description = "When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.",
+                    checked = editor.isCompleted,
+                    enabled = enabled && isHandsActive,
+                    onCheckedChange = { editor.updateCompletedState(it) },
+                )
+                IconButton(onClick = { handsExpanded = !handsExpanded }) {
+                    Text(if (handsExpanded) "⌃" else "⌄", style = MaterialTheme.typography.titleLarge)
+                }
+            }
         },
         content = {
-            if (!isHandsActive) return@SectionCard
+            if (!handsExpanded) return@SectionCard
 
             if (editor.hands.isEmpty()) {
                 Text(
@@ -644,7 +653,7 @@ private fun HandsSection(
                     hand = hand,
                     playerIds = editor.playerIds,
                     playerNamesById = playerNamesById,
-                    enabled = enabled,
+                    enabled = enabled && isHandsActive,
                     forceDoneChecked = editor.isCompleted,
                     subtotal = handSubtotals.getOrNull(index).orZero(),
                     navigation = rowNavigators.getOrNull(index) ?: HandRowKeyboardNavigator(),
@@ -1184,7 +1193,7 @@ private fun HandRow(
                     width = HandDoneControlWidth,
                     label = "Done",
                     checked = hand.isDone,
-                    enabled = !forceDoneChecked,
+                    enabled = rowEnabled,
                     isChanged = hand.hasDoneChanged,
                     onCheckedChange = { hand.updateDoneState(it) },
                     focusRequester = navigation.done,
@@ -2821,14 +2830,15 @@ private fun PlayerDropdown(
 
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { shouldExpand -> if (enabled) expanded = shouldExpand },
+        // The menu remains inspectable when the field is disabled. Its options stay disabled below.
+        onExpandedChange = { shouldExpand -> expanded = shouldExpand },
         modifier = modifier,
     ) {
         CompactOutlinedTextField(
             modifier = Modifier
                 .menuAnchor(
                     type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                    enabled = enabled,
+                    enabled = true,
                 )
                 .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
                 .focusRequester(anchorFocusRequester)
@@ -2948,6 +2958,7 @@ private fun PlayerDropdown(
                             },
                         ),
                         text = { Text(option.label) },
+                        enabled = enabled,
                         onClick = {
                             activeOptionIndex = index
                             option.onSelect()

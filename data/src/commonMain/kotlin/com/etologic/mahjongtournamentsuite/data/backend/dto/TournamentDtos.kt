@@ -86,6 +86,7 @@ data class PlayerDto(
     val emaId: String,
     val name: String,
     val country: String = "",
+    val photoUrl: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
@@ -104,8 +105,15 @@ data class CreatePlayerRequestDto(
 
 @Serializable
 data class UpdatePlayerRequestDto(
+    val emaId: String,
     val name: String,
     val country: String,
+)
+
+@Serializable
+data class UpdatePlayerPhotoRequestDto(
+    val contentType: String,
+    val dataBase64: String,
 )
 
 @Serializable

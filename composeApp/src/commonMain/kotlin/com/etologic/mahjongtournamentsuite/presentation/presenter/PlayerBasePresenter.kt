@@ -12,6 +12,8 @@ class PlayerBasePresenter(
 ) {
     suspend fun loadPlayers(): AppResult<List<Player>> = playerRepository.listPlayers()
     suspend fun createPlayer(player: Player): AppResult<Player> = playerRepository.createPlayer(player)
-    suspend fun updatePlayer(player: Player): AppResult<Unit> = playerRepository.updatePlayer(player)
+    suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = playerRepository.updatePlayer(previousEmaId, player)
+    suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> =
+        playerRepository.updatePlayerPhoto(emaId, contentType, bytes)
     suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
 }

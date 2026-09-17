@@ -9,5 +9,12 @@ interface PlayerRepository {
 
     suspend fun createPlayer(player: Player): AppResult<Player>
 
-    suspend fun updatePlayer(player: Player): AppResult<Unit>
+    suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit>
+
+    suspend fun updatePlayerPhoto(
+        emaId: String,
+        contentType: String,
+        bytes: ByteArray,
+    ): AppResult<Player>
+
 }

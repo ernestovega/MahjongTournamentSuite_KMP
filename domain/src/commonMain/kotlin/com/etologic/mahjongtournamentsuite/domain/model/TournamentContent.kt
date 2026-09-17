@@ -17,6 +17,7 @@ data class Player(
     val emaId: String,
     val name: String,
     val country: String = "",
+    val photoUrl: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )

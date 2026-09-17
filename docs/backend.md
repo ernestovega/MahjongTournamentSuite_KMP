@@ -68,7 +68,7 @@ Membership is stored at:
 
 - `users/{uid}`
 - `emaIdUsers/{emaId}`
-- `emaPlayers/{emaId}` (global pool, populated later by a scraper job)
+- `emaPlayerRegistry/{emaId}` (shared EMA registry, populated by the EMA sync)
 - `countries/{countryCode}` with `{ code, name }`, for example `ES` and `Spain`
 - `tournaments/{tournamentId}`
 - `tournaments/{tournamentId}/members/{uid}`

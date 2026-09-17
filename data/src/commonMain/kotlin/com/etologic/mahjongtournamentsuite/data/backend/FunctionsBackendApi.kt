@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlay
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.WhoAmIResponseDto
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
@@ -132,7 +133,7 @@ class FunctionsBackendApi(
 
     /** Shared player base. The backend permits every signed-in user to read it. */
     suspend fun listPlayers(idToken: String): PlayersResponseDto = get(
-        path = "/players",
+        path = "/ema-player-registry",
         idToken = idToken,
     )
 
@@ -140,7 +141,7 @@ class FunctionsBackendApi(
         idToken: String,
         request: CreatePlayerRequestDto,
     ): PlayerDto = post(
-        path = "/players",
+        path = "/ema-player-registry",
         requestBody = request,
         idToken = idToken,
     )
@@ -150,7 +151,17 @@ class FunctionsBackendApi(
         emaId: String,
         request: UpdatePlayerRequestDto,
     ): OkResponseDto = put(
-        path = "/players/$emaId",
+        path = "/ema-player-registry/$emaId",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun updatePlayerPhoto(
+        idToken: String,
+        emaId: String,
+        request: UpdatePlayerPhotoRequestDto,
+    ): PlayerDto = put(
+        path = "/ema-player-registry/$emaId/photo",
         requestBody = request,
         idToken = idToken,
     )

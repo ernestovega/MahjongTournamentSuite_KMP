@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -12,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
+import kotlin.io.encoding.Base64
 
 class DefaultPlayerRepository(
     private val backendApi: FunctionsBackendApi,
@@ -26,9 +28,24 @@ class DefaultPlayerRepository(
         backendApi.createPlayer(token, CreatePlayerRequestDto(player.emaId, player.name, player.country)).toPlayer()
     }
 
-    override suspend fun updatePlayer(player: Player): AppResult<Unit> = request("Updating shared player") { token ->
-        backendApi.updatePlayer(token, player.emaId, UpdatePlayerRequestDto(player.name, player.country))
+    override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = request("Updating shared player") { token ->
+        backendApi.updatePlayer(token, previousEmaId, UpdatePlayerRequestDto(player.emaId, player.name, player.country))
         Unit
+    }
+
+    override suspend fun updatePlayerPhoto(
+        emaId: String,
+        contentType: String,
+        bytes: ByteArray,
+    ): AppResult<Player> = request("Updating shared player photo") { token ->
+        backendApi.updatePlayerPhoto(
+            idToken = token,
+            emaId = emaId,
+            request = UpdatePlayerPhotoRequestDto(
+                contentType = contentType,
+                dataBase64 = Base64.Default.encode(bytes),
+            ),
+        ).toPlayer()
     }
 
     private suspend fun <T> request(action: String, block: suspend (String) -> T): AppResult<T> = runCatching {
@@ -56,8 +73,9 @@ class DefaultPlayerRepository(
 
     private fun com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto.toPlayer() = Player(
         emaId = emaId,
-        name = name,
+        name = name.uppercase(),
         country = country,
+        photoUrl = photoUrl,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
