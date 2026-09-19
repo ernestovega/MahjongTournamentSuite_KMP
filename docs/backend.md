@@ -32,18 +32,28 @@ Body:
 Creates a Firebase Auth email/password user and writes:
 
 - `users/{uid}` profile
-- `emaIdUsers/{emaId}` mapping → `{ uid, email }`
 
-### Sign in (email or EMA id)
+### Sign in
 
 `POST /auth/signIn`
 
 Body:
 
-- `identifier` (email or emaId)
+- `email` (required)
 - `password`
 
-If `identifier` is an emaId, the function resolves it via `emaIdUsers/{emaId}`.
+The current client sends the email as `email`. During deployment, the function also accepts the old
+`identifier` field so older clients and newly deployed functions can coexist.
+
+### Password recovery
+
+`POST /auth/passwordReset`
+
+Body:
+
+- `email` (required)
+
+Firebase sends password reset instructions to the email address.
 
 ### Refresh
 
@@ -67,7 +77,6 @@ Membership is stored at:
 ## Firestore data model
 
 - `users/{uid}`
-- `emaIdUsers/{emaId}`
 - `emaPlayerRegistry/{emaId}` (shared EMA registry, populated by the EMA sync)
 - `countries/{countryCode}` with `{ code, name }`, for example `ES` and `Spain`
 - `tournaments/{tournamentId}`

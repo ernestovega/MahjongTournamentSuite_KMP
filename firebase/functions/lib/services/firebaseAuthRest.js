@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.signUpWithEmailPassword = signUpWithEmailPassword;
 exports.signInWithEmailPassword = signInWithEmailPassword;
+exports.sendPasswordResetEmail = sendPasswordResetEmail;
 exports.refreshIdToken = refreshIdToken;
 const config_1 = require("../config");
 function apiKey() {
@@ -51,6 +52,13 @@ async function signInWithEmailPassword(email, password) {
         refreshToken: json.refreshToken,
         uid: json.localId,
     };
+}
+async function sendPasswordResetEmail(email) {
+    const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey()}`;
+    await postJson(url, {
+        requestType: "PASSWORD_RESET",
+        email,
+    });
 }
 async function refreshIdToken(refreshToken) {
     const url = `https://securetoken.googleapis.com/v1/token?key=${apiKey()}`;

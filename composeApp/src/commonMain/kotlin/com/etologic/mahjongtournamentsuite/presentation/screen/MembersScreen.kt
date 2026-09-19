@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Button
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -20,8 +20,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -32,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRole
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
@@ -41,6 +45,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.RowActionMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.presenter.MembersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.launch
@@ -61,6 +66,8 @@ fun TournamentMembersScreen(
 
     var lookupIdentifier by remember { mutableStateOf("") }
     var lookedUpUser by remember { mutableStateOf<UserProfile?>(null) }
+    val lookupFocusRequester = remember { FocusRequester() }
+    var initialLookupFocusPending by rememberSaveable(tournamentId) { mutableStateOf(true) }
 
     fun refresh() {
         coroutineScope.launch {
@@ -113,12 +120,19 @@ fun TournamentMembersScreen(
         refresh()
     }
 
+    LaunchedEffect(isLoading, adminStatus?.isSuperadmin) {
+        if (initialLookupFocusPending && !isLoading && adminStatus?.isSuperadmin == true) {
+            lookupFocusRequester.requestFocus()
+            initialLookupFocusPending = false
+        }
+    }
+
     AppScaffold(
         title = "Members",
         subtitle = tournamentId,
         isLoading = isLoading,
         onBack = { navController.popBackStack() },
-        actions = { AppTopBarActions { refresh() } },
+        actions = { AppTopBarActions(onRefresh = { refresh() }) },
     ) {
         ScreenColumn(
             maxWidth = 1200.dp,
@@ -138,7 +152,7 @@ fun TournamentMembersScreen(
                             value = lookupIdentifier,
                             onValueChange = { lookupIdentifier = it },
                             label = { Text("Email or emaId") },
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier.fillMaxWidth().focusRequester(lookupFocusRequester),
                             singleLine = true,
                             enabled = !isLoading,
                         )
@@ -238,7 +252,8 @@ private fun MembersTable(
     onChangeRole: (uid: String, role: TournamentRole) -> Unit,
     onRemove: (uid: String) -> Unit,
 ) {
-    LazyColumn(
+    LazyColumnWithScrollbar(
+        state = rememberLazyListState(),
         modifier = Modifier.fillMaxWidth(),
     ) {
         item {

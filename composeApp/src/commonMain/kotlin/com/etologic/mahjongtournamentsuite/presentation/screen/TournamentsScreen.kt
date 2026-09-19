@@ -19,10 +19,10 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -33,10 +33,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
@@ -51,6 +55,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.MembersRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -59,6 +64,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
@@ -87,10 +95,16 @@ fun TournamentsScreen(
     val adminStatus by store.adminStatus.collectAsState()
     val tournaments by store.tournaments.collectAsState()
 
-    var isRefreshing by remember { mutableStateOf(false) }
+    var isRefreshing by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var deleteDialogTournament by remember { mutableStateOf<Tournament?>(null) }
+    var tournamentFocusApplied by remember { mutableStateOf(false) }
+    var lastFocusedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
+    var lastFocusedControl by rememberSaveable { mutableStateOf<String?>(null) }
+    val playerBaseFocusRequester = remember { FocusRequester() }
+    val membersFocusRequester = remember { FocusRequester() }
+    val newTournamentFocusRequester = remember { FocusRequester() }
 
     fun refresh() {
         coroutineScope.launch {
@@ -121,21 +135,93 @@ fun TournamentsScreen(
         }
     }
 
+    fun openTournament(tournament: Tournament) {
+        coroutineScope.launch {
+            isLoading = true
+            errorMessage = null
+
+            when (val result = presenter.loadPlayers(tournament.id)) {
+                is AppResult.Success -> {
+                    store.upsertPlayers(tournament.id, result.value)
+                    if (result.value.any { it.assignedEmaId == null }) {
+                        navController.navigate(
+                            TournamentRoute(
+                                tournamentId = tournament.id,
+                                tournamentName = tournament.name,
+                            ),
+                        )
+                        navController.navigate(PlayersRoute(tournamentId = tournament.id))
+                    } else {
+                        navController.navigate(
+                            TournamentRoute(
+                                tournamentId = tournament.id,
+                                tournamentName = tournament.name,
+                            ),
+                        )
+                    }
+                }
+
+                is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+            }
+
+            isLoading = false
+        }
+    }
+
     LaunchedEffect(presenter) {
         refresh()
     }
 
     val roleLabel = adminStatus?.let { if (it.isSuperadmin) "Superadmin" else "Member" }
     val canDeleteTournaments = adminStatus?.isSuperadmin == true
+    val tournamentFocusRequesters = remember(tournaments.map { it.id }) {
+        tournaments.map { FocusRequester() }
+    }
+
+    LaunchedEffect(isRefreshing, tournaments.map { it.id }) {
+        if (!tournamentFocusApplied && !isRefreshing) {
+            when (lastFocusedControl) {
+                "player-base" -> playerBaseFocusRequester.requestFocus()
+                "members" -> if (adminStatus?.canEditPlayers == true) {
+                    membersFocusRequester.requestFocus()
+                } else {
+                    newTournamentFocusRequester.requestFocus()
+                }
+                "new-tournament" -> newTournamentFocusRequester.requestFocus()
+                else -> {
+                    if (tournamentFocusRequesters.isNotEmpty()) {
+                        val index = tournaments.indexOfFirst { it.id == lastFocusedTournamentId }.coerceAtLeast(0)
+                        tournamentFocusRequesters[index].requestFocus()
+                    } else {
+                        newTournamentFocusRequester.requestFocus()
+                    }
+                }
+            }
+            tournamentFocusApplied = true
+        }
+    }
 
     deleteDialogTournament?.let { tournament ->
+        val deleteFocusRequester = remember(tournament.id) { FocusRequester() }
+        val cancelFocusRequester = remember(tournament.id) { FocusRequester() }
+
+        LaunchedEffect(tournament.id) {
+            deleteFocusRequester.requestFocus()
+        }
+
         AlertDialog(
+            modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!isLoading) deleteDialogTournament = null },
             title = { Text("Delete tournament") },
             text = { Text("This will permanently delete \"${tournament.name}\" (ID: ${tournament.id}).") },
             confirmButton = {
                 Button(
                     enabled = !isLoading,
+                    focusRequester = deleteFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = cancelFocusRequester,
+                        next = cancelFocusRequester,
+                    ),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError,
@@ -168,6 +254,11 @@ fun TournamentsScreen(
                 Button(
                     enabled = !isLoading,
                     onClick = { deleteDialogTournament = null },
+                    focusRequester = cancelFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = deleteFocusRequester,
+                        next = deleteFocusRequester,
+                    ),
                 ) {
                     Text("Cancel")
                 }
@@ -194,14 +285,26 @@ fun TournamentsScreen(
         },
         actions = {
             AppTopBarActions(
-                onPlayerBase = { navController.navigate(PlayerBaseRoute) },
+                onPlayerBase = {
+                    lastFocusedControl = "player-base"
+                    navController.navigate(PlayerBaseRoute)
+                },
                 onMembers = if (adminStatus?.canEditPlayers == true) {
-                    { navController.navigate(MembersRoute()) }
+                    {
+                        lastFocusedControl = "members"
+                        navController.navigate(MembersRoute())
+                    }
                 } else {
                     null
                 },
                 onRefresh = { refresh() },
-                onNewTournament = { navController.navigate(CreateTournamentRoute) },
+                onNewTournament = {
+                    lastFocusedControl = "new-tournament"
+                    navController.navigate(CreateTournamentRoute)
+                },
+                playerBaseFocusRequester = playerBaseFocusRequester,
+                membersFocusRequester = membersFocusRequester,
+                newTournamentFocusRequester = newTournamentFocusRequester,
             )
         },
     ) {
@@ -246,23 +349,30 @@ fun TournamentsScreen(
                                             )
                                             DataTableDivider()
                                         }
-                                        items(tournaments, key = { it.id }) { tournament ->
+                                        itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
                                         TournamentTableRow(
+                                            modifier = Modifier
+                                                .focusRequester(tournamentFocusRequesters[index])
+                                                .onFocusChanged {
+                                                    if (it.isFocused) lastFocusedTournamentId = tournament.id
+                                                    if (it.isFocused) lastFocusedControl = "tournament"
+                                                },
                                             tournament = tournament,
                                             createdByName = tournament.createdByName,
                                             enabled = !isLoading,
                                             cellMinWidth = cellMinWidth,
-                                            actionCellMinWidth = actionCellMinWidth,
-                                            showDelete = canDeleteTournaments,
+                                                actionCellMinWidth = actionCellMinWidth,
+                                                showDelete = canDeleteTournaments,
                                                 onClick = {
-                                                    navController.navigate(
-                                                        TournamentRoute(
-                                                            tournamentId = tournament.id,
-                                                            tournamentName = tournament.name,
-                                                        ),
-                                                    )
+                                                    lastFocusedTournamentId = tournament.id
+                                                    lastFocusedControl = "tournament"
+                                                    openTournament(tournament)
                                                 },
-                                                onDelete = { deleteDialogTournament = tournament },
+                                                onDelete = {
+                                                    lastFocusedTournamentId = tournament.id
+                                                    lastFocusedControl = "tournament"
+                                                    deleteDialogTournament = tournament
+                                                },
                                             )
                                             DataTableDivider()
                                         }
@@ -394,18 +504,18 @@ private fun TournamentTableHeader(
     DataTableHeaderRow {
         HeaderCell(text = "Name", minWidth = cellMinWidth, weight = 2.0f)
         HeaderCell(text = "ID", minWidth = cellMinWidth, weight = 1.1f)
-        HeaderCell(text = "Created by", minWidth = cellMinWidth, weight = 1.1f)
-        HeaderCell(text = "Teams", minWidth = cellMinWidth, weight = .5f)
-        HeaderCell(text = "Players", minWidth = cellMinWidth, weight = .5f)
-        HeaderCell(text = "Rounds", minWidth = cellMinWidth, weight = .5f)
+        HeaderCell(text = "Created by", minWidth = cellMinWidth, weight = .6f)
+        HeaderCell(text = "Teams", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = "Players", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = "Rounds", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(
             text = "Tries",
             minWidth = cellMinWidth,
             weight = .6f,
-            textAlign = TextAlign.Start
+            textAlign = TextAlign.Center,
         )
-        HeaderCell(text = "Created", minWidth = cellMinWidth, weight = .8f)
-        HeaderCell(text = "Updated", minWidth = cellMinWidth, weight = .8f)
+        HeaderCell(text = "Created", minWidth = cellMinWidth, weight = 1.05f)
+        HeaderCell(text = "Updated", minWidth = cellMinWidth, weight = 1.05f)
         Text(
             text = "",
             style = MaterialTheme.typography.labelLarge,
@@ -420,6 +530,7 @@ private fun TournamentTableHeader(
 @Composable
 @OptIn(ExperimentalComposeUiApi::class)
 private fun TournamentTableRow(
+    modifier: Modifier = Modifier,
     tournament: Tournament,
     createdByName: String?,
     enabled: Boolean,
@@ -430,6 +541,7 @@ private fun TournamentTableRow(
     onDelete: () -> Unit,
 ) {
     DataTableRow(
+        modifier = modifier,
         onClick = if (enabled) onClick else null,
     ) {
         BodyCell(text = tournament.name, minWidth = cellMinWidth, weight = 2.0f)
@@ -443,7 +555,7 @@ private fun TournamentTableRow(
         BodyCell(
             text = createdByName ?: "—",
             minWidth = cellMinWidth,
-            weight = 1.1f,
+            weight = .6f,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -451,6 +563,7 @@ private fun TournamentTableRow(
             text = if (tournament.isTeams) "Yes" else "No",
             minWidth = cellMinWidth,
             weight = .5f,
+            textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -458,31 +571,33 @@ private fun TournamentTableRow(
             text = tournament.numPlayers.toString(),
             minWidth = cellMinWidth,
             weight = .5f,
+            textAlign = TextAlign.Center,
         )
         BodyCell(
             text = tournament.numRounds.toString(),
             minWidth = cellMinWidth,
             weight = .5f,
+            textAlign = TextAlign.Center,
         )
         BodyCell(
             text = tournament.numTries.toString(),
             minWidth = cellMinWidth,
             weight = .6f,
-            textAlign = TextAlign.Start,
+            textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         BodyCell(
             text = tournament.createdAt.toUiIsoDateTimeOrDash(),
             minWidth = cellMinWidth,
-            weight = .8f,
+            weight = 1.05f,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         BodyCell(
             text = tournament.updatedAt.toUiIsoDateTimeOrDash(),
             minWidth = cellMinWidth,
-            weight = .8f,
+            weight = 1.05f,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

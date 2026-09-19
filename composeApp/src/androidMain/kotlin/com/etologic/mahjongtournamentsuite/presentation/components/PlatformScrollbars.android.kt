@@ -14,6 +14,12 @@ actual fun PlatformVerticalScrollbar(
 ) = Unit
 
 @Composable
+actual fun PlatformVerticalScrollbar(
+    scrollState: ScrollState,
+    modifier: Modifier,
+) = Unit
+
+@Composable
 actual fun PlatformHorizontalScrollbar(
     scrollState: ScrollState,
     modifier: Modifier,

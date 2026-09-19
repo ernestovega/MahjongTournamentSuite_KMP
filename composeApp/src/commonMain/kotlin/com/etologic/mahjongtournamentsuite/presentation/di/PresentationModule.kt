@@ -21,6 +21,6 @@ val presentationModule = module {
     factory { MembersPresenter(get(), get(), get()) }
     factory { PlayersPresenter(get(), get(), get()) }
     factory { PlayerBasePresenter(get(), get()) }
-    factory { TablesPresenter(get(), get()) }
+    factory { TablesPresenter(get(), get(), get()) }
     factory { TableManagerPresenter(get(), get()) }
 }

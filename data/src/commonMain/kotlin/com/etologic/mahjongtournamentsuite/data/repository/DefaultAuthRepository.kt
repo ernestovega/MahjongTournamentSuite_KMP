@@ -5,7 +5,10 @@ import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
+import com.etologic.mahjongtournamentsuite.data.session.CredentialStore
+import com.etologic.mahjongtournamentsuite.data.session.SavedCredentials
 import com.etologic.mahjongtournamentsuite.data.session.StoredAuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -20,6 +23,7 @@ class DefaultAuthRepository(
     private val backendApi: FunctionsBackendApi,
     private val sessionStore: AuthSessionStore,
     private val logger: Logger,
+    private val credentialStore: CredentialStore,
 ) : AuthRepository {
     private var loadedFromStore: Boolean = false
     private var session: AuthSession? = null
@@ -36,13 +40,14 @@ class DefaultAuthRepository(
     }
 
     override suspend fun signIn(
-        identifier: String,
+        email: String,
         password: String,
     ): AppResult<AuthSession> = runCatching {
         val response = backendApi.signIn(
             SignInRequestDto(
-                identifier = identifier,
+                email = email,
                 password = password,
+                identifier = email,
             ),
         )
 
@@ -55,10 +60,22 @@ class DefaultAuthRepository(
         onSuccess = { newSession ->
             session = newSession
             sessionStore.save(newSession.toStored())
+            runCatching { credentialStore.save(SavedCredentials(email = email, password = password)) }
             AppResult.Success(newSession)
         },
         onFailure = { throwable ->
             logger.w(throwable) { "Sign in failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun requestPasswordReset(email: String): AppResult<Unit> = runCatching {
+        backendApi.requestPasswordReset(PasswordResetRequestDto(email = email))
+        Unit
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Password reset request failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )
@@ -91,6 +108,10 @@ class DefaultAuthRepository(
         session = null
         sessionStore.save(null)
     }
+
+    override suspend fun savedCredentials(): SavedCredentials? = credentialStore.load()
+
+    override suspend fun clearSavedCredentials() = credentialStore.clear()
 
     override suspend fun getMe(): AppResult<UserProfile> = runCatching {
         val me = withFreshIdToken { idToken ->

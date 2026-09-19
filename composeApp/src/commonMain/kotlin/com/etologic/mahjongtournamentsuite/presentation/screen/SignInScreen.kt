@@ -8,11 +8,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -29,8 +27,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.autofill.contentType
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
@@ -38,6 +39,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
@@ -48,8 +50,13 @@ import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
+import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
+import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.launch
@@ -67,35 +74,47 @@ fun SignInScreen(
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
+    val emailRequester = remember { FocusRequester() }
     val passwordRequester = remember { FocusRequester() }
     val loginButtonRequester = remember { FocusRequester() }
 
-    var identifier by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var infoMessage by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(authPresenter) {
+        // Chrome mediates this request through its password manager UI.
+        loadBrowserCredentials { savedEmail, savedPassword ->
+            email = savedEmail
+            password = savedPassword
+        }
         if (authPresenter.hasActiveSession()) {
             navController.navigate(TournamentsRoute) {
                 popUpTo(SignInRoute) { inclusive = true }
             }
+        } else {
+            emailRequester.requestFocus()
         }
     }
 
     AppScaffold(
         title = "Sign in",
         isLoading = isLoading,
+        autoFocusFirst = false,
         leadingActions = { AppTopBarLeadingActions(showThemeToggle = true) },
     ) {
         fun submit() {
             errorMessage = null
+            infoMessage = null
             isLoading = true
 
             coroutineScope.launch {
-                when (val result = authPresenter.signIn(identifier = identifier, password = password)) {
+                when (val result = authPresenter.signIn(email = email.trim(), password = password)) {
                     is AppResult.Success -> {
+                        saveBrowserCredentials(email.trim(), password)
                         navController.navigate(TournamentsRoute) {
                             popUpTo(SignInRoute) { inclusive = true }
                         }
@@ -108,6 +127,27 @@ fun SignInScreen(
             }
         }
 
+        fun requestPasswordReset() {
+            errorMessage = null
+            infoMessage = null
+            if (email.trim().isEmpty()) {
+                errorMessage = "Enter your email address first."
+                emailRequester.requestFocus()
+                return
+            }
+
+            isLoading = true
+            coroutineScope.launch {
+                when (val result = authPresenter.requestPasswordReset(email.trim())) {
+                    is AppResult.Success -> {
+                        infoMessage = "If an account exists, we sent password reset instructions to your email."
+                    }
+                    is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+                }
+                isLoading = false
+            }
+        }
+
         ScreenColumn(
             maxWidth = 520.dp,
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -115,7 +155,7 @@ fun SignInScreen(
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
         ) {
             Text(
-                text = "Use your email or EMA id to sign in. Accounts are invitation-only.",
+                text = "Use your email to sign in. Accounts are invitation-only.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -126,15 +166,25 @@ fun SignInScreen(
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
                     OutlinedTextField(
-                        value = identifier,
-                        onValueChange = { identifier = it },
-                        label = { Text("Email or emaId") },
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .contentType(ContentType.EmailAddress)
+                            .focusRequester(emailRequester)
                             .onPreviewKeyEvent { e ->
                                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                 when (e.key) {
-                                    Key.Tab, Key.Enter -> {
+                                    Key.Tab -> {
+                                        if (e.isShiftPressed) {
+                                            focusManager.moveFocus(androidx.compose.ui.focus.FocusDirection.Previous)
+                                        } else {
+                                            passwordRequester.requestFocus()
+                                        }
+                                        true
+                                    }
+                                    Key.Enter, Key.NumPadEnter -> {
                                         passwordRequester.requestFocus()
                                         true
                                     }
@@ -143,7 +193,10 @@ fun SignInScreen(
                             },
                         singleLine = true,
                         enabled = !isLoading,
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Email,
+                            imeAction = ImeAction.Next,
+                        ),
                         keyboardActions = KeyboardActions(
                             onNext = { passwordRequester.requestFocus() },
                         ),
@@ -155,15 +208,20 @@ fun SignInScreen(
                         label = { Text("Password") },
                         modifier = Modifier
                             .fillMaxWidth()
+                            .contentType(ContentType.Password)
                             .focusRequester(passwordRequester)
                             .onPreviewKeyEvent { e ->
                                 if (e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                                 when (e.key) {
                                     Key.Tab -> {
-                                        loginButtonRequester.requestFocus()
+                                        if (e.isShiftPressed) {
+                                            emailRequester.requestFocus()
+                                        } else {
+                                            loginButtonRequester.requestFocus()
+                                        }
                                         true
                                     }
-                                    Key.Enter -> {
+                                    Key.Enter, Key.NumPadEnter -> {
                                         submit()
                                         true
                                     }
@@ -184,7 +242,7 @@ fun SignInScreen(
                             }
 
                             IconButton(
-                                modifier = Modifier.focusProperties { canFocus = false },
+                                buttonModifier = Modifier.focusProperties { canFocus = false },
                                 enabled = !isLoading,
                                 onClick = { isPasswordVisible = !isPasswordVisible },
                             ) {
@@ -208,12 +266,27 @@ fun SignInScreen(
                         AppErrorMessage(message = message)
                     }
 
+                    infoMessage?.let { message ->
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.primary,
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
+
+                    TextButton(
+                        enabled = !isLoading,
+                        onClick = { requestPasswordReset() },
+                    ) {
+                        Text("Forgot password?")
+                    }
+
                     Button(
                         enabled = !isLoading,
                         onClick = { submit() },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .focusRequester(loginButtonRequester),
+                        modifier = Modifier.fillMaxWidth(),
+                        buttonModifier = Modifier.fillMaxWidth(),
+                        focusRequester = loginButtonRequester,
                     ) {
                         if (isLoading) {
                             CircularProgressIndicator(
@@ -245,7 +318,7 @@ private fun SignInScreenPreview() {
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
             ) {
                 Text(
-                    text = "Use your email or EMA id to sign in. Accounts are invitation-only.",
+                    text = "Use your email to sign in. Accounts are invitation-only.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -258,7 +331,7 @@ private fun SignInScreenPreview() {
                         OutlinedTextField(
                             value = "demo@example.com",
                             onValueChange = {},
-                            label = { Text("Email or emaId") },
+                            label = { Text("Email") },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                         )

@@ -2,14 +2,19 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -31,12 +36,72 @@ expect fun PlatformVerticalScrollbar(
 )
 
 @Composable
+expect fun PlatformVerticalScrollbar(
+    scrollState: ScrollState,
+    modifier: Modifier = Modifier,
+)
+
+@Composable
 expect fun PlatformHorizontalScrollbar(
     scrollState: ScrollState,
     modifier: Modifier = Modifier,
 )
 
 expect val PlatformScrollbarThickness: Dp
+
+@Composable
+fun LazyColumnWithScrollbar(
+    state: LazyListState,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues.Zero,
+    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    content: LazyListScope.() -> Unit,
+) {
+    Box(modifier = modifier) {
+        LazyColumn(
+            state = state,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(end = PlatformScrollbarThickness),
+            contentPadding = contentPadding,
+            verticalArrangement = verticalArrangement,
+            horizontalAlignment = horizontalAlignment,
+            content = content,
+        )
+        PlatformVerticalScrollbar(
+            listState = state,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxSize()
+                .width(PlatformScrollbarThickness),
+        )
+    }
+}
+
+@Composable
+fun ScrollableColumnWithScrollbar(
+    state: ScrollState,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Box(modifier = modifier) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(end = PlatformScrollbarThickness)
+                .verticalScroll(state),
+            content = content,
+        )
+        PlatformVerticalScrollbar(
+            scrollState = state,
+            modifier = Modifier
+                .align(Alignment.CenterEnd)
+                .fillMaxSize()
+                .width(PlatformScrollbarThickness),
+        )
+    }
+}
 
 @Preview(device = Devices.DESKTOP)
 @Composable

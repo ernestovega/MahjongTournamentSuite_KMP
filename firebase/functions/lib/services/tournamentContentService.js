@@ -6,6 +6,7 @@ exports.listTournamentRounds = listTournamentRounds;
 exports.listTournamentTables = listTournamentTables;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
+const httpError_1 = require("../api/httpError");
 function timestampToIso(value) {
     return value instanceof firestore_1.Timestamp ? value.toDate().toISOString() : null;
 }
@@ -34,13 +35,45 @@ async function listTournamentPlayers(tournamentId) {
 async function assignTournamentPlayer(params) {
     const playerRef = firebase_1.db.collection("tournaments").doc(params.tournamentId)
         .collection("players").doc(String(params.playerId));
-    const player = await playerRef.get();
-    if (!player.exists) {
-        throw new Error("Player not found");
-    }
-    await playerRef.update({
-        assignedEmaId: params.emaId,
-        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    const players = playerRef.parent;
+    const assignmentRefs = firebase_1.db.collection("tournaments").doc(params.tournamentId)
+        .collection("emaPlayerAssignments");
+    await firebase_1.db.runTransaction(async (transaction) => {
+        const player = await transaction.get(playerRef);
+        if (!player.exists) {
+            throw new Error("Player not found");
+        }
+        const previousEmaId = typeof player.get("assignedEmaId") === "string"
+            ? String(player.get("assignedEmaId"))
+            : null;
+        const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
+        const nextAssignment = nextAssignmentRef == null ? null : await transaction.get(nextAssignmentRef);
+        const existingAssignments = params.emaId == null
+            ? null
+            : await transaction.get(players.where("assignedEmaId", "==", params.emaId));
+        if (params.emaId != null && nextAssignmentRef != null) {
+            const mappedPlayerId = nextAssignment?.exists ? Number(nextAssignment.get("playerId")) : null;
+            if (mappedPlayerId != null && mappedPlayerId !== params.playerId) {
+                throw (0, httpError_1.conflict)("EMA player is already assigned in this tournament");
+            }
+            const assignedElsewhere = existingAssignments?.docs.some((document) => document.id !== playerRef.id) ?? false;
+            if (assignedElsewhere) {
+                throw (0, httpError_1.conflict)("EMA player is already assigned in this tournament");
+            }
+        }
+        if (previousEmaId != null && previousEmaId !== params.emaId) {
+            transaction.delete(assignmentRefs.doc(previousEmaId));
+        }
+        if (nextAssignmentRef != null) {
+            transaction.set(nextAssignmentRef, {
+                playerId: params.playerId,
+                updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            });
+        }
+        transaction.update(playerRef, {
+            assignedEmaId: params.emaId,
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        });
     });
 }
 async function listTournamentRounds(tournamentId) {

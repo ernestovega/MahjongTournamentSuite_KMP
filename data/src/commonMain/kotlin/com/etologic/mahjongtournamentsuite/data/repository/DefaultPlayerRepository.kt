@@ -74,12 +74,15 @@ class DefaultPlayerRepository(
     private fun com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto.toPlayer() = Player(
         emaId = emaId,
         name = name.uppercase(),
-        country = country,
+        country = country.toPlayerCountryCode(),
         photoUrl = photoUrl,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )
 }
+
+private fun String.toPlayerCountryCode(): String =
+    trim().uppercase().takeUnless { it == "EU" }.orEmpty()
 
 private fun Throwable.toAppError(): AppError = when (this) {
     is CancellationException -> throw this

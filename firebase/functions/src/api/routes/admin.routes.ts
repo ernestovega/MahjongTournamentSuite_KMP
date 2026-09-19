@@ -4,7 +4,7 @@ import { auth } from "../../firebase";
 import { badRequest, forbidden } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireSuperadmin } from "../middleware/requireSuperadmin";
-import { getEmaIdMapping, getUserProfile } from "../../services/usersService";
+import { getUserProfile, getUserProfileByEmaId } from "../../services/usersService";
 import { BOOTSTRAP_KEY } from "../../config";
 
 function requireBootstrapKey(req: { header(name: string): string | undefined }): void {
@@ -55,15 +55,9 @@ export function adminRouter(): Router {
         throw badRequest("Missing identifier");
       }
 
-      if (identifier.includes("@")) {
-        const user = await auth.getUserByEmail(identifier);
-        const profile = await getUserProfile(user.uid);
-        res.status(200).json(profile);
-        return;
-      }
-
-      const mapping = await getEmaIdMapping(identifier);
-      const profile = await getUserProfile(mapping.uid);
+      const profile = identifier.includes("@")
+        ? await auth.getUserByEmail(identifier).then((user) => getUserProfile(user.uid))
+        : await getUserProfileByEmaId(identifier);
       res.status(200).json(profile);
     } catch (e) {
       next(e);

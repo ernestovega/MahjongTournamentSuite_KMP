@@ -3,6 +3,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.hoverable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -26,7 +26,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -53,19 +60,36 @@ fun DataTableHeaderRow(
 fun DataTableRow(
     modifier: Modifier = Modifier,
     onClick: (() -> Unit)? = null,
+    clickFocusable: Boolean = true,
+    highlighted: Boolean = false,
+    backgroundColor: Color = Color.Transparent,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
     content: @Composable RowScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isHovered by interactionSource.collectIsHoveredAsState()
+    val isFocused by interactionSource.collectIsFocusedAsState()
     val hoverColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-    val backgroundColor = if (isHovered) hoverColor else Color.Transparent
+    val resolvedBackgroundColor = if (isHovered || isFocused || highlighted) hoverColor else backgroundColor
 
     val interactiveModifier = if (onClick == null) {
         Modifier.hoverable(interactionSource = interactionSource)
     } else {
         Modifier
             .hoverable(interactionSource = interactionSource)
+            .focusProperties { canFocus = clickFocusable }
+            .onPreviewKeyEvent { event ->
+                if (!clickFocusable || event.type != KeyEventType.KeyDown) {
+                    return@onPreviewKeyEvent false
+                }
+                when (event.key) {
+                    Key.Enter, Key.NumPadEnter -> {
+                        onClick()
+                        true
+                    }
+                    else -> false
+                }
+            }
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
@@ -76,7 +100,7 @@ fun DataTableRow(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .background(backgroundColor)
+            .background(resolvedBackgroundColor)
             .then(interactiveModifier)
             .padding(contentPadding),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -104,15 +128,17 @@ fun RowActionsMenu(
     buttonLabel: String = "⋮",
     buttonTextStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     buttonContentColor: Color? = null,
+    focusRequester: FocusRequester? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
 
     val defaultButtonColors = ButtonDefaults.textButtonColors()
 
-    TextButton(
+    FocusedTextButton(
         enabled = enabled,
         onClick = { expanded = true },
         modifier = modifier,
+        focusRequester = focusRequester,
         colors = buttonContentColor?.let { ButtonDefaults.textButtonColors(contentColor = it) } ?: defaultButtonColors,
     ) {
         Text(

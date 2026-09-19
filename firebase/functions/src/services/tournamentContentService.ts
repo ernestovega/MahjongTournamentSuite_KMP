@@ -1,5 +1,6 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
+import { conflict } from "../api/httpError";
 
 export type TournamentPlayer = {
   id: number;
@@ -69,14 +70,49 @@ export async function assignTournamentPlayer(params: {
 }): Promise<void> {
   const playerRef = db.collection("tournaments").doc(params.tournamentId)
     .collection("players").doc(String(params.playerId));
-  const player = await playerRef.get();
-  if (!player.exists) {
-    throw new Error("Player not found");
-  }
+  const players = playerRef.parent;
+  const assignmentRefs = db.collection("tournaments").doc(params.tournamentId)
+    .collection("emaPlayerAssignments");
 
-  await playerRef.update({
-    assignedEmaId: params.emaId,
-    updatedAt: FieldValue.serverTimestamp(),
+  await db.runTransaction(async (transaction) => {
+    const player = await transaction.get(playerRef);
+    if (!player.exists) {
+      throw new Error("Player not found");
+    }
+
+    const previousEmaId = typeof player.get("assignedEmaId") === "string"
+      ? String(player.get("assignedEmaId"))
+      : null;
+    const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
+    const nextAssignment = nextAssignmentRef == null ? null : await transaction.get(nextAssignmentRef);
+    const existingAssignments = params.emaId == null
+      ? null
+      : await transaction.get(players.where("assignedEmaId", "==", params.emaId));
+
+    if (params.emaId != null && nextAssignmentRef != null) {
+      const mappedPlayerId = nextAssignment?.exists ? Number(nextAssignment.get("playerId")) : null;
+      if (mappedPlayerId != null && mappedPlayerId !== params.playerId) {
+        throw conflict("EMA player is already assigned in this tournament");
+      }
+      const assignedElsewhere = existingAssignments?.docs.some((document) => document.id !== playerRef.id) ?? false;
+      if (assignedElsewhere) {
+        throw conflict("EMA player is already assigned in this tournament");
+      }
+    }
+
+    if (previousEmaId != null && previousEmaId !== params.emaId) {
+      transaction.delete(assignmentRefs.doc(previousEmaId));
+    }
+    if (nextAssignmentRef != null) {
+      transaction.set(nextAssignmentRef, {
+        playerId: params.playerId,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
+    transaction.update(playerRef, {
+      assignedEmaId: params.emaId,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
   });
 }
 

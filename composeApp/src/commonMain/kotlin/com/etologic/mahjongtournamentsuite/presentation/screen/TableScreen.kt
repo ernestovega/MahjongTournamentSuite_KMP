@@ -30,7 +30,6 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -49,6 +48,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -57,6 +57,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.text.font.FontWeight
@@ -81,6 +82,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -88,6 +91,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChange
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import io.ktor.http.HttpHeaders.From
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -106,6 +110,10 @@ fun TableManagerScreen(
     var tableState by remember { mutableStateOf<TableState?>(null) }
     var hands by remember { mutableStateOf<List<TableHand>>(emptyList()) }
     var pendingUnsavedAction by remember { mutableStateOf<TableManagerPendingUnsavedAction?>(null) }
+    val initialEditorFocusRequester = remember { FocusRequester() }
+    var initialEditorFocusPending by rememberSaveable(tournamentId, roundId, tableId) {
+        mutableStateOf(true)
+    }
     fun refresh() {
         coroutineScope.launch {
             isLoading = true
@@ -129,6 +137,13 @@ fun TableManagerScreen(
     val table = tableState
     val editorState = remember(table, hands) { table?.let { TableManagerEditorState.from(it, hands) } }
     val hasUnsavedChanges = editorState?.hasUnsavedChanges == true
+
+    LaunchedEffect(isLoading, editorState) {
+        if (initialEditorFocusPending && !isLoading && editorState != null) {
+            initialEditorFocusRequester.requestFocus()
+            initialEditorFocusPending = false
+        }
+    }
 
     suspend fun saveChanges(): Boolean {
         val editor = editorState ?: return true
@@ -213,21 +228,35 @@ fun TableManagerScreen(
         },
         floatingActionButton = {
             if (editorState != null && editorState.hasUnsavedChanges) {
+                val discardInteractionSource = remember { MutableInteractionSource() }
+                val saveInteractionSource = remember { MutableInteractionSource() }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ExtendedFloatingActionButton(
-                        onClick = { editorState.discard() },
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                    FocusHighlightContainer(
+                        modifier = Modifier,
+                        interactionSource = discardInteractionSource,
                     ) {
-                        Text("Discard")
+                        ExtendedFloatingActionButton(
+                            onClick = { editorState.discard() },
+                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+                            interactionSource = discardInteractionSource,
+                        ) {
+                            Text("Discard")
+                        }
                     }
-                    ExtendedFloatingActionButton(
-                        onClick = { coroutineScope.launch { saveChanges() } },
+                    FocusHighlightContainer(
+                        modifier = Modifier,
+                        interactionSource = saveInteractionSource,
                     ) {
-                        Text("Save")
+                        ExtendedFloatingActionButton(
+                            onClick = { coroutineScope.launch { saveChanges() } },
+                            interactionSource = saveInteractionSource,
+                        ) {
+                            Text("Save")
+                        }
                     }
                 }
             }
@@ -250,6 +279,7 @@ fun TableManagerScreen(
             TableManagerContent(
                 editor = editor,
                 enabled = !isLoading,
+                initialFocusRequester = initialEditorFocusRequester,
                 onManualTotalsChange = { checked ->
                     if (checked) {
                         editor.enableManualTotals()
@@ -274,6 +304,7 @@ internal fun TableManagerContent(
     editor: TableManagerEditorState,
     enabled: Boolean,
     playerNamesById: Map<Int, String> = emptyMap(),
+    initialFocusRequester: FocusRequester? = null,
     onManualTotalsChange: (Boolean) -> Unit = { checked ->
         if (checked) editor.enableManualTotals() else editor.disableManualTotals()
     },
@@ -287,6 +318,7 @@ internal fun TableManagerContent(
         editor = editor,
         enabled = enabled,
         playerNamesById = playerNamesById,
+        initialFocusRequester = initialFocusRequester,
     )
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -413,6 +445,7 @@ private fun SeatPositionsSection(
     editor: TableManagerEditorState,
     enabled: Boolean,
     playerNamesById: Map<Int, String>,
+    initialFocusRequester: FocusRequester? = null,
 ) {
     SectionCard(
         title = "Seat positions",
@@ -433,6 +466,7 @@ private fun SeatPositionsSection(
                 onWestChange = { editor.setSeatAssignment(2, it) },
                 onNorthChange = { editor.setSeatAssignment(3, it) },
                 playerNamesById = playerNamesById,
+                eastFocusRequester = initialFocusRequester,
             )
         },
     )
@@ -674,31 +708,40 @@ private fun LabeledSwitch(
     enabled: Boolean,
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    val interactionSource = remember { MutableInteractionSource() }
+    val tooltipState = rememberTooltipState()
+    val coroutineScope = rememberCoroutineScope()
+    FocusHighlightContainer(
+        modifier = Modifier,
+        interactionSource = interactionSource,
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Switch(
-            checked = checked,
-            enabled = enabled,
-            onCheckedChange = onCheckedChange,
-        )
-        TooltipBox(
-            positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-            tooltip = { PlainTooltip { Text(description) } },
-            state = rememberTooltipState(),
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            IconButton(onClick = {}) {
-                Text(
-                    text = "ⓘ",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Switch(
+                checked = checked,
+                enabled = enabled,
+                onCheckedChange = onCheckedChange,
+                interactionSource = interactionSource,
+            )
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                tooltip = { PlainTooltip { Text(description) } },
+                state = tooltipState,
+            ) {
+                IconButton(onClick = { coroutineScope.launch { tooltipState.show() } }) {
+                    Text(
+                        text = "ⓘ",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
     }
@@ -1298,11 +1341,15 @@ private fun HandToggleControl(
 ) {
     val shape = MaterialTheme.shapes.extraSmall
     var focused by remember { mutableStateOf(false) }
-    val borderModifier = if (focused && enabled) {
-        Modifier.border(2.dp, MaterialTheme.colorScheme.primary, shape)
-    } else {
-        Modifier
-    }
+    val focusModifier = Modifier
+        .clip(shape)
+        .background(
+            if (focused && enabled) {
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+            } else {
+                Color.Transparent
+            },
+        )
     val checkboxColors = when {
         !enabled -> CheckboxDefaults.colors(
             checkedColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f),
@@ -1323,7 +1370,7 @@ private fun HandToggleControl(
     Column(
         modifier = Modifier
             .width(width)
-            .then(borderModifier)
+            .then(focusModifier)
             .padding(horizontal = 4.dp, vertical = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
@@ -2654,6 +2701,7 @@ private fun SeatPositionsRow(
     onWestChange: (String) -> Unit,
     onNorthChange: (String) -> Unit,
     playerNamesById: Map<Int, String>,
+    eastFocusRequester: FocusRequester? = null,
 ) {
     fun seatMarksByPlayerId(): Map<Int, String> {
         fun parseId(value: String): Int? = value.trim().toIntOrNull()
@@ -2687,6 +2735,7 @@ private fun SeatPositionsRow(
             onChange = onEastChange,
             playerNamesById = playerNamesById,
             optionSuffixById = optionSuffixById,
+            focusRequester = eastFocusRequester,
         )
         PlayerDropdown(
             modifier = Modifier.weight(1f),

@@ -18,11 +18,10 @@ function authRouter() {
             if (!email || !password || !emaId) {
                 throw (0, httpError_1.badRequest)("Missing email, password, or emaId");
             }
-            // Pre-check to avoid orphan Auth accounts in the common case.
             await (0, usersService_1.assertEmaIdAvailable)(emaId);
             const tokens = await (0, firebaseAuthRest_1.signUpWithEmailPassword)(email, password);
             createdUid = tokens.uid;
-            await (0, usersService_1.linkEmaIdToUser)(tokens.uid, email, emaId);
+            await (0, usersService_1.createUserProfile)(tokens.uid, email, emaId);
             res.status(200).json({
                 idToken: tokens.idToken,
                 refreshToken: tokens.refreshToken,
@@ -30,10 +29,7 @@ function authRouter() {
             });
         }
         catch (e) {
-            // If a rare race caused emaId conflict after Auth user creation, clean it up.
-            if (createdUid &&
-                e instanceof httpError_1.HttpError &&
-                e.code === "conflict") {
+            if (createdUid) {
                 try {
                     await firebase_1.auth.deleteUser(createdUid);
                 }
@@ -46,18 +42,31 @@ function authRouter() {
     });
     router.post("/signIn", async (req, res, next) => {
         try {
-            const identifier = String(req.body?.identifier ?? "").trim();
+            // Accept identifier during the rollout of the email-only API.
+            const email = String(req.body?.email ?? req.body?.identifier ?? "").trim();
             const password = String(req.body?.password ?? "");
-            if (!identifier || !password) {
-                throw (0, httpError_1.badRequest)("Missing identifier or password");
+            if (!email || !password) {
+                throw (0, httpError_1.badRequest)("Missing email or password");
             }
-            const email = identifier.includes("@") ? identifier : await (0, usersService_1.getEmailForEmaId)(identifier);
             const tokens = await (0, firebaseAuthRest_1.signInWithEmailPassword)(email, password);
             res.status(200).json({
                 idToken: tokens.idToken,
                 refreshToken: tokens.refreshToken,
                 uid: tokens.uid,
             });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.post("/passwordReset", async (req, res, next) => {
+        try {
+            const email = String(req.body?.email ?? "").trim();
+            if (!email) {
+                throw (0, httpError_1.badRequest)("Missing email");
+            }
+            await (0, firebaseAuthRest_1.sendPasswordResetEmail)(email);
+            res.status(200).json({ ok: true });
         }
         catch (e) {
             next(e);

@@ -27,9 +27,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
@@ -55,9 +58,17 @@ fun AppScaffold(
     actions: @Composable (RowScope.() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
+    autoFocusFirst: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    val focusManager = LocalFocusManager.current
+
+    LaunchedEffect(Unit) {
+        if (autoFocusFirst) focusManager.moveFocus(FocusDirection.Next)
+    }
+
     Scaffold(
+        modifier = Modifier.appFocusGroup(),
         topBar = {
             Column {
                 val titleContent: @Composable () -> Unit = {

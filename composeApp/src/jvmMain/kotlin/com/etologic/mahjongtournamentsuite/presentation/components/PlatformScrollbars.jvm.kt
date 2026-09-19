@@ -22,6 +22,17 @@ actual fun PlatformVerticalScrollbar(
 }
 
 @Composable
+actual fun PlatformVerticalScrollbar(
+    scrollState: ScrollState,
+    modifier: Modifier,
+) {
+    VerticalScrollbar(
+        adapter = rememberScrollbarAdapter(scrollState),
+        modifier = modifier,
+    )
+}
+
+@Composable
 actual fun PlatformHorizontalScrollbar(
     scrollState: ScrollState,
     modifier: Modifier,

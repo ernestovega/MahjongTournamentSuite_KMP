@@ -23,11 +23,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
@@ -51,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
@@ -76,9 +75,13 @@ import androidx.navigation.NavHostController
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
+import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
@@ -202,6 +205,7 @@ fun CreateTournamentScreen(
                         ) {
                             popUpTo(CreateTournamentRoute) { inclusive = true }
                         }
+                        navController.navigate(PlayersRoute(tournamentId = result.value.id))
                     }
 
                     is AppResult.Failure -> {
@@ -229,11 +233,6 @@ fun CreateTournamentScreen(
                 true
             }
 
-            Key.Enter, Key.NumPadEnter -> {
-                startCreate()
-                true
-            }
-
             else -> false
         }
     }
@@ -241,6 +240,7 @@ fun CreateTournamentScreen(
     AppScaffold(
         title = "Create tournament",
         isLoading = isLoading,
+        autoFocusFirst = false,
         onBack = {
             cancelCreation()
             navController.popBackStack()
@@ -319,72 +319,82 @@ fun CreateTournamentScreen(
 
                         Spacer(Modifier.size(16.dp))
 
-                        Row(
+                        FocusHighlightContainer(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                            interactionSource = teamsToggleInteractionSource,
                         ) {
-                            Switch(
-                                checked = isTeams,
-                                onCheckedChange = ::setTeamsChecked,
-                                enabled = !isLoading,
-                            )
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(
-                                    text = "Teams",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier
-                                        .toggleable(
-                                            value = isTeams,
-                                            enabled = !isLoading,
-                                            role = Role.Switch,
-                                            interactionSource = teamsToggleInteractionSource,
-                                            indication = null,
-                                            onValueChange = ::setTeamsChecked,
-                                        ),
+                                Switch(
+                                    checked = isTeams,
+                                    onCheckedChange = ::setTeamsChecked,
+                                    enabled = !isLoading,
+                                    interactionSource = teamsToggleInteractionSource,
                                 )
-                                SwitchInfoTooltip(
-                                    description = "When on, group players into teams of four. Players on the same team will not play together.\nWhen off, do not group players into teams.",
-                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "Teams",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier
+                                            .toggleable(
+                                                value = isTeams,
+                                                enabled = !isLoading,
+                                                role = Role.Switch,
+                                                interactionSource = teamsToggleInteractionSource,
+                                                indication = null,
+                                                onValueChange = ::setTeamsChecked,
+                                            ),
+                                    )
+                                    SwitchInfoTooltip(
+                                        description = "When on, group players into teams of four. Players on the same team will not play together.\nWhen off, do not group players into teams.",
+                                    )
+                                }
                             }
                         }
 
                         Spacer(Modifier.size(16.dp))
 
-                        Row(
+                        FocusHighlightContainer(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                            interactionSource = computeToggleInteractionSource,
                         ) {
-                            val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
-                            Switch(
-                                checked = isHeavy,
-                                onCheckedChange = ::setHeavyCompute,
-                                enabled = !isLoading,
-                            )
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(
-                                    text = "Heavy computing",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    modifier = Modifier
-                                        .toggleable(
-                                            value = isHeavy,
-                                            enabled = !isLoading,
-                                            role = Role.Switch,
-                                            interactionSource = computeToggleInteractionSource,
-                                            indication = null,
-                                            onValueChange = ::setHeavyCompute,
-                                        ),
+                                val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
+                                Switch(
+                                    checked = isHeavy,
+                                    onCheckedChange = ::setHeavyCompute,
+                                    enabled = !isLoading,
+                                    interactionSource = computeToggleInteractionSource,
                                 )
-                                SwitchInfoTooltip(
-                                    description = "When on, use more CPU to finish faster. Use this when you can leave the computer working.\nWhen off, use less CPU so you can keep using the computer while it runs.",
-                                )
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Text(
+                                        text = "Heavy computing",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        modifier = Modifier
+                                            .toggleable(
+                                                value = isHeavy,
+                                                enabled = !isLoading,
+                                                role = Role.Switch,
+                                                interactionSource = computeToggleInteractionSource,
+                                                indication = null,
+                                                onValueChange = ::setHeavyCompute,
+                                            ),
+                                    )
+                                    SwitchInfoTooltip(
+                                        description = "When on, use more CPU to finish faster. Use this when you can leave the computer working.\nWhen off, use less CPU so you can keep using the computer while it runs.",
+                                    )
+                                }
                             }
                         }
 
@@ -422,6 +432,7 @@ fun CreateTournamentScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .background(Color.Black.copy(alpha = 0.35f))
+                        .focusProperties { canFocus = false }
                         .clickable(
                             interactionSource = remember { MutableInteractionSource() },
                             indication = null,

@@ -1,13 +1,15 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -20,29 +22,53 @@ fun UnsavedChangesDialog(
     onDiscard: () -> Unit,
     onCancel: () -> Unit,
 ) {
+    val saveFocusRequester = remember { FocusRequester() }
+    val cancelFocusRequester = remember { FocusRequester() }
+    val discardFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        saveFocusRequester.requestFocus()
+    }
+
     AlertDialog(
+        modifier = Modifier.appFocusGroup(),
         onDismissRequest = { if (!isSaving) onCancel() },
         title = { Text("Unsaved changes") },
         text = { Text("You have unsaved changes. Save them before continuing?") },
         confirmButton = {
-            Button(
+            FocusedButton(
                 enabled = !isSaving,
                 onClick = onSave,
+                focusRequester = saveFocusRequester,
+                buttonModifier = Modifier.focusLoop(
+                    previous = discardFocusRequester,
+                    next = cancelFocusRequester,
+                ),
             ) {
                 Text("Save")
             }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(
+                FocusedTextButton(
                     enabled = !isSaving,
                     onClick = onCancel,
+                    focusRequester = cancelFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = saveFocusRequester,
+                        next = discardFocusRequester,
+                    ),
                 ) {
                     Text("Cancel")
                 }
-                TextButton(
+                FocusedTextButton(
                     enabled = !isSaving,
                     onClick = onDiscard,
+                    focusRequester = discardFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = cancelFocusRequester,
+                        next = saveFocusRequester,
+                    ),
                 ) {
                     Text(
                         text = "Discard",

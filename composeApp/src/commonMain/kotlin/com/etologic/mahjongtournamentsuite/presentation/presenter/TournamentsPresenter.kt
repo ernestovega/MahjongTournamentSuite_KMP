@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -18,6 +19,9 @@ class TournamentsPresenter(
     suspend fun loadAdminStatus(): AppResult<AdminStatus> = adminRepository.whoAmI()
 
     suspend fun loadTournaments(): AppResult<List<Tournament>> = tournamentRepository.listTournaments()
+
+    suspend fun loadPlayers(tournamentId: String): AppResult<List<TournamentPlayer>> =
+        tournamentRepository.listTournamentPlayers(tournamentId)
 
     suspend fun lookupUser(identifier: String): AppResult<UserProfile> = adminRepository.lookupUser(identifier)
 

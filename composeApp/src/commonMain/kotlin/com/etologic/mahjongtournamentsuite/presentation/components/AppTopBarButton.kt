@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -11,9 +12,11 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 fun AppTopBarButton(
     text: String,
     onClick: () -> Unit,
+    focusRequester: FocusRequester? = null,
 ) {
     AppTextButton(
         onClick = onClick,
+        focusRequester = focusRequester,
     ) {
         Text(
             text = text,

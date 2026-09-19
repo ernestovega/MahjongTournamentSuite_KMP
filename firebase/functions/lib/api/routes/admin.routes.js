@@ -50,14 +50,9 @@ function adminRouter() {
             if (!identifier) {
                 throw (0, httpError_1.badRequest)("Missing identifier");
             }
-            if (identifier.includes("@")) {
-                const user = await firebase_1.auth.getUserByEmail(identifier);
-                const profile = await (0, usersService_1.getUserProfile)(user.uid);
-                res.status(200).json(profile);
-                return;
-            }
-            const mapping = await (0, usersService_1.getEmaIdMapping)(identifier);
-            const profile = await (0, usersService_1.getUserProfile)(mapping.uid);
+            const profile = identifier.includes("@")
+                ? await firebase_1.auth.getUserByEmail(identifier).then((user) => (0, usersService_1.getUserProfile)(user.uid))
+                : await (0, usersService_1.getUserProfileByEmaId)(identifier);
             res.status(200).json(profile);
         }
         catch (e) {

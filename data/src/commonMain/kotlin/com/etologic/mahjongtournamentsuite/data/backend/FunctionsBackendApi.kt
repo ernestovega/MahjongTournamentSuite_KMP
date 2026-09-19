@@ -21,6 +21,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResp
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpsertMemberRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
@@ -50,6 +51,9 @@ class FunctionsBackendApi(
 
     suspend fun signIn(request: SignInRequestDto): SignInResponseDto =
         post(path = "/auth/signIn", requestBody = request)
+
+    suspend fun requestPasswordReset(request: PasswordResetRequestDto): OkResponseDto =
+        post(path = "/auth/passwordReset", requestBody = request)
 
     suspend fun refresh(request: RefreshRequestDto): RefreshResponseDto =
         post(path = "/auth/refresh", requestBody = request)

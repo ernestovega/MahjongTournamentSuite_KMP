@@ -174,14 +174,20 @@ async function getPlayer(emaId) {
     const sourceUrl = `${baseUrl}Players/${emaId}.html`;
     const html = await getHtml(sourceUrl);
     const nameMatch = html.match(/Name\s*:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i);
-    const countryMatch = html.match(/Country\s*:<\/td>\s*<td[^>]*>[\s\S]*?Img\/flag\/16\/([a-z]{2})\.png/i);
+    // Keep the match inside the country cell. The old expression searched the
+    // rest of the page when the EMA guest flag was `European.png`, then used a
+    // tournament venue flag as the player's country.
+    const countryCell = html.match(/Country\s*:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i)?.[1] ?? "";
+    const countryFlag = countryCell.match(/Img\/flag\/16\/([^"'/?]+)\.png/i)?.[1] ?? "";
     const photoMatch = html.match(/<img[^>]+src="(?:\.\.\/Players\/)?photo\/([^"?#]+)"/i);
     const name = nameMatch ? (0, playerName_1.normalizePlayerName)(text(nameMatch[1])) : "";
     if (!name)
         return null;
     const photoName = photoMatch?.[1];
     const hasPhoto = photoName != null && !/^vide\.jpe?g$/i.test(photoName);
-    return { emaId, name, country: countryMatch?.[1]?.toUpperCase() ?? "", sourceUrl, photoSourceUrl: hasPhoto ? `${baseUrl}Players/photo/${photoName}` : null };
+    const sourceCountry = countryFlag.toUpperCase();
+    const country = sourceCountry === "EU" || sourceCountry === "EUR" || sourceCountry === "EUROPEAN" ? "" : sourceCountry;
+    return { emaId, name, country, sourceUrl, photoSourceUrl: hasPhoto ? `${baseUrl}Players/photo/${photoName}` : null };
 }
 async function runEmaPlayerRegistrySync(mode) {
     const startedAt = new Date().toISOString();

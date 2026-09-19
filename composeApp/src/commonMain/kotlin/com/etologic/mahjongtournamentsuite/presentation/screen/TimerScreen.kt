@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -22,6 +21,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.isShiftPressed
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
@@ -35,7 +43,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.delay
@@ -43,13 +54,14 @@ import kotlinx.coroutines.delay
 @Composable
 fun TimerStandaloneScreen(
 ) {
-    AppScaffold(title = "Timer") {
+    AppScaffold(title = "Timer", autoFocusFirst = false) {
         TimerContent()
     }
 }
 
 @Composable
 private fun TimerContent() {
+    val startFocusRequester = remember { FocusRequester() }
     var isRunning by remember { mutableStateOf(false) }
     var roundNum by remember { mutableStateOf(1) }
 
@@ -60,6 +72,10 @@ private fun TimerContent() {
     var minutesText by remember { mutableStateOf((maxTimeSeconds / 60).toString()) }
 
     val hasFinished = timeLeftSeconds <= 0L
+
+    LaunchedEffect(Unit) {
+        startFocusRequester.requestFocus()
+    }
 
     LaunchedEffect(isRunning, maxTimeSeconds) {
         while (isRunning) {
@@ -86,10 +102,24 @@ private fun TimerContent() {
     }
 
     if (isSetTimeDialogOpen) {
+        val timeFieldFocusRequester = remember { FocusRequester() }
+        val setFocusRequester = remember { FocusRequester() }
+        val cancelFocusRequester = remember { FocusRequester() }
+
+        LaunchedEffect(Unit) {
+            timeFieldFocusRequester.requestFocus()
+        }
+
         AlertDialog(
+            modifier = Modifier.appFocusGroup(),
             onDismissRequest = { isSetTimeDialogOpen = false },
             confirmButton = {
                 Button(
+                    focusRequester = setFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = timeFieldFocusRequester,
+                        next = cancelFocusRequester,
+                    ),
                     onClick = {
                         val minutes = minutesText.trim().toLongOrNull()
                         if (minutes != null && minutes > 0) {
@@ -104,7 +134,14 @@ private fun TimerContent() {
                 }
             },
             dismissButton = {
-                Button(onClick = { isSetTimeDialogOpen = false }) {
+                Button(
+                    onClick = { isSetTimeDialogOpen = false },
+                    focusRequester = cancelFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = setFocusRequester,
+                        next = timeFieldFocusRequester,
+                    ),
+                ) {
                     Text("Cancel")
                 }
             },
@@ -119,6 +156,36 @@ private fun TimerContent() {
                             keyboardType = KeyboardType.Number,
                         ),
                         singleLine = true,
+                        modifier = Modifier
+                            .focusRequester(timeFieldFocusRequester)
+                            .focusProperties {
+                                previous = cancelFocusRequester
+                                next = setFocusRequester
+                            }
+                            .onPreviewKeyEvent { event ->
+                                if (event.type != KeyEventType.KeyDown) {
+                                    return@onPreviewKeyEvent false
+                                }
+                                when (event.key) {
+                                    Key.Tab -> {
+                                        if (event.isShiftPressed) {
+                                            cancelFocusRequester.requestFocus()
+                                        } else {
+                                            setFocusRequester.requestFocus()
+                                        }
+                                        true
+                                    }
+                                    Key.DirectionUp -> {
+                                        cancelFocusRequester.requestFocus()
+                                        true
+                                    }
+                                    Key.DirectionDown -> {
+                                        setFocusRequester.requestFocus()
+                                        true
+                                    }
+                                    else -> false
+                                }
+                            },
                     )
                 }
             },
@@ -214,6 +281,7 @@ private fun TimerContent() {
                     Text("+")
                 }
                 AppTextButton(
+                    focusRequester = startFocusRequester,
                     onClick = {
                         if (hasFinished) {
                             timeLeftSeconds = maxTimeSeconds

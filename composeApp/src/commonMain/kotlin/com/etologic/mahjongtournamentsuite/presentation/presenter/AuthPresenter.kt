@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 
 class AuthPresenter(
     private val authRepository: AuthRepository,
@@ -13,15 +14,24 @@ class AuthPresenter(
     suspend fun hasActiveSession(): Boolean = authRepository.currentSession() != null
 
     suspend fun signIn(
-        identifier: String,
+        email: String,
         password: String,
     ): AppResult<AuthSession> {
         logger.i { "Signing in user." }
         return authRepository.signIn(
-            identifier = identifier,
+            email = email,
             password = password,
         )
     }
+
+    suspend fun requestPasswordReset(email: String): AppResult<Unit> {
+        logger.i { "Requesting password reset." }
+        return authRepository.requestPasswordReset(email)
+    }
+
+    suspend fun savedCredentials(): SavedCredentials? = authRepository.savedCredentials()
+
+    suspend fun clearSavedCredentials() = authRepository.clearSavedCredentials()
 
     suspend fun signOut() {
         logger.i { "Signing out user." }

@@ -22,10 +22,11 @@ function timestampToIso(value: unknown): string | null {
 }
 
 function toPlayer(emaId: string, data: FirebaseFirestore.DocumentData): Player {
+  const storedCountry = String(data.country ?? "").trim().toUpperCase();
   return {
     emaId,
     name: normalizePlayerName(String(data.name ?? "")),
-    country: String(data.country ?? ""),
+    country: storedCountry === "EU" ? "" : storedCountry,
     photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : null,
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),

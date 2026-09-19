@@ -1,13 +1,13 @@
 # MahjongTournamentSuite — KMP migration plan
 
-_Last updated: 2026-04-11_
+_Last updated: 2026-09-19_
 
 ## Goals
 
 - Replace the Windows Forms app with a **Kotlin Multiplatform** app targeting **Android + Desktop (JVM) + Web (Wasm)**.
 - Use **Compose Multiplatform** for UI, **Koin** for DI, **Navigation Compose** for navigation, **Ktor client** + **kotlinx.serialization** for networking.
 - **Sync across devices**.
-- Implement **custom login + role system** (email + password + emaId).
+- Implement **custom login + role system** (email + password).
 - Provide **Excel export**.
 
 ## Not in scope (for now)
@@ -38,7 +38,7 @@ _Last updated: 2026-04-11_
 ## Auth + roles (chosen)
 
 - **Sign-up**: `email + password + emaId`
-- **Sign-in**: accepts a single `identifier` that can be **email OR emaId** (server resolves).
+- **Sign-in**: accepts an email and password.
 - Roles:
   - Global: `superadmin` (Firebase custom claim)
   - Per tournament membership: `ADMIN | EDITOR | READER`
@@ -47,7 +47,6 @@ _Last updated: 2026-04-11_
 
 - Identity:
   - `users/{uid}`
-  - `emaIdUsers/{emaId}` → `{ uid, email }`
 - Global player pool (future scraper output):
 - `emaPlayerRegistry/{emaId}`
 - `countries/{countryCode}` → `{ code, name }`
@@ -125,7 +124,7 @@ Build the admin-side app flow (no reader app yet):
 
 - Auth:
   - Sign Up (email, emaId, password)
-  - Sign In (identifier: email or emaId, password)
+  - Sign In (email and password)
   - Sign Out
 - Tournaments:
   - List tournaments (with refresh)

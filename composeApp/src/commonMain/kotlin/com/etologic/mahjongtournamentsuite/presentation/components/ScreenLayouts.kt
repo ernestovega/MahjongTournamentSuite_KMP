@@ -3,20 +3,23 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.material3.Text
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
@@ -34,16 +37,28 @@ fun ScreenColumn(
         modifier = modifier.fillMaxSize(),
     ) {
         val scrollState = rememberScrollState()
-        Column(
-            modifier = Modifier
-                .widthIn(max = maxWidth)
-                .align(Alignment.TopCenter)
-                .padding(contentPadding)
-                .then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier),
-            verticalArrangement = verticalArrangement,
-            horizontalAlignment = horizontalAlignment,
-            content = content,
-        )
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .widthIn(max = maxWidth)
+                    .fillMaxHeight()
+                    .align(Alignment.TopCenter)
+                    .padding(contentPadding)
+                    .then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier),
+                verticalArrangement = verticalArrangement,
+                horizontalAlignment = horizontalAlignment,
+                content = content,
+            )
+            if (scrollable) {
+                PlatformVerticalScrollbar(
+                    scrollState = scrollState,
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .fillMaxSize()
+                        .width(PlatformScrollbarThickness),
+                )
+            }
+        }
     }
 }
 

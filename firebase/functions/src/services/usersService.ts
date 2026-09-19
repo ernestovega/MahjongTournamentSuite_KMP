@@ -10,12 +10,6 @@ export type UserProfile = {
   contactEmail: string;
 };
 
-export type EmaIdMapping = {
-  uid: string;
-  email: string;
-  emaId: string;
-};
-
 export async function getUserProfile(uid: string): Promise<UserProfile> {
   const snap = await db.doc(`users/${uid}`).get();
   if (!snap.exists) {
@@ -29,58 +23,32 @@ export async function getUserProfile(uid: string): Promise<UserProfile> {
   return { uid, email, emaId, contactEmail };
 }
 
-export async function getEmaIdMapping(emaId: string): Promise<EmaIdMapping> {
-  const snap = await db.doc(`emaIdUsers/${emaId}`).get();
-  if (!snap.exists) {
+export async function getUserProfileByEmaId(emaId: string): Promise<UserProfile> {
+  const matches = await db.collection("users").where("emaId", "==", emaId).limit(1).get();
+  if (matches.empty) {
     throw notFound("Unknown emaId");
   }
 
-  return {
-    uid: snap.get("uid") as string,
-    email: snap.get("email") as string,
-    emaId: snap.get("emaId") as string,
-  };
+  return getUserProfile(matches.docs[0].id);
 }
 
 export async function assertEmaIdAvailable(emaId: string): Promise<void> {
-  const snap = await db.doc(`emaIdUsers/${emaId}`).get();
-  if (snap.exists) {
+  const matches = await db.collection("users").where("emaId", "==", emaId).limit(1).get();
+  if (!matches.empty) {
     throw conflict("emaId already in use");
   }
 }
 
-export async function getEmailForEmaId(emaId: string): Promise<string> {
-  const mapping = await getEmaIdMapping(emaId);
-  return mapping.email;
-}
-
-export async function linkEmaIdToUser(uid: string, email: string, emaId: string): Promise<void> {
-  const mappingRef = db.doc(`emaIdUsers/${emaId}`);
-
-  await db.runTransaction(async (tx) => {
-    const current = await tx.get(mappingRef);
-    if (current.exists) {
-      throw conflict("emaId already in use");
-    }
-
-    tx.set(mappingRef, {
+export async function createUserProfile(uid: string, email: string, emaId: string): Promise<void> {
+  await db.doc(`users/${uid}`).set(
+    {
       uid,
       email,
       emaId,
+      contactEmail: email,
       createdAt: FieldValue.serverTimestamp(),
-    });
-
-    tx.set(
-      db.doc(`users/${uid}`),
-      {
-        uid,
-        email,
-        emaId,
-        contactEmail: email,
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      },
-      { merge: true },
-    );
-  });
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
 }

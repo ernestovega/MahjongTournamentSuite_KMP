@@ -69,6 +69,14 @@ export async function signInWithEmailPassword(email: string, password: string): 
   };
 }
 
+export async function sendPasswordResetEmail(email: string): Promise<void> {
+  const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey()}`;
+  await postJson(url, {
+    requestType: "PASSWORD_RESET",
+    email,
+  });
+}
+
 export async function refreshIdToken(refreshToken: string): Promise<{ idToken: string; refreshToken: string }> {
   const url = `https://securetoken.googleapis.com/v1/token?key=${apiKey()}`;
   const body = new URLSearchParams({

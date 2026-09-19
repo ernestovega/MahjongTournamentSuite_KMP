@@ -1,10 +1,10 @@
 import { Router } from "express";
 
 import { auth } from "../../firebase";
-import { badRequest, HttpError } from "../httpError";
+import { badRequest } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
-import { refreshIdToken, signInWithEmailPassword, signUpWithEmailPassword } from "../../services/firebaseAuthRest";
-import { assertEmaIdAvailable, getEmailForEmaId, getUserProfile, linkEmaIdToUser } from "../../services/usersService";
+import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword, signUpWithEmailPassword } from "../../services/firebaseAuthRest";
+import { assertEmaIdAvailable, createUserProfile, getUserProfile } from "../../services/usersService";
 
 export function authRouter(): Router {
   const router = Router();
@@ -21,13 +21,12 @@ export function authRouter(): Router {
         throw badRequest("Missing email, password, or emaId");
       }
 
-      // Pre-check to avoid orphan Auth accounts in the common case.
       await assertEmaIdAvailable(emaId);
 
       const tokens = await signUpWithEmailPassword(email, password);
       createdUid = tokens.uid;
 
-      await linkEmaIdToUser(tokens.uid, email, emaId);
+      await createUserProfile(tokens.uid, email, emaId);
 
       res.status(200).json({
         idToken: tokens.idToken,
@@ -35,12 +34,7 @@ export function authRouter(): Router {
         uid: tokens.uid,
       });
     } catch (e) {
-      // If a rare race caused emaId conflict after Auth user creation, clean it up.
-      if (
-        createdUid &&
-        e instanceof HttpError &&
-        e.code === "conflict"
-      ) {
+      if (createdUid) {
         try {
           await auth.deleteUser(createdUid);
         } catch {
@@ -54,14 +48,14 @@ export function authRouter(): Router {
 
   router.post("/signIn", async (req, res, next) => {
     try {
-      const identifier = String(req.body?.identifier ?? "").trim();
+      // Accept identifier during the rollout of the email-only API.
+      const email = String(req.body?.email ?? req.body?.identifier ?? "").trim();
       const password = String(req.body?.password ?? "");
 
-      if (!identifier || !password) {
-        throw badRequest("Missing identifier or password");
+      if (!email || !password) {
+        throw badRequest("Missing email or password");
       }
 
-      const email = identifier.includes("@") ? identifier : await getEmailForEmaId(identifier);
       const tokens = await signInWithEmailPassword(email, password);
 
       res.status(200).json({
@@ -69,6 +63,20 @@ export function authRouter(): Router {
         refreshToken: tokens.refreshToken,
         uid: tokens.uid,
       });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  router.post("/passwordReset", async (req, res, next) => {
+    try {
+      const email = String(req.body?.email ?? "").trim();
+      if (!email) {
+        throw badRequest("Missing email");
+      }
+
+      await sendPasswordResetEmail(email);
+      res.status(200).json({ ok: true });
     } catch (e) {
       next(e);
     }

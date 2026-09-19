@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -17,8 +19,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Devices
@@ -36,6 +42,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionMenuItem
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -68,6 +75,30 @@ fun TablesScreen(
 
     val tablesKey = selectedRoundId?.toString() ?: "all"
     val tables = tablesByTournamentId[tournamentId]?.get(tablesKey) ?: emptyList()
+    val tablesListState = rememberLazyListState()
+    var tableFocusApplied by remember(tablesKey) { mutableStateOf(false) }
+    var lastFocusedTableKey by rememberSaveable(tournamentId) { mutableStateOf<String?>(null) }
+    var lastFocusedTableControl by rememberSaveable(tournamentId) { mutableStateOf("row") }
+    val tableFocusRequesters = remember(tables.map { it.roundId to it.tableId }) {
+        tables.map { FocusRequester() }
+    }
+    val tableActionFocusRequesters = remember(tables.map { it.roundId to it.tableId }) {
+        tables.map { FocusRequester() }
+    }
+
+    LaunchedEffect(isLoading, tablesKey, tables.map { it.roundId to it.tableId }) {
+        if (!tableFocusApplied && !isLoading && tableFocusRequesters.isNotEmpty()) {
+            val index = tables.indexOfFirst {
+                "${it.roundId}_${it.tableId}" == lastFocusedTableKey
+            }.coerceAtLeast(0)
+            if (lastFocusedTableControl == "menu") {
+                tableActionFocusRequesters[index].requestFocus()
+            } else {
+                tableFocusRequesters[index].requestFocus()
+            }
+            tableFocusApplied = true
+        }
+    }
 
     fun refreshMeta() {
         coroutineScope.launch {
@@ -188,7 +219,8 @@ fun TablesScreen(
                         }
 
                         else -> {
-                            LazyColumn(
+                            LazyColumnWithScrollbar(
+                                state = tablesListState,
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
                                 item {
@@ -233,7 +265,10 @@ fun TablesScreen(
                                     DataTableDivider()
                                 }
 
-                                items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
+                                itemsIndexed(
+                                    tables,
+                                    key = { _, table -> "${table.roundId}_${table.tableId}" },
+                                ) { index, table ->
                                     val playersLabel = table.playerIds.joinToString(" • ") { playerId ->
                                         val player = playersById[playerId]
                                         if (player == null) {
@@ -244,7 +279,16 @@ fun TablesScreen(
                                     }
 
                                     DataTableRow(
+                                        modifier = Modifier
+                                            .focusRequester(tableFocusRequesters[index])
+                                            .onFocusChanged {
+                                                if (it.isFocused) {
+                                                    lastFocusedTableKey = "${table.roundId}_${table.tableId}"
+                                                }
+                                            },
                                         onClick = {
+                                            lastFocusedTableKey = "${table.roundId}_${table.tableId}"
+                                            lastFocusedTableControl = "row"
                                             navController.navigate(
                                                 TableRoute(
                                                     tournamentId = tournamentId,
@@ -290,6 +334,8 @@ fun TablesScreen(
                                                 RowActionMenuItem(
                                                     label = "Open",
                                                     onClick = {
+                                                        lastFocusedTableKey = "${table.roundId}_${table.tableId}"
+                                                        lastFocusedTableControl = "menu"
                                                         navController.navigate(
                                                             TableRoute(
                                                                 tournamentId = tournamentId,
@@ -303,6 +349,7 @@ fun TablesScreen(
                                                 RowActionMenuItem(label = "Delete (coming soon)", enabled = false, onClick = {}),
                                             ),
                                             modifier = Modifier.width(44.dp),
+                                            focusRequester = tableActionFocusRequesters[index],
                                         )
                                     }
                                     DataTableDivider()
@@ -339,7 +386,8 @@ private fun TablesScreenPreview() {
                         }
                     },
                     content = {
-                        LazyColumn(
+                        LazyColumnWithScrollbar(
+                            state = rememberLazyListState(),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             item {

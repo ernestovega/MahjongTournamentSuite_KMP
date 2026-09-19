@@ -7,6 +7,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -19,14 +20,16 @@ fun AppTopBarLeadingActions(
     showThemeToggle: Boolean = false,
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
+    timerFocusRequester: FocusRequester? = null,
+    rankingFocusRequester: FocusRequester? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
         if (showThemeToggle) { ThemeModeToggleButton() }
-        onTimer?.let { AppTopBarButton("Timer", it) }
-        onRanking?.let { AppTopBarButton("Ranking", it) }
+        onTimer?.let { AppTopBarButton("Timer", it, timerFocusRequester) }
+        onRanking?.let { AppTopBarButton("Ranking", it, rankingFocusRequester) }
     }
 }
 

@@ -194,9 +194,9 @@ class DefaultTournamentRepository(
             ).players.map { dto ->
                 TournamentPlayer(
                     id = dto.id,
-                    name = dto.name,
+                    name = "Player ${dto.id}",
                     team = dto.team,
-                    country = dto.country,
+                    country = "",
                     assignedEmaId = dto.assignedEmaId,
                     createdAt = dto.createdAt,
                     updatedAt = dto.updatedAt,

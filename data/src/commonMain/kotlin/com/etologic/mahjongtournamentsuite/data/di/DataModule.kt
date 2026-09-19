@@ -12,6 +12,8 @@ import com.etologic.mahjongtournamentsuite.data.repository.DefaultGreetingReposi
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
+import com.etologic.mahjongtournamentsuite.data.session.CredentialStore
+import com.etologic.mahjongtournamentsuite.data.session.PlatformCredentialStore
 import com.etologic.mahjongtournamentsuite.data.session.PlatformAuthSessionStore
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -33,9 +35,10 @@ val dataModule = module {
     }
     single { ApiConfiguration() }
     single<AuthSessionStore> { PlatformAuthSessionStore(json = get()) }
+    single<CredentialStore> { PlatformCredentialStore() }
     single<HttpClient> { createHttpClient(json = get()) }
     single { FunctionsBackendApi(httpClient = get(), apiConfiguration = get()) }
-    single<AuthRepository> { DefaultAuthRepository(get(), get(), get()) }
+    single<AuthRepository> { DefaultAuthRepository(get(), get(), get(), get()) }
     single<AdminRepository> { DefaultAdminRepository(get(), get(), get()) }
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get()) }
     single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get()) }

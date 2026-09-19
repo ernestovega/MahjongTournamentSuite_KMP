@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -15,11 +16,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Card
 import androidx.compose.material3.PlainTooltip
@@ -34,10 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -48,9 +51,14 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
@@ -96,6 +104,12 @@ fun TournamentScreen(
     var tableState by remember { mutableStateOf<TableState?>(null) }
     var hands by remember { mutableStateOf<List<TableHand>>(emptyList()) }
     var pendingUnsavedAction by remember { mutableStateOf<PendingUnsavedAction?>(null) }
+    val initialRoundFocusRequester = remember { FocusRequester() }
+    val playersFocusRequester = remember { FocusRequester() }
+    val timerFocusRequester = remember { FocusRequester() }
+    val rankingFocusRequester = remember { FocusRequester() }
+    var screenFocusApplied by remember { mutableStateOf(false) }
+    var lastFocusedControl by rememberSaveable(tournamentId) { mutableStateOf<String?>(null) }
 
     suspend fun loadSelectedTable() {
         val roundId = selectedRoundId ?: return
@@ -156,13 +170,27 @@ fun TournamentScreen(
         isLoading = true
         errorMessage = null
 
+        val basePlayersByEma = when (val basePlayersResult = presenter.loadBasePlayers()) {
+            is AppResult.Success -> basePlayersResult.value.associateBy { it.emaId }
+            is AppResult.Failure -> {
+                errorMessage = basePlayersResult.error.toUiMessage()
+                emptyMap()
+            }
+        }
+
         when (val playersResult = presenter.loadPlayers(tournamentId)) {
             is AppResult.Success -> {
-                playerNamesById = playersResult.value.associate { it.id to it.name }
+                playerNamesById = playersResult.value.associate { slot ->
+                    val assignedName = slot.assignedEmaId
+                        ?.let(basePlayersByEma::get)
+                        ?.name
+                    slot.id to (assignedName ?: "Player ${slot.id}")
+                }
             }
 
             is AppResult.Failure -> {
                 playerNamesById = emptyMap()
+                if (errorMessage == null) errorMessage = playersResult.error.toUiMessage()
             }
         }
 
@@ -220,6 +248,18 @@ fun TournamentScreen(
     val table = tableState
     val editorState = remember(table, hands) { table?.let { TableManagerEditorState.from(it, hands) } }
     val hasUnsavedChanges = editorState?.hasUnsavedChanges == true
+
+    LaunchedEffect(isLoading, rounds.map { it.roundId }, selectedRoundId) {
+        if (!screenFocusApplied && !isLoading && rounds.isNotEmpty()) {
+            when (lastFocusedControl) {
+                "players" -> playersFocusRequester.requestFocus()
+                "timer" -> timerFocusRequester.requestFocus()
+                "ranking" -> rankingFocusRequester.requestFocus()
+                else -> initialRoundFocusRequester.requestFocus()
+            }
+            screenFocusApplied = true
+        }
+    }
 
     suspend fun saveChanges(): Boolean {
         val editor = editorState ?: return true
@@ -307,14 +347,26 @@ fun TournamentScreen(
         leadingActions = {
             AppTopBarLeadingActions(
                 showThemeToggle = true,
-                onTimer = { openTimer(navController) },
-                onRanking = { openRankings(navController, tournamentId, tournamentName) },
+                onTimer = {
+                    lastFocusedControl = "timer"
+                    openTimer(navController)
+                },
+                onRanking = {
+                    lastFocusedControl = "ranking"
+                    openRankings(navController, tournamentId, tournamentName)
+                },
+                timerFocusRequester = timerFocusRequester,
+                rankingFocusRequester = rankingFocusRequester,
             )
         },
         actions = {
             AppTopBarActions(
-                onPlayers = { requestUnsavedAction(PendingUnsavedAction.NavigatePlayers) },
+                onPlayers = {
+                    lastFocusedControl = "players"
+                    requestUnsavedAction(PendingUnsavedAction.NavigatePlayers)
+                },
                 onRefresh = { requestUnsavedAction(PendingUnsavedAction.Refresh) },
+                playersFocusRequester = playersFocusRequester,
             )
         }
     ) {
@@ -337,6 +389,7 @@ fun TournamentScreen(
                     isLoading = isLoading,
                     onSelectRound = { roundId -> requestUnsavedAction(PendingUnsavedAction.SelectRound(roundId)) },
                     onSelectTable = { tableId -> requestUnsavedAction(PendingUnsavedAction.SelectTable(tableId)) },
+                    initialRoundFocusRequester = initialRoundFocusRequester,
                 )
 
                 Box(
@@ -348,7 +401,7 @@ fun TournamentScreen(
                     val listState = rememberLazyListState()
                     val showOverlaySave = hasUnsavedChanges
 
-                    LazyColumn(
+                    LazyColumnWithScrollbar(
                         modifier = Modifier.fillMaxSize(),
                         state = listState,
                         contentPadding = PaddingValues(bottom = if (showOverlaySave) saveButtonHeight + 32.dp else 16.dp),
@@ -416,7 +469,10 @@ private fun RoundTableSidebar(
     isLoading: Boolean,
     onSelectRound: (Int) -> Unit,
     onSelectTable: (Int) -> Unit,
+    initialRoundFocusRequester: FocusRequester? = null,
 ) {
+    val roundsListState = rememberLazyListState()
+    val tablesListState = rememberLazyListState()
     Card(
         modifier = Modifier
             .fillMaxHeight()
@@ -463,19 +519,27 @@ private fun RoundTableSidebar(
                             description = "○ Empty: all tables are empty.\n◐ Progress: at least one table has data.\n✓ Manual: at least one table has valid saved Manual Scores or Manual Points.\n✓✓ Completed: all tables are completed without a manual mode.",
                         )
                     }
-                    LazyColumn(
+                    LazyColumnWithScrollbar(
+                        state = roundsListState,
                         modifier = Modifier
                             .fillMaxWidth()
                             .weight(1f),
                         verticalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        items(rounds, key = { it.roundId }) { round ->
+                        itemsIndexed(rounds, key = { _, round -> round.roundId }) { index, round ->
                             RoundTableSidebarItem(
                                 label = "Round ${round.roundId}",
                                 status = roundCompletionStatus(allTables.filter { it.roundId == round.roundId }),
                                 selected = round.roundId == selectedRoundId,
                                 enabled = enabled,
                                 onClick = { onSelectRound(round.roundId) },
+                                focusRequester = if (
+                                    round.roundId == selectedRoundId || selectedRoundId == null && index == 0
+                                ) {
+                                    initialRoundFocusRequester
+                                } else {
+                                    null
+                                },
                             )
                         }
                     }
@@ -527,7 +591,8 @@ private fun RoundTableSidebar(
                         }
 
                         else -> {
-                            LazyColumn(
+                            LazyColumnWithScrollbar(
+                                state = tablesListState,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .weight(1f),
@@ -558,26 +623,44 @@ private fun RoundTableSidebarItem(
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
+    focusRequester: FocusRequester? = null,
 ) {
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
-        shape = MaterialTheme.shapes.small,
-        color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
-        contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
-        tonalElevation = 0.dp,
+    val interactionSource = remember { MutableInteractionSource() }
+    FocusHighlightContainer(
+        modifier = Modifier.fillMaxWidth(),
+        interactionSource = interactionSource,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
+                .then(
+                    if (enabled) {
+                        Modifier.clickable(
+                            interactionSource = interactionSource,
+                            indication = null,
+                            onClick = onClick,
+                        ).activateOnEnter(onClick = onClick)
+                    } else {
+                        Modifier
+                    },
+                ),
+            shape = MaterialTheme.shapes.small,
+            color = if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+            contentColor = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface,
+            tonalElevation = 0.dp,
         ) {
-            Text(text = label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-            Text(
-                text = status.symbol,
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (selected) Color.Unspecified else status.color,
-            )
+            Row(
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(text = label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
+                Text(
+                    text = status.symbol,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (selected) Color.Unspecified else status.color,
+                )
+            }
         }
     }
 }
@@ -595,12 +678,14 @@ private enum class CompletionStatus(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun CompletionStatusInfoIcon(description: String) {
+    val tooltipState = rememberTooltipState()
+    val coroutineScope = rememberCoroutineScope()
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = { PlainTooltip { Text(description) } },
-        state = rememberTooltipState(),
+        state = tooltipState,
     ) {
-        IconButton(onClick = {}) {
+        IconButton(onClick = { coroutineScope.launch { tooltipState.show() } }) {
             Text(
                 text = "ⓘ",
                 style = MaterialTheme.typography.titleMedium,

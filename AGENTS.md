@@ -121,3 +121,30 @@ Treat those as tooling noise unless a specific failure appears.
 - Unit tests belong primarily in `domain` and `data`.
 - There is no UI/interface test harness yet.
 - If adding tests, prefer focused common tests before platform-specific ones.
+
+## Keyboard Focus And Interaction
+
+Apply these rules to every new or changed screen, dialog, list, and interactive component:
+
+- Give each screen and dialog a logical initial focus target.
+- Restore focus to the control that opened a dialog or sub-screen when the user returns.
+- Support forward navigation with Tab and reverse navigation with Shift+Tab.
+- Support logical spatial navigation with the arrow keys.
+- Keep list focus in place while the next item is visible.
+- Scroll a list only when focus moves past its first or last visible item.
+- Keep left and right navigation within the controls of the current list item when applicable.
+- Activate buttons and custom clickable controls with Enter and Numpad Enter.
+- Show the shared soft focus highlight around focused buttons and clickable controls.
+- Use the shared focus components in `presentation/components/KeyboardFocus.kt`.
+- Use `Modifier.appFocusGroup()` for new focus regions.
+- Use the Tournament players screen and its assignment dialog as the reference behavior.
+
+## Tournament Player Presentation
+
+- Treat tournament player records as schedule slots.
+- Use only the slot ID, team, and EMA assignment when presenting a slot.
+- Never display the stored slot name or country. These fields can contain old data.
+- Resolve names, countries, and photos from the assigned EMA player record.
+- Show `Player <ID>` for an unassigned slot.
+- Show 🌐 when a displayed player has no country.
+- Treat the EMA pseudo-country code `EU` as an empty guest country and show 🌐.
