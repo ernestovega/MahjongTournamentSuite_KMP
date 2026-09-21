@@ -3,11 +3,6 @@ package com.etologic.mahjongtournamentsuite
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
@@ -16,7 +11,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
 import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
-import com.etologic.mahjongtournamentsuite.presentation.MembersRoute
+import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.RankingsRoute
@@ -29,7 +24,8 @@ import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.di.presentationModule
 import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentMembersScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
@@ -42,8 +38,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
-import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import org.koin.compose.KoinApplication
 import org.koin.dsl.koinConfiguration
 
@@ -60,26 +55,39 @@ fun App() {
 }
 
 @Composable
+fun RankingApp(
+    tournamentId: String,
+    tournamentName: String?,
+) {
+    KoinApplication(
+        configuration = koinConfiguration {
+            modules(dataModule, presentationModule)
+        },
+    ) {
+        val themeController = rememberThemeController()
+        CompositionLocalProvider(LocalThemeController provides themeController) {
+            MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+                RankingStandaloneScreen(
+                    tournamentId = tournamentId,
+                    tournamentName = tournamentName,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TimerApp(initialRound: Int = 1) {
+    TimerStandaloneScreen(initialRound = initialRound)
+}
+
+@Composable
 private fun MahjongTournamentSuiteApp() {
     val navController = rememberNavController()
-    var savedThemePreference by rememberSaveable { mutableStateOf(ThemePreference.Light.name) }
-    val themePreference = remember(savedThemePreference) {
-        runCatching { ThemePreference.valueOf(savedThemePreference) }
-            .getOrDefault(ThemePreference.Light)
-    }
-    val useDarkTheme = themePreference == ThemePreference.Dark
-    val themeController = remember(themePreference, useDarkTheme) {
-        ThemeController(
-            preference = themePreference,
-            isDarkTheme = useDarkTheme,
-            onTogglePreference = {
-                savedThemePreference = themePreference.next().name
-            },
-        )
-    }
+    val themeController = rememberThemeController()
 
     CompositionLocalProvider(LocalThemeController provides themeController) {
-        MtsTheme(useDarkTheme = useDarkTheme) {
+        MtsTheme(useDarkTheme = themeController.isDarkTheme) {
             NavHost(
                 navController = navController,
                 startDestination = SplashRoute,
@@ -98,12 +106,12 @@ private fun MahjongTournamentSuiteApp() {
                         tournamentName = args.tournamentName,
                     )
                 }
-                composable<MembersRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<MembersRoute>()
+                composable<UsersRoute> { backStackEntry ->
+                    val args = backStackEntry.toRoute<UsersRoute>()
                     if (args.tournamentId == null) {
-                        //TODO: SuperMembersScreen
+                        GlobalUsersScreen(navController = navController)
                     } else {
-                        TournamentMembersScreen(
+                        TournamentUsersScreen(
                             navController = navController,
                             tournamentId = args.tournamentId,
                         )
@@ -138,7 +146,6 @@ private fun MahjongTournamentSuiteApp() {
                     RankingStandaloneScreen(
                         tournamentId = args.tournamentId,
                         tournamentName = args.tournamentName,
-                        onClose = { navController.popBackStack() },
                     )
                 }
             }

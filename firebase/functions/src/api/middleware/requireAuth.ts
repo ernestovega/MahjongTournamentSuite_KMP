@@ -21,7 +21,8 @@ export async function requireAuth(
   }
 
   try {
-    const decoded = await auth.verifyIdToken(token);
+    // Check revocation so disabled users lose API access immediately.
+    const decoded = await auth.verifyIdToken(token, true);
     res.locals.auth = decoded;
     next();
   } catch {

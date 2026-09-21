@@ -59,6 +59,9 @@ kotlin {
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)
         }
+        jvmTest.dependencies {
+            implementation(libs.compose.ui.test.junit4.desktop)
+        }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
         }

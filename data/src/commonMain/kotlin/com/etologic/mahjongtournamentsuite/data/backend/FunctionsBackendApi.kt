@@ -4,12 +4,17 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequ
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RenameTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
@@ -64,13 +69,47 @@ class FunctionsBackendApi(
     suspend fun whoAmI(idToken: String): WhoAmIResponseDto =
         get(path = "/admin/whoami", idToken = idToken)
 
+    suspend fun listUsers(idToken: String): ManagedUsersResponseDto =
+        get(path = "/admin/users", idToken = idToken)
+
+    suspend fun createUser(
+        idToken: String,
+        request: SaveManagedUserRequestDto,
+    ): ManagedUserDto = post(
+        path = "/admin/users",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun updateUser(
+        idToken: String,
+        uid: String,
+        request: SaveManagedUserRequestDto,
+    ): ManagedUserDto = put(
+        path = "/admin/users/$uid",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun setUserDisabled(
+        idToken: String,
+        uid: String,
+        disabled: Boolean,
+    ): ManagedUserDto = put(
+        path = "/admin/users/$uid/disabled",
+        requestBody = SetUserDisabledRequestDto(disabled),
+        idToken = idToken,
+    )
+
     suspend fun lookupUser(
         idToken: String,
         identifier: String,
+        tournamentId: String? = null,
     ): UserProfileDto {
-        val response = httpClient.get(url("/admin/users/lookup")) {
+        val path = if (tournamentId == null) "/admin/users/lookup" else "/tournaments/$tournamentId/users/lookup"
+        val response = httpClient.get(url(path)) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
-            parameter("identifier", identifier)
+            parameter(if (tournamentId == null) "identifier" else "email", identifier)
         }
         return response.requireSuccessBody()
     }
@@ -96,6 +135,16 @@ class FunctionsBackendApi(
         tournamentId: String,
     ): OkResponseDto = delete(
         path = "/tournaments/$tournamentId",
+        idToken = idToken,
+    )
+
+    suspend fun renameTournament(
+        idToken: String,
+        tournamentId: String,
+        name: String,
+    ): OkResponseDto = put(
+        path = "/tournaments/$tournamentId",
+        requestBody = RenameTournamentRequestDto(name),
         idToken = idToken,
     )
 

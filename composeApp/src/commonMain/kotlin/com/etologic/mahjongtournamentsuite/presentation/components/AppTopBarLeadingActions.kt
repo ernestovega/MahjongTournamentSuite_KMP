@@ -20,13 +20,16 @@ fun AppTopBarLeadingActions(
     showThemeToggle: Boolean = false,
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
+    onUsers: (() -> Unit)? = null,
     timerFocusRequester: FocusRequester? = null,
     rankingFocusRequester: FocusRequester? = null,
+    usersFocusRequester: FocusRequester? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
+        onUsers?.let { AppTopBarButton("Users", it, usersFocusRequester) }
         if (showThemeToggle) { ThemeModeToggleButton() }
         onTimer?.let { AppTopBarButton("Timer", it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton("Ranking", it, rankingFocusRequester) }
@@ -36,10 +39,7 @@ fun AppTopBarLeadingActions(
 @Composable
 private fun ThemeModeToggleButton() {
     val themeController = LocalThemeController.current
-    val label = when (themeController.preference) {
-        ThemePreference.Light -> "Dark"
-        ThemePreference.Dark -> "Light"
-    }
+    val label = "Theme: ${themeController.preference.name}"
 
     AppTextButton(onClick = themeController.onTogglePreference) {
         Text(

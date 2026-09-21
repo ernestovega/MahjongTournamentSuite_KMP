@@ -28,5 +28,8 @@ class TournamentsPresenter(
     suspend fun deleteTournament(tournamentId: String): AppResult<Unit> =
         tournamentRepository.deleteTournament(tournamentId)
 
+    suspend fun renameTournament(tournamentId: String, name: String): AppResult<Unit> =
+        tournamentRepository.renameTournament(tournamentId, name)
+
     suspend fun signOut() = authRepository.signOut()
 }

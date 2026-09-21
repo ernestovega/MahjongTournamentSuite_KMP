@@ -129,7 +129,9 @@ Apply these rules to every new or changed screen, dialog, list, and interactive 
 - Give each screen and dialog a logical initial focus target.
 - Restore focus to the control that opened a dialog or sub-screen when the user returns.
 - Support forward navigation with Tab and reverse navigation with Shift+Tab.
+- Keep focus inside each active screen or dialog. Tab on the last control must return to the first control. Shift+Tab on the first control must return to the last control.
 - Support logical spatial navigation with the arrow keys.
+- In every text field, Left and Right move the caret within the text first. Move focus only when Left is at the start or Right is at the end. Preserve selections and do not move focus from an active selection.
 - Keep list focus in place while the next item is visible.
 - Scroll a list only when focus moves past its first or last visible item.
 - Keep left and right navigation within the controls of the current list item when applicable.
@@ -138,6 +140,17 @@ Apply these rules to every new or changed screen, dialog, list, and interactive 
 - Use the shared focus components in `presentation/components/KeyboardFocus.kt`.
 - Use `Modifier.appFocusGroup()` for new focus regions.
 - Use the Tournament players screen and its assignment dialog as the reference behavior.
+
+## Scrollable Lists And Pointer Input
+
+- Use `LazyColumnWithScrollbar` for a vertical lazy list that needs a visible scrollbar.
+- Use `ScrollableColumnWithScrollbar` for other vertical content that needs a visible scrollbar.
+- A vertical scrollbar must fill only the height. Use `fillMaxHeight()` and a fixed width.
+- A horizontal scrollbar must fill only the width. Use `fillMaxWidth()` and a fixed height.
+- Never use `fillMaxSize()` on a scrollbar. It can cover the content and intercept pointer input.
+- Keep each row's hover and click target within that row's bounds.
+- Test list changes with mouse hover, mouse click, wheel scrolling, and keyboard navigation.
+- For desktop regression tests, use coordinate-based mouse input. A semantics click can bypass pointer interception.
 
 ## Tournament Player Presentation
 

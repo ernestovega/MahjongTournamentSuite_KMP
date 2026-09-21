@@ -13,16 +13,18 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 fun AppTopBarActions(
     onPlayers: (() -> Unit)? = null,
     onPlayerBase: (() -> Unit)? = null,
-    onMembers: (() -> Unit)? = null,
+    onUsers: (() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null,
     onNewTournament: (() -> Unit)? = null,
     onNewPlayer: (() -> Unit)? = null,
+    onNewUser: (() -> Unit)? = null,
     playersFocusRequester: FocusRequester? = null,
     playerBaseFocusRequester: FocusRequester? = null,
-    membersFocusRequester: FocusRequester? = null,
+    usersFocusRequester: FocusRequester? = null,
     refreshFocusRequester: FocusRequester? = null,
     newTournamentFocusRequester: FocusRequester? = null,
     newPlayerFocusRequester: FocusRequester? = null,
+    newUserFocusRequester: FocusRequester? = null,
 ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -30,10 +32,11 @@ fun AppTopBarActions(
         ) {
             onPlayers?.let { AppTopBarButton("Players", it, playersFocusRequester) }
             onPlayerBase?.let { AppTopBarButton("EMA Players", it, playerBaseFocusRequester) }
-            onMembers?.let { AppTopBarButton("Members", it, membersFocusRequester) }
+            onUsers?.let { AppTopBarButton("Users", it, usersFocusRequester) }
             onRefresh?.let { AppTopBarButton("Refresh", it, refreshFocusRequester) }
             onNewTournament?.let { AppTopBarButton("New Tournament", it, newTournamentFocusRequester) }
             onNewPlayer?.let { AppTopBarButton("New Player", it, newPlayerFocusRequester) }
+            onNewUser?.let { AppTopBarButton("NEW USER", it, newUserFocusRequester) }
         }
 }
 
@@ -44,7 +47,7 @@ private fun AppTopBarActionsPreview() {
         AppTopBarActions(
             onPlayers = {},
             onPlayerBase = {},
-            onMembers = {},
+            onUsers = {},
             onRefresh = {},
             onNewTournament = {},
             onNewPlayer = {},

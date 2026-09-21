@@ -763,6 +763,7 @@ private fun HandRow(
 ) {
     val rowLocked = forceDoneChecked || hand.isDone
     val rowEnabled = enabled && !rowLocked
+    val doneEnabled = enabled && !forceDoneChecked
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -1236,7 +1237,7 @@ private fun HandRow(
                     width = HandDoneControlWidth,
                     label = "Done",
                     checked = hand.isDone,
-                    enabled = rowEnabled,
+                    enabled = doneEnabled,
                     isChanged = hand.hasDoneChanged,
                     onCheckedChange = { hand.updateDoneState(it) },
                     focusRequester = navigation.done,
@@ -2487,7 +2488,7 @@ internal class HandDraftState private constructor(
     val hasNorthPenaltyChanged: Boolean get() = playerNorthPenalty.trim() != initial.playerNorthPenalty
 
     val isIgnoredForCalculation: Boolean
-        get() = isResultSelectionInvalid || isCompletelyEmpty
+        get() = !isDone || isResultSelectionInvalid || isCompletelyEmpty
 
     private val isCompletelyEmpty: Boolean
         get() = playerWinnerId.trim().isEmpty() && normalizedLoserId.isEmpty() && handScore.trim().isEmpty()

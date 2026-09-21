@@ -17,6 +17,16 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity
+            android:name=".TimerActivity"
+            android:documentLaunchMode="always"
+            android:exported="false"
+            android:taskAffinity="com.etologic.mahjongtournamentsuite.timer" />
+        <activity
+            android:name=".RankingsActivity"
+            android:documentLaunchMode="always"
+            android:exported="false"
+            android:taskAffinity="com.etologic.mahjongtournamentsuite.rankings" />
     </application>
 
 </manifest>

@@ -14,14 +14,12 @@ function authRouter() {
         try {
             const email = String(req.body?.email ?? "").trim();
             const password = String(req.body?.password ?? "");
-            const emaId = String(req.body?.emaId ?? "").trim();
-            if (!email || !password || !emaId) {
-                throw (0, httpError_1.badRequest)("Missing email, password, or emaId");
+            if (!email || !password) {
+                throw (0, httpError_1.badRequest)("Missing email or password");
             }
-            await (0, usersService_1.assertEmaIdAvailable)(emaId);
             const tokens = await (0, firebaseAuthRest_1.signUpWithEmailPassword)(email, password);
             createdUid = tokens.uid;
-            await (0, usersService_1.createUserProfile)(tokens.uid, email, emaId);
+            await (0, usersService_1.createUserProfile)(tokens.uid, email);
             res.status(200).json({
                 idToken: tokens.idToken,
                 refreshToken: tokens.refreshToken,

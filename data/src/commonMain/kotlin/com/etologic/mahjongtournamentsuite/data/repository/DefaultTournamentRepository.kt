@@ -51,7 +51,7 @@ class DefaultTournamentRepository(
                     createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
                     updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
                 )
-            }
+            }.sortedRecentFirst()
         }
     }.fold(
         onSuccess = { tournaments -> AppResult.Success(tournaments) },
@@ -108,6 +108,23 @@ class DefaultTournamentRepository(
         },
     )
 
+    override suspend fun renameTournament(tournamentId: String, name: String): AppResult<Unit> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.renameTournament(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                name = name.trim(),
+            )
+            Unit
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Renaming tournament failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
     override suspend fun deleteTournament(tournamentId: String): AppResult<Unit> = runCatching {
         withFreshIdToken { idToken ->
             backendApi.deleteTournament(
@@ -132,6 +149,7 @@ class DefaultTournamentRepository(
             ).members.map { dto ->
                 TournamentMember(
                     uid = dto.uid,
+                    email = dto.email,
                     role = TournamentRole.valueOf(dto.role.name),
                 )
             }
@@ -426,6 +444,13 @@ class DefaultTournamentRepository(
         }
     }
 }
+
+internal fun List<Tournament>.sortedRecentFirst(): List<Tournament> =
+    sortedWith(
+        compareByDescending<Tournament> { it.createdAt ?: "" }
+            .thenBy { it.name.lowercase() }
+            .thenBy { it.id },
+    )
 
 private fun Throwable.toAppError(): AppError = when (this) {
     is CancellationException -> throw this

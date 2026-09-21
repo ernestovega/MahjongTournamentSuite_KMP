@@ -22,9 +22,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -44,6 +47,8 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -53,7 +58,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
-import com.etologic.mahjongtournamentsuite.presentation.MembersRoute
+import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
@@ -65,13 +70,17 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.textFieldFocusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.RowActionMenuItem
+import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
@@ -99,12 +108,18 @@ fun TournamentsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var deleteDialogTournament by remember { mutableStateOf<Tournament?>(null) }
+    var renameDialogTournament by remember { mutableStateOf<Tournament?>(null) }
+    var renameValue by remember { mutableStateOf(TextFieldValue()) }
+    var renameError by remember { mutableStateOf<String?>(null) }
     var tournamentFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
     var lastFocusedControl by rememberSaveable { mutableStateOf<String?>(null) }
     val playerBaseFocusRequester = remember { FocusRequester() }
-    val membersFocusRequester = remember { FocusRequester() }
+    val usersFocusRequester = remember { FocusRequester() }
     val newTournamentFocusRequester = remember { FocusRequester() }
+    val renameFieldFocusRequester = remember { FocusRequester() }
+    val renameConfirmFocusRequester = remember { FocusRequester() }
+    val renameCancelFocusRequester = remember { FocusRequester() }
 
     fun refresh() {
         coroutineScope.launch {
@@ -172,7 +187,12 @@ fun TournamentsScreen(
         refresh()
     }
 
-    val roleLabel = adminStatus?.let { if (it.isSuperadmin) "Superadmin" else "Member" }
+    val roleLabel = adminStatus?.let {
+        when {
+            it.isSuperadmin -> "Superadmin"
+            else -> "User"
+        }
+    }
     val canDeleteTournaments = adminStatus?.isSuperadmin == true
     val tournamentFocusRequesters = remember(tournaments.map { it.id }) {
         tournaments.map { FocusRequester() }
@@ -182,8 +202,8 @@ fun TournamentsScreen(
         if (!tournamentFocusApplied && !isRefreshing) {
             when (lastFocusedControl) {
                 "player-base" -> playerBaseFocusRequester.requestFocus()
-                "members" -> if (adminStatus?.canEditPlayers == true) {
-                    membersFocusRequester.requestFocus()
+                "users" -> if (adminStatus?.canManageUsers == true) {
+                    usersFocusRequester.requestFocus()
                 } else {
                     newTournamentFocusRequester.requestFocus()
                 }
@@ -199,6 +219,89 @@ fun TournamentsScreen(
             }
             tournamentFocusApplied = true
         }
+    }
+
+    renameDialogTournament?.let { tournament ->
+        LaunchedEffect(tournament.id) {
+            renameFieldFocusRequester.requestFocus()
+        }
+
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (!isLoading) renameDialogTournament = null },
+            title = { Text("Rename tournament") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = renameValue,
+                        onValueChange = {
+                            renameValue = it
+                            renameError = null
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(renameFieldFocusRequester)
+                            .textFieldFocusLoop(
+                                previous = renameCancelFocusRequester,
+                                next = renameConfirmFocusRequester,
+                                value = { renameValue },
+                            ),
+                        label = { Text("Tournament name") },
+                        singleLine = true,
+                        isError = renameError != null,
+                    )
+                    renameError?.let { message ->
+                        Text(
+                            text = message,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !isLoading && renameValue.text.trim().isNotEmpty(),
+                    onClick = {
+                        val newName = renameValue.text.trim()
+                        coroutineScope.launch {
+                            isLoading = true
+                            renameError = null
+                            when (val result = presenter.renameTournament(tournament.id, newName)) {
+                                is AppResult.Success -> {
+                                    renameDialogTournament = null
+                                    store.renameTournament(tournament.id, newName)
+                                    refresh()
+                                }
+
+                                is AppResult.Failure -> renameError = result.error.toUiMessage()
+                            }
+                            isLoading = false
+                        }
+                    },
+                    focusRequester = renameConfirmFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = renameFieldFocusRequester,
+                        next = renameCancelFocusRequester,
+                    ),
+                ) {
+                    Text("Save")
+                }
+            },
+            dismissButton = {
+                FocusedTextButton(
+                    enabled = !isLoading,
+                    onClick = { renameDialogTournament = null },
+                    focusRequester = renameCancelFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = renameConfirmFocusRequester,
+                        next = renameFieldFocusRequester,
+                    ),
+                ) {
+                    Text("Cancel")
+                }
+            },
+        )
     }
 
     deleteDialogTournament?.let { tournament ->
@@ -281,6 +384,15 @@ fun TournamentsScreen(
             AppTopBarLeadingActions(
                 showThemeToggle = true,
                 onTimer = { openTimer(navController) },
+                onUsers = if (adminStatus?.canManageUsers == true) {
+                    {
+                        lastFocusedControl = "users"
+                        navController.navigate(UsersRoute())
+                    }
+                } else {
+                    null
+                },
+                usersFocusRequester = usersFocusRequester,
             )
         },
         actions = {
@@ -289,21 +401,12 @@ fun TournamentsScreen(
                     lastFocusedControl = "player-base"
                     navController.navigate(PlayerBaseRoute)
                 },
-                onMembers = if (adminStatus?.canEditPlayers == true) {
-                    {
-                        lastFocusedControl = "members"
-                        navController.navigate(MembersRoute())
-                    }
-                } else {
-                    null
-                },
                 onRefresh = { refresh() },
                 onNewTournament = {
                     lastFocusedControl = "new-tournament"
                     navController.navigate(CreateTournamentRoute)
                 },
                 playerBaseFocusRequester = playerBaseFocusRequester,
-                membersFocusRequester = membersFocusRequester,
                 newTournamentFocusRequester = newTournamentFocusRequester,
             )
         },
@@ -350,17 +453,17 @@ fun TournamentsScreen(
                                             DataTableDivider()
                                         }
                                         itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
-                                        TournamentTableRow(
-                                            modifier = Modifier
-                                                .focusRequester(tournamentFocusRequesters[index])
-                                                .onFocusChanged {
-                                                    if (it.isFocused) lastFocusedTournamentId = tournament.id
-                                                    if (it.isFocused) lastFocusedControl = "tournament"
-                                                },
-                                            tournament = tournament,
-                                            createdByName = tournament.createdByName,
-                                            enabled = !isLoading,
-                                            cellMinWidth = cellMinWidth,
+                                            TournamentTableRow(
+                                                modifier = Modifier
+                                                    .focusRequester(tournamentFocusRequesters[index])
+                                                    .onFocusChanged {
+                                                        if (it.isFocused) lastFocusedTournamentId = tournament.id
+                                                        if (it.isFocused) lastFocusedControl = "tournament"
+                                                    },
+                                                tournament = tournament,
+                                                createdByName = tournament.createdByName,
+                                                enabled = !isLoading,
+                                                cellMinWidth = cellMinWidth,
                                                 actionCellMinWidth = actionCellMinWidth,
                                                 showDelete = canDeleteTournaments,
                                                 onClick = {
@@ -372,6 +475,16 @@ fun TournamentsScreen(
                                                     lastFocusedTournamentId = tournament.id
                                                     lastFocusedControl = "tournament"
                                                     deleteDialogTournament = tournament
+                                                },
+                                                onRename = {
+                                                    lastFocusedTournamentId = tournament.id
+                                                    lastFocusedControl = "tournament"
+                                                    renameValue = TextFieldValue(
+                                                        text = tournament.name,
+                                                        selection = TextRange(tournament.name.length),
+                                                    )
+                                                    renameError = null
+                                                    renameDialogTournament = tournament
                                                 },
                                             )
                                             DataTableDivider()
@@ -403,17 +516,13 @@ fun TournamentsScreen(
                                                 .width(12.dp),
                                         )
 
-                                        Box(
+                                        PlatformHorizontalScrollbar(
+                                            scrollState = scrollState,
                                             modifier = Modifier
                                                 .align(Alignment.BottomStart)
                                                 .fillMaxWidth()
                                                 .height(12.dp),
-                                        ) {
-                                            PlatformHorizontalScrollbar(
-                                                scrollState = scrollState,
-                                                modifier = Modifier.fillMaxSize(),
-                                            )
-                                        }
+                                        )
                                     }
                                 } else {
                                     Box(modifier = Modifier.fillMaxWidth()) {
@@ -539,6 +648,7 @@ private fun TournamentTableRow(
     showDelete: Boolean,
     onClick: () -> Unit,
     onDelete: () -> Unit,
+    onRename: () -> Unit,
 ) {
     DataTableRow(
         modifier = modifier,
@@ -606,24 +716,25 @@ private fun TournamentTableRow(
             modifier = Modifier.width(actionCellMinWidth),
             contentAlignment = Alignment.CenterEnd,
         ) {
-            if (showDelete) {
-                Button(
-                    enabled = enabled,
-                    onClick = onDelete,
-                    modifier = Modifier.height(32.dp),
-                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                    ),
-                ) {
-                    Text(
-                        text = "Delete",
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
+            val actionItems = buildList {
+                add(RowActionMenuItem(label = "Rename", onClick = onRename))
+                if (showDelete) {
+                    add(
+                        RowActionMenuItem(
+                            label = "Delete",
+                            enabled = enabled,
+                            onClick = onDelete,
+                        ),
                     )
                 }
             }
+            RowActionsMenu(
+                enabled = enabled,
+                items = actionItems,
+                modifier = Modifier.height(40.dp),
+                buttonIcon = Icons.Default.MoreVert,
+                buttonIconSize = 36.dp,
+            )
         }
     }
 }

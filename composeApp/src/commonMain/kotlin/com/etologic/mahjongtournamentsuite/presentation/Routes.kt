@@ -24,7 +24,7 @@ data class TournamentRoute(
 )
 
 @Serializable
-data class MembersRoute(
+data class UsersRoute(
     val tournamentId: String? = null,
 )
 

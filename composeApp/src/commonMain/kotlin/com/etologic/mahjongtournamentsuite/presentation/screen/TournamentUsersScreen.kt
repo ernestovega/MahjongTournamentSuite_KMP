@@ -46,17 +46,17 @@ import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMen
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.presenter.MembersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun TournamentMembersScreen(
+fun TournamentUsersScreen(
     navController: NavHostController,
     tournamentId: String,
 ) {
-    val presenter = koinInject<MembersPresenter>()
+    val presenter = koinInject<UsersPresenter>()
     val coroutineScope = rememberCoroutineScope()
 
     var isLoading by remember { mutableStateOf(true) }
@@ -120,15 +120,15 @@ fun TournamentMembersScreen(
         refresh()
     }
 
-    LaunchedEffect(isLoading, adminStatus?.isSuperadmin) {
-        if (initialLookupFocusPending && !isLoading && adminStatus?.isSuperadmin == true) {
+    LaunchedEffect(isLoading) {
+        if (initialLookupFocusPending && !isLoading && errorMessage == null) {
             lookupFocusRequester.requestFocus()
             initialLookupFocusPending = false
         }
     }
 
     AppScaffold(
-        title = "Members",
+        title = "Tournament users",
         subtitle = tournamentId,
         isLoading = isLoading,
         onBack = { navController.popBackStack() },
@@ -143,15 +143,18 @@ fun TournamentMembersScreen(
                 AppErrorMessage(message = message)
             }
 
-            if (adminStatus?.isSuperadmin == true) {
-                SectionCard(
-                    title = "Add member",
-                    subtitle = "Lookup by email or EMA id and assign a role",
-                    content = {
+            SectionCard(
+                title = "Add user",
+                subtitle = if (adminStatus?.isSuperadmin == true) {
+                    "Look up a user and assign a tournament role"
+                } else {
+                    "Assign Reader or Editor. Only a superadmin can grant Tournament Admin."
+                },
+                content = {
                         OutlinedTextField(
                             value = lookupIdentifier,
                             onValueChange = { lookupIdentifier = it },
-                            label = { Text("Email or emaId") },
+                            label = { Text("Email") },
                             modifier = Modifier.fillMaxWidth().focusRequester(lookupFocusRequester),
                             singleLine = true,
                             enabled = !isLoading,
@@ -166,7 +169,7 @@ fun TournamentMembersScreen(
                                     coroutineScope.launch {
                                         errorMessage = null
                                         lookedUpUser = null
-                                        when (val result = presenter.lookupUser(lookupIdentifier.trim())) {
+                                        when (val result = presenter.lookupUser(lookupIdentifier.trim(), tournamentId)) {
                                             is AppResult.Success -> lookedUpUser = result.value
                                             is AppResult.Failure -> errorMessage = result.error.toUiMessage()
                                         }
@@ -186,7 +189,7 @@ fun TournamentMembersScreen(
                         lookedUpUser?.let { user ->
                             HorizontalDivider()
                             Text(
-                                text = "${user.email} • EMA ${user.emaId}",
+                                text = user.email,
                                 style = MaterialTheme.typography.titleSmall,
                             )
                             Text(
@@ -198,32 +201,24 @@ fun TournamentMembersScreen(
                                 enabled = !isLoading,
                                 buttonText = "Assign role",
                                 currentRole = null,
+                                roles = if (adminStatus?.isSuperadmin == true) {
+                                    TournamentRole.entries
+                                } else {
+                                    listOf(TournamentRole.READER, TournamentRole.EDITOR)
+                                },
                                 onSelect = { role -> upsert(uid = user.uid, role = role) },
                             )
                         }
-                    },
-                )
-            } else {
-                SectionCard(
-                    title = "Permissions",
-                    subtitle = "Only superadmins can add or remove members",
-                    content = {
-                        Text(
-                            text = "Ask a superadmin to grant access if you need to manage this tournament.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                )
-            }
+                },
+            )
 
             SectionCard(
-                title = "Current members",
-                subtitle = if (isLoading) "Loading…" else "${members.size} members",
+                title = "Current users",
+                subtitle = if (isLoading) "Loading…" else "${members.size} users",
                 content = {
                     if (!isLoading && members.isEmpty()) {
                         Text(
-                            text = "No members yet.",
+                            text = "No users yet.",
                             style = MaterialTheme.typography.bodyLarge,
                         )
                         Text(
@@ -232,9 +227,10 @@ fun TournamentMembersScreen(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     } else {
-                        MembersTable(
+                        TournamentUsersTable(
                             members = members,
                             enabled = !isLoading,
+                            canGrantAdmin = adminStatus?.isSuperadmin == true,
                             onChangeRole = { uid, role -> upsert(uid = uid, role = role) },
                             onRemove = { uid -> remove(uid) },
                         )
@@ -246,9 +242,10 @@ fun TournamentMembersScreen(
 }
 
 @Composable
-private fun MembersTable(
+private fun TournamentUsersTable(
     members: List<TournamentMember>,
     enabled: Boolean,
+    canGrantAdmin: Boolean,
     onChangeRole: (uid: String, role: TournamentRole) -> Unit,
     onRemove: (uid: String) -> Unit,
 ) {
@@ -284,7 +281,7 @@ private fun MembersTable(
         items(members, key = { it.uid }) { member ->
             DataTableRow {
                 Text(
-                    text = member.uid,
+                    text = member.email.ifBlank { member.uid },
                     style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(0.65f),
                     maxLines = 1,
@@ -298,28 +295,38 @@ private fun MembersTable(
                 )
                 RowActionsMenu(
                     enabled = enabled,
-                    items = listOf(
-                        RowActionMenuItem(
-                            label = "Set role: READER",
-                            enabled = member.role != TournamentRole.READER,
-                            onClick = { onChangeRole(member.uid, TournamentRole.READER) },
-                        ),
-                        RowActionMenuItem(
-                            label = "Set role: EDITOR",
-                            enabled = member.role != TournamentRole.EDITOR,
-                            onClick = { onChangeRole(member.uid, TournamentRole.EDITOR) },
-                        ),
-                        RowActionMenuItem(
-                            label = "Set role: ADMIN",
-                            enabled = member.role != TournamentRole.ADMIN,
-                            onClick = { onChangeRole(member.uid, TournamentRole.ADMIN) },
-                        ),
-                        RowActionMenuItem(
-                            label = "Remove",
-                            enabled = enabled,
-                            onClick = { onRemove(member.uid) },
-                        ),
-                    ),
+                    items = buildList {
+                        add(
+                            RowActionMenuItem(
+                                label = "Set role: READER",
+                                enabled = member.role != TournamentRole.READER,
+                                onClick = { onChangeRole(member.uid, TournamentRole.READER) },
+                            ),
+                        )
+                        add(
+                            RowActionMenuItem(
+                                label = "Set role: EDITOR",
+                                enabled = member.role != TournamentRole.EDITOR,
+                                onClick = { onChangeRole(member.uid, TournamentRole.EDITOR) },
+                            ),
+                        )
+                        if (canGrantAdmin) {
+                            add(
+                                RowActionMenuItem(
+                                    label = "Set role: ADMIN",
+                                    enabled = member.role != TournamentRole.ADMIN,
+                                    onClick = { onChangeRole(member.uid, TournamentRole.ADMIN) },
+                                ),
+                            )
+                        }
+                        add(
+                            RowActionMenuItem(
+                                label = "Remove",
+                                enabled = enabled,
+                                onClick = { onRemove(member.uid) },
+                            ),
+                        )
+                    },
                     modifier = Modifier.width(44.dp),
                 )
             }
@@ -333,6 +340,7 @@ private fun RoleDropdown(
     enabled: Boolean,
     buttonText: String,
     currentRole: TournamentRole?,
+    roles: List<TournamentRole>,
     onSelect: (TournamentRole) -> Unit,
 ) {
     var isMenuOpen by remember(currentRole) { mutableStateOf(false) }
@@ -347,7 +355,7 @@ private fun RoleDropdown(
         expanded = isMenuOpen,
         onDismissRequest = { isMenuOpen = false },
     ) {
-        TournamentRole.entries.forEach { role ->
+        roles.forEach { role ->
             DropdownMenuItem(
                 text = { Text(role.name) },
                 onClick = {

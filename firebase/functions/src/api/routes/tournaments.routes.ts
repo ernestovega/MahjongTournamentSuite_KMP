@@ -1,15 +1,17 @@
 import { Router } from "express";
 
+import { auth } from "../../firebase";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireSuperadmin } from "../middleware/requireSuperadmin";
 import { requireTournamentRole } from "../middleware/requireTournamentRole";
-import { badRequest } from "../httpError";
+import { badRequest, forbidden } from "../httpError";
 import { parseRole } from "../../models/role";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
-import { createTournament, deleteTournament, listAllTournaments, listTournamentsForUser } from "../../services/tournamentsService";
+import { createTournament, deleteTournament, listAllTournaments, listTournamentsForUser, renameTournament } from "../../services/tournamentsService";
 import { assignTournamentPlayer, listTournamentPlayers, listTournamentRounds, listTournamentTables } from "../../services/tournamentContentService";
 import { playerExists, validateEmaId } from "../../services/playersService";
 import { getTableWithHands, updateHand, updateTable } from "../../services/tableManagerService";
+import { getUserProfile } from "../../services/usersService";
 
 export function tournamentsRouter(): Router {
   const router = Router();
@@ -133,6 +135,35 @@ export function tournamentsRouter(): Router {
     }
   });
 
+  router.put("/:tournamentId", requireAuth, requireTournamentRole("ADMIN"), async (req, res, next) => {
+    try {
+      const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
+      const name = String(body?.name ?? "").trim();
+      if (!name) throw badRequest("Tournament name is required");
+
+      await renameTournament(req.params.tournamentId, name);
+      res.status(200).json({ ok: true });
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  router.get(
+    "/:tournamentId/users/lookup",
+    requireAuth,
+    requireTournamentRole("ADMIN"),
+    async (req, res, next) => {
+      try {
+        const email = String(req.query.email ?? "").trim();
+        if (!email.includes("@")) throw badRequest("Enter a user email address");
+        const profile = await auth.getUserByEmail(email).then((user) => getUserProfile(user.uid));
+        res.status(200).json(profile);
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
   router.get(
     "/:tournamentId/members",
     requireAuth,
@@ -184,6 +215,10 @@ export function tournamentsRouter(): Router {
         const role = parseRole(req.body?.role);
         if (!role) {
           throw badRequest("Invalid role");
+        }
+        const actor = res.locals.auth as { superadmin?: boolean };
+        if (role === "ADMIN" && actor.superadmin !== true) {
+          throw forbidden("Only a superadmin can grant Tournament Admin");
         }
 
         await upsertTournamentMember({

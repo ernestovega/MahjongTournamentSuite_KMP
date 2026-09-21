@@ -121,8 +121,6 @@ class DefaultAuthRepository(
         UserProfile(
             uid = me.uid,
             email = me.email,
-            emaId = me.emaId,
-            contactEmail = me.contactEmail,
         )
     }.fold(
         onSuccess = { profile -> AppResult.Success(profile) },

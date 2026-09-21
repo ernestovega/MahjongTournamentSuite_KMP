@@ -2,13 +2,13 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireAdmin = requireAdmin;
 const httpError_1 = require("../httpError");
-/** Allows global admins and superadmins to manage the shared player base. */
+/** Kept for compatibility. Global administration now requires a superadmin. */
 function requireAdmin(_req, res, next) {
     const decoded = res.locals.auth;
-    if (decoded?.admin === true || decoded?.superadmin === true) {
+    if (decoded?.superadmin === true) {
         next();
         return;
     }
-    next((0, httpError_1.forbidden)("Admin required"));
+    next((0, httpError_1.forbidden)("Superadmin required"));
 }
 //# sourceMappingURL=requireAdmin.js.map

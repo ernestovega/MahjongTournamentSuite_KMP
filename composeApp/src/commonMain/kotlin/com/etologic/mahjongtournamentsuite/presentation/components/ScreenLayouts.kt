@@ -54,7 +54,7 @@ fun ScreenColumn(
                     scrollState = scrollState,
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
-                        .fillMaxSize()
+                        .fillMaxHeight()
                         .width(PlatformScrollbarThickness),
                 )
             }

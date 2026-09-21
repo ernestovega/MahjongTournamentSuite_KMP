@@ -1,11 +1,13 @@
 package com.etologic.mahjongtournamentsuite.presentation.platform
 
 import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.presentation.RankingsRoute
-import com.etologic.mahjongtournamentsuite.presentation.TimerRoute
+import kotlinx.browser.window
 
-actual fun openTimer(navController: NavHostController) {
-    navController.navigate(TimerRoute)
+actual fun openTimer(
+    navController: NavHostController,
+    initialRound: Int,
+) {
+    window.open("${window.location.pathname}?standalone=timer&initialRound=$initialRound", "_blank")
 }
 
 actual fun openRankings(
@@ -13,10 +15,8 @@ actual fun openRankings(
     tournamentId: String,
     tournamentName: String,
 ) {
-    navController.navigate(
-        RankingsRoute(
-            tournamentId = tournamentId,
-            tournamentName = tournamentName,
-        ),
+    window.open(
+        "${window.location.pathname}?standalone=rankings&tournamentId=$tournamentId",
+        "_blank",
     )
 }

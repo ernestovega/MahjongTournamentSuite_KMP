@@ -45,8 +45,14 @@ data class CreateTournamentRequestDto(
 )
 
 @Serializable
+data class RenameTournamentRequestDto(
+    val name: String,
+)
+
+@Serializable
 data class TournamentMemberDto(
     val uid: String,
+    val email: String = "",
     val role: TournamentRoleDto,
 )
 

@@ -6,15 +6,13 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.rememberWindowState
-import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import java.util.UUID
 
 sealed class StandaloneWindow {
     abstract val id: String
 
     data class Timer(
+        val initialRound: Int,
         override val id: String = UUID.randomUUID().toString(),
     ) : StandaloneWindow()
 
@@ -27,9 +25,10 @@ sealed class StandaloneWindow {
 
 object StandaloneWindows {
     private val windows: SnapshotStateList<StandaloneWindow> = mutableStateListOf()
+    val hasOpenWindows: Boolean get() = windows.isNotEmpty()
 
-    fun openTimer() {
-        windows.add(StandaloneWindow.Timer())
+    fun openTimer(initialRound: Int) {
+        windows.add(StandaloneWindow.Timer(initialRound = initialRound))
     }
 
     fun openRankings(
@@ -54,9 +53,7 @@ object StandaloneWindows {
                         onCloseRequest = { windows.removeAll { it.id == w.id } },
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {
-                        MtsTheme {
-                            TimerStandaloneScreen()
-                        }
+                        TimerApp(initialRound = w.initialRound)
                     }
                 }
 
@@ -66,13 +63,10 @@ object StandaloneWindows {
                         onCloseRequest = { windows.removeAll { it.id == w.id } },
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {
-                        MtsTheme {
-                            RankingStandaloneScreen(
-                                tournamentId = w.tournamentId,
-                                tournamentName = w.tournamentName,
-                                onClose = { windows.removeAll { it.id == w.id } },
-                            )
-                        }
+                        RankingApp(
+                            tournamentId = w.tournamentId,
+                            tournamentName = w.tournamentName,
+                        )
                     }
                 }
             }

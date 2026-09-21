@@ -32,5 +32,6 @@ data class CreateTournamentRequest(
 
 data class TournamentMember(
     val uid: String,
+    val email: String,
     val role: TournamentRole,
 )

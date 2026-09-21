@@ -4,7 +4,7 @@ import { auth } from "../../firebase";
 import { badRequest } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword, signUpWithEmailPassword } from "../../services/firebaseAuthRest";
-import { assertEmaIdAvailable, createUserProfile, getUserProfile } from "../../services/usersService";
+import { createUserProfile, getUserProfile } from "../../services/usersService";
 
 export function authRouter(): Router {
   const router = Router();
@@ -15,18 +15,15 @@ export function authRouter(): Router {
     try {
       const email = String(req.body?.email ?? "").trim();
       const password = String(req.body?.password ?? "");
-      const emaId = String(req.body?.emaId ?? "").trim();
 
-      if (!email || !password || !emaId) {
-        throw badRequest("Missing email, password, or emaId");
+      if (!email || !password) {
+        throw badRequest("Missing email or password");
       }
-
-      await assertEmaIdAvailable(emaId);
 
       const tokens = await signUpWithEmailPassword(email, password);
       createdUid = tokens.uid;
 
-      await createUserProfile(tokens.uid, email, emaId);
+      await createUserProfile(tokens.uid, email);
 
       res.status(200).json({
         idToken: tokens.idToken,

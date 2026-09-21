@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.playersRouter = playersRouter;
 const express_1 = require("express");
 const httpError_1 = require("../httpError");
-const requireAdmin_1 = require("../middleware/requireAdmin");
+const requireSuperadmin_1 = require("../middleware/requireSuperadmin");
 const requireAuth_1 = require("../middleware/requireAuth");
 const playersService_1 = require("../../services/playersService");
 function playersRouter() {
@@ -16,7 +16,7 @@ function playersRouter() {
             next(error);
         }
     });
-    router.post("/", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
+    router.post("/", requireAuth_1.requireAuth, requireSuperadmin_1.requireSuperadmin, async (req, res, next) => {
         try {
             const emaId = (0, playersService_1.validateEmaId)(req.body?.emaId);
             const name = String(req.body?.name ?? "").trim();
@@ -31,7 +31,7 @@ function playersRouter() {
             next(error);
         }
     });
-    router.put("/:emaId", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
+    router.put("/:emaId", requireAuth_1.requireAuth, requireSuperadmin_1.requireSuperadmin, async (req, res, next) => {
         try {
             const emaId = (0, playersService_1.validateEmaId)(req.params.emaId);
             const newEmaId = (0, playersService_1.validateEmaId)(req.body?.emaId ?? emaId);
@@ -53,7 +53,7 @@ function playersRouter() {
             next(error);
         }
     });
-    router.put("/:emaId/photo", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
+    router.put("/:emaId/photo", requireAuth_1.requireAuth, requireSuperadmin_1.requireSuperadmin, async (req, res, next) => {
         try {
             const emaId = (0, playersService_1.validateEmaId)(req.params.emaId);
             const contentType = String(req.body?.contentType ?? "").trim().toLowerCase();

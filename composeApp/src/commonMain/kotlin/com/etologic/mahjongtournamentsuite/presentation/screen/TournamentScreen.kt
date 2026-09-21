@@ -50,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -78,6 +79,7 @@ private sealed class PendingUnsavedAction {
     data class SelectRound(val roundId: Int) : PendingUnsavedAction()
     data class SelectTable(val tableId: Int) : PendingUnsavedAction()
     data object NavigatePlayers : PendingUnsavedAction()
+    data object NavigateUsers : PendingUnsavedAction()
     data object OpenRankings : PendingUnsavedAction()
     data object OpenTimer : PendingUnsavedAction()
 }
@@ -106,6 +108,7 @@ fun TournamentScreen(
     var pendingUnsavedAction by remember { mutableStateOf<PendingUnsavedAction?>(null) }
     val initialRoundFocusRequester = remember { FocusRequester() }
     val playersFocusRequester = remember { FocusRequester() }
+    val usersFocusRequester = remember { FocusRequester() }
     val timerFocusRequester = remember { FocusRequester() }
     val rankingFocusRequester = remember { FocusRequester() }
     var screenFocusApplied by remember { mutableStateOf(false) }
@@ -248,11 +251,18 @@ fun TournamentScreen(
     val table = tableState
     val editorState = remember(table, hands) { table?.let { TableManagerEditorState.from(it, hands) } }
     val hasUnsavedChanges = editorState?.hasUnsavedChanges == true
+    val timerInitialRound = allTables
+        .asSequence()
+        .filter { it.isCompleted || it.hasProgress }
+        .maxOfOrNull { it.roundId }
+        ?.plus(1)
+        ?: 1
 
     LaunchedEffect(isLoading, rounds.map { it.roundId }, selectedRoundId) {
         if (!screenFocusApplied && !isLoading && rounds.isNotEmpty()) {
             when (lastFocusedControl) {
                 "players" -> playersFocusRequester.requestFocus()
+                "users" -> usersFocusRequester.requestFocus()
                 "timer" -> timerFocusRequester.requestFocus()
                 "ranking" -> rankingFocusRequester.requestFocus()
                 else -> initialRoundFocusRequester.requestFocus()
@@ -307,8 +317,9 @@ fun TournamentScreen(
             is PendingUnsavedAction.SelectRound -> selectRound(action.roundId)
             is PendingUnsavedAction.SelectTable -> selectTable(action.tableId)
             PendingUnsavedAction.NavigatePlayers -> navController.navigate(PlayersRoute(tournamentId = tournamentId))
+            PendingUnsavedAction.NavigateUsers -> navController.navigate(UsersRoute(tournamentId = tournamentId))
             PendingUnsavedAction.OpenRankings -> openRankings(navController, tournamentId, tournamentName)
-            PendingUnsavedAction.OpenTimer -> openTimer(navController)
+            PendingUnsavedAction.OpenTimer -> openTimer(navController, timerInitialRound)
         }
     }
 
@@ -349,14 +360,19 @@ fun TournamentScreen(
                 showThemeToggle = true,
                 onTimer = {
                     lastFocusedControl = "timer"
-                    openTimer(navController)
+                    openTimer(navController, timerInitialRound)
                 },
                 onRanking = {
                     lastFocusedControl = "ranking"
                     openRankings(navController, tournamentId, tournamentName)
                 },
+                onUsers = {
+                    lastFocusedControl = "users"
+                    requestUnsavedAction(PendingUnsavedAction.NavigateUsers)
+                },
                 timerFocusRequester = timerFocusRequester,
                 rankingFocusRequester = rankingFocusRequester,
+                usersFocusRequester = usersFocusRequester,
             )
         },
         actions = {

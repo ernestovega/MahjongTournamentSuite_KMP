@@ -38,6 +38,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.isShiftPressed
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 
 private val FocusHaloPadding = 3.dp
@@ -78,6 +79,49 @@ fun Modifier.focusLoop(
             true
         }
         Key.DirectionRight, Key.DirectionDown -> {
+            next.requestFocus()
+            true
+        }
+        else -> false
+    }
+}
+
+/** Moves focus horizontally only when the caret is at the matching text boundary. */
+fun Modifier.textFieldFocusLoop(
+    previous: FocusRequester,
+    next: FocusRequester,
+    value: () -> TextFieldValue,
+): Modifier = onPreviewKeyEvent { event ->
+    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+    when (event.key) {
+        Key.Tab -> {
+            if (event.isShiftPressed) previous.requestFocus() else next.requestFocus()
+            true
+        }
+        Key.DirectionLeft -> {
+            val selection = value().selection
+            if (selection.collapsed && selection.start == 0) {
+                previous.requestFocus()
+                true
+            } else {
+                false
+            }
+        }
+        Key.DirectionRight -> {
+            val currentValue = value()
+            val selection = currentValue.selection
+            if (selection.collapsed && selection.end == currentValue.text.length) {
+                next.requestFocus()
+                true
+            } else {
+                false
+            }
+        }
+        Key.DirectionUp -> {
+            previous.requestFocus()
+            true
+        }
+        Key.DirectionDown -> {
             next.requestFocus()
             true
         }
@@ -216,12 +260,14 @@ fun FocusedIconButton(
     enabled: Boolean = true,
     colors: IconButtonColors = IconButtonDefaults.iconButtonColors(),
     focusRequester: FocusRequester? = null,
+    showFocusHighlight: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     FocusHighlightContainer(
         modifier = modifier,
         interactionSource = interactionSource,
+        showFocusHighlight = showFocusHighlight,
     ) {
         IconButton(
             onClick = onClick,
@@ -240,21 +286,22 @@ fun FocusedIconButton(
 fun FocusHighlightContainer(
     modifier: Modifier,
     interactionSource: MutableInteractionSource,
+    showFocusHighlight: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val focused by interactionSource.collectIsFocusedAsState()
     val hovered by interactionSource.collectIsHoveredAsState()
     Box(
         modifier = modifier
+            .padding(FocusHaloPadding)
             .clip(MaterialTheme.shapes.small)
             .background(
-                if (focused || hovered) {
+                if ((showFocusHighlight && focused) || hovered) {
                     MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
                 } else {
                     androidx.compose.ui.graphics.Color.Transparent
                 },
-            )
-            .padding(FocusHaloPadding),
+            ),
         propagateMinConstraints = true,
     ) {
         content()

@@ -1,6 +1,8 @@
 # MahjongTournamentSuite — KMP migration plan
 
-_Last updated: 2026-09-19_
+See [users.md](users.md) for the current user and role system.
+
+_Last updated: 2026-09-20_
 
 ## Goals
 
@@ -37,7 +39,7 @@ _Last updated: 2026-09-19_
 
 ## Auth + roles (chosen)
 
-- **Sign-up**: `email + password + emaId`
+- **Sign-up**: `email + password`
 - **Sign-in**: accepts an email and password.
 - Roles:
   - Global: `superadmin` (Firebase custom claim)
@@ -78,13 +80,18 @@ Implemented (Firebase Functions):
 - Admin:
   - `POST /admin/bootstrapSuperadmin` (one-time; uses `X-Bootstrap-Key`)
   - `GET /admin/whoami`
-  - `GET /admin/users/lookup?identifier=...` (email or emaId)
+  - `GET /admin/users`
+  - `POST /admin/users`
+  - `PUT /admin/users/:uid`
+  - `PUT /admin/users/:uid/disabled`
+  - `GET /admin/users/lookup?identifier=...` (email)
 - Tournaments:
   - `GET /tournaments` (superadmin: all; others: membership derived)
   - `POST /tournaments` (superadmin only)
   - `GET /tournaments/:tournamentId/members`
   - `PUT /tournaments/:tournamentId/members/:uid`
   - `DELETE /tournaments/:tournamentId/members/:uid`
+  - `GET /tournaments/:tournamentId/users/lookup?email=...`
   - `GET /tournaments/:tournamentId` is still a placeholder.
 
 Rules + docs:
@@ -123,16 +130,19 @@ Rules + docs:
 Build the admin-side app flow (no reader app yet):
 
 - Auth:
-  - Sign Up (email, emaId, password)
+  - Sign Up (email and password)
   - Sign In (email and password)
   - Sign Out
 - Tournaments:
   - List tournaments (with refresh)
   - Create tournament (superadmin only)
-- Members:
-  - View tournament members
-  - Lookup user by email/emaId (superadmin only)
-  - Assign member role (ADMIN/EDITOR/READER)
+- Users:
+  - Manage global users (superadmin only)
+  - Disable accounts while keeping profile and audit records
+  - View tournament users
+  - Look up a user by email (superadmin or the tournament's Admin)
+  - Assign Reader or Editor as a Tournament Admin
+  - Assign Tournament Admin as a superadmin
 
 ## 3) Persist auth session
 

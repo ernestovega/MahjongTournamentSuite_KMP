@@ -12,10 +12,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.ButtonDefaults
@@ -37,7 +39,9 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.graphics.vector.ImageVector
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 @Composable
@@ -64,6 +68,7 @@ fun DataTableRow(
     highlighted: Boolean = false,
     backgroundColor: Color = Color.Transparent,
     contentPadding: PaddingValues = PaddingValues(horizontal = 12.dp, vertical = 10.dp),
+    horizontalArrangement: Arrangement.Horizontal = Arrangement.spacedBy(12.dp),
     content: @Composable RowScope.() -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -103,7 +108,7 @@ fun DataTableRow(
             .background(resolvedBackgroundColor)
             .then(interactiveModifier)
             .padding(contentPadding),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = horizontalArrangement,
         verticalAlignment = Alignment.CenterVertically,
         content = content,
     )
@@ -126,6 +131,8 @@ fun RowActionsMenu(
     items: List<RowActionMenuItem>,
     modifier: Modifier = Modifier,
     buttonLabel: String = "⋮",
+    buttonIcon: ImageVector? = null,
+    buttonIconSize: Dp = 24.dp,
     buttonTextStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     buttonContentColor: Color? = null,
     focusRequester: FocusRequester? = null,
@@ -141,10 +148,18 @@ fun RowActionsMenu(
         focusRequester = focusRequester,
         colors = buttonContentColor?.let { ButtonDefaults.textButtonColors(contentColor = it) } ?: defaultButtonColors,
     ) {
-        Text(
-            text = buttonLabel,
-            style = buttonTextStyle,
-        )
+        if (buttonIcon != null) {
+            Icon(
+                imageVector = buttonIcon,
+                contentDescription = "Actions",
+                modifier = Modifier.size(buttonIconSize),
+            )
+        } else {
+            Text(
+                text = buttonLabel,
+                style = buttonTextStyle,
+            )
+        }
     }
 
     DropdownMenu(

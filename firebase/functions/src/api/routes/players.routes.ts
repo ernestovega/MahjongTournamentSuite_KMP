@@ -1,7 +1,7 @@
 import { Router } from "express";
 
 import { badRequest, forbidden } from "../httpError";
-import { requireAdmin } from "../middleware/requireAdmin";
+import { requireSuperadmin } from "../middleware/requireSuperadmin";
 import { requireAuth } from "../middleware/requireAuth";
 import { createPlayer, listPlayers, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
 
@@ -16,7 +16,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.post("/", requireAuth, requireAdmin, async (req, res, next) => {
+  router.post("/", requireAuth, requireSuperadmin, async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.body?.emaId);
       const name = String(req.body?.name ?? "").trim();
@@ -29,7 +29,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.put("/:emaId", requireAuth, requireAdmin, async (req, res, next) => {
+  router.put("/:emaId", requireAuth, requireSuperadmin, async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.params.emaId);
       const newEmaId = validateEmaId(req.body?.emaId ?? emaId);
@@ -48,7 +48,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.put("/:emaId/photo", requireAuth, requireAdmin, async (req, res, next) => {
+  router.put("/:emaId/photo", requireAuth, requireSuperadmin, async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.params.emaId);
       const contentType = String(req.body?.contentType ?? "").trim().toLowerCase();

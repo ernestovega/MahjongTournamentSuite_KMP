@@ -210,6 +210,20 @@ export async function listAllTournaments(): Promise<Tournament[]> {
   return Promise.all(snap.docs.map((d) => mapTournamentDoc(d)));
 }
 
+export async function renameTournament(tournamentId: string, name: string): Promise<void> {
+  const normalizedName = name.trim();
+  if (normalizedName.length === 0) throw badRequest("Tournament name is required");
+
+  const ref = db.collection("tournaments").doc(tournamentId);
+  const snap = await ref.get();
+  if (!snap.exists) throw notFound("Tournament not found");
+
+  await ref.update({
+    name: normalizedName,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
 function isDocRef(value: DocumentReference | null): value is DocumentReference {
   return value != null;
 }

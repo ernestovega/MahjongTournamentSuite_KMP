@@ -109,7 +109,7 @@ The sync does not delete players. It reports no deletions because tournament his
 
 The initial seed downloads each available photo once. Later runs send a conditional request with the saved ETag. An unchanged photo returns `304 Not Modified` and is not downloaded again.
 
-Admins can replace a photo in the app. The upload accepts JPEG, PNG, WebP, and GIF files up to 5 MB.
+Superadmins can replace a photo in the app. The upload accepts JPEG, PNG, WebP, and GIF files up to 5 MB.
 
 Changed photos replace the same Storage path. The registry keeps a Firebase Storage download URL and the source ETag.
 

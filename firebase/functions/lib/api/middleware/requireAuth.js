@@ -16,7 +16,8 @@ async function requireAuth(req, res, next) {
         return;
     }
     try {
-        const decoded = await firebase_1.auth.verifyIdToken(token);
+        // Check revocation so disabled users lose API access immediately.
+        const decoded = await firebase_1.auth.verifyIdToken(token, true);
         res.locals.auth = decoded;
         next();
     }

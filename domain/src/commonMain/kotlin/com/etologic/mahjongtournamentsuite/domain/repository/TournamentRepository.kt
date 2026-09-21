@@ -17,6 +17,11 @@ interface TournamentRepository {
 
     suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament>
 
+    suspend fun renameTournament(
+        tournamentId: String,
+        name: String,
+    ): AppResult<Unit>
+
     suspend fun deleteTournament(tournamentId: String): AppResult<Unit>
 
     suspend fun listTournamentMembers(tournamentId: String): AppResult<List<TournamentMember>>

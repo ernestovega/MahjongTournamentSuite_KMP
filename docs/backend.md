@@ -1,5 +1,7 @@
 # Backend (Firebase Functions + Firestore)
 
+See [users.md](users.md) for the complete user and role system.
+
 This app does **not** access Firestore directly from clients.
 
 - Firestore rules are `deny all`.
@@ -27,7 +29,6 @@ Body:
 
 - `email` (required)
 - `password` (required)
-- `emaId` (required)
 
 Creates a Firebase Auth email/password user and writes:
 
@@ -69,6 +70,22 @@ Clients should refresh tokens when receiving `401 unauthenticated`.
 
 - Global: `superadmin` (Firebase custom claim)
 - Per tournament membership: `ADMIN | EDITOR | READER`
+
+Superadmins manage accounts and all tournament assignments. Tournament Admins manage users in their tournament.
+Only a superadmin can grant Tournament Admin. Disabling a user keeps the profile and audit history.
+
+## User management
+
+- `GET /admin/users` lists Firebase Auth users and their profiles.
+- `POST /admin/users` creates an account and sends a password-reset email.
+- `PUT /admin/users/:uid` changes email, global role, and tournament assignments.
+- `PUT /admin/users/:uid/disabled` disables or enables an account.
+
+Users cannot disable themselves or change their own role. The last enabled superadmin cannot be demoted or disabled.
+
+- `GET /tournaments/:tournamentId/users/lookup?email=...` finds a user for a Tournament Admin.
+- Tournament Admins can assign Reader or Editor, change roles, and remove users.
+- Only superadmins can grant the Tournament Admin role.
 
 Membership is stored at:
 

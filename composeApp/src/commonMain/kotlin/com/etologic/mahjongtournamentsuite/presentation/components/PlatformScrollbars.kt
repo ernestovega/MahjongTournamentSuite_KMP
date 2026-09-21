@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -49,6 +50,10 @@ expect fun PlatformHorizontalScrollbar(
 
 expect val PlatformScrollbarThickness: Dp
 
+/**
+ * Displays a vertical lazy list with a scrollbar that occupies only the trailing edge.
+ * The scrollbar must not fill the width because it would intercept row pointer input.
+ */
 @Composable
 fun LazyColumnWithScrollbar(
     state: LazyListState,
@@ -73,7 +78,7 @@ fun LazyColumnWithScrollbar(
             listState = state,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .fillMaxSize()
+                .fillMaxHeight()
                 .width(PlatformScrollbarThickness),
         )
     }
@@ -97,7 +102,7 @@ fun ScrollableColumnWithScrollbar(
             scrollState = state,
             modifier = Modifier
                 .align(Alignment.CenterEnd)
-                .fillMaxSize()
+                .fillMaxHeight()
                 .width(PlatformScrollbarThickness),
         )
     }
@@ -146,7 +151,7 @@ private fun PlatformScrollbarsPreview() {
                 listState = listState,
                 modifier = Modifier
                     .align(Alignment.CenterEnd)
-                    .fillMaxSize()
+                    .fillMaxHeight()
                     .width(PlatformScrollbarThickness),
             )
             PlatformHorizontalScrollbar(

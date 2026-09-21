@@ -97,7 +97,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import coil3.compose.AsyncImage
 
-/** Shared player base. All signed-in users can read it. Only global admins can change it. */
+/** Shared player base. All signed-in users can read it. Only superadmins can change it. */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 fun PlayerBaseScreen(navController: NavHostController) {

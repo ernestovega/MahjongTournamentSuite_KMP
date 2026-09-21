@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createTournament = createTournament;
 exports.listAllTournaments = listAllTournaments;
+exports.renameTournament = renameTournament;
 exports.listTournamentsForUser = listTournamentsForUser;
 exports.deleteTournament = deleteTournament;
 const firestore_1 = require("firebase-admin/firestore");
@@ -172,6 +173,19 @@ async function createTournament(params) {
 async function listAllTournaments() {
     const snap = await firebase_1.db.collection("tournaments").orderBy("updatedAt", "desc").get();
     return Promise.all(snap.docs.map((d) => mapTournamentDoc(d)));
+}
+async function renameTournament(tournamentId, name) {
+    const normalizedName = name.trim();
+    if (normalizedName.length === 0)
+        throw (0, httpError_1.badRequest)("Tournament name is required");
+    const ref = firebase_1.db.collection("tournaments").doc(tournamentId);
+    const snap = await ref.get();
+    if (!snap.exists)
+        throw (0, httpError_1.notFound)("Tournament not found");
+    await ref.update({
+        name: normalizedName,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
 }
 function isDocRef(value) {
     return value != null;

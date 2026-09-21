@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,19 +9,33 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Pause
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -32,8 +47,11 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -42,36 +60,72 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import kotlinx.coroutines.delay
 
 @Composable
 fun TimerStandaloneScreen(
+    initialRound: Int = 1,
 ) {
-    AppScaffold(title = "Timer", autoFocusFirst = false) {
-        TimerContent()
+    val appThemeController = rememberThemeController()
+    var themeOverride by rememberSaveable { mutableStateOf<Boolean?>(null) }
+    val useDarkTheme = themeOverride ?: appThemeController.isDarkTheme
+
+    MtsTheme(useDarkTheme = useDarkTheme) {
+        Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
+            TimerContent(
+                initialRound = initialRound,
+                useDarkTheme = useDarkTheme,
+                onToggleTheme = { themeOverride = !useDarkTheme },
+            )
+        }
     }
 }
 
 @Composable
-private fun TimerContent() {
+private fun TimerContent(
+    initialRound: Int,
+    useDarkTheme: Boolean,
+    onToggleTheme: () -> Unit,
+) {
+    val roundDownFocusRequester = remember { FocusRequester() }
+    val roundUpFocusRequester = remember { FocusRequester() }
     val startFocusRequester = remember { FocusRequester() }
+    val resetFocusRequester = remember { FocusRequester() }
+    val setTimeFocusRequester = remember { FocusRequester() }
+    val themeFocusRequester = remember { FocusRequester() }
     var isRunning by remember { mutableStateOf(false) }
-    var roundNum by remember { mutableStateOf(1) }
+    var roundNum by remember { mutableStateOf(initialRound) }
+
+    LaunchedEffect(initialRound) {
+        roundNum = initialRound
+    }
 
     var maxTimeSeconds by remember { mutableStateOf(DEFAULT_MAX_TIME_SECONDS) }
     var timeLeftSeconds by remember { mutableStateOf(DEFAULT_MAX_TIME_SECONDS) }
 
     var isSetTimeDialogOpen by remember { mutableStateOf(false) }
-    var minutesText by remember { mutableStateOf((maxTimeSeconds / 60).toString()) }
+    var minutesValue by remember {
+        mutableStateOf(TextFieldValue((maxTimeSeconds / 60).toString()))
+    }
 
     val hasFinished = timeLeftSeconds <= 0L
+
+    fun applyRemainingTime() {
+        val minutes = minutesValue.text.trim().toLongOrNull()
+        if (minutes != null && minutes > 0) {
+            maxTimeSeconds = minutes * 60L
+            timeLeftSeconds = maxTimeSeconds
+            isRunning = false
+            isSetTimeDialogOpen = false
+        }
+    }
 
     LaunchedEffect(Unit) {
         startFocusRequester.requestFocus()
@@ -107,6 +161,9 @@ private fun TimerContent() {
         val cancelFocusRequester = remember { FocusRequester() }
 
         LaunchedEffect(Unit) {
+            minutesValue = minutesValue.copy(
+                selection = TextRange(0, minutesValue.text.length),
+            )
             timeFieldFocusRequester.requestFocus()
         }
 
@@ -120,15 +177,7 @@ private fun TimerContent() {
                         previous = timeFieldFocusRequester,
                         next = cancelFocusRequester,
                     ),
-                    onClick = {
-                        val minutes = minutesText.trim().toLongOrNull()
-                        if (minutes != null && minutes > 0) {
-                            maxTimeSeconds = minutes * 60L
-                            timeLeftSeconds = maxTimeSeconds
-                            isRunning = false
-                            isSetTimeDialogOpen = false
-                        }
-                    },
+                    onClick = { applyRemainingTime() },
                 ) {
                     Text("Set")
                 }
@@ -150,10 +199,14 @@ private fun TimerContent() {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Text("Enter remaining time in minutes:")
                     OutlinedTextField(
-                        value = minutesText,
-                        onValueChange = { minutesText = it },
+                        value = minutesValue,
+                        onValueChange = { minutesValue = it },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                            onDone = { applyRemainingTime() },
                         ),
                         singleLine = true,
                         modifier = Modifier
@@ -183,6 +236,10 @@ private fun TimerContent() {
                                         setFocusRequester.requestFocus()
                                         true
                                     }
+                                    Key.Enter, Key.NumPadEnter -> {
+                                        applyRemainingTime()
+                                        true
+                                    }
                                     else -> false
                                 }
                             },
@@ -195,15 +252,60 @@ private fun TimerContent() {
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {
-        Text(
-            text = "Round $roundNum",
-            style = MaterialTheme.typography.headlineLarge.copy(fontSize = 84.sp),
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 24.dp, start = 24.dp, end = 24.dp),
-        )
+                .padding(top = 20.dp, start = 24.dp, end = 24.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (!isRunning) {
+                FocusedIconButton(
+                    enabled = roundNum > 0,
+                    onClick = { roundNum -= 1 },
+                    focusRequester = roundDownFocusRequester,
+                    buttonModifier = Modifier
+                        .size(32.dp)
+                        .focusLoop(
+                            previous = themeFocusRequester,
+                            next = roundUpFocusRequester,
+                        ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Remove,
+                        contentDescription = "Decrease round",
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+            if (roundNum > 0) {
+                Text(
+                    text = "Round $roundNum",
+                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = 64.sp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                )
+            }
+            if (!isRunning) {
+                FocusedIconButton(
+                    onClick = { roundNum += 1 },
+                    focusRequester = roundUpFocusRequester,
+                    buttonModifier = Modifier
+                        .size(32.dp)
+                        .focusLoop(
+                            previous = if (roundNum > 0) roundDownFocusRequester else themeFocusRequester,
+                            next = startFocusRequester,
+                        ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Increase round",
+                        modifier = Modifier.size(18.dp),
+                    )
+                }
+            }
+        }
 
         BoxWithConstraints(
             modifier = Modifier
@@ -263,59 +365,98 @@ private fun TimerContent() {
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceEvenly,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                AppTextButton(
-                    enabled = !isRunning,
-                    onClick = { if (roundNum > 1) roundNum -= 1 },
-                ) {
-                    Text("−")
-                }
-                AppTextButton(
-                    enabled = !isRunning,
-                    onClick = { roundNum += 1 },
-                ) {
-                    Text("+")
-                }
-                AppTextButton(
-                    focusRequester = startFocusRequester,
-                    onClick = {
-                        if (hasFinished) {
-                            timeLeftSeconds = maxTimeSeconds
-                        }
-                        isRunning = !isRunning
-                    },
-                ) {
-                    Text(if (isRunning) "Pause" else "Start")
-                }
-                AppTextButton(
-                    onClick = {
-                        isRunning = false
-                        timeLeftSeconds = maxTimeSeconds
-                    },
-                ) {
-                    Text("Reset")
-                }
-                AppTextButton(
-                    enabled = !isRunning,
-                    onClick = {
-                        minutesText = (maxTimeSeconds / 60).toString()
-                        isSetTimeDialogOpen = true
-                    },
-                ) {
-                    Text("Set time")
-                }
-            }
-
             if (hasFinished) {
                 Text(
                     text = "Time is up.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
+            }
+
+            Box(modifier = Modifier.fillMaxWidth()) {
+                FocusedIconButton(
+                    focusRequester = startFocusRequester,
+                    showFocusHighlight = !isRunning,
+                    onClick = {
+                        if (hasFinished) {
+                            timeLeftSeconds = maxTimeSeconds
+                        }
+                        isRunning = !isRunning
+                    },
+                    modifier = Modifier
+                        .align(Alignment.Center)
+                        .alpha(if (isRunning) 0.5f else 1f),
+                    buttonModifier = Modifier
+                        .size(56.dp)
+                        .focusLoop(
+                            previous = if (isRunning) startFocusRequester else roundUpFocusRequester,
+                            next = if (isRunning) startFocusRequester else resetFocusRequester,
+                        ),
+                ) {
+                    Icon(
+                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
+                        contentDescription = if (isRunning) "Pause timer" else "Start timer",
+                        modifier = Modifier.size(34.dp),
+                    )
+                }
+
+                if (!isRunning) {
+                    Row(
+                        modifier = Modifier.align(Alignment.CenterEnd),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        FocusedIconButton(
+                            focusRequester = resetFocusRequester,
+                            buttonModifier = Modifier.focusLoop(
+                                previous = startFocusRequester,
+                                next = setTimeFocusRequester,
+                            ),
+                            onClick = {
+                                isRunning = false
+                                timeLeftSeconds = maxTimeSeconds
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Refresh,
+                                contentDescription = "Reset timer",
+                            )
+                        }
+                        FocusedIconButton(
+                            focusRequester = setTimeFocusRequester,
+                            buttonModifier = Modifier.focusLoop(
+                                previous = resetFocusRequester,
+                                next = themeFocusRequester,
+                            ),
+                            onClick = {
+                                val minutesText = (maxTimeSeconds / 60).toString()
+                                minutesValue = TextFieldValue(
+                                    text = minutesText,
+                                    selection = TextRange(0, minutesText.length),
+                                )
+                                isSetTimeDialogOpen = true
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = "Set time",
+                            )
+                        }
+                        FocusedIconButton(
+                            onClick = onToggleTheme,
+                            focusRequester = themeFocusRequester,
+                            buttonModifier = Modifier.focusLoop(
+                                previous = setTimeFocusRequester,
+                                next = if (roundNum > 0) roundDownFocusRequester else roundUpFocusRequester,
+                            ),
+                        ) {
+                            Icon(
+                                imageVector = if (useDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = if (useDarkTheme) "Use light theme" else "Use dark theme",
+                            )
+                        }
+                    }
+                }
             }
         }
     }

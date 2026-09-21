@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tournamentsRouter = tournamentsRouter;
 const express_1 = require("express");
+const firebase_1 = require("../../firebase");
 const requireAuth_1 = require("../middleware/requireAuth");
 const requireSuperadmin_1 = require("../middleware/requireSuperadmin");
 const requireTournamentRole_1 = require("../middleware/requireTournamentRole");
@@ -12,6 +13,7 @@ const tournamentsService_1 = require("../../services/tournamentsService");
 const tournamentContentService_1 = require("../../services/tournamentContentService");
 const playersService_1 = require("../../services/playersService");
 const tableManagerService_1 = require("../../services/tableManagerService");
+const usersService_1 = require("../../services/usersService");
 function tournamentsRouter() {
     const router = (0, express_1.Router)();
     router.get("/", requireAuth_1.requireAuth, async (_req, res, next) => {
@@ -133,6 +135,31 @@ function tournamentsRouter() {
             next(e);
         }
     });
+    router.put("/:tournamentId", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
+        try {
+            const body = (req.body != null && typeof req.body === "object") ? req.body : null;
+            const name = String(body?.name ?? "").trim();
+            if (!name)
+                throw (0, httpError_1.badRequest)("Tournament name is required");
+            await (0, tournamentsService_1.renameTournament)(req.params.tournamentId, name);
+            res.status(200).json({ ok: true });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.get("/:tournamentId/users/lookup", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
+        try {
+            const email = String(req.query.email ?? "").trim();
+            if (!email.includes("@"))
+                throw (0, httpError_1.badRequest)("Enter a user email address");
+            const profile = await firebase_1.auth.getUserByEmail(email).then((user) => (0, usersService_1.getUserProfile)(user.uid));
+            res.status(200).json(profile);
+        }
+        catch (e) {
+            next(e);
+        }
+    });
     router.get("/:tournamentId/members", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
         try {
             const members = await (0, membersService_1.listTournamentMembers)(req.params.tournamentId);
@@ -169,6 +196,10 @@ function tournamentsRouter() {
             const role = (0, role_1.parseRole)(req.body?.role);
             if (!role) {
                 throw (0, httpError_1.badRequest)("Invalid role");
+            }
+            const actor = res.locals.auth;
+            if (role === "ADMIN" && actor.superadmin !== true) {
+                throw (0, httpError_1.forbidden)("Only a superadmin can grant Tournament Admin");
             }
             await (0, membersService_1.upsertTournamentMember)({
                 tournamentId: req.params.tournamentId,
