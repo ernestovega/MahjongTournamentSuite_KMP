@@ -8,7 +8,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRole
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -52,13 +51,11 @@ class UsersPresenter(
     suspend fun upsertMember(
         tournamentId: String,
         uid: String,
-        role: TournamentRole,
     ): AppResult<Unit> {
         logger.i { "Upserting tournament member." }
         return tournamentRepository.upsertTournamentMember(
             tournamentId = tournamentId,
             uid = uid,
-            role = role,
         )
     }
 

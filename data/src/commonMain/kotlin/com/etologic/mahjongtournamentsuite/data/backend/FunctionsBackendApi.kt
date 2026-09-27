@@ -18,7 +18,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledReque
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoleDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
@@ -160,10 +161,9 @@ class FunctionsBackendApi(
         idToken: String,
         tournamentId: String,
         uid: String,
-        role: TournamentRoleDto,
     ): OkResponseDto = put(
         path = "/tournaments/$tournamentId/members/$uid",
-        requestBody = UpsertMemberRequestDto(role = role),
+        requestBody = UpsertMemberRequestDto(),
         idToken = idToken,
     )
 
@@ -181,6 +181,25 @@ class FunctionsBackendApi(
         tournamentId: String,
     ): TournamentPlayersResponseDto = get(
         path = "/tournaments/$tournamentId/players",
+        idToken = idToken,
+    )
+
+    suspend fun listTournamentTeams(
+        idToken: String,
+        tournamentId: String,
+    ): TournamentTeamsResponseDto = get(
+        path = "/tournaments/$tournamentId/teams",
+        idToken = idToken,
+    )
+
+    suspend fun updateTournamentTeam(
+        idToken: String,
+        tournamentId: String,
+        teamId: Int,
+        request: UpdateTournamentTeamRequestDto,
+    ): OkResponseDto = put(
+        path = "/tournaments/$tournamentId/teams/$teamId",
+        requestBody = request,
         idToken = idToken,
     )
 

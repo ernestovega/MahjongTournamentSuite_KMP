@@ -21,19 +21,6 @@ Hands are created lazily (when a table is first opened) to keep tournament creat
 
 ## Auth
 
-### Sign up
-
-`POST /auth/signUp`
-
-Body:
-
-- `email` (required)
-- `password` (required)
-
-Creates a Firebase Auth email/password user and writes:
-
-- `users/{uid}` profile
-
 ### Sign in
 
 `POST /auth/signIn`
@@ -68,11 +55,12 @@ Clients should refresh tokens when receiving `401 unauthenticated`.
 
 ## Roles
 
-- Global: `superadmin` (Firebase custom claim)
-- Per tournament membership: `ADMIN | EDITOR | READER`
+- Global roles: `EDITOR | ADMIN`
+- Firebase custom claim: `admin: true` for administrators
+- Per-tournament editor assignment: `tournaments/{tournamentId}/members/{uid}`
 
-Superadmins manage accounts and all tournament assignments. Tournament Admins manage users in their tournament.
-Only a superadmin can grant Tournament Admin. Disabling a user keeps the profile and audit history.
+Admins manage all tournaments and the EMA registry. Editors manage content and accounts for assigned tournaments.
+Only admins can create, delete, rename, or configure tournaments. Disabling an account keeps its profile and history.
 
 ## User management
 
@@ -81,11 +69,11 @@ Only a superadmin can grant Tournament Admin. Disabling a user keeps the profile
 - `PUT /admin/users/:uid` changes email, global role, and tournament assignments.
 - `PUT /admin/users/:uid/disabled` disables or enables an account.
 
-Users cannot disable themselves or change their own role. The last enabled superadmin cannot be demoted or disabled.
+Users cannot disable themselves or change their own role. The last enabled admin cannot be demoted or disabled.
 
-- `GET /tournaments/:tournamentId/users/lookup?email=...` finds a user for a Tournament Admin.
-- Tournament Admins can assign Reader or Editor, change roles, and remove users.
-- Only superadmins can grant the Tournament Admin role.
+- `GET /tournaments/:tournamentId/users/lookup?email=...` finds an account for an assigned editor.
+- Assigned editors can assign or remove other editors.
+- Admin access is implicit and cannot be removed from one tournament.
 
 Membership is stored at:
 
@@ -104,6 +92,8 @@ Membership is stored at:
 - `tournaments/{tournamentId}/tables/{tableKey}/hands/{handId}` with hand fields including `isChickenHand` and `isDone`
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
+Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive. Legacy documents with only `eventDate` use that value for both dates. Older documents without dates use their creation date as a fallback.
+
 ## Seed countries
 
 The country picker reads `countries/{countryCode}` documents. To write the full ISO country list, set Application Default Credentials for the Firebase project, then run:
@@ -121,13 +111,17 @@ No background polling for now.
 - Reload after any write
 - Manual refresh button
 
-## Bootstrap superadmin
+## Bootstrap admin
 
-A one-time endpoint exists to grant the `superadmin` custom claim.
+A one-time endpoint exists to grant the first `admin` custom claim.
 
 Set an environment variable `BOOTSTRAP_KEY` in Functions and call:
 
-`POST /admin/bootstrapSuperadmin` with header `X-Bootstrap-Key: <value>`.
+`POST /admin/bootstrapAdmin` with header `X-Bootstrap-Key: <value>`.
+
+Send an existing Firebase Authentication `uid` in the request body. The endpoint rejects the request when an enabled admin already exists.
+
+For the full role migration order, deployment commands, and permission checks, see [Firebase role rollout](firebase-role-rollout.md).
 
 ## Required env vars (Functions)
 

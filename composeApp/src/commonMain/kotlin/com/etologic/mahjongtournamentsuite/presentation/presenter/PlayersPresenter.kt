@@ -6,6 +6,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 
@@ -22,6 +23,12 @@ class PlayersPresenter(
     suspend fun loadBasePlayers(): AppResult<List<Player>> = playerRepository.listPlayers()
 
     suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
+
+    suspend fun loadTeams(tournamentId: String): AppResult<List<TournamentTeam>> =
+        tournamentRepository.listTournamentTeams(tournamentId)
+
+    suspend fun loadTables(tournamentId: String): AppResult<List<TournamentTable>> =
+        tournamentRepository.listTournamentTables(tournamentId)
 
     suspend fun assignPlayer(
         tournamentId: String,

@@ -50,6 +50,8 @@ async function mapTournamentDoc(d) {
         isTeams: d.get("isTeams") ?? false,
         numPlayers: d.get("numPlayers") ?? 0,
         numRounds: d.get("numRounds") ?? 0,
+        eventStartDate: d.get("eventStartDate") ?? d.get("eventDate") ?? null,
+        eventEndDate: d.get("eventEndDate") ?? d.get("eventDate") ?? null,
         numTries: d.get("numTries") ?? 0,
         isCompleted: d.get("isCompleted") ?? false,
         createdByUid,
@@ -70,6 +72,8 @@ async function createTournament(params) {
     const ref = firebase_1.db.collection("tournaments").doc();
     const tournamentDoc = {
         name: params.name,
+        eventStartDate: params.eventStartDate,
+        eventEndDate: params.eventEndDate,
         isTeams: params.isTeams,
         numPlayers: params.numPlayers,
         numRounds: params.numRounds,
@@ -79,16 +83,7 @@ async function createTournament(params) {
         createdAt: firestore_1.FieldValue.serverTimestamp(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
-    await firebase_1.db.runTransaction(async (tx) => {
-        tx.set(ref, tournamentDoc);
-        const memberRef = ref.collection("members").doc(params.createdByUid);
-        tx.set(memberRef, {
-            uid: params.createdByUid,
-            role: "ADMIN",
-            createdAt: firestore_1.FieldValue.serverTimestamp(),
-            updatedAt: firestore_1.FieldValue.serverTimestamp(),
-        });
-    });
+    await ref.set(tournamentDoc);
     // Persist the client-generated schedule payload (players/rounds/tables).
     // Hands are created lazily when a table is first opened to keep write volume manageable.
     const batchCommits = [];
@@ -121,6 +116,21 @@ async function createTournament(params) {
             createdAt: firestore_1.FieldValue.serverTimestamp(),
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });
+    }
+    if (params.isTeams) {
+        const teamIds = [...new Set(params.players.map((player) => player.team))]
+            .filter((teamId) => Number.isInteger(teamId) && teamId > 0)
+            .sort((a, b) => a - b);
+        for (const teamId of teamIds) {
+            const teamRef = ref.collection("teams").doc(String(teamId));
+            // eslint-disable-next-line no-await-in-loop
+            await addSet(teamRef, {
+                id: teamId,
+                name: `Team ${teamId}`,
+                createdAt: firestore_1.FieldValue.serverTimestamp(),
+                updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            });
+        }
     }
     for (let roundId = 1; roundId <= params.numRounds; roundId++) {
         const roundRef = ref.collection("rounds").doc(String(roundId));

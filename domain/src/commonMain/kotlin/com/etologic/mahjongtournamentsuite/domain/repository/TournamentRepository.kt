@@ -10,7 +10,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRole
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 
 interface TournamentRepository {
     suspend fun listTournaments(): AppResult<List<Tournament>>
@@ -29,7 +29,6 @@ interface TournamentRepository {
     suspend fun upsertTournamentMember(
         tournamentId: String,
         uid: String,
-        role: TournamentRole,
     ): AppResult<Unit>
 
     suspend fun removeTournamentMember(
@@ -38,6 +37,19 @@ interface TournamentRepository {
     ): AppResult<Unit>
 
     suspend fun listTournamentPlayers(tournamentId: String): AppResult<List<TournamentPlayer>>
+
+    suspend fun listTournamentTeams(tournamentId: String): AppResult<List<TournamentTeam>>
+
+    /**
+     * Renames a team and assigns EMA players to its fixed schedule slots.
+     * The list order matches [TournamentTeam.playerIds]. Null leaves a slot empty.
+     */
+    suspend fun updateTournamentTeam(
+        tournamentId: String,
+        teamId: Int,
+        name: String,
+        emaIds: List<String?>,
+    ): AppResult<Unit>
 
     suspend fun listCountries(): AppResult<List<Country>>
 

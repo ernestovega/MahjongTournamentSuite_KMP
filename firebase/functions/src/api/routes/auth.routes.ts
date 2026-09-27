@@ -1,47 +1,12 @@
 import { Router } from "express";
 
-import { auth } from "../../firebase";
 import { badRequest } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
-import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword, signUpWithEmailPassword } from "../../services/firebaseAuthRest";
-import { createUserProfile, getUserProfile } from "../../services/usersService";
+import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword } from "../../services/firebaseAuthRest";
+import { getUserProfile } from "../../services/usersService";
 
 export function authRouter(): Router {
   const router = Router();
-
-  router.post("/signUp", async (req, res, next) => {
-    let createdUid: string | null = null;
-
-    try {
-      const email = String(req.body?.email ?? "").trim();
-      const password = String(req.body?.password ?? "");
-
-      if (!email || !password) {
-        throw badRequest("Missing email or password");
-      }
-
-      const tokens = await signUpWithEmailPassword(email, password);
-      createdUid = tokens.uid;
-
-      await createUserProfile(tokens.uid, email);
-
-      res.status(200).json({
-        idToken: tokens.idToken,
-        refreshToken: tokens.refreshToken,
-        uid: tokens.uid,
-      });
-    } catch (e) {
-      if (createdUid) {
-        try {
-          await auth.deleteUser(createdUid);
-        } catch {
-          // ignore cleanup failures
-        }
-      }
-
-      next(e);
-    }
-  });
 
   router.post("/signIn", async (req, res, next) => {
     try {

@@ -34,6 +34,11 @@ data class PlayersRoute(
 )
 
 @Serializable
+data class TeamsRoute(
+    val tournamentId: String,
+)
+
+@Serializable
 data class TablesRoute(
     val tournamentId: String,
 )

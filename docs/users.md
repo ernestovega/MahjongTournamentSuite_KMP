@@ -1,105 +1,105 @@
-# Users system
+# Application users
 
-## Purpose
+## Scope
 
-The users system separates account control from tournament access.
+This application is for tournament management. The public viewer application is outside this repository.
 
-- A global role controls account administration.
-- A tournament role controls access to one tournament.
-- Disabling an account blocks sign-in without deleting its records.
+The management application has two global roles:
 
-## Global roles
+- `EDITOR`
+- `ADMIN`
 
-The app has two global roles.
+There are no reader accounts and no tournament-specific roles.
 
-| Role | Permissions |
-| --- | --- |
-| User | Access assigned tournaments. |
-| Superadmin | Manage accounts, tournaments, the EMA player base, and all tournament assignments. |
+## Editor
 
-Firebase Authentication stores the `superadmin` custom claim. The old global `admin` claim has no effect.
+An editor can use only assigned tournaments.
 
-The last enabled superadmin cannot lose the role or become disabled. A user cannot disable their own account.
+An assigned editor can:
 
-## Tournament roles
+- view tournament data;
+- assign EMA players to tournament slots;
+- edit tables, hands, scores, and results;
+- view EMA reports;
+- list the tournament's assigned accounts;
+- assign or remove other editors;
+- create and edit `EDITOR` accounts;
+- assign editor accounts only to tournaments that the editor can manage.
 
-Each tournament stores one role for each assigned user.
+An editor cannot:
 
-| Role | Permissions |
-| --- | --- |
-| Reader | Read tournament data. |
-| Editor | Read and edit tournament data. |
-| Tournament Admin | Manage tournament data and tournament users. |
+- create, delete, rename, or configure tournaments;
+- create or modify an `ADMIN` account;
+- disable an account;
+- edit the shared EMA player registry.
 
-A Tournament Admin can:
+## Admin
 
-- add a user as Reader or Editor;
-- change another assignment to Reader or Editor;
-- remove users and other Tournament Admins from the tournament.
+An admin has implicit access to every tournament.
 
-Only a superadmin can grant the Tournament Admin role.
+An admin can:
 
-## Email and account creation
+- perform every editor operation;
+- create, delete, rename, and configure tournaments;
+- create and modify admins;
+- disable and enable accounts;
+- edit the shared EMA player registry.
 
-The add-user dialog requires the email twice. The app enables Save only when both values match.
+The last enabled admin cannot be demoted or disabled. An admin cannot disable their own account.
 
-Firebase Authentication uses the same email for sign-in and contact. After creation, Firebase sends a password-reset email.
+## Firebase Authentication
 
-## Main Users screen
+Firebase Authentication stores the sign-in email and disabled state.
 
-Only superadmins can open the main Users screen.
+The `admin: true` custom claim identifies an admin. An account without this claim is an editor.
 
-- Select a user row to open the edit dialog.
-- Set the global role to User or Superadmin.
-- Set access for each tournament.
-- Disable or enable the account from the edit dialog.
+The application has no public sign-up endpoint. An authorized editor or admin creates each account.
 
-The list shows the email, global role, assigned tournaments, and account status.
-
-## Tournament Users screen
-
-Superadmins and the tournament's Tournament Admins can open this screen.
-
-- Look up an account by email.
-- Assign Reader or Editor.
-- Change or remove existing tournament assignments.
-- Grant Tournament Admin when the signed-in user is a superadmin.
-
-## Firebase data
-
-Firebase Authentication stores:
-
-- the sign-in email;
-- the disabled state;
-- the `superadmin` custom claim.
-
-Firestore stores the account profile at:
+The bootstrap endpoint promotes an existing Firebase Authentication account to the first admin. The account must have an email address.
 
 ```text
-users/{uid}
+POST /admin/bootstrapAdmin
+X-Bootstrap-Key: <value>
+
+{ "uid": "<firebase-auth-uid>" }
 ```
 
-Tournament assignments use:
+The endpoint rejects the request when an enabled admin already exists.
+
+## Firestore assignments
+
+Editor assignments use this path:
 
 ```text
 tournaments/{tournamentId}/members/{uid}
 ```
 
-Each membership document contains `uid`, `role`, `createdAt`, and `updatedAt`.
+The document contains `uid`, `createdAt`, and `updatedAt`. It does not contain a role or permission.
 
-## API routes
+Admin access is implicit. Admins do not need membership documents.
 
-Global user routes require a superadmin.
+## User management API
+
+Signed-in editors and admins can use these routes:
 
 ```text
 GET /admin/users
 POST /admin/users
 PUT /admin/users/{uid}
-PUT /admin/users/{uid}/disabled
 GET /admin/users/lookup?identifier={email}
 ```
 
-Tournament user routes require a superadmin or the tournament's Tournament Admin.
+Only admins can disable or enable accounts:
+
+```text
+PUT /admin/users/{uid}/disabled
+```
+
+An editor receives only assignments for tournaments that the editor can manage. The backend preserves hidden assignments.
+
+## Tournament member API
+
+An assigned editor or any admin can use these routes:
 
 ```text
 GET /tournaments/{tournamentId}/members
@@ -108,10 +108,33 @@ PUT /tournaments/{tournamentId}/members/{uid}
 DELETE /tournaments/{tournamentId}/members/{uid}
 ```
 
-The server rejects Tournament Admin grants from non-superadmins.
+The member list includes assigned editors and all enabled admins. Admin rows are implicit and cannot be removed.
 
 ## Account removal policy
 
-The app does not delete managed accounts. It disables Firebase Authentication and revokes refresh tokens.
+The application does not delete managed accounts. An admin disables an account and revokes its refresh tokens.
 
 The profile, tournament history, and audit data remain available.
+
+## Full access reset
+
+The maintenance script `npm run reset:access` resets accounts and tournament assignments before the new role model starts.
+
+Deploy the new backend before this reset. The new client requires the `role` field returned by the new `whoami` endpoint.
+
+The script uses a dry run by default. Apply mode requires the project ID twice and creates a local metadata inventory before remote changes.
+
+The reset performs these actions:
+
+- keeps or creates one selected Firebase Authentication account;
+- deletes every other Firebase Authentication account;
+- deletes all user profiles and tournament membership documents;
+- creates one clean profile with the global `ADMIN` role;
+- leaves all tournament content and EMA registry data unchanged;
+- verifies that one enabled admin and no tournament assignments remain.
+
+Use [Firebase access reset](firebase-access-reset.md) for the commands, credential requirements, and inventory location.
+
+Use [Firebase role rollout](firebase-role-rollout.md) for the deployment order and the `EDITOR` and `ADMIN` checks.
+
+This reset is an exceptional maintenance task. Normal account removal still uses account disabling.

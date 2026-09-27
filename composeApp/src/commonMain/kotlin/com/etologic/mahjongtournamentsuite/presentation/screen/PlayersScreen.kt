@@ -65,10 +65,13 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
@@ -92,10 +95,13 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val scope = rememberCoroutineScope()
     val slots by store.tournamentPlayers.collectAsState()
     val basePlayers by store.players.collectAsState()
+    val tournaments by store.tournaments.collectAsState()
     var loading by remember { mutableStateOf(false) }
     var savingId by remember { mutableStateOf<Int?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
+    var teams by remember { mutableStateOf<List<TournamentTeam>>(emptyList()) }
+    var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var assignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var assignmentSearchQuery by remember { mutableStateOf("") }
@@ -118,6 +124,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             is AppResult.Success -> countries = result.value
             is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
         }
+        when (val result = presenter.loadTeams(tournamentId)) {
+            is AppResult.Success -> teams = result.value
+            is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+        }
+        when (val result = presenter.loadTables(tournamentId)) {
+            is AppResult.Success -> {
+                tables = result.value
+                store.upsertTables(tournamentId, roundId = null, tables = result.value)
+            }
+            is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+        }
         loading = false
     }
 
@@ -136,6 +153,19 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     LaunchedEffect(tournamentId) { refresh() }
     val playersByEma = basePlayers.associateBy { it.emaId }
     val players = slots[tournamentId].orEmpty()
+    val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
+    val teamNamesById = remember(teams) { teams.associate { it.id to it.name } }
+    val tableNumbersByPlayerId = remember(tables) {
+        buildMap<Int, String> {
+            tables
+                .sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
+                .flatMap { table -> table.playerIds.map { playerId -> playerId to table.tableId } }
+                .groupBy(keySelector = { it.first }, valueTransform = { it.second })
+                .forEach { (playerId, tableIds) ->
+                    put(playerId, tableIds.joinToString(" · "))
+                }
+        }
+    }
     val assignedEmaIds = remember(players) { players.mapNotNullTo(mutableSetOf()) { it.assignedEmaId } }
     val filteredBasePlayers = remember(basePlayers, countries, assignmentSearchQuery, assignedEmaIds) {
         val query = normalizeSearchText(assignmentSearchQuery.trim())
@@ -490,7 +520,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             modifier = Modifier.width(AssignmentCountryColumnWidth),
                                             contentAlignment = Alignment.Center,
                                         ) {
-                                            Text(countryFlag(player.country))
+                                            CountryFlag(
+                                                code = player.country,
+                                                contentDescription = "Country ${player.country}",
+                                            )
                                         }
                                         Text(
                                             player.emaId,
@@ -691,7 +724,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         onBack = { navController.popBackStack() },
         actions = { AppTopBarActions(onRefresh = ::refresh) },
     ) {
-        ScreenColumn(maxWidth = 1000.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        ScreenColumn(maxWidth = 1400.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let { AppErrorMessage(it) }
             SectionCard {
                 if (players.isEmpty() && !loading) Text("No generated tournament players found.")
@@ -706,6 +739,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         )
                         TournamentPlayerHeader("EMA number", Modifier.width(TournamentPlayerEmaColumnWidth))
                         TournamentPlayerHeader("Name", Modifier.weight(1.2f))
+                        TournamentPlayerHeader("Team", Modifier.width(TournamentPlayerTeamColumnWidth))
+                        TournamentPlayerHeader("Tables", Modifier.width(TournamentPlayerTablesColumnWidth))
                         Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                     }
                     DataTableDivider()
@@ -738,7 +773,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
                                     contentAlignment = Alignment.Center,
                                 ) {
-                                    Text(countryFlag(playerCountry))
+                                    CountryFlag(
+                                        code = playerCountry,
+                                        contentDescription = playerCountry.ifBlank { "No country" },
+                                    )
                                 }
                                 Text(
                                     text = slot.id.toString(),
@@ -754,6 +792,24 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     assigned?.name ?: "Not assigned",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1.2f),
+                                )
+                                Text(
+                                    text = if (isTeamsTournament) {
+                                        teamNamesById[slot.team] ?: "Team ${slot.team}"
+                                    } else {
+                                        "—"
+                                    },
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    text = tableNumbersByPlayerId[slot.id] ?: "—",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.width(TournamentPlayerTablesColumnWidth),
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Row(
                                     modifier = Modifier.width(TournamentPlayerActionColumnWidth),
@@ -862,6 +918,8 @@ private val TournamentPlayerPhotoColumnWidth = 48.dp
 private val TournamentPlayerCountryColumnWidth = 64.dp
 private val TournamentPlayerIdColumnWidth = 72.dp
 private val TournamentPlayerEmaColumnWidth = 104.dp
+private val TournamentPlayerTeamColumnWidth = 144.dp
+private val TournamentPlayerTablesColumnWidth = 220.dp
 private val TournamentPlayerActionColumnWidth = 112.dp
 private val AssignmentPhotoColumnWidth = 48.dp
 private val AssignmentCountryColumnWidth = 64.dp
@@ -916,18 +974,4 @@ private fun TournamentPlayerPhoto(
             )
         }
     }
-}
-
-private fun countryFlag(code: String): String {
-    val normalized = code.trim().uppercase()
-    if (normalized == "EU" || normalized.length != 2 || normalized.any { it !in 'A'..'Z' }) return "🌐"
-    return normalized.map { regionalIndicator(it) }.joinToString("")
-}
-
-private fun regionalIndicator(letter: Char): String {
-    val codePoint = 0x1F1E6 + (letter.code - 'A'.code)
-    val offset = codePoint - 0x10000
-    val high = ((offset / 0x400) + 0xD800).toChar()
-    val low = ((offset % 0x400) + 0xDC00).toChar()
-    return charArrayOf(high, low).concatToString()
 }

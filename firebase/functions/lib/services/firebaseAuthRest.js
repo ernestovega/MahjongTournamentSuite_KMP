@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.signUpWithEmailPassword = signUpWithEmailPassword;
 exports.signInWithEmailPassword = signInWithEmailPassword;
 exports.sendPasswordResetEmail = sendPasswordResetEmail;
 exports.refreshIdToken = refreshIdToken;
@@ -26,19 +25,6 @@ async function postJson(url, body) {
         throw new Error(message);
     }
     return json;
-}
-async function signUpWithEmailPassword(email, password) {
-    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey()}`;
-    const json = await postJson(url, {
-        email,
-        password,
-        returnSecureToken: true,
-    });
-    return {
-        idToken: json.idToken,
-        refreshToken: json.refreshToken,
-        uid: json.localId,
-    };
 }
 async function signInWithEmailPassword(email, password) {
     const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey()}`;

@@ -3,19 +3,14 @@ package com.etologic.mahjongtournamentsuite.data.backend.dto
 import kotlinx.serialization.Serializable
 
 @Serializable
-enum class TournamentRoleDto {
-    READER,
-    EDITOR,
-    ADMIN,
-}
-
-@Serializable
 data class TournamentDto(
     val id: String,
     val name: String,
     val isTeams: Boolean,
     val numPlayers: Int,
     val numRounds: Int,
+    val eventStartDate: String? = null,
+    val eventEndDate: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
     val createdByUid: String? = null,
@@ -36,6 +31,8 @@ data class TournamentsResponseDto(
 @Serializable
 data class CreateTournamentRequestDto(
     val name: String,
+    val eventStartDate: String,
+    val eventEndDate: String,
     val isTeams: Boolean,
     val numPlayers: Int,
     val numRounds: Int,
@@ -53,7 +50,7 @@ data class RenameTournamentRequestDto(
 data class TournamentMemberDto(
     val uid: String,
     val email: String = "",
-    val role: TournamentRoleDto,
+    val role: GlobalUserRoleDto,
 )
 
 @Serializable
@@ -63,7 +60,7 @@ data class MembersResponseDto(
 
 @Serializable
 data class UpsertMemberRequestDto(
-    val role: TournamentRoleDto,
+    val assigned: Boolean = true,
 )
 
 @Serializable
@@ -125,6 +122,24 @@ data class UpdatePlayerPhotoRequestDto(
 @Serializable
 data class TournamentPlayersResponseDto(
     val players: List<TournamentPlayerDto>,
+)
+
+@Serializable
+data class TournamentTeamDto(
+    val id: Int,
+    val name: String,
+    val playerIds: List<Int>,
+)
+
+@Serializable
+data class TournamentTeamsResponseDto(
+    val teams: List<TournamentTeamDto>,
+)
+
+@Serializable
+data class UpdateTournamentTeamRequestDto(
+    val name: String,
+    val emaIds: List<String?>,
 )
 
 @Serializable

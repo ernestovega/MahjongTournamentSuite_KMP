@@ -7,14 +7,12 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.GlobalUserRoleDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAssignmentDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoleDto
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRole
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -32,7 +30,7 @@ class DefaultAdminRepository(
             val status = backendApi.whoAmI(idToken)
             AdminStatus(
                 uid = status.uid,
-                isSuperadmin = status.superadmin,
+                role = GlobalUserRole.valueOf(status.role.name),
             )
         }
     }.fold(
@@ -137,19 +135,17 @@ private fun ManagedUserDto.toDomain(): ManagedUser = ManagedUser(
     alias = alias,
     role = GlobalUserRole.valueOf(role.name),
     disabled = disabled,
-    tournamentAssignments = tournamentAssignments.map { assignment ->
-        TournamentAssignment(
-            tournamentId = assignment.tournamentId,
-            tournamentName = assignment.tournamentName,
-            role = TournamentRole.valueOf(assignment.role.name),
-        )
-    },
+        tournamentAssignments = tournamentAssignments.map { assignment ->
+            TournamentAssignment(
+                tournamentId = assignment.tournamentId,
+                tournamentName = assignment.tournamentName,
+            )
+        },
 )
 
 private fun TournamentAssignment.toDto(): TournamentAssignmentDto = TournamentAssignmentDto(
     tournamentId = tournamentId,
     tournamentName = tournamentName,
-    role = TournamentRoleDto.valueOf(role.name),
 )
 
 private fun Throwable.toAppError(): AppError = when (this) {

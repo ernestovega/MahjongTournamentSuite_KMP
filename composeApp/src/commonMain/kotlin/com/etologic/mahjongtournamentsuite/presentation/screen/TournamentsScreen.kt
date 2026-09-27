@@ -188,12 +188,13 @@ fun TournamentsScreen(
     }
 
     val roleLabel = adminStatus?.let {
-        when {
-            it.isSuperadmin -> "Superadmin"
-            else -> "User"
+        when (it.role) {
+            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.ADMIN -> "Admin"
+            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.EDITOR -> "Editor"
         }
     }
-    val canDeleteTournaments = adminStatus?.isSuperadmin == true
+    val canConfigureTournaments = adminStatus?.canConfigureTournaments == true
+    val canDeleteTournaments = adminStatus?.canDeleteTournaments == true
     val tournamentFocusRequesters = remember(tournaments.map { it.id }) {
         tournaments.map { FocusRequester() }
     }
@@ -207,13 +208,17 @@ fun TournamentsScreen(
                 } else {
                     newTournamentFocusRequester.requestFocus()
                 }
-                "new-tournament" -> newTournamentFocusRequester.requestFocus()
+                "new-tournament" -> if (adminStatus?.canCreateTournaments == true) {
+                    newTournamentFocusRequester.requestFocus()
+                } else {
+                    usersFocusRequester.requestFocus()
+                }
                 else -> {
                     if (tournamentFocusRequesters.isNotEmpty()) {
                         val index = tournaments.indexOfFirst { it.id == lastFocusedTournamentId }.coerceAtLeast(0)
                         tournamentFocusRequesters[index].requestFocus()
                     } else {
-                        newTournamentFocusRequester.requestFocus()
+                        usersFocusRequester.requestFocus()
                     }
                 }
             }
@@ -384,15 +389,6 @@ fun TournamentsScreen(
             AppTopBarLeadingActions(
                 showThemeToggle = true,
                 onTimer = { openTimer(navController) },
-                onUsers = if (adminStatus?.canManageUsers == true) {
-                    {
-                        lastFocusedControl = "users"
-                        navController.navigate(UsersRoute())
-                    }
-                } else {
-                    null
-                },
-                usersFocusRequester = usersFocusRequester,
             )
         },
         actions = {
@@ -401,12 +397,25 @@ fun TournamentsScreen(
                     lastFocusedControl = "player-base"
                     navController.navigate(PlayerBaseRoute)
                 },
+                onUsers = if (adminStatus?.canManageUsers == true) {
+                    {
+                        lastFocusedControl = "users"
+                        navController.navigate(UsersRoute())
+                    }
+                } else {
+                    null
+                },
                 onRefresh = { refresh() },
-                onNewTournament = {
-                    lastFocusedControl = "new-tournament"
-                    navController.navigate(CreateTournamentRoute)
+                onNewTournament = if (adminStatus?.canCreateTournaments == true) {
+                    {
+                        lastFocusedControl = "new-tournament"
+                        navController.navigate(CreateTournamentRoute)
+                    }
+                } else {
+                    null
                 },
                 playerBaseFocusRequester = playerBaseFocusRequester,
+                usersFocusRequester = usersFocusRequester,
                 newTournamentFocusRequester = newTournamentFocusRequester,
             )
         },
@@ -433,7 +442,7 @@ fun TournamentsScreen(
                                 val scrollState = rememberScrollState()
                                 val listState = rememberLazyListState()
                                 val cellMinWidth = 56.dp
-                                val numColumns = 10
+                                val numColumns = 12
                                 val actionCellMinWidth = 96.dp
                                 val columnsMinWidth = (cellMinWidth * (numColumns - 1)) + actionCellMinWidth
                                 val columnSpacing = 12.dp
@@ -465,6 +474,7 @@ fun TournamentsScreen(
                                                 enabled = !isLoading,
                                                 cellMinWidth = cellMinWidth,
                                                 actionCellMinWidth = actionCellMinWidth,
+                                                showRename = canConfigureTournaments,
                                                 showDelete = canDeleteTournaments,
                                                 onClick = {
                                                     lastFocusedTournamentId = tournament.id
@@ -617,6 +627,8 @@ private fun TournamentTableHeader(
         HeaderCell(text = "Teams", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = "Players", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = "Rounds", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = "From", minWidth = cellMinWidth, weight = 1.0f)
+        HeaderCell(text = "To", minWidth = cellMinWidth, weight = 1.0f)
         HeaderCell(
             text = "Tries",
             minWidth = cellMinWidth,
@@ -645,6 +657,7 @@ private fun TournamentTableRow(
     enabled: Boolean,
     cellMinWidth: Dp,
     actionCellMinWidth: Dp,
+    showRename: Boolean,
     showDelete: Boolean,
     onClick: () -> Unit,
     onDelete: () -> Unit,
@@ -690,6 +703,20 @@ private fun TournamentTableRow(
             textAlign = TextAlign.Center,
         )
         BodyCell(
+            text = tournament.eventStartDate ?: "—",
+            minWidth = cellMinWidth,
+            weight = 1.0f,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        BodyCell(
+            text = tournament.eventEndDate ?: "—",
+            minWidth = cellMinWidth,
+            weight = 1.0f,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        BodyCell(
             text = tournament.numTries.toString(),
             minWidth = cellMinWidth,
             weight = .6f,
@@ -717,7 +744,9 @@ private fun TournamentTableRow(
             contentAlignment = Alignment.CenterEnd,
         ) {
             val actionItems = buildList {
-                add(RowActionMenuItem(label = "Rename", onClick = onRename))
+                if (showRename) {
+                    add(RowActionMenuItem(label = "Rename", onClick = onRename))
+                }
                 if (showDelete) {
                     add(
                         RowActionMenuItem(
@@ -728,13 +757,15 @@ private fun TournamentTableRow(
                     )
                 }
             }
-            RowActionsMenu(
-                enabled = enabled,
-                items = actionItems,
-                modifier = Modifier.height(40.dp),
-                buttonIcon = Icons.Default.MoreVert,
-                buttonIconSize = 36.dp,
-            )
+            if (actionItems.isNotEmpty()) {
+                RowActionsMenu(
+                    enabled = enabled,
+                    items = actionItems,
+                    modifier = Modifier.height(40.dp),
+                    buttonIcon = Icons.Default.MoreVert,
+                    buttonIconSize = 36.dp,
+                )
+            }
         }
     }
 }

@@ -11,6 +11,13 @@ data class TournamentPlayer(
     val updatedAt: String? = null,
 )
 
+/** A named group of the fixed schedule slots that share the same team id. */
+data class TournamentTeam(
+    val id: Int,
+    val name: String,
+    val playerIds: List<Int>,
+)
+
 /** A real player that is independent of every tournament. */
 data class Player(
     /** Unique EMA number. This is the shared-player primary key. */

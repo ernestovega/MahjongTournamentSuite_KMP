@@ -1,7 +1,6 @@
 import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
-import { Role } from "../models/role";
 import { badRequest, notFound } from "../api/httpError";
 import { getUserProfile } from "./usersService";
 
@@ -11,6 +10,8 @@ export type Tournament = {
   isTeams: boolean;
   numPlayers: number;
   numRounds: number;
+  eventStartDate: string | null;
+  eventEndDate: string | null;
   numTries: number;
   isCompleted: boolean;
   createdByUid: string | null;
@@ -63,6 +64,8 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     isTeams: (d.get("isTeams") as boolean) ?? false,
     numPlayers: (d.get("numPlayers") as number) ?? 0,
     numRounds: (d.get("numRounds") as number) ?? 0,
+    eventStartDate: (d.get("eventStartDate") as string) ?? (d.get("eventDate") as string) ?? null,
+    eventEndDate: (d.get("eventEndDate") as string) ?? (d.get("eventDate") as string) ?? null,
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
     createdByUid,
@@ -74,6 +77,8 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
 
 export async function createTournament(params: {
   name: string;
+  eventStartDate: string;
+  eventEndDate: string;
   isTeams: boolean;
   numPlayers: number;
   numRounds: number;
@@ -95,6 +100,8 @@ export async function createTournament(params: {
 
   const tournamentDoc = {
     name: params.name,
+    eventStartDate: params.eventStartDate,
+    eventEndDate: params.eventEndDate,
     isTeams: params.isTeams,
     numPlayers: params.numPlayers,
     numRounds: params.numRounds,
@@ -105,17 +112,7 @@ export async function createTournament(params: {
     updatedAt: FieldValue.serverTimestamp(),
   };
 
-  await db.runTransaction(async (tx) => {
-    tx.set(ref, tournamentDoc);
-
-    const memberRef = ref.collection("members").doc(params.createdByUid);
-    tx.set(memberRef, {
-      uid: params.createdByUid,
-      role: "ADMIN" satisfies Role,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  });
+  await ref.set(tournamentDoc);
 
   // Persist the client-generated schedule payload (players/rounds/tables).
   // Hands are created lazily when a table is first opened to keep write volume manageable.
@@ -151,6 +148,22 @@ export async function createTournament(params: {
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+  }
+
+  if (params.isTeams) {
+    const teamIds = [...new Set(params.players.map((player) => player.team))]
+      .filter((teamId) => Number.isInteger(teamId) && teamId > 0)
+      .sort((a, b) => a - b);
+    for (const teamId of teamIds) {
+      const teamRef = ref.collection("teams").doc(String(teamId));
+      // eslint-disable-next-line no-await-in-loop
+      await addSet(teamRef, {
+        id: teamId,
+        name: `Team ${teamId}`,
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
   }
 
   for (let roundId = 1; roundId <= params.numRounds; roundId++) {

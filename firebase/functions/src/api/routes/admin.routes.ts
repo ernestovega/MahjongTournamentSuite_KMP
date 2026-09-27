@@ -2,15 +2,17 @@ import { Router } from "express";
 
 import { auth, db } from "../../firebase";
 import { badRequest, forbidden } from "../httpError";
+import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
-import { requireSuperadmin } from "../middleware/requireSuperadmin";
+import { hasAdminClaim, parseGlobalUserRole } from "../../models/globalRole";
 import { sendPasswordResetEmail } from "../../services/firebaseAuthRest";
 import {
   assertEmailAvailable,
-  countEnabledSuperadmins,
+  countEnabledAdmins,
   createUserProfile,
   getManagedUser,
   getUserProfile,
+  listAssignedTournamentIds,
   listManagedUsers,
   setGlobalUserRole,
   setManagedUserDisabled,
@@ -20,13 +22,8 @@ import {
   type TournamentAssignment,
 } from "../../services/usersService";
 import { BOOTSTRAP_KEY } from "../../config";
-import { parseRole } from "../../models/role";
 
-type Actor = { uid: string; superadmin?: boolean };
-
-function parseGlobalUserRole(value: unknown): GlobalUserRole | null {
-  return value === "REGULAR" || value === "SUPERADMIN" ? value : null;
-}
+type Actor = { uid: string; admin?: boolean };
 
 function requireEmail(value: unknown, fieldName: string): string {
   const email = String(value ?? "").trim();
@@ -39,92 +36,97 @@ function parseTournamentAssignments(value: unknown): TournamentAssignment[] {
   return value.map((item) => {
     const record = item != null && typeof item === "object" ? item as Record<string, unknown> : null;
     const tournamentId = String(record?.tournamentId ?? "").trim();
-    const role = parseRole(record?.role);
-    if (!tournamentId || !role) throw badRequest("Invalid tournament assignment");
-    return { tournamentId, tournamentName: "", role };
+    if (!tournamentId) throw badRequest("Invalid tournament assignment");
+    return { tournamentId, tournamentName: "" };
   });
 }
 
-async function assertSuperadminRemainsEnabled(
+async function assignmentScopeFor(actor: Actor): Promise<Set<string> | undefined> {
+  return hasAdminClaim(actor) ? undefined : listAssignedTournamentIds(actor.uid);
+}
+
+async function assertAdminRemainsEnabled(
   currentRole: GlobalUserRole,
   currentDisabled: boolean,
   nextRole: GlobalUserRole,
   nextDisabled: boolean,
 ): Promise<void> {
-  if (currentRole !== "SUPERADMIN" || currentDisabled || (nextRole === "SUPERADMIN" && !nextDisabled)) return;
-  if (await countEnabledSuperadmins() <= 1) {
-    throw badRequest("The last enabled superadmin cannot be demoted or disabled");
+  if (currentRole !== "ADMIN" || currentDisabled || (nextRole === "ADMIN" && !nextDisabled)) return;
+  if (await countEnabledAdmins() <= 1) {
+    throw badRequest("The last enabled admin cannot be demoted or disabled");
   }
 }
 
 function requireBootstrapKey(req: { header(name: string): string | undefined }): void {
   const expected = BOOTSTRAP_KEY.value();
-  if (!expected) {
-    throw new Error("Missing secret MTS_BOOTSTRAP_KEY");
-  }
+  if (!expected) throw new Error("Missing secret MTS_BOOTSTRAP_KEY");
   const provided = req.header("x-bootstrap-key");
-  if (!provided || provided != expected) {
-    throw forbidden("Invalid bootstrap key");
-  }
+  if (!provided || provided !== expected) throw forbidden("Invalid bootstrap key");
 }
 
 export function adminRouter(): Router {
   const router = Router();
 
-  // One-time helper to set superadmin claim.
-  router.post("/bootstrapSuperadmin", async (req, res, next) => {
+  router.post("/bootstrapAdmin", async (req, res, next) => {
     try {
       requireBootstrapKey(req);
-
-      const uid = String(req.body?.uid ?? "").trim();
-      if (!uid) {
-        throw badRequest("Missing uid");
+      if (await countEnabledAdmins() > 0) {
+        throw forbidden("An enabled admin already exists");
       }
-
-      await auth.setCustomUserClaims(uid, { superadmin: true });
-
+      const uid = String(req.body?.uid ?? "").trim();
+      if (!uid) throw badRequest("Missing uid");
+      const user = await auth.getUser(uid);
+      if (!user.email) throw badRequest("The bootstrap account must have an email address");
+      await createUserProfile(uid, user.email, user.displayName ?? "");
+      const claims: Record<string, unknown> = { ...(user.customClaims ?? {}), admin: true };
+      delete claims.superadmin;
+      await auth.setCustomUserClaims(uid, claims);
       res.status(200).json({ ok: true });
-    } catch (e) {
-      next(e);
+    } catch (error) {
+      next(error);
     }
   });
 
   router.get("/whoami", requireAuth, async (_req, res, next) => {
     try {
-      const decoded = res.locals.auth as { uid: string; superadmin?: boolean };
-      res.status(200).json({ uid: decoded.uid, admin: false, superadmin: decoded.superadmin === true });
-    } catch (e) {
-      next(e);
+      const actor = res.locals.auth as Actor;
+      res.status(200).json({ uid: actor.uid, role: hasAdminClaim(actor) ? "ADMIN" : "EDITOR" });
+    } catch (error) {
+      next(error);
     }
   });
 
-  router.get("/users", requireAuth, requireSuperadmin, async (_req, res, next) => {
+  router.get("/users", requireAuth, async (_req, res, next) => {
     try {
-      res.status(200).json({ users: await listManagedUsers() });
-    } catch (e) {
-      next(e);
+      const actor = res.locals.auth as Actor;
+      res.status(200).json({ users: await listManagedUsers(await assignmentScopeFor(actor)) });
+    } catch (error) {
+      next(error);
     }
   });
 
-  router.post("/users", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.post("/users", requireAuth, async (req, res, next) => {
     let createdUid: string | null = null;
     try {
+      const actor = res.locals.auth as Actor;
       const email = requireEmail(req.body?.email, "email");
       const alias = String(req.body?.alias ?? "").trim();
       const role = parseGlobalUserRole(req.body?.role);
       if (!role) throw badRequest("Invalid role");
-      const tournamentAssignments = parseTournamentAssignments(req.body?.tournamentAssignments);
+      if (role === "ADMIN" && !hasAdminClaim(actor)) throw forbidden("Only admins can create admins");
+      const assignmentScope = await assignmentScopeFor(actor);
+      const tournamentAssignments = role === "ADMIN" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments);
       await assertEmailAvailable(email);
 
       const user = await auth.createUser({ email, disabled: false });
       createdUid = user.uid;
       await createUserProfile(user.uid, email, alias);
       await setGlobalUserRole(user.uid, role);
-      await syncUserTournamentAssignments(user.uid, tournamentAssignments);
+      await syncUserTournamentAssignments(user.uid, tournamentAssignments, assignmentScope);
       await sendPasswordResetEmail(email);
 
-      res.status(201).json(await getManagedUser(user.uid));
-    } catch (e) {
+      res.status(201).json(await getManagedUser(user.uid, assignmentScope));
+    } catch (error) {
       if (createdUid) {
         await Promise.allSettled([
           auth.deleteUser(createdUid),
@@ -132,62 +134,69 @@ export function adminRouter(): Router {
           syncUserTournamentAssignments(createdUid, []),
         ]);
       }
-      next(e);
+      next(error);
     }
   });
 
-  router.put("/users/:uid", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.put("/users/:uid", requireAuth, async (req, res, next) => {
     try {
       const actor = res.locals.auth as Actor;
       const current = await getManagedUser(req.params.uid);
-      const email = requireEmail(req.body?.email, "email");
-      const alias = String(req.body?.alias ?? "").trim();
       const role = parseGlobalUserRole(req.body?.role);
       if (!role) throw badRequest("Invalid role");
-      const tournamentAssignments = parseTournamentAssignments(req.body?.tournamentAssignments);
+      if (!hasAdminClaim(actor) && (current.role === "ADMIN" || role === "ADMIN")) {
+        throw forbidden("Editors cannot modify admin accounts");
+      }
       if (actor.uid === current.uid && role !== current.role) {
         throw badRequest("You cannot change your own role");
       }
-      await assertSuperadminRemainsEnabled(current.role, current.disabled, role, current.disabled);
+
+      const email = requireEmail(req.body?.email, "email");
+      const alias = String(req.body?.alias ?? "").trim();
+      const assignmentScope = await assignmentScopeFor(actor);
+      const tournamentAssignments = role === "ADMIN" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments);
+      await assertAdminRemainsEnabled(current.role, current.disabled, role, current.disabled);
       await assertEmailAvailable(email, current.uid);
 
-      await updateManagedUser({ uid: current.uid, email, alias, role, tournamentAssignments });
-      res.status(200).json(await getManagedUser(current.uid));
-    } catch (e) {
-      next(e);
+      await updateManagedUser({
+        uid: current.uid,
+        email,
+        alias,
+        role,
+        tournamentAssignments,
+        assignmentScope,
+      });
+      res.status(200).json(await getManagedUser(current.uid, assignmentScope));
+    } catch (error) {
+      next(error);
     }
   });
 
-  router.put("/users/:uid/disabled", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.put("/users/:uid/disabled", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const actor = res.locals.auth as Actor;
       const disabled = req.body?.disabled;
       if (typeof disabled !== "boolean") throw badRequest("disabled must be a boolean");
       const current = await getManagedUser(req.params.uid);
-      if (actor.uid === current.uid && disabled) {
-        throw badRequest("You cannot disable your own account");
-      }
-      await assertSuperadminRemainsEnabled(current.role, current.disabled, current.role, disabled);
+      if (actor.uid === current.uid && disabled) throw badRequest("You cannot disable your own account");
+      await assertAdminRemainsEnabled(current.role, current.disabled, current.role, disabled);
 
       await setManagedUserDisabled(current.uid, disabled);
       res.status(200).json(await getManagedUser(current.uid));
-    } catch (e) {
-      next(e);
+    } catch (error) {
+      next(error);
     }
   });
 
-  router.get("/users/lookup", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.get("/users/lookup", requireAuth, async (req, res, next) => {
     try {
       const identifier = String(req.query.identifier ?? "").trim();
-      if (!identifier) {
-        throw badRequest("Missing identifier");
-      }
-
+      if (!identifier) throw badRequest("Missing identifier");
       if (!identifier.includes("@")) throw badRequest("Enter a user email address");
       const profile = await auth.getUserByEmail(identifier).then((user) => getUserProfile(user.uid));
       res.status(200).json(profile);
-    } catch (e) {
-      next(e);
+    } catch (error) {
+      next(error);
     }
   });
 

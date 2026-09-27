@@ -20,9 +20,11 @@ fun AppTopBarLeadingActions(
     showThemeToggle: Boolean = false,
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
+    onExport: (() -> Unit)? = null,
     onUsers: (() -> Unit)? = null,
     timerFocusRequester: FocusRequester? = null,
     rankingFocusRequester: FocusRequester? = null,
+    exportFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
 ) {
     Row(
@@ -33,6 +35,7 @@ fun AppTopBarLeadingActions(
         if (showThemeToggle) { ThemeModeToggleButton() }
         onTimer?.let { AppTopBarButton("Timer", it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton("Ranking", it, rankingFocusRequester) }
+        onExport?.let { AppTopBarButton("Export", it, exportFocusRequester) }
     }
 }
 

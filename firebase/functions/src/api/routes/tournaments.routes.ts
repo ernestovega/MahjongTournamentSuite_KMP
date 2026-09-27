@@ -2,24 +2,31 @@ import { Router } from "express";
 
 import { auth } from "../../firebase";
 import { requireAuth } from "../middleware/requireAuth";
-import { requireSuperadmin } from "../middleware/requireSuperadmin";
-import { requireTournamentRole } from "../middleware/requireTournamentRole";
-import { badRequest, forbidden } from "../httpError";
-import { parseRole } from "../../models/role";
+import { requireAdmin } from "../middleware/requireAdmin";
+import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
+import { badRequest } from "../httpError";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import { createTournament, deleteTournament, listAllTournaments, listTournamentsForUser, renameTournament } from "../../services/tournamentsService";
-import { assignTournamentPlayer, listTournamentPlayers, listTournamentRounds, listTournamentTables } from "../../services/tournamentContentService";
+import {
+  assignTournamentPlayer,
+  listTournamentPlayers,
+  listTournamentRounds,
+  listTournamentTables,
+  listTournamentTeams,
+  updateTournamentTeam,
+} from "../../services/tournamentContentService";
 import { playerExists, validateEmaId } from "../../services/playersService";
 import { getTableWithHands, updateHand, updateTable } from "../../services/tableManagerService";
 import { getUserProfile } from "../../services/usersService";
+import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
 
 export function tournamentsRouter(): Router {
   const router = Router();
 
   router.get("/", requireAuth, async (_req, res, next) => {
     try {
-      const decoded = res.locals.auth as { uid: string; superadmin?: boolean };
-      const tournaments = decoded.superadmin === true
+      const decoded = res.locals.auth as { uid: string; admin?: boolean };
+      const tournaments = decoded.admin === true
         ? await listAllTournaments()
         : await listTournamentsForUser(decoded.uid);
       res.status(200).json({ tournaments });
@@ -28,13 +35,15 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.post("/", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.post("/", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const decoded = res.locals.auth as { uid: string };
 
       const body = (req.body != null && typeof req.body === "object") ? (req.body as Record<string, unknown>) : null;
 
       const name = String(body?.name ?? "").trim();
+      const eventStartDate = String(body?.eventStartDate ?? body?.eventDate ?? "").trim();
+      const eventEndDate = String(body?.eventEndDate ?? body?.eventDate ?? "").trim();
       const isTeams = Boolean(body?.isTeams ?? false);
 
       const numPlayersValue = body?.numPlayers;
@@ -50,6 +59,15 @@ export function tournamentsRouter(): Router {
       const issues: Array<{ field: string; message: string; value?: unknown }> = [];
       if (!body) issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
       if (!name) issues.push({ field: "name", message: "Required", value: body?.name });
+      if (!isValidIsoDate(eventStartDate)) {
+        issues.push({ field: "eventStartDate", message: "Must use yyyy-MM-dd", value: body?.eventStartDate });
+      }
+      if (!isValidIsoDate(eventEndDate)) {
+        issues.push({ field: "eventEndDate", message: "Must use yyyy-MM-dd", value: body?.eventEndDate });
+      }
+      if (isValidIsoDate(eventStartDate) && isValidIsoDate(eventEndDate) && !isValidIsoDateRange(eventStartDate, eventEndDate)) {
+        issues.push({ field: "eventEndDate", message: "Must not be before eventStartDate", value: body?.eventEndDate });
+      }
 
       if (!Number.isFinite(numPlayers) || !Number.isInteger(numPlayers) || numPlayers <= 0 || numPlayers % 4 !== 0) {
         issues.push({ field: "numPlayers", message: "Must be a positive integer multiple of 4", value: numPlayersValue });
@@ -111,6 +129,8 @@ export function tournamentsRouter(): Router {
 
       const tournament = await createTournament({
         name,
+        eventStartDate,
+        eventEndDate,
         isTeams,
         numPlayers,
         numRounds,
@@ -126,7 +146,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.delete("/:tournamentId", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.delete("/:tournamentId", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       await deleteTournament(req.params.tournamentId);
       res.status(200).json({ ok: true });
@@ -135,7 +155,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.put("/:tournamentId", requireAuth, requireTournamentRole("ADMIN"), async (req, res, next) => {
+  router.put("/:tournamentId", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
       const name = String(body?.name ?? "").trim();
@@ -151,7 +171,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/users/lookup",
     requireAuth,
-    requireTournamentRole("ADMIN"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const email = String(req.query.email ?? "").trim();
@@ -167,7 +187,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/members",
     requireAuth,
-    requireTournamentRole("ADMIN"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const members = await listTournamentMembers(req.params.tournamentId);
@@ -181,7 +201,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/players/:playerId",
     requireAuth,
-    requireTournamentRole("EDITOR"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const playerId = Number(req.params.playerId);
@@ -209,22 +229,12 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/members/:uid",
     requireAuth,
-    requireTournamentRole("ADMIN"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const role = parseRole(req.body?.role);
-        if (!role) {
-          throw badRequest("Invalid role");
-        }
-        const actor = res.locals.auth as { superadmin?: boolean };
-        if (role === "ADMIN" && actor.superadmin !== true) {
-          throw forbidden("Only a superadmin can grant Tournament Admin");
-        }
-
         await upsertTournamentMember({
           tournamentId: req.params.tournamentId,
           uid: req.params.uid,
-          role,
         });
 
         res.status(200).json({ ok: true });
@@ -237,7 +247,7 @@ export function tournamentsRouter(): Router {
   router.delete(
     "/:tournamentId/members/:uid",
     requireAuth,
-    requireTournamentRole("ADMIN"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         await removeTournamentMember({
@@ -254,7 +264,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/players",
     requireAuth,
-    requireTournamentRole("READER"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const players = await listTournamentPlayers(req.params.tournamentId);
@@ -266,9 +276,75 @@ export function tournamentsRouter(): Router {
   );
 
   router.get(
+    "/:tournamentId/teams",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const teams = await listTournamentTeams(req.params.tournamentId);
+        res.status(200).json({ teams });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.put(
+    "/:tournamentId/teams/:teamId",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const teamId = Number(req.params.teamId);
+        const body = (req.body != null && typeof req.body === "object")
+          ? req.body as Record<string, unknown>
+          : null;
+        const name = String(body?.name ?? "").trim();
+        const rawEmaIds = Array.isArray(body?.emaIds) ? body.emaIds : null;
+        if (!Number.isInteger(teamId) || teamId <= 0) {
+          throw badRequest("teamId must be a positive integer");
+        }
+        if (name.length === 0 || name.length > 80) {
+          throw badRequest("Team name must contain 1 to 80 characters");
+        }
+        if (rawEmaIds == null || rawEmaIds.length > 4) {
+          throw badRequest("emaIds must contain up to four team slots");
+        }
+        const emaIds = rawEmaIds.map((value, index) => {
+          if (value == null || String(value).trim().length === 0) return null;
+          try {
+            return validateEmaId(value);
+          } catch (_error) {
+            throw badRequest("Invalid EMA player", { index, value });
+          }
+        });
+        const assignedEmaIds = emaIds.filter((emaId): emaId is string => emaId != null);
+        if (new Set(assignedEmaIds).size !== assignedEmaIds.length) {
+          throw badRequest("A player cannot occupy two team slots");
+        }
+        const existence = await Promise.all(assignedEmaIds.map((emaId) => playerExists(emaId)));
+        const missingIndex = existence.findIndex((exists) => !exists);
+        if (missingIndex >= 0) {
+          throw badRequest("EMA player does not exist", { emaId: assignedEmaIds[missingIndex] });
+        }
+
+        await updateTournamentTeam({
+          tournamentId: req.params.tournamentId,
+          teamId,
+          name,
+          emaIds,
+        });
+        res.status(200).json({ ok: true });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.get(
     "/:tournamentId/rounds",
     requireAuth,
-    requireTournamentRole("READER"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const rounds = await listTournamentRounds(req.params.tournamentId);
@@ -282,7 +358,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables",
     requireAuth,
-    requireTournamentRole("READER"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const roundIdParam = req.query.roundId;
@@ -302,7 +378,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables/:roundId/:tableId",
     requireAuth,
-    requireTournamentRole("READER"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const roundId = Number(req.params.roundId);
@@ -326,7 +402,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/tables/:roundId/:tableId",
     requireAuth,
-    requireTournamentRole("EDITOR"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const roundId = Number(req.params.roundId);
@@ -352,7 +428,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/tables/:roundId/:tableId/hands/:handId",
     requireAuth,
-    requireTournamentRole("EDITOR"),
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const roundId = Number(req.params.roundId);
@@ -385,7 +461,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId",
     requireAuth,
-    requireTournamentRole("READER"),
+    requireTournamentEditor,
     async (req, res) => {
       res.status(501).json({
         error: "not_implemented",

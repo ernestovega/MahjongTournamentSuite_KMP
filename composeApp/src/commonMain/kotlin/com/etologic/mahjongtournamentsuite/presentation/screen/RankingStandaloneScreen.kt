@@ -61,6 +61,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -473,7 +474,7 @@ private fun RankingPage(
                                 TextAlign.Center,
                                 textStyle,
                             )
-                            if (page.showCountry) RankingCell(row.country, widths.country, TextAlign.Center, textStyle)
+                            if (page.showCountry) RankingCountryCell(row.country, widths.country, textStyle)
                             RankingCell(row.name, widths.name, TextAlign.Start, textStyle)
                             if (page.extraHeader != null) {
                                 RankingCell(row.extra.orEmpty(), widths.extra, TextAlign.Center, textStyle)
@@ -510,6 +511,26 @@ private fun RankingCell(
         overflow = TextOverflow.Ellipsis,
         style = style,
     )
+}
+
+@Composable
+private fun RankingCountryCell(
+    countryCode: String,
+    width: Dp,
+    textStyle: TextStyle,
+) {
+    val density = androidx.compose.ui.platform.LocalDensity.current
+    val flagWidth = with(density) { (textStyle.fontSize.toDp() * 1.25f).coerceIn(24.dp, 64.dp) }
+    Box(
+        modifier = Modifier.width(width),
+        contentAlignment = Alignment.Center,
+    ) {
+        CountryFlag(
+            code = countryCode,
+            width = flagWidth,
+            contentDescription = countryCode.ifBlank { "No country" },
+        )
+    }
 }
 
 private data class RankingColumnWidths(
@@ -582,6 +603,7 @@ private data class RankingRow(
 private fun RankingSnapshot.toPages(): List<RankingPage> {
     val slotsById = tournamentPlayers.associateBy { it.id }
     val playersByEma = basePlayers.associateBy { it.emaId }
+    val teamNamesById = tournamentTeams.associate { it.id to it.name }
     val pages = mutableListOf<RankingPage>()
 
     if (rankings.players.isNotEmpty()) {
@@ -590,7 +612,7 @@ private fun RankingSnapshot.toPages(): List<RankingPage> {
             title = "Players",
             nameHeader = "Player",
             teamHeader = "Team",
-            rows = rankings.players.map { it.toRow(slotsById, playersByEma) },
+            rows = rankings.players.map { it.toRow(slotsById, playersByEma, teamNamesById) },
         )
     }
     if (isTeams && rankings.teams.isNotEmpty()) {
@@ -599,7 +621,7 @@ private fun RankingSnapshot.toPages(): List<RankingPage> {
             title = "Teams",
             nameHeader = "Team",
             showCountry = false,
-            rows = rankings.teams.map { it.toRow() },
+            rows = rankings.teams.map { it.toRow(teamNamesById) },
         )
     }
     if (rankings.chickenHands.isNotEmpty()) {
@@ -625,20 +647,24 @@ private fun RankingSnapshot.toPages(): List<RankingPage> {
     return pages
 }
 
-private fun PlayerRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Map<String, Player>) = RankingRow(
+private fun PlayerRanking.toRow(
+    slots: Map<Int, TournamentPlayer>,
+    players: Map<String, Player>,
+    teamNames: Map<Int, String>,
+) = RankingRow(
     key = "player-$playerId",
     position = position,
     name = displayName(playerId, slots, players),
-    team = "Team $teamId",
+    team = teamNames[teamId] ?: "Team $teamId",
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
 )
 
-private fun TeamRanking.toRow() = RankingRow(
+private fun TeamRanking.toRow(teamNames: Map<Int, String>) = RankingRow(
     key = "team-$teamId",
     position = position,
-    name = "Team $teamId",
+    name = teamNames[teamId] ?: "Team $teamId",
     points = points,
     score = score,
 )
@@ -682,22 +708,7 @@ private fun String.formatRankingName(): String {
 }
 
 private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String {
-    val country = slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
-    return countryFlag(country)
-}
-
-private fun countryFlag(code: String): String {
-    val normalized = code.trim().uppercase()
-    if (normalized == "EU" || normalized.length != 2 || normalized.any { it !in 'A'..'Z' }) return "🌐"
-    return normalized.map { regionalIndicator(it) }.joinToString("")
-}
-
-private fun regionalIndicator(letter: Char): String {
-    val codePoint = 0x1F1E6 + (letter.code - 'A'.code)
-    val offset = codePoint - 0x10000
-    val high = ((offset / 0x400) + 0xD800).toChar()
-    val low = ((offset % 0x400) + 0xDC00).toChar()
-    return charArrayOf(high, low).concatToString()
+    return slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
 }
 
 private fun formatPoints(value: Double): String =

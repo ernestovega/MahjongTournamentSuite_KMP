@@ -37,6 +37,8 @@ class CreateTournamentPresenter(
 
     suspend fun createTournament(
         name: String,
+        eventStartDate: String,
+        eventEndDate: String,
         isTeams: Boolean,
         numPlayers: Int,
         numRounds: Int,
@@ -101,6 +103,8 @@ class CreateTournamentPresenter(
         val result = tournamentRepository.createTournament(
             CreateTournamentRequest(
                 name = name,
+                eventStartDate = eventStartDate,
+                eventEndDate = eventEndDate,
                 isTeams = isTeams,
                 numPlayers = numPlayers,
                 numRounds = numRounds,

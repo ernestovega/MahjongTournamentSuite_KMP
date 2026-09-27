@@ -79,6 +79,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
@@ -97,7 +98,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import coil3.compose.AsyncImage
 
-/** Shared player base. All signed-in users can read it. Only superadmins can change it. */
+/** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 fun PlayerBaseScreen(navController: NavHostController) {
@@ -107,7 +108,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val players by store.players.collectAsState()
     val admin by store.adminStatus.collectAsState()
     val canEdit = admin?.canEditPlayers == true
-    val canEditEmaNumber = admin?.isSuperadmin == true
+    val canEditEmaNumber = admin?.isAdmin == true
     var selectedEmaId by remember { mutableStateOf<String?>(null) }
     var emaId by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
@@ -625,7 +626,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     ),
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                 ) {
-                                    Text(countryFlag(code))
+                                    CountryFlag(code = code)
                                 }
                             }
                         }
@@ -775,7 +776,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     }
                                 }
                             } else if (!canEdit) {
-                                Text("Only admins and superadmins can edit the player base.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text("Only admins can edit the player base.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             }
                             PlatformVerticalScrollbar(
@@ -917,13 +918,22 @@ private fun CountrySelector(
         OutlinedTextField(
             value = if (expanded) query else {
                 val selectedCountry = countries.firstOrNull { it.code == selectedCode }
-                if (selectedCountry == null) selectedCode else "${countryFlag(selectedCountry.code)} ${selectedCountry.name}"
+                selectedCountry?.name ?: selectedCode
             },
             onValueChange = {
                 onQueryChange(it)
                 onExpandedChange(true)
             },
             label = { Text("Country") },
+            leadingIcon = if (!expanded && selectedCode.isNotBlank()) {
+                {
+                    CountryFlag(
+                        code = selectedCode,
+                    )
+                }
+            } else {
+                null
+            },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
             enabled = enabled,
             modifier = Modifier
@@ -933,7 +943,15 @@ private fun CountrySelector(
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
             filteredCountries.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text("${countryFlag(option.code)} ${option.name}") },
+                    text = {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            CountryFlag(code = option.code)
+                            Text(option.name)
+                        }
+                    },
                     onClick = { onCountrySelected(option.code) },
                 )
             }
@@ -956,20 +974,6 @@ private fun CountryFlagWithTooltip(code: String, countries: List<Country>) {
         tooltip = { PlainTooltip { Text(country?.name ?: code) } },
         state = rememberTooltipState(),
     ) {
-        Text(countryFlag(code))
+        CountryFlag(code = code, contentDescription = country?.name ?: code)
     }
-}
-
-private fun countryFlag(code: String): String {
-    val normalized = code.trim().uppercase()
-    if (normalized == "EU" || normalized.length != 2 || normalized.any { it !in 'A'..'Z' }) return "🌐"
-    return normalized.map { regionalIndicator(it) }.joinToString("")
-}
-
-private fun regionalIndicator(letter: Char): String {
-    val codePoint = 0x1F1E6 + (letter.code - 'A'.code)
-    val offset = codePoint - 0x10000
-    val high = ((offset / 0x400) + 0xD800).toChar()
-    val low = ((offset % 0x400) + 0xDC00).toChar()
-    return charArrayOf(high, low).concatToString()
 }

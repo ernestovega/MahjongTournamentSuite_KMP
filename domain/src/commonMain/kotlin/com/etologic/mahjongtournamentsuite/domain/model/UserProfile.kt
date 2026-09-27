@@ -6,14 +6,13 @@ data class UserProfile(
 )
 
 enum class GlobalUserRole {
-    REGULAR,
-    SUPERADMIN,
+    EDITOR,
+    ADMIN,
 }
 
 data class TournamentAssignment(
     val tournamentId: String,
     val tournamentName: String,
-    val role: TournamentRole,
 )
 
 data class ManagedUser(

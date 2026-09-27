@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -25,27 +22,26 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRole
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionMenuItem
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.launch
@@ -58,12 +54,9 @@ fun TournamentUsersScreen(
 ) {
     val presenter = koinInject<UsersPresenter>()
     val coroutineScope = rememberCoroutineScope()
-
     var isLoading by remember { mutableStateOf(true) }
-    var adminStatus by remember { mutableStateOf<AdminStatus?>(null) }
     var members by remember { mutableStateOf<List<TournamentMember>>(emptyList()) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
     var lookupIdentifier by remember { mutableStateOf("") }
     var lookedUpUser by remember { mutableStateOf<UserProfile?>(null) }
     val lookupFocusRequester = remember { FocusRequester() }
@@ -74,29 +67,18 @@ fun TournamentUsersScreen(
             isLoading = true
             errorMessage = null
             lookedUpUser = null
-
-            when (val statusResult = presenter.loadAdminStatus()) {
-                is AppResult.Success -> adminStatus = statusResult.value
-                is AppResult.Failure -> errorMessage = statusResult.error.toUiMessage()
+            when (val result = presenter.loadMembers(tournamentId)) {
+                is AppResult.Success -> members = result.value
+                is AppResult.Failure -> errorMessage = result.error.toUiMessage()
             }
-
-            when (val membersResult = presenter.loadMembers(tournamentId)) {
-                is AppResult.Success -> members = membersResult.value
-                is AppResult.Failure -> if (errorMessage == null) errorMessage = membersResult.error.toUiMessage()
-            }
-
             isLoading = false
         }
     }
 
-    fun upsert(uid: String, role: TournamentRole) {
+    fun assign(uid: String) {
         coroutineScope.launch {
             errorMessage = null
-            when (val result = presenter.upsertMember(
-                tournamentId = tournamentId,
-                uid = uid,
-                role = role,
-            )) {
+            when (val result = presenter.upsertMember(tournamentId = tournamentId, uid = uid)) {
                 is AppResult.Success -> refresh()
                 is AppResult.Failure -> errorMessage = result.error.toUiMessage()
             }
@@ -106,20 +88,14 @@ fun TournamentUsersScreen(
     fun remove(uid: String) {
         coroutineScope.launch {
             errorMessage = null
-            when (val result = presenter.removeMember(
-                tournamentId = tournamentId,
-                uid = uid,
-            )) {
+            when (val result = presenter.removeMember(tournamentId = tournamentId, uid = uid)) {
                 is AppResult.Success -> refresh()
                 is AppResult.Failure -> errorMessage = result.error.toUiMessage()
             }
         }
     }
 
-    LaunchedEffect(presenter, tournamentId) {
-        refresh()
-    }
-
+    LaunchedEffect(presenter, tournamentId) { refresh() }
     LaunchedEffect(isLoading) {
         if (initialLookupFocusPending && !isLoading && errorMessage == null) {
             lookupFocusRequester.requestFocus()
@@ -128,115 +104,80 @@ fun TournamentUsersScreen(
     }
 
     AppScaffold(
-        title = "Tournament users",
+        title = "Tournament editors",
         subtitle = tournamentId,
         isLoading = isLoading,
         onBack = { navController.popBackStack() },
-        actions = { AppTopBarActions(onRefresh = { refresh() }) },
+        actions = { AppTopBarActions(onRefresh = ::refresh) },
     ) {
         ScreenColumn(
             maxWidth = 1200.dp,
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            errorMessage?.let { message ->
-                AppErrorMessage(message = message)
+            errorMessage?.let { AppErrorMessage(message = it) }
+
+            SectionCard(
+                title = "Assign editor",
+                subtitle = "Editors can assign other editor accounts to this tournament",
+            ) {
+                OutlinedTextField(
+                    value = lookupIdentifier,
+                    onValueChange = { lookupIdentifier = it },
+                    label = { Text("Email") },
+                    modifier = Modifier.fillMaxWidth().focusRequester(lookupFocusRequester),
+                    singleLine = true,
+                    enabled = !isLoading,
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Button(
+                        enabled = !isLoading,
+                        onClick = {
+                            coroutineScope.launch {
+                                errorMessage = null
+                                lookedUpUser = null
+                                when (val result = presenter.lookupUser(lookupIdentifier.trim(), tournamentId)) {
+                                    is AppResult.Success -> lookedUpUser = result.value
+                                    is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+                                }
+                            }
+                        },
+                    ) { Text("Look up account") }
+                    Text(
+                        text = "Create new accounts from the App Users screen.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.weight(1f),
+                    )
+                }
+
+                lookedUpUser?.let { user ->
+                    HorizontalDivider()
+                    Text(user.email, style = MaterialTheme.typography.titleSmall)
+                    Button(
+                        enabled = !isLoading && members.none { it.uid == user.uid },
+                        onClick = { assign(user.uid) },
+                    ) { Text(if (members.any { it.uid == user.uid }) "Already assigned" else "Assign editor") }
+                }
             }
 
             SectionCard(
-                title = "Add user",
-                subtitle = if (adminStatus?.isSuperadmin == true) {
-                    "Look up a user and assign a tournament role"
+                title = "Assigned accounts",
+                subtitle = if (isLoading) "Loading…" else "${members.size} accounts",
+            ) {
+                if (!isLoading && members.isEmpty()) {
+                    Text("No editor accounts are assigned.", style = MaterialTheme.typography.bodyLarge)
                 } else {
-                    "Assign Reader or Editor. Only a superadmin can grant Tournament Admin."
-                },
-                content = {
-                        OutlinedTextField(
-                            value = lookupIdentifier,
-                            onValueChange = { lookupIdentifier = it },
-                            label = { Text("Email") },
-                            modifier = Modifier.fillMaxWidth().focusRequester(lookupFocusRequester),
-                            singleLine = true,
-                            enabled = !isLoading,
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            Button(
-                                enabled = !isLoading,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        errorMessage = null
-                                        lookedUpUser = null
-                                        when (val result = presenter.lookupUser(lookupIdentifier.trim(), tournamentId)) {
-                                            is AppResult.Success -> lookedUpUser = result.value
-                                            is AppResult.Failure -> errorMessage = result.error.toUiMessage()
-                                        }
-                                    }
-                                },
-                            ) {
-                                Text("Lookup user")
-                            }
-                            Text(
-                                text = "Assign Reader/Editor/Admin after lookup.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f),
-                            )
-                        }
-
-                        lookedUpUser?.let { user ->
-                            HorizontalDivider()
-                            Text(
-                                text = user.email,
-                                style = MaterialTheme.typography.titleSmall,
-                            )
-                            Text(
-                                text = "uid: ${user.uid}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                            RoleDropdown(
-                                enabled = !isLoading,
-                                buttonText = "Assign role",
-                                currentRole = null,
-                                roles = if (adminStatus?.isSuperadmin == true) {
-                                    TournamentRole.entries
-                                } else {
-                                    listOf(TournamentRole.READER, TournamentRole.EDITOR)
-                                },
-                                onSelect = { role -> upsert(uid = user.uid, role = role) },
-                            )
-                        }
-                },
-            )
-
-            SectionCard(
-                title = "Current users",
-                subtitle = if (isLoading) "Loading…" else "${members.size} users",
-                content = {
-                    if (!isLoading && members.isEmpty()) {
-                        Text(
-                            text = "No users yet.",
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                        Text(
-                            text = "Add at least one Editor/Admin so the tournament can be managed.",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else {
-                        TournamentUsersTable(
-                            members = members,
-                            enabled = !isLoading,
-                            canGrantAdmin = adminStatus?.isSuperadmin == true,
-                            onChangeRole = { uid, role -> upsert(uid = uid, role = role) },
-                            onRemove = { uid -> remove(uid) },
-                        )
-                    }
-                },
-            )
+                    TournamentUsersTable(
+                        members = members,
+                        enabled = !isLoading,
+                        onRemove = ::remove,
+                    )
+                }
+            }
         }
     }
 }
@@ -245,8 +186,6 @@ fun TournamentUsersScreen(
 private fun TournamentUsersTable(
     members: List<TournamentMember>,
     enabled: Boolean,
-    canGrantAdmin: Boolean,
-    onChangeRole: (uid: String, role: TournamentRole) -> Unit,
     onRemove: (uid: String) -> Unit,
 ) {
     LazyColumnWithScrollbar(
@@ -255,25 +194,9 @@ private fun TournamentUsersTable(
     ) {
         item {
             DataTableHeaderRow {
-                Text(
-                    text = "User",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(0.65f),
-                )
-                Text(
-                    text = "Role",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(0.25f),
-                )
-                Text(
-                    text = "",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.width(44.dp),
-                    textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                )
+                Text("Account", modifier = Modifier.weight(0.65f), style = MaterialTheme.typography.labelLarge)
+                Text("Role", modifier = Modifier.weight(0.25f), style = MaterialTheme.typography.labelLarge)
+                Text("", modifier = Modifier.width(88.dp))
             }
             DataTableDivider()
         }
@@ -282,87 +205,42 @@ private fun TournamentUsersTable(
             DataTableRow {
                 Text(
                     text = member.email.ifBlank { member.uid },
-                    style = MaterialTheme.typography.bodyMedium,
                     modifier = Modifier.weight(0.65f),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Text(
-                    text = member.role.name,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = member.role.label(),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.weight(0.25f),
                 )
-                RowActionsMenu(
-                    enabled = enabled,
-                    items = buildList {
-                        add(
-                            RowActionMenuItem(
-                                label = "Set role: READER",
-                                enabled = member.role != TournamentRole.READER,
-                                onClick = { onChangeRole(member.uid, TournamentRole.READER) },
-                            ),
-                        )
-                        add(
-                            RowActionMenuItem(
-                                label = "Set role: EDITOR",
-                                enabled = member.role != TournamentRole.EDITOR,
-                                onClick = { onChangeRole(member.uid, TournamentRole.EDITOR) },
-                            ),
-                        )
-                        if (canGrantAdmin) {
-                            add(
-                                RowActionMenuItem(
-                                    label = "Set role: ADMIN",
-                                    enabled = member.role != TournamentRole.ADMIN,
-                                    onClick = { onChangeRole(member.uid, TournamentRole.ADMIN) },
-                                ),
-                            )
-                        }
-                        add(
+                if (member.role == GlobalUserRole.EDITOR) {
+                    RowActionsMenu(
+                        enabled = enabled,
+                        items = listOf(
                             RowActionMenuItem(
                                 label = "Remove",
                                 enabled = enabled,
                                 onClick = { onRemove(member.uid) },
                             ),
-                        )
-                    },
-                    modifier = Modifier.width(44.dp),
-                )
+                        ),
+                        modifier = Modifier.width(88.dp),
+                    )
+                } else {
+                    Text(
+                        text = "Global",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
+                        modifier = Modifier.width(88.dp),
+                    )
+                }
             }
             DataTableDivider()
         }
     }
 }
 
-@Composable
-private fun RoleDropdown(
-    enabled: Boolean,
-    buttonText: String,
-    currentRole: TournamentRole?,
-    roles: List<TournamentRole>,
-    onSelect: (TournamentRole) -> Unit,
-) {
-    var isMenuOpen by remember(currentRole) { mutableStateOf(false) }
-    AppTextButton(
-        enabled = enabled,
-        onClick = { isMenuOpen = true },
-        modifier = Modifier.width(104.dp),
-    ) {
-        Text(currentRole?.name ?: buttonText)
-    }
-    DropdownMenu(
-        expanded = isMenuOpen,
-        onDismissRequest = { isMenuOpen = false },
-    ) {
-        roles.forEach { role ->
-            DropdownMenuItem(
-                text = { Text(role.name) },
-                onClick = {
-                    isMenuOpen = false
-                    onSelect(role)
-                },
-            )
-        }
-    }
+private fun GlobalUserRole.label(): String = when (this) {
+    GlobalUserRole.EDITOR -> "Editor"
+    GlobalUserRole.ADMIN -> "Admin"
 }

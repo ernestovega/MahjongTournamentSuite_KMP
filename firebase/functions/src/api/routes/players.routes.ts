@@ -1,7 +1,7 @@
 import { Router } from "express";
 
-import { badRequest, forbidden } from "../httpError";
-import { requireSuperadmin } from "../middleware/requireSuperadmin";
+import { badRequest } from "../httpError";
+import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
 import { createPlayer, listPlayers, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
 
@@ -16,7 +16,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.post("/", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.post("/", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.body?.emaId);
       const name = String(req.body?.name ?? "").trim();
@@ -29,14 +29,10 @@ export function playersRouter(): Router {
     }
   });
 
-  router.put("/:emaId", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.put("/:emaId", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.params.emaId);
       const newEmaId = validateEmaId(req.body?.emaId ?? emaId);
-      if (newEmaId !== emaId) {
-        const decoded = res.locals.auth as { superadmin?: boolean } | undefined;
-        if (decoded?.superadmin !== true) throw forbidden("Superadmin required to change an EMA number");
-      }
       const name = String(req.body?.name ?? "").trim();
       const country = String(req.body?.country ?? "").trim();
       if (!name) throw badRequest("Player name is required");
@@ -48,7 +44,7 @@ export function playersRouter(): Router {
     }
   });
 
-  router.put("/:emaId/photo", requireAuth, requireSuperadmin, async (req, res, next) => {
+  router.put("/:emaId/photo", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.params.emaId);
       const contentType = String(req.body?.contentType ?? "").trim().toLowerCase();

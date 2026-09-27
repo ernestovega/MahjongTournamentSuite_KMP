@@ -5,21 +5,19 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class WhoAmIResponseDto(
     val uid: String,
-    val admin: Boolean = false,
-    val superadmin: Boolean,
+    val role: GlobalUserRoleDto,
 )
 
 @Serializable
 enum class GlobalUserRoleDto {
-    REGULAR,
-    SUPERADMIN,
+    EDITOR,
+    ADMIN,
 }
 
 @Serializable
 data class TournamentAssignmentDto(
     val tournamentId: String,
     val tournamentName: String = "",
-    val role: TournamentRoleDto,
 )
 
 @Serializable

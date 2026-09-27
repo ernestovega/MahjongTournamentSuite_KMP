@@ -1,16 +1,14 @@
 import { FieldValue } from "firebase-admin/firestore";
-import type { UserRecord } from "firebase-admin/auth";
 
 import { auth, db } from "../firebase";
-import { conflict, notFound } from "../api/httpError";
-import type { Role } from "../models/role";
+import { conflict, forbidden, notFound } from "../api/httpError";
+import { getGlobalUserRole, type GlobalUserRole } from "../models/globalRole";
 
-export type GlobalUserRole = "REGULAR" | "SUPERADMIN";
+export type { GlobalUserRole } from "../models/globalRole";
 
 export type TournamentAssignment = {
   tournamentId: string;
   tournamentName: string;
-  role: Role;
 };
 
 export type UserProfile = {
@@ -25,20 +23,19 @@ export type ManagedUser = UserProfile & {
   tournamentAssignments: TournamentAssignment[];
 };
 
-export function getGlobalUserRole(user: Pick<UserRecord, "customClaims">): GlobalUserRole {
-  if (user.customClaims?.superadmin === true) return "SUPERADMIN";
-  return "REGULAR";
-}
+export type AdminAccount = {
+  uid: string;
+  email: string;
+};
 
 export async function getUserProfile(uid: string): Promise<UserProfile> {
   const snap = await db.doc(`users/${uid}`).get();
-  if (!snap.exists) {
-    throw notFound("User profile not found");
-  }
-
-  const email = snap.get("email") as string;
-  const alias = String(snap.get("alias") ?? "").trim();
-  return { uid, email, alias };
+  if (!snap.exists) throw notFound("User profile not found");
+  return {
+    uid,
+    email: String(snap.get("email") ?? ""),
+    alias: String(snap.get("alias") ?? "").trim(),
+  };
 }
 
 export async function createUserProfile(uid: string, email: string, alias = ""): Promise<void> {
@@ -55,10 +52,12 @@ export async function createUserProfile(uid: string, email: string, alias = ""):
   );
 }
 
-export async function listManagedUsers(): Promise<ManagedUser[]> {
+export async function listManagedUsers(
+  visibleTournamentIds?: ReadonlySet<string>,
+): Promise<ManagedUser[]> {
   const profiles = await db.collection("users").get();
   const profilesByUid = new Map(profiles.docs.map((doc) => [doc.id, doc.data()]));
-  const assignmentsByUid = await listTournamentAssignmentsByUid();
+  const assignmentsByUid = await listTournamentAssignmentsByUid(visibleTournamentIds);
   const users: ManagedUser[] = [];
   let pageToken: string | undefined;
 
@@ -66,10 +65,9 @@ export async function listManagedUsers(): Promise<ManagedUser[]> {
     const page = await auth.listUsers(1_000, pageToken);
     page.users.forEach((user) => {
       const profile = profilesByUid.get(user.uid);
-      const email = user.email ?? String(profile?.email ?? "");
       users.push({
         uid: user.uid,
-        email,
+        email: user.email ?? String(profile?.email ?? ""),
         alias: String(profile?.alias ?? "").trim(),
         role: getGlobalUserRole(user),
         disabled: user.disabled,
@@ -82,18 +80,19 @@ export async function listManagedUsers(): Promise<ManagedUser[]> {
   return users.sort((left, right) => left.email.localeCompare(right.email));
 }
 
-export async function getManagedUser(uid: string): Promise<ManagedUser> {
+export async function getManagedUser(
+  uid: string,
+  visibleTournamentIds?: ReadonlySet<string>,
+): Promise<ManagedUser> {
   const user = await auth.getUser(uid);
   const profile = await db.doc(`users/${uid}`).get();
-  const email = user.email ?? String(profile.get("email") ?? "");
-  const alias = String(profile.get("alias") ?? "").trim();
   return {
     uid,
-    email,
-    alias,
+    email: user.email ?? String(profile.get("email") ?? ""),
+    alias: String(profile.get("alias") ?? "").trim(),
     role: getGlobalUserRole(user),
     disabled: user.disabled,
-    tournamentAssignments: await listUserTournamentAssignments(uid),
+    tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
   };
 }
 
@@ -102,7 +101,7 @@ export async function setGlobalUserRole(uid: string, role: GlobalUserRole): Prom
   const claims = { ...(user.customClaims ?? {}) };
   delete claims.admin;
   delete claims.superadmin;
-  if (role === "SUPERADMIN") claims.superadmin = true;
+  if (role === "ADMIN") claims.admin = true;
   await auth.setCustomUserClaims(uid, claims);
 }
 
@@ -112,6 +111,7 @@ export async function updateManagedUser(params: {
   alias: string;
   role: GlobalUserRole;
   tournamentAssignments: TournamentAssignment[];
+  assignmentScope?: ReadonlySet<string>;
 }): Promise<void> {
   await auth.updateUser(params.uid, { email: params.email });
   await setGlobalUserRole(params.uid, params.role);
@@ -126,38 +126,48 @@ export async function updateManagedUser(params: {
     },
     { merge: true },
   );
-  await syncUserTournamentAssignments(params.uid, params.tournamentAssignments);
+  await syncUserTournamentAssignments(
+    params.uid,
+    params.role === "ADMIN" ? [] : params.tournamentAssignments,
+    params.role === "ADMIN" ? undefined : params.assignmentScope,
+  );
 }
 
-async function listTournamentAssignmentsByUid(): Promise<Map<string, TournamentAssignment[]>> {
+async function listTournamentAssignmentsByUid(
+  visibleTournamentIds?: ReadonlySet<string>,
+): Promise<Map<string, TournamentAssignment[]>> {
   const result = new Map<string, TournamentAssignment[]>();
   const tournaments = await db.collection("tournaments").get();
   await Promise.all(tournaments.docs.map(async (tournament) => {
+    if (visibleTournamentIds && !visibleTournamentIds.has(tournament.id)) return;
     const members = await tournament.ref.collection("members").get();
     members.docs.forEach((member) => {
       const assignment: TournamentAssignment = {
         tournamentId: tournament.id,
         tournamentName: String(tournament.get("name") ?? ""),
-        role: member.get("role") as Role,
       };
       result.set(member.id, [...(result.get(member.id) ?? []), assignment]);
     });
   }));
-  result.forEach((assignments) => assignments.sort((left, right) => left.tournamentName.localeCompare(right.tournamentName)));
+  result.forEach((assignments) => assignments.sort(
+    (left, right) => left.tournamentName.localeCompare(right.tournamentName),
+  ));
   return result;
 }
 
-export async function listUserTournamentAssignments(uid: string): Promise<TournamentAssignment[]> {
+export async function listUserTournamentAssignments(
+  uid: string,
+  visibleTournamentIds?: ReadonlySet<string>,
+): Promise<TournamentAssignment[]> {
   const memberships = await db.collectionGroup("members").where("uid", "==", uid).get();
   const assignments = await Promise.all(memberships.docs.map(async (membership) => {
     const tournamentRef = membership.ref.parent.parent;
-    if (!tournamentRef) return null;
+    if (!tournamentRef || (visibleTournamentIds && !visibleTournamentIds.has(tournamentRef.id))) return null;
     const tournament = await tournamentRef.get();
     if (!tournament.exists) return null;
     return {
       tournamentId: tournament.id,
       tournamentName: String(tournament.get("name") ?? ""),
-      role: membership.get("role") as Role,
     } satisfies TournamentAssignment;
   }));
   return assignments
@@ -165,13 +175,21 @@ export async function listUserTournamentAssignments(uid: string): Promise<Tourna
     .sort((left, right) => left.tournamentName.localeCompare(right.tournamentName));
 }
 
+export async function listAssignedTournamentIds(uid: string): Promise<Set<string>> {
+  return new Set((await listUserTournamentAssignments(uid)).map((assignment) => assignment.tournamentId));
+}
+
 export async function syncUserTournamentAssignments(
   uid: string,
   assignments: TournamentAssignment[],
+  scopeTournamentIds?: ReadonlySet<string>,
 ): Promise<void> {
   const desired = new Map(assignments.map((assignment) => [assignment.tournamentId, assignment]));
   const tournamentIds = [...desired.keys()];
   if (tournamentIds.length !== assignments.length) throw conflict("Duplicate tournament assignment");
+  if (scopeTournamentIds && tournamentIds.some((id) => !scopeTournamentIds.has(id))) {
+    throw forbidden("Editors can assign accounts only to their own tournaments");
+  }
 
   const tournamentRefs = tournamentIds.map((id) => db.doc(`tournaments/${id}`));
   const tournamentDocs = tournamentRefs.length > 0 ? await db.getAll(...tournamentRefs) : [];
@@ -182,7 +200,8 @@ export async function syncUserTournamentAssignments(
   let operationCount = 0;
   current.docs.forEach((membership) => {
     const tournamentId = membership.ref.parent.parent?.id;
-    if (tournamentId && !desired.has(tournamentId)) {
+    const isInScope = tournamentId && (!scopeTournamentIds || scopeTournamentIds.has(tournamentId));
+    if (tournamentId && isInScope && !desired.has(tournamentId)) {
       batch.delete(membership.ref);
       operationCount++;
     }
@@ -190,10 +209,9 @@ export async function syncUserTournamentAssignments(
   assignments.forEach((assignment) => {
     batch.set(db.doc(`tournaments/${assignment.tournamentId}/members/${uid}`), {
       uid,
-      role: assignment.role,
       updatedAt: FieldValue.serverTimestamp(),
       createdAt: FieldValue.serverTimestamp(),
-    }, { merge: true });
+    });
     operationCount++;
   });
   if (operationCount > 0) await batch.commit();
@@ -203,23 +221,35 @@ export async function setManagedUserDisabled(uid: string, disabled: boolean): Pr
   await auth.updateUser(uid, { disabled });
   if (disabled) await auth.revokeRefreshTokens(uid);
   await db.doc(`users/${uid}`).set(
-    {
-      disabled,
-      updatedAt: FieldValue.serverTimestamp(),
-    },
+    { disabled, updatedAt: FieldValue.serverTimestamp() },
     { merge: true },
   );
 }
 
-export async function countEnabledSuperadmins(): Promise<number> {
+export async function countEnabledAdmins(): Promise<number> {
   let count = 0;
   let pageToken: string | undefined;
   do {
     const page = await auth.listUsers(1_000, pageToken);
-    count += page.users.filter((user) => !user.disabled && getGlobalUserRole(user) === "SUPERADMIN").length;
+    count += page.users.filter((user) => !user.disabled && getGlobalUserRole(user) === "ADMIN").length;
     pageToken = page.pageToken;
   } while (pageToken);
   return count;
+}
+
+export async function listEnabledAdmins(): Promise<AdminAccount[]> {
+  const admins: AdminAccount[] = [];
+  let pageToken: string | undefined;
+  do {
+    const page = await auth.listUsers(1_000, pageToken);
+    page.users.forEach((user) => {
+      if (!user.disabled && getGlobalUserRole(user) === "ADMIN") {
+        admins.push({ uid: user.uid, email: user.email ?? "" });
+      }
+    });
+    pageToken = page.pageToken;
+  } while (pageToken);
+  return admins;
 }
 
 export async function assertEmailAvailable(email: string, excludedUid?: string): Promise<void> {

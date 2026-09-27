@@ -25,12 +25,16 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -88,6 +92,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTourname
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -95,8 +100,15 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
+import kotlinx.datetime.Instant
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
+import kotlin.time.Clock
 import org.koin.compose.koinInject
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateTournamentScreen(
     navController: NavHostController,
@@ -106,10 +118,16 @@ fun CreateTournamentScreen(
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
+    val eventStartDateFocusRequester = remember { FocusRequester() }
+    val eventEndDateFocusRequester = remember { FocusRequester() }
     val playersFocusRequester = remember { FocusRequester() }
     val roundsFocusRequester = remember { FocusRequester() }
 
     var name by remember { mutableStateOf("") }
+    val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString() }
+    var eventStartDate by remember { mutableStateOf(today) }
+    var eventEndDate by remember { mutableStateOf(today) }
+    var datePickerFor by remember { mutableStateOf<String?>(null) }
     var numPlayersText by remember { mutableStateOf("60") }
     var numRoundsText by remember { mutableStateOf("7") }
     var isTeams by remember { mutableStateOf(true) }
@@ -157,12 +175,18 @@ fun CreateTournamentScreen(
         if (isLoading) return
 
         val trimmedName = name.trim()
+        val trimmedStartDate = eventStartDate.trim()
+        val trimmedEndDate = eventEndDate.trim()
         val numPlayers = numPlayersText.trim().toIntOrNull()
         val numRounds = numRoundsText.trim().toIntOrNull()
 
         if (trimmedName.isBlank()) {
             errorMessage = "* Name is required."
             nameFocusRequester.requestFocus()
+            return
+        }
+        if (!TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)) {
+            errorMessage = "* Enter a valid date period. The end date must not be before the start date."
             return
         }
         if (numPlayers == null || numPlayers <= 0 || numPlayers % 4 != 0) {
@@ -189,6 +213,8 @@ fun CreateTournamentScreen(
             try {
                 when (val result = presenter.createTournament(
                     name = trimmedName,
+                    eventStartDate = trimmedStartDate,
+                    eventEndDate = trimmedEndDate,
                     isTeams = isTeams,
                     numPlayers = numPlayers,
                     numRounds = numRounds,
@@ -237,6 +263,38 @@ fun CreateTournamentScreen(
         }
     }
 
+    if (datePickerFor == "start") {
+        val state = rememberDatePickerState(initialSelectedDateMillis = dateToEpochMillis(eventStartDate))
+        DatePickerDialog(
+            onDismissRequest = { datePickerFor = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let { eventStartDate = epochMillisToDate(it) }
+                    datePickerFor = null
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { datePickerFor = null }) { Text("Cancel") }
+            },
+        ) { DatePicker(state = state) }
+    }
+
+    if (datePickerFor == "end") {
+        val state = rememberDatePickerState(initialSelectedDateMillis = dateToEpochMillis(eventEndDate))
+        DatePickerDialog(
+            onDismissRequest = { datePickerFor = null },
+            confirmButton = {
+                TextButton(onClick = {
+                    state.selectedDateMillis?.let { eventEndDate = epochMillisToDate(it) }
+                    datePickerFor = null
+                }) { Text("OK") }
+            },
+            dismissButton = {
+                TextButton(onClick = { datePickerFor = null }) { Text("Cancel") }
+            },
+        ) { DatePicker(state = state) }
+    }
+
     AppScaffold(
         title = "Create tournament",
         isLoading = isLoading,
@@ -272,10 +330,54 @@ fun CreateTournamentScreen(
                                 .focusRequester(nameFocusRequester),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             keyboardActions = KeyboardActions(
-                                onNext = { playersFocusRequester.requestFocus() },
+                                onNext = { eventStartDateFocusRequester.requestFocus() },
                                 onDone = { startCreate() },
                             ),
                         )
+
+                        Spacer(Modifier.size(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            OutlinedTextField(
+                                value = eventStartDate,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("From") },
+                                supportingText = { Text("YYYY-MM-DD") },
+                                singleLine = true,
+                                enabled = !isLoading,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(eventStartDateFocusRequester)
+                                    .clickable { datePickerFor = "start" },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(
+                                    onNext = { eventEndDateFocusRequester.requestFocus() },
+                                    onDone = { startCreate() },
+                                ),
+                            )
+                            OutlinedTextField(
+                                value = eventEndDate,
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("To") },
+                                supportingText = { Text("YYYY-MM-DD") },
+                                singleLine = true,
+                                enabled = !isLoading,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(eventEndDateFocusRequester)
+                                    .clickable { datePickerFor = "end" },
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(
+                                    onNext = { playersFocusRequester.requestFocus() },
+                                    onDone = { startCreate() },
+                                ),
+                            )
+                        }
 
                         Spacer(Modifier.size(16.dp))
 
@@ -541,6 +643,13 @@ fun CreateTournamentScreen(
         }
     }
 }
+
+private fun dateToEpochMillis(value: String): Long? = runCatching {
+    LocalDate.parse(value).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
+}.getOrNull()
+
+private fun epochMillisToDate(value: Long): String =
+    Instant.fromEpochMilliseconds(value).toLocalDateTime(TimeZone.UTC).date.toString()
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

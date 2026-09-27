@@ -4,22 +4,22 @@ exports.tournamentsRouter = tournamentsRouter;
 const express_1 = require("express");
 const firebase_1 = require("../../firebase");
 const requireAuth_1 = require("../middleware/requireAuth");
-const requireSuperadmin_1 = require("../middleware/requireSuperadmin");
-const requireTournamentRole_1 = require("../middleware/requireTournamentRole");
+const requireAdmin_1 = require("../middleware/requireAdmin");
+const requireTournamentEditor_1 = require("../middleware/requireTournamentEditor");
 const httpError_1 = require("../httpError");
-const role_1 = require("../../models/role");
 const membersService_1 = require("../../services/membersService");
 const tournamentsService_1 = require("../../services/tournamentsService");
 const tournamentContentService_1 = require("../../services/tournamentContentService");
 const playersService_1 = require("../../services/playersService");
 const tableManagerService_1 = require("../../services/tableManagerService");
 const usersService_1 = require("../../services/usersService");
+const tournamentDates_1 = require("../../services/tournamentDates");
 function tournamentsRouter() {
     const router = (0, express_1.Router)();
     router.get("/", requireAuth_1.requireAuth, async (_req, res, next) => {
         try {
             const decoded = res.locals.auth;
-            const tournaments = decoded.superadmin === true
+            const tournaments = decoded.admin === true
                 ? await (0, tournamentsService_1.listAllTournaments)()
                 : await (0, tournamentsService_1.listTournamentsForUser)(decoded.uid);
             res.status(200).json({ tournaments });
@@ -28,11 +28,13 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.post("/", requireAuth_1.requireAuth, requireSuperadmin_1.requireSuperadmin, async (req, res, next) => {
+    router.post("/", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
             const decoded = res.locals.auth;
             const body = (req.body != null && typeof req.body === "object") ? req.body : null;
             const name = String(body?.name ?? "").trim();
+            const eventStartDate = String(body?.eventStartDate ?? body?.eventDate ?? "").trim();
+            const eventEndDate = String(body?.eventEndDate ?? body?.eventDate ?? "").trim();
             const isTeams = Boolean(body?.isTeams ?? false);
             const numPlayersValue = body?.numPlayers;
             const numRoundsValue = body?.numRounds;
@@ -47,6 +49,15 @@ function tournamentsRouter() {
                 issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
             if (!name)
                 issues.push({ field: "name", message: "Required", value: body?.name });
+            if (!(0, tournamentDates_1.isValidIsoDate)(eventStartDate)) {
+                issues.push({ field: "eventStartDate", message: "Must use yyyy-MM-dd", value: body?.eventStartDate });
+            }
+            if (!(0, tournamentDates_1.isValidIsoDate)(eventEndDate)) {
+                issues.push({ field: "eventEndDate", message: "Must use yyyy-MM-dd", value: body?.eventEndDate });
+            }
+            if ((0, tournamentDates_1.isValidIsoDate)(eventStartDate) && (0, tournamentDates_1.isValidIsoDate)(eventEndDate) && !(0, tournamentDates_1.isValidIsoDateRange)(eventStartDate, eventEndDate)) {
+                issues.push({ field: "eventEndDate", message: "Must not be before eventStartDate", value: body?.eventEndDate });
+            }
             if (!Number.isFinite(numPlayers) || !Number.isInteger(numPlayers) || numPlayers <= 0 || numPlayers % 4 !== 0) {
                 issues.push({ field: "numPlayers", message: "Must be a positive integer multiple of 4", value: numPlayersValue });
             }
@@ -112,6 +123,8 @@ function tournamentsRouter() {
             });
             const tournament = await (0, tournamentsService_1.createTournament)({
                 name,
+                eventStartDate,
+                eventEndDate,
                 isTeams,
                 numPlayers,
                 numRounds,
@@ -126,7 +139,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.delete("/:tournamentId", requireAuth_1.requireAuth, requireSuperadmin_1.requireSuperadmin, async (req, res, next) => {
+    router.delete("/:tournamentId", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
             await (0, tournamentsService_1.deleteTournament)(req.params.tournamentId);
             res.status(200).json({ ok: true });
@@ -135,7 +148,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.put("/:tournamentId", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
+    router.put("/:tournamentId", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
             const body = (req.body != null && typeof req.body === "object") ? req.body : null;
             const name = String(body?.name ?? "").trim();
@@ -148,7 +161,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.get("/:tournamentId/users/lookup", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
+    router.get("/:tournamentId/users/lookup", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const email = String(req.query.email ?? "").trim();
             if (!email.includes("@"))
@@ -160,7 +173,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.get("/:tournamentId/members", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
+    router.get("/:tournamentId/members", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const members = await (0, membersService_1.listTournamentMembers)(req.params.tournamentId);
             res.status(200).json({ members });
@@ -169,7 +182,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.put("/:tournamentId/players/:playerId", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("EDITOR"), async (req, res, next) => {
+    router.put("/:tournamentId/players/:playerId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const playerId = Number(req.params.playerId);
             const body = (req.body != null && typeof req.body === "object") ? req.body : null;
@@ -191,20 +204,11 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.put("/:tournamentId/members/:uid", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
+    router.put("/:tournamentId/members/:uid", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
-            const role = (0, role_1.parseRole)(req.body?.role);
-            if (!role) {
-                throw (0, httpError_1.badRequest)("Invalid role");
-            }
-            const actor = res.locals.auth;
-            if (role === "ADMIN" && actor.superadmin !== true) {
-                throw (0, httpError_1.forbidden)("Only a superadmin can grant Tournament Admin");
-            }
             await (0, membersService_1.upsertTournamentMember)({
                 tournamentId: req.params.tournamentId,
                 uid: req.params.uid,
-                role,
             });
             res.status(200).json({ ok: true });
         }
@@ -212,7 +216,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.delete("/:tournamentId/members/:uid", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("ADMIN"), async (req, res, next) => {
+    router.delete("/:tournamentId/members/:uid", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             await (0, membersService_1.removeTournamentMember)({
                 tournamentId: req.params.tournamentId,
@@ -224,7 +228,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.get("/:tournamentId/players", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("READER"), async (req, res, next) => {
+    router.get("/:tournamentId/players", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const players = await (0, tournamentContentService_1.listTournamentPlayers)(req.params.tournamentId);
             res.status(200).json({ players });
@@ -233,7 +237,64 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.get("/:tournamentId/rounds", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("READER"), async (req, res, next) => {
+    router.get("/:tournamentId/teams", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const teams = await (0, tournamentContentService_1.listTournamentTeams)(req.params.tournamentId);
+            res.status(200).json({ teams });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.put("/:tournamentId/teams/:teamId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const teamId = Number(req.params.teamId);
+            const body = (req.body != null && typeof req.body === "object")
+                ? req.body
+                : null;
+            const name = String(body?.name ?? "").trim();
+            const rawEmaIds = Array.isArray(body?.emaIds) ? body.emaIds : null;
+            if (!Number.isInteger(teamId) || teamId <= 0) {
+                throw (0, httpError_1.badRequest)("teamId must be a positive integer");
+            }
+            if (name.length === 0 || name.length > 80) {
+                throw (0, httpError_1.badRequest)("Team name must contain 1 to 80 characters");
+            }
+            if (rawEmaIds == null || rawEmaIds.length > 4) {
+                throw (0, httpError_1.badRequest)("emaIds must contain up to four team slots");
+            }
+            const emaIds = rawEmaIds.map((value, index) => {
+                if (value == null || String(value).trim().length === 0)
+                    return null;
+                try {
+                    return (0, playersService_1.validateEmaId)(value);
+                }
+                catch (_error) {
+                    throw (0, httpError_1.badRequest)("Invalid EMA player", { index, value });
+                }
+            });
+            const assignedEmaIds = emaIds.filter((emaId) => emaId != null);
+            if (new Set(assignedEmaIds).size !== assignedEmaIds.length) {
+                throw (0, httpError_1.badRequest)("A player cannot occupy two team slots");
+            }
+            const existence = await Promise.all(assignedEmaIds.map((emaId) => (0, playersService_1.playerExists)(emaId)));
+            const missingIndex = existence.findIndex((exists) => !exists);
+            if (missingIndex >= 0) {
+                throw (0, httpError_1.badRequest)("EMA player does not exist", { emaId: assignedEmaIds[missingIndex] });
+            }
+            await (0, tournamentContentService_1.updateTournamentTeam)({
+                tournamentId: req.params.tournamentId,
+                teamId,
+                name,
+                emaIds,
+            });
+            res.status(200).json({ ok: true });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.get("/:tournamentId/rounds", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const rounds = await (0, tournamentContentService_1.listTournamentRounds)(req.params.tournamentId);
             res.status(200).json({ rounds });
@@ -242,7 +303,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.get("/:tournamentId/tables", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("READER"), async (req, res, next) => {
+    router.get("/:tournamentId/tables", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const roundIdParam = req.query.roundId;
             const roundId = roundIdParam == null ? null : Number(roundIdParam);
@@ -256,7 +317,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.get("/:tournamentId/tables/:roundId/:tableId", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("READER"), async (req, res, next) => {
+    router.get("/:tournamentId/tables/:roundId/:tableId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const roundId = Number(req.params.roundId);
             const tableId = Number(req.params.tableId);
@@ -274,7 +335,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.put("/:tournamentId/tables/:roundId/:tableId", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("EDITOR"), async (req, res, next) => {
+    router.put("/:tournamentId/tables/:roundId/:tableId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const roundId = Number(req.params.roundId);
             const tableId = Number(req.params.tableId);
@@ -294,7 +355,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.put("/:tournamentId/tables/:roundId/:tableId/hands/:handId", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("EDITOR"), async (req, res, next) => {
+    router.put("/:tournamentId/tables/:roundId/:tableId/hands/:handId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const roundId = Number(req.params.roundId);
             const tableId = Number(req.params.tableId);
@@ -319,7 +380,7 @@ function tournamentsRouter() {
         }
     });
     // Placeholder: future endpoints for players/teams/tables/hands will live here.
-    router.get("/:tournamentId", requireAuth_1.requireAuth, (0, requireTournamentRole_1.requireTournamentRole)("READER"), async (req, res) => {
+    router.get("/:tournamentId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res) => {
         res.status(501).json({
             error: "not_implemented",
             message: "Tournament details endpoint not implemented yet",

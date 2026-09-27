@@ -11,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 @Composable
 fun AppTopBarActions(
+    onTeams: (() -> Unit)? = null,
     onPlayers: (() -> Unit)? = null,
     onPlayerBase: (() -> Unit)? = null,
     onUsers: (() -> Unit)? = null,
@@ -18,6 +19,7 @@ fun AppTopBarActions(
     onNewTournament: (() -> Unit)? = null,
     onNewPlayer: (() -> Unit)? = null,
     onNewUser: (() -> Unit)? = null,
+    teamsFocusRequester: FocusRequester? = null,
     playersFocusRequester: FocusRequester? = null,
     playerBaseFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
@@ -30,9 +32,10 @@ fun AppTopBarActions(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End,
         ) {
+            onTeams?.let { AppTopBarButton("Teams", it, teamsFocusRequester) }
             onPlayers?.let { AppTopBarButton("Players", it, playersFocusRequester) }
+            onUsers?.let { AppTopBarButton("App Users", it, usersFocusRequester) }
             onPlayerBase?.let { AppTopBarButton("EMA Players", it, playerBaseFocusRequester) }
-            onUsers?.let { AppTopBarButton("Users", it, usersFocusRequester) }
             onRefresh?.let { AppTopBarButton("Refresh", it, refreshFocusRequester) }
             onNewTournament?.let { AppTopBarButton("New Tournament", it, newTournamentFocusRequester) }
             onNewPlayer?.let { AppTopBarButton("New Player", it, newPlayerFocusRequester) }

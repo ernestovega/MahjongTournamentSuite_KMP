@@ -39,11 +39,11 @@ _Last updated: 2026-09-20_
 
 ## Auth + roles (chosen)
 
-- **Sign-up**: `email + password`
 - **Sign-in**: accepts an email and password.
 - Roles:
-  - Global: `superadmin` (Firebase custom claim)
-  - Per tournament membership: `ADMIN | EDITOR | READER`
+  - Global: `EDITOR | ADMIN`
+  - Firebase custom claim: `admin: true`
+  - Per-tournament membership: editor assignment without another role
 
 ## Firestore structure (current draft)
 
@@ -73,12 +73,11 @@ Notes:
 Implemented (Firebase Functions):
 
 - Auth:
-  - `POST /auth/signUp`
   - `POST /auth/signIn`
   - `POST /auth/refresh`
   - `GET /auth/me`
 - Admin:
-  - `POST /admin/bootstrapSuperadmin` (one-time; uses `X-Bootstrap-Key`)
+  - `POST /admin/bootstrapAdmin` (one-time; uses `X-Bootstrap-Key`)
   - `GET /admin/whoami`
   - `GET /admin/users`
   - `POST /admin/users`
@@ -86,8 +85,8 @@ Implemented (Firebase Functions):
   - `PUT /admin/users/:uid/disabled`
   - `GET /admin/users/lookup?identifier=...` (email)
 - Tournaments:
-  - `GET /tournaments` (superadmin: all; others: membership derived)
-  - `POST /tournaments` (superadmin only)
+  - `GET /tournaments` (admin: all; editor: assignment derived)
+  - `POST /tournaments` (admin only)
   - `GET /tournaments/:tournamentId/members`
   - `PUT /tournaments/:tournamentId/members/:uid`
   - `DELETE /tournaments/:tournamentId/members/:uid`
@@ -130,19 +129,17 @@ Rules + docs:
 Build the admin-side app flow (no reader app yet):
 
 - Auth:
-  - Sign Up (email and password)
   - Sign In (email and password)
   - Sign Out
 - Tournaments:
   - List tournaments (with refresh)
-  - Create tournament (superadmin only)
+  - Create tournament (admin only)
 - Users:
-  - Manage global users (superadmin only)
+  - Manage application users
   - Disable accounts while keeping profile and audit records
   - View tournament users
-  - Look up a user by email (superadmin or the tournament's Admin)
-  - Assign Reader or Editor as a Tournament Admin
-  - Assign Tournament Admin as a superadmin
+  - Look up an account by email
+  - Assign editors from an assigned tournament
 
 ## 3) Persist auth session
 
@@ -172,8 +169,8 @@ Preferred approach (cross-platform friendly):
 ## Phase A — Admin MVP (auth + tournaments)
 
 Deliverables:
-- Working sign-in/sign-up
-- Superadmin bootstrap
+- Working sign-in
+- Admin bootstrap
 - Tournament list/create
 - Member management
 

@@ -39,21 +39,6 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
   return json as T;
 }
 
-export async function signUpWithEmailPassword(email: string, password: string): Promise<AuthTokens> {
-  const url = `https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=${apiKey()}`;
-  const json = await postJson<{ idToken: string; refreshToken: string; localId: string }>(url, {
-    email,
-    password,
-    returnSecureToken: true,
-  });
-
-  return {
-    idToken: json.idToken,
-    refreshToken: json.refreshToken,
-    uid: json.localId,
-  };
-}
-
 export async function signInWithEmailPassword(email: string, password: string): Promise<AuthTokens> {
   const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey()}`;
   const json = await postJson<{ idToken: string; refreshToken: string; localId: string }>(url, {

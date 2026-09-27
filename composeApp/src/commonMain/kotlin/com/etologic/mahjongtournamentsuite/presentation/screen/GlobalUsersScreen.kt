@@ -1,25 +1,29 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,15 +36,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -50,7 +58,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRole
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
@@ -58,11 +65,14 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivi
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
@@ -73,16 +83,16 @@ import org.koin.compose.koinInject
 fun GlobalUsersScreen(navController: NavHostController) {
     val presenter = koinInject<UsersPresenter>()
     val scope = rememberCoroutineScope()
-    var adminStatus by remember { mutableStateOf<AdminStatus?>(null) }
+    var access by remember { mutableStateOf<AdminStatus?>(null) }
     var users by remember { mutableStateOf<List<ManagedUser>>(emptyList()) }
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var loading by remember { mutableStateOf(true) }
+    var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
     var notice by remember { mutableStateOf<String?>(null) }
     var editingUser by remember { mutableStateOf<ManagedUser?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var pendingDisabledUser by remember { mutableStateOf<ManagedUser?>(null) }
-    var saving by remember { mutableStateOf(false) }
     var emailFilter by rememberSaveable { mutableStateOf("") }
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
     var tournamentFilterText by rememberSaveable { mutableStateOf("") }
@@ -96,7 +106,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
     val filteredUsers = users.filter { user ->
         user.email.contains(emailFilter.trim(), ignoreCase = true) &&
             (selectedRoles.isEmpty() || user.role in selectedRoles) &&
-            (selectedTournamentId == null || user.tournamentAssignments.any {
+            (selectedTournamentId == null || user.role == GlobalUserRole.ADMIN || user.tournamentAssignments.any {
                 it.tournamentId == selectedTournamentId
             })
     }
@@ -106,22 +116,16 @@ fun GlobalUsersScreen(navController: NavHostController) {
             loading = true
             error = null
             when (val status = presenter.loadAdminStatus()) {
-                is AppResult.Success -> {
-                    adminStatus = status.value
-                    if (status.value.isSuperadmin) {
-                        when (val result = presenter.loadUsers()) {
-                            is AppResult.Success -> users = result.value
-                            is AppResult.Failure -> error = result.error.toUiMessage()
-                        }
-                        when (val result = presenter.loadTournaments()) {
-                            is AppResult.Success -> tournaments = result.value
-                            is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
-                        }
-                    } else {
-                        error = "Only superadmins can open the Users screen."
-                    }
-                }
+                is AppResult.Success -> access = status.value
                 is AppResult.Failure -> error = status.error.toUiMessage()
+            }
+            when (val result = presenter.loadUsers()) {
+                is AppResult.Success -> users = result.value
+                is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+            }
+            when (val result = presenter.loadTournaments()) {
+                is AppResult.Success -> tournaments = result.value
+                is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
             }
             loading = false
         }
@@ -150,7 +154,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     users = (users.filterNot { it.uid == result.value.uid } + result.value)
                         .sortedBy { it.email.lowercase() }
                     if (original == null) {
-                        notice = "User created. Firebase sent a password-reset email to ${result.value.email}."
+                        notice = "Account created. Firebase sent a password-reset email to ${result.value.email}."
                     }
                     editingUser = null
                     showCreateDialog = false
@@ -180,15 +184,13 @@ fun GlobalUsersScreen(navController: NavHostController) {
     }
 
     LaunchedEffect(presenter) { refresh() }
-    LaunchedEffect(loading, adminStatus) {
-        if (!loading && adminStatus?.isSuperadmin == true && restoreUid == null) addFocusRequester.requestFocus()
+    LaunchedEffect(loading, access) {
+        if (!loading && access != null && restoreUid == null) addFocusRequester.requestFocus()
     }
     LaunchedEffect(editingUser, showCreateDialog, pendingDisabledUser, restoreUid, users) {
         if (editingUser == null && !showCreateDialog && pendingDisabledUser == null) {
             val uid = restoreUid
-            if (uid == null) {
-                addFocusRequester.requestFocus()
-            } else {
+            if (uid == null) addFocusRequester.requestFocus() else {
                 rowFocusRequesters[uid]?.requestFocus()
                 restoreUid = null
             }
@@ -196,7 +198,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
     }
 
     AppScaffold(
-        title = "Users",
+        title = "App users",
         isLoading = loading || saving,
         onBack = { navController.popBackStack() },
         actions = {
@@ -214,44 +216,42 @@ fun GlobalUsersScreen(navController: NavHostController) {
         ) {
             error?.let { AppErrorMessage(it) }
             notice?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
-            if (adminStatus?.isSuperadmin == true) {
-                UserFilters(
-                    emailFilter = emailFilter,
-                    onEmailFilterChange = { emailFilter = it },
-                    selectedRoles = selectedRoles,
-                    onRoleToggle = { role ->
-                        selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
-                    },
-                    tournaments = tournaments,
-                    tournamentFilterText = tournamentFilterText,
-                    onTournamentFilterTextChange = {
-                        tournamentFilterText = it
-                        selectedTournamentId = null
-                        tournamentFilterExpanded = true
-                    },
-                    tournamentFilterExpanded = tournamentFilterExpanded,
-                    onTournamentFilterExpandedChange = { tournamentFilterExpanded = it },
-                    selectedTournamentId = selectedTournamentId,
-                    onTournamentSelected = { tournament ->
-                        selectedTournamentId = tournament?.id
-                        tournamentFilterText = tournament?.name.orEmpty()
-                        tournamentFilterExpanded = false
+            UserFilters(
+                emailFilter = emailFilter,
+                onEmailFilterChange = { emailFilter = it },
+                selectedRoles = selectedRoles,
+                onRoleToggle = { role ->
+                    selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
+                },
+                tournaments = tournaments,
+                tournamentFilterText = tournamentFilterText,
+                onTournamentFilterTextChange = {
+                    tournamentFilterText = it
+                    selectedTournamentId = null
+                    tournamentFilterExpanded = true
+                },
+                tournamentFilterExpanded = tournamentFilterExpanded,
+                onTournamentFilterExpandedChange = { tournamentFilterExpanded = it },
+                onTournamentSelected = { tournament ->
+                    selectedTournamentId = tournament?.id
+                    tournamentFilterText = tournament?.name.orEmpty()
+                    tournamentFilterExpanded = false
+                },
+            )
+            SectionCard(
+                title = "Accounts",
+                subtitle = if (loading) "Loading…" else "${filteredUsers.size} of ${users.size} accounts",
+            ) {
+                UsersTable(
+                    users = filteredUsers,
+                    enabled = !loading && !saving,
+                    canEditAdmins = access?.isAdmin == true,
+                    rowFocusRequesters = rowFocusRequesters,
+                    onEdit = { user ->
+                        restoreUid = user.uid
+                        editingUser = user
                     },
                 )
-                SectionCard(
-                    title = "Users",
-                    subtitle = if (loading) "Loading…" else "${filteredUsers.size} of ${users.size} users",
-                ) {
-                    UsersTable(
-                        users = filteredUsers,
-                        enabled = !loading && !saving,
-                        rowFocusRequesters = rowFocusRequesters,
-                        onEdit = { user ->
-                            restoreUid = user.uid
-                            editingUser = user
-                        },
-                    )
-                }
             }
         }
     }
@@ -261,7 +261,9 @@ fun GlobalUsersScreen(navController: NavHostController) {
         ManageUserDialog(
             original = original,
             tournaments = tournaments,
-            isSelf = original?.uid == adminStatus?.uid,
+            isSelf = original?.uid == access?.uid,
+            canManageRoles = access?.isAdmin == true,
+            canDisable = access?.canDisableUsers == true,
             saving = saving,
             onDismiss = {
                 showCreateDialog = false
@@ -281,9 +283,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
                 }
             },
             onChangeDisabled = { user ->
-                if (user.disabled) {
-                    setDisabled(user, false)
-                } else {
+                if (user.disabled) setDisabled(user, false) else {
                     editingUser = null
                     pendingDisabledUser = user
                 }
@@ -305,6 +305,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
 private fun UsersTable(
     users: List<ManagedUser>,
     enabled: Boolean,
+    canEditAdmins: Boolean,
     rowFocusRequesters: Map<String, FocusRequester>,
     onEdit: (ManagedUser) -> Unit,
 ) {
@@ -322,12 +323,13 @@ private fun UsersTable(
             DataTableDivider()
         }
         itemsIndexed(users, key = { _, user -> user.uid }) { _, user ->
+            val canEdit = enabled && (canEditAdmins || user.role == GlobalUserRole.EDITOR)
             DataTableRow(
                 modifier = Modifier.focusRequester(rowFocusRequesters.getValue(user.uid)),
-                onClick = { if (enabled) onEdit(user) },
-                clickFocusable = enabled,
+                onClick = { if (canEdit) onEdit(user) },
+                clickFocusable = canEdit,
             ) {
-                Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.3f), maxLines = 1)
                 Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(user.role.label(), modifier = Modifier.weight(0.15f))
                 Text(if (user.disabled) "Disabled" else "Active", modifier = Modifier.weight(0.25f))
@@ -349,7 +351,6 @@ private fun UserFilters(
     onTournamentFilterTextChange: (String) -> Unit,
     tournamentFilterExpanded: Boolean,
     onTournamentFilterExpandedChange: (Boolean) -> Unit,
-    selectedTournamentId: String?,
     onTournamentSelected: (Tournament?) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -384,10 +385,10 @@ private fun UserFilters(
                         .fillMaxWidth()
                         .onPreviewKeyEvent { event ->
                             if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                            val typedCharacter = event.key.typeaheadCharacter()
+                            val character = event.key.typeaheadCharacter()
                             when {
-                                typedCharacter != null -> {
-                                    onTournamentFilterTextChange(tournamentFilterText + typedCharacter)
+                                character != null -> {
+                                    onTournamentFilterTextChange(tournamentFilterText + character)
                                     true
                                 }
                                 event.key == Key.Backspace && tournamentFilterText.isNotEmpty() -> {
@@ -402,17 +403,11 @@ private fun UserFilters(
                     expanded = tournamentFilterExpanded,
                     onDismissRequest = { onTournamentFilterExpandedChange(false) },
                 ) {
-                    DropdownMenuItem(
-                        text = { Text("All tournaments") },
-                        onClick = { onTournamentSelected(null) },
-                    )
+                    DropdownMenuItem(text = { Text("All tournaments") }, onClick = { onTournamentSelected(null) })
                     tournaments.filter {
                         tournamentFilterText.isBlank() || it.name.startsWith(tournamentFilterText, ignoreCase = true)
                     }.forEach { tournament ->
-                        DropdownMenuItem(
-                            text = { Text(tournament.name) },
-                            onClick = { onTournamentSelected(tournament) },
-                        )
+                        DropdownMenuItem(text = { Text(tournament.name) }, onClick = { onTournamentSelected(tournament) })
                     }
                 }
             }
@@ -434,6 +429,8 @@ private fun ManageUserDialog(
     original: ManagedUser?,
     tournaments: List<Tournament>,
     isSelf: Boolean,
+    canManageRoles: Boolean,
+    canDisable: Boolean,
     saving: Boolean,
     onDismiss: () -> Unit,
     onSave: (String, String, GlobalUserRole, List<TournamentAssignment>) -> Unit,
@@ -443,24 +440,46 @@ private fun ManageUserDialog(
     var email by remember(original) { mutableStateOf(original?.email.orEmpty()) }
     var alias by remember(original) { mutableStateOf(original?.alias.orEmpty()) }
     var confirmEmail by remember(original) { mutableStateOf(original?.email.orEmpty()) }
-    var role by remember(original) { mutableStateOf(original?.role ?: GlobalUserRole.REGULAR) }
-    val assignmentRoles = remember(original) {
-        mutableStateMapOf<String, TournamentRole?>().apply {
-            original?.tournamentAssignments?.forEach { put(it.tournamentId, it.role) }
+    var role by remember(original) { mutableStateOf(original?.role ?: GlobalUserRole.EDITOR) }
+    val assignments = remember(original) {
+        mutableStateMapOf<String, Boolean>().apply {
+            tournaments.forEach { tournament ->
+                put(tournament.id, original?.tournamentAssignments?.any { it.tournamentId == tournament.id } == true)
+            }
         }
     }
+    var showTournamentSelector by remember { mutableStateOf(false) }
+    var restoreTournamentSelectorFocus by remember { mutableStateOf(false) }
     val emailFocus = remember { FocusRequester() }
+    val tournamentSelectorFocus = remember { FocusRequester() }
     val saveFocus = remember { FocusRequester() }
     val cancelFocus = remember { FocusRequester() }
     val normalizedEmail = email.trim()
     val emailsMatch = original != null || normalizedEmail.equals(confirmEmail.trim(), ignoreCase = true)
-    val valid = original != null || (normalizedEmail.contains("@") && emailsMatch)
+    val valid = normalizedEmail.contains("@") && emailsMatch
     LaunchedEffect(Unit) { emailFocus.requestFocus() }
+    LaunchedEffect(showTournamentSelector, restoreTournamentSelectorFocus) {
+        if (!showTournamentSelector && restoreTournamentSelectorFocus) {
+            tournamentSelectorFocus.requestFocus()
+            restoreTournamentSelectorFocus = false
+        }
+    }
+
+    if (showTournamentSelector) {
+        TournamentAssignmentsDialog(
+            tournaments = tournaments,
+            assignments = assignments,
+            enabled = !saving,
+            onAssignmentChange = { tournamentId, assigned -> assignments[tournamentId] = assigned },
+            onDismiss = { showTournamentSelector = false },
+        )
+        return
+    }
 
     AlertDialog(
         onDismissRequest = { if (!saving) onDismiss() },
         modifier = Modifier.appFocusGroup(),
-        title = { Text(if (original == null) "Add user" else "Edit user") },
+        title = { Text(if (original == null) "Add account" else "Edit account") },
         text = {
             Column(
                 modifier = Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
@@ -468,10 +487,10 @@ private fun ManageUserDialog(
             ) {
                 OutlinedTextField(
                     value = email,
-                    onValueChange = { if (original == null) email = it },
+                    onValueChange = { email = it },
                     label = { Text("Email") },
                     singleLine = true,
-                    enabled = original == null && !saving,
+                    enabled = !saving,
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth().focusRequester(emailFocus),
                 )
@@ -499,21 +518,53 @@ private fun ManageUserDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                GlobalRoleDropdown(role = role, enabled = !saving && !isSelf, onSelect = { role = it })
-                if (role != GlobalUserRole.SUPERADMIN) {
-                    Text("Tournament access", style = MaterialTheme.typography.titleSmall)
+                GlobalRoleDropdown(
+                    role = role,
+                    enabled = canManageRoles && !isSelf && !saving,
+                    onSelect = { role = it },
+                )
+                if (role == GlobalUserRole.EDITOR) {
+                    Text("Tournament assignments", style = MaterialTheme.typography.titleSmall)
                     if (tournaments.isEmpty()) {
                         Text("No tournaments are available.", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
-                        tournaments.forEach { tournament ->
-                            TournamentAccessDropdown(
-                                tournament = tournament,
-                                role = assignmentRoles[tournament.id],
-                                enabled = !saving,
-                                onSelect = { selected -> assignmentRoles[tournament.id] = selected },
+                        val selectedTournaments = tournaments.filter { assignments[it.id] == true }
+                        val assignmentSummary = when (selectedTournaments.size) {
+                            0 -> "No tournaments assigned"
+                            1 -> selectedTournaments.single().name
+                            else -> "${selectedTournaments.size} tournaments selected"
+                        }
+                        FocusedOutlinedButton(
+                            onClick = {
+                                restoreTournamentSelectorFocus = true
+                                showTournamentSelector = true
+                            },
+                            enabled = !saving,
+                            modifier = Modifier.fillMaxWidth(),
+                            buttonModifier = Modifier.fillMaxWidth(),
+                            focusRequester = tournamentSelectorFocus,
+                        ) {
+                            Text(
+                                text = assignmentSummary,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Start,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text("Change")
+                        }
+                        if (selectedTournaments.size > 1) {
+                            Text(
+                                text = selectedTournaments.take(2).joinToString { it.name } +
+                                    if (selectedTournaments.size > 2) " · +${selectedTournaments.size - 2} more" else "",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
                     }
+                } else {
+                    Text("Admins have access to every tournament.")
                 }
                 if (original == null) {
                     Text("Firebase will send a password-reset email after creation.")
@@ -522,26 +573,23 @@ private fun ManageUserDialog(
                         onClick = { onResetPassword(original.email) },
                         enabled = !saving,
                     ) { Text("Send password-reset email") }
-                    FocusedTextButton(
-                        onClick = { onChangeDisabled(original) },
-                        enabled = !saving,
-                    ) { Text(if (original.disabled) "Enable user" else "Disable user") }
+                    if (canDisable) {
+                        FocusedTextButton(
+                            onClick = { onChangeDisabled(original) },
+                            enabled = !saving,
+                        ) { Text(if (original.disabled) "Enable account" else "Disable account") }
+                    }
                 }
             }
         },
         confirmButton = {
             FocusedButton(
                 onClick = {
-                    val assignments = if (role == GlobalUserRole.SUPERADMIN) {
-                        emptyList()
-                    } else {
-                        tournaments.mapNotNull { tournament ->
-                            assignmentRoles[tournament.id]?.let { assignmentRole ->
-                                TournamentAssignment(tournament.id, tournament.name, assignmentRole)
-                            }
-                        }
+                    val selectedAssignments = if (role == GlobalUserRole.ADMIN) emptyList() else {
+                        tournaments.filter { assignments[it.id] == true }
+                            .map { TournamentAssignment(it.id, it.name) }
                     }
-                    onSave(normalizedEmail, alias.trim(), role, assignments)
+                    onSave(normalizedEmail, alias.trim(), role, selectedAssignments)
                 },
                 enabled = valid && !saving,
                 focusRequester = saveFocus,
@@ -575,9 +623,7 @@ private fun GlobalRoleDropdown(
             label = { Text("Global role") },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             enabled = enabled,
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
         )
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             GlobalUserRole.entries.forEach { option ->
@@ -594,37 +640,160 @@ private fun GlobalRoleDropdown(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun TournamentAccessDropdown(
-    tournament: Tournament,
-    role: TournamentRole?,
+private fun TournamentAssignmentsDialog(
+    tournaments: List<Tournament>,
+    assignments: Map<String, Boolean>,
     enabled: Boolean,
-    onSelect: (TournamentRole?) -> Unit,
+    onAssignmentChange: (String, Boolean) -> Unit,
+    onDismiss: () -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (enabled) expanded = it }) {
-        OutlinedTextField(
-            value = role?.label() ?: "No access",
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(tournament.name) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            enabled = enabled,
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth(),
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-            listOf<TournamentRole?>(null, TournamentRole.READER, TournamentRole.EDITOR, TournamentRole.ADMIN)
-                .forEach { option ->
-                    DropdownMenuItem(
-                        text = { Text(option?.label() ?: "No access") },
-                        onClick = {
-                            expanded = false
-                            onSelect(option)
-                        },
+    var searchText by remember { mutableStateOf("") }
+    var showSelectedOnly by remember { mutableStateOf(false) }
+    val listState = rememberLazyListState()
+    val searchFocus = remember { FocusRequester() }
+    val closeFocus = remember { FocusRequester() }
+    val filteredTournaments = tournaments.filter { tournament ->
+        (!showSelectedOnly || assignments[tournament.id] == true) &&
+            tournament.name.contains(searchText.trim(), ignoreCase = true)
+    }
+    val selectedCount = tournaments.count { assignments[it.id] == true }
+
+    LaunchedEffect(Unit) { searchFocus.requestFocus() }
+    LaunchedEffect(searchText, showSelectedOnly) {
+        if (filteredTournaments.isNotEmpty()) listState.scrollToItem(0)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.appFocusGroup(),
+        title = { Text("Assign tournaments") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    label = { Text("Search by name") },
+                    singleLine = true,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .focusRequester(searchFocus)
+                        .focusProperties { previous = closeFocus },
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    FilterChip(
+                        selected = showSelectedOnly,
+                        onClick = { showSelectedOnly = !showSelectedOnly },
+                        label = { Text("Selected only") },
+                    )
+                    Text(
+                        text = "$selectedCount selected",
+                        modifier = Modifier.weight(1f).padding(top = 8.dp),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.End,
                     )
                 }
+                if (filteredTournaments.isEmpty()) {
+                    Text(
+                        text = if (showSelectedOnly && selectedCount == 0) {
+                            "No tournaments are selected."
+                        } else {
+                            "No tournaments match the search."
+                        },
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.height(240.dp).padding(top = 16.dp),
+                    )
+                } else {
+                    LazyColumnWithScrollbar(
+                        state = listState,
+                        modifier = Modifier.fillMaxWidth().height(240.dp),
+                    ) {
+                        items(
+                            count = filteredTournaments.size,
+                            key = { filteredTournaments[it].id },
+                        ) { index ->
+                            val tournament = filteredTournaments[index]
+                            TournamentSelectionRow(
+                                tournament = tournament,
+                                selected = assignments[tournament.id] == true,
+                                enabled = enabled,
+                                onToggle = {
+                                    onAssignmentChange(tournament.id, assignments[tournament.id] != true)
+                                },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            FocusedButton(
+                onClick = onDismiss,
+                enabled = enabled,
+                focusRequester = closeFocus,
+                buttonModifier = Modifier.focusProperties { next = searchFocus },
+            ) { Text("Close") }
+        },
+        dismissButton = {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                FocusedTextButton(
+                    onClick = {
+                        filteredTournaments.forEach { onAssignmentChange(it.id, true) }
+                    },
+                    enabled = enabled && filteredTournaments.isNotEmpty(),
+                ) { Text("Select results") }
+                FocusedTextButton(
+                    onClick = {
+                        tournaments.forEach { onAssignmentChange(it.id, false) }
+                    },
+                    enabled = enabled && selectedCount > 0,
+                ) { Text("Clear all") }
+            }
+        },
+    )
+}
+
+@Composable
+private fun TournamentSelectionRow(
+    tournament: Tournament,
+    selected: Boolean,
+    enabled: Boolean,
+    onToggle: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    FocusHighlightContainer(
+        modifier = Modifier.fillMaxWidth(),
+        interactionSource = interactionSource,
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .activateOnEnter(enabled, onToggle)
+                .toggleable(
+                    value = selected,
+                    enabled = enabled,
+                    role = Role.Checkbox,
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onValueChange = { onToggle() },
+                )
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(
+                checked = selected,
+                onCheckedChange = null,
+                enabled = enabled,
+            )
+            Text(
+                text = tournament.name,
+                modifier = Modifier.weight(1f),
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
         }
     }
 }
@@ -642,8 +811,8 @@ private fun DisableUserDialog(
     AlertDialog(
         onDismissRequest = { if (!saving) onDismiss() },
         modifier = Modifier.appFocusGroup(),
-        title = { Text("Disable user?") },
-        text = { Text("${user.email} will not be able to sign in. The profile and audit history will remain.") },
+        title = { Text("Disable account?") },
+        text = { Text("${user.email} will not be able to sign in. Its profile and history will remain.") },
         confirmButton = {
             FocusedButton(
                 onClick = onConfirm,
@@ -664,8 +833,8 @@ private fun DisableUserDialog(
 }
 
 private fun GlobalUserRole.label(): String = when (this) {
-    GlobalUserRole.REGULAR -> "User"
-    GlobalUserRole.SUPERADMIN -> "Superadmin"
+    GlobalUserRole.EDITOR -> "Editor"
+    GlobalUserRole.ADMIN -> "Admin"
 }
 
 private fun Key.typeaheadCharacter(): Char? = when (this) {
@@ -696,10 +865,4 @@ private fun Key.typeaheadCharacter(): Char? = when (this) {
     Key.Y -> 'y'
     Key.Z -> 'z'
     else -> null
-}
-
-private fun TournamentRole.label(): String = when (this) {
-    TournamentRole.READER -> "Reader"
-    TournamentRole.EDITOR -> "Editor"
-    TournamentRole.ADMIN -> "Tournament admin"
 }

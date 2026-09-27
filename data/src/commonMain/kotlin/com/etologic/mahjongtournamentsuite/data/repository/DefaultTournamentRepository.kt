@@ -6,20 +6,21 @@ import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoleDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRole
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -44,6 +45,8 @@ class DefaultTournamentRepository(
                     isTeams = dto.isTeams,
                     numPlayers = dto.numPlayers,
                     numRounds = dto.numRounds,
+                    eventStartDate = dto.eventStartDate.normalizedOrNull(),
+                    eventEndDate = dto.eventEndDate.normalizedOrNull(),
                     numTries = dto.numTries,
                     isCompleted = dto.isCompleted,
                     createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
@@ -65,6 +68,8 @@ class DefaultTournamentRepository(
         withFreshIdToken { idToken ->
             val requestDto = CreateTournamentRequestDto(
                 name = request.name,
+                eventStartDate = request.eventStartDate,
+                eventEndDate = request.eventEndDate,
                 isTeams = request.isTeams,
                 numPlayers = request.numPlayers,
                 numRounds = request.numRounds,
@@ -92,6 +97,8 @@ class DefaultTournamentRepository(
                 isTeams = dto.isTeams,
                 numPlayers = dto.numPlayers,
                 numRounds = dto.numRounds,
+                eventStartDate = dto.eventStartDate.normalizedOrNull(),
+                eventEndDate = dto.eventEndDate.normalizedOrNull(),
                 numTries = dto.numTries,
                 isCompleted = dto.isCompleted,
                 createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
@@ -150,7 +157,7 @@ class DefaultTournamentRepository(
                 TournamentMember(
                     uid = dto.uid,
                     email = dto.email,
-                    role = TournamentRole.valueOf(dto.role.name),
+                    role = GlobalUserRole.valueOf(dto.role.name),
                 )
             }
         }
@@ -165,14 +172,12 @@ class DefaultTournamentRepository(
     override suspend fun upsertTournamentMember(
         tournamentId: String,
         uid: String,
-        role: TournamentRole,
     ): AppResult<Unit> = runCatching {
         withFreshIdToken { idToken ->
             backendApi.upsertTournamentMember(
                 idToken = idToken,
                 tournamentId = tournamentId,
                 uid = uid,
-                role = TournamentRoleDto.valueOf(role.name),
             )
             Unit
         }
@@ -225,6 +230,53 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Listing tournament players failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun listTournamentTeams(tournamentId: String): AppResult<List<TournamentTeam>> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.listTournamentTeams(
+                idToken = idToken,
+                tournamentId = tournamentId,
+            ).teams.map { dto ->
+                TournamentTeam(
+                    id = dto.id,
+                    name = dto.name,
+                    playerIds = dto.playerIds,
+                )
+            }
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Listing tournament teams failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun updateTournamentTeam(
+        tournamentId: String,
+        teamId: Int,
+        name: String,
+        emaIds: List<String?>,
+    ): AppResult<Unit> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.updateTournamentTeam(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                teamId = teamId,
+                request = UpdateTournamentTeamRequestDto(
+                    name = name,
+                    emaIds = emaIds,
+                ),
+            )
+            Unit
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Updating tournament team failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )

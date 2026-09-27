@@ -2,42 +2,12 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.authRouter = authRouter;
 const express_1 = require("express");
-const firebase_1 = require("../../firebase");
 const httpError_1 = require("../httpError");
 const requireAuth_1 = require("../middleware/requireAuth");
 const firebaseAuthRest_1 = require("../../services/firebaseAuthRest");
 const usersService_1 = require("../../services/usersService");
 function authRouter() {
     const router = (0, express_1.Router)();
-    router.post("/signUp", async (req, res, next) => {
-        let createdUid = null;
-        try {
-            const email = String(req.body?.email ?? "").trim();
-            const password = String(req.body?.password ?? "");
-            if (!email || !password) {
-                throw (0, httpError_1.badRequest)("Missing email or password");
-            }
-            const tokens = await (0, firebaseAuthRest_1.signUpWithEmailPassword)(email, password);
-            createdUid = tokens.uid;
-            await (0, usersService_1.createUserProfile)(tokens.uid, email);
-            res.status(200).json({
-                idToken: tokens.idToken,
-                refreshToken: tokens.refreshToken,
-                uid: tokens.uid,
-            });
-        }
-        catch (e) {
-            if (createdUid) {
-                try {
-                    await firebase_1.auth.deleteUser(createdUid);
-                }
-                catch {
-                    // ignore cleanup failures
-                }
-            }
-            next(e);
-        }
-    });
     router.post("/signIn", async (req, res, next) => {
         try {
             // Accept identifier during the rollout of the email-only API.

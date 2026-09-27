@@ -6,6 +6,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRankings
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
@@ -16,9 +18,11 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
 data class RankingSnapshot(
+    val tournament: Tournament,
     val rankings: TournamentRankings,
     val tournamentPlayers: List<TournamentPlayer>,
     val basePlayers: List<Player>,
+    val tournamentTeams: List<TournamentTeam>,
     val isTeams: Boolean,
     val tableCount: Int,
     val completedTableCount: Int,
@@ -40,6 +44,16 @@ class RankingPresenter(
         val players = when (val result = tournamentRepository.listTournamentPlayers(tournamentId)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
+        }
+        val tournament = tournaments.firstOrNull { it.id == tournamentId }
+            ?: return AppResult.Failure(com.etologic.mahjongtournamentsuite.domain.model.AppError.Unexpected("Tournament not found"))
+        val tournamentTeams = if (tournament.isTeams) {
+            when (val result = tournamentRepository.listTournamentTeams(tournamentId)) {
+                is AppResult.Success -> result.value
+                is AppResult.Failure -> return result
+            }
+        } else {
+            emptyList()
         }
         val basePlayers = when (val result = playerRepository.listPlayers()) {
             is AppResult.Success -> result.value
@@ -71,12 +85,14 @@ class RankingPresenter(
             RankingTable(table = value.first, hands = value.second)
         }
 
-        val isTeams = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
+        val isTeams = tournament.isTeams
         return AppResult.Success(
             RankingSnapshot(
+                tournament = tournament,
                 rankings = calculateRankings(players, rankingTables, isTeams),
                 tournamentPlayers = players,
                 basePlayers = basePlayers,
+                tournamentTeams = tournamentTeams,
                 isTeams = isTeams,
                 tableCount = tableSummaries.size,
                 completedTableCount = tableSummaries.count { it.isCompleted },

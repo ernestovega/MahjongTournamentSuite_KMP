@@ -1,6 +1,5 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getGlobalUserRole = getGlobalUserRole;
 exports.getUserProfile = getUserProfile;
 exports.createUserProfile = createUserProfile;
 exports.listManagedUsers = listManagedUsers;
@@ -8,26 +7,25 @@ exports.getManagedUser = getManagedUser;
 exports.setGlobalUserRole = setGlobalUserRole;
 exports.updateManagedUser = updateManagedUser;
 exports.listUserTournamentAssignments = listUserTournamentAssignments;
+exports.listAssignedTournamentIds = listAssignedTournamentIds;
 exports.syncUserTournamentAssignments = syncUserTournamentAssignments;
 exports.setManagedUserDisabled = setManagedUserDisabled;
-exports.countEnabledSuperadmins = countEnabledSuperadmins;
+exports.countEnabledAdmins = countEnabledAdmins;
+exports.listEnabledAdmins = listEnabledAdmins;
 exports.assertEmailAvailable = assertEmailAvailable;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
-function getGlobalUserRole(user) {
-    if (user.customClaims?.superadmin === true)
-        return "SUPERADMIN";
-    return "REGULAR";
-}
+const globalRole_1 = require("../models/globalRole");
 async function getUserProfile(uid) {
     const snap = await firebase_1.db.doc(`users/${uid}`).get();
-    if (!snap.exists) {
+    if (!snap.exists)
         throw (0, httpError_1.notFound)("User profile not found");
-    }
-    const email = snap.get("email");
-    const alias = String(snap.get("alias") ?? "").trim();
-    return { uid, email, alias };
+    return {
+        uid,
+        email: String(snap.get("email") ?? ""),
+        alias: String(snap.get("alias") ?? "").trim(),
+    };
 }
 async function createUserProfile(uid, email, alias = "") {
     await firebase_1.db.doc(`users/${uid}`).set({
@@ -39,22 +37,21 @@ async function createUserProfile(uid, email, alias = "") {
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     }, { merge: true });
 }
-async function listManagedUsers() {
+async function listManagedUsers(visibleTournamentIds) {
     const profiles = await firebase_1.db.collection("users").get();
     const profilesByUid = new Map(profiles.docs.map((doc) => [doc.id, doc.data()]));
-    const assignmentsByUid = await listTournamentAssignmentsByUid();
+    const assignmentsByUid = await listTournamentAssignmentsByUid(visibleTournamentIds);
     const users = [];
     let pageToken;
     do {
         const page = await firebase_1.auth.listUsers(1000, pageToken);
         page.users.forEach((user) => {
             const profile = profilesByUid.get(user.uid);
-            const email = user.email ?? String(profile?.email ?? "");
             users.push({
                 uid: user.uid,
-                email,
+                email: user.email ?? String(profile?.email ?? ""),
                 alias: String(profile?.alias ?? "").trim(),
-                role: getGlobalUserRole(user),
+                role: (0, globalRole_1.getGlobalUserRole)(user),
                 disabled: user.disabled,
                 tournamentAssignments: assignmentsByUid.get(user.uid) ?? [],
             });
@@ -63,18 +60,16 @@ async function listManagedUsers() {
     } while (pageToken);
     return users.sort((left, right) => left.email.localeCompare(right.email));
 }
-async function getManagedUser(uid) {
+async function getManagedUser(uid, visibleTournamentIds) {
     const user = await firebase_1.auth.getUser(uid);
     const profile = await firebase_1.db.doc(`users/${uid}`).get();
-    const email = user.email ?? String(profile.get("email") ?? "");
-    const alias = String(profile.get("alias") ?? "").trim();
     return {
         uid,
-        email,
-        alias,
-        role: getGlobalUserRole(user),
+        email: user.email ?? String(profile.get("email") ?? ""),
+        alias: String(profile.get("alias") ?? "").trim(),
+        role: (0, globalRole_1.getGlobalUserRole)(user),
         disabled: user.disabled,
-        tournamentAssignments: await listUserTournamentAssignments(uid),
+        tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
     };
 }
 async function setGlobalUserRole(uid, role) {
@@ -82,8 +77,8 @@ async function setGlobalUserRole(uid, role) {
     const claims = { ...(user.customClaims ?? {}) };
     delete claims.admin;
     delete claims.superadmin;
-    if (role === "SUPERADMIN")
-        claims.superadmin = true;
+    if (role === "ADMIN")
+        claims.admin = true;
     await firebase_1.auth.setCustomUserClaims(uid, claims);
 }
 async function updateManagedUser(params) {
@@ -97,18 +92,19 @@ async function updateManagedUser(params) {
         emaId: firestore_1.FieldValue.delete(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     }, { merge: true });
-    await syncUserTournamentAssignments(params.uid, params.tournamentAssignments);
+    await syncUserTournamentAssignments(params.uid, params.role === "ADMIN" ? [] : params.tournamentAssignments, params.role === "ADMIN" ? undefined : params.assignmentScope);
 }
-async function listTournamentAssignmentsByUid() {
+async function listTournamentAssignmentsByUid(visibleTournamentIds) {
     const result = new Map();
     const tournaments = await firebase_1.db.collection("tournaments").get();
     await Promise.all(tournaments.docs.map(async (tournament) => {
+        if (visibleTournamentIds && !visibleTournamentIds.has(tournament.id))
+            return;
         const members = await tournament.ref.collection("members").get();
         members.docs.forEach((member) => {
             const assignment = {
                 tournamentId: tournament.id,
                 tournamentName: String(tournament.get("name") ?? ""),
-                role: member.get("role"),
             };
             result.set(member.id, [...(result.get(member.id) ?? []), assignment]);
         });
@@ -116,11 +112,11 @@ async function listTournamentAssignmentsByUid() {
     result.forEach((assignments) => assignments.sort((left, right) => left.tournamentName.localeCompare(right.tournamentName)));
     return result;
 }
-async function listUserTournamentAssignments(uid) {
+async function listUserTournamentAssignments(uid, visibleTournamentIds) {
     const memberships = await firebase_1.db.collectionGroup("members").where("uid", "==", uid).get();
     const assignments = await Promise.all(memberships.docs.map(async (membership) => {
         const tournamentRef = membership.ref.parent.parent;
-        if (!tournamentRef)
+        if (!tournamentRef || (visibleTournamentIds && !visibleTournamentIds.has(tournamentRef.id)))
             return null;
         const tournament = await tournamentRef.get();
         if (!tournament.exists)
@@ -128,18 +124,23 @@ async function listUserTournamentAssignments(uid) {
         return {
             tournamentId: tournament.id,
             tournamentName: String(tournament.get("name") ?? ""),
-            role: membership.get("role"),
         };
     }));
     return assignments
         .filter((assignment) => assignment !== null)
         .sort((left, right) => left.tournamentName.localeCompare(right.tournamentName));
 }
-async function syncUserTournamentAssignments(uid, assignments) {
+async function listAssignedTournamentIds(uid) {
+    return new Set((await listUserTournamentAssignments(uid)).map((assignment) => assignment.tournamentId));
+}
+async function syncUserTournamentAssignments(uid, assignments, scopeTournamentIds) {
     const desired = new Map(assignments.map((assignment) => [assignment.tournamentId, assignment]));
     const tournamentIds = [...desired.keys()];
     if (tournamentIds.length !== assignments.length)
         throw (0, httpError_1.conflict)("Duplicate tournament assignment");
+    if (scopeTournamentIds && tournamentIds.some((id) => !scopeTournamentIds.has(id))) {
+        throw (0, httpError_1.forbidden)("Editors can assign accounts only to their own tournaments");
+    }
     const tournamentRefs = tournamentIds.map((id) => firebase_1.db.doc(`tournaments/${id}`));
     const tournamentDocs = tournamentRefs.length > 0 ? await firebase_1.db.getAll(...tournamentRefs) : [];
     if (tournamentDocs.some((document) => !document.exists))
@@ -149,7 +150,8 @@ async function syncUserTournamentAssignments(uid, assignments) {
     let operationCount = 0;
     current.docs.forEach((membership) => {
         const tournamentId = membership.ref.parent.parent?.id;
-        if (tournamentId && !desired.has(tournamentId)) {
+        const isInScope = tournamentId && (!scopeTournamentIds || scopeTournamentIds.has(tournamentId));
+        if (tournamentId && isInScope && !desired.has(tournamentId)) {
             batch.delete(membership.ref);
             operationCount++;
         }
@@ -157,10 +159,9 @@ async function syncUserTournamentAssignments(uid, assignments) {
     assignments.forEach((assignment) => {
         batch.set(firebase_1.db.doc(`tournaments/${assignment.tournamentId}/members/${uid}`), {
             uid,
-            role: assignment.role,
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
             createdAt: firestore_1.FieldValue.serverTimestamp(),
-        }, { merge: true });
+        });
         operationCount++;
     });
     if (operationCount > 0)
@@ -170,20 +171,31 @@ async function setManagedUserDisabled(uid, disabled) {
     await firebase_1.auth.updateUser(uid, { disabled });
     if (disabled)
         await firebase_1.auth.revokeRefreshTokens(uid);
-    await firebase_1.db.doc(`users/${uid}`).set({
-        disabled,
-        updatedAt: firestore_1.FieldValue.serverTimestamp(),
-    }, { merge: true });
+    await firebase_1.db.doc(`users/${uid}`).set({ disabled, updatedAt: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
 }
-async function countEnabledSuperadmins() {
+async function countEnabledAdmins() {
     let count = 0;
     let pageToken;
     do {
         const page = await firebase_1.auth.listUsers(1000, pageToken);
-        count += page.users.filter((user) => !user.disabled && getGlobalUserRole(user) === "SUPERADMIN").length;
+        count += page.users.filter((user) => !user.disabled && (0, globalRole_1.getGlobalUserRole)(user) === "ADMIN").length;
         pageToken = page.pageToken;
     } while (pageToken);
     return count;
+}
+async function listEnabledAdmins() {
+    const admins = [];
+    let pageToken;
+    do {
+        const page = await firebase_1.auth.listUsers(1000, pageToken);
+        page.users.forEach((user) => {
+            if (!user.disabled && (0, globalRole_1.getGlobalUserRole)(user) === "ADMIN") {
+                admins.push({ uid: user.uid, email: user.email ?? "" });
+            }
+        });
+        pageToken = page.pageToken;
+    } while (pageToken);
+    return admins;
 }
 async function assertEmailAvailable(email, excludedUid) {
     try {

@@ -29,11 +29,11 @@ Firestore and Storage client rules deny every direct read and write. Clients mus
 | Action | Required access |
 | --- | --- |
 | Read the player registry | Signed-in user |
-| Add or edit a base player | `admin` or `superadmin` custom claim |
-| Replace a base player photo | `admin` or `superadmin` custom claim |
-| Assign a base player in a tournament | Tournament `EDITOR`, `ADMIN`, or `superadmin` |
-| Manage tournament members | Tournament `ADMIN` or `superadmin` |
-| Create or delete a tournament | `superadmin` |
+| Add or edit a base player | `ADMIN` |
+| Replace a base player photo | `ADMIN` |
+| Assign a base player in a tournament | Assigned `EDITOR` or `ADMIN` |
+| Manage tournament editors | Assigned `EDITOR` or `ADMIN` |
+| Create or delete a tournament | `ADMIN` |
 
 There is no player-delete API. The sync never deletes registry records. This protects tournament history.
 

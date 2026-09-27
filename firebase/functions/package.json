@@ -7,9 +7,12 @@
   },
   "scripts": {
     "build": "tsc",
+    "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/models/globalRole.test.js",
+    "verify:roles": "npm run build && node lib/scripts/verifyRolePermissions.js",
     "seed:countries": "npm run build && node lib/scripts/seedCountries.js",
     "seed:players": "npm run build && node --env-file=local-player-sync.env lib/scripts/seedPlayers.js",
     "normalize:player-names": "npm run build && node --env-file=local-player-sync.env lib/scripts/normalizePlayerNames.js",
+    "reset:access": "npm run build && node lib/scripts/resetAccess.js",
     "sync:players": "npm run build && node --env-file=local-player-sync.env lib/scripts/syncPlayers.js",
     "watch": "tsc -w"
   },
