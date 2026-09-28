@@ -89,9 +89,11 @@ function drawFront(doc, model, player, associationLogo) {
     const countryText = valueOrFallback(player.country, "Guest");
     const countrySize = fitText(doc, countryText, 64, 7, 5);
     doc.fontSize(countrySize).text(countryText, 162, 10, { width: 68, align: "center", lineBreak: false });
-    const teamText = player.teamName == null ? "No team" : valueOrFallback(player.teamName, "No team");
-    const teamSize = fitText(doc.font("CardTitle"), teamText, 93, 10, 6);
-    doc.fontSize(teamSize).text(teamText, 142, 31, { width: 94, align: "center", lineBreak: false });
+    const teamText = player.teamName == null ? "" : player.teamName.trim();
+    if (teamText.length > 0) {
+        const teamSize = fitText(doc.font("CardTitle"), teamText, 93, 10, 6);
+        doc.fontSize(teamSize).text(teamText, 142, 31, { width: 94, align: "center", lineBreak: false });
+    }
     doc.font("CardTitle").fontSize(27).text(String(player.playerId), 151, 49, {
         width: 76,
         align: "center",
