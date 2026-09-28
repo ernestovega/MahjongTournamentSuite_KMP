@@ -214,3 +214,65 @@ export async function updateHand(params: {
     updatedAt: FieldValue.serverTimestamp(),
   });
 }
+
+export async function resetTable(params: {
+  tournamentId: string;
+  roundId: number;
+  tableId: number;
+}): Promise<void> {
+  const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
+  const tableDocId = `${params.roundId}_${params.tableId}`;
+  const tableRef = tournamentRef.collection("tables").doc(tableDocId);
+  const [tableSnap, handsSnap] = await Promise.all([
+    tableRef.get(),
+    tableRef.collection("hands").get(),
+  ]);
+  if (!tableSnap.exists) throw notFound("Table not found");
+
+  const batch = db.batch();
+  batch.update(tableRef, {
+    playerEastId: "",
+    playerSouthId: "",
+    playerWestId: "",
+    playerNorthId: "",
+    playerEastScore: "",
+    playerSouthScore: "",
+    playerWestScore: "",
+    playerNorthScore: "",
+    playerEastPoints: "",
+    playerSouthPoints: "",
+    playerWestPoints: "",
+    playerNorthPoints: "",
+    manualPlayerEastScore: "",
+    manualPlayerSouthScore: "",
+    manualPlayerWestScore: "",
+    manualPlayerNorthScore: "",
+    manualPlayerEastPoints: "",
+    manualPlayerSouthPoints: "",
+    manualPlayerWestPoints: "",
+    manualPlayerNorthPoints: "",
+    isCompleted: false,
+    useTotalsOnly: true,
+    usePointsCalculation: true,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  handsSnap.docs.forEach((hand) => {
+    batch.update(hand.ref, {
+      playerWinnerId: "",
+      playerLooserId: "",
+      handScore: "",
+      isChickenHand: false,
+      isDone: false,
+      playerEastPenalty: "",
+      playerSouthPenalty: "",
+      playerWestPenalty: "",
+      playerNorthPenalty: "",
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+  batch.update(tournamentRef, {
+    isCompleted: false,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  await batch.commit();
+}

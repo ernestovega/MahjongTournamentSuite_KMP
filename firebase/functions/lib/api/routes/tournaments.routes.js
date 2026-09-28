@@ -183,6 +183,8 @@ function tournamentsRouter() {
             const name = String(body.name ?? "").trim();
             const shortName = String(body.shortName ?? "").trim();
             const primaryColor = String(body.primaryColor ?? "").trim().toUpperCase();
+            const eventStartDate = String(body.eventStartDate ?? "").trim();
+            const eventEndDate = String(body.eventEndDate ?? "").trim();
             const associationLogoContentType = body.associationLogoContentType == null
                 ? null
                 : String(body.associationLogoContentType).trim();
@@ -197,6 +199,9 @@ function tournamentsRouter() {
             if (!/^#[0-9A-F]{6}$/.test(primaryColor)) {
                 throw (0, httpError_1.badRequest)("Primary color must use #RRGGBB format");
             }
+            if (!(0, tournamentDates_1.isValidIsoDateRange)(eventStartDate, eventEndDate)) {
+                throw (0, httpError_1.badRequest)("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
+            }
             if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
                 throw (0, httpError_1.badRequest)("Association logo content type and image data must be supplied together");
             }
@@ -205,6 +210,8 @@ function tournamentsRouter() {
                 name,
                 shortName,
                 primaryColor,
+                eventStartDate,
+                eventEndDate,
                 associationLogoContentType,
                 associationLogoDataBase64,
                 removeAssociationLogo: body.removeAssociationLogo === true,
@@ -448,6 +455,24 @@ function tournamentsRouter() {
                 tableId,
                 handId,
                 patch,
+            });
+            res.status(200).json({ ok: true });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.post("/:tournamentId/tables/:roundId/:tableId/reset", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const roundId = Number(req.params.roundId);
+            const tableId = Number(req.params.tableId);
+            if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
+                throw (0, httpError_1.badRequest)("roundId and tableId must be positive integers");
+            }
+            await (0, tableManagerService_1.resetTable)({
+                tournamentId: req.params.tournamentId,
+                roundId,
+                tableId,
             });
             res.status(200).json({ ok: true });
         }

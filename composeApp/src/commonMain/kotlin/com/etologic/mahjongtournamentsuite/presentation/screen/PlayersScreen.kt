@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -60,14 +59,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
@@ -328,8 +326,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
         AlertDialog(
             onDismissRequest = { assignmentSlotId = null },
-            modifier = Modifier.fillMaxWidth(0.72f).widthIn(max = 620.dp).appFocusGroup(),
-            properties = DialogProperties(usePlatformDefaultWidth = false),
+            modifier = Modifier.appFocusGroup(),
             title = { Text("ASSIGN EMA PLAYER TO PLAYER ${assignmentSlot.id}") },
             text = {
                 Column(
@@ -748,7 +745,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         },
     ) {
         ScreenColumn(maxWidth = 1400.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            error?.let { AppErrorMessage(it) }
+            error?.let {
+                AppErrorDialog(
+                    message = it,
+                    onDismiss = { error = null },
+                )
+            }
             SectionCard {
                 if (players.isEmpty() && !loading) Text("No generated tournament players found.")
                 Column(Modifier.fillMaxWidth()) {
@@ -762,7 +764,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         )
                         TournamentPlayerHeader("EMA number", Modifier.width(TournamentPlayerEmaColumnWidth))
                         TournamentPlayerHeader("Name", Modifier.weight(1.2f))
-                        TournamentPlayerHeader("Team", Modifier.width(TournamentPlayerTeamColumnWidth))
+                        if (isTeamsTournament) {
+                            TournamentPlayerHeader("Team", Modifier.width(TournamentPlayerTeamColumnWidth))
+                        }
                         TournamentPlayerHeader("Tables", Modifier.width(TournamentPlayerTablesColumnWidth))
                         Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                     }
@@ -816,17 +820,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1.2f),
                                 )
-                                Text(
-                                    text = if (isTeamsTournament) {
-                                        teamNamesById[slot.team] ?: "Team ${slot.team}"
-                                    } else {
-                                        "—"
-                                    },
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                if (isTeamsTournament) {
+                                    Text(
+                                        text = teamNamesById[slot.team] ?: "Team ${slot.team}",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                }
                                 Text(
                                     text = tableNumbersByPlayerId[slot.id] ?: "—",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,

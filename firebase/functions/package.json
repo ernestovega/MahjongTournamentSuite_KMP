@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/models/globalRole.test.js lib/services/idCardsService.test.js",
+    "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/services/tournamentContentRules.test.js lib/services/tournamentsService.test.js lib/models/globalRole.test.js lib/services/idCardsService.test.js",
     "proof:id-cards": "npm run build && node lib/scripts/createIdCardsProof.js",
     "verify:roles": "npm run build && node lib/scripts/verifyRolePermissions.js",
     "seed:countries": "npm run build && node lib/scripts/seedCountries.js",

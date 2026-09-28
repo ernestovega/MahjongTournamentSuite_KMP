@@ -30,7 +30,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
@@ -115,7 +115,12 @@ fun TournamentUsersScreen(
             contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            errorMessage?.let { AppErrorMessage(message = it) }
+            errorMessage?.let {
+                AppErrorDialog(
+                    message = it,
+                    onDismiss = { errorMessage = null },
+                )
+            }
 
             SectionCard(
                 title = "Assign editor",

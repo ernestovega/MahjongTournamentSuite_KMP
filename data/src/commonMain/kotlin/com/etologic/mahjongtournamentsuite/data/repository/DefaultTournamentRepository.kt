@@ -149,6 +149,8 @@ class DefaultTournamentRepository(
         name: String,
         shortName: String,
         primaryColor: String,
+        eventStartDate: String,
+        eventEndDate: String,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
         removeAssociationLogo: Boolean,
@@ -161,6 +163,8 @@ class DefaultTournamentRepository(
                     name = name.trim(),
                     shortName = shortName.trim(),
                     primaryColor = primaryColor.trim().uppercase(),
+                    eventStartDate = eventStartDate.trim(),
+                    eventEndDate = eventEndDate.trim(),
                     associationLogoContentType = associationLogoContentType,
                     associationLogoDataBase64 = associationLogoBytes?.let(Base64.Default::encode),
                     removeAssociationLogo = removeAssociationLogo,
@@ -548,6 +552,28 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(Unit) },
         onFailure = { throwable ->
             logger.w(throwable) { "Patching hand failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Unit> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.resetTable(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                roundId = roundId,
+                tableId = tableId,
+            )
+            Unit
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Resetting table failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )

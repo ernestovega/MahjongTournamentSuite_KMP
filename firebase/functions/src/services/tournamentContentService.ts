@@ -1,6 +1,11 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { conflict, notFound } from "../api/httpError";
+import {
+  blocksAssignmentChangeAfterProgress,
+  hasFourValidScores,
+  hasValidTablePoints,
+} from "./tournamentContentRules";
 
 export type TournamentPlayer = {
   id: number;
@@ -36,23 +41,6 @@ export type TournamentTable = {
   hasProgress: boolean;
   hasValidManualTotals: boolean;
 };
-
-function hasValidTotals(
-  values: unknown[],
-  expectedTotal: number,
-  allowDecimal: boolean = false,
-): boolean {
-  const pattern = allowDecimal ? /^-?\d+(?:[,.]\d+)?$/ : /^-?\d+$/;
-  if (values.length !== 4 || !values.every((value) => pattern.test(String(value ?? "").trim()))) {
-    return false;
-  }
-
-  const total = values.reduce(
-    (sum: number, value: unknown) => sum + Number(String(value).replace(",", ".")),
-    0,
-  );
-  return Math.abs(total - expectedTotal) < 0.011;
-}
 
 export async function listTournamentPlayers(tournamentId: string): Promise<TournamentPlayer[]> {
   const snap = await db.collection("tournaments").doc(tournamentId).collection("players").get();
@@ -257,7 +245,7 @@ export async function assignTournamentPlayer(params: {
     const previousEmaId = typeof player.get("assignedEmaId") === "string"
       ? String(player.get("assignedEmaId"))
       : null;
-    if (previousEmaId !== params.emaId && tournamentHasProgress) {
+    if (blocksAssignmentChangeAfterProgress(previousEmaId, params.emaId, tournamentHasProgress)) {
       throw conflict("Players cannot change after table results have started");
     }
     const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
@@ -341,18 +329,18 @@ export async function listTournamentTables(
       d.get("playerWestPoints"),
       d.get("playerNorthPoints"),
     ].some((field) => String(field ?? "").trim().length > 0);
-    const hasValidManualScores = hasValidTotals([
+    const hasValidManualScores = hasFourValidScores([
       d.get("manualPlayerEastScore") || d.get("playerEastScore"),
       d.get("manualPlayerSouthScore") || d.get("playerSouthScore"),
       d.get("manualPlayerWestScore") || d.get("playerWestScore"),
       d.get("manualPlayerNorthScore") || d.get("playerNorthScore"),
-    ], 0);
-    const hasValidManualPoints = hasValidTotals([
+    ]);
+    const hasValidManualPoints = hasValidTablePoints([
       d.get("manualPlayerEastPoints") || d.get("playerEastPoints"),
       d.get("manualPlayerSouthPoints") || d.get("playerSouthPoints"),
       d.get("manualPlayerWestPoints") || d.get("playerWestPoints"),
       d.get("manualPlayerNorthPoints") || d.get("playerNorthPoints"),
-    ], 7, true);
+    ]);
     const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? true);
     const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
 

@@ -51,6 +51,7 @@ class DefaultAdminRepository(
             UserProfile(
                 uid = user.uid,
                 email = user.email,
+                alias = user.alias,
             )
         }
     }.fold(

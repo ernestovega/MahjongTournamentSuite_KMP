@@ -16,6 +16,7 @@ fun AppTopBarActions(
     onIdCards: (() -> Unit)? = null,
     onPlayerBase: (() -> Unit)? = null,
     onUsers: (() -> Unit)? = null,
+    onExport: (() -> Unit)? = null,
     onRefresh: (() -> Unit)? = null,
     onNewTournament: (() -> Unit)? = null,
     onNewPlayer: (() -> Unit)? = null,
@@ -25,6 +26,7 @@ fun AppTopBarActions(
     idCardsFocusRequester: FocusRequester? = null,
     playerBaseFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
+    exportFocusRequester: FocusRequester? = null,
     refreshFocusRequester: FocusRequester? = null,
     newTournamentFocusRequester: FocusRequester? = null,
     newPlayerFocusRequester: FocusRequester? = null,
@@ -38,6 +40,7 @@ fun AppTopBarActions(
             onPlayers?.let { AppTopBarButton("Players", it, playersFocusRequester) }
             onIdCards?.let { AppTopBarButton("ID cards", it, idCardsFocusRequester) }
             onUsers?.let { AppTopBarButton("App Users", it, usersFocusRequester) }
+            onExport?.let { AppTopBarButton("EMA report", it, exportFocusRequester) }
             onPlayerBase?.let { AppTopBarButton("EMA Players", it, playerBaseFocusRequester) }
             onRefresh?.let { AppTopBarButton("Refresh", it, refreshFocusRequester) }
             onNewTournament?.let { AppTopBarButton("New Tournament", it, newTournamentFocusRequester) }

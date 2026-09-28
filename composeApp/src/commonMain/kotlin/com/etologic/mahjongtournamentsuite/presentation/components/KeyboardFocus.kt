@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
@@ -248,6 +249,32 @@ fun FocusedTextButton(
             contentPadding = contentPadding,
             interactionSource = interactionSource,
             content = content,
+        )
+    }
+}
+
+@Composable
+fun FocusedAssistChip(
+    onClick: () -> Unit,
+    label: @Composable () -> Unit,
+    modifier: Modifier = Modifier,
+    chipModifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    focusRequester: FocusRequester? = null,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    FocusHighlightContainer(
+        modifier = modifier,
+        interactionSource = interactionSource,
+    ) {
+        AssistChip(
+            onClick = onClick,
+            label = label,
+            modifier = chipModifier.then(
+                if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
+            ),
+            enabled = enabled,
+            interactionSource = interactionSource,
         )
     }
 }

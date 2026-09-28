@@ -60,7 +60,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
@@ -162,7 +162,12 @@ private fun RankingStandaloneContent(
             Column(
                 modifier = Modifier.fillMaxSize().padding(20.dp).appFocusGroup(),
             ) {
-                error?.let { AppErrorMessage(message = it) }
+                error?.let {
+                    AppErrorDialog(
+                        message = it,
+                        onDismiss = { error = null },
+                    )
+                }
                 when {
                     loading && snapshot == null -> CenteredMessage(
                         message = "Loading rankings…",

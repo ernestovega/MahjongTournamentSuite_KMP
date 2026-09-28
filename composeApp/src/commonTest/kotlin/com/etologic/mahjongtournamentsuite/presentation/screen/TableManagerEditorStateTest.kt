@@ -11,6 +11,53 @@ import kotlin.test.assertTrue
 class TableManagerEditorStateTest {
 
     @Test
+    fun freshEditorHasNoUnsavedChanges() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(),
+            hands = emptyList(),
+        )
+
+        assertFalse(editor.hasUnsavedChanges)
+        assertTrue(editor.buildTablePatch().isEmpty())
+    }
+
+    @Test
+    fun manualScoresWithNonZeroTotalNeedSaveConfirmation() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = true),
+            hands = emptyList(),
+        )
+
+        assertEquals(100_000L, editor.nonZeroManualScoreTotal)
+    }
+
+    @Test
+    fun manualScoresWithZeroTotalDoNotNeedSaveConfirmation() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(
+                useTotalsOnly = true,
+                playerEastScore = "40",
+                playerSouthScore = "-24",
+                playerWestScore = "-8",
+                playerNorthScore = "-8",
+            ),
+            hands = emptyList(),
+        )
+
+        assertNull(editor.nonZeroManualScoreTotal)
+    }
+
+    @Test
+    fun inactiveManualScoresDoNotNeedSaveConfirmation() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = false),
+            hands = emptyList(),
+        )
+
+        assertNull(editor.nonZeroManualScoreTotal)
+    }
+
+    @Test
     fun manualPointsAreDisabledByDefaultAndCanBeEnabled() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(),
@@ -110,12 +157,14 @@ class TableManagerEditorStateTest {
         assertFalse(editor.useTotalsOnly)
         assertFalse(editor.usePointsCalculation)
         assertEquals("4", editor.displayEastPoints)
+        assertEquals("33000", editor.displayEastScore)
         assertEquals("33000", editor.playerEastScore)
 
         editor.disableManualPoints()
         assertFalse(editor.useTotalsOnly)
         assertTrue(editor.usePointsCalculation)
         assertEquals("40", editor.displayEastScore)
+        assertEquals("4", editor.displayEastPoints)
         assertEquals("1", hand.playerWinnerId)
         assertEquals("2", hand.normalizedLoserId)
         assertEquals("16", hand.handScore)
@@ -157,7 +206,7 @@ class TableManagerEditorStateTest {
     }
 
     @Test
-    fun disablingManualScoresPreservesManualValuesForReuse() {
+    fun disablingManualScoresKeepsValuesVisibleWhenCalculationIsUnavailable() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(useTotalsOnly = true),
             hands = emptyList(),
@@ -171,14 +220,49 @@ class TableManagerEditorStateTest {
         editor.disableManualTotals()
 
         assertFalse(editor.useTotalsOnly)
-        assertEquals("", editor.displayEastScore)
+        assertEquals("33000", editor.displayEastScore)
         assertEquals("33000", editor.playerEastScore)
 
         val patch = editor.buildTablePatch()
 
         assertEquals(false, patch["useTotalsOnly"])
         assertEquals("33000", patch["manualPlayerEastScore"])
-        assertEquals("", patch["playerEastScore"])
+        assertEquals("33000", patch["playerEastScore"])
+    }
+
+    @Test
+    fun disablingManualPointsKeepsValuesVisibleWhenCalculationIsUnavailable() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(
+                useTotalsOnly = false,
+                usePointsCalculation = false,
+                playerEastScore = "",
+                playerSouthScore = "",
+                playerWestScore = "",
+                playerNorthScore = "",
+            ),
+            hands = emptyList(),
+        )
+        editor.playerEastPoints = "4"
+        editor.playerSouthPoints = "2"
+        editor.playerWestPoints = "1"
+        editor.playerNorthPoints = "0"
+
+        editor.disableManualPoints()
+
+        assertTrue(editor.usePointsCalculation)
+        assertEquals("4", editor.displayEastPoints)
+        assertEquals("2", editor.displaySouthPoints)
+        assertEquals("1", editor.displayWestPoints)
+        assertEquals("0", editor.displayNorthPoints)
+
+        val patch = editor.buildTablePatch()
+
+        assertEquals(true, patch["usePointsCalculation"])
+        assertEquals("4", patch["playerEastPoints"])
+        assertEquals("2", patch["playerSouthPoints"])
+        assertEquals("1", patch["playerWestPoints"])
+        assertEquals("0", patch["playerNorthPoints"])
     }
 
     @Test

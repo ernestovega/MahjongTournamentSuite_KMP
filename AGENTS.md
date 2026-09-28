@@ -141,6 +141,26 @@ Apply these rules to every new or changed screen, dialog, list, and interactive 
 - Use `Modifier.appFocusGroup()` for new focus regions.
 - Use the Tournament players screen and its assignment dialog as the reference behavior.
 
+## Dialog Size And Layout
+
+Apply these rules to every new or changed dialog:
+
+- Use the standard platform width for `AlertDialog`.
+- Let the dialog wrap its content and keep the platform edge padding.
+- Do not set `usePlatformDefaultWidth = false` for a routine form, picker, or confirmation dialog.
+- Do not combine a fractional `fillMaxWidth()` with a fixed `widthIn()` on a dialog.
+- Limit scrollable content height when needed. Do not force the dialog width to fit a list or text field.
+- Use a custom dialog width only when the content needs a large canvas, preview, or data table.
+- Document the reason beside each custom width and keep safe edge padding on small windows.
+
+## Error Presentation
+
+- Show screen-level operation errors in `AppErrorDialog`.
+- Do not show screen-level errors as text above or inside the screen content.
+- Clear the error state when the user dismisses the dialog.
+- Keep field validation next to the related field or control.
+- Keep warnings and other non-error status messages in their relevant content area.
+
 ## Scrollable Lists And Pointer Input
 
 - Use `LazyColumnWithScrollbar` for a vertical lazy list that needs a visible scrollbar.

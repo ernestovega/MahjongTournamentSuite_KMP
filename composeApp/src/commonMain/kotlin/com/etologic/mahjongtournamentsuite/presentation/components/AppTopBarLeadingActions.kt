@@ -31,7 +31,7 @@ fun AppTopBarLeadingActions(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
-        onUsers?.let { AppTopBarButton("Users", it, usersFocusRequester) }
+        onUsers?.let { AppTopBarButton("App Users", it, usersFocusRequester) }
         if (showThemeToggle) { ThemeModeToggleButton() }
         onTimer?.let { AppTopBarButton("Timer", it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton("Ranking", it, rankingFocusRequester) }

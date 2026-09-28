@@ -1,20 +1,27 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -35,23 +42,25 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedAssistChip
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
@@ -64,6 +73,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun TeamsScreen(
     navController: NavHostController,
     tournamentId: String,
@@ -79,8 +89,54 @@ fun TeamsScreen(
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var initialFocusApplied by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
-    val editFocusRequesters = remember(teams.map { it.id }) { teams.map { FocusRequester() } }
+    val searchFocusRequester = remember { FocusRequester() }
+    val slotsById = remember(slots) { slots.associateBy { it.id } }
+    val basePlayersByEma = remember(basePlayers) { basePlayers.associateBy { it.emaId } }
+    val playersByTeamId = remember(teams, slotsById, basePlayersByEma) {
+        teams.associate { team ->
+            team.id to team.playerIds.map { playerId ->
+                val emaId = slotsById[playerId]?.assignedEmaId
+                val player = emaId?.let(basePlayersByEma::get)
+                TeamPlayerSummary(
+                    id = playerId,
+                    name = player?.name,
+                    country = player?.country.orEmpty(),
+                )
+            }
+        }
+    }
+    val tournamentCountryCodes = remember(playersByTeamId) {
+        playersByTeamId.values
+            .flatten()
+            .map { it.country.trim().uppercase() }
+            .filter { it.isNotEmpty() && it != "EU" }
+            .distinct()
+            .sorted()
+    }
+    val normalizedQuery = normalizeSearchText(searchQuery.trim())
+    val filteredTeams = remember(teams, playersByTeamId, normalizedQuery, selectedCountryCodes) {
+        teams.filter { team ->
+            val teamPlayers = playersByTeamId[team.id].orEmpty()
+            val matchesSearch = normalizedQuery.isEmpty() ||
+                normalizeSearchText(team.name).contains(normalizedQuery) ||
+                team.id.toString().contains(normalizedQuery) ||
+                teamPlayers.any { player ->
+                    player.id.toString().contains(normalizedQuery) ||
+                        normalizeSearchText(player.name.orEmpty()).contains(normalizedQuery)
+                }
+            val matchesCountry = selectedCountryCodes.isEmpty() || teamPlayers.any { player ->
+                player.country.trim().uppercase() in selectedCountryCodes
+            }
+            matchesSearch && matchesCountry
+        }
+    }
+    val editFocusRequesters = remember(filteredTeams.map { it.id }) {
+        filteredTeams.map { FocusRequester() }
+    }
 
     fun refresh() = scope.launch {
         loading = true
@@ -106,12 +162,27 @@ fun TeamsScreen(
 
     LaunchedEffect(tournamentId) { refresh() }
 
-    LaunchedEffect(loading, teams.map { it.id }) {
-        if (!loading && teams.isNotEmpty() && editingTeamId == null) {
-            val restoreIndex = restoreTeamId?.let { id -> teams.indexOfFirst { it.id == id } } ?: -1
-            val index = restoreIndex.takeIf { it >= 0 } ?: 0
-            listState.scrollToItem(index)
-            editFocusRequesters.getOrNull(index)?.requestFocus()
+    LaunchedEffect(tournamentCountryCodes) {
+        selectedCountryCodes = selectedCountryCodes.intersect(tournamentCountryCodes.toSet())
+    }
+
+    LaunchedEffect(loading, teams.isNotEmpty()) {
+        if (!loading && teams.isNotEmpty() && !initialFocusApplied) {
+            initialFocusApplied = true
+            searchFocusRequester.requestFocus()
+        }
+    }
+
+    LaunchedEffect(loading, restoreTeamId, filteredTeams.map { it.id }, editingTeamId) {
+        val teamIdToRestore = restoreTeamId
+        if (!loading && teamIdToRestore != null && editingTeamId == null) {
+            val restoreIndex = filteredTeams.indexOfFirst { it.id == teamIdToRestore }
+            if (restoreIndex >= 0) {
+                listState.scrollToItem(restoreIndex)
+                editFocusRequesters.getOrNull(restoreIndex)?.requestFocus()
+            } else {
+                searchFocusRequester.requestFocus()
+            }
             restoreTeamId = null
         }
     }
@@ -163,10 +234,97 @@ fun TeamsScreen(
             contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            error?.let { AppErrorMessage(it) }
+            error?.let {
+                AppErrorDialog(
+                    message = it,
+                    onDismiss = { error = null },
+                )
+            }
+            if (teams.isNotEmpty()) {
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = { searchQuery = it },
+                    label = { Text("Search by team or player name or ID") },
+                    singleLine = true,
+                    trailingIcon = if (searchQuery.isNotEmpty()) {
+                        {
+                            FocusedIconButton(
+                                onClick = {
+                                    searchQuery = ""
+                                    searchFocusRequester.requestFocus()
+                                },
+                            ) {
+                                Icon(Icons.Default.Close, contentDescription = "Clear search")
+                            }
+                        }
+                    } else {
+                        null
+                    },
+                    modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                )
+                if (tournamentCountryCodes.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text(
+                            text = "Filter by country",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            tournamentCountryCodes.forEach { code ->
+                                val isSelected = code in selectedCountryCodes
+                                FocusedTextButton(
+                                    onClick = {
+                                        selectedCountryCodes = if (isSelected) {
+                                            selectedCountryCodes - code
+                                        } else {
+                                            selectedCountryCodes + code
+                                        }
+                                    },
+                                    shape = CircleShape,
+                                    colors = if (isSelected) {
+                                        ButtonDefaults.textButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                        )
+                                    } else {
+                                        ButtonDefaults.textButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    },
+                                    border = BorderStroke(
+                                        width = if (isSelected) 2.dp else 1.dp,
+                                        color = if (isSelected) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.outline
+                                        },
+                                    ),
+                                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+                                ) {
+                                    CountryFlag(
+                                        code = code,
+                                        contentDescription = if (isSelected) {
+                                            "Remove $code country filter"
+                                        } else {
+                                            "Filter by $code"
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             SectionCard {
                 if (teams.isEmpty() && !loading) {
                     Text("This tournament does not use teams.")
+                } else if (filteredTeams.isEmpty() && !loading) {
+                    Text("No teams match the current filters.")
                 }
                 Column(Modifier.fillMaxWidth()) {
                     DataTableHeaderRow {
@@ -180,32 +338,45 @@ fun TeamsScreen(
                         state = listState,
                         modifier = Modifier.weight(1f, fill = false),
                     ) {
-                        itemsIndexed(teams, key = { _, team -> team.id }) { index, team ->
-                            val assignedNames = team.playerIds.mapNotNull { playerId ->
-                                val emaId = slots.firstOrNull { it.id == playerId }?.assignedEmaId
-                                emaId?.let { id -> basePlayers.firstOrNull { it.emaId == id }?.name }
-                            }
+                        itemsIndexed(filteredTeams, key = { _, team -> team.id }) { index, team ->
+                            val assignedPlayers = playersByTeamId[team.id].orEmpty()
                             DataTableRow(
                                 onClick = { editingTeamId = team.id },
                                 clickFocusable = false,
                             ) {
-                                Text(team.id.toString(), Modifier.width(90.dp))
+                                Text(
+                                    text = team.id.toString(),
+                                    modifier = Modifier.width(90.dp),
+                                )
                                 Text(
                                     text = team.name,
                                     modifier = Modifier.weight(1f),
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
                                 )
-                                Text(
-                                    text = if (assignedNames.isEmpty()) {
-                                        "No players assigned"
-                                    } else {
-                                        assignedNames.joinToString(", ")
-                                    },
+                                Column(
                                     modifier = Modifier.weight(1.6f),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    assignedPlayers.forEach { player ->
+                                        Row(
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            Text(player.id.toString())
+                                            CountryFlag(
+                                                code = player.country,
+                                                width = 16.dp,
+                                                contentDescription = player.country.ifBlank { "No country" },
+                                            )
+                                            Text(
+                                                text = player.name ?: "Not assigned",
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                    }
+                                }
                                 FocusedButton(
                                     onClick = { editingTeamId = team.id },
                                     focusRequester = editFocusRequesters[index],
@@ -255,37 +426,34 @@ private fun TeamEditorDialog(
         teamSlots.map { it.assignedEmaId }
     }
     var name by remember(team.id) { mutableStateOf(team.name) }
-    var activeSlotIndex by remember(team.id) { mutableStateOf(0) }
-    var query by remember(team.id) { mutableStateOf("") }
+    var playerPickerSlotIndex by remember(team.id) { mutableStateOf<Int?>(null) }
+    var restoreSlotIndex by remember(team.id) { mutableStateOf<Int?>(null) }
     var moveWarning by remember(team.id) { mutableStateOf<String?>(null) }
     val nameFocusRequester = remember(team.id) { FocusRequester() }
+    val slotFocusRequesters = remember(team.id, teamSlots.map { it.id }) {
+        teamSlots.map { FocusRequester() }
+    }
     val playersByEma = remember(basePlayers) { basePlayers.associateBy { it.emaId } }
     val slotsByEma = remember(slots) { slots.mapNotNull { slot -> slot.assignedEmaId?.let { it to slot } }.toMap() }
     val teamNamesById = remember(teams) { teams.associate { it.id to it.name } }
-    val normalizedQuery = normalizeSearchText(query.trim())
-    val filteredPlayers = remember(basePlayers, normalizedQuery) {
-        if (normalizedQuery.isEmpty()) {
-            basePlayers
-        } else {
-            basePlayers.filter { player ->
-                normalizeSearchText(player.name).contains(normalizedQuery) ||
-                    normalizeSearchText(player.emaId).contains(normalizedQuery) ||
-                    normalizeSearchText(player.country).contains(normalizedQuery)
-            }
-        }
-    }
     val membershipChanged = selectedEmaIds.toList() != originalEmaIds
 
     LaunchedEffect(team.id) { nameFocusRequester.requestFocus() }
+    LaunchedEffect(playerPickerSlotIndex, restoreSlotIndex) {
+        if (playerPickerSlotIndex == null) {
+            restoreSlotIndex?.let { index -> slotFocusRequesters.getOrNull(index)?.requestFocus() }
+            restoreSlotIndex = null
+        }
+    }
 
-    fun selectPlayer(player: Player) {
+    fun selectPlayer(slotIndex: Int, player: Player) {
         if (assignmentsLocked) return
         val previousSelectedIndex = selectedEmaIds.indexOf(player.emaId)
-        if (previousSelectedIndex >= 0 && previousSelectedIndex != activeSlotIndex) {
-            val displaced = selectedEmaIds[activeSlotIndex]
+        if (previousSelectedIndex >= 0 && previousSelectedIndex != slotIndex) {
+            val displaced = selectedEmaIds[slotIndex]
             selectedEmaIds[previousSelectedIndex] = displaced
         }
-        selectedEmaIds[activeSlotIndex] = player.emaId
+        selectedEmaIds[slotIndex] = player.emaId
 
         val sourceSlot = slotsByEma[player.emaId]
         moveWarning = if (sourceSlot != null && sourceSlot.team != team.id) {
@@ -297,14 +465,42 @@ private fun TeamEditorDialog(
         }
     }
 
+    playerPickerSlotIndex?.let { slotIndex ->
+        val slot = teamSlots.getOrNull(slotIndex)
+        if (slot != null) {
+            PlayerPickerDialog(
+                slot = slot,
+                selectedEmaId = selectedEmaIds.getOrNull(slotIndex),
+                players = basePlayers,
+                slotsByEma = slotsByEma,
+                teamNamesById = teamNamesById,
+                saving = saving,
+                onSelect = { player ->
+                    selectPlayer(slotIndex, player)
+                    restoreSlotIndex = slotIndex
+                    playerPickerSlotIndex = null
+                },
+                onClear = {
+                    selectedEmaIds[slotIndex] = null
+                    moveWarning = null
+                    restoreSlotIndex = slotIndex
+                    playerPickerSlotIndex = null
+                },
+                onDismiss = {
+                    restoreSlotIndex = slotIndex
+                    playerPickerSlotIndex = null
+                },
+            )
+        }
+    }
+
     AlertDialog(
         onDismissRequest = onDismiss,
-        modifier = Modifier.fillMaxWidth(0.9f).widthIn(max = 920.dp).appFocusGroup(),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+        modifier = Modifier.appFocusGroup(),
         title = { Text("Edit team ${team.id}") },
         text = {
             Column(
-                modifier = Modifier.fillMaxWidth().heightIn(max = 680.dp),
+                modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OutlinedTextField(
@@ -314,78 +510,46 @@ private fun TeamEditorDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().focusRequester(nameFocusRequester),
                 )
-                if (assignmentsLocked) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     Text(
-                        "Player assignments are locked because table results have started. The name can still change.",
-                        color = MaterialTheme.colorScheme.error,
+                        text = "Team members",
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center,
                     )
-                }
-                Text("Select a team slot, then select a player.", style = MaterialTheme.typography.labelLarge)
-                teamSlots.forEachIndexed { index, slot ->
-                    val selected = selectedEmaIds.getOrNull(index)?.let(playersByEma::get)
-                    FocusedOutlinedButton(
-                        onClick = { activeSlotIndex = index },
-                        enabled = !saving,
-                        buttonModifier = Modifier.fillMaxWidth(),
-                    ) {
+                    if (assignmentsLocked) {
                         Text(
-                            text = "Player ${slot.id}: ${selected?.name ?: "Not assigned"}" +
-                                if (activeSlotIndex == index) "  • selected" else "",
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            text = "Player assignments are locked because table results have started.",
+                            color = MaterialTheme.colorScheme.error,
+                            textAlign = TextAlign.Center,
                         )
                     }
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        label = { Text("Search players") },
-                        singleLine = true,
-                        modifier = Modifier.weight(1f),
-                    )
-                    FocusedTextButton(
-                        onClick = {
-                            if (!assignmentsLocked && activeSlotIndex in selectedEmaIds.indices) {
-                                selectedEmaIds[activeSlotIndex] = null
-                                moveWarning = null
-                            }
-                        },
-                        enabled = !assignmentsLocked && !saving,
-                    ) { Text("Clear slot") }
+                    Column(
+                        modifier = Modifier.wrapContentWidth(),
+                        horizontalAlignment = Alignment.Start,
+                    ) {
+                        teamSlots.forEachIndexed { index, slot ->
+                            val selected = selectedEmaIds.getOrNull(index)?.let(playersByEma::get)
+                            FocusedAssistChip(
+                                onClick = { playerPickerSlotIndex = index },
+                                enabled = !saving && !assignmentsLocked,
+                                focusRequester = slotFocusRequesters[index],
+                                label = {
+                                    Text(
+                                        text = "${slot.id} - ${selected?.name ?: "Not assigned"}",
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                },
+                            )
+                        }
+                    }
                 }
                 moveWarning?.let { warning ->
                     Text(warning, color = MaterialTheme.colorScheme.error)
-                }
-                Box(Modifier.fillMaxWidth().height(240.dp)) {
-                    LazyColumnWithScrollbar(state = rememberLazyListState()) {
-                        itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { _, player ->
-                            val assignedSlot = slotsByEma[player.emaId]
-                            val assignedTeam = assignedSlot?.let { teamNamesById[it.team] ?: "Team ${it.team}" }
-                            DataTableRow(
-                                onClick = { selectPlayer(player) },
-                                clickFocusable = !assignmentsLocked,
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(player.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    Text(
-                                        buildString {
-                                            append("EMA ${player.emaId}")
-                                            if (assignedTeam != null) append(" • $assignedTeam • Player ${assignedSlot.id}")
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-                            DataTableDivider()
-                        }
-                    }
                 }
             }
         },
@@ -400,6 +564,111 @@ private fun TeamEditorDialog(
         },
     )
 }
+
+@Composable
+private fun PlayerPickerDialog(
+    slot: TournamentPlayer,
+    selectedEmaId: String?,
+    players: List<Player>,
+    slotsByEma: Map<String, TournamentPlayer>,
+    teamNamesById: Map<Int, String>,
+    saving: Boolean,
+    onSelect: (Player) -> Unit,
+    onClear: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    var query by remember(slot.id) { mutableStateOf("") }
+    val searchFocusRequester = remember(slot.id) { FocusRequester() }
+    val listState = rememberLazyListState()
+    val normalizedQuery = normalizeSearchText(query.trim())
+    val filteredPlayers = remember(players, normalizedQuery) {
+        if (normalizedQuery.isEmpty()) {
+            players
+        } else {
+            players.filter { player ->
+                normalizeSearchText(player.name).contains(normalizedQuery) ||
+                    normalizeSearchText(player.emaId).contains(normalizedQuery) ||
+                    normalizeSearchText(player.country).contains(normalizedQuery)
+            }
+        }
+    }
+
+    LaunchedEffect(slot.id) { searchFocusRequester.requestFocus() }
+    LaunchedEffect(normalizedQuery) {
+        if (filteredPlayers.isNotEmpty()) listState.scrollToItem(0)
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.appFocusGroup(),
+        title = { Text("Select player ${slot.id}") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text("Search players") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                )
+                if (filteredPlayers.isEmpty()) {
+                    Text(
+                        text = "No players match the search.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    Box(Modifier.fillMaxWidth().heightIn(max = 320.dp)) {
+                        LazyColumnWithScrollbar(state = listState) {
+                            itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { _, player ->
+                                val assignedSlot = slotsByEma[player.emaId]
+                                val assignedTeam = assignedSlot?.let {
+                                    teamNamesById[it.team] ?: "Team ${it.team}"
+                                }
+                                DataTableRow(
+                                    onClick = { onSelect(player) },
+                                    highlighted = player.emaId == selectedEmaId,
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(player.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(
+                                            buildString {
+                                                append("EMA ${player.emaId}")
+                                                if (assignedTeam != null) {
+                                                    append(" • $assignedTeam • Player ${assignedSlot.id}")
+                                                }
+                                            },
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                                DataTableDivider()
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            FocusedButton(
+                onClick = onClear,
+                enabled = !saving && selectedEmaId != null,
+            ) { Text("Clear slot") }
+        },
+        dismissButton = {
+            FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text("Cancel") }
+        },
+    )
+}
+
+private data class TeamPlayerSummary(
+    val id: Int,
+    val name: String?,
+    val country: String,
+)
 
 @Composable
 private fun TeamHeader(text: String, modifier: Modifier) {

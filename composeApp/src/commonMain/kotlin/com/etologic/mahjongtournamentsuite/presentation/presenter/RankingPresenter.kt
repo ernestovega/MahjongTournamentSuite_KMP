@@ -24,8 +24,7 @@ data class RankingSnapshot(
     val basePlayers: List<Player>,
     val tournamentTeams: List<TournamentTeam>,
     val isTeams: Boolean,
-    val tableCount: Int,
-    val completedTableCount: Int,
+    val rankingTables: List<RankingTable>,
 )
 
 class RankingPresenter(
@@ -94,8 +93,7 @@ class RankingPresenter(
                 basePlayers = basePlayers,
                 tournamentTeams = tournamentTeams,
                 isTeams = isTeams,
-                tableCount = tableSummaries.size,
-                completedTableCount = tableSummaries.count { it.isCompleted },
+                rankingTables = rankingTables,
             ),
         )
     }

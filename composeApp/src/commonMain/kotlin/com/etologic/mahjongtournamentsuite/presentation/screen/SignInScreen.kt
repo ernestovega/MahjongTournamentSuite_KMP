@@ -47,7 +47,7 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
@@ -263,7 +263,10 @@ fun SignInScreen(
                     )
 
                     errorMessage?.let { message ->
-                        AppErrorMessage(message = message)
+                        AppErrorDialog(
+                            message = message,
+                            onDismiss = { errorMessage = null },
+                        )
                     }
 
                     infoMessage?.let { message ->

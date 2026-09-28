@@ -58,6 +58,8 @@ data class UpdateTournamentSettingsRequestDto(
     val name: String,
     val shortName: String,
     val primaryColor: String,
+    val eventStartDate: String,
+    val eventEndDate: String,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
     val removeAssociationLogo: Boolean = false,

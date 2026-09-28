@@ -24,6 +24,7 @@ fun SectionCard(
     title: String? = null,
     subtitle: String? = null,
     verticalSpacing: Dp = 12.dp,
+    titleAction: @Composable (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -32,7 +33,7 @@ fun SectionCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         ) {
-            if (title != null || subtitle != null || actions != null) {
+            if (title != null || subtitle != null || titleAction != null || actions != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -42,11 +43,19 @@ fun SectionCard(
                         modifier = Modifier.weight(1f),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
-                        if (!title.isNullOrBlank()) {
-                            Text(
-                                text = title,
-                                style = MaterialTheme.typography.titleMedium,
-                            )
+                        if (!title.isNullOrBlank() || titleAction != null) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                if (!title.isNullOrBlank()) {
+                                    Text(
+                                        text = title,
+                                        style = MaterialTheme.typography.titleMedium,
+                                    )
+                                }
+                                titleAction?.invoke()
+                            }
                         }
                         if (!subtitle.isNullOrBlank()) {
                             Text(

@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.domain.model
 data class UserProfile(
     val uid: String,
     val email: String,
+    val alias: String = "",
 )
 
 enum class GlobalUserRole {

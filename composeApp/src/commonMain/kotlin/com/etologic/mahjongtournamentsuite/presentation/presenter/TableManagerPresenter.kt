@@ -54,5 +54,17 @@ class TableManagerPresenter(
             patch = patch,
         )
     }
-}
 
+    suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Unit> {
+        logger.i { "Resetting table." }
+        return tournamentRepository.resetTable(
+            tournamentId = tournamentId,
+            roundId = roundId,
+            tableId = tableId,
+        )
+    }
+}

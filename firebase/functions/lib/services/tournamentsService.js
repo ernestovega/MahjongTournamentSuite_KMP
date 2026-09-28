@@ -5,11 +5,13 @@ exports.listAllTournaments = listAllTournaments;
 exports.renameTournament = renameTournament;
 exports.updateTournamentSettings = updateTournamentSettings;
 exports.listTournamentsForUser = listTournamentsForUser;
+exports.deleteTournamentResources = deleteTournamentResources;
 exports.deleteTournament = deleteTournament;
 const firestore_1 = require("firebase-admin/firestore");
 const node_crypto_1 = require("node:crypto");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
+const tournamentDates_1 = require("./tournamentDates");
 const usersService_1 = require("./usersService");
 function toIsoString(value) {
     if (value instanceof firestore_1.Timestamp)
@@ -270,6 +272,9 @@ async function updateTournamentSettings(params) {
         throw (0, httpError_1.badRequest)("Tournament name is required");
     const shortName = normalizeShortName(params.shortName);
     const primaryColor = normalizePrimaryColor(params.primaryColor);
+    if (!(0, tournamentDates_1.isValidIsoDateRange)(params.eventStartDate, params.eventEndDate)) {
+        throw (0, httpError_1.badRequest)("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
+    }
     const ref = firebase_1.db.collection("tournaments").doc(params.tournamentId);
     const before = await ref.get();
     if (!before.exists)
@@ -286,6 +291,8 @@ async function updateTournamentSettings(params) {
         name: normalizedName,
         shortName,
         primaryColor,
+        eventStartDate: params.eventStartDate,
+        eventEndDate: params.eventEndDate,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
     if (logo !== undefined) {
@@ -313,19 +320,26 @@ async function listTournamentsForUser(uid) {
         .filter((t) => t.exists)
         .map((d) => mapTournamentDoc(d)));
 }
+async function deleteTournamentResources(params) {
+    const logoPath = params.logoPath.trim();
+    if (logoPath.length > 0) {
+        await params.deleteLogo(logoPath);
+    }
+    await params.deleteTournamentTree();
+}
 async function deleteTournament(tournamentId) {
     const ref = firebase_1.db.collection("tournaments").doc(tournamentId);
     const snap = await ref.get();
     if (!snap.exists)
         throw (0, httpError_1.notFound)("Tournament not found");
-    const recursiveDelete = firebase_1.db
-        .recursiveDelete;
-    if (typeof recursiveDelete === "function") {
-        await recursiveDelete(ref);
-        return;
-    }
-    // Fallback: delete the parent document (subcollections will remain).
-    // This should be extremely rare; most firebase-admin builds expose recursiveDelete.
-    await ref.delete();
+    await deleteTournamentResources({
+        logoPath: String(snap.get("associationLogoPath") ?? ""),
+        deleteLogo: async (logoPath) => {
+            await firebase_1.storage.file(logoPath).delete({ ignoreNotFound: true });
+        },
+        deleteTournamentTree: async () => {
+            await firebase_1.db.recursiveDelete(ref);
+        },
+    });
 }
 //# sourceMappingURL=tournamentsService.js.map

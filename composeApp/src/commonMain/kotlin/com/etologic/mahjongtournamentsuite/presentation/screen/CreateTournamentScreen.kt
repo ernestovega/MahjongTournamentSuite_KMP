@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.selection.toggleable
@@ -25,8 +26,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -34,7 +36,6 @@ import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -81,13 +82,21 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
-import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
-import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
+import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
+import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
@@ -102,10 +111,7 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
-import kotlinx.datetime.Instant
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import org.koin.compose.koinInject
@@ -118,7 +124,6 @@ fun CreateTournamentScreen(
     val presenter = koinInject<CreateTournamentPresenter>()
     val store = koinInject<AppMemoryStore>()
     val coroutineScope = rememberCoroutineScope()
-    val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
     val shortNameFocusRequester = remember { FocusRequester() }
     val primaryColorFocusRequester = remember { FocusRequester() }
@@ -130,8 +135,16 @@ fun CreateTournamentScreen(
     var name by remember { mutableStateOf("") }
     var shortName by remember { mutableStateOf("") }
     var primaryColor by remember { mutableStateOf("#02B16B") }
+    var showColorPickerDialog by remember { mutableStateOf(false) }
     var associationLogo by remember { mutableStateOf<SelectedImage?>(null) }
-    val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString() }
+    var logoImageInfo by remember { mutableStateOf<String?>(null) }
+    val today = remember {
+        Clock.System.now()
+            .toLocalDateTime(TimeZone.currentSystemDefault())
+            .date
+            .toString()
+            .toDisplayTournamentDate()
+    }
     var eventStartDate by remember { mutableStateOf(today) }
     var eventEndDate by remember { mutableStateOf(today) }
     var datePickerFor by remember { mutableStateOf<String?>(null) }
@@ -148,11 +161,12 @@ fun CreateTournamentScreen(
     val logoPicker = rememberImagePicker(
         onImageSelected = { image ->
             if (image.contentType !in setOf("image/jpeg", "image/png")) {
-                errorMessage = "* Association logo must be a JPEG or PNG image."
+                errorMessage = "* Logo must be a JPEG or PNG image."
             } else if (image.bytes.size > 2 * 1024 * 1024) {
-                errorMessage = "* Association logo must be 2 MB or smaller."
+                errorMessage = "* Logo must be 2 MB or smaller."
             } else {
                 associationLogo = image
+                logoImageInfo = null
                 errorMessage = null
             }
         },
@@ -197,8 +211,8 @@ fun CreateTournamentScreen(
         val trimmedName = name.trim()
         val trimmedShortName = shortName.trim()
         val normalizedPrimaryColor = primaryColor.trim().uppercase()
-        val trimmedStartDate = eventStartDate.trim()
-        val trimmedEndDate = eventEndDate.trim()
+        val trimmedStartDate = eventStartDate.toIsoTournamentDateOrNull()
+        val trimmedEndDate = eventEndDate.toIsoTournamentDateOrNull()
         val numPlayers = numPlayersText.trim().toIntOrNull()
         val numRounds = numRoundsText.trim().toIntOrNull()
 
@@ -217,8 +231,12 @@ fun CreateTournamentScreen(
             primaryColorFocusRequester.requestFocus()
             return
         }
-        if (!TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)) {
-            errorMessage = "* Enter a valid date period. The end date must not be before the start date."
+        if (
+            trimmedStartDate == null ||
+            trimmedEndDate == null ||
+            !TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)
+        ) {
+            errorMessage = "* Enter valid DD-MM-YYYY dates. The end date must not be before the start date."
             return
         }
         if (numPlayers == null || numPlayers <= 0 || numPlayers % 4 != 0) {
@@ -285,468 +303,318 @@ fun CreateTournamentScreen(
         }
     }
 
-    fun handleKeys(event: KeyEvent): Boolean {
-        if (isLoading) return false
-        if (event.type != KeyEventType.KeyDown) return false
-
-        return when (event.key) {
-            Key.Tab -> {
-                focusManager.moveFocus(if (event.isShiftPressed) FocusDirection.Previous else FocusDirection.Next)
-                true
+    AlertDialog(
+        modifier = Modifier.appFocusGroup(),
+        onDismissRequest = {
+            if (!isLoading) {
+                cancelCreation()
+                navController.popBackStack()
             }
-
-            else -> false
-        }
-    }
-
-    if (datePickerFor == "start") {
-        val state = rememberDatePickerState(initialSelectedDateMillis = dateToEpochMillis(eventStartDate))
-        DatePickerDialog(
-            onDismissRequest = { datePickerFor = null },
-            confirmButton = {
-                TextButton(onClick = {
-                    state.selectedDateMillis?.let { eventStartDate = epochMillisToDate(it) }
-                    datePickerFor = null
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { datePickerFor = null }) { Text("Cancel") }
-            },
-        ) { DatePicker(state = state) }
-    }
-
-    if (datePickerFor == "end") {
-        val state = rememberDatePickerState(initialSelectedDateMillis = dateToEpochMillis(eventEndDate))
-        DatePickerDialog(
-            onDismissRequest = { datePickerFor = null },
-            confirmButton = {
-                TextButton(onClick = {
-                    state.selectedDateMillis?.let { eventEndDate = epochMillisToDate(it) }
-                    datePickerFor = null
-                }) { Text("OK") }
-            },
-            dismissButton = {
-                TextButton(onClick = { datePickerFor = null }) { Text("Cancel") }
-            },
-        ) { DatePicker(state = state) }
-    }
-
-    AppScaffold(
-        title = "Create tournament",
-        isLoading = isLoading,
-        autoFocusFirst = false,
-        onBack = {
-            cancelCreation()
-            navController.popBackStack()
         },
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            ScreenColumn(
-                modifier = Modifier.onPreviewKeyEvent(::handleKeys),
-                maxWidth = 640.dp,
-                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-                scrollable = true,
+        title = { Text("New tournament") },
+        text = {
+            ScrollableColumnWithScrollbar(
+                state = rememberScrollState(),
+                modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp),
             ) {
-                SectionCard(
-                    title = "",
-                    subtitle = "Creates rounds, tables and players automatically by an endless try and error random assignment process, satisfying the teams restriction and avoiding 2 players playing together twice; if it takes too long, constraints may be unsatisfiable.",
-                    verticalSpacing = 0.dp,
-                    content = {
-                        Spacer(Modifier.size(16.dp))
-
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text(
+                        "Creates rounds, tables, and players automatically.",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Name") },
+                        singleLine = true,
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth().focusRequester(nameFocusRequester),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { shortNameFocusRequester.requestFocus() }),
+                    )
+                    OutlinedTextField(
+                        value = shortName,
+                        onValueChange = { shortName = it.take(10) },
+                        label = { Text("Short name") },
+                        placeholder = { Text("Max. 10 characters") },
+                        singleLine = true,
+                        enabled = !isLoading,
+                        modifier = Modifier.fillMaxWidth().focusRequester(shortNameFocusRequester),
+                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                        keyboardActions = KeyboardActions(onNext = { primaryColorFocusRequester.requestFocus() }),
+                    )
+                    TournamentColorField(
+                        value = primaryColor,
+                        enabled = !isLoading,
+                        isError = errorMessage?.contains("color", ignoreCase = true) == true,
+                        onValueChange = { primaryColor = it },
+                        onPreviewClick = {
+                            datePickerFor = null
+                            showColorPickerDialog = true
+                        },
+                        fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
                         OutlinedTextField(
-                            value = name,
-                            onValueChange = { name = it },
-                            label = { Text("Name") },
+                            value = numPlayersText,
+                            onValueChange = { numPlayersText = it },
+                            label = { Text("Players") },
+                            placeholder = { Text("Multiple of 4") },
+                            modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
                             singleLine = true,
                             enabled = !isLoading,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(nameFocusRequester),
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                            keyboardActions = KeyboardActions(
-                                onNext = { shortNameFocusRequester.requestFocus() },
-                                onDone = { startCreate() },
-                            ),
                         )
-
-                        Spacer(Modifier.size(16.dp))
-
+                        OutlinedTextField(
+                            value = numRoundsText,
+                            onValueChange = { numRoundsText = it },
+                            label = { Text("Rounds") },
+                            modifier = Modifier.weight(1f).focusRequester(roundsFocusRequester),
+                            singleLine = true,
+                            enabled = !isLoading,
+                        )
+                    }
+                    FocusHighlightContainer(
+                        modifier = Modifier.fillMaxWidth(),
+                        interactionSource = teamsToggleInteractionSource,
+                    ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            OutlinedTextField(
-                                value = shortName,
-                                onValueChange = { shortName = it.take(10) },
-                                label = { Text("Short name") },
-                                supportingText = { Text("Maximum 10 characters") },
-                                singleLine = true,
-                                enabled = !isLoading,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(shortNameFocusRequester),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                                keyboardActions = KeyboardActions(
-                                    onNext = { primaryColorFocusRequester.requestFocus() },
-                                ),
-                            )
-                            OutlinedTextField(
-                                value = primaryColor,
-                                onValueChange = { primaryColor = it.take(7) },
-                                label = { Text("Primary color") },
-                                supportingText = { Text("#RRGGBB") },
-                                singleLine = true,
-                                enabled = !isLoading,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(primaryColorFocusRequester),
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                                keyboardActions = KeyboardActions(
-                                    onNext = { eventStartDateFocusRequester.requestFocus() },
-                                ),
-                            )
-                        }
-
-                        Spacer(Modifier.size(12.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Button(
+                            Switch(
+                                checked = isTeams,
+                                onCheckedChange = ::setTeamsChecked,
                                 enabled = !isLoading,
-                                onClick = logoPicker::launch,
-                            ) {
-                                Text(if (associationLogo == null) "Choose association logo" else "Change association logo")
-                            }
+                                interactionSource = teamsToggleInteractionSource,
+                            )
                             Text(
-                                text = associationLogo?.fileName ?: "No logo selected",
-                                modifier = Modifier.weight(1f),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                            if (associationLogo != null) {
-                                TextButton(onClick = { associationLogo = null }) { Text("Clear") }
-                            }
-                        }
-
-                        Spacer(Modifier.size(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            OutlinedTextField(
-                                value = eventStartDate,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("From") },
-                                supportingText = { Text("YYYY-MM-DD") },
-                                singleLine = true,
-                                enabled = !isLoading,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(eventStartDateFocusRequester)
-                                    .clickable { datePickerFor = "start" },
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                                keyboardActions = KeyboardActions(
-                                    onNext = { eventEndDateFocusRequester.requestFocus() },
-                                    onDone = { startCreate() },
-                                ),
-                            )
-                            OutlinedTextField(
-                                value = eventEndDate,
-                                onValueChange = {},
-                                readOnly = true,
-                                label = { Text("To") },
-                                supportingText = { Text("YYYY-MM-DD") },
-                                singleLine = true,
-                                enabled = !isLoading,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(eventEndDateFocusRequester)
-                                    .clickable { datePickerFor = "end" },
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                                keyboardActions = KeyboardActions(
-                                    onNext = { playersFocusRequester.requestFocus() },
-                                    onDone = { startCreate() },
-                                ),
-                            )
-                        }
-
-                        Spacer(Modifier.size(16.dp))
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            OutlinedTextField(
-                                value = numPlayersText,
-                                onValueChange = { numPlayersText = it },
-                                label = { Text("Players") },
-                                supportingText = { Text("* Only multiples of 4") },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(playersFocusRequester),
-                                singleLine = true,
-                                enabled = !isLoading,
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                                keyboardActions = KeyboardActions(
-                                    onNext = { roundsFocusRequester.requestFocus() },
-                                    onDone = { startCreate() },
-                                ),
-                            )
-
-                            OutlinedTextField(
-                                value = numRoundsText,
-                                onValueChange = { numRoundsText = it },
-                                label = { Text("Rounds") },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(roundsFocusRequester),
-                                singleLine = true,
-                                enabled = !isLoading,
-                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                                keyboardActions = KeyboardActions(
-                                    onDone = { startCreate() },
-                                    onNext = { startCreate() },
-                                ),
-                            )
-                        }
-
-                        Spacer(Modifier.size(16.dp))
-
-                        FocusHighlightContainer(
-                            modifier = Modifier.fillMaxWidth(),
-                            interactionSource = teamsToggleInteractionSource,
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Switch(
-                                    checked = isTeams,
-                                    onCheckedChange = ::setTeamsChecked,
+                                text = "Teams",
+                                modifier = Modifier.toggleable(
+                                    value = isTeams,
                                     enabled = !isLoading,
+                                    role = Role.Switch,
                                     interactionSource = teamsToggleInteractionSource,
-                                )
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = "Teams",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier
-                                            .toggleable(
-                                                value = isTeams,
-                                                enabled = !isLoading,
-                                                role = Role.Switch,
-                                                interactionSource = teamsToggleInteractionSource,
-                                                indication = null,
-                                                onValueChange = ::setTeamsChecked,
-                                            ),
-                                    )
-                                    SwitchInfoTooltip(
-                                        description = "When on, group players into teams of four. Players on the same team will not play together.\nWhen off, do not group players into teams.",
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.size(16.dp))
-
-                        FocusHighlightContainer(
-                            modifier = Modifier.fillMaxWidth(),
-                            interactionSource = computeToggleInteractionSource,
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
-                                Switch(
-                                    checked = isHeavy,
-                                    onCheckedChange = ::setHeavyCompute,
-                                    enabled = !isLoading,
-                                    interactionSource = computeToggleInteractionSource,
-                                )
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Text(
-                                        text = "Heavy computing",
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier
-                                            .toggleable(
-                                                value = isHeavy,
-                                                enabled = !isLoading,
-                                                role = Role.Switch,
-                                                interactionSource = computeToggleInteractionSource,
-                                                indication = null,
-                                                onValueChange = ::setHeavyCompute,
-                                            ),
-                                    )
-                                    SwitchInfoTooltip(
-                                        description = "When on, use more CPU to finish faster. Use this when you can leave the computer working.\nWhen off, use less CPU so you can keep using the computer while it runs.",
-                                    )
-                                }
-                            }
-                        }
-
-                        Spacer(Modifier.size(8.dp))
-                    },
-                )
-
-                errorMessage?.let { message ->
-                    AppErrorMessage(message = message)
-                }
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Button(
-                        enabled = !isLoading,
-                        onClick = ::startCreate,
-                        modifier = Modifier.weight(1f),
-                    ) {
-                        if (isLoading) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                strokeWidth = 2.dp,
+                                    indication = null,
+                                    onValueChange = ::setTeamsChecked,
+                                ),
                             )
-                        } else {
-                            Text("Create")
+                            SwitchInfoTooltip(
+                                "Group players into teams of four. Team members will not play together.",
+                            )
                         }
                     }
-                }
-            }
 
-            if (isLoading) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color.Black.copy(alpha = 0.35f))
-                        .focusProperties { canFocus = false }
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                        ) { },
-                )
+                    Text("Logo", style = MaterialTheme.typography.titleSmall)
+                    TournamentLogoPreview(
+                        model = associationLogo?.dataUrl,
+                        onImageInfo = { logoImageInfo = it },
+                    )
+                    Text(
+                        text = associationLogo?.let { image ->
+                            buildString {
+                                append(image.fileName)
+                                append(" · ")
+                                append(formatByteSize(image.bytes.size.toLong()))
+                                logoImageInfo?.let { append(" · ").append(it) }
+                            }
+                        } ?: "No logo",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(enabled = !isLoading, onClick = logoPicker::launch) {
+                            Text(if (associationLogo == null) "Choose logo" else "Change logo")
+                        }
+                        if (associationLogo != null) {
+                            AppTextButton(
+                                enabled = !isLoading,
+                                onClick = {
+                                    associationLogo = null
+                                    logoImageInfo = null
+                                },
+                            ) {
+                                Text("Remove")
+                            }
+                        }
+                    }
 
-                Card(
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(24.dp)
-                        .wrapContentWidth()
-                        .widthIn(max = 440.dp),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally,
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        OutlinedTextField(
+                            value = eventStartDate,
+                            onValueChange = {
+                                eventStartDate = it.take(10)
+                                eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
+                            },
+                            label = { Text("From") },
+                            placeholder = { Text("DD-MM-YYYY") },
+                            trailingIcon = {
+                                IconButton(onClick = { datePickerFor = "start" }) {
+                                    androidx.compose.material3.Icon(
+                                        Icons.Default.DateRange,
+                                        contentDescription = "Choose start date",
+                                    )
+                                }
+                            },
+                            modifier = Modifier.weight(1f).focusRequester(eventStartDateFocusRequester),
+                            singleLine = true,
+                            enabled = !isLoading,
+                        )
+                        OutlinedTextField(
+                            value = eventEndDate,
+                            onValueChange = {
+                                val newValue = it.take(10)
+                                eventEndDate = when {
+                                    newValue.isEmpty() && eventStartDate.toIsoTournamentDateOrNull() != null -> eventStartDate
+                                    else -> adjustedEndDate(eventStartDate, newValue)
+                                }
+                            },
+                            label = { Text("To") },
+                            placeholder = { Text("DD-MM-YYYY") },
+                            trailingIcon = {
+                                IconButton(onClick = { datePickerFor = "end" }) {
+                                    androidx.compose.material3.Icon(
+                                        Icons.Default.DateRange,
+                                        contentDescription = "Choose end date",
+                                    )
+                                }
+                            },
+                            modifier = Modifier.weight(1f).focusRequester(eventEndDateFocusRequester),
+                            singleLine = true,
+                            enabled = !isLoading,
+                        )
+                    }
+
+                    FocusHighlightContainer(
+                        modifier = Modifier.fillMaxWidth(),
+                        interactionSource = computeToggleInteractionSource,
                     ) {
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            CircularProgressIndicator()
+                            val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
+                            Switch(
+                                checked = isHeavy,
+                                onCheckedChange = ::setHeavyCompute,
+                                enabled = !isLoading,
+                                interactionSource = computeToggleInteractionSource,
+                            )
                             Text(
-                                text = when (progress?.phase) {
+                                text = "Heavy computing",
+                                modifier = Modifier.toggleable(
+                                    value = isHeavy,
+                                    enabled = !isLoading,
+                                    role = Role.Switch,
+                                    interactionSource = computeToggleInteractionSource,
+                                    indication = null,
+                                    onValueChange = ::setHeavyCompute,
+                                ),
+                            )
+                            SwitchInfoTooltip("Use more CPU to calculate the schedule faster.")
+                        }
+                    }
+
+                    errorMessage?.let {
+                        AppErrorDialog(
+                            message = it,
+                            onDismiss = { errorMessage = null },
+                        )
+                    }
+
+                    if (isLoading) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            Text(
+                                when (progress?.phase) {
                                     CreateTournamentPresenter.Phase.CREATING -> "Saving tournament…"
                                     else -> "Calculating schedule…"
                                 },
-                                style = MaterialTheme.typography.titleMedium,
-                                textAlign = TextAlign.Center,
                             )
                         }
-
-                        progress?.let { p ->
-                            if (p.phase == CreateTournamentPresenter.Phase.CALCULATING) {
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                                ) {
-                                    Text(
-                                        text = "Parallel running tries (${p.maxConcurrency} max):",
-                                        textAlign = TextAlign.Center,
-                                    )
-                                    RunningTriesSlots(
-                                        runningTries = p.runningTries,
-                                        maxConcurrency = p.maxConcurrency,
-                                    )
-                                }
-
-                                Column(
-                                    horizontalAlignment = Alignment.CenterHorizontally,
-                                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    Text(
-                                        text = "Tried:",
-                                        textAlign = TextAlign.Center,
-                                    )
-                                    Text(
-                                        text = buildString {
-                                            append(formatWithDots(p.tried))
-                                            formatAvgPerTry(
-                                                tried = p.tried,
-                                                startMark = calcStartMark,
-                                            )?.let { avg ->
-                                                append("  ")
-                                                append(avg)
-                                            }
-                                        },
-                                        style = MaterialTheme.typography.bodyMedium.copy(fontFamily = FontFamily.Monospace),
-                                        textAlign = TextAlign.Center,
-                                    )
-                                }
-                            } else {
-                                Text(
-                                    buildAnnotatedString {
-                                        append("Calculated schedule in ")
-                                        withStyle(SpanStyle(fontFamily = FontFamily.Monospace)) {
-                                            append(formatWithDots(p.tried))
-                                        }
-                                        append(" tries")
-                                    },
-                                    textAlign = TextAlign.Center,
+                        progress?.let { currentProgress ->
+                            if (currentProgress.phase == CreateTournamentPresenter.Phase.CALCULATING) {
+                                Text("Tried: ${formatWithDots(currentProgress.tried)}")
+                                RunningTriesSlots(
+                                    runningTries = currentProgress.runningTries,
+                                    maxConcurrency = currentProgress.maxConcurrency,
                                 )
-                                Text(
-                                    text = "Saving to server…",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textAlign = TextAlign.Center,
-                                )
-                            }
-                        } ?: Text("Starting…")
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            Button(
-                                onClick = ::cancelCreation,
-                            ) {
-                                Text("Cancel")
                             }
                         }
                     }
                 }
             }
-        }
+        },
+        confirmButton = {
+            Button(
+                onClick = if (isLoading) ::cancelCreation else ::startCreate,
+            ) {
+                Text(if (isLoading) "Cancel calculation" else "Create")
+            }
+        },
+        dismissButton = if (isLoading) {
+            null
+        } else {
+            {
+                AppTextButton(
+                    onClick = {
+                        cancelCreation()
+                        navController.popBackStack()
+                    },
+                ) {
+                    Text("Cancel")
+                }
+            }
+        },
+    )
+
+    if (datePickerFor == "start") {
+        TournamentDatePickerDialog(
+            selectedDisplayDate = eventStartDate,
+            onDismiss = { datePickerFor = null },
+            onDateSelected = { selectedDate ->
+                eventStartDate = selectedDate
+                eventEndDate = adjustedEndDate(selectedDate, eventEndDate)
+                datePickerFor = null
+            },
+        )
+    }
+
+    if (datePickerFor == "end") {
+        TournamentDatePickerDialog(
+            selectedDisplayDate = eventEndDate,
+            minimumDisplayDate = eventStartDate,
+            onDismiss = { datePickerFor = null },
+            onDateSelected = { selectedDate ->
+                eventEndDate = adjustedEndDate(eventStartDate, selectedDate)
+                datePickerFor = null
+            },
+        )
+    }
+
+    if (showColorPickerDialog) {
+        TournamentColorPickerDialog(
+            initialColor = primaryColor,
+            onDismiss = { showColorPickerDialog = false },
+            onColorSelected = { selectedColor ->
+                primaryColor = selectedColor
+                showColorPickerDialog = false
+            },
+        )
     }
 }
-
-private fun dateToEpochMillis(value: String): Long? = runCatching {
-    LocalDate.parse(value).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
-}.getOrNull()
-
-private fun epochMillisToDate(value: Long): String =
-    Instant.fromEpochMilliseconds(value).toLocalDateTime(TimeZone.UTC).date.toString()
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)

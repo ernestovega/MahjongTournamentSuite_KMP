@@ -32,7 +32,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.TableRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
@@ -146,6 +146,13 @@ fun TablesScreen(
         refreshTables(roundId = null)
     }
 
+    errorMessage?.let { message ->
+        AppErrorDialog(
+            message = message,
+            onDismiss = { errorMessage = null },
+        )
+    }
+
     AppScaffold(
         title = "Tables",
         subtitle = tournamentId,
@@ -202,10 +209,6 @@ fun TablesScreen(
                     }
 
                     when {
-                        errorMessage != null -> {
-                            AppErrorMessage(message = errorMessage!!)
-                        }
-
                         isLoading -> {
                             Text("Loading…")
                         }

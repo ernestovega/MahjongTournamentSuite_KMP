@@ -335,6 +335,18 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
+    suspend fun resetTable(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): OkResponseDto {
+        val response = httpClient.post(url("/tournaments/$tournamentId/tables/$roundId/$tableId/reset")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+        }
+        return response.requireSuccessBody()
+    }
+
     private suspend inline fun <reified TResponse> get(
         path: String,
         idToken: String,

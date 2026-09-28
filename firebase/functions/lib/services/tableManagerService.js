@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTableWithHands = getTableWithHands;
 exports.updateTable = updateTable;
 exports.updateHand = updateHand;
+exports.resetTable = resetTable;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
@@ -126,5 +127,62 @@ async function updateHand(params) {
         ...params.patch,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
+}
+async function resetTable(params) {
+    const tournamentRef = firebase_1.db.collection("tournaments").doc(params.tournamentId);
+    const tableDocId = `${params.roundId}_${params.tableId}`;
+    const tableRef = tournamentRef.collection("tables").doc(tableDocId);
+    const [tableSnap, handsSnap] = await Promise.all([
+        tableRef.get(),
+        tableRef.collection("hands").get(),
+    ]);
+    if (!tableSnap.exists)
+        throw (0, httpError_1.notFound)("Table not found");
+    const batch = firebase_1.db.batch();
+    batch.update(tableRef, {
+        playerEastId: "",
+        playerSouthId: "",
+        playerWestId: "",
+        playerNorthId: "",
+        playerEastScore: "",
+        playerSouthScore: "",
+        playerWestScore: "",
+        playerNorthScore: "",
+        playerEastPoints: "",
+        playerSouthPoints: "",
+        playerWestPoints: "",
+        playerNorthPoints: "",
+        manualPlayerEastScore: "",
+        manualPlayerSouthScore: "",
+        manualPlayerWestScore: "",
+        manualPlayerNorthScore: "",
+        manualPlayerEastPoints: "",
+        manualPlayerSouthPoints: "",
+        manualPlayerWestPoints: "",
+        manualPlayerNorthPoints: "",
+        isCompleted: false,
+        useTotalsOnly: true,
+        usePointsCalculation: true,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    handsSnap.docs.forEach((hand) => {
+        batch.update(hand.ref, {
+            playerWinnerId: "",
+            playerLooserId: "",
+            handScore: "",
+            isChickenHand: false,
+            isDone: false,
+            playerEastPenalty: "",
+            playerSouthPenalty: "",
+            playerWestPenalty: "",
+            playerNorthPenalty: "",
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        });
+    });
+    batch.update(tournamentRef, {
+        isCompleted: false,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    await batch.commit();
 }
 //# sourceMappingURL=tableManagerService.js.map

@@ -19,16 +19,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Card
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -37,7 +32,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
@@ -57,14 +51,18 @@ import com.etologic.mahjongtournamentsuite.domain.export.EmaResultsRow
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.ManualScoreTotalConfirmationDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
@@ -83,7 +81,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DoneAll
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.material3.Icon
@@ -113,12 +110,15 @@ fun TournamentScreen(
     val rankingPresenter = koinInject<RankingPresenter>()
     val store = koinInject<AppMemoryStore>()
     val coroutineScope = rememberCoroutineScope()
+    val profile by store.profile.collectAsState()
+    val adminStatus by store.adminStatus.collectAsState()
     val tournaments by store.tournaments.collectAsState()
     val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
 
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var rounds by remember { mutableStateOf<List<TournamentRound>>(emptyList()) }
+    var initialTableSelectionPending by rememberSaveable(tournamentId) { mutableStateOf(true) }
     var selectedRoundId by remember { mutableStateOf<Int?>(null) }
     var allTables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
@@ -128,7 +128,11 @@ fun TournamentScreen(
     var tableState by remember { mutableStateOf<TableState?>(null) }
     var hands by remember { mutableStateOf<List<TableHand>>(emptyList()) }
     var pendingUnsavedAction by remember { mutableStateOf<PendingUnsavedAction?>(null) }
-    var emaReport by remember { mutableStateOf<EmaReportPreview?>(null) }
+    var manualScoreTotalToConfirm by remember { mutableStateOf<Long?>(null) }
+    var actionAfterManualScoreConfirmation by remember { mutableStateOf<PendingUnsavedAction?>(null) }
+    var showResetConfirmation by remember { mutableStateOf(false) }
+    var restoreResetFocus by remember { mutableStateOf(false) }
+    var restoreSaveFocus by remember { mutableStateOf(false) }
     val initialRoundFocusRequester = remember { FocusRequester() }
     val playersFocusRequester = remember { FocusRequester() }
     val teamsFocusRequester = remember { FocusRequester() }
@@ -136,6 +140,8 @@ fun TournamentScreen(
     val timerFocusRequester = remember { FocusRequester() }
     val rankingFocusRequester = remember { FocusRequester() }
     val exportFocusRequester = remember { FocusRequester() }
+    val resetFocusRequester = remember { FocusRequester() }
+    val saveFocusRequester = remember { FocusRequester() }
     var screenFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedControl by rememberSaveable(tournamentId) { mutableStateOf<String?>(null) }
 
@@ -195,6 +201,7 @@ fun TournamentScreen(
     }
 
     suspend fun refresh() {
+        val chooseInitialTable = initialTableSelectionPending
         isLoading = true
         errorMessage = null
 
@@ -252,15 +259,32 @@ fun TournamentScreen(
             is AppResult.Success -> {
                 allTables = tablesResult.value.sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
                 tables = allTables.filter { it.roundId == roundId }
+                if (chooseInitialTable) {
+                    val initialTable = firstTournamentTableToOpen(allTables)
+                    val initialRound = initialTable?.roundId ?: roundId
+                    if (initialRound != roundId && newRounds.any { it.roundId == initialRound }) {
+                        selectedRoundId = initialRound
+                        tables = allTables.filter { it.roundId == initialRound }
+                    }
+                }
             }
 
             is AppResult.Failure -> errorMessage = tablesResult.error.toUiMessage()
         }
 
-        val nextTableId = selectedTableId
-            ?.takeIf { id -> tables.any { it.tableId == id } }
-            ?: tables.firstOrNull()?.tableId
+        val initialTable = if (chooseInitialTable) firstTournamentTableToOpen(allTables) else null
+        val nextTableId = if (chooseInitialTable) {
+            initialTable
+                ?.takeIf { it.roundId == selectedRoundId }
+                ?.tableId
+                ?: tables.firstOrNull()?.tableId
+        } else {
+            selectedTableId
+                ?.takeIf { id -> tables.any { it.tableId == id } }
+                ?: tables.firstOrNull()?.tableId
+        }
         selectedTableId = nextTableId
+        if (chooseInitialTable) initialTableSelectionPending = false
 
         tableState = null
         hands = emptyList()
@@ -282,6 +306,12 @@ fun TournamentScreen(
         .maxOfOrNull { it.roundId }
         ?.plus(1)
         ?: 1
+    val roleLabel = adminStatus?.let {
+        when (it.role) {
+            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.ADMIN -> "Admin"
+            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.EDITOR -> "Editor"
+        }
+    }
 
     LaunchedEffect(isLoading, rounds.map { it.roundId }, selectedRoundId) {
         if (!screenFocusApplied && !isLoading && rounds.isNotEmpty()) {
@@ -295,6 +325,20 @@ fun TournamentScreen(
                 else -> initialRoundFocusRequester.requestFocus()
             }
             screenFocusApplied = true
+        }
+    }
+
+    LaunchedEffect(showResetConfirmation, restoreResetFocus, isLoading, editorState) {
+        if (!showResetConfirmation && restoreResetFocus && !isLoading && editorState != null) {
+            restoreResetFocus = false
+            resetFocusRequester.requestFocus()
+        }
+    }
+
+    LaunchedEffect(manualScoreTotalToConfirm, restoreSaveFocus, isLoading) {
+        if (manualScoreTotalToConfirm == null && restoreSaveFocus && !isLoading) {
+            restoreSaveFocus = false
+            saveFocusRequester.requestFocus()
         }
     }
 
@@ -337,6 +381,29 @@ fun TournamentScreen(
         }
     }
 
+    suspend fun resetCurrentTable() {
+        val roundId = selectedRoundId ?: return
+        val tableId = selectedTableId ?: return
+
+        isLoading = true
+        errorMessage = null
+        when (val result = tablePresenter.resetTable(tournamentId, roundId, tableId)) {
+            is AppResult.Success -> {
+                showResetConfirmation = false
+                restoreResetFocus = true
+                tableState = null
+                hands = emptyList()
+                refresh()
+            }
+            is AppResult.Failure -> {
+                showResetConfirmation = false
+                restoreResetFocus = true
+                errorMessage = result.error.toUiMessage()
+                isLoading = false
+            }
+        }
+    }
+
     suspend fun exportResults() {
         if (isLoading) return
         isLoading = true
@@ -346,8 +413,9 @@ fun TournamentScreen(
                 is AppResult.Failure -> errorMessage = result.error.toUiMessage()
                 is AppResult.Success -> {
                     val snapshot = result.value
-                    if (snapshot.tableCount == 0 || snapshot.completedTableCount != snapshot.tableCount) {
-                        errorMessage = "Complete every table before exporting official results."
+                    val exportValidationError = officialResultsExportError(snapshot.rankingTables)
+                    if (exportValidationError != null) {
+                        errorMessage = exportValidationError
                         return
                     }
                     val unassigned = snapshot.tournamentPlayers.filter { it.assignedEmaId.isNullOrBlank() }
@@ -375,14 +443,7 @@ fun TournamentScreen(
                     val startDate = snapshot.tournament.eventStartDate ?: snapshot.tournament.createdAt?.take(10) ?: "undated"
                     val endDate = snapshot.tournament.eventEndDate ?: startDate
                     val fileName = "${safeFileName(snapshot.tournament.name)}_${startDate}_$endDate.csv"
-                    emaReport = EmaReportPreview(
-                        tournamentName = snapshot.tournament.name,
-                        startDate = startDate,
-                        endDate = endDate,
-                        rows = rows,
-                        fileName = fileName,
-                        csv = EmaResultsCsvExporter.export(rows),
-                    )
+                    saveTextFile(fileName, EmaResultsCsvExporter.export(rows))
                 }
             }
         } catch (_: Throwable) {
@@ -416,17 +477,29 @@ fun TournamentScreen(
         coroutineScope.launch { performUnsavedAction(action) }
     }
 
-    pendingUnsavedAction?.let { action ->
+    fun saveAndContinue(action: PendingUnsavedAction?) {
+        coroutineScope.launch {
+            if (saveChanges()) {
+                pendingUnsavedAction = null
+                action?.let { performUnsavedAction(it) }
+            }
+        }
+    }
+
+    fun requestSave(action: PendingUnsavedAction? = null) {
+        val nonZeroTotal = editorState?.nonZeroManualScoreTotal
+        if (nonZeroTotal != null) {
+            actionAfterManualScoreConfirmation = action
+            manualScoreTotalToConfirm = nonZeroTotal
+            return
+        }
+        saveAndContinue(action)
+    }
+
+    pendingUnsavedAction?.takeIf { manualScoreTotalToConfirm == null }?.let { action ->
         UnsavedChangesDialog(
             isSaving = isLoading,
-            onSave = {
-                coroutineScope.launch {
-                    if (saveChanges()) {
-                        pendingUnsavedAction = null
-                        performUnsavedAction(action)
-                    }
-                }
-            },
+            onSave = { requestSave(action) },
             onDiscard = {
                 pendingUnsavedAction = null
                 coroutineScope.launch { performUnsavedAction(action) }
@@ -435,18 +508,45 @@ fun TournamentScreen(
         )
     }
 
-    emaReport?.let { report ->
-        EmaReportDialog(
-            report = report,
-            onExport = {
-                try {
-                    saveTextFile(report.fileName, report.csv)
-                    emaReport = null
-                } catch (_: Throwable) {
-                    errorMessage = "The EMA results file could not be saved."
-                }
+    manualScoreTotalToConfirm?.let { total ->
+        ManualScoreTotalConfirmationDialog(
+            total = total,
+            onConfirm = {
+                val action = actionAfterManualScoreConfirmation
+                actionAfterManualScoreConfirmation = null
+                manualScoreTotalToConfirm = null
+                saveAndContinue(action)
             },
-            onClose = { emaReport = null },
+            onCancel = {
+                val wasDirectSave = actionAfterManualScoreConfirmation == null
+                actionAfterManualScoreConfirmation = null
+                manualScoreTotalToConfirm = null
+                restoreSaveFocus = wasDirectSave
+            },
+        )
+    }
+
+    if (showResetConfirmation) {
+        selectedRoundId?.let { resetRoundId ->
+            selectedTableId?.let { resetTableId ->
+                ResetTableDialog(
+                    roundId = resetRoundId,
+                    tableId = resetTableId,
+                    isResetting = isLoading,
+                    onConfirm = { coroutineScope.launch { resetCurrentTable() } },
+                    onCancel = {
+                        showResetConfirmation = false
+                        restoreResetFocus = true
+                    },
+                )
+            }
+        }
+    }
+
+    errorMessage?.let { message ->
+        AppErrorDialog(
+            message = message,
+            onDismiss = { errorMessage = null },
         )
     }
 
@@ -455,8 +555,12 @@ fun TournamentScreen(
         isLoading = isLoading,
         onBack = { requestUnsavedAction(PendingUnsavedAction.Back) },
         leadingActions = {
+            ProfileInfo(profile, roleLabel)
             AppTopBarLeadingActions(
-                showThemeToggle = true,
+                onUsers = {
+                    lastFocusedControl = "users"
+                    requestUnsavedAction(PendingUnsavedAction.NavigateUsers)
+                },
                 onTimer = {
                     lastFocusedControl = "timer"
                     openTimer(navController, timerInitialRound)
@@ -465,17 +569,8 @@ fun TournamentScreen(
                     lastFocusedControl = "ranking"
                     openRankings(navController, tournamentId, tournamentName)
                 },
-                onExport = {
-                    lastFocusedControl = "export"
-                    requestUnsavedAction(PendingUnsavedAction.ExportResults)
-                },
-                onUsers = {
-                    lastFocusedControl = "users"
-                    requestUnsavedAction(PendingUnsavedAction.NavigateUsers)
-                },
                 timerFocusRequester = timerFocusRequester,
                 rankingFocusRequester = rankingFocusRequester,
-                exportFocusRequester = exportFocusRequester,
                 usersFocusRequester = usersFocusRequester,
             )
         },
@@ -493,10 +588,32 @@ fun TournamentScreen(
                     lastFocusedControl = "players"
                     requestUnsavedAction(PendingUnsavedAction.NavigatePlayers)
                 },
+                onExport = {
+                    lastFocusedControl = "export"
+                    requestUnsavedAction(PendingUnsavedAction.ExportResults)
+                },
                 onRefresh = { requestUnsavedAction(PendingUnsavedAction.Refresh) },
                 playersFocusRequester = playersFocusRequester,
                 teamsFocusRequester = teamsFocusRequester,
+                exportFocusRequester = exportFocusRequester,
             )
+            if (
+                adminStatus?.isAdmin == true &&
+                selectedRoundId != null &&
+                selectedTableId != null &&
+                editorState != null
+            ) {
+                AppTextButton(
+                    onClick = { showResetConfirmation = true },
+                    enabled = !isLoading,
+                    focusRequester = resetFocusRequester,
+                ) {
+                    Text(
+                        text = "Reset table",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+            }
         }
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
@@ -536,18 +653,13 @@ fun TournamentScreen(
                         contentPadding = PaddingValues(bottom = if (showOverlaySave) saveButtonHeight + 32.dp else 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        if (errorMessage != null) {
-                            item(key = "error") {
-                                AppErrorMessage(message = errorMessage.orEmpty())
-                            }
-                        }
-
                         item {
                             if (selectedRoundId != null && selectedTableId != null && editorState != null) {
                                 TableManagerContent(
                                     editor = editorState,
                                     enabled = !isLoading,
                                     playerNamesById = playerNamesById,
+                                    showSeatPlayerIds = true,
                                 )
                             } else if (!isLoading) {
                                 Text(
@@ -563,8 +675,9 @@ fun TournamentScreen(
                     if (showOverlaySave) {
                         val colors = MaterialTheme.colorScheme
                         Button(
-                            onClick = { coroutineScope.launch { saveChanges() } },
+                            onClick = { requestSave() },
                             enabled = !isLoading,
+                            focusRequester = saveFocusRequester,
                             modifier = Modifier
                                 .align(Alignment.BottomCenter)
                                 .fillMaxWidth()
@@ -636,7 +749,7 @@ private fun RoundTableSidebar(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(0.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
@@ -689,7 +802,7 @@ private fun RoundTableSidebar(
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(0.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
@@ -794,7 +907,7 @@ private fun RoundTableSidebarItem(
     }
 }
 
-private enum class CompletionStatus(
+internal enum class CompletionStatus(
     val label: String,
     val icon: ImageVector,
     val color: Color,
@@ -806,30 +919,25 @@ private enum class CompletionStatus(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun CompletionStatusInfoIcon(description: String) {
-    val tooltipState = rememberTooltipState()
-    val coroutineScope = rememberCoroutineScope()
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text(description) } },
-        state = tooltipState,
-    ) {
-        IconButton(onClick = { coroutineScope.launch { tooltipState.show() } }) {
-            Icon(
-                imageVector = Icons.Default.Info,
-                contentDescription = "Completion status help",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
+    InfoTooltipIcon(
+        description = description,
+        contentDescription = "Show completion status information",
+    )
 }
 
-private fun tableCompletionStatus(table: TournamentTable): CompletionStatus = when {
+internal fun tableCompletionStatus(table: TournamentTable): CompletionStatus = when {
     table.hasValidManualTotals -> CompletionStatus.Manual
     table.isCompleted -> CompletionStatus.Completed
     table.hasProgress -> CompletionStatus.InProgress
     else -> CompletionStatus.Empty
+}
+
+internal fun firstTournamentTableToOpen(tables: List<TournamentTable>): TournamentTable? {
+    val orderedTables = tables.sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
+    return orderedTables.firstOrNull { table ->
+        tableCompletionStatus(table) in setOf(CompletionStatus.Empty, CompletionStatus.InProgress)
+    } ?: orderedTables.firstOrNull()
 }
 
 private fun roundCompletionStatus(tables: List<TournamentTable>): CompletionStatus = when {
@@ -859,12 +967,3 @@ private fun safeFileName(value: String): String = value
     .replace(Regex("\\s+"), "_")
     .trim('_')
     .ifBlank { "tournament" }
-
-internal data class EmaReportPreview(
-    val tournamentName: String,
-    val startDate: String,
-    val endDate: String,
-    val rows: List<EmaResultsRow>,
-    val fileName: String,
-    val csv: String,
-)

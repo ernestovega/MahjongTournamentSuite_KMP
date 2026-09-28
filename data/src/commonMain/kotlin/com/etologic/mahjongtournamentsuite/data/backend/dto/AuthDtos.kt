@@ -37,4 +37,5 @@ data class RefreshResponseDto(
 data class UserProfileDto(
     val uid: String,
     val email: String,
+    val alias: String = "",
 )

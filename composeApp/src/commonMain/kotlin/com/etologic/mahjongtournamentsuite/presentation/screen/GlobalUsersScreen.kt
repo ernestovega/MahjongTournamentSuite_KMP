@@ -58,7 +58,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
@@ -214,7 +214,12 @@ fun GlobalUsersScreen(navController: NavHostController) {
             contentPadding = PaddingValues(24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            error?.let { AppErrorMessage(it) }
+            error?.let {
+                AppErrorDialog(
+                    message = it,
+                    onDismiss = { error = null },
+                )
+            }
             notice?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
             UserFilters(
                 emailFilter = emailFilter,

@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicTextField
@@ -27,19 +28,16 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.LaunchedEffect
@@ -71,6 +69,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -80,11 +81,15 @@ import androidx.compose.ui.input.key.type
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorMessage
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.ManualScoreTotalConfirmationDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
@@ -110,7 +115,16 @@ fun TableManagerScreen(
     var tableState by remember { mutableStateOf<TableState?>(null) }
     var hands by remember { mutableStateOf<List<TableHand>>(emptyList()) }
     var pendingUnsavedAction by remember { mutableStateOf<TableManagerPendingUnsavedAction?>(null) }
+    var manualScoreTotalToConfirm by remember { mutableStateOf<Long?>(null) }
+    var actionAfterManualScoreConfirmation by remember {
+        mutableStateOf<TableManagerPendingUnsavedAction?>(null)
+    }
+    var showResetConfirmation by remember { mutableStateOf(false) }
+    var restoreResetFocus by remember { mutableStateOf(false) }
+    var restoreSaveFocus by remember { mutableStateOf(false) }
     val initialEditorFocusRequester = remember { FocusRequester() }
+    val resetFocusRequester = remember { FocusRequester() }
+    val saveFocusRequester = remember { FocusRequester() }
     var initialEditorFocusPending by rememberSaveable(tournamentId, roundId, tableId) {
         mutableStateOf(true)
     }
@@ -142,6 +156,20 @@ fun TableManagerScreen(
         if (initialEditorFocusPending && !isLoading && editorState != null) {
             initialEditorFocusRequester.requestFocus()
             initialEditorFocusPending = false
+        }
+    }
+
+    LaunchedEffect(showResetConfirmation, restoreResetFocus, isLoading) {
+        if (!showResetConfirmation && restoreResetFocus && !isLoading) {
+            restoreResetFocus = false
+            resetFocusRequester.requestFocus()
+        }
+    }
+
+    LaunchedEffect(manualScoreTotalToConfirm, restoreSaveFocus, isLoading) {
+        if (manualScoreTotalToConfirm == null && restoreSaveFocus && !isLoading) {
+            restoreSaveFocus = false
+            saveFocusRequester.requestFocus()
         }
     }
 
@@ -197,22 +225,87 @@ fun TableManagerScreen(
         performUnsavedAction(action)
     }
 
-    pendingUnsavedAction?.let { action ->
+    fun saveAndContinue(action: TableManagerPendingUnsavedAction?) {
+        coroutineScope.launch {
+            if (saveChanges()) {
+                pendingUnsavedAction = null
+                action?.let(::performUnsavedAction)
+            }
+        }
+    }
+
+    fun requestSave(action: TableManagerPendingUnsavedAction? = null) {
+        val nonZeroTotal = editorState?.nonZeroManualScoreTotal
+        if (nonZeroTotal != null) {
+            actionAfterManualScoreConfirmation = action
+            manualScoreTotalToConfirm = nonZeroTotal
+            return
+        }
+        saveAndContinue(action)
+    }
+
+    fun resetCurrentTable() {
+        coroutineScope.launch {
+            isLoading = true
+            errorMessage = null
+            when (val result = presenter.resetTable(tournamentId, roundId, tableId)) {
+                is AppResult.Success -> {
+                    showResetConfirmation = false
+                    restoreResetFocus = true
+                    tableState = null
+                    hands = emptyList()
+                    refresh()
+                }
+                is AppResult.Failure -> {
+                    showResetConfirmation = false
+                    restoreResetFocus = true
+                    errorMessage = result.error.toUiMessage()
+                    isLoading = false
+                }
+            }
+        }
+    }
+
+    pendingUnsavedAction?.takeIf { manualScoreTotalToConfirm == null }?.let { action ->
         UnsavedChangesDialog(
             isSaving = isLoading,
-            onSave = {
-                coroutineScope.launch {
-                    if (saveChanges()) {
-                        pendingUnsavedAction = null
-                        performUnsavedAction(action)
-                    }
-                }
-            },
+            onSave = { requestSave(action) },
             onDiscard = {
                 pendingUnsavedAction = null
                 performUnsavedAction(action)
             },
             onCancel = { pendingUnsavedAction = null },
+        )
+    }
+
+    manualScoreTotalToConfirm?.let { total ->
+        ManualScoreTotalConfirmationDialog(
+            total = total,
+            onConfirm = {
+                val action = actionAfterManualScoreConfirmation
+                actionAfterManualScoreConfirmation = null
+                manualScoreTotalToConfirm = null
+                saveAndContinue(action)
+            },
+            onCancel = {
+                val wasDirectSave = actionAfterManualScoreConfirmation == null
+                actionAfterManualScoreConfirmation = null
+                manualScoreTotalToConfirm = null
+                restoreSaveFocus = wasDirectSave
+            },
+        )
+    }
+
+    if (showResetConfirmation) {
+        ResetTableDialog(
+            roundId = roundId,
+            tableId = tableId,
+            isResetting = isLoading,
+            onConfirm = ::resetCurrentTable,
+            onCancel = {
+                showResetConfirmation = false
+                restoreResetFocus = true
+            },
         )
     }
 
@@ -252,7 +345,8 @@ fun TableManagerScreen(
                         interactionSource = saveInteractionSource,
                     ) {
                         ExtendedFloatingActionButton(
-                            onClick = { coroutineScope.launch { saveChanges() } },
+                            onClick = { requestSave() },
+                            modifier = Modifier.focusRequester(saveFocusRequester),
                             interactionSource = saveInteractionSource,
                         ) {
                             Text("Save")
@@ -268,13 +362,34 @@ fun TableManagerScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             scrollable = true,
         ) {
-            errorMessage?.let { AppErrorMessage(message = it) }
+            errorMessage?.let {
+                AppErrorDialog(
+                    message = it,
+                    onDismiss = { errorMessage = null },
+                )
+            }
 
             if (isLoading && table == null) {
                 Text("Loading…")
                 return@ScreenColumn
             }
             val editor = editorState ?: return@ScreenColumn
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                FocusedOutlinedButton(
+                    onClick = { showResetConfirmation = true },
+                    enabled = !isLoading,
+                    focusRequester = resetFocusRequester,
+                    colors = ButtonDefaults.outlinedButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error,
+                    ),
+                ) {
+                    Text("Reset table")
+                }
+            }
 
             TableManagerContent(
                 editor = editor,
@@ -304,6 +419,7 @@ internal fun TableManagerContent(
     editor: TableManagerEditorState,
     enabled: Boolean,
     playerNamesById: Map<Int, String> = emptyMap(),
+    showSeatPlayerIds: Boolean = false,
     initialFocusRequester: FocusRequester? = null,
     onManualTotalsChange: (Boolean) -> Unit = { checked ->
         if (checked) editor.enableManualTotals() else editor.disableManualTotals()
@@ -318,6 +434,7 @@ internal fun TableManagerContent(
         editor = editor,
         enabled = enabled,
         playerNamesById = playerNamesById,
+        showPlayerIds = showSeatPlayerIds,
         initialFocusRequester = initialFocusRequester,
     )
 
@@ -445,6 +562,7 @@ private fun SeatPositionsSection(
     editor: TableManagerEditorState,
     enabled: Boolean,
     playerNamesById: Map<Int, String>,
+    showPlayerIds: Boolean,
     initialFocusRequester: FocusRequester? = null,
 ) {
     SectionCard(
@@ -466,6 +584,7 @@ private fun SeatPositionsSection(
                 onWestChange = { editor.setSeatAssignment(2, it) },
                 onNorthChange = { editor.setSeatAssignment(3, it) },
                 playerNamesById = playerNamesById,
+                showPlayerIds = showPlayerIds,
                 eastFocusRequester = initialFocusRequester,
             )
         },
@@ -502,10 +621,10 @@ private fun TotalScoreSection(
                     southChanged = editor.hasSouthScoreChanged,
                     westChanged = editor.hasWestScoreChanged,
                     northChanged = editor.hasNorthScoreChanged,
-                    onEastChange = { editor.playerEastScore = it },
-                    onSouthChange = { editor.playerSouthScore = it },
-                    onWestChange = { editor.playerWestScore = it },
-                    onNorthChange = { editor.playerNorthScore = it },
+                    onEastChange = { editor.updateManualScore(0, it) },
+                    onSouthChange = { editor.updateManualScore(1, it) },
+                    onWestChange = { editor.updateManualScore(2, it) },
+                    onNorthChange = { editor.updateManualScore(3, it) },
                 )
             }
         },
@@ -643,19 +762,25 @@ private fun HandsSection(
     SectionCard(
         title = "Hands",
         subtitle = subtitle,
-        actions = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LabeledSwitch(
-                    label = "Completed",
-                    description = "When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.",
-                    checked = editor.isCompleted,
-                    enabled = enabled && isHandsActive,
-                    onCheckedChange = { editor.updateCompletedState(it) },
+        titleAction = {
+            IconButton(
+                onClick = { handsExpanded = !handsExpanded },
+                buttonModifier = Modifier.size(32.dp),
+            ) {
+                Icon(
+                    imageVector = if (handsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = if (handsExpanded) "Fold hands" else "Unfold hands",
                 )
-                IconButton(onClick = { handsExpanded = !handsExpanded }) {
-                    Text(if (handsExpanded) "⌃" else "⌄", style = MaterialTheme.typography.titleLarge)
-                }
             }
+        },
+        actions = {
+            LabeledSwitch(
+                label = "Completed",
+                description = "When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.",
+                checked = editor.isCompleted,
+                enabled = enabled && isHandsActive,
+                onCheckedChange = { editor.updateCompletedState(it) },
+            )
         },
         content = {
             if (!handsExpanded) return@SectionCard
@@ -709,15 +834,13 @@ private fun LabeledSwitch(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    val tooltipState = rememberTooltipState()
-    val coroutineScope = rememberCoroutineScope()
     FocusHighlightContainer(
         modifier = Modifier,
         interactionSource = interactionSource,
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = label,
@@ -730,19 +853,10 @@ private fun LabeledSwitch(
                 onCheckedChange = onCheckedChange,
                 interactionSource = interactionSource,
             )
-            TooltipBox(
-                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                tooltip = { PlainTooltip { Text(description) } },
-                state = tooltipState,
-            ) {
-                IconButton(onClick = { coroutineScope.launch { tooltipState.show() } }) {
-                    Text(
-                        text = "ⓘ",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
+            InfoTooltipIcon(
+                description = description,
+                contentDescription = "Show $label information",
+            )
         }
     }
 }
@@ -1905,6 +2019,9 @@ private fun moveHandFieldFocus(
  * - Manual Scores applies manual scores and calculated table points.
  * - Manual Points applies manual table points.
  *
+ * If a calculated value is not available, the editor keeps the matching manual value visible and
+ * effective. A calculated value replaces it when the related calculation produces a result.
+ *
  * Manual Scores and Manual Points cannot both be active. Either manual mode disables Hands.
  * Saving writes all changed hand and manual values, including values from inactive modes. Loading
  * the table again restores those values when the related mode becomes active. Discard restores the
@@ -1952,13 +2069,13 @@ internal class TableManagerEditorState private constructor(
         get() = calculatePointsFromScores(calculatedHandScoreTotals)
 
     val displayEastScore: String
-        get() = effectiveTableScores().east
+        get() = displayedTableScores().east
     val displaySouthScore: String
-        get() = effectiveTableScores().south
+        get() = displayedTableScores().south
     val displayWestScore: String
-        get() = effectiveTableScores().west
+        get() = displayedTableScores().west
     val displayNorthScore: String
-        get() = effectiveTableScores().north
+        get() = displayedTableScores().north
 
     val displayEastPoints: String
         get() = effectiveTablePoints().east
@@ -1977,6 +2094,16 @@ internal class TableManagerEditorState private constructor(
 
     val hasCompleteSeatPositions: Boolean
         get() = currentSeatIds() != null
+
+    val nonZeroManualScoreTotal: Long?
+        get() {
+            if (!useTotalsOnly) return null
+            val scores = manualTableScores()
+            val values = listOf(scores.east, scores.south, scores.west, scores.north).map {
+                it.toLongOrNull() ?: return null
+            }
+            return values.sum().takeIf { it != 0L }
+        }
 
     val hasEastSeatChanged: Boolean get() = playerEastId.trim() != initialSeatAssignments.east
     val hasSouthSeatChanged: Boolean get() = playerSouthId.trim() != initialSeatAssignments.south
@@ -2052,6 +2179,16 @@ internal class TableManagerEditorState private constructor(
     fun enableManualTotals() {
         useTotalsOnly = true
         usePointsCalculation = true
+    }
+
+    fun updateManualScore(seatIndex: Int, value: String) {
+        if (value != manualTableScores().bySeat(seatIndex)) isCompleted = false
+        when (seatIndex) {
+            0 -> playerEastScore = value
+            1 -> playerSouthScore = value
+            2 -> playerWestScore = value
+            3 -> playerNorthScore = value
+        }
     }
 
     fun disableManualTotals() {
@@ -2169,14 +2306,22 @@ internal class TableManagerEditorState private constructor(
         return if (useTotalsOnly) {
             manualTableScores()
         } else {
-            calculatedHandScoreTotals
+            calculatedHandScoreTotals.ifEmpty { manualTableScores() }
+        }
+    }
+
+    private fun displayedTableScores(): SeatTextValues {
+        return if (!usePointsCalculation) {
+            manualTableScores()
+        } else {
+            effectiveTableScores()
         }
     }
 
     private fun effectiveTablePoints(): SeatTextValues {
         return when {
             !usePointsCalculation -> manualTablePoints()
-            else -> calculatePointsFromScores(effectiveTableScores())
+            else -> calculatePointsFromScores(effectiveTableScores()).ifEmpty { manualTablePoints() }
         }
     }
 
@@ -2195,10 +2340,12 @@ internal class TableManagerEditorState private constructor(
     )
 
     private fun shouldPersistEffectiveTotals(hasHandChanges: Boolean): Boolean {
+        val manualScoresChanged = manualTableScores() != initialManualScores()
+        val manualPointsChanged = manualTablePoints() != initialManualPoints()
         if (initialTable.usePointsCalculation != usePointsCalculation) return true
-        if (!usePointsCalculation) return true
-        if (useTotalsOnly) return true
         if (initialTable.useTotalsOnly != useTotalsOnly) return true
+        if (useTotalsOnly && manualScoresChanged) return true
+        if (!usePointsCalculation && manualPointsChanged) return true
         if (hasHandChanges) return true
         if (playerEastId.trim() != initialSeatAssignments.east) return true
         if (playerSouthId.trim() != initialSeatAssignments.south) return true
@@ -2488,7 +2635,7 @@ internal class HandDraftState private constructor(
     val hasNorthPenaltyChanged: Boolean get() = playerNorthPenalty.trim() != initial.playerNorthPenalty
 
     val isIgnoredForCalculation: Boolean
-        get() = !isDone || isResultSelectionInvalid || isCompletelyEmpty
+        get() = isResultSelectionInvalid || isCompletelyEmpty
 
     private val isCompletelyEmpty: Boolean
         get() = playerWinnerId.trim().isEmpty() && normalizedLoserId.isEmpty() && handScore.trim().isEmpty()
@@ -2645,6 +2792,17 @@ internal data class SeatTextValues(
     val west: String,
     val north: String,
 ) {
+    fun bySeat(seatIndex: Int): String = when (seatIndex) {
+        0 -> east
+        1 -> south
+        2 -> west
+        3 -> north
+        else -> ""
+    }
+
+    inline fun ifEmpty(fallback: () -> SeatTextValues): SeatTextValues =
+        if (this == EMPTY) fallback() else this
+
     companion object {
         val EMPTY = SeatTextValues("", "", "", "")
         val ZERO = SeatTextValues("0", "0", "0", "0")
@@ -2702,6 +2860,7 @@ private fun SeatPositionsRow(
     onWestChange: (String) -> Unit,
     onNorthChange: (String) -> Unit,
     playerNamesById: Map<Int, String>,
+    showPlayerIds: Boolean,
     eastFocusRequester: FocusRequester? = null,
 ) {
     fun seatMarksByPlayerId(): Map<Int, String> {
@@ -2735,6 +2894,7 @@ private fun SeatPositionsRow(
             isChanged = eastChanged,
             onChange = onEastChange,
             playerNamesById = playerNamesById,
+            showPlayerId = showPlayerIds,
             optionSuffixById = optionSuffixById,
             focusRequester = eastFocusRequester,
         )
@@ -2747,6 +2907,7 @@ private fun SeatPositionsRow(
             isChanged = southChanged,
             onChange = onSouthChange,
             playerNamesById = playerNamesById,
+            showPlayerId = showPlayerIds,
             optionSuffixById = optionSuffixById,
         )
         PlayerDropdown(
@@ -2758,6 +2919,7 @@ private fun SeatPositionsRow(
             isChanged = westChanged,
             onChange = onWestChange,
             playerNamesById = playerNamesById,
+            showPlayerId = showPlayerIds,
             optionSuffixById = optionSuffixById,
         )
         PlayerDropdown(
@@ -2769,6 +2931,7 @@ private fun SeatPositionsRow(
             isChanged = northChanged,
             onChange = onNorthChange,
             playerNamesById = playerNamesById,
+            showPlayerId = showPlayerIds,
             optionSuffixById = optionSuffixById,
         )
     }
@@ -2786,6 +2949,7 @@ private fun PlayerDropdown(
     onDismiss: () -> Unit = {},
     onFocusLost: () -> Unit = {},
     playerNamesById: Map<Int, String> = emptyMap(),
+    showPlayerId: Boolean = false,
     optionSuffixById: Map<Int, String> = emptyMap(),
     excludedPlayerIds: Set<Int> = emptySet(),
     emptyOptionLabel: String? = null,
@@ -2807,10 +2971,14 @@ private fun PlayerDropdown(
 
     val trimmed = value.trim()
     val selectedId = trimmed.toIntOrNull()
+    fun playerLabel(id: Int): String {
+        val name = playerNamesById[id] ?: "Player $id"
+        return if (showPlayerId) "$id - $name" else name
+    }
     val displayValue = when {
         trimmed.isBlank() || selectedId == null && trimmed == "-" -> emptyOptionLabel.orEmpty()
         selectedId == null -> trimmed
-        else -> playerNamesById[selectedId] ?: "Player $selectedId"
+        else -> playerLabel(selectedId)
     }
     val options = buildList {
         emptyOptionLabel?.let { emptyLabel ->
@@ -2829,7 +2997,7 @@ private fun PlayerDropdown(
         playerIds.forEach { id ->
             if (id in excludedPlayerIds) return@forEach
             val suffix = optionSuffixById[id]
-            val base = playerNamesById[id] ?: "Player $id"
+            val base = playerLabel(id)
             add(
                 DropdownOption(
                     value = id.toString(),

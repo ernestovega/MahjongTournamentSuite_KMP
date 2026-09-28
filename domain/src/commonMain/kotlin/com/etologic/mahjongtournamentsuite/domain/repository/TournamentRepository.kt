@@ -27,6 +27,8 @@ interface TournamentRepository {
         name: String,
         shortName: String,
         primaryColor: String,
+        eventStartDate: String,
+        eventEndDate: String,
         associationLogoContentType: String? = null,
         associationLogoBytes: ByteArray? = null,
         removeAssociationLogo: Boolean = false,
@@ -98,5 +100,11 @@ interface TournamentRepository {
         tableId: Int,
         handId: Int,
         patch: Map<String, Any?>,
+    ): AppResult<Unit>
+
+    suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
     ): AppResult<Unit>
 }

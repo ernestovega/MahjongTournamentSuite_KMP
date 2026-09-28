@@ -9,16 +9,9 @@ exports.listTournamentTables = listTournamentTables;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
+const tournamentContentRules_1 = require("./tournamentContentRules");
 function timestampToIso(value) {
     return value instanceof firestore_1.Timestamp ? value.toDate().toISOString() : null;
-}
-function hasValidTotals(values, expectedTotal, allowDecimal = false) {
-    const pattern = allowDecimal ? /^-?\d+(?:[,.]\d+)?$/ : /^-?\d+$/;
-    if (values.length !== 4 || !values.every((value) => pattern.test(String(value ?? "").trim()))) {
-        return false;
-    }
-    const total = values.reduce((sum, value) => sum + Number(String(value).replace(",", ".")), 0);
-    return Math.abs(total - expectedTotal) < 0.011;
 }
 async function listTournamentPlayers(tournamentId) {
     const snap = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("players").get();
@@ -209,7 +202,7 @@ async function assignTournamentPlayer(params) {
         const previousEmaId = typeof player.get("assignedEmaId") === "string"
             ? String(player.get("assignedEmaId"))
             : null;
-        if (previousEmaId !== params.emaId && tournamentHasProgress) {
+        if ((0, tournamentContentRules_1.blocksAssignmentChangeAfterProgress)(previousEmaId, params.emaId, tournamentHasProgress)) {
             throw (0, httpError_1.conflict)("Players cannot change after table results have started");
         }
         const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
@@ -285,18 +278,18 @@ async function listTournamentTables(tournamentId, roundId) {
             d.get("playerWestPoints"),
             d.get("playerNorthPoints"),
         ].some((field) => String(field ?? "").trim().length > 0);
-        const hasValidManualScores = hasValidTotals([
+        const hasValidManualScores = (0, tournamentContentRules_1.hasFourValidScores)([
             d.get("manualPlayerEastScore") || d.get("playerEastScore"),
             d.get("manualPlayerSouthScore") || d.get("playerSouthScore"),
             d.get("manualPlayerWestScore") || d.get("playerWestScore"),
             d.get("manualPlayerNorthScore") || d.get("playerNorthScore"),
-        ], 0);
-        const hasValidManualPoints = hasValidTotals([
+        ]);
+        const hasValidManualPoints = (0, tournamentContentRules_1.hasValidTablePoints)([
             d.get("manualPlayerEastPoints") || d.get("playerEastPoints"),
             d.get("manualPlayerSouthPoints") || d.get("playerSouthPoints"),
             d.get("manualPlayerWestPoints") || d.get("playerWestPoints"),
             d.get("manualPlayerNorthPoints") || d.get("playerNorthPoints"),
-        ], 7, true);
+        ]);
         const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? true);
         const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
         return {
