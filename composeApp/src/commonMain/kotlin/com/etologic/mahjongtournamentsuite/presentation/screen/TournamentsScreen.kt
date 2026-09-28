@@ -83,6 +83,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.RowActionMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
+import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiIsoDateTimeOrDash
@@ -110,6 +112,10 @@ fun TournamentsScreen(
     var deleteDialogTournament by remember { mutableStateOf<Tournament?>(null) }
     var renameDialogTournament by remember { mutableStateOf<Tournament?>(null) }
     var renameValue by remember { mutableStateOf(TextFieldValue()) }
+    var settingsShortName by remember { mutableStateOf("") }
+    var settingsPrimaryColor by remember { mutableStateOf("#02B16B") }
+    var settingsLogo by remember { mutableStateOf<SelectedImage?>(null) }
+    var removeSettingsLogo by remember { mutableStateOf(false) }
     var renameError by remember { mutableStateOf<String?>(null) }
     var tournamentFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -120,6 +126,20 @@ fun TournamentsScreen(
     val renameFieldFocusRequester = remember { FocusRequester() }
     val renameConfirmFocusRequester = remember { FocusRequester() }
     val renameCancelFocusRequester = remember { FocusRequester() }
+    val settingsLogoPicker = rememberImagePicker(
+        onImageSelected = { image ->
+            if (image.contentType !in setOf("image/jpeg", "image/png")) {
+                renameError = "Association logo must be a JPEG or PNG image."
+            } else if (image.bytes.size > 2 * 1024 * 1024) {
+                renameError = "Association logo must be 2 MB or smaller."
+            } else {
+                settingsLogo = image
+                removeSettingsLogo = false
+                renameError = null
+            }
+        },
+        onError = { message -> renameError = message },
+    )
 
     fun refresh() {
         coroutineScope.launch {
@@ -234,7 +254,7 @@ fun TournamentsScreen(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!isLoading) renameDialogTournament = null },
-            title = { Text("Rename tournament") },
+            title = { Text("Edit tournament") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
@@ -245,16 +265,62 @@ fun TournamentsScreen(
                         },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .focusRequester(renameFieldFocusRequester)
-                            .textFieldFocusLoop(
-                                previous = renameCancelFocusRequester,
-                                next = renameConfirmFocusRequester,
-                                value = { renameValue },
-                            ),
+                            .focusRequester(renameFieldFocusRequester),
                         label = { Text("Tournament name") },
                         singleLine = true,
                         isError = renameError != null,
                     )
+                    OutlinedTextField(
+                        value = settingsShortName,
+                        onValueChange = {
+                            settingsShortName = it.take(10)
+                            renameError = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Short name") },
+                        supportingText = { Text("Maximum 10 characters") },
+                        singleLine = true,
+                        isError = renameError != null,
+                    )
+                    OutlinedTextField(
+                        value = settingsPrimaryColor,
+                        onValueChange = {
+                            settingsPrimaryColor = it.take(7)
+                            renameError = null
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("Primary color") },
+                        supportingText = { Text("#RRGGBB") },
+                        singleLine = true,
+                        isError = renameError != null,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Button(onClick = settingsLogoPicker::launch) {
+                            Text(if (settingsLogo == null) "Choose logo" else "Change logo")
+                        }
+                        Text(
+                            text = when {
+                                settingsLogo != null -> settingsLogo?.fileName.orEmpty()
+                                removeSettingsLogo -> "Logo will be removed"
+                                tournament.associationLogoUrl != null -> "Current logo"
+                                else -> "No logo"
+                            },
+                            modifier = Modifier.weight(1f),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                        if (settingsLogo != null || (!removeSettingsLogo && tournament.associationLogoUrl != null)) {
+                            FocusedTextButton(
+                                onClick = {
+                                    settingsLogo = null
+                                    removeSettingsLogo = true
+                                },
+                            ) { Text("Remove") }
+                        }
+                    }
                     renameError?.let { message ->
                         Text(
                             text = message,
@@ -266,16 +332,34 @@ fun TournamentsScreen(
             },
             confirmButton = {
                 Button(
-                    enabled = !isLoading && renameValue.text.trim().isNotEmpty(),
+                    enabled = !isLoading && renameValue.text.trim().isNotEmpty() && settingsShortName.isNotBlank(),
                     onClick = {
                         val newName = renameValue.text.trim()
+                        val newShortName = settingsShortName.trim()
+                        val newPrimaryColor = settingsPrimaryColor.trim().uppercase()
+                        if (newShortName.isEmpty() || newShortName.length > 10) {
+                            renameError = "Short name must contain 1 to 10 characters."
+                            return@Button
+                        }
+                        if (!Regex("^#[0-9A-F]{6}$").matches(newPrimaryColor)) {
+                            renameError = "Primary color must use #RRGGBB format."
+                            return@Button
+                        }
                         coroutineScope.launch {
                             isLoading = true
                             renameError = null
-                            when (val result = presenter.renameTournament(tournament.id, newName)) {
+                            when (val result = presenter.updateTournamentSettings(
+                                tournamentId = tournament.id,
+                                name = newName,
+                                shortName = newShortName,
+                                primaryColor = newPrimaryColor,
+                                associationLogoContentType = settingsLogo?.contentType,
+                                associationLogoBytes = settingsLogo?.bytes,
+                                removeAssociationLogo = removeSettingsLogo,
+                            )) {
                                 is AppResult.Success -> {
                                     renameDialogTournament = null
-                                    store.renameTournament(tournament.id, newName)
+                                    store.updateTournament(result.value)
                                     refresh()
                                 }
 
@@ -285,10 +369,7 @@ fun TournamentsScreen(
                         }
                     },
                     focusRequester = renameConfirmFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = renameFieldFocusRequester,
-                        next = renameCancelFocusRequester,
-                    ),
+                    buttonModifier = Modifier,
                 ) {
                     Text("Save")
                 }
@@ -298,10 +379,7 @@ fun TournamentsScreen(
                     enabled = !isLoading,
                     onClick = { renameDialogTournament = null },
                     focusRequester = renameCancelFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = renameConfirmFocusRequester,
-                        next = renameFieldFocusRequester,
-                    ),
+                    buttonModifier = Modifier,
                 ) {
                     Text("Cancel")
                 }
@@ -494,6 +572,12 @@ fun TournamentsScreen(
                                                         selection = TextRange(tournament.name.length),
                                                     )
                                                     renameError = null
+                                                    settingsShortName = tournament.shortName.ifBlank {
+                                                        tournament.name.take(10)
+                                                    }
+                                                    settingsPrimaryColor = tournament.primaryColor
+                                                    settingsLogo = null
+                                                    removeSettingsLogo = false
                                                     renameDialogTournament = tournament
                                                 },
                                             )
@@ -745,7 +829,7 @@ private fun TournamentTableRow(
         ) {
             val actionItems = buildList {
                 if (showRename) {
-                    add(RowActionMenuItem(label = "Rename", onClick = onRename))
+                    add(RowActionMenuItem(label = "Edit", onClick = onRename))
                 }
                 if (showDelete) {
                     add(

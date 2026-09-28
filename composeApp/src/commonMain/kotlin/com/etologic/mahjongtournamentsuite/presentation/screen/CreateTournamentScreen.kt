@@ -89,6 +89,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighligh
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
+import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
@@ -118,12 +120,17 @@ fun CreateTournamentScreen(
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
     val nameFocusRequester = remember { FocusRequester() }
+    val shortNameFocusRequester = remember { FocusRequester() }
+    val primaryColorFocusRequester = remember { FocusRequester() }
     val eventStartDateFocusRequester = remember { FocusRequester() }
     val eventEndDateFocusRequester = remember { FocusRequester() }
     val playersFocusRequester = remember { FocusRequester() }
     val roundsFocusRequester = remember { FocusRequester() }
 
     var name by remember { mutableStateOf("") }
+    var shortName by remember { mutableStateOf("") }
+    var primaryColor by remember { mutableStateOf("#02B16B") }
+    var associationLogo by remember { mutableStateOf<SelectedImage?>(null) }
     val today = remember { Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date.toString() }
     var eventStartDate by remember { mutableStateOf(today) }
     var eventEndDate by remember { mutableStateOf(today) }
@@ -138,6 +145,19 @@ fun CreateTournamentScreen(
     var progress by remember { mutableStateOf<CreateTournamentPresenter.Progress?>(null) }
     var createJob by remember { mutableStateOf<Job?>(null) }
     var calcStartMark by remember { mutableStateOf<TimeMark?>(null) }
+    val logoPicker = rememberImagePicker(
+        onImageSelected = { image ->
+            if (image.contentType !in setOf("image/jpeg", "image/png")) {
+                errorMessage = "* Association logo must be a JPEG or PNG image."
+            } else if (image.bytes.size > 2 * 1024 * 1024) {
+                errorMessage = "* Association logo must be 2 MB or smaller."
+            } else {
+                associationLogo = image
+                errorMessage = null
+            }
+        },
+        onError = { message -> errorMessage = "* $message" },
+    )
     val teamsToggleInteractionSource = remember { MutableInteractionSource() }
     val computeToggleInteractionSource = remember { MutableInteractionSource() }
 
@@ -175,6 +195,8 @@ fun CreateTournamentScreen(
         if (isLoading) return
 
         val trimmedName = name.trim()
+        val trimmedShortName = shortName.trim()
+        val normalizedPrimaryColor = primaryColor.trim().uppercase()
         val trimmedStartDate = eventStartDate.trim()
         val trimmedEndDate = eventEndDate.trim()
         val numPlayers = numPlayersText.trim().toIntOrNull()
@@ -183,6 +205,16 @@ fun CreateTournamentScreen(
         if (trimmedName.isBlank()) {
             errorMessage = "* Name is required."
             nameFocusRequester.requestFocus()
+            return
+        }
+        if (trimmedShortName.isBlank() || trimmedShortName.length > 10) {
+            errorMessage = "* Short name must contain 1 to 10 characters."
+            shortNameFocusRequester.requestFocus()
+            return
+        }
+        if (!Regex("^#[0-9A-F]{6}$").matches(normalizedPrimaryColor)) {
+            errorMessage = "* Primary color must use #RRGGBB format."
+            primaryColorFocusRequester.requestFocus()
             return
         }
         if (!TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)) {
@@ -213,6 +245,10 @@ fun CreateTournamentScreen(
             try {
                 when (val result = presenter.createTournament(
                     name = trimmedName,
+                    shortName = trimmedShortName,
+                    primaryColor = normalizedPrimaryColor,
+                    associationLogoContentType = associationLogo?.contentType,
+                    associationLogoBytes = associationLogo?.bytes,
                     eventStartDate = trimmedStartDate,
                     eventEndDate = trimmedEndDate,
                     isTeams = isTeams,
@@ -330,10 +366,71 @@ fun CreateTournamentScreen(
                                 .focusRequester(nameFocusRequester),
                             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
                             keyboardActions = KeyboardActions(
-                                onNext = { eventStartDateFocusRequester.requestFocus() },
+                                onNext = { shortNameFocusRequester.requestFocus() },
                                 onDone = { startCreate() },
                             ),
                         )
+
+                        Spacer(Modifier.size(16.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            OutlinedTextField(
+                                value = shortName,
+                                onValueChange = { shortName = it.take(10) },
+                                label = { Text("Short name") },
+                                supportingText = { Text("Maximum 10 characters") },
+                                singleLine = true,
+                                enabled = !isLoading,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(shortNameFocusRequester),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(
+                                    onNext = { primaryColorFocusRequester.requestFocus() },
+                                ),
+                            )
+                            OutlinedTextField(
+                                value = primaryColor,
+                                onValueChange = { primaryColor = it.take(7) },
+                                label = { Text("Primary color") },
+                                supportingText = { Text("#RRGGBB") },
+                                singleLine = true,
+                                enabled = !isLoading,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(primaryColorFocusRequester),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(
+                                    onNext = { eventStartDateFocusRequester.requestFocus() },
+                                ),
+                            )
+                        }
+
+                        Spacer(Modifier.size(12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Button(
+                                enabled = !isLoading,
+                                onClick = logoPicker::launch,
+                            ) {
+                                Text(if (associationLogo == null) "Choose association logo" else "Change association logo")
+                            }
+                            Text(
+                                text = associationLogo?.fileName ?: "No logo selected",
+                                modifier = Modifier.weight(1f),
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            if (associationLogo != null) {
+                                TextButton(onClick = { associationLogo = null }) { Text("Clear") }
+                            }
+                        }
 
                         Spacer(Modifier.size(16.dp))
 

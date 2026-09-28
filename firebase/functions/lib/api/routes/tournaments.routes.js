@@ -9,6 +9,7 @@ const requireTournamentEditor_1 = require("../middleware/requireTournamentEditor
 const httpError_1 = require("../httpError");
 const membersService_1 = require("../../services/membersService");
 const tournamentsService_1 = require("../../services/tournamentsService");
+const idCardsService_1 = require("../../services/idCardsService");
 const tournamentContentService_1 = require("../../services/tournamentContentService");
 const playersService_1 = require("../../services/playersService");
 const tableManagerService_1 = require("../../services/tableManagerService");
@@ -33,6 +34,14 @@ function tournamentsRouter() {
             const decoded = res.locals.auth;
             const body = (req.body != null && typeof req.body === "object") ? req.body : null;
             const name = String(body?.name ?? "").trim();
+            const shortName = String(body?.shortName ?? name.slice(0, 10)).trim();
+            const primaryColor = String(body?.primaryColor ?? "#02B16B").trim().toUpperCase();
+            const associationLogoContentType = body?.associationLogoContentType == null
+                ? null
+                : String(body.associationLogoContentType).trim();
+            const associationLogoDataBase64 = body?.associationLogoDataBase64 == null
+                ? null
+                : String(body.associationLogoDataBase64).trim();
             const eventStartDate = String(body?.eventStartDate ?? body?.eventDate ?? "").trim();
             const eventEndDate = String(body?.eventEndDate ?? body?.eventDate ?? "").trim();
             const isTeams = Boolean(body?.isTeams ?? false);
@@ -49,6 +58,15 @@ function tournamentsRouter() {
                 issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
             if (!name)
                 issues.push({ field: "name", message: "Required", value: body?.name });
+            if (!shortName || shortName.length > 10) {
+                issues.push({ field: "shortName", message: "Required, with at most 10 characters", value: body?.shortName });
+            }
+            if (!/^#[0-9A-F]{6}$/.test(primaryColor)) {
+                issues.push({ field: "primaryColor", message: "Must use #RRGGBB format", value: body?.primaryColor });
+            }
+            if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
+                issues.push({ field: "associationLogo", message: "Content type and image data must be supplied together" });
+            }
             if (!(0, tournamentDates_1.isValidIsoDate)(eventStartDate)) {
                 issues.push({ field: "eventStartDate", message: "Must use yyyy-MM-dd", value: body?.eventStartDate });
             }
@@ -74,7 +92,10 @@ function tournamentsRouter() {
             if (issues.length > 0) {
                 throw (0, httpError_1.badRequest)("Missing or invalid tournament fields", {
                     issues,
-                    received: body,
+                    received: body == null ? null : {
+                        ...body,
+                        associationLogoDataBase64: associationLogoDataBase64 == null ? null : "[image data]",
+                    },
                     inferred: { name, isTeams, numPlayers, numRounds, numTries, playersCount: players?.length, tablesCount: tables?.length },
                 });
             }
@@ -123,6 +144,10 @@ function tournamentsRouter() {
             });
             const tournament = await (0, tournamentsService_1.createTournament)({
                 name,
+                shortName,
+                primaryColor,
+                associationLogoContentType,
+                associationLogoDataBase64,
                 eventStartDate,
                 eventEndDate,
                 isTeams,
@@ -132,6 +157,57 @@ function tournamentsRouter() {
                 players: parsedPlayers,
                 tables: parsedTables,
                 createdByUid: decoded.uid,
+            });
+            res.status(200).json(tournament);
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.get("/:tournamentId/id-cards", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const pdf = await (0, idCardsService_1.generateTournamentIdCards)(req.params.tournamentId);
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-cards.pdf"`);
+            res.status(200).send(pdf);
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.put("/:tournamentId/settings", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
+        try {
+            const body = (req.body != null && typeof req.body === "object") ? req.body : null;
+            if (body == null)
+                throw (0, httpError_1.badRequest)("Request body must be JSON");
+            const name = String(body.name ?? "").trim();
+            const shortName = String(body.shortName ?? "").trim();
+            const primaryColor = String(body.primaryColor ?? "").trim().toUpperCase();
+            const associationLogoContentType = body.associationLogoContentType == null
+                ? null
+                : String(body.associationLogoContentType).trim();
+            const associationLogoDataBase64 = body.associationLogoDataBase64 == null
+                ? null
+                : String(body.associationLogoDataBase64).trim();
+            if (!name)
+                throw (0, httpError_1.badRequest)("Tournament name is required");
+            if (!shortName || shortName.length > 10) {
+                throw (0, httpError_1.badRequest)("Tournament short name must contain 1 to 10 characters");
+            }
+            if (!/^#[0-9A-F]{6}$/.test(primaryColor)) {
+                throw (0, httpError_1.badRequest)("Primary color must use #RRGGBB format");
+            }
+            if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
+                throw (0, httpError_1.badRequest)("Association logo content type and image data must be supplied together");
+            }
+            const tournament = await (0, tournamentsService_1.updateTournamentSettings)({
+                tournamentId: req.params.tournamentId,
+                name,
+                shortName,
+                primaryColor,
+                associationLogoContentType,
+                associationLogoDataBase64,
+                removeAssociationLogo: body.removeAssociationLogo === true,
             });
             res.status(200).json(tournament);
         }

@@ -47,6 +47,12 @@ class AppMemoryStore {
         }
     }
 
+    fun updateTournament(item: Tournament) {
+        tournaments.update { current ->
+            current.map { tournament -> if (tournament.id == item.id) item else tournament }
+        }
+    }
+
     fun removeTournament(tournamentId: String) {
         tournaments.update { current -> current.filterNot { it.id == tournamentId } }
         tournamentPlayers.update { it - tournamentId }

@@ -31,5 +31,23 @@ class TournamentsPresenter(
     suspend fun renameTournament(tournamentId: String, name: String): AppResult<Unit> =
         tournamentRepository.renameTournament(tournamentId, name)
 
+    suspend fun updateTournamentSettings(
+        tournamentId: String,
+        name: String,
+        shortName: String,
+        primaryColor: String,
+        associationLogoContentType: String?,
+        associationLogoBytes: ByteArray?,
+        removeAssociationLogo: Boolean,
+    ): AppResult<Tournament> = tournamentRepository.updateTournamentSettings(
+        tournamentId = tournamentId,
+        name = name,
+        shortName = shortName,
+        primaryColor = primaryColor,
+        associationLogoContentType = associationLogoContentType,
+        associationLogoBytes = associationLogoBytes,
+        removeAssociationLogo = removeAssociationLogo,
+    )
+
     suspend fun signOut() = authRepository.signOut()
 }

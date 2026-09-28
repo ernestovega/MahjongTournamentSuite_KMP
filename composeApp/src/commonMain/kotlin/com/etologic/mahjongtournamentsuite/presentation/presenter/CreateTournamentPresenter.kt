@@ -37,6 +37,10 @@ class CreateTournamentPresenter(
 
     suspend fun createTournament(
         name: String,
+        shortName: String,
+        primaryColor: String,
+        associationLogoContentType: String?,
+        associationLogoBytes: ByteArray?,
         eventStartDate: String,
         eventEndDate: String,
         isTeams: Boolean,
@@ -111,6 +115,10 @@ class CreateTournamentPresenter(
                 numTries = schedule.triesUsed,
                 players = schedule.players,
                 tables = schedule.tables,
+                shortName = shortName,
+                primaryColor = primaryColor,
+                associationLogoContentType = associationLogoContentType,
+                associationLogoBytes = associationLogoBytes,
             ),
         )
 

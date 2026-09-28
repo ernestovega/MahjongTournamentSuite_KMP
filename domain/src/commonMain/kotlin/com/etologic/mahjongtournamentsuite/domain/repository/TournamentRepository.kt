@@ -22,6 +22,18 @@ interface TournamentRepository {
         name: String,
     ): AppResult<Unit>
 
+    suspend fun updateTournamentSettings(
+        tournamentId: String,
+        name: String,
+        shortName: String,
+        primaryColor: String,
+        associationLogoContentType: String? = null,
+        associationLogoBytes: ByteArray? = null,
+        removeAssociationLogo: Boolean = false,
+    ): AppResult<Tournament>
+
+    suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray>
+
     suspend fun deleteTournament(tournamentId: String): AppResult<Unit>
 
     suspend fun listTournamentMembers(tournamentId: String): AppResult<List<TournamentMember>>

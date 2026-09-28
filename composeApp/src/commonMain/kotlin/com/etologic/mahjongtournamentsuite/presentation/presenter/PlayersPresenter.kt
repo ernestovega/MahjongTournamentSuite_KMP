@@ -30,6 +30,9 @@ class PlayersPresenter(
     suspend fun loadTables(tournamentId: String): AppResult<List<TournamentTable>> =
         tournamentRepository.listTournamentTables(tournamentId)
 
+    suspend fun generateIdCards(tournamentId: String): AppResult<ByteArray> =
+        tournamentRepository.generateTournamentIdCards(tournamentId)
+
     suspend fun assignPlayer(
         tournamentId: String,
         tournamentPlayerId: Int,

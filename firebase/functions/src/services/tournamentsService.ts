@@ -1,12 +1,16 @@
 import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
+import { randomUUID } from "node:crypto";
 
-import { db } from "../firebase";
+import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { getUserProfile } from "./usersService";
 
 export type Tournament = {
   id: string;
   name: string;
+  shortName: string;
+  primaryColor: string;
+  associationLogoUrl: string | null;
   isTeams: boolean;
   numPlayers: number;
   numRounds: number;
@@ -61,6 +65,11 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
   return {
     id: d.id,
     name: (d.get("name") as string) ?? "",
+    shortName: String(d.get("shortName") ?? d.get("name") ?? "").trim().slice(0, 10),
+    primaryColor: /^#[0-9A-F]{6}$/i.test(String(d.get("primaryColor") ?? ""))
+      ? String(d.get("primaryColor")).toUpperCase()
+      : "#02B16B",
+    associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
     isTeams: (d.get("isTeams") as boolean) ?? false,
     numPlayers: (d.get("numPlayers") as number) ?? 0,
     numRounds: (d.get("numRounds") as number) ?? 0,
@@ -77,6 +86,10 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
 
 export async function createTournament(params: {
   name: string;
+  shortName: string;
+  primaryColor: string;
+  associationLogoContentType?: string | null;
+  associationLogoDataBase64?: string | null;
   eventStartDate: string;
   eventEndDate: string;
   isTeams: boolean;
@@ -98,8 +111,16 @@ export async function createTournament(params: {
 
   const ref = db.collection("tournaments").doc();
 
+  const logo = params.associationLogoContentType && params.associationLogoDataBase64
+    ? await saveAssociationLogo(ref.id, params.associationLogoContentType, params.associationLogoDataBase64)
+    : null;
+
   const tournamentDoc = {
     name: params.name,
+    shortName: normalizeShortName(params.shortName),
+    primaryColor: normalizePrimaryColor(params.primaryColor),
+    associationLogoUrl: logo?.url ?? null,
+    associationLogoPath: logo?.path ?? null,
     eventStartDate: params.eventStartDate,
     eventEndDate: params.eventEndDate,
     isTeams: params.isTeams,
@@ -235,6 +256,109 @@ export async function renameTournament(tournamentId: string, name: string): Prom
     name: normalizedName,
     updatedAt: FieldValue.serverTimestamp(),
   });
+}
+
+const logoExtensions: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/png": "png",
+};
+
+function normalizeShortName(value: string): string {
+  const shortName = value.trim();
+  if (shortName.length === 0) throw badRequest("Tournament short name is required");
+  if (shortName.length > 10) throw badRequest("Tournament short name must contain at most 10 characters");
+  return shortName;
+}
+
+function normalizePrimaryColor(value: string): string {
+  const color = value.trim().toUpperCase();
+  if (!/^#[0-9A-F]{6}$/.test(color)) throw badRequest("Primary color must use #RRGGBB format");
+  return color;
+}
+
+function hasValidLogoSignature(bytes: Buffer, contentType: string): boolean {
+  if (contentType === "image/jpeg") {
+    return bytes.length >= 3 && bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff;
+  }
+  return bytes.length >= 8
+    && bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+}
+
+async function saveAssociationLogo(
+  tournamentId: string,
+  contentType: string,
+  dataBase64: string,
+): Promise<{ path: string; url: string }> {
+  const extension = logoExtensions[contentType];
+  if (!extension) throw badRequest("Association logo must be a JPEG or PNG image");
+  const bytes = Buffer.from(dataBase64, "base64");
+  if (bytes.length === 0) throw badRequest("Association logo is empty");
+  if (bytes.length > 2 * 1024 * 1024) throw badRequest("Association logo must be 2 MB or smaller");
+  if (!hasValidLogoSignature(bytes, contentType)) {
+    throw badRequest("Association logo data does not match its image type");
+  }
+  const path = `tournamentLogos/${tournamentId}.${extension}`;
+  const file = storage.file(path);
+  const token = randomUUID();
+  await file.save(bytes, {
+    contentType,
+    metadata: {
+      cacheControl: "public, max-age=604800",
+      metadata: { firebaseStorageDownloadTokens: token },
+    },
+  });
+  const objectName = encodeURIComponent(path);
+  return {
+    path,
+    url: `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${objectName}?alt=media&token=${token}`,
+  };
+}
+
+export async function updateTournamentSettings(params: {
+  tournamentId: string;
+  name: string;
+  shortName: string;
+  primaryColor: string;
+  associationLogoContentType?: string | null;
+  associationLogoDataBase64?: string | null;
+  removeAssociationLogo?: boolean;
+}): Promise<Tournament> {
+  const normalizedName = params.name.trim();
+  if (normalizedName.length === 0) throw badRequest("Tournament name is required");
+  const shortName = normalizeShortName(params.shortName);
+  const primaryColor = normalizePrimaryColor(params.primaryColor);
+  const ref = db.collection("tournaments").doc(params.tournamentId);
+  const before = await ref.get();
+  if (!before.exists) throw notFound("Tournament not found");
+
+  const oldLogoPath = String(before.get("associationLogoPath") ?? "").trim();
+  let logo: { path: string; url: string } | null | undefined;
+  if (params.removeAssociationLogo === true) {
+    logo = null;
+  } else if (params.associationLogoContentType && params.associationLogoDataBase64) {
+    logo = await saveAssociationLogo(
+      params.tournamentId,
+      params.associationLogoContentType,
+      params.associationLogoDataBase64,
+    );
+  }
+
+  const update: Record<string, unknown> = {
+    name: normalizedName,
+    shortName,
+    primaryColor,
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  if (logo !== undefined) {
+    update.associationLogoPath = logo?.path ?? null;
+    update.associationLogoUrl = logo?.url ?? null;
+  }
+  await ref.update(update);
+
+  if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
+    await storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);
+  }
+  return mapTournamentDoc(await ref.get());
 }
 
 function isDocRef(value: DocumentReference | null): value is DocumentReference {

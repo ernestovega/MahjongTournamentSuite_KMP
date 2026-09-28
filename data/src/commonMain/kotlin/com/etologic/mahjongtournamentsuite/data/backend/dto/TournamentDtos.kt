@@ -9,6 +9,9 @@ data class TournamentDto(
     val isTeams: Boolean,
     val numPlayers: Int,
     val numRounds: Int,
+    val shortName: String = "",
+    val primaryColor: String = "#02B16B",
+    val associationLogoUrl: String? = null,
     val eventStartDate: String? = null,
     val eventEndDate: String? = null,
     val numTries: Long = 0,
@@ -39,11 +42,25 @@ data class CreateTournamentRequestDto(
     val numTries: Long,
     val players: List<TournamentPlayerDto>,
     val tables: List<TournamentTableDto>,
+    val shortName: String,
+    val primaryColor: String,
+    val associationLogoContentType: String? = null,
+    val associationLogoDataBase64: String? = null,
 )
 
 @Serializable
 data class RenameTournamentRequestDto(
     val name: String,
+)
+
+@Serializable
+data class UpdateTournamentSettingsRequestDto(
+    val name: String,
+    val shortName: String,
+    val primaryColor: String,
+    val associationLogoContentType: String? = null,
+    val associationLogoDataBase64: String? = null,
+    val removeAssociationLogo: Boolean = false,
 )
 
 @Serializable

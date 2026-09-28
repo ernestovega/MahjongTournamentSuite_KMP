@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
@@ -148,6 +149,31 @@ class FunctionsBackendApi(
         requestBody = RenameTournamentRequestDto(name),
         idToken = idToken,
     )
+
+    suspend fun updateTournamentSettings(
+        idToken: String,
+        tournamentId: String,
+        request: UpdateTournamentSettingsRequestDto,
+    ): TournamentDto = put(
+        path = "/tournaments/$tournamentId/settings",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun generateTournamentIdCards(
+        idToken: String,
+        tournamentId: String,
+    ): ByteArray {
+        val response = httpClient.get(url("/tournaments/$tournamentId/id-cards")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            header(HttpHeaders.Accept, "application/pdf")
+            timeout { requestTimeoutMillis = 180_000 }
+        }
+        if (!response.status.isSuccess()) {
+            throw BackendHttpException(response.status, response.bodyAsText())
+        }
+        return response.body()
+    }
 
     suspend fun listTournamentMembers(
         idToken: String,

@@ -80,6 +80,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
@@ -148,6 +149,23 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         assignmentSlotId = null
         clearAssignmentSlotId = null
         savingId = null
+    }
+
+    fun exportIdCards() = scope.launch {
+        loading = true
+        error = null
+        when (val result = presenter.generateIdCards(tournamentId)) {
+            is AppResult.Success -> {
+                val tournament = tournaments.firstOrNull { it.id == tournamentId }
+                val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
+                val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
+                val safeName = baseName.replace(Regex("[^A-Za-z0-9_-]+"), "-").trim('-').ifBlank { "tournament" }
+                val fileName = listOfNotNull(safeName, year, "id-cards").joinToString("-") + ".pdf"
+                saveBinaryFile(fileName, result.value, "application/pdf")
+            }
+            is AppResult.Failure -> error = result.error.toUiMessage()
+        }
+        loading = false
     }
 
     LaunchedEffect(tournamentId) { refresh() }
@@ -722,7 +740,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         title = "Tournament players",
         isLoading = loading || savingId != null,
         onBack = { navController.popBackStack() },
-        actions = { AppTopBarActions(onRefresh = ::refresh) },
+        actions = {
+            AppTopBarActions(
+                onIdCards = ::exportIdCards,
+                onRefresh = ::refresh,
+            )
+        },
     ) {
         ScreenColumn(maxWidth = 1400.dp, contentPadding = PaddingValues(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             error?.let { AppErrorMessage(it) }

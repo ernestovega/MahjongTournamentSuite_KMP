@@ -10,6 +10,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -28,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
+import kotlin.io.encoding.Base64
 
 class DefaultTournamentRepository(
     private val backendApi: FunctionsBackendApi,
@@ -45,6 +47,9 @@ class DefaultTournamentRepository(
                     isTeams = dto.isTeams,
                     numPlayers = dto.numPlayers,
                     numRounds = dto.numRounds,
+                    shortName = dto.shortName,
+                    primaryColor = dto.primaryColor,
+                    associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
                     eventStartDate = dto.eventStartDate.normalizedOrNull(),
                     eventEndDate = dto.eventEndDate.normalizedOrNull(),
                     numTries = dto.numTries,
@@ -84,6 +89,10 @@ class DefaultTournamentRepository(
                         useTotalsOnly = t.useTotalsOnly,
                     )
                 },
+                shortName = request.shortName,
+                primaryColor = request.primaryColor,
+                associationLogoContentType = request.associationLogoContentType,
+                associationLogoDataBase64 = request.associationLogoBytes?.let(Base64.Default::encode),
             )
 
             val dto = backendApi.createTournament(
@@ -97,6 +106,9 @@ class DefaultTournamentRepository(
                 isTeams = dto.isTeams,
                 numPlayers = dto.numPlayers,
                 numRounds = dto.numRounds,
+                shortName = dto.shortName,
+                primaryColor = dto.primaryColor,
+                associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
                 eventStartDate = dto.eventStartDate.normalizedOrNull(),
                 eventEndDate = dto.eventEndDate.normalizedOrNull(),
                 numTries = dto.numTries,
@@ -128,6 +140,67 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(Unit) },
         onFailure = { throwable ->
             logger.w(throwable) { "Renaming tournament failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun updateTournamentSettings(
+        tournamentId: String,
+        name: String,
+        shortName: String,
+        primaryColor: String,
+        associationLogoContentType: String?,
+        associationLogoBytes: ByteArray?,
+        removeAssociationLogo: Boolean,
+    ): AppResult<Tournament> = runCatching {
+        withFreshIdToken { idToken ->
+            val dto = backendApi.updateTournamentSettings(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                request = UpdateTournamentSettingsRequestDto(
+                    name = name.trim(),
+                    shortName = shortName.trim(),
+                    primaryColor = primaryColor.trim().uppercase(),
+                    associationLogoContentType = associationLogoContentType,
+                    associationLogoDataBase64 = associationLogoBytes?.let(Base64.Default::encode),
+                    removeAssociationLogo = removeAssociationLogo,
+                ),
+            )
+            Tournament(
+                id = dto.id,
+                name = dto.name,
+                isTeams = dto.isTeams,
+                numPlayers = dto.numPlayers,
+                numRounds = dto.numRounds,
+                shortName = dto.shortName,
+                primaryColor = dto.primaryColor,
+                associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
+                eventStartDate = dto.eventStartDate.normalizedOrNull(),
+                eventEndDate = dto.eventEndDate.normalizedOrNull(),
+                numTries = dto.numTries,
+                isCompleted = dto.isCompleted,
+                createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
+                createdByName = dto.createdByName.normalizedOrNull(),
+                createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
+                updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
+            )
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Updating tournament settings failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.generateTournamentIdCards(idToken, tournamentId)
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Generating tournament ID cards failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )

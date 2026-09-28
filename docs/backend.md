@@ -19,6 +19,20 @@ Tournament rounds/tables are generated on the client (Android/Desktop/Web) and s
 `POST /tournaments`. The backend validates the payload and persists it to Firestore; it does **not** generate schedules.
 Hands are created lazily (when a table is first opened) to keep tournament creation write volume manageable.
 
+## Tournament ID cards
+
+Tournament records contain these ID-card branding fields:
+
+- `shortName`: Required text with 1 to 10 characters.
+- `primaryColor`: A color in `#RRGGBB` format.
+- `associationLogoUrl`: The public URL for the optional association logo.
+
+The create request accepts these fields. It can also contain a JPEG or PNG logo as Base64 data.
+
+`PUT /tournaments/:tournamentId/settings` updates the name, short name, color, and logo.
+
+`GET /tournaments/:tournamentId/id-cards` returns a two-sided PDF. Each assigned player gets one front page and one back page. The endpoint rejects tournaments with unassigned player slots.
+
 ## Auth
 
 ### Sign in
