@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
@@ -101,10 +102,11 @@ fun TeamsScreen(
             team.id to team.playerIds.map { playerId ->
                 val emaId = slotsById[playerId]?.assignedEmaId
                 val player = emaId?.let(basePlayersByEma::get)
+                val nonMember = slotsById[playerId]?.nonMember
                 TeamPlayerSummary(
                     id = playerId,
-                    name = player?.name,
-                    country = player?.country.orEmpty(),
+                    name = player?.displayName ?: nonMember?.displayName,
+                    country = player?.country ?: nonMember?.country.orEmpty(),
                 )
             }
         }
@@ -458,7 +460,7 @@ private fun TeamEditorDialog(
         val sourceSlot = slotsByEma[player.emaId]
         moveWarning = if (sourceSlot != null && sourceSlot.team != team.id) {
             val sourceTeam = teamNamesById[sourceSlot.team] ?: "Team ${sourceSlot.team}"
-            "${player.name} is assigned to $sourceTeam as player ${sourceSlot.id}. " +
+            "${player.displayName} is assigned to $sourceTeam as player ${sourceSlot.id}. " +
                 "Saving will change the player's ID and tables. An occupied source slot will receive the displaced player."
         } else {
             null
@@ -533,13 +535,14 @@ private fun TeamEditorDialog(
                     ) {
                         teamSlots.forEachIndexed { index, slot ->
                             val selected = selectedEmaIds.getOrNull(index)?.let(playersByEma::get)
+                            val nonMemberName = if (selected == null) slot.nonMember?.displayName else null
                             FocusedAssistChip(
                                 onClick = { playerPickerSlotIndex = index },
                                 enabled = !saving && !assignmentsLocked,
                                 focusRequester = slotFocusRequesters[index],
                                 label = {
                                     Text(
-                                        text = "${slot.id} - ${selected?.name ?: "Not assigned"}",
+                                        text = "${slot.id} - ${selected?.displayName ?: nonMemberName ?: "Not assigned"}",
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -586,7 +589,7 @@ private fun PlayerPickerDialog(
             players
         } else {
             players.filter { player ->
-                normalizeSearchText(player.name).contains(normalizedQuery) ||
+                normalizeSearchText(player.displayName).contains(normalizedQuery) ||
                     normalizeSearchText(player.emaId).contains(normalizedQuery) ||
                     normalizeSearchText(player.country).contains(normalizedQuery)
             }
@@ -632,7 +635,7 @@ private fun PlayerPickerDialog(
                                     highlighted = player.emaId == selectedEmaId,
                                 ) {
                                     Column(Modifier.weight(1f)) {
-                                        Text(player.name, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                        Text(player.displayName, maxLines = 1, overflow = TextOverflow.Ellipsis)
                                         Text(
                                             buildString {
                                                 append("EMA ${player.emaId}")

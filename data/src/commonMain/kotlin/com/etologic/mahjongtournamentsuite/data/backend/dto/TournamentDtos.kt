@@ -12,6 +12,9 @@ data class TournamentDto(
     val shortName: String = "",
     val primaryColor: String = "#02B16B",
     val associationLogoUrl: String? = null,
+    val hostCountry: String = "",
+    val hostCity: String = "",
+    val mers: Double = 0.0,
     val eventStartDate: String? = null,
     val eventEndDate: String? = null,
     val numTries: Long = 0,
@@ -46,6 +49,8 @@ data class CreateTournamentRequestDto(
     val primaryColor: String,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
+    val hostCountry: String,
+    val hostCity: String,
 )
 
 @Serializable
@@ -60,6 +65,8 @@ data class UpdateTournamentSettingsRequestDto(
     val primaryColor: String,
     val eventStartDate: String,
     val eventEndDate: String,
+    val hostCountry: String,
+    val hostCity: String,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
     val removeAssociationLogo: Boolean = false,
@@ -94,19 +101,29 @@ data class TournamentPlayerDto(
     val team: Int,
     val country: String = "",
     val assignedEmaId: String? = null,
+    val nonMember: NonMemberPlayerDto? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
 
 @Serializable
+data class NonMemberPlayerDto(
+    val firstName: String,
+    val lastName: String,
+    val country: String,
+)
+
+@Serializable
 data class AssignTournamentPlayerRequestDto(
     val emaId: String? = null,
+    val nonMember: NonMemberPlayerDto? = null,
 )
 
 @Serializable
 data class PlayerDto(
     val emaId: String,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val country: String = "",
     val photoUrl: String? = null,
     val createdAt: String? = null,
@@ -121,15 +138,30 @@ data class PlayersResponseDto(
 @Serializable
 data class CreatePlayerRequestDto(
     val emaId: String,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val country: String,
 )
 
 @Serializable
 data class UpdatePlayerRequestDto(
     val emaId: String,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val country: String,
+)
+
+@Serializable
+data class EmaReportRankingRowDto(
+    val playerId: Int,
+    val place: Int,
+    val tablePoints: Double,
+    val score: Int,
+)
+
+@Serializable
+data class EmaReportRequestDto(
+    val rows: List<EmaReportRankingRowDto>,
 )
 
 @Serializable

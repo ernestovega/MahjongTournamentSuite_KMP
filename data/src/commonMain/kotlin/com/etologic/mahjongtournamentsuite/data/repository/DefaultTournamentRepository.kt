@@ -11,6 +11,9 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.NonMemberPlayerDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRankingRowDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -22,6 +25,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
+import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -50,6 +55,9 @@ class DefaultTournamentRepository(
                     shortName = dto.shortName,
                     primaryColor = dto.primaryColor,
                     associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
+                    hostCountry = dto.hostCountry,
+                    hostCity = dto.hostCity,
+                    mers = dto.mers,
                     eventStartDate = dto.eventStartDate.normalizedOrNull(),
                     eventEndDate = dto.eventEndDate.normalizedOrNull(),
                     numTries = dto.numTries,
@@ -93,6 +101,8 @@ class DefaultTournamentRepository(
                 primaryColor = request.primaryColor,
                 associationLogoContentType = request.associationLogoContentType,
                 associationLogoDataBase64 = request.associationLogoBytes?.let(Base64.Default::encode),
+                hostCountry = request.hostCountry,
+                hostCity = request.hostCity,
             )
 
             val dto = backendApi.createTournament(
@@ -109,6 +119,9 @@ class DefaultTournamentRepository(
                 shortName = dto.shortName,
                 primaryColor = dto.primaryColor,
                 associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
+                hostCountry = dto.hostCountry,
+                hostCity = dto.hostCity,
+                mers = dto.mers,
                 eventStartDate = dto.eventStartDate.normalizedOrNull(),
                 eventEndDate = dto.eventEndDate.normalizedOrNull(),
                 numTries = dto.numTries,
@@ -151,6 +164,8 @@ class DefaultTournamentRepository(
         primaryColor: String,
         eventStartDate: String,
         eventEndDate: String,
+        hostCountry: String,
+        hostCity: String,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
         removeAssociationLogo: Boolean,
@@ -165,6 +180,8 @@ class DefaultTournamentRepository(
                     primaryColor = primaryColor.trim().uppercase(),
                     eventStartDate = eventStartDate.trim(),
                     eventEndDate = eventEndDate.trim(),
+                    hostCountry = hostCountry.trim().uppercase(),
+                    hostCity = hostCity.trim(),
                     associationLogoContentType = associationLogoContentType,
                     associationLogoDataBase64 = associationLogoBytes?.let(Base64.Default::encode),
                     removeAssociationLogo = removeAssociationLogo,
@@ -179,6 +196,9 @@ class DefaultTournamentRepository(
                 shortName = dto.shortName,
                 primaryColor = dto.primaryColor,
                 associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
+                hostCountry = dto.hostCountry,
+                hostCity = dto.hostCity,
+                mers = dto.mers,
                 eventStartDate = dto.eventStartDate.normalizedOrNull(),
                 eventEndDate = dto.eventEndDate.normalizedOrNull(),
                 numTries = dto.numTries,
@@ -205,6 +225,34 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Generating tournament ID cards failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun generateEmaReport(
+        tournamentId: String,
+        rankings: List<PlayerRanking>,
+    ): AppResult<ByteArray> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.generateEmaReport(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                request = EmaReportRequestDto(
+                    rows = rankings.map { ranking ->
+                        EmaReportRankingRowDto(
+                            playerId = ranking.playerId,
+                            place = ranking.position,
+                            tablePoints = ranking.points,
+                            score = ranking.score,
+                        )
+                    },
+                ),
+            )
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Generating EMA report failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )
@@ -298,6 +346,13 @@ class DefaultTournamentRepository(
                     team = dto.team,
                     country = "",
                     assignedEmaId = dto.assignedEmaId,
+                    nonMember = dto.nonMember?.let { member ->
+                        NonMemberPlayer(
+                            firstName = member.firstName,
+                            lastName = member.lastName,
+                            country = member.country,
+                        )
+                    },
                     createdAt = dto.createdAt,
                     updatedAt = dto.updatedAt,
                 )
@@ -376,13 +431,19 @@ class DefaultTournamentRepository(
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
+        nonMember: NonMemberPlayer?,
     ): AppResult<Unit> = runCatching {
         withFreshIdToken { idToken ->
             backendApi.assignTournamentPlayer(
                 idToken = idToken,
                 tournamentId = tournamentId,
                 playerId = tournamentPlayerId,
-                request = AssignTournamentPlayerRequestDto(emaId = emaId),
+                request = AssignTournamentPlayerRequestDto(
+                    emaId = emaId,
+                    nonMember = nonMember?.let {
+                        NonMemberPlayerDto(it.firstName, it.lastName, it.country)
+                    },
+                ),
             )
             Unit
         }

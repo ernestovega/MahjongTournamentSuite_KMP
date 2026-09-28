@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRankings
@@ -33,6 +34,11 @@ class RankingPresenter(
     private val calculateRankings: CalculateTournamentRankingsUseCase,
     private val logger: Logger,
 ) {
+    suspend fun generateEmaReport(
+        tournamentId: String,
+        rankings: List<PlayerRanking>,
+    ): AppResult<ByteArray> = tournamentRepository.generateEmaReport(tournamentId, rankings)
+
     suspend fun load(tournamentId: String): AppResult<RankingSnapshot> {
         logger.i { "Loading tournament rankings." }
 

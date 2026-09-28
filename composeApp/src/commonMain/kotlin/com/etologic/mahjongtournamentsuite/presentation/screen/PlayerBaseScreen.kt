@@ -31,10 +31,6 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
@@ -69,6 +65,7 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
@@ -111,7 +108,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val canEditEmaNumber = admin?.isAdmin == true
     var selectedEmaId by remember { mutableStateOf<String?>(null) }
     var emaId by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
+    var firstName by remember { mutableStateOf("") }
+    var lastName by remember { mutableStateOf("") }
     var country by remember { mutableStateOf("") }
     var photoUrl by remember { mutableStateOf("") }
     var pendingPhoto by remember { mutableStateOf<SelectedImage?>(null) }
@@ -119,10 +117,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
     var showSaveConfirmation by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
     var newEmaId by remember { mutableStateOf("") }
-    var newName by remember { mutableStateOf("") }
+    var newFirstName by remember { mutableStateOf("") }
+    var newLastName by remember { mutableStateOf("") }
     var newCountry by remember { mutableStateOf("") }
-    var newCountryQuery by remember { mutableStateOf("") }
-    var newCountryMenuExpanded by remember { mutableStateOf(false) }
     var newPhoto by remember { mutableStateOf<SelectedImage?>(null) }
     var newPlayerError by remember { mutableStateOf<String?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -135,13 +132,12 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val selected = players.firstOrNull { it.emaId == selectedEmaId }
     val hasPlayerChanges = selected?.let { player ->
         emaId.trim() != player.emaId ||
-            name.trim() != player.name ||
+            firstName.trim() != player.firstName ||
+            lastName.trim() != player.lastName ||
             country.trim() != player.country ||
             pendingPhoto != null
     } == true
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
-    var countryMenuExpanded by remember { mutableStateOf(false) }
-    var countryQuery by remember { mutableStateOf("") }
     val existingPlayerCountryCodes = remember(players, countries) {
         players
             .map { it.country.trim().uppercase() }
@@ -158,7 +154,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         players.filter {
             val matchesSearch = query.isEmpty() ||
                 normalizeSearchText(it.emaId).contains(query) ||
-                normalizeSearchText(it.name).contains(query)
+                normalizeSearchText(it.displayName).contains(query)
             val matchesCountry = selectedCountryCodes.isEmpty() ||
                 it.country.trim().uppercase() in selectedCountryCodes
             matchesSearch && matchesCountry
@@ -180,7 +176,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
     fun select(player: Player?) {
         selectedEmaId = player?.emaId
         emaId = player?.emaId.orEmpty()
-        name = player?.name.orEmpty()
+        firstName = player?.firstName.orEmpty()
+        lastName = player?.lastName.orEmpty()
         country = player?.country.orEmpty()
         photoUrl = player?.photoUrl.orEmpty()
         pendingPhoto = null
@@ -188,7 +185,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     fun upsertPlayerLocally(previousEmaId: String, player: Player) {
         store.upsertBasePlayers(
             (players.filterNot { it.emaId == previousEmaId || it.emaId == player.emaId } + player)
-                .sortedWith(compareBy(Player::name, Player::emaId)),
+                .sortedWith(compareBy(Player::lastName, Player::firstName, Player::emaId)),
         )
     }
     val imagePicker = rememberImagePicker(
@@ -217,10 +214,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
     )
     fun openNewPlayerDialog() {
         newEmaId = ""
-        newName = ""
+        newFirstName = ""
+        newLastName = ""
         newCountry = ""
-        newCountryQuery = ""
-        newCountryMenuExpanded = false
         newPhoto = null
         newPlayerError = null
         showNewPlayerDialog = true
@@ -235,15 +231,16 @@ fun PlayerBaseScreen(navController: NavHostController) {
     }
     fun save() = scope.launch {
         val currentPlayer = selected ?: return@launch
-        if (name.isBlank() || country.isBlank()) {
-            error = "Name and country are required."
+        if (firstName.isBlank() || lastName.isBlank() || !country.trim().matches(Regex("^[A-Za-z]{3}$"))) {
+            error = "First name, last name, and a three-letter EMA country code are required."
             return@launch
         }
-        val normalizedEmaId = emaId.trim()
-        if (!normalizedEmaId.matches(Regex("\\d+"))) {
-            error = "EMA number must contain only digits."
+        val rawEmaId = emaId.trim()
+        if (!rawEmaId.matches(Regex("\\d{1,8}"))) {
+            error = "EMA number must contain 1 to 8 digits."
             return@launch
         }
+        val normalizedEmaId = rawEmaId.padStart(8, '0')
         if (players.any { it.emaId == normalizedEmaId && it.emaId != currentPlayer.emaId }) {
             error = "This EMA number already exists."
             return@launch
@@ -252,8 +249,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
         error = null
         val player = Player(
             emaId = normalizedEmaId,
-            name = name.trim(),
-            country = country.trim(),
+            firstName = firstName.trim(),
+            lastName = lastName.trim(),
+            country = country.trim().uppercase(),
             photoUrl = currentPlayer.photoUrl,
         )
         val savedPlayer = when (val result = presenter.updatePlayer(currentPlayer.emaId, player)) {
@@ -287,15 +285,18 @@ fun PlayerBaseScreen(navController: NavHostController) {
         saving = false
     }
     fun createPlayer() = scope.launch {
-        val normalizedEmaId = newEmaId.trim()
-        val normalizedName = newName.trim()
-        val normalizedCountry = newCountry.trim()
+        val rawEmaId = newEmaId.trim()
+        val normalizedEmaId = rawEmaId.padStart(8, '0')
+        val normalizedFirstName = newFirstName.trim()
+        val normalizedLastName = newLastName.trim()
+        val normalizedCountry = newCountry.trim().uppercase()
         newPlayerError = when {
-            normalizedEmaId.isEmpty() -> "EMA number is required."
-            normalizedEmaId.any { !it.isDigit() } -> "EMA number must contain only digits."
+            rawEmaId.isEmpty() -> "EMA number is required."
+            !rawEmaId.matches(Regex("\\d{1,8}")) -> "EMA number must contain 1 to 8 digits."
             players.any { it.emaId == normalizedEmaId } -> "This EMA number already exists."
-            normalizedName.isEmpty() -> "Name is required."
-            normalizedCountry.isEmpty() -> "Country is required."
+            normalizedFirstName.isEmpty() -> "First name is required."
+            normalizedLastName.isEmpty() -> "Last name is required."
+            !normalizedCountry.matches(Regex("^[A-Za-z]{3}$")) -> "Country must use a three-letter EMA code."
             else -> null
         }
         if (newPlayerError != null) return@launch
@@ -305,7 +306,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
             val result = presenter.createPlayer(
                 Player(
                     emaId = normalizedEmaId,
-                    name = normalizedName,
+                    firstName = normalizedFirstName,
+                    lastName = normalizedLastName,
                     country = normalizedCountry,
                 ),
             )
@@ -390,7 +392,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             },
             title = { Text("Save player changes") },
             text = {
-                Text("Save the changes to ${selected?.name ?: "this player"}?")
+                Text("Save the changes to ${selected?.displayName ?: "this player"}?")
             },
             confirmButton = {
                 Button(
@@ -463,30 +465,30 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         modifier = Modifier.fillMaxWidth().focusRequester(newEmaFocusRequester),
                     )
                     OutlinedTextField(
-                        value = newName,
-                        onValueChange = { newName = it; newPlayerError = null },
-                        label = { Text("Name") },
+                        value = newFirstName,
+                        onValueChange = { newFirstName = it; newPlayerError = null },
+                        label = { Text("First name") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    CountrySelector(
-                        selectedCode = newCountry,
-                        countries = countries,
-                        query = newCountryQuery,
-                        expanded = newCountryMenuExpanded,
-                        enabled = !saving,
-                        onQueryChange = { newCountryQuery = it },
-                        onExpandedChange = { newCountryMenuExpanded = it },
-                        onCountrySelected = {
-                            newCountry = it
-                            newCountryQuery = ""
-                            newCountryMenuExpanded = false
-                            newPlayerError = null
-                        },
+                    OutlinedTextField(
+                        value = newLastName,
+                        onValueChange = { newLastName = it; newPlayerError = null },
+                        label = { Text("Last name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = newCountry,
+                        onValueChange = { newCountry = it.uppercase().take(3); newPlayerError = null },
+                        label = { Text("Country") },
+                        placeholder = { Text("Three-letter EMA code") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     PlayerPhotoPreview(
                         model = newPhoto?.dataUrl,
-                        playerName = newName,
+                        playerName = "$newFirstName $newLastName".trim(),
                         maxWidth = 200.dp,
                         maxHeight = 220.dp,
                     )
@@ -680,7 +682,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         } else {
                                             AsyncImage(
                                                 model = player.photoUrl,
-                                                contentDescription = "Photo of ${player.name}",
+                                                contentDescription = "Photo of ${player.displayName}",
                                                 contentScale = ContentScale.Crop,
                                                 modifier = Modifier.width(PlayerPhotoSize).height(PlayerPhotoSize),
                                             )
@@ -692,7 +694,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     ) {
                                         CountryFlagWithTooltip(player.country, countries)
                                     }
-                                    Text(player.name, modifier = Modifier.weight(1f))
+                                    Text(player.displayName, modifier = Modifier.weight(1f))
                                     Text(
                                         player.emaId,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -730,25 +732,21 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 enabled = canEditEmaNumber && !saving,
                                 modifier = Modifier.fillMaxWidth(),
                             )
-                            OutlinedTextField(name, { name = it }, label = { Text("Name") }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                            CountrySelector(
-                                selectedCode = country,
-                                countries = countries,
-                                query = countryQuery,
-                                expanded = countryMenuExpanded,
+                            OutlinedTextField(firstName, { firstName = it }, label = { Text("First name") }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                            OutlinedTextField(lastName, { lastName = it }, label = { Text("Last name") }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                            OutlinedTextField(
+                                value = country,
+                                onValueChange = { country = it.uppercase().take(3) },
+                                label = { Text("Country") },
+                                placeholder = { Text("Three-letter EMA code") },
+                                singleLine = true,
                                 enabled = canEdit,
-                                onQueryChange = { countryQuery = it },
-                                onExpandedChange = { if (canEdit) countryMenuExpanded = it },
-                                onCountrySelected = {
-                                    country = it
-                                    countryQuery = ""
-                                    countryMenuExpanded = false
-                                },
+                                modifier = Modifier.fillMaxWidth(),
                             )
                             val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
                             PlayerPhotoPreview(
                                 model = photoModel,
-                                playerName = name,
+                                playerName = "$firstName $lastName".trim(),
                                 maxWidth = 280.dp,
                                 maxHeight = 340.dp,
                                 enabled = canEdit && !saving,
@@ -890,75 +888,6 @@ private fun PlayerPhotoPreview(
                 ) {
                     photo()
                 }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun CountrySelector(
-    selectedCode: String,
-    countries: List<Country>,
-    query: String,
-    expanded: Boolean,
-    enabled: Boolean,
-    onQueryChange: (String) -> Unit,
-    onExpandedChange: (Boolean) -> Unit,
-    onCountrySelected: (String) -> Unit,
-) {
-    val filteredCountries = remember(countries, query) {
-        val normalizedQuery = query.trim().lowercase()
-        countries.filter {
-            normalizedQuery.isEmpty() ||
-                it.name.lowercase().contains(normalizedQuery) ||
-                it.code.lowercase().contains(normalizedQuery)
-        }
-    }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = onExpandedChange,
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        OutlinedTextField(
-            value = if (expanded) query else {
-                val selectedCountry = countries.firstOrNull { it.code == selectedCode }
-                selectedCountry?.name ?: selectedCode
-            },
-            onValueChange = {
-                onQueryChange(it)
-                onExpandedChange(true)
-            },
-            label = { Text("Country") },
-            leadingIcon = if (!expanded && selectedCode.isNotBlank()) {
-                {
-                    CountryFlag(
-                        code = selectedCode,
-                    )
-                }
-            } else {
-                null
-            },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-            enabled = enabled,
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                .fillMaxWidth(),
-        )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { onExpandedChange(false) }) {
-            filteredCountries.forEach { option ->
-                DropdownMenuItem(
-                    text = {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            CountryFlag(code = option.code)
-                            Text(option.name)
-                        }
-                    },
-                    onClick = { onCountrySelected(option.code) },
-                )
             }
         }
     }

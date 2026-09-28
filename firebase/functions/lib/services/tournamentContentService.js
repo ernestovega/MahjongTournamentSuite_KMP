@@ -9,7 +9,49 @@ exports.listTournamentTables = listTournamentTables;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
+const mers_1 = require("./mers");
+const playersService_1 = require("./playersService");
 const tournamentContentRules_1 = require("./tournamentContentRules");
+function readNonMember(value) {
+    if (value == null || typeof value !== "object")
+        return null;
+    const data = value;
+    const firstName = String(data.firstName ?? "").trim();
+    const lastName = String(data.lastName ?? "").trim();
+    const country = String(data.country ?? "").trim().toUpperCase();
+    return firstName && lastName && country ? { firstName, lastName, country } : null;
+}
+async function updateTournamentMers(tournamentId) {
+    const ref = firebase_1.db.collection("tournaments").doc(tournamentId);
+    const [tournament, players] = await Promise.all([ref.get(), ref.collection("players").get()]);
+    if (!tournament.exists)
+        return;
+    await ref.update({
+        mers: (0, mers_1.calculateMers)({
+            startDate: String(tournament.get("eventStartDate") ?? ""),
+            endDate: String(tournament.get("eventEndDate") ?? ""),
+            participantCount: Number(tournament.get("numPlayers") ?? 0),
+            representedCountries: players.docs.map((player) => String(player.get("assignedCountry") ?? "")),
+        }),
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+}
+async function refreshAssignmentCountries(tournamentId) {
+    const players = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("players").get();
+    const emaIds = [...new Set(players.docs.map((player) => player.get("assignedEmaId"))
+            .filter((value) => typeof value === "string" && value.length > 0))];
+    const registry = await Promise.all(emaIds.map((emaId) => firebase_1.db.collection(playersService_1.EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()));
+    const countries = new Map(registry.filter((player) => player.exists)
+        .map((player) => [player.id, String(player.get("country") ?? "").trim().toUpperCase()]));
+    const batch = firebase_1.db.batch();
+    players.docs.forEach((player) => {
+        const emaId = typeof player.get("assignedEmaId") === "string" ? String(player.get("assignedEmaId")) : null;
+        const nonMember = readNonMember(player.get("nonMember"));
+        batch.update(player.ref, { assignedCountry: emaId == null ? nonMember?.country ?? "" : countries.get(emaId) ?? "" });
+    });
+    await batch.commit();
+    await updateTournamentMers(tournamentId);
+}
 function timestampToIso(value) {
     return value instanceof firestore_1.Timestamp ? value.toDate().toISOString() : null;
 }
@@ -22,6 +64,7 @@ async function listTournamentPlayers(tournamentId) {
         team: Number(d.get("team") ?? 0),
         country: String(d.get("country") ?? ""),
         assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
+        nonMember: readNonMember(d.get("nonMember")),
         createdAt: timestampToIso(d.get("createdAt")),
         updatedAt: timestampToIso(d.get("updatedAt")),
     }))
@@ -163,6 +206,7 @@ async function updateTournamentTeam(params) {
                 affectedEmaIds.add(next);
             transaction.update(player.ref, {
                 assignedEmaId: next,
+                ...(next == null ? {} : { nonMember: null }),
                 updatedAt: firestore_1.FieldValue.serverTimestamp(),
             });
         });
@@ -185,6 +229,7 @@ async function updateTournamentTeam(params) {
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         }, { merge: true });
     });
+    await refreshAssignmentCountries(params.tournamentId);
 }
 async function assignTournamentPlayer(params) {
     const playerRef = firebase_1.db.collection("tournaments").doc(params.tournamentId)
@@ -202,7 +247,10 @@ async function assignTournamentPlayer(params) {
         const previousEmaId = typeof player.get("assignedEmaId") === "string"
             ? String(player.get("assignedEmaId"))
             : null;
-        if ((0, tournamentContentRules_1.blocksAssignmentChangeAfterProgress)(previousEmaId, params.emaId, tournamentHasProgress)) {
+        const previousNonMember = readNonMember(player.get("nonMember"));
+        const assignmentChanged = previousEmaId !== params.emaId
+            || JSON.stringify(previousNonMember) !== JSON.stringify(params.nonMember);
+        if ((previousEmaId != null || previousNonMember != null) && assignmentChanged && tournamentHasProgress) {
             throw (0, httpError_1.conflict)("Players cannot change after table results have started");
         }
         const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
@@ -220,6 +268,13 @@ async function assignTournamentPlayer(params) {
                 throw (0, httpError_1.conflict)("EMA player is already assigned in this tournament");
             }
         }
+        let assignedCountry = params.nonMember?.country ?? "";
+        if (params.emaId != null) {
+            const registryPlayer = await transaction.get(firebase_1.db.collection(playersService_1.EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId));
+            if (!registryPlayer.exists)
+                throw (0, httpError_1.notFound)("EMA player not found");
+            assignedCountry = String(registryPlayer.get("country") ?? "").trim().toUpperCase();
+        }
         if (previousEmaId != null && previousEmaId !== params.emaId) {
             transaction.delete(assignmentRefs.doc(previousEmaId));
         }
@@ -231,9 +286,12 @@ async function assignTournamentPlayer(params) {
         }
         transaction.update(playerRef, {
             assignedEmaId: params.emaId,
+            nonMember: params.nonMember,
+            assignedCountry,
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });
     });
+    await refreshAssignmentCountries(params.tournamentId);
 }
 async function listTournamentRounds(tournamentId) {
     const snap = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("rounds").get();

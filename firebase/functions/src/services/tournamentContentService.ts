@@ -1,8 +1,9 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { conflict, notFound } from "../api/httpError";
+import { calculateMers } from "./mers";
+import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import {
-  blocksAssignmentChangeAfterProgress,
   hasFourValidScores,
   hasValidTablePoints,
 } from "./tournamentContentRules";
@@ -13,9 +14,53 @@ export type TournamentPlayer = {
   team: number;
   country: string;
   assignedEmaId: string | null;
+  nonMember: NonMemberPlayer | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
+
+export type NonMemberPlayer = { firstName: string; lastName: string; country: string };
+
+function readNonMember(value: unknown): NonMemberPlayer | null {
+  if (value == null || typeof value !== "object") return null;
+  const data = value as Record<string, unknown>;
+  const firstName = String(data.firstName ?? "").trim();
+  const lastName = String(data.lastName ?? "").trim();
+  const country = String(data.country ?? "").trim().toUpperCase();
+  return firstName && lastName && country ? { firstName, lastName, country } : null;
+}
+
+async function updateTournamentMers(tournamentId: string): Promise<void> {
+  const ref = db.collection("tournaments").doc(tournamentId);
+  const [tournament, players] = await Promise.all([ref.get(), ref.collection("players").get()]);
+  if (!tournament.exists) return;
+  await ref.update({
+    mers: calculateMers({
+      startDate: String(tournament.get("eventStartDate") ?? ""),
+      endDate: String(tournament.get("eventEndDate") ?? ""),
+      participantCount: Number(tournament.get("numPlayers") ?? 0),
+      representedCountries: players.docs.map((player) => String(player.get("assignedCountry") ?? "")),
+    }),
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+}
+
+async function refreshAssignmentCountries(tournamentId: string): Promise<void> {
+  const players = await db.collection("tournaments").doc(tournamentId).collection("players").get();
+  const emaIds = [...new Set(players.docs.map((player) => player.get("assignedEmaId"))
+    .filter((value): value is string => typeof value === "string" && value.length > 0))];
+  const registry = await Promise.all(emaIds.map((emaId) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()));
+  const countries = new Map(registry.filter((player) => player.exists)
+    .map((player) => [player.id, String(player.get("country") ?? "").trim().toUpperCase()]));
+  const batch = db.batch();
+  players.docs.forEach((player) => {
+    const emaId = typeof player.get("assignedEmaId") === "string" ? String(player.get("assignedEmaId")) : null;
+    const nonMember = readNonMember(player.get("nonMember"));
+    batch.update(player.ref, { assignedCountry: emaId == null ? nonMember?.country ?? "" : countries.get(emaId) ?? "" });
+  });
+  await batch.commit();
+  await updateTournamentMers(tournamentId);
+}
 
 export type TournamentTeam = {
   id: number;
@@ -51,6 +96,7 @@ export async function listTournamentPlayers(tournamentId: string): Promise<Tourn
       team: Number(d.get("team") ?? 0),
       country: String(d.get("country") ?? ""),
       assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
+      nonMember: readNonMember(d.get("nonMember")),
       createdAt: timestampToIso(d.get("createdAt")),
       updatedAt: timestampToIso(d.get("updatedAt")),
     }))
@@ -198,6 +244,7 @@ export async function updateTournamentTeam(params: {
       if (next != null) affectedEmaIds.add(next);
       transaction.update(player.ref, {
         assignedEmaId: next,
+        ...(next == null ? {} : { nonMember: null }),
         updatedAt: FieldValue.serverTimestamp(),
       });
     });
@@ -221,12 +268,14 @@ export async function updateTournamentTeam(params: {
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   });
+  await refreshAssignmentCountries(params.tournamentId);
 }
 
 export async function assignTournamentPlayer(params: {
   tournamentId: string;
   playerId: number;
   emaId: string | null;
+  nonMember: NonMemberPlayer | null;
 }): Promise<void> {
   const playerRef = db.collection("tournaments").doc(params.tournamentId)
     .collection("players").doc(String(params.playerId));
@@ -245,7 +294,10 @@ export async function assignTournamentPlayer(params: {
     const previousEmaId = typeof player.get("assignedEmaId") === "string"
       ? String(player.get("assignedEmaId"))
       : null;
-    if (blocksAssignmentChangeAfterProgress(previousEmaId, params.emaId, tournamentHasProgress)) {
+    const previousNonMember = readNonMember(player.get("nonMember"));
+    const assignmentChanged = previousEmaId !== params.emaId
+      || JSON.stringify(previousNonMember) !== JSON.stringify(params.nonMember);
+    if ((previousEmaId != null || previousNonMember != null) && assignmentChanged && tournamentHasProgress) {
       throw conflict("Players cannot change after table results have started");
     }
     const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
@@ -265,6 +317,13 @@ export async function assignTournamentPlayer(params: {
       }
     }
 
+    let assignedCountry = params.nonMember?.country ?? "";
+    if (params.emaId != null) {
+      const registryPlayer = await transaction.get(db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId));
+      if (!registryPlayer.exists) throw notFound("EMA player not found");
+      assignedCountry = String(registryPlayer.get("country") ?? "").trim().toUpperCase();
+    }
+
     if (previousEmaId != null && previousEmaId !== params.emaId) {
       transaction.delete(assignmentRefs.doc(previousEmaId));
     }
@@ -276,9 +335,12 @@ export async function assignTournamentPlayer(params: {
     }
     transaction.update(playerRef, {
       assignedEmaId: params.emaId,
+      nonMember: params.nonMember,
+      assignedCountry,
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
+  await refreshAssignmentCountries(params.tournamentId);
 }
 
 export async function listTournamentRounds(tournamentId: string): Promise<TournamentRound[]> {

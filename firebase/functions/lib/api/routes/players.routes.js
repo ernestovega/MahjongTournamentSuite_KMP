@@ -19,13 +19,14 @@ function playersRouter() {
     router.post("/", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
             const emaId = (0, playersService_1.validateEmaId)(req.body?.emaId);
-            const name = String(req.body?.name ?? "").trim();
-            const country = String(req.body?.country ?? "").trim();
-            if (!name)
-                throw (0, httpError_1.badRequest)("Player name is required");
-            if (!country)
-                throw (0, httpError_1.badRequest)("Player country is required");
-            res.status(200).json(await (0, playersService_1.createPlayer)({ emaId, name, country }));
+            const firstName = String(req.body?.firstName ?? "").trim();
+            const lastName = String(req.body?.lastName ?? "").trim();
+            const country = String(req.body?.country ?? "").trim().toUpperCase();
+            if (!firstName || !lastName)
+                throw (0, httpError_1.badRequest)("First name and last name are required");
+            if (!/^[A-Z]{3}$/.test(country))
+                throw (0, httpError_1.badRequest)("Player country must use a three-letter EMA code");
+            res.status(200).json(await (0, playersService_1.createPlayer)({ emaId, firstName, lastName, country }));
         }
         catch (error) {
             next(error);
@@ -35,13 +36,14 @@ function playersRouter() {
         try {
             const emaId = (0, playersService_1.validateEmaId)(req.params.emaId);
             const newEmaId = (0, playersService_1.validateEmaId)(req.body?.emaId ?? emaId);
-            const name = String(req.body?.name ?? "").trim();
-            const country = String(req.body?.country ?? "").trim();
-            if (!name)
-                throw (0, httpError_1.badRequest)("Player name is required");
-            if (!country)
-                throw (0, httpError_1.badRequest)("Player country is required");
-            await (0, playersService_1.updatePlayer)({ previousEmaId: emaId, emaId: newEmaId, name, country });
+            const firstName = String(req.body?.firstName ?? "").trim();
+            const lastName = String(req.body?.lastName ?? "").trim();
+            const country = String(req.body?.country ?? "").trim().toUpperCase();
+            if (!firstName || !lastName)
+                throw (0, httpError_1.badRequest)("First name and last name are required");
+            if (!/^[A-Z]{3}$/.test(country))
+                throw (0, httpError_1.badRequest)("Player country must use a three-letter EMA code");
+            await (0, playersService_1.updatePlayer)({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country });
             res.status(200).json({ ok: true });
         }
         catch (error) {

@@ -43,6 +43,8 @@ class CreateTournamentPresenter(
         associationLogoBytes: ByteArray?,
         eventStartDate: String,
         eventEndDate: String,
+        hostCountry: String,
+        hostCity: String,
         isTeams: Boolean,
         numPlayers: Int,
         numRounds: Int,
@@ -119,6 +121,8 @@ class CreateTournamentPresenter(
                 primaryColor = primaryColor,
                 associationLogoContentType = associationLogoContentType,
                 associationLogoBytes = associationLogoBytes,
+                hostCountry = hostCountry,
+                hostCity = hostCity,
             ),
         )
 

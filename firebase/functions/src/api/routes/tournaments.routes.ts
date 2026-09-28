@@ -15,6 +15,7 @@ import {
   updateTournamentSettings,
 } from "../../services/tournamentsService";
 import { generateTournamentIdCards } from "../../services/idCardsService";
+import { generateEmaReport } from "../../services/emaReportService";
 import {
   assignTournamentPlayer,
   listTournamentPlayers,
@@ -60,6 +61,8 @@ export function tournamentsRouter(): Router {
         : String(body.associationLogoDataBase64).trim();
       const eventStartDate = String(body?.eventStartDate ?? body?.eventDate ?? "").trim();
       const eventEndDate = String(body?.eventEndDate ?? body?.eventDate ?? "").trim();
+      const hostCountry = String(body?.hostCountry ?? "").trim().toUpperCase();
+      const hostCity = String(body?.hostCity ?? "").trim();
       const isTeams = Boolean(body?.isTeams ?? false);
 
       const numPlayersValue = body?.numPlayers;
@@ -75,6 +78,10 @@ export function tournamentsRouter(): Router {
       const issues: Array<{ field: string; message: string; value?: unknown }> = [];
       if (!body) issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
       if (!name) issues.push({ field: "name", message: "Required", value: body?.name });
+      if (!/^[A-Z]{3}$/.test(hostCountry)) {
+        issues.push({ field: "hostCountry", message: "Must use a three-letter EMA country code", value: body?.hostCountry });
+      }
+      if (!hostCity) issues.push({ field: "hostCity", message: "Required", value: body?.hostCity });
       if (!shortName || shortName.length > 10) {
         issues.push({ field: "shortName", message: "Required, with at most 10 characters", value: body?.shortName });
       }
@@ -163,6 +170,8 @@ export function tournamentsRouter(): Router {
         associationLogoDataBase64,
         eventStartDate,
         eventEndDate,
+        hostCountry,
+        hostCity,
         isTeams,
         numPlayers,
         numRounds,
@@ -189,6 +198,35 @@ export function tournamentsRouter(): Router {
     }
   });
 
+  router.post("/:tournamentId/ema-report", requireAuth, requireTournamentEditor, async (req, res, next) => {
+    try {
+      const rawRows = Array.isArray(req.body?.rows) ? req.body.rows as unknown[] : null;
+      if (rawRows == null || rawRows.length === 0) throw badRequest("Ranking rows are required");
+      const rows = rawRows.map((value, index) => {
+        if (value == null || typeof value !== "object") throw badRequest("Invalid ranking row", { index });
+        const row = value as Record<string, unknown>;
+        const parsed = {
+          playerId: Number(row.playerId),
+          place: Number(row.place),
+          tablePoints: Number(row.tablePoints),
+          score: Number(row.score),
+        };
+        if (!Number.isInteger(parsed.playerId) || parsed.playerId <= 0
+          || !Number.isInteger(parsed.place) || parsed.place <= 0
+          || !Number.isFinite(parsed.tablePoints) || !Number.isFinite(parsed.score)) {
+          throw badRequest("Invalid ranking row", { index, value });
+        }
+        return parsed;
+      });
+      const report = await generateEmaReport({ tournamentId: req.params.tournamentId, rows });
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-ema.xlsx"`);
+      res.status(200).send(report);
+    } catch (e) {
+      next(e);
+    }
+  });
+
   router.put("/:tournamentId/settings", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
@@ -198,6 +236,8 @@ export function tournamentsRouter(): Router {
       const primaryColor = String(body.primaryColor ?? "").trim().toUpperCase();
       const eventStartDate = String(body.eventStartDate ?? "").trim();
       const eventEndDate = String(body.eventEndDate ?? "").trim();
+      const hostCountry = String(body.hostCountry ?? "").trim().toUpperCase();
+      const hostCity = String(body.hostCity ?? "").trim();
       const associationLogoContentType = body.associationLogoContentType == null
         ? null
         : String(body.associationLogoContentType).trim();
@@ -214,6 +254,10 @@ export function tournamentsRouter(): Router {
       if (!isValidIsoDateRange(eventStartDate, eventEndDate)) {
         throw badRequest("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
       }
+      if (!/^[A-Z]{3}$/.test(hostCountry)) {
+        throw badRequest("Host country must use a three-letter EMA country code");
+      }
+      if (!hostCity) throw badRequest("Host city is required");
       if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
         throw badRequest("Association logo content type and image data must be supplied together");
       }
@@ -224,6 +268,8 @@ export function tournamentsRouter(): Router {
         primaryColor,
         eventStartDate,
         eventEndDate,
+        hostCountry,
+        hostCity,
         associationLogoContentType,
         associationLogoDataBase64,
         removeAssociationLogo: body.removeAssociationLogo === true,
@@ -296,8 +342,23 @@ export function tournamentsRouter(): Router {
         const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
         const rawEmaId = body?.emaId;
         const emaId = rawEmaId == null ? null : validateEmaId(rawEmaId);
+        const rawNonMember = body?.nonMember;
+        let nonMember: { firstName: string; lastName: string; country: string } | null = null;
+        if (rawNonMember != null) {
+          if (typeof rawNonMember !== "object") throw badRequest("nonMember must be an object");
+          const value = rawNonMember as Record<string, unknown>;
+          nonMember = {
+            firstName: String(value.firstName ?? "").trim(),
+            lastName: String(value.lastName ?? "").trim(),
+            country: String(value.country ?? "").trim().toUpperCase(),
+          };
+          if (!nonMember.firstName || !nonMember.lastName || !/^[A-Z]{3}$/.test(nonMember.country)) {
+            throw badRequest("A non-member needs first name, last name, and a three-letter country code");
+          }
+        }
 
         if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
+        if (emaId != null && nonMember != null) throw badRequest("Choose an EMA player or a non-member, not both");
         if (emaId != null && !(await playerExists(emaId))) {
           throw badRequest("EMA player does not exist");
         }
@@ -306,6 +367,7 @@ export function tournamentsRouter(): Router {
           tournamentId: req.params.tournamentId,
           playerId,
           emaId,
+          nonMember,
         });
         res.status(200).json({ ok: true });
       } catch (e) {

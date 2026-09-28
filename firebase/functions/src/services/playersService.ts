@@ -3,14 +3,15 @@ import { randomUUID } from "node:crypto";
 
 import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
-import { normalizePlayerName } from "./playerName";
+import { normalizePlayerNamePart } from "./playerName";
 
 /** Firestore collection for EMA registry records. Never use this for tournament player slots. */
 export const EMA_PLAYER_REGISTRY_COLLECTION = "emaPlayerRegistry";
 
 export type Player = {
   emaId: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   country: string;
   photoUrl: string | null;
   createdAt: string | null;
@@ -25,7 +26,8 @@ function toPlayer(emaId: string, data: FirebaseFirestore.DocumentData): Player {
   const storedCountry = String(data.country ?? "").trim().toUpperCase();
   return {
     emaId,
-    name: normalizePlayerName(String(data.name ?? "")),
+    firstName: normalizePlayerNamePart(String(data.firstName ?? "")),
+    lastName: normalizePlayerNamePart(String(data.lastName ?? "")),
     country: storedCountry === "EU" ? "" : storedCountry,
     photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : null,
     createdAt: timestampToIso(data.createdAt),
@@ -38,24 +40,30 @@ export function validateEmaId(value: unknown): string {
   if (!/^\d+$/.test(emaId)) {
     throw badRequest("EMA number must contain only digits");
   }
-  return emaId;
+  if (emaId.length > 8) {
+    throw badRequest("EMA number must contain at most 8 digits");
+  }
+  return emaId.padStart(8, "0");
 }
 
 export async function listPlayers(): Promise<Player[]> {
   const snapshot = await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).get();
   return snapshot.docs
     .map((document) => toPlayer(document.id, document.data()))
-    .sort((left, right) => left.name.localeCompare(right.name) || left.emaId.localeCompare(right.emaId));
+    .sort((left, right) => left.lastName.localeCompare(right.lastName)
+      || left.firstName.localeCompare(right.firstName)
+      || left.emaId.localeCompare(right.emaId));
 }
 
-export async function createPlayer(params: { emaId: string; name: string; country: string }): Promise<Player> {
+export async function createPlayer(params: { emaId: string; firstName: string; lastName: string; country: string }): Promise<Player> {
   const ref = db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId);
   const existing = await ref.get();
   if (existing.exists) {
     throw badRequest("A player with this EMA number already exists");
   }
   await ref.create({
-    name: normalizePlayerName(params.name),
+    firstName: normalizePlayerNamePart(params.firstName),
+    lastName: normalizePlayerNamePart(params.lastName),
     country: params.country,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -64,7 +72,13 @@ export async function createPlayer(params: { emaId: string; name: string; countr
   return toPlayer(params.emaId, created.data() ?? {});
 }
 
-export async function updatePlayer(params: { previousEmaId: string; emaId: string; name: string; country: string }): Promise<void> {
+export async function updatePlayer(params: {
+  previousEmaId: string;
+  emaId: string;
+  firstName: string;
+  lastName: string;
+  country: string;
+}): Promise<void> {
   const previousRef = db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.previousEmaId);
   const previousSnapshot = await previousRef.get();
   if (!previousSnapshot.exists) {
@@ -75,12 +89,13 @@ export async function updatePlayer(params: { previousEmaId: string; emaId: strin
     throw badRequest("A player with this EMA number already exists");
   }
   const update = {
-    name: normalizePlayerName(params.name),
+    firstName: normalizePlayerNamePart(params.firstName),
+    lastName: normalizePlayerNamePart(params.lastName),
     country: params.country,
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (params.previousEmaId === params.emaId) {
-    await previousRef.update(update);
+    await previousRef.update({ ...update, name: FieldValue.delete() });
     return;
   }
 
@@ -88,7 +103,9 @@ export async function updatePlayer(params: { previousEmaId: string; emaId: strin
     .where("assignedEmaId", "==", params.previousEmaId)
     .get();
   const batch = db.batch();
-  batch.create(targetRef, { ...previousSnapshot.data(), ...update });
+  const previousData = previousSnapshot.data() ?? {};
+  const { name: _legacyName, ...retainedData } = previousData;
+  batch.create(targetRef, { ...retainedData, ...update });
   batch.delete(previousRef);
   references.docs.forEach((reference) => batch.update(reference.ref, { assignedEmaId: params.emaId, updatedAt: FieldValue.serverTimestamp() }));
   await batch.commit();

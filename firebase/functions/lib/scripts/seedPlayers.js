@@ -2,6 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const playerSyncService_1 = require("../services/playerSyncService");
 async function configureLocalExecution() {
+    const localSourceDir = process.env.EMA_LOCAL_SOURCE_DIR?.trim();
+    if (localSourceDir) {
+        console.log(`Using local EMA mirror: ${localSourceDir}`);
+        return;
+    }
     console.log("Using live EMA pages from this local machine.");
     if (process.env.EMA_ALLOW_INSECURE_TLS === "1") {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";

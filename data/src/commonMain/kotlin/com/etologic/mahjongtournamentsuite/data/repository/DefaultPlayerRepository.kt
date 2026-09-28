@@ -25,11 +25,18 @@ class DefaultPlayerRepository(
     }
 
     override suspend fun createPlayer(player: Player): AppResult<Player> = request("Creating shared player") { token ->
-        backendApi.createPlayer(token, CreatePlayerRequestDto(player.emaId, player.name, player.country)).toPlayer()
+        backendApi.createPlayer(
+            token,
+            CreatePlayerRequestDto(player.emaId, player.firstName, player.lastName, player.country),
+        ).toPlayer()
     }
 
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = request("Updating shared player") { token ->
-        backendApi.updatePlayer(token, previousEmaId, UpdatePlayerRequestDto(player.emaId, player.name, player.country))
+        backendApi.updatePlayer(
+            token,
+            previousEmaId,
+            UpdatePlayerRequestDto(player.emaId, player.firstName, player.lastName, player.country),
+        )
         Unit
     }
 
@@ -73,7 +80,8 @@ class DefaultPlayerRepository(
 
     private fun com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto.toPlayer() = Player(
         emaId = emaId,
-        name = name.uppercase(),
+        firstName = firstName,
+        lastName = lastName,
         country = country.toPlayerCountryCode(),
         photoUrl = photoUrl,
         createdAt = createdAt,

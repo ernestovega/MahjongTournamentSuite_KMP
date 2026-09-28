@@ -34,6 +34,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestD
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.WhoAmIResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -168,6 +169,23 @@ class FunctionsBackendApi(
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, "application/pdf")
             timeout { requestTimeoutMillis = 180_000 }
+        }
+        if (!response.status.isSuccess()) {
+            throw BackendHttpException(response.status, response.bodyAsText())
+        }
+        return response.body()
+    }
+
+    suspend fun generateEmaReport(
+        idToken: String,
+        tournamentId: String,
+        request: EmaReportRequestDto,
+    ): ByteArray {
+        val response = httpClient.post(url("/tournaments/$tournamentId/ema-report")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            header(HttpHeaders.Accept, EMA_REPORT_MIME_TYPE)
+            timeout { requestTimeoutMillis = 180_000 }
+            setBody(request)
         }
         if (!response.status.isSuccess()) {
             throw BackendHttpException(response.status, response.bodyAsText())
@@ -393,6 +411,8 @@ class FunctionsBackendApi(
         return response.requireSuccessBody()
     }
 }
+
+private const val EMA_REPORT_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 private suspend inline fun <reified T> HttpResponse.requireSuccessBody(): T {
     if (!status.isSuccess()) {

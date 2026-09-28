@@ -13,6 +13,7 @@ const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const tournamentDates_1 = require("./tournamentDates");
 const usersService_1 = require("./usersService");
+const mers_1 = require("./mers");
 function toIsoString(value) {
     if (value instanceof firestore_1.Timestamp)
         return value.toDate().toISOString();
@@ -56,6 +57,9 @@ async function mapTournamentDoc(d) {
             ? String(d.get("primaryColor")).toUpperCase()
             : "#02B16B",
         associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
+        hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
+        hostCity: String(d.get("hostCity") ?? "").trim(),
+        mers: Number(d.get("mers") ?? 0),
         isTeams: d.get("isTeams") ?? false,
         numPlayers: d.get("numPlayers") ?? 0,
         numRounds: d.get("numRounds") ?? 0,
@@ -90,6 +94,14 @@ async function createTournament(params) {
         associationLogoPath: logo?.path ?? null,
         eventStartDate: params.eventStartDate,
         eventEndDate: params.eventEndDate,
+        hostCountry: params.hostCountry.trim().toUpperCase(),
+        hostCity: params.hostCity.trim(),
+        mers: (0, mers_1.calculateMers)({
+            startDate: params.eventStartDate,
+            endDate: params.eventEndDate,
+            participantCount: params.numPlayers,
+            representedCountries: [],
+        }),
         isTeams: params.isTeams,
         numPlayers: params.numPlayers,
         numRounds: params.numRounds,
@@ -293,6 +305,15 @@ async function updateTournamentSettings(params) {
         primaryColor,
         eventStartDate: params.eventStartDate,
         eventEndDate: params.eventEndDate,
+        hostCountry: params.hostCountry.trim().toUpperCase(),
+        hostCity: params.hostCity.trim(),
+        mers: (0, mers_1.calculateMers)({
+            startDate: params.eventStartDate,
+            endDate: params.eventEndDate,
+            participantCount: Number(before.get("numPlayers") ?? 0),
+            representedCountries: (await ref.collection("players").get()).docs
+                .map((player) => String(player.get("assignedCountry") ?? "")),
+        }),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
     if (logo !== undefined) {

@@ -11,6 +11,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
+import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 
 interface TournamentRepository {
     suspend fun listTournaments(): AppResult<List<Tournament>>
@@ -29,12 +31,19 @@ interface TournamentRepository {
         primaryColor: String,
         eventStartDate: String,
         eventEndDate: String,
+        hostCountry: String,
+        hostCity: String,
         associationLogoContentType: String? = null,
         associationLogoBytes: ByteArray? = null,
         removeAssociationLogo: Boolean = false,
     ): AppResult<Tournament>
 
     suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray>
+
+    suspend fun generateEmaReport(
+        tournamentId: String,
+        rankings: List<PlayerRanking>,
+    ): AppResult<ByteArray>
 
     suspend fun deleteTournament(tournamentId: String): AppResult<Unit>
 
@@ -67,11 +76,12 @@ interface TournamentRepository {
 
     suspend fun listCountries(): AppResult<List<Country>>
 
-    /** Assigns a shared EMA number to a generated tournament slot. Pass null to clear it. */
+    /** Assigns an EMA player or a tournament-only non-member. Pass both null to clear it. */
     suspend fun assignTournamentPlayer(
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
+        nonMember: NonMemberPlayer? = null,
     ): AppResult<Unit>
 
     suspend fun listTournamentRounds(tournamentId: String): AppResult<List<TournamentRound>>

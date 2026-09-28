@@ -19,11 +19,12 @@ export function playersRouter(): Router {
   router.post("/", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const emaId = validateEmaId(req.body?.emaId);
-      const name = String(req.body?.name ?? "").trim();
-      const country = String(req.body?.country ?? "").trim();
-      if (!name) throw badRequest("Player name is required");
-      if (!country) throw badRequest("Player country is required");
-      res.status(200).json(await createPlayer({ emaId, name, country }));
+      const firstName = String(req.body?.firstName ?? "").trim();
+      const lastName = String(req.body?.lastName ?? "").trim();
+      const country = String(req.body?.country ?? "").trim().toUpperCase();
+      if (!firstName || !lastName) throw badRequest("First name and last name are required");
+      if (!/^[A-Z]{3}$/.test(country)) throw badRequest("Player country must use a three-letter EMA code");
+      res.status(200).json(await createPlayer({ emaId, firstName, lastName, country }));
     } catch (error) {
       next(error);
     }
@@ -33,11 +34,12 @@ export function playersRouter(): Router {
     try {
       const emaId = validateEmaId(req.params.emaId);
       const newEmaId = validateEmaId(req.body?.emaId ?? emaId);
-      const name = String(req.body?.name ?? "").trim();
-      const country = String(req.body?.country ?? "").trim();
-      if (!name) throw badRequest("Player name is required");
-      if (!country) throw badRequest("Player country is required");
-      await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, name, country });
+      const firstName = String(req.body?.firstName ?? "").trim();
+      const lastName = String(req.body?.lastName ?? "").trim();
+      const country = String(req.body?.country ?? "").trim().toUpperCase();
+      if (!firstName || !lastName) throw badRequest("First name and last name are required");
+      if (!/^[A-Z]{3}$/.test(country)) throw badRequest("Player country must use a three-letter EMA code");
+      await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country });
       res.status(200).json({ ok: true });
     } catch (error) {
       next(error);

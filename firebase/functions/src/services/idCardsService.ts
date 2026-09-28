@@ -271,16 +271,20 @@ export async function generateTournamentIdCards(tournamentId: string): Promise<B
   if (!tournament.exists) throw notFound("Tournament not found");
 
   const orderedSlots = slots.docs.slice().sort((left, right) => Number(left.get("id")) - Number(right.get("id")));
-  const missingAssignments = orderedSlots.filter((slot) => typeof slot.get("assignedEmaId") !== "string");
+  const missingAssignments = orderedSlots.filter((slot) => {
+    return typeof slot.get("assignedEmaId") !== "string" && slot.get("nonMember") == null;
+  });
   if (missingAssignments.length > 0) {
     throw conflict(`Assign every tournament player before creating ID cards. ${missingAssignments.length} assignments are missing.`);
   }
 
-  const playerRefs = orderedSlots.map((slot) => {
-    return db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(String(slot.get("assignedEmaId")));
-  });
-  const playerDocuments = playerRefs.length > 0 ? await db.getAll(...playerRefs) : [];
-  if (playerDocuments.some((player) => !player.exists)) {
+  const playerDocuments = await Promise.all(orderedSlots.map((slot) => {
+    const emaId = slot.get("assignedEmaId");
+    return typeof emaId === "string"
+      ? db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()
+      : Promise.resolve(null);
+  }));
+  if (playerDocuments.some((player) => player != null && !player.exists)) {
     throw conflict("One or more assigned EMA players no longer exist");
   }
 
@@ -307,11 +311,14 @@ export async function generateTournamentIdCards(tournamentId: string): Promise<B
     const player = playerDocuments[index];
     const playerId = Number(slot.get("id") ?? slot.id);
     const teamId = Number(slot.get("team") ?? 0);
-    const countryCode = String(player.get("country") ?? "").trim().toUpperCase();
+    const nonMember = slot.get("nonMember") as Record<string, unknown> | null | undefined;
+    const countryCode = String(player?.get("country") ?? nonMember?.country ?? "").trim().toUpperCase();
     const rounds = tablesByPlayer.get(playerId) ?? new Map<number, number>();
     return {
       playerId,
-      name: String(player.get("name") ?? `Player ${playerId}`),
+      name: player == null
+        ? `${String(nonMember?.firstName ?? "")} ${String(nonMember?.lastName ?? "")}`.trim()
+        : `${String(player.get("firstName") ?? "")} ${String(player.get("lastName") ?? "")}`.trim(),
       country: countryNames.get(countryCode) ?? countryCode,
       teamName: tournament.get("isTeams") === true ? teamNames.get(teamId) ?? `Team ${teamId}` : null,
       tableNumbers: Array.from({ length: numRounds }, (_, roundIndex) => rounds.get(roundIndex + 1) ?? 0),

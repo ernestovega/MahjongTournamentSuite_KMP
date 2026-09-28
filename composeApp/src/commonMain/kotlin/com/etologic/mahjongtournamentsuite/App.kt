@@ -10,7 +10,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
-import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
@@ -24,7 +23,6 @@ import com.etologic.mahjongtournamentsuite.presentation.TimerRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.di.presentationModule
-import com.etologic.mahjongtournamentsuite.presentation.screen.CreateTournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
@@ -98,7 +96,6 @@ private fun MahjongTournamentSuiteApp() {
                 composable<SplashRoute> { SplashScreen(navController = navController) }
                 composable<SignInRoute> { SignInScreen(navController = navController) }
                 composable<TournamentsRoute> { TournamentsScreen(navController = navController) }
-                composable<CreateTournamentRoute> { CreateTournamentScreen(navController = navController) }
                 composable<PlayerBaseRoute> { PlayerBaseScreen(navController = navController) }
                 composable<TournamentRoute> { backStackEntry ->
                     val args = backStackEntry.toRoute<TournamentRoute>()

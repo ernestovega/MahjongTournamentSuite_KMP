@@ -197,15 +197,19 @@ async function generateTournamentIdCards(tournamentId) {
     if (!tournament.exists)
         throw (0, httpError_1.notFound)("Tournament not found");
     const orderedSlots = slots.docs.slice().sort((left, right) => Number(left.get("id")) - Number(right.get("id")));
-    const missingAssignments = orderedSlots.filter((slot) => typeof slot.get("assignedEmaId") !== "string");
+    const missingAssignments = orderedSlots.filter((slot) => {
+        return typeof slot.get("assignedEmaId") !== "string" && slot.get("nonMember") == null;
+    });
     if (missingAssignments.length > 0) {
         throw (0, httpError_1.conflict)(`Assign every tournament player before creating ID cards. ${missingAssignments.length} assignments are missing.`);
     }
-    const playerRefs = orderedSlots.map((slot) => {
-        return firebase_1.db.collection(playersService_1.EMA_PLAYER_REGISTRY_COLLECTION).doc(String(slot.get("assignedEmaId")));
-    });
-    const playerDocuments = playerRefs.length > 0 ? await firebase_1.db.getAll(...playerRefs) : [];
-    if (playerDocuments.some((player) => !player.exists)) {
+    const playerDocuments = await Promise.all(orderedSlots.map((slot) => {
+        const emaId = slot.get("assignedEmaId");
+        return typeof emaId === "string"
+            ? firebase_1.db.collection(playersService_1.EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()
+            : Promise.resolve(null);
+    }));
+    if (playerDocuments.some((player) => player != null && !player.exists)) {
         throw (0, httpError_1.conflict)("One or more assigned EMA players no longer exist");
     }
     const teamNames = new Map();
@@ -230,11 +234,14 @@ async function generateTournamentIdCards(tournamentId) {
         const player = playerDocuments[index];
         const playerId = Number(slot.get("id") ?? slot.id);
         const teamId = Number(slot.get("team") ?? 0);
-        const countryCode = String(player.get("country") ?? "").trim().toUpperCase();
+        const nonMember = slot.get("nonMember");
+        const countryCode = String(player?.get("country") ?? nonMember?.country ?? "").trim().toUpperCase();
         const rounds = tablesByPlayer.get(playerId) ?? new Map();
         return {
             playerId,
-            name: String(player.get("name") ?? `Player ${playerId}`),
+            name: player == null
+                ? `${String(nonMember?.firstName ?? "")} ${String(nonMember?.lastName ?? "")}`.trim()
+                : `${String(player.get("firstName") ?? "")} ${String(player.get("lastName") ?? "")}`.trim(),
             country: countryNames.get(countryCode) ?? countryCode,
             teamName: tournament.get("isTeams") === true ? teamNames.get(teamId) ?? `Team ${teamId}` : null,
             tableNumbers: Array.from({ length: numRounds }, (_, roundIndex) => rounds.get(roundIndex + 1) ?? 0),

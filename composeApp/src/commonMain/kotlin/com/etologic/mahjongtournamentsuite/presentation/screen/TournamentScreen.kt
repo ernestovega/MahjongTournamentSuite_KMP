@@ -46,8 +46,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
-import com.etologic.mahjongtournamentsuite.domain.export.EmaResultsCsvExporter
-import com.etologic.mahjongtournamentsuite.domain.export.EmaResultsRow
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
@@ -67,7 +67,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnt
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
-import com.etologic.mahjongtournamentsuite.presentation.platform.saveTextFile
+import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
@@ -218,7 +218,8 @@ fun TournamentScreen(
                 playerNamesById = playersResult.value.associate { slot ->
                     val assignedName = slot.assignedEmaId
                         ?.let(basePlayersByEma::get)
-                        ?.name
+                        ?.displayName
+                        ?: slot.nonMember?.displayName
                     slot.id to (assignedName ?: "Player ${slot.id}")
                 }
             }
@@ -418,32 +419,24 @@ fun TournamentScreen(
                         errorMessage = exportValidationError
                         return
                     }
-                    val unassigned = snapshot.tournamentPlayers.filter { it.assignedEmaId.isNullOrBlank() }
+                    val unassigned = snapshot.tournamentPlayers.filterNot { it.isAssigned }
                     if (unassigned.isNotEmpty()) {
-                        errorMessage = "Assign an EMA player to every tournament slot before export."
+                        errorMessage = "Assign an EMA player or non-member to every tournament slot before export."
                         return
-                    }
-                    val playersByEma = snapshot.basePlayers.associateBy { it.emaId }
-                    val rows = snapshot.rankings.players.mapNotNull { ranking ->
-                        val slot = snapshot.tournamentPlayers.firstOrNull { it.id == ranking.playerId } ?: return@mapNotNull null
-                        val player = slot.assignedEmaId?.let(playersByEma::get)
-                        val name = player?.name.orEmpty()
-                        val split = splitEmaName(name)
-                        EmaResultsRow(
-                            place = ranking.position,
-                            firstName = split.first,
-                            lastName = split.second,
-                            emaNumber = player?.emaId.orEmpty(),
-                            tablePoints = ranking.points.toString(),
-                            score = ranking.score,
-                            emaMember = if (player?.emaId.isNullOrBlank()) "NO" else "YES",
-                            country = player?.country.orEmpty(),
-                        )
                     }
                     val startDate = snapshot.tournament.eventStartDate ?: snapshot.tournament.createdAt?.take(10) ?: "undated"
                     val endDate = snapshot.tournament.eventEndDate ?: startDate
-                    val fileName = "${safeFileName(snapshot.tournament.name)}_${startDate}_$endDate.csv"
-                    saveTextFile(fileName, EmaResultsCsvExporter.export(rows))
+                    when (val report = rankingPresenter.generateEmaReport(tournamentId, snapshot.rankings.players)) {
+                        is AppResult.Failure -> errorMessage = report.error.toUiMessage()
+                        is AppResult.Success -> {
+                            val fileName = "${safeFileName(snapshot.tournament.name)}_${startDate}_$endDate.xlsx"
+                            saveBinaryFile(
+                                fileName = fileName,
+                                content = report.value,
+                                mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            )
+                        }
+                    }
                 }
             }
         } catch (_: Throwable) {
@@ -946,19 +939,6 @@ private fun roundCompletionStatus(tables: List<TournamentTable>): CompletionStat
     tables.all { tableCompletionStatus(it) == CompletionStatus.Completed } -> CompletionStatus.Completed
     tables.any { tableCompletionStatus(it) == CompletionStatus.InProgress } -> CompletionStatus.InProgress
     else -> CompletionStatus.Empty
-}
-
-private fun splitEmaName(name: String): Pair<String, String> {
-    val normalized = name.trim()
-    val comma = normalized.indexOf(',')
-    if (comma > 0) {
-        return normalized.substring(comma + 1).trim() to normalized.substring(0, comma).trim()
-    }
-    val lastSpace = normalized.lastIndexOf(' ')
-    if (lastSpace > 0) {
-        return normalized.substring(0, lastSpace).trim() to normalized.substring(lastSpace + 1).trim()
-    }
-    return normalized to ""
 }
 
 private fun safeFileName(value: String): String = value

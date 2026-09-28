@@ -7,9 +7,20 @@ data class TournamentPlayer(
     val country: String = "",
     /** EMA number of the shared player assigned to this tournament slot, if any. */
     val assignedEmaId: String? = null,
+    /** Tournament-only participant data when this slot is assigned to a non-member. */
+    val nonMember: NonMemberPlayer? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
+
+data class NonMemberPlayer(
+    val firstName: String,
+    val lastName: String,
+    val country: String,
+)
+
+val TournamentPlayer.isAssigned: Boolean
+    get() = !assignedEmaId.isNullOrBlank() || nonMember != null
 
 /** A named group of the fixed schedule slots that share the same team id. */
 data class TournamentTeam(
@@ -22,12 +33,25 @@ data class TournamentTeam(
 data class Player(
     /** Unique EMA number. This is the shared-player primary key. */
     val emaId: String,
-    val name: String,
+    val firstName: String,
+    val lastName: String,
     val country: String = "",
     val photoUrl: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
+
+val Player.displayName: String
+    get() = listOf(firstName, lastName)
+        .filter(String::isNotBlank)
+        .joinToString(" ")
+        .uppercase()
+
+val NonMemberPlayer.displayName: String
+    get() = listOf(firstName, lastName)
+        .filter(String::isNotBlank)
+        .joinToString(" ")
+        .uppercase()
 
 data class Country(
     val code: String,

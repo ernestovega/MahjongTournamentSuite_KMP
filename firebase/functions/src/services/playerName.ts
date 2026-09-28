@@ -70,11 +70,13 @@ export function decodePlayerNameEntities(value: string): string {
       const parsed = Number.parseInt(code.slice(1), 10);
       return Number.isFinite(parsed) ? String.fromCodePoint(parsed) : entity;
     }
-    return namedHtmlEntities[code.toLowerCase()] ?? entity;
+    const decoded = namedHtmlEntities[code.toLowerCase()];
+    if (decoded == null) return entity;
+    return /^[A-Z]/.test(code) ? decoded.toUpperCase() : decoded;
   });
 }
 
-/** Keep player names in one canonical Unicode form and uppercase every supported letter. */
-export function normalizePlayerName(value: string): string {
-  return decodePlayerNameEntities(value).normalize("NFC").toUpperCase();
+/** Keep source letter case, trim whitespace, and use canonical Unicode. */
+export function normalizePlayerNamePart(value: string): string {
+  return decodePlayerNameEntities(value).replace(/\s+/g, " ").trim().normalize("NFC");
 }

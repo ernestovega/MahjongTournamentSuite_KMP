@@ -84,6 +84,7 @@ fun TournamentColorField(
     onValueChange: (String) -> Unit,
     onPreviewClick: () -> Unit,
     fieldModifier: Modifier = Modifier,
+    errorMessage: String? = null,
 ) {
     val previewColor = value.toTournamentColorOrNull() ?: DefaultTournamentColor
 
@@ -115,6 +116,7 @@ fun TournamentColorField(
             enabled = enabled,
             singleLine = true,
             isError = isError,
+            supportingText = errorMessage?.let { message -> { Text(message) } },
         )
     }
 }

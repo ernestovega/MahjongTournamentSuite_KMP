@@ -5,6 +5,7 @@ import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
 import { getUserProfile } from "./usersService";
+import { calculateMers } from "./mers";
 
 export type Tournament = {
   id: string;
@@ -12,6 +13,9 @@ export type Tournament = {
   shortName: string;
   primaryColor: string;
   associationLogoUrl: string | null;
+  hostCountry: string;
+  hostCity: string;
+  mers: number;
   isTeams: boolean;
   numPlayers: number;
   numRounds: number;
@@ -71,6 +75,9 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
       ? String(d.get("primaryColor")).toUpperCase()
       : "#02B16B",
     associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
+    hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
+    hostCity: String(d.get("hostCity") ?? "").trim(),
+    mers: Number(d.get("mers") ?? 0),
     isTeams: (d.get("isTeams") as boolean) ?? false,
     numPlayers: (d.get("numPlayers") as number) ?? 0,
     numRounds: (d.get("numRounds") as number) ?? 0,
@@ -93,6 +100,8 @@ export async function createTournament(params: {
   associationLogoDataBase64?: string | null;
   eventStartDate: string;
   eventEndDate: string;
+  hostCountry: string;
+  hostCity: string;
   isTeams: boolean;
   numPlayers: number;
   numRounds: number;
@@ -124,6 +133,14 @@ export async function createTournament(params: {
     associationLogoPath: logo?.path ?? null,
     eventStartDate: params.eventStartDate,
     eventEndDate: params.eventEndDate,
+    hostCountry: params.hostCountry.trim().toUpperCase(),
+    hostCity: params.hostCity.trim(),
+    mers: calculateMers({
+      startDate: params.eventStartDate,
+      endDate: params.eventEndDate,
+      participantCount: params.numPlayers,
+      representedCountries: [],
+    }),
     isTeams: params.isTeams,
     numPlayers: params.numPlayers,
     numRounds: params.numRounds,
@@ -322,6 +339,8 @@ export async function updateTournamentSettings(params: {
   primaryColor: string;
   eventStartDate: string;
   eventEndDate: string;
+  hostCountry: string;
+  hostCity: string;
   associationLogoContentType?: string | null;
   associationLogoDataBase64?: string | null;
   removeAssociationLogo?: boolean;
@@ -355,6 +374,15 @@ export async function updateTournamentSettings(params: {
     primaryColor,
     eventStartDate: params.eventStartDate,
     eventEndDate: params.eventEndDate,
+    hostCountry: params.hostCountry.trim().toUpperCase(),
+    hostCity: params.hostCity.trim(),
+    mers: calculateMers({
+      startDate: params.eventStartDate,
+      endDate: params.eventEndDate,
+      participantCount: Number(before.get("numPlayers") ?? 0),
+      representedCountries: (await ref.collection("players").get()).docs
+        .map((player) => String(player.get("assignedCountry") ?? "")),
+    }),
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (logo !== undefined) {

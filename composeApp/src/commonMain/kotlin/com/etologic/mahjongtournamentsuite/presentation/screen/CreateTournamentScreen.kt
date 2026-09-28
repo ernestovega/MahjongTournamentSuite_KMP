@@ -76,17 +76,15 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.presentation.CreateTournamentRoute
-import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
-import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
@@ -118,8 +116,9 @@ import org.koin.compose.koinInject
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateTournamentScreen(
-    navController: NavHostController,
+fun CreateTournamentDialog(
+    onDismiss: () -> Unit,
+    onCreated: (Tournament) -> Unit,
 ) {
     val presenter = koinInject<CreateTournamentPresenter>()
     val store = koinInject<AppMemoryStore>()
@@ -127,6 +126,8 @@ fun CreateTournamentScreen(
     val nameFocusRequester = remember { FocusRequester() }
     val shortNameFocusRequester = remember { FocusRequester() }
     val primaryColorFocusRequester = remember { FocusRequester() }
+    val hostCountryFocusRequester = remember { FocusRequester() }
+    val hostCityFocusRequester = remember { FocusRequester() }
     val eventStartDateFocusRequester = remember { FocusRequester() }
     val eventEndDateFocusRequester = remember { FocusRequester() }
     val playersFocusRequester = remember { FocusRequester() }
@@ -135,6 +136,8 @@ fun CreateTournamentScreen(
     var name by remember { mutableStateOf("") }
     var shortName by remember { mutableStateOf("") }
     var primaryColor by remember { mutableStateOf("#02B16B") }
+    var hostCountry by remember { mutableStateOf("") }
+    var hostCity by remember { mutableStateOf("") }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var associationLogo by remember { mutableStateOf<SelectedImage?>(null) }
     var logoImageInfo by remember { mutableStateOf<String?>(null) }
@@ -211,6 +214,8 @@ fun CreateTournamentScreen(
         val trimmedName = name.trim()
         val trimmedShortName = shortName.trim()
         val normalizedPrimaryColor = primaryColor.trim().uppercase()
+        val normalizedHostCountry = hostCountry.trim().uppercase()
+        val trimmedHostCity = hostCity.trim()
         val trimmedStartDate = eventStartDate.toIsoTournamentDateOrNull()
         val trimmedEndDate = eventEndDate.toIsoTournamentDateOrNull()
         val numPlayers = numPlayersText.trim().toIntOrNull()
@@ -229,6 +234,16 @@ fun CreateTournamentScreen(
         if (!Regex("^#[0-9A-F]{6}$").matches(normalizedPrimaryColor)) {
             errorMessage = "* Primary color must use #RRGGBB format."
             primaryColorFocusRequester.requestFocus()
+            return
+        }
+        if (!Regex("^[A-Z]{3}$").matches(normalizedHostCountry)) {
+            errorMessage = "* Host country must use a three-letter EMA code, for example ESP."
+            hostCountryFocusRequester.requestFocus()
+            return
+        }
+        if (trimmedHostCity.isBlank()) {
+            errorMessage = "* Host city is required."
+            hostCityFocusRequester.requestFocus()
             return
         }
         if (
@@ -269,6 +284,8 @@ fun CreateTournamentScreen(
                     associationLogoBytes = associationLogo?.bytes,
                     eventStartDate = trimmedStartDate,
                     eventEndDate = trimmedEndDate,
+                    hostCountry = normalizedHostCountry,
+                    hostCity = trimmedHostCity,
                     isTeams = isTeams,
                     numPlayers = numPlayers,
                     numRounds = numRounds,
@@ -277,15 +294,7 @@ fun CreateTournamentScreen(
                 )) {
                     is AppResult.Success -> {
                         store.addTournament(result.value)
-                        navController.navigate(
-                            TournamentRoute(
-                                tournamentId = result.value.id,
-                                tournamentName = result.value.name,
-                            ),
-                        ) {
-                            popUpTo(CreateTournamentRoute) { inclusive = true }
-                        }
-                        navController.navigate(PlayersRoute(tournamentId = result.value.id))
+                        onCreated(result.value)
                     }
 
                     is AppResult.Failure -> {
@@ -308,14 +317,16 @@ fun CreateTournamentScreen(
         onDismissRequest = {
             if (!isLoading) {
                 cancelCreation()
-                navController.popBackStack()
+                onDismiss()
             }
         },
         title = { Text("New tournament") },
         text = {
             ScrollableColumnWithScrollbar(
                 state = rememberScrollState(),
-                modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = 560.dp),
             ) {
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
@@ -345,22 +356,11 @@ fun CreateTournamentScreen(
                         enabled = !isLoading,
                         modifier = Modifier.fillMaxWidth().focusRequester(shortNameFocusRequester),
                         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { primaryColorFocusRequester.requestFocus() }),
-                    )
-                    TournamentColorField(
-                        value = primaryColor,
-                        enabled = !isLoading,
-                        isError = errorMessage?.contains("color", ignoreCase = true) == true,
-                        onValueChange = { primaryColor = it },
-                        onPreviewClick = {
-                            datePickerFor = null
-                            showColorPickerDialog = true
-                        },
-                        fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
+                        keyboardActions = KeyboardActions(onNext = { playersFocusRequester.requestFocus() }),
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         OutlinedTextField(
                             value = numPlayersText,
@@ -380,71 +380,26 @@ fun CreateTournamentScreen(
                             enabled = !isLoading,
                         )
                     }
-                    FocusHighlightContainer(
+                    Row(
                         modifier = Modifier.fillMaxWidth(),
-                        interactionSource = teamsToggleInteractionSource,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Switch(
-                                checked = isTeams,
-                                onCheckedChange = ::setTeamsChecked,
-                                enabled = !isLoading,
-                                interactionSource = teamsToggleInteractionSource,
-                            )
-                            Text(
-                                text = "Teams",
-                                modifier = Modifier.toggleable(
-                                    value = isTeams,
-                                    enabled = !isLoading,
-                                    role = Role.Switch,
-                                    interactionSource = teamsToggleInteractionSource,
-                                    indication = null,
-                                    onValueChange = ::setTeamsChecked,
-                                ),
-                            )
-                            SwitchInfoTooltip(
-                                "Group players into teams of four. Team members will not play together.",
-                            )
-                        }
+                        EmaCountryDropdown(
+                            selectedCode = hostCountry,
+                            onCountrySelected = { hostCountry = it },
+                            enabled = !isLoading,
+                            modifier = Modifier.weight(1f).focusRequester(hostCountryFocusRequester),
+                            label = "Country",
+                        )
+                        OutlinedTextField(
+                            value = hostCity,
+                            onValueChange = { hostCity = it },
+                            label = { Text("City") },
+                            singleLine = true,
+                            enabled = !isLoading,
+                            modifier = Modifier.weight(2f).focusRequester(hostCityFocusRequester),
+                        )
                     }
-
-                    Text("Logo", style = MaterialTheme.typography.titleSmall)
-                    TournamentLogoPreview(
-                        model = associationLogo?.dataUrl,
-                        onImageInfo = { logoImageInfo = it },
-                    )
-                    Text(
-                        text = associationLogo?.let { image ->
-                            buildString {
-                                append(image.fileName)
-                                append(" · ")
-                                append(formatByteSize(image.bytes.size.toLong()))
-                                logoImageInfo?.let { append(" · ").append(it) }
-                            }
-                        } ?: "No logo",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Button(enabled = !isLoading, onClick = logoPicker::launch) {
-                            Text(if (associationLogo == null) "Choose logo" else "Change logo")
-                        }
-                        if (associationLogo != null) {
-                            AppTextButton(
-                                enabled = !isLoading,
-                                onClick = {
-                                    associationLogo = null
-                                    logoImageInfo = null
-                                },
-                            ) {
-                                Text("Remove")
-                            }
-                        }
-                    }
-
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -492,6 +447,95 @@ fun CreateTournamentScreen(
                             singleLine = true,
                             enabled = !isLoading,
                         )
+                    }
+                    TournamentColorField(
+                        value = primaryColor,
+                        enabled = !isLoading,
+                        isError = errorMessage?.contains("color", ignoreCase = true) == true,
+                        onValueChange = { primaryColor = it },
+                        onPreviewClick = {
+                            datePickerFor = null
+                            showColorPickerDialog = true
+                        },
+                        fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
+                    )
+
+                    Text("Logo", style = MaterialTheme.typography.titleSmall)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.Top,
+                    ) {
+                        TournamentLogoPreview(
+                            model = associationLogo?.dataUrl,
+                            onImageInfo = { logoImageInfo = it },
+                            modifier = Modifier.size(120.dp),
+                        )
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            Text(
+                                text = associationLogo?.let { image ->
+                                    buildString {
+                                        append(image.fileName)
+                                        append(" · ")
+                                        append(formatByteSize(image.bytes.size.toLong()))
+                                        logoImageInfo?.let { append(" · ").append(it) }
+                                    }
+                                } ?: "No logo",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodySmall,
+                            )
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Button(enabled = !isLoading, onClick = logoPicker::launch) {
+                                    Text(if (associationLogo == null) "Choose logo" else "Change logo")
+                                }
+                                if (associationLogo != null) {
+                                    AppTextButton(
+                                        enabled = !isLoading,
+                                        onClick = {
+                                            associationLogo = null
+                                            logoImageInfo = null
+                                        },
+                                    ) { Text("Remove") }
+                                }
+                            }
+                        }
+                    }
+
+                    FocusHighlightContainer(
+                        modifier = Modifier.fillMaxWidth(),
+                        interactionSource = teamsToggleInteractionSource,
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Switch(
+                                checked = isTeams,
+                                onCheckedChange = ::setTeamsChecked,
+                                enabled = !isLoading,
+                                interactionSource = teamsToggleInteractionSource,
+                            )
+                            Text(
+                                text = "Teams",
+                                modifier = Modifier.toggleable(
+                                    value = isTeams,
+                                    enabled = !isLoading,
+                                    role = Role.Switch,
+                                    interactionSource = teamsToggleInteractionSource,
+                                    indication = null,
+                                    onValueChange = ::setTeamsChecked,
+                                ),
+                            )
+                            SwitchInfoTooltip(
+                                "Group players into teams of four. Team members will not play together.",
+                            )
+                        }
                     }
 
                     FocusHighlightContainer(
@@ -571,7 +615,7 @@ fun CreateTournamentScreen(
                 AppTextButton(
                     onClick = {
                         cancelCreation()
-                        navController.popBackStack()
+                        onDismiss()
                     },
                 ) {
                     Text("Cancel")

@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.decodePlayerNameEntities = decodePlayerNameEntities;
-exports.normalizePlayerName = normalizePlayerName;
+exports.normalizePlayerNamePart = normalizePlayerNamePart;
 const namedHtmlEntities = {
     amp: "&",
     apos: "'",
@@ -73,11 +73,14 @@ function decodePlayerNameEntities(value) {
             const parsed = Number.parseInt(code.slice(1), 10);
             return Number.isFinite(parsed) ? String.fromCodePoint(parsed) : entity;
         }
-        return namedHtmlEntities[code.toLowerCase()] ?? entity;
+        const decoded = namedHtmlEntities[code.toLowerCase()];
+        if (decoded == null)
+            return entity;
+        return /^[A-Z]/.test(code) ? decoded.toUpperCase() : decoded;
     });
 }
-/** Keep player names in one canonical Unicode form and uppercase every supported letter. */
-function normalizePlayerName(value) {
-    return decodePlayerNameEntities(value).normalize("NFC").toUpperCase();
+/** Keep source letter case, trim whitespace, and use canonical Unicode. */
+function normalizePlayerNamePart(value) {
+    return decodePlayerNameEntities(value).replace(/\s+/g, " ").trim().normalize("NFC");
 }
 //# sourceMappingURL=playerName.js.map

@@ -63,6 +63,9 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -102,6 +105,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var teams by remember { mutableStateOf<List<TournamentTeam>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var assignmentSlotId by remember { mutableStateOf<Int?>(null) }
+    var nonMemberSlotId by remember { mutableStateOf<Int?>(null) }
+    var nonMemberFirstName by remember { mutableStateOf("") }
+    var nonMemberLastName by remember { mutableStateOf("") }
+    var nonMemberCountry by remember { mutableStateOf("") }
+    var nonMemberError by remember { mutableStateOf<String?>(null) }
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var assignmentSearchQuery by remember { mutableStateOf("") }
     val assignmentsListState = rememberLazyListState()
@@ -149,6 +157,36 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         savingId = null
     }
 
+    fun assignNonMember(slotId: Int) = scope.launch {
+        val firstName = nonMemberFirstName.trim()
+        val lastName = nonMemberLastName.trim()
+        val country = nonMemberCountry.trim().uppercase()
+        nonMemberError = when {
+            firstName.isEmpty() -> "First name is required."
+            lastName.isEmpty() -> "Last name is required."
+            !country.matches(Regex("^[A-Z]{3}$")) -> "Country must use a three-letter EMA code."
+            else -> null
+        }
+        if (nonMemberError != null) return@launch
+        savingId = slotId
+        when (val result = presenter.assignPlayer(
+            tournamentId,
+            slotId,
+            emaId = null,
+            nonMember = NonMemberPlayer(firstName, lastName, country),
+        )) {
+            is AppResult.Success -> {
+                nonMemberSlotId = null
+                refresh()
+            }
+            is AppResult.Failure -> {
+                nonMemberSlotId = null
+                error = result.error.toUiMessage()
+            }
+        }
+        savingId = null
+    }
+
     fun exportIdCards() = scope.launch {
         loading = true
         error = null
@@ -191,7 +229,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         } else {
             availablePlayers.filter { player ->
                 val countryName = countries.firstOrNull { it.code == player.country }?.name.orEmpty()
-                normalizeSearchText(player.name).contains(query) ||
+                normalizeSearchText(player.displayName).contains(query) ||
                     normalizeSearchText(player.emaId).contains(query) ||
                     normalizeSearchText(player.country).contains(query) ||
                     normalizeSearchText(countryName).contains(query)
@@ -259,7 +297,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         if (index !in players.indices) return
         scope.launch {
             revealPlayerAction(index)
-            if (players[index].assignedEmaId != null) {
+            if (players[index].isAssigned) {
                 clearFocusRequesters[index].requestFocus()
             } else {
                 assignFocusRequesters[index].requestFocus()
@@ -269,10 +307,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
     LaunchedEffect(loading, players) {
         if (initialAssignmentScrollPending && !loading && players.isNotEmpty()) {
-            val firstUnassignedIndex = players.indexOfFirst { it.assignedEmaId == null }
+            val firstUnassignedIndex = players.indexOfFirst { !it.isAssigned }
             val initialFocusIndex = firstUnassignedIndex.takeIf { it >= 0 } ?: 0
             revealPlayerAction(initialFocusIndex)
-            if (players[initialFocusIndex].assignedEmaId == null) {
+            if (!players[initialFocusIndex].isAssigned) {
                 assignFocusRequesters[initialFocusIndex].requestFocus()
             } else {
                 clearFocusRequesters[initialFocusIndex].requestFocus()
@@ -452,6 +490,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             null
                         },
                     )
+                    Button(
+                        enabled = savingId == null,
+                        onClick = {
+                            nonMemberFirstName = ""
+                            nonMemberLastName = ""
+                            nonMemberCountry = ""
+                            nonMemberError = null
+                            nonMemberSlotId = assignmentSlot.id
+                            assignmentSlotId = null
+                        },
+                    ) { Text("Enter non-member") }
                     Column(Modifier.fillMaxWidth()) {
                         DataTableHeaderRow {
                             TournamentPlayerHeader("Photo", Modifier.width(AssignmentPhotoColumnWidth), TextAlign.Center)
@@ -528,7 +577,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     ) {
                                         TournamentPlayerPhoto(
                                             photoUrl = player.photoUrl,
-                                            playerName = player.name,
+                                            playerName = player.displayName,
                                             columnWidth = AssignmentPhotoColumnWidth,
                                         )
                                         Box(
@@ -545,7 +594,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             modifier = Modifier.width(AssignmentEmaColumnWidth),
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         )
-                                        Text(player.name, modifier = Modifier.weight(1f))
+                                        Text(player.displayName, modifier = Modifier.weight(1f))
                                     }
                                     DataTableDivider()
                                 }
@@ -620,8 +669,52 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         )
     }
 
+    nonMemberSlotId?.let { slotId ->
+        val firstNameFocusRequester = remember(slotId) { FocusRequester() }
+        LaunchedEffect(slotId) { firstNameFocusRequester.requestFocus() }
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (savingId == null) nonMemberSlotId = null },
+            title = { Text("Assign non-member to player $slotId") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    nonMemberError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    OutlinedTextField(
+                        value = nonMemberFirstName,
+                        onValueChange = { nonMemberFirstName = it; nonMemberError = null },
+                        label = { Text("First name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().focusRequester(firstNameFocusRequester),
+                    )
+                    OutlinedTextField(
+                        value = nonMemberLastName,
+                        onValueChange = { nonMemberLastName = it; nonMemberError = null },
+                        label = { Text("Last name") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = nonMemberCountry,
+                        onValueChange = { nonMemberCountry = it.uppercase().take(3); nonMemberError = null },
+                        label = { Text("Country") },
+                        placeholder = { Text("Three-letter EMA code") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+            },
+            confirmButton = {
+                Button(enabled = savingId == null, onClick = { assignNonMember(slotId) }) { Text("Assign") }
+            },
+            dismissButton = {
+                TextButton(enabled = savingId == null, onClick = { nonMemberSlotId = null }) { Text("Cancel") }
+            },
+        )
+    }
+
     if (clearAssignmentSlot != null) {
         val assigned = clearAssignmentSlot.assignedEmaId?.let(playersByEma::get)
+        val assignedName = assigned?.displayName ?: clearAssignmentSlot.nonMember?.displayName
         val clearConfirmFocusRequester = remember(clearAssignmentSlot.id) { FocusRequester() }
         val clearCancelFocusRequester = remember(clearAssignmentSlot.id) { FocusRequester() }
         val clearConfirmInteractionSource = remember(clearAssignmentSlot.id) { MutableInteractionSource() }
@@ -641,7 +734,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             title = { Text("Clear assignment?") },
             text = {
                 Text(
-                    "Remove ${assigned?.name ?: "EMA ${clearAssignmentSlot.assignedEmaId}"} " +
+                    "Remove ${assignedName ?: "this assignment"} " +
                         "from tournament player ${clearAssignmentSlot.id}?",
                 )
             },
@@ -778,7 +871,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         items(players.size, key = { players[it].id }) { index ->
                             val slot = players[index]
                             val assigned = slot.assignedEmaId?.let(playersByEma::get)
-                            val playerCountry = assigned?.country.orEmpty()
+                            val playerCountry = assigned?.country ?: slot.nonMember?.country.orEmpty()
+                            val playerName = assigned?.displayName ?: slot.nonMember?.displayName
                             DataTableRow(
                                 onClick = { openAssignment(slot.id) },
                                 clickFocusable = false,
@@ -792,7 +886,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 ) {
                                     TournamentPlayerPhoto(
                                         photoUrl = assigned?.photoUrl,
-                                        playerName = assigned?.name.orEmpty(),
+                                        playerName = playerName.orEmpty(),
                                         columnWidth = TournamentPlayerPhotoColumnWidth,
                                     )
                                 }
@@ -811,12 +905,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     textAlign = TextAlign.Center,
                                 )
                                 Text(
-                                    assigned?.emaId ?: "—",
+                                    assigned?.emaId ?: if (slot.nonMember != null) "Non-member" else "—",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
                                 )
                                 Text(
-                                    assigned?.name ?: "Not assigned",
+                                    playerName ?: "Not assigned",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.weight(1.2f),
                                 )
@@ -841,7 +935,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    if (slot.assignedEmaId == null) Box(
+                                    if (!slot.isAssigned) Box(
                                         modifier = Modifier
                                             .clip(MaterialTheme.shapes.small)
                                             .background(
@@ -883,7 +977,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 },
                                         ) { Text("Assign", maxLines = 1, overflow = TextOverflow.Clip) }
                                     }
-                                    if (slot.assignedEmaId != null) {
+                                    if (slot.isAssigned) {
                                         Box(
                                             modifier = Modifier
                                                 .clip(MaterialTheme.shapes.small)

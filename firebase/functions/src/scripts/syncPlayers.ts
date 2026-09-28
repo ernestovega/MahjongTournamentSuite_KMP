@@ -1,6 +1,9 @@
 import { runEmaPlayerRegistrySync } from "../services/playerSyncService";
 
-if (process.env.EMA_ALLOW_INSECURE_TLS === "1") {
+const localSourceDir = process.env.EMA_LOCAL_SOURCE_DIR?.trim();
+if (localSourceDir) {
+  console.log(`Using local EMA mirror: ${localSourceDir}`);
+} else if (process.env.EMA_ALLOW_INSECURE_TLS === "1") {
   process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
   console.warn("WARNING: TLS certificate validation is disabled for this local run only.");
 }

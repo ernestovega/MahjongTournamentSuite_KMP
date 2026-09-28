@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
@@ -37,5 +38,11 @@ class PlayersPresenter(
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-    ): AppResult<Unit> = tournamentRepository.assignTournamentPlayer(tournamentId, tournamentPlayerId, emaId)
+        nonMember: NonMemberPlayer? = null,
+    ): AppResult<Unit> = tournamentRepository.assignTournamentPlayer(
+        tournamentId,
+        tournamentPlayerId,
+        emaId,
+        nonMember,
+    )
 }

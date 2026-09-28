@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.parseTournamentPlayerNames = parseTournamentPlayerNames;
 exports.runEmaPlayerRegistrySync = runEmaPlayerRegistrySync;
 const firestore_1 = require("firebase-admin/firestore");
 const node_crypto_1 = require("node:crypto");
@@ -145,18 +146,44 @@ async function markTournamentPaths(paths) {
     if (count > 0)
         await batch.commit();
 }
+function parseTournamentPlayerNames(html) {
+    const players = [];
+    const resultRows = [
+        ...html.matchAll(/<div\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bTCTT_ligneG?\b[^"']*["'])[^>]*>([\s\S]*?)<\/div>/gi),
+    ].map((match) => ({ body: match[1], cellPattern: /<p\b[^>]*>([\s\S]*?)<\/p>/gi }));
+    const legacyTableRows = [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)]
+        .map((match) => ({ body: match[1], cellPattern: /<td\b[^>]*>([\s\S]*?)<\/td>/gi }));
+    for (const row of [...resultRows, ...legacyTableRows]) {
+        const body = row.body;
+        const idMatch = body.match(/Players\/([0-9]+)\.html/i);
+        if (!idMatch)
+            continue;
+        const cells = [...body.matchAll(row.cellPattern)].map((cell) => text(cell[1]));
+        const idIndex = cells.findIndex((cell) => cell.replace(/^0+/, "") === idMatch[1].replace(/^0+/, ""));
+        if (idIndex < 0 || cells.length <= idIndex + 2)
+            continue;
+        const lastName = (0, playerName_1.normalizePlayerNamePart)(cells[idIndex + 1]);
+        const firstName = (0, playerName_1.normalizePlayerNamePart)(cells[idIndex + 2]);
+        const sourceCountry = body.match(/Country\/([A-Z]{3})_Information\.html/i)?.[1]?.toUpperCase() ?? "";
+        const country = sourceCountry === "EUR" ? "" : sourceCountry;
+        if (firstName && lastName) {
+            players.push({ emaId: (0, playersService_1.validateEmaId)(idMatch[1]), sourceEmaId: idMatch[1], firstName, lastName, country });
+        }
+    }
+    return players;
+}
 async function getPlayersFromTournamentPaths(tournamentPaths) {
-    const ids = new Set();
+    const nameParts = new Map();
     for (const path of tournamentPaths) {
         const html = await getHtml(baseUrl + "Tournament/" + path);
-        for (const match of html.matchAll(/Players\/([0-9]+)\.html/gi))
-            ids.add(match[1]);
+        for (const player of parseTournamentPlayerNames(html))
+            nameParts.set(player.emaId, player);
     }
-    console.log(`EMA tournament pages found ${ids.size} unique players.`);
-    const players = await mapWithConcurrency([...ids], async (emaId, index) => {
+    console.log(`EMA tournament pages found ${nameParts.size} unique players.`);
+    const players = await mapWithConcurrency([...nameParts.values()], async (parts, index) => {
         if ((index + 1) % 50 === 0)
-            console.log(`Read ${index + 1}/${ids.size} tournament player pages.`);
-        return getPlayer(emaId);
+            console.log(`Read ${index + 1}/${nameParts.size} tournament player pages.`);
+        return getPlayer(parts);
     });
     return players.filter((player) => player != null);
 }
@@ -170,24 +197,21 @@ async function getNewTournamentPlayers() {
     const players = await getPlayersFromTournamentPaths(newPaths);
     return { players, paths: newPaths };
 }
-async function getPlayer(emaId) {
-    const sourceUrl = `${baseUrl}Players/${emaId}.html`;
+async function getPlayer(parts) {
+    const { emaId, firstName, lastName } = parts;
+    const sourceUrl = `${baseUrl}Players/${parts.sourceEmaId}.html`;
     const html = await getHtml(sourceUrl);
-    const nameMatch = html.match(/Name\s*:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i);
-    // Keep the match inside the country cell. The old expression searched the
-    // rest of the page when the EMA guest flag was `European.png`, then used a
-    // tournament venue flag as the player's country.
-    const countryCell = html.match(/Country\s*:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i)?.[1] ?? "";
-    const countryFlag = countryCell.match(/Img\/flag\/16\/([^"'/?]+)\.png/i)?.[1] ?? "";
     const photoMatch = html.match(/<img[^>]+src="(?:\.\.\/Players\/)?photo\/([^"?#]+)"/i);
-    const name = nameMatch ? (0, playerName_1.normalizePlayerName)(text(nameMatch[1])) : "";
-    if (!name)
-        return null;
     const photoName = photoMatch?.[1];
     const hasPhoto = photoName != null && !/^vide\.jpe?g$/i.test(photoName);
-    const sourceCountry = countryFlag.toUpperCase();
-    const country = sourceCountry === "EU" || sourceCountry === "EUR" || sourceCountry === "EUROPEAN" ? "" : sourceCountry;
-    return { emaId, name, country, sourceUrl, photoSourceUrl: hasPhoto ? `${baseUrl}Players/photo/${photoName}` : null };
+    return {
+        emaId,
+        firstName,
+        lastName,
+        country: parts.country,
+        sourceUrl,
+        photoSourceUrl: hasPhoto ? `${baseUrl}Players/photo/${photoName}` : null,
+    };
 }
 async function runEmaPlayerRegistrySync(mode) {
     const startedAt = new Date().toISOString();
@@ -215,13 +239,21 @@ async function runEmaPlayerRegistrySync(mode) {
         const progress = players.indexOf(player) + 1;
         const before = existing.get(player.emaId);
         const photo = await syncPhoto(player, before);
-        const change = { emaId: player.emaId, name: player.name, country: player.country };
+        const change = {
+            emaId: player.emaId,
+            firstName: player.firstName,
+            lastName: player.lastName,
+            country: player.country,
+        };
         if (!before)
             additions.push(change);
-        else if (before.name !== player.name || before.country !== player.country)
+        else if (before.firstName !== player.firstName
+            || before.lastName !== player.lastName
+            || before.country !== player.country)
             updates.push(change);
         await firebase_1.db.collection(playersService_1.EMA_PLAYER_REGISTRY_COLLECTION).doc(player.emaId).set({
             ...player,
+            name: firestore_1.FieldValue.delete(),
             photoUrl: photo.url ?? before?.photoUrl ?? null,
             photoSourceEtag: photo.etag,
             lastSeenInTournamentAt: firestore_1.FieldValue.serverTimestamp(),

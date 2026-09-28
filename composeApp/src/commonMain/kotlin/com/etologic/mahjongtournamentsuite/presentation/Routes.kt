@@ -12,9 +12,6 @@ data object SignInRoute
 data object TournamentsRoute
 
 @Serializable
-data object CreateTournamentRoute
-
-@Serializable
 data object PlayerBaseRoute
 
 @Serializable

@@ -57,6 +57,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.BestHandRanking
 import com.etologic.mahjongtournamentsuite.domain.model.ChickenHandRanking
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
@@ -695,25 +696,13 @@ private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Ma
 )
 
 private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String =
-    slots[playerId]?.assignedEmaId?.let(players::get)?.name
+    (slots[playerId]?.assignedEmaId?.let(players::get)?.displayName ?: slots[playerId]?.nonMember?.displayName)
         ?.takeIf { it.isNotBlank() }
-        ?.formatRankingName()
         ?: "PLAYER $playerId"
 
-private fun String.formatRankingName(): String {
-    val words = trim().split(Regex("\\s+")).filter { it.isNotBlank() }
-    if (words.isEmpty()) return this
-    if (words.size == 1) return words.single().uppercase()
-
-    val firstName = words.first().uppercase()
-    val lastNames = words.drop(1).joinToString(" ") {
-        it.lowercase().replaceFirstChar { character -> character.titlecase() }
-    }
-    return "$firstName $lastNames"
-}
-
 private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String {
-    return slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
+    return slots[playerId]?.assignedEmaId?.let(players::get)?.country
+        ?: slots[playerId]?.nonMember?.country.orEmpty()
 }
 
 private fun formatPoints(value: Double): String =

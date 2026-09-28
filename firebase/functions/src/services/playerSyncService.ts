@@ -4,13 +4,13 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 
 import { db, storage } from "../firebase";
-import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
-import { decodePlayerNameEntities, normalizePlayerName } from "./playerName";
+import { EMA_PLAYER_REGISTRY_COLLECTION, validateEmaId } from "./playersService";
+import { decodePlayerNameEntities, normalizePlayerNamePart } from "./playerName";
 
 const baseUrl = `${process.env.EMA_SOURCE_BASE_URL ?? "https://mahjong-europe.org"}/ranking/`;
 const EMA_RANKING_TOURNAMENT_RESULT_INDEX = "emaRankingTournamentResultIndex";
 
-export type SyncChange = { emaId: string; name: string; country: string };
+export type SyncChange = { emaId: string; firstName: string; lastName: string; country: string };
 export type EmaPlayerRegistrySyncReport = {
   id: string;
   mode: "seed" | "incremental";
@@ -22,7 +22,22 @@ export type EmaPlayerRegistrySyncReport = {
   sourceUrls: string[];
 };
 
-type EmaPlayer = { emaId: string; name: string; country: string; sourceUrl: string; photoSourceUrl: string | null };
+type EmaPlayer = {
+  emaId: string;
+  firstName: string;
+  lastName: string;
+  country: string;
+  sourceUrl: string;
+  photoSourceUrl: string | null;
+};
+
+type TournamentNameParts = {
+  emaId: string;
+  sourceEmaId: string;
+  firstName: string;
+  lastName: string;
+  country: string;
+};
 
 async function mapWithConcurrency<T, R>(items: T[], worker: (item: T, index: number) => Promise<R>, concurrency = 6): Promise<R[]> {
   const results = new Array<R>(items.length);
@@ -155,16 +170,42 @@ async function markTournamentPaths(paths: Iterable<string>): Promise<void> {
   if (count > 0) await batch.commit();
 }
 
+export function parseTournamentPlayerNames(html: string): TournamentNameParts[] {
+  const players: TournamentNameParts[] = [];
+  const resultRows = [
+    ...html.matchAll(/<div\b(?=[^>]*\bclass\s*=\s*["'][^"']*\bTCTT_ligneG?\b[^"']*["'])[^>]*>([\s\S]*?)<\/div>/gi),
+  ].map((match) => ({ body: match[1], cellPattern: /<p\b[^>]*>([\s\S]*?)<\/p>/gi }));
+  const legacyTableRows = [...html.matchAll(/<tr\b[^>]*>([\s\S]*?)<\/tr>/gi)]
+    .map((match) => ({ body: match[1], cellPattern: /<td\b[^>]*>([\s\S]*?)<\/td>/gi }));
+
+  for (const row of [...resultRows, ...legacyTableRows]) {
+    const body = row.body;
+    const idMatch = body.match(/Players\/([0-9]+)\.html/i);
+    if (!idMatch) continue;
+    const cells = [...body.matchAll(row.cellPattern)].map((cell) => text(cell[1]));
+    const idIndex = cells.findIndex((cell) => cell.replace(/^0+/, "") === idMatch[1].replace(/^0+/, ""));
+    if (idIndex < 0 || cells.length <= idIndex + 2) continue;
+    const lastName = normalizePlayerNamePart(cells[idIndex + 1]);
+    const firstName = normalizePlayerNamePart(cells[idIndex + 2]);
+    const sourceCountry = body.match(/Country\/([A-Z]{3})_Information\.html/i)?.[1]?.toUpperCase() ?? "";
+    const country = sourceCountry === "EUR" ? "" : sourceCountry;
+    if (firstName && lastName) {
+      players.push({ emaId: validateEmaId(idMatch[1]), sourceEmaId: idMatch[1], firstName, lastName, country });
+    }
+  }
+  return players;
+}
+
 async function getPlayersFromTournamentPaths(tournamentPaths: Iterable<string>): Promise<EmaPlayer[]> {
-  const ids = new Set<string>();
+  const nameParts = new Map<string, TournamentNameParts>();
   for (const path of tournamentPaths) {
     const html = await getHtml(baseUrl + "Tournament/" + path);
-    for (const match of html.matchAll(/Players\/([0-9]+)\.html/gi)) ids.add(match[1]);
+    for (const player of parseTournamentPlayerNames(html)) nameParts.set(player.emaId, player);
   }
-  console.log(`EMA tournament pages found ${ids.size} unique players.`);
-  const players = await mapWithConcurrency([...ids], async (emaId, index) => {
-    if ((index + 1) % 50 === 0) console.log(`Read ${index + 1}/${ids.size} tournament player pages.`);
-    return getPlayer(emaId);
+  console.log(`EMA tournament pages found ${nameParts.size} unique players.`);
+  const players = await mapWithConcurrency([...nameParts.values()], async (parts, index) => {
+    if ((index + 1) % 50 === 0) console.log(`Read ${index + 1}/${nameParts.size} tournament player pages.`);
+    return getPlayer(parts);
   });
   return players.filter((player): player is EmaPlayer => player != null);
 }
@@ -180,23 +221,21 @@ async function getNewTournamentPlayers(): Promise<{ players: EmaPlayer[]; paths:
   return { players, paths: newPaths };
 }
 
-async function getPlayer(emaId: string): Promise<EmaPlayer | null> {
-  const sourceUrl = `${baseUrl}Players/${emaId}.html`;
+async function getPlayer(parts: TournamentNameParts): Promise<EmaPlayer | null> {
+  const { emaId, firstName, lastName } = parts;
+  const sourceUrl = `${baseUrl}Players/${parts.sourceEmaId}.html`;
   const html = await getHtml(sourceUrl);
-  const nameMatch = html.match(/Name\s*:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i);
-  // Keep the match inside the country cell. The old expression searched the
-  // rest of the page when the EMA guest flag was `European.png`, then used a
-  // tournament venue flag as the player's country.
-  const countryCell = html.match(/Country\s*:<\/td>\s*<td[^>]*>([\s\S]*?)<\/td>/i)?.[1] ?? "";
-  const countryFlag = countryCell.match(/Img\/flag\/16\/([^"'/?]+)\.png/i)?.[1] ?? "";
   const photoMatch = html.match(/<img[^>]+src="(?:\.\.\/Players\/)?photo\/([^"?#]+)"/i);
-  const name = nameMatch ? normalizePlayerName(text(nameMatch[1])) : "";
-  if (!name) return null;
   const photoName = photoMatch?.[1];
   const hasPhoto = photoName != null && !/^vide\.jpe?g$/i.test(photoName);
-  const sourceCountry = countryFlag.toUpperCase();
-  const country = sourceCountry === "EU" || sourceCountry === "EUR" || sourceCountry === "EUROPEAN" ? "" : sourceCountry;
-  return { emaId, name, country, sourceUrl, photoSourceUrl: hasPhoto ? `${baseUrl}Players/photo/${photoName}` : null };
+  return {
+    emaId,
+    firstName,
+    lastName,
+    country: parts.country,
+    sourceUrl,
+    photoSourceUrl: hasPhoto ? `${baseUrl}Players/photo/${photoName}` : null,
+  };
 }
 
 export async function runEmaPlayerRegistrySync(mode: "seed" | "incremental"): Promise<EmaPlayerRegistrySyncReport> {
@@ -226,11 +265,19 @@ export async function runEmaPlayerRegistrySync(mode: "seed" | "incremental"): Pr
     const progress = players.indexOf(player) + 1;
     const before = existing.get(player.emaId);
     const photo = await syncPhoto(player, before);
-    const change = { emaId: player.emaId, name: player.name, country: player.country };
+    const change = {
+      emaId: player.emaId,
+      firstName: player.firstName,
+      lastName: player.lastName,
+      country: player.country,
+    };
     if (!before) additions.push(change);
-    else if (before.name !== player.name || before.country !== player.country) updates.push(change);
+    else if (before.firstName !== player.firstName
+      || before.lastName !== player.lastName
+      || before.country !== player.country) updates.push(change);
     await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(player.emaId).set({
       ...player,
+      name: FieldValue.delete(),
       photoUrl: photo.url ?? before?.photoUrl ?? null,
       photoSourceEtag: photo.etag,
       lastSeenInTournamentAt: FieldValue.serverTimestamp(),

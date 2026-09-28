@@ -9,6 +9,9 @@ data class Tournament(
     val shortName: String = "",
     val primaryColor: String = "#02B16B",
     val associationLogoUrl: String? = null,
+    val hostCountry: String = "",
+    val hostCity: String = "",
+    val mers: Double = 0.0,
     /** First calendar date of the tournament in ISO-8601 format (yyyy-MM-dd). */
     val eventStartDate: String? = null,
     /** Last calendar date of the tournament in ISO-8601 format (yyyy-MM-dd). */
@@ -35,6 +38,8 @@ data class CreateTournamentRequest(
     val primaryColor: String,
     val associationLogoContentType: String? = null,
     val associationLogoBytes: ByteArray? = null,
+    val hostCountry: String,
+    val hostCity: String,
 )
 
 data class TournamentMember(

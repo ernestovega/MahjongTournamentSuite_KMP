@@ -21,7 +21,8 @@ function toPlayer(emaId, data) {
     const storedCountry = String(data.country ?? "").trim().toUpperCase();
     return {
         emaId,
-        name: (0, playerName_1.normalizePlayerName)(String(data.name ?? "")),
+        firstName: (0, playerName_1.normalizePlayerNamePart)(String(data.firstName ?? "")),
+        lastName: (0, playerName_1.normalizePlayerNamePart)(String(data.lastName ?? "")),
         country: storedCountry === "EU" ? "" : storedCountry,
         photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : null,
         createdAt: timestampToIso(data.createdAt),
@@ -33,13 +34,18 @@ function validateEmaId(value) {
     if (!/^\d+$/.test(emaId)) {
         throw (0, httpError_1.badRequest)("EMA number must contain only digits");
     }
-    return emaId;
+    if (emaId.length > 8) {
+        throw (0, httpError_1.badRequest)("EMA number must contain at most 8 digits");
+    }
+    return emaId.padStart(8, "0");
 }
 async function listPlayers() {
     const snapshot = await firebase_1.db.collection(exports.EMA_PLAYER_REGISTRY_COLLECTION).get();
     return snapshot.docs
         .map((document) => toPlayer(document.id, document.data()))
-        .sort((left, right) => left.name.localeCompare(right.name) || left.emaId.localeCompare(right.emaId));
+        .sort((left, right) => left.lastName.localeCompare(right.lastName)
+        || left.firstName.localeCompare(right.firstName)
+        || left.emaId.localeCompare(right.emaId));
 }
 async function createPlayer(params) {
     const ref = firebase_1.db.collection(exports.EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId);
@@ -48,7 +54,8 @@ async function createPlayer(params) {
         throw (0, httpError_1.badRequest)("A player with this EMA number already exists");
     }
     await ref.create({
-        name: (0, playerName_1.normalizePlayerName)(params.name),
+        firstName: (0, playerName_1.normalizePlayerNamePart)(params.firstName),
+        lastName: (0, playerName_1.normalizePlayerNamePart)(params.lastName),
         country: params.country,
         createdAt: firestore_1.FieldValue.serverTimestamp(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
@@ -67,19 +74,22 @@ async function updatePlayer(params) {
         throw (0, httpError_1.badRequest)("A player with this EMA number already exists");
     }
     const update = {
-        name: (0, playerName_1.normalizePlayerName)(params.name),
+        firstName: (0, playerName_1.normalizePlayerNamePart)(params.firstName),
+        lastName: (0, playerName_1.normalizePlayerNamePart)(params.lastName),
         country: params.country,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
     if (params.previousEmaId === params.emaId) {
-        await previousRef.update(update);
+        await previousRef.update({ ...update, name: firestore_1.FieldValue.delete() });
         return;
     }
     const references = await firebase_1.db.collectionGroup("players")
         .where("assignedEmaId", "==", params.previousEmaId)
         .get();
     const batch = firebase_1.db.batch();
-    batch.create(targetRef, { ...previousSnapshot.data(), ...update });
+    const previousData = previousSnapshot.data() ?? {};
+    const { name: _legacyName, ...retainedData } = previousData;
+    batch.create(targetRef, { ...retainedData, ...update });
     batch.delete(previousRef);
     references.docs.forEach((reference) => batch.update(reference.ref, { assignedEmaId: params.emaId, updatedAt: firestore_1.FieldValue.serverTimestamp() }));
     await batch.commit();
