@@ -61,8 +61,8 @@ function tournamentsRouter() {
                 issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
             if (!name)
                 issues.push({ field: "name", message: "Required", value: body?.name });
-            if (!/^[A-Z]{3}$/.test(hostCountry)) {
-                issues.push({ field: "hostCountry", message: "Must use a three-letter EMA country code", value: body?.hostCountry });
+            if (!/^[A-Z]{2,3}$/.test(hostCountry)) {
+                issues.push({ field: "hostCountry", message: "Must use a two-letter country code or legacy three-letter EMA code", value: body?.hostCountry });
             }
             if (!hostCity)
                 issues.push({ field: "hostCity", message: "Required", value: body?.hostCity });
@@ -245,8 +245,8 @@ function tournamentsRouter() {
             if (!(0, tournamentDates_1.isValidIsoDateRange)(eventStartDate, eventEndDate)) {
                 throw (0, httpError_1.badRequest)("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
             }
-            if (!/^[A-Z]{3}$/.test(hostCountry)) {
-                throw (0, httpError_1.badRequest)("Host country must use a three-letter EMA country code");
+            if (!/^[A-Z]{2,3}$/.test(hostCountry)) {
+                throw (0, httpError_1.badRequest)("Host country must use a two-letter country code or legacy three-letter EMA code");
             }
             if (!hostCity)
                 throw (0, httpError_1.badRequest)("Host city is required");

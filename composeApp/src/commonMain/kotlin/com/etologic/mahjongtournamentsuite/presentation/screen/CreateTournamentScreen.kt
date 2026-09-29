@@ -78,6 +78,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
@@ -88,7 +89,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDro
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -137,6 +138,7 @@ fun CreateTournamentDialog(
     var shortName by remember { mutableStateOf("") }
     var primaryColor by remember { mutableStateOf("#02B16B") }
     var hostCountry by remember { mutableStateOf("") }
+    var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
     var hostCity by remember { mutableStateOf("") }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var associationLogo by remember { mutableStateOf<SelectedImage?>(null) }
@@ -150,7 +152,7 @@ fun CreateTournamentDialog(
     }
     var eventStartDate by remember { mutableStateOf(today) }
     var eventEndDate by remember { mutableStateOf(today) }
-    var datePickerFor by remember { mutableStateOf<String?>(null) }
+    var showDateRangePicker by remember { mutableStateOf(false) }
     var numPlayersText by remember { mutableStateOf("60") }
     var numRoundsText by remember { mutableStateOf("7") }
     var isTeams by remember { mutableStateOf(true) }
@@ -206,6 +208,10 @@ fun CreateTournamentDialog(
 
     LaunchedEffect(Unit) {
         nameFocusRequester.requestFocus()
+        when (val result = presenter.loadCountries()) {
+            is AppResult.Success -> countries = result.value
+            is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+        }
     }
 
     fun startCreate() {
@@ -236,8 +242,8 @@ fun CreateTournamentDialog(
             primaryColorFocusRequester.requestFocus()
             return
         }
-        if (!Regex("^[A-Z]{3}$").matches(normalizedHostCountry)) {
-            errorMessage = "* Host country must use a three-letter EMA code, for example ESP."
+        if (!Regex("^[A-Z]{2,3}$").matches(normalizedHostCountry)) {
+            errorMessage = "* Select a host country."
             hostCountryFocusRequester.requestFocus()
             return
         }
@@ -251,7 +257,7 @@ fun CreateTournamentDialog(
             trimmedEndDate == null ||
             !TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)
         ) {
-            errorMessage = "* Enter valid DD-MM-YYYY dates. The end date must not be before the start date."
+            errorMessage = "* Enter valid DD/MM/YYYY dates. The end date must not be before the start date."
             return
         }
         if (numPlayers == null || numPlayers <= 0 || numPlayers % 4 != 0) {
@@ -387,8 +393,10 @@ fun CreateTournamentDialog(
                         EmaCountryDropdown(
                             selectedCode = hostCountry,
                             onCountrySelected = { hostCountry = it },
+                            countries = countries,
                             enabled = !isLoading,
-                            modifier = Modifier.weight(1f).focusRequester(hostCountryFocusRequester),
+                            modifier = Modifier.weight(1f),
+                            focusRequester = hostCountryFocusRequester,
                             label = "Country",
                         )
                         OutlinedTextField(
@@ -411,9 +419,9 @@ fun CreateTournamentDialog(
                                 eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
                             },
                             label = { Text("From") },
-                            placeholder = { Text("DD-MM-YYYY") },
+                            placeholder = { Text("DD/MM/YYYY") },
                             trailingIcon = {
-                                IconButton(onClick = { datePickerFor = "start" }) {
+                                IconButton(onClick = { showDateRangePicker = true }) {
                                     androidx.compose.material3.Icon(
                                         Icons.Default.DateRange,
                                         contentDescription = "Choose start date",
@@ -434,9 +442,9 @@ fun CreateTournamentDialog(
                                 }
                             },
                             label = { Text("To") },
-                            placeholder = { Text("DD-MM-YYYY") },
+                            placeholder = { Text("DD/MM/YYYY") },
                             trailingIcon = {
-                                IconButton(onClick = { datePickerFor = "end" }) {
+                                IconButton(onClick = { showDateRangePicker = true }) {
                                     androidx.compose.material3.Icon(
                                         Icons.Default.DateRange,
                                         contentDescription = "Choose end date",
@@ -454,7 +462,7 @@ fun CreateTournamentDialog(
                         isError = errorMessage?.contains("color", ignoreCase = true) == true,
                         onValueChange = { primaryColor = it },
                         onPreviewClick = {
-                            datePickerFor = null
+                            showDateRangePicker = false
                             showColorPickerDialog = true
                         },
                         fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
@@ -624,26 +632,15 @@ fun CreateTournamentDialog(
         },
     )
 
-    if (datePickerFor == "start") {
-        TournamentDatePickerDialog(
-            selectedDisplayDate = eventStartDate,
-            onDismiss = { datePickerFor = null },
-            onDateSelected = { selectedDate ->
-                eventStartDate = selectedDate
-                eventEndDate = adjustedEndDate(selectedDate, eventEndDate)
-                datePickerFor = null
-            },
-        )
-    }
-
-    if (datePickerFor == "end") {
-        TournamentDatePickerDialog(
-            selectedDisplayDate = eventEndDate,
-            minimumDisplayDate = eventStartDate,
-            onDismiss = { datePickerFor = null },
-            onDateSelected = { selectedDate ->
-                eventEndDate = adjustedEndDate(eventStartDate, selectedDate)
-                datePickerFor = null
+    if (showDateRangePicker) {
+        TournamentDateRangePickerDialog(
+            selectedStartDisplayDate = eventStartDate,
+            selectedEndDisplayDate = eventEndDate,
+            onDismiss = { showDateRangePicker = false },
+            onDatesSelected = { selectedStartDate, selectedEndDate ->
+                eventStartDate = selectedStartDate
+                eventEndDate = selectedEndDate
+                showDateRangePicker = false
             },
         )
     }

@@ -56,7 +56,43 @@ fun CountryFlag(
 
 internal fun normalizedFlagCountryCode(code: String): String? {
     val normalized = code.trim().uppercase()
-    return normalized.takeIf {
-        it != "EU" && it.length == 2 && it.all { character -> character in 'A'..'Z' }
+    if (normalized == "EU") return normalized
+
+    if (normalized.length == 2 && normalized.all { character -> character in 'A'..'Z' }) {
+        return normalized
     }
+
+    return emaCountryCodeToIso2[normalized]
 }
+
+private val emaCountryCodeToIso2 = mapOf(
+    "AUT" to "AT",
+    "BEL" to "BE",
+    "BLR" to "BY",
+    "CHE" to "CH",
+    "CZE" to "CZ",
+    "DEU" to "DE",
+    "DEN" to "DK",
+    "DNK" to "DK",
+    "ESP" to "ES",
+    "FIN" to "FI",
+    "FRA" to "FR",
+    "GBR" to "GB",
+    "GER" to "DE",
+    "HUN" to "HU",
+    "IRL" to "IE",
+    "ITA" to "IT",
+    "LAT" to "LV",
+    "NED" to "NL",
+    "NLD" to "NL",
+    "NOR" to "NO",
+    "POL" to "PL",
+    "POR" to "PT",
+    "PRT" to "PT",
+    "ROU" to "RO",
+    "RUS" to "RU",
+    "SUI" to "CH",
+    "SVK" to "SK",
+    "SWE" to "SE",
+    "UKR" to "UA",
+)

@@ -72,6 +72,7 @@ import mahjongtournamentsuite.composeapp.generated.resources.flag_eh
 import mahjongtournamentsuite.composeapp.generated.resources.flag_er
 import mahjongtournamentsuite.composeapp.generated.resources.flag_es
 import mahjongtournamentsuite.composeapp.generated.resources.flag_et
+import mahjongtournamentsuite.composeapp.generated.resources.flag_eu
 import mahjongtournamentsuite.composeapp.generated.resources.flag_fi
 import mahjongtournamentsuite.composeapp.generated.resources.flag_fj
 import mahjongtournamentsuite.composeapp.generated.resources.flag_fk
@@ -324,6 +325,7 @@ internal fun flagResourceFor(code: String): DrawableResource? = when (code) {
     "ER" -> Res.drawable.flag_er
     "ES" -> Res.drawable.flag_es
     "ET" -> Res.drawable.flag_et
+    "EU" -> Res.drawable.flag_eu
     "FI" -> Res.drawable.flag_fi
     "FJ" -> Res.drawable.flag_fj
     "FK" -> Res.drawable.flag_fk

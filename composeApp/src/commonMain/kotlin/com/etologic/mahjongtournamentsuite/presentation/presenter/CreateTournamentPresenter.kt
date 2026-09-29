@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.data.platform.platformCpuCount
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
+import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
@@ -18,6 +19,8 @@ class CreateTournamentPresenter(
     private val logger: Logger,
     private val generateSchedule: GenerateTournamentScheduleBruteForceParallelUseCase,
 ) {
+    suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
+
     enum class ComputeMode {
         LIGHT,
         HEAVY,

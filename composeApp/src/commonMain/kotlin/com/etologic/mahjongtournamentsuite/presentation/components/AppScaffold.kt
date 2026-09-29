@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -199,12 +201,7 @@ private fun SlowLinearLoadingIndicator(
 
 @Composable
 private fun AppBackButton(onClick: () -> Unit) {
-    AppTextButton(onClick = onClick) {
-        Text(
-            text = "Back",
-            color = Color.White,
-        )
-    }
+    AppTopBarButton(text = "Back", icon = Icons.AutoMirrored.Filled.ArrowBack, onClick = onClick)
 }
 
 @Preview(device = Devices.DESKTOP)

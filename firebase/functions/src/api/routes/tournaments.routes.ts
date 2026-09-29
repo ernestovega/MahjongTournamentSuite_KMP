@@ -78,8 +78,8 @@ export function tournamentsRouter(): Router {
       const issues: Array<{ field: string; message: string; value?: unknown }> = [];
       if (!body) issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
       if (!name) issues.push({ field: "name", message: "Required", value: body?.name });
-      if (!/^[A-Z]{3}$/.test(hostCountry)) {
-        issues.push({ field: "hostCountry", message: "Must use a three-letter EMA country code", value: body?.hostCountry });
+      if (!/^[A-Z]{2,3}$/.test(hostCountry)) {
+        issues.push({ field: "hostCountry", message: "Must use a two-letter country code or legacy three-letter EMA code", value: body?.hostCountry });
       }
       if (!hostCity) issues.push({ field: "hostCity", message: "Required", value: body?.hostCity });
       if (!shortName || shortName.length > 10) {
@@ -254,8 +254,8 @@ export function tournamentsRouter(): Router {
       if (!isValidIsoDateRange(eventStartDate, eventEndDate)) {
         throw badRequest("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
       }
-      if (!/^[A-Z]{3}$/.test(hostCountry)) {
-        throw badRequest("Host country must use a three-letter EMA country code");
+      if (!/^[A-Z]{2,3}$/.test(hostCountry)) {
+        throw badRequest("Host country must use a two-letter country code or legacy three-letter EMA code");
       }
       if (!hostCity) throw badRequest("Host city is required");
       if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {

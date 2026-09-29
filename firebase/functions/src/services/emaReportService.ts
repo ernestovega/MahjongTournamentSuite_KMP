@@ -74,8 +74,18 @@ function periodText(startDate: string, endDate: string): string {
   return `${startDay} ${startMonth} ${startYear}-${endDay} ${endMonth} ${endYear}`;
 }
 
+/** Format EMA source names for the report without changing stored registry values. */
+function reportName(value: string): string {
+  return value
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/(^|[\s'’-])(\p{L})/gu, (_, separator: string, letter: string) =>
+      `${separator}${letter.toLocaleUpperCase()}`,
+    );
+}
+
 export async function buildEmaReport(input: EmaReportInput): Promise<Buffer> {
-  if (!/^[A-Z]{3}$/.test(input.hostCountry.trim().toUpperCase()) || input.hostCity.trim().length === 0) {
+  if (!/^[A-Z]{2,3}$/.test(input.hostCountry.trim().toUpperCase()) || input.hostCity.trim().length === 0) {
     throw badRequest("Host country and host city are required before EMA export");
   }
   if (input.rows.some((row) => row.firstName.trim().length === 0 || row.lastName.trim().length === 0)) {
@@ -93,8 +103,8 @@ export async function buildEmaReport(input: EmaReportInput): Promise<Buffer> {
       input.tournamentName,
       input.participantCount,
       row.place,
-      row.firstName,
-      row.lastName,
+      reportName(row.firstName),
+      row.lastName.trim().toUpperCase(),
       row.emaId == null ? "" : validateEmaId(row.emaId),
       row.tablePoints,
       row.score,
@@ -123,7 +133,9 @@ export async function buildEmaReport(input: EmaReportInput): Promise<Buffer> {
     };
   }));
   sheet.getColumn(6).numFmt = "@";
-  sheet.getColumn(11).numFmt = "D/M/YYYY";
+  // Use lower-case Excel date tokens. Some spreadsheet readers treat upper-case
+  // tokens as literal text and display values such as `D/10/YYYY`.
+  sheet.getColumn(11).numFmt = "d/m/yyyy";
   sheet.columns.forEach((column, index) => {
     const longest = Math.max(EMA_REPORT_HEADERS[index].length, ...input.rows.map((row) => {
       if (index === 3) return row.firstName.length;

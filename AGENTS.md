@@ -63,7 +63,7 @@ Do not add more libraries casually. Keep the setup lean and only add new depende
 
 - Kotlin: `2.3.20`
 - AGP: `9.0.1`
-- Gradle: `9.1.0`
+- Gradle: `9.3.1`
 - Compose Multiplatform: `1.10.2`
 
 The project is already migrated to the AGP 9-compatible KMP structure:

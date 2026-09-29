@@ -19,7 +19,7 @@ const emaReportService_1 = require("./emaReportService");
         shortName: "MMC2025",
         rows: [{
                 place: 1,
-                firstName: "Anton",
+                firstName: "ANTON",
                 lastName: "KÖSTERS",
                 emaId: "8010039",
                 tablePoints: 24,
@@ -36,8 +36,10 @@ const emaReportService_1 = require("./emaReportService");
     strict_1.default.deepEqual(headerValues.slice(1), [...emaReportService_1.EMA_REPORT_HEADERS]);
     strict_1.default.equal(sheet.getCell("F2").value, "08010039");
     strict_1.default.equal(sheet.getCell("F2").numFmt, "@");
+    strict_1.default.equal(sheet.getCell("D2").value, "Anton");
+    strict_1.default.equal(sheet.getCell("E2").value, "KÖSTERS");
     strict_1.default.ok(sheet.getCell("K2").value instanceof Date);
-    strict_1.default.equal(sheet.getCell("K2").numFmt, "D/M/YYYY");
+    strict_1.default.equal(sheet.getCell("K2").numFmt, "d/m/yyyy");
     strict_1.default.equal(sheet.getCell("P2").value, "Chinese official");
     strict_1.default.equal(sheet.getCell("S2").value, "NO");
 });

@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
@@ -69,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
@@ -83,6 +85,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
@@ -102,7 +105,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableCol
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
@@ -142,6 +145,7 @@ fun TournamentsScreen(
     val profile by store.profile.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
     val tournaments by store.tournaments.collectAsState()
+    var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
 
     var isRefreshing by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
@@ -157,7 +161,7 @@ fun TournamentsScreen(
     var settingsEventEndDate by remember { mutableStateOf("") }
     var settingsHostCountry by remember { mutableStateOf("") }
     var settingsHostCity by remember { mutableStateOf("") }
-    var datePickerFor by remember { mutableStateOf<String?>(null) }
+    var showDateRangePicker by remember { mutableStateOf(false) }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var settingsLogo by remember { mutableStateOf<SelectedImage?>(null) }
     var removeSettingsLogo by remember { mutableStateOf(false) }
@@ -222,6 +226,12 @@ fun TournamentsScreen(
 
                 is AppResult.Failure -> if (errorMessage == null) errorMessage =
                     tournamentsResult.error.toUiMessage()
+            }
+
+            when (val countriesResult = presenter.loadCountries()) {
+                is AppResult.Success -> countries = countriesResult.value
+                is AppResult.Failure -> if (errorMessage == null) errorMessage =
+                    countriesResult.error.toUiMessage()
             }
 
             isRefreshing = false
@@ -343,7 +353,7 @@ fun TournamentsScreen(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = {
                 if (!isLoading) {
-                    datePickerFor = null
+                    showDateRangePicker = false
                     showColorPickerDialog = false
                     renameDialogTournament = null
                 }
@@ -410,12 +420,14 @@ fun TournamentsScreen(
                         ) {
                             EmaCountryDropdown(
                                 selectedCode = settingsHostCountry,
+                                countries = countries,
                                 onCountrySelected = {
                                     settingsHostCountry = it
                                     invalidEditFields = invalidEditFields - TournamentEditField.HOST_COUNTRY
                                     renameError = null
                                 },
-                                modifier = Modifier.weight(1f).focusRequester(settingsHostCountryFocusRequester),
+                                modifier = Modifier.weight(1f),
+                                focusRequester = settingsHostCountryFocusRequester,
                                 isError = TournamentEditField.HOST_COUNTRY in invalidEditFields,
                                 label = "Country",
                                 errorMessage = if (TournamentEditField.HOST_COUNTRY in invalidEditFields) {
@@ -462,9 +474,9 @@ fun TournamentsScreen(
                                 },
                                 modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
                                 label = { Text("From") },
-                                placeholder = { Text("DD-MM-YYYY") },
+                                placeholder = { Text("DD/MM/YYYY") },
                                 trailingIcon = {
-                                    IconButton(onClick = { datePickerFor = "start" }) {
+                                    IconButton(onClick = { showDateRangePicker = true }) {
                                         Icon(
                                             imageVector = Icons.Default.DateRange,
                                             contentDescription = "Choose start date",
@@ -474,7 +486,7 @@ fun TournamentsScreen(
                                 singleLine = true,
                                 isError = TournamentEditField.START_DATE in invalidEditFields,
                                 supportingText = if (TournamentEditField.START_DATE in invalidEditFields) {
-                                    { Text("Use DD-MM-YYYY.") }
+                                    { Text("Use DD/MM/YYYY.") }
                                 } else {
                                     null
                                 },
@@ -496,9 +508,9 @@ fun TournamentsScreen(
                                 },
                                 modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
                                 label = { Text("To") },
-                                placeholder = { Text("DD-MM-YYYY") },
+                                placeholder = { Text("DD/MM/YYYY") },
                                 trailingIcon = {
-                                    IconButton(onClick = { datePickerFor = "end" }) {
+                                    IconButton(onClick = { showDateRangePicker = true }) {
                                         Icon(
                                             imageVector = Icons.Default.DateRange,
                                             contentDescription = "Choose end date",
@@ -530,7 +542,7 @@ fun TournamentsScreen(
                                 renameError = null
                             },
                             onPreviewClick = {
-                                datePickerFor = null
+                                showDateRangePicker = false
                                 showColorPickerDialog = true
                             },
                             fieldModifier = Modifier.focusRequester(settingsColorFocusRequester),
@@ -688,7 +700,7 @@ fun TournamentsScreen(
                     FocusedTextButton(
                         enabled = !isLoading,
                         onClick = {
-                            datePickerFor = null
+                            showDateRangePicker = false
                             showColorPickerDialog = false
                             renameDialogTournament = null
                         },
@@ -713,7 +725,7 @@ fun TournamentsScreen(
                                 if (newShortName.isEmpty() || newShortName.length > 10) {
                                     add(TournamentEditField.SHORT_NAME)
                                 }
-                                if (!Regex("^[A-Z]{3}$").matches(newHostCountry)) {
+                                if (!Regex("^[A-Z]{2,3}$").matches(newHostCountry)) {
                                     add(TournamentEditField.HOST_COUNTRY)
                                 }
                                 if (newHostCity.isEmpty()) {
@@ -770,7 +782,7 @@ fun TournamentsScreen(
                                     removeAssociationLogo = removeSettingsLogo,
                                 )) {
                                     is AppResult.Success -> {
-                                        datePickerFor = null
+                                        showDateRangePicker = false
                                         showColorPickerDialog = false
                                         renameDialogTournament = null
                                         store.updateTournament(result.value)
@@ -797,36 +809,20 @@ fun TournamentsScreen(
             },
         )
 
-        if (datePickerFor == "start") {
-            TournamentDatePickerDialog(
-                selectedDisplayDate = settingsEventStartDate,
-                onDismiss = { datePickerFor = null },
-                onDateSelected = { selectedDate ->
-                    settingsEventStartDate = selectedDate
-                    settingsEventEndDate = adjustedEndDate(selectedDate, settingsEventEndDate)
+        if (showDateRangePicker) {
+            TournamentDateRangePickerDialog(
+                selectedStartDisplayDate = settingsEventStartDate,
+                selectedEndDisplayDate = settingsEventEndDate,
+                onDismiss = { showDateRangePicker = false },
+                onDatesSelected = { selectedStartDate, selectedEndDate ->
+                    settingsEventStartDate = selectedStartDate
+                    settingsEventEndDate = selectedEndDate
                     invalidEditFields = invalidEditFields - setOf(
                         TournamentEditField.START_DATE,
                         TournamentEditField.END_DATE,
                     )
                     renameError = null
-                    datePickerFor = null
-                },
-            )
-        }
-
-        if (datePickerFor == "end") {
-            TournamentDatePickerDialog(
-                selectedDisplayDate = settingsEventEndDate,
-                minimumDisplayDate = settingsEventStartDate,
-                onDismiss = { datePickerFor = null },
-                onDateSelected = { selectedDate ->
-                    settingsEventEndDate = adjustedEndDate(settingsEventStartDate, selectedDate)
-                    invalidEditFields = invalidEditFields - setOf(
-                        TournamentEditField.START_DATE,
-                        TournamentEditField.END_DATE,
-                    )
-                    renameError = null
-                    datePickerFor = null
+                    showDateRangePicker = false
                 },
             )
         }
@@ -1036,7 +1032,7 @@ fun TournamentsScreen(
                                                     settingsLogo = null
                                                     removeSettingsLogo = false
                                                     logoImageInfo = null
-                                                    datePickerFor = null
+                                                    showDateRangePicker = false
                                                     showColorPickerDialog = false
                                                     renameDialogTournament = tournament
                                                 },
@@ -1145,7 +1141,9 @@ private fun LogoutButton(
     presenter: TournamentsPresenter,
     navController: NavHostController
 ) {
-    AppTextButton(
+    AppTopBarButton(
+        text = "Logout",
+        icon = Icons.AutoMirrored.Filled.Logout,
         onClick = {
             coroutineScope.launch {
                 presenter.signOut()
@@ -1154,12 +1152,7 @@ private fun LogoutButton(
                 }
             }
         },
-    ) {
-        Text(
-            text = "Logout",
-            color = Color.White,
-        )
-    }
+    )
 }
 
 @Composable

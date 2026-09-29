@@ -3,10 +3,15 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.LightMode
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,11 +36,11 @@ fun AppTopBarLeadingActions(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
-        onUsers?.let { AppTopBarButton("App Users", it, usersFocusRequester) }
+        onUsers?.let { AppTopBarButton("App Users", Icons.Default.Person, it, usersFocusRequester) }
         if (showThemeToggle) { ThemeModeToggleButton() }
-        onTimer?.let { AppTopBarButton("Timer", it, timerFocusRequester) }
-        onRanking?.let { AppTopBarButton("Ranking", it, rankingFocusRequester) }
-        onExport?.let { AppTopBarButton("Export", it, exportFocusRequester) }
+        onTimer?.let { AppTopBarButton("Timer", Icons.Default.AccessTime, it, timerFocusRequester) }
+        onRanking?.let { AppTopBarButton("Ranking", Icons.Default.Leaderboard, it, rankingFocusRequester) }
+        onExport?.let { AppTopBarButton("Export", Icons.Default.FileUpload, it, exportFocusRequester) }
     }
 }
 
@@ -44,12 +49,11 @@ private fun ThemeModeToggleButton() {
     val themeController = LocalThemeController.current
     val label = "Theme: ${themeController.preference.name}"
 
-    AppTextButton(onClick = themeController.onTogglePreference) {
-        Text(
-            text = label,
-            color = Color.White,
-        )
-    }
+    AppTopBarButton(
+        text = label,
+        icon = if (themeController.isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+        onClick = themeController.onTogglePreference,
+    )
 }
 
 @Preview(device = Devices.DESKTOP)

@@ -11,22 +11,32 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CalendarLocale
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerState
+import androidx.compose.material3.DateRangePicker
+import androidx.compose.material3.DateRangePickerDefaults
+import androidx.compose.material3.DateRangePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +68,7 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import kotlinx.datetime.LocalDate
@@ -426,15 +437,116 @@ fun TournamentDatePickerDialog(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TournamentDateRangePickerDialog(
+    selectedStartDisplayDate: String,
+    selectedEndDisplayDate: String,
+    onDismiss: () -> Unit,
+    onDatesSelected: (startDisplayDate: String, endDisplayDate: String) -> Unit,
+) {
+    val initialStartMillis = displayDateToEpochMillis(selectedStartDisplayDate)
+    val initialEndMillis = displayDateToEpochMillis(selectedEndDisplayDate)
+    val locale = remember { mondayFirstCalendarLocale() }
+    val pickerColors = DatePickerDefaults.colors()
+    val dateFormatter = remember { DatePickerDefaults.dateFormatter() }
+    val state = remember(initialStartMillis, initialEndMillis) {
+        DateRangePickerState(
+            locale = locale,
+            initialSelectedStartDateMillis = initialStartMillis,
+            initialSelectedEndDateMillis = initialEndMillis,
+        )
+    }
+
+    // This picker needs added height to show the next month. The 420 dp cap keeps day spacing compact.
+    // Outer padding keeps the custom dialog clear of small window edges.
+    BasicAlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.appFocusGroup(),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier = Modifier
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+                .widthIn(max = 420.dp)
+                .fillMaxWidth()
+                .fillMaxHeight(0.9f)
+                .heightIn(max = 720.dp),
+            shape = DatePickerDefaults.shape,
+            color = pickerColors.containerColor,
+            tonalElevation = DatePickerDefaults.TonalElevation,
+        ) {
+            Column {
+                DateRangePicker(
+                    state = state,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f),
+                    colors = pickerColors,
+                    title = {
+                        DateRangePickerDefaults.DateRangePickerTitle(
+                            displayMode = state.displayMode,
+                            modifier = Modifier.padding(
+                                start = 24.dp,
+                                top = 24.dp,
+                                end = 24.dp,
+                                bottom = 8.dp,
+                            ),
+                            contentColor = pickerColors.titleContentColor,
+                        )
+                    },
+                    headline = {
+                        ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                            DateRangePickerDefaults.DateRangePickerHeadline(
+                                selectedStartDateMillis = state.selectedStartDateMillis,
+                                selectedEndDateMillis = state.selectedEndDateMillis,
+                                displayMode = state.displayMode,
+                                dateFormatter = dateFormatter,
+                                modifier = Modifier.padding(start = 24.dp, end = 8.dp, bottom = 16.dp),
+                                contentColor = pickerColors.headlineContentColor,
+                            )
+                        }
+                    },
+                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    FocusedTextButton(onClick = onDismiss) {
+                        Text("Cancel")
+                    }
+                    FocusedTextButton(
+                        enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
+                        onClick = {
+                            val startMillis = state.selectedStartDateMillis
+                            val endMillis = state.selectedEndDateMillis
+                            if (startMillis != null && endMillis != null) {
+                                onDatesSelected(
+                                    epochMillisToDisplayDate(startMillis),
+                                    epochMillisToDisplayDate(endMillis),
+                                )
+                            }
+                        },
+                    ) {
+                        Text("OK")
+                    }
+                }
+            }
+        }
+    }
+}
+
 fun String?.toDisplayTournamentDate(): String {
     val isoDate = this?.trim().orEmpty()
     if (!TournamentDateRangeValidator.isValidDate(isoDate)) return ""
-    return "${isoDate.substring(8, 10)}-${isoDate.substring(5, 7)}-${isoDate.substring(0, 4)}"
+    return "${isoDate.substring(8, 10)}/${isoDate.substring(5, 7)}/${isoDate.substring(0, 4)}"
 }
 
 fun String.toIsoTournamentDateOrNull(): String? {
     val displayDate = trim()
-    if (!Regex("^\\d{2}-\\d{2}-\\d{4}$").matches(displayDate)) return null
+    if (!Regex("^\\d{2}/\\d{2}/\\d{4}$").matches(displayDate)) return null
     val isoDate = buildString {
         append(displayDate.substring(6, 10))
         append('-')

@@ -24,7 +24,7 @@ Kotlin Multiplatform project targeting:
 
 - Kotlin `2.3.20`
 - AGP `9.0.1`
-- Gradle `9.1.0`
+- Gradle `9.3.1`
 - Compose Multiplatform `1.10.2`
 
 ## Libraries In Use

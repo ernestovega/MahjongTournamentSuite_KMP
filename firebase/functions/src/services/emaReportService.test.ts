@@ -16,7 +16,7 @@ test("EMA report keeps exact columns and typed Excel values", async () => {
     shortName: "MMC2025",
     rows: [{
       place: 1,
-      firstName: "Anton",
+      firstName: "ANTON",
       lastName: "KÖSTERS",
       emaId: "8010039",
       tablePoints: 24,
@@ -33,8 +33,10 @@ test("EMA report keeps exact columns and typed Excel values", async () => {
   assert.deepEqual(headerValues.slice(1), [...EMA_REPORT_HEADERS]);
   assert.equal(sheet.getCell("F2").value, "08010039");
   assert.equal(sheet.getCell("F2").numFmt, "@");
+  assert.equal(sheet.getCell("D2").value, "Anton");
+  assert.equal(sheet.getCell("E2").value, "KÖSTERS");
   assert.ok(sheet.getCell("K2").value instanceof Date);
-  assert.equal(sheet.getCell("K2").numFmt, "D/M/YYYY");
+  assert.equal(sheet.getCell("K2").numFmt, "d/m/yyyy");
   assert.equal(sheet.getCell("P2").value, "Chinese official");
   assert.equal(sheet.getCell("S2").value, "NO");
 });

@@ -58,6 +58,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
@@ -82,6 +83,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DoneAll
 import androidx.compose.material.icons.filled.RadioButtonUnchecked
+import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.material.icons.filled.Timelapse
 import androidx.compose.material3.Icon
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
@@ -596,16 +598,14 @@ fun TournamentScreen(
                 selectedTableId != null &&
                 editorState != null
             ) {
-                AppTextButton(
+                AppTopBarButton(
+                    text = "Reset table",
+                    icon = Icons.Default.RestartAlt,
                     onClick = { showResetConfirmation = true },
                     enabled = !isLoading,
                     focusRequester = resetFocusRequester,
-                ) {
-                    Text(
-                        text = "Reset table",
-                        color = MaterialTheme.colorScheme.error,
-                    )
-                }
+                    textColor = MaterialTheme.colorScheme.error,
+                )
             }
         }
     ) {

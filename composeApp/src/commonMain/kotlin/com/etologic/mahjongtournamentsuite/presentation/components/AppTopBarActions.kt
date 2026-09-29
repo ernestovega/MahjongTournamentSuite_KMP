@@ -2,6 +2,21 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddBox
+import androidx.compose.material.icons.filled.AddBusiness
+import androidx.compose.material.icons.filled.AddHome
+import androidx.compose.material.icons.filled.Badge
+import androidx.compose.material.icons.filled.Assessment
+import androidx.compose.material.icons.filled.DomainAdd
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.LibraryAdd
+import androidx.compose.material.icons.filled.ManageAccounts
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.TableView
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusRequester
@@ -36,16 +51,16 @@ fun AppTopBarActions(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End,
         ) {
-            onTeams?.let { AppTopBarButton("Teams", it, teamsFocusRequester) }
-            onPlayers?.let { AppTopBarButton("Players", it, playersFocusRequester) }
-            onIdCards?.let { AppTopBarButton("ID cards", it, idCardsFocusRequester) }
-            onUsers?.let { AppTopBarButton("App Users", it, usersFocusRequester) }
-            onExport?.let { AppTopBarButton("EMA report", it, exportFocusRequester) }
-            onPlayerBase?.let { AppTopBarButton("EMA Players", it, playerBaseFocusRequester) }
-            onRefresh?.let { AppTopBarButton("Refresh", it, refreshFocusRequester) }
-            onNewTournament?.let { AppTopBarButton("New Tournament", it, newTournamentFocusRequester) }
-            onNewPlayer?.let { AppTopBarButton("New Player", it, newPlayerFocusRequester) }
-            onNewUser?.let { AppTopBarButton("NEW USER", it, newUserFocusRequester) }
+            onTeams?.let { AppTopBarButton("Teams", Icons.Default.Groups, it, teamsFocusRequester) }
+            onPlayers?.let { AppTopBarButton("Players", Icons.Default.People, it, playersFocusRequester) }
+            onIdCards?.let { AppTopBarButton("ID cards", Icons.Default.Badge, it, idCardsFocusRequester) }
+            onUsers?.let { AppTopBarButton("App Users", Icons.Default.ManageAccounts, it, usersFocusRequester) }
+            onExport?.let { AppTopBarButton("EMA report", Icons.Default.Assessment, it, exportFocusRequester) }
+            onPlayerBase?.let { AppTopBarButton("EMA Players", Icons.Default.People, it, playerBaseFocusRequester) }
+            onRefresh?.let { AppTopBarButton("Refresh", Icons.Default.Refresh, it, refreshFocusRequester) }
+            onNewTournament?.let { AppTopBarButton("New Tournament", Icons.Outlined.AddBox, it, newTournamentFocusRequester) }
+            onNewPlayer?.let { AppTopBarButton("New Player", Icons.Default.PersonAdd, it, newPlayerFocusRequester) }
+            onNewUser?.let { AppTopBarButton("NEW USER", Icons.Default.PersonAdd, it, newUserFocusRequester) }
         }
 }
 
