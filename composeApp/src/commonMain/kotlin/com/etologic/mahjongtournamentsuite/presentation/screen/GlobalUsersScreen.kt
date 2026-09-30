@@ -111,19 +111,19 @@ fun GlobalUsersScreen(navController: NavHostController) {
             })
     }
 
-    fun refresh() {
+    fun refresh(force: Boolean = false) {
         scope.launch {
             loading = true
             error = null
-            when (val status = presenter.loadAdminStatus()) {
+            when (val status = presenter.loadAdminStatus(force)) {
                 is AppResult.Success -> access = status.value
                 is AppResult.Failure -> error = status.error.toUiMessage()
             }
-            when (val result = presenter.loadUsers()) {
+            when (val result = presenter.loadUsers(force)) {
                 is AppResult.Success -> users = result.value
                 is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
             }
-            when (val result = presenter.loadTournaments()) {
+            when (val result = presenter.loadTournaments(force)) {
                 is AppResult.Success -> tournaments = result.value
                 is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
             }
@@ -203,7 +203,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
-                onRefresh = ::refresh,
+                onRefresh = { refresh(force = true) },
                 onNewUser = { showCreateDialog = true },
                 newUserFocusRequester = addFocusRequester,
             )

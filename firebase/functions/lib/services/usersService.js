@@ -16,6 +16,7 @@ exports.assertEmailAvailable = assertEmailAvailable;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
+const dataVersionsService_1 = require("./dataVersionsService");
 const globalRole_1 = require("../models/globalRole");
 async function getUserProfile(uid) {
     const snap = await firebase_1.db.doc(`users/${uid}`).get();
@@ -148,11 +149,13 @@ async function syncUserTournamentAssignments(uid, assignments, scopeTournamentId
     const current = await firebase_1.db.collectionGroup("members").where("uid", "==", uid).get();
     const batch = firebase_1.db.batch();
     let operationCount = 0;
+    const affectedTournamentIds = new Set();
     current.docs.forEach((membership) => {
         const tournamentId = membership.ref.parent.parent?.id;
         const isInScope = tournamentId && (!scopeTournamentIds || scopeTournamentIds.has(tournamentId));
         if (tournamentId && isInScope && !desired.has(tournamentId)) {
             batch.delete(membership.ref);
+            affectedTournamentIds.add(tournamentId);
             operationCount++;
         }
     });
@@ -162,6 +165,11 @@ async function syncUserTournamentAssignments(uid, assignments, scopeTournamentId
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
             createdAt: firestore_1.FieldValue.serverTimestamp(),
         });
+        affectedTournamentIds.add(assignment.tournamentId);
+        operationCount++;
+    });
+    affectedTournamentIds.forEach((tournamentId) => {
+        batch.update(firebase_1.db.doc(`tournaments/${tournamentId}`), (0, dataVersionsService_1.tournamentVersionUpdate)("members"));
         operationCount++;
     });
     if (operationCount > 0)

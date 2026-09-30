@@ -29,24 +29,38 @@ import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
+import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
 import kotlin.io.encoding.Base64
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 
 class DefaultTournamentRepository(
     private val backendApi: FunctionsBackendApi,
     private val authRepository: AuthRepository,
     private val logger: Logger,
+    private val cache: RepositoryCache,
+    private val json: Json,
 ) : TournamentRepository {
     private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf(String::isNotBlank)
 
-    override suspend fun listTournaments(): AppResult<List<Tournament>> = runCatching {
-        withFreshIdToken { idToken ->
+    override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = cachedRequest(
+        action = "Listing tournaments",
+        key = GLOBAL_TOURNAMENTS_CACHE_KEY,
+        resource = "tournaments",
+        refreshMode = refreshMode,
+    ) { idToken ->
             backendApi.listTournaments(idToken).tournaments.map { dto ->
                 Tournament(
                     id = dto.id,
@@ -70,14 +84,7 @@ class DefaultTournamentRepository(
                     updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
                 )
             }.sortedRecentFirst()
-        }
-    }.fold(
-        onSuccess = { tournaments -> AppResult.Success(tournaments) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Listing tournaments failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
     override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
@@ -113,7 +120,7 @@ class DefaultTournamentRepository(
                 request = requestDto,
             )
 
-            Tournament(
+            val tournament = Tournament(
                 id = dto.id,
                 name = dto.name,
                 isTeams = dto.isTeams,
@@ -134,6 +141,8 @@ class DefaultTournamentRepository(
                 createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
                 updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
             )
+            cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY)
+            tournament
         }
     }.fold(
         onSuccess = { tournament -> AppResult.Success(tournament) },
@@ -150,6 +159,7 @@ class DefaultTournamentRepository(
                 tournamentId = tournamentId,
                 name = name.trim(),
             )
+            cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY)
             Unit
         }
     }.fold(
@@ -192,7 +202,7 @@ class DefaultTournamentRepository(
                     removeAssociationLogo = removeAssociationLogo,
                 ),
             )
-            Tournament(
+            val tournament = Tournament(
                 id = dto.id,
                 name = dto.name,
                 isTeams = dto.isTeams,
@@ -213,6 +223,8 @@ class DefaultTournamentRepository(
                 createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
                 updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
             )
+            cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY)
+            tournament
         }
     }.fold(
         onSuccess = { AppResult.Success(it) },
@@ -280,6 +292,7 @@ class DefaultTournamentRepository(
                 idToken = idToken,
                 tournamentId = tournamentId,
             )
+            cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY, "tournament:$tournamentId:")
             Unit
         }
     }.fold(
@@ -290,8 +303,16 @@ class DefaultTournamentRepository(
         },
     )
 
-    override suspend fun listTournamentMembers(tournamentId: String): AppResult<List<TournamentMember>> = runCatching {
-        withFreshIdToken { idToken ->
+    override suspend fun listTournamentMembers(
+        tournamentId: String,
+        refreshMode: RefreshMode,
+    ): AppResult<List<TournamentMember>> = cachedRequest(
+        action = "Listing members",
+        key = "tournament:$tournamentId:members",
+        resource = "members",
+        tournamentId = tournamentId,
+        refreshMode = refreshMode,
+    ) { idToken ->
             backendApi.listTournamentMembers(
                 idToken = idToken,
                 tournamentId = tournamentId,
@@ -302,14 +323,7 @@ class DefaultTournamentRepository(
                     role = GlobalUserRole.valueOf(dto.role.name),
                 )
             }
-        }
-    }.fold(
-        onSuccess = { members -> AppResult.Success(members) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Listing members failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
     override suspend fun upsertTournamentMember(
         tournamentId: String,
@@ -321,6 +335,7 @@ class DefaultTournamentRepository(
                 tournamentId = tournamentId,
                 uid = uid,
             )
+            cache.markStale("tournament:$tournamentId:members", GLOBAL_USERS_CACHE_KEY)
             Unit
         }
     }.fold(
@@ -341,6 +356,7 @@ class DefaultTournamentRepository(
                 tournamentId = tournamentId,
                 uid = uid,
             )
+            cache.markStale("tournament:$tournamentId:members", GLOBAL_USERS_CACHE_KEY)
             Unit
         }
     }.fold(
@@ -351,8 +367,16 @@ class DefaultTournamentRepository(
         },
     )
 
-    override suspend fun listTournamentPlayers(tournamentId: String): AppResult<List<TournamentPlayer>> = runCatching {
-        withFreshIdToken { idToken ->
+    override suspend fun listTournamentPlayers(
+        tournamentId: String,
+        refreshMode: RefreshMode,
+    ): AppResult<List<TournamentPlayer>> = cachedRequest(
+        action = "Listing tournament players",
+        key = "tournament:$tournamentId:players",
+        resource = "players",
+        tournamentId = tournamentId,
+        refreshMode = refreshMode,
+    ) { idToken ->
             backendApi.listTournamentPlayers(
                 idToken = idToken,
                 tournamentId = tournamentId,
@@ -374,17 +398,18 @@ class DefaultTournamentRepository(
                     updatedAt = dto.updatedAt,
                 )
             }
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Listing tournament players failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
-    override suspend fun listTournamentTeams(tournamentId: String): AppResult<List<TournamentTeam>> = runCatching {
-        withFreshIdToken { idToken ->
+    override suspend fun listTournamentTeams(
+        tournamentId: String,
+        refreshMode: RefreshMode,
+    ): AppResult<List<TournamentTeam>> = cachedRequest(
+        action = "Listing tournament teams",
+        key = "tournament:$tournamentId:teams",
+        resource = "teams",
+        tournamentId = tournamentId,
+        refreshMode = refreshMode,
+    ) { idToken ->
             backendApi.listTournamentTeams(
                 idToken = idToken,
                 tournamentId = tournamentId,
@@ -395,14 +420,7 @@ class DefaultTournamentRepository(
                     playerIds = dto.playerIds,
                 )
             }
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Listing tournament teams failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
     override suspend fun updateTournamentTeam(
         tournamentId: String,
@@ -420,6 +438,11 @@ class DefaultTournamentRepository(
                     emaIds = emaIds,
                 ),
             )
+            cache.markStale(
+                "tournament:$tournamentId:teams",
+                "tournament:$tournamentId:players",
+                GLOBAL_TOURNAMENTS_CACHE_KEY,
+            )
             Unit
         }
     }.fold(
@@ -430,19 +453,16 @@ class DefaultTournamentRepository(
         },
     )
 
-    override suspend fun listCountries(): AppResult<List<Country>> = runCatching {
-        withFreshIdToken { idToken ->
+    override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = cachedRequest(
+        action = "Listing countries",
+        key = GLOBAL_COUNTRIES_CACHE_KEY,
+        resource = "countries",
+        refreshMode = refreshMode,
+    ) { idToken ->
             backendApi.listCountries(idToken).countries.map { dto ->
                 Country(code = dto.code, name = dto.name)
             }
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Listing countries failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
     override suspend fun assignTournamentPlayer(
         tournamentId: String,
@@ -462,6 +482,11 @@ class DefaultTournamentRepository(
                     },
                 ),
             )
+            cache.markStale(
+                "tournament:$tournamentId:players",
+                "tournament:$tournamentId:teams",
+                GLOBAL_TOURNAMENTS_CACHE_KEY,
+            )
             Unit
         }
     }.fold(
@@ -472,26 +497,33 @@ class DefaultTournamentRepository(
         },
     )
 
-    override suspend fun listTournamentRounds(tournamentId: String): AppResult<List<TournamentRound>> = runCatching {
-        withFreshIdToken { idToken ->
+    override suspend fun listTournamentRounds(
+        tournamentId: String,
+        refreshMode: RefreshMode,
+    ): AppResult<List<TournamentRound>> = cachedRequest(
+        action = "Listing tournament rounds",
+        key = "tournament:$tournamentId:rounds",
+        resource = "rounds",
+        tournamentId = tournamentId,
+        refreshMode = refreshMode,
+    ) { idToken ->
             backendApi.listTournamentRounds(
                 idToken = idToken,
                 tournamentId = tournamentId,
             ).rounds.map { dto -> TournamentRound(roundId = dto.roundId) }
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Listing tournament rounds failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
     override suspend fun listTournamentTables(
         tournamentId: String,
         roundId: Int?,
-    ): AppResult<List<TournamentTable>> = runCatching {
-        withFreshIdToken { idToken ->
+        refreshMode: RefreshMode,
+    ): AppResult<List<TournamentTable>> = cachedRequest(
+        action = "Listing tournament tables",
+        key = "tournament:$tournamentId:tables:${roundId ?: "all"}",
+        resource = "tables",
+        tournamentId = tournamentId,
+        refreshMode = refreshMode,
+    ) { idToken ->
             backendApi.listTournamentTables(
                 idToken = idToken,
                 tournamentId = tournamentId,
@@ -506,23 +538,23 @@ class DefaultTournamentRepository(
                     usePointsCalculation = dto.usePointsCalculation,
                     hasProgress = dto.hasProgress,
                     hasValidManualTotals = dto.hasValidManualTotals,
+                    version = dto.version,
                 )
             }
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Listing tournament tables failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
     override suspend fun getTableWithHands(
         tournamentId: String,
         roundId: Int,
         tableId: Int,
-    ): AppResult<Pair<TableState, List<TableHand>>> = runCatching {
-        withFreshIdToken { idToken ->
+        refreshMode: RefreshMode,
+    ): AppResult<Pair<TableState, List<TableHand>>> = cachedRequest(
+        action = "Getting table with hands",
+        key = "tournament:$tournamentId:table:$roundId:$tableId",
+        resource = "tables",
+        tournamentId = tournamentId,
+        refreshMode = refreshMode,
+    ) { idToken ->
             val dto = backendApi.getTableWithHands(
                 idToken = idToken,
                 tournamentId = tournamentId,
@@ -531,6 +563,7 @@ class DefaultTournamentRepository(
             )
 
             val table = TableState(
+                version = dto.table.version,
                 roundId = dto.table.roundId,
                 tableId = dto.table.tableId,
                 playerIds = dto.table.playerIds,
@@ -575,14 +608,7 @@ class DefaultTournamentRepository(
             }
 
             table to hands
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Getting table with hands failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
+    }
 
     override suspend fun patchTable(
         tournamentId: String,
@@ -598,6 +624,7 @@ class DefaultTournamentRepository(
                 tableId = tableId,
                 patch = patch.toTablePatchRequestDto(),
             )
+            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
             Unit
         }
     }.fold(
@@ -624,6 +651,7 @@ class DefaultTournamentRepository(
                 handId = handId,
                 patch = patch.toHandPatchRequestDto(),
             )
+            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
             Unit
         }
     }.fold(
@@ -631,6 +659,80 @@ class DefaultTournamentRepository(
         onFailure = { throwable ->
             logger.w(throwable) { "Patching hand failed." }
             AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun saveTableState(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        expectedVersion: Long,
+        tablePatch: Map<String, Any?>,
+        handPatches: Map<Int, Map<String, Any?>>,
+    ): AppResult<Pair<TableState, List<TableHand>>> = runCatching {
+        withFreshIdToken { idToken ->
+            val dto = backendApi.saveTableState(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                roundId = roundId,
+                tableId = tableId,
+                request = SaveTableStateRequestDto(
+                    expectedVersion = expectedVersion,
+                    tablePatch = tablePatch.toTablePatchRequestDto(),
+                    handPatches = handPatches.map { (handId, patch) ->
+                        TableHandPatchDto(handId, patch.toHandPatchRequestDto())
+                    },
+                ),
+            )
+            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
+            TableState(
+                version = dto.table.version,
+                roundId = dto.table.roundId,
+                tableId = dto.table.tableId,
+                playerIds = dto.table.playerIds,
+                playerEastId = dto.table.playerEastId,
+                playerSouthId = dto.table.playerSouthId,
+                playerWestId = dto.table.playerWestId,
+                playerNorthId = dto.table.playerNorthId,
+                playerEastScore = dto.table.playerEastScore,
+                playerSouthScore = dto.table.playerSouthScore,
+                playerWestScore = dto.table.playerWestScore,
+                playerNorthScore = dto.table.playerNorthScore,
+                playerEastPoints = dto.table.playerEastPoints,
+                playerSouthPoints = dto.table.playerSouthPoints,
+                playerWestPoints = dto.table.playerWestPoints,
+                playerNorthPoints = dto.table.playerNorthPoints,
+                manualPlayerEastScore = dto.table.manualPlayerEastScore,
+                manualPlayerSouthScore = dto.table.manualPlayerSouthScore,
+                manualPlayerWestScore = dto.table.manualPlayerWestScore,
+                manualPlayerNorthScore = dto.table.manualPlayerNorthScore,
+                manualPlayerEastPoints = dto.table.manualPlayerEastPoints,
+                manualPlayerSouthPoints = dto.table.manualPlayerSouthPoints,
+                manualPlayerWestPoints = dto.table.manualPlayerWestPoints,
+                manualPlayerNorthPoints = dto.table.manualPlayerNorthPoints,
+                isCompleted = dto.table.isCompleted,
+                useTotalsOnly = dto.table.useTotalsOnly,
+                usePointsCalculation = dto.table.usePointsCalculation,
+            ) to dto.hands.map { hand ->
+                TableHand(
+                    handId = hand.handId,
+                    playerWinnerId = hand.playerWinnerId,
+                    playerLooserId = hand.playerLooserId,
+                    handScore = hand.handScore,
+                    isChickenHand = hand.isChickenHand,
+                    isDone = hand.isDone,
+                    playerEastPenalty = hand.playerEastPenalty,
+                    playerSouthPenalty = hand.playerSouthPenalty,
+                    playerWestPenalty = hand.playerWestPenalty,
+                    playerNorthPenalty = hand.playerNorthPenalty,
+                )
+            }
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Saving table state failed." }
+            AppResult.Failure(throwable.toTableSaveError(json))
         },
     )
 
@@ -646,12 +748,46 @@ class DefaultTournamentRepository(
                 roundId = roundId,
                 tableId = tableId,
             )
+            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
             Unit
         }
     }.fold(
         onSuccess = { AppResult.Success(Unit) },
         onFailure = { throwable ->
             logger.w(throwable) { "Resetting table failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    private suspend fun <T : Any> cachedRequest(
+        action: String,
+        key: String,
+        resource: String,
+        refreshMode: RefreshMode,
+        tournamentId: String? = null,
+        block: suspend (String) -> T,
+    ): AppResult<T> = runCatching {
+        val session = authRepository.currentSession() ?: error("No active session")
+        cache.getOrLoad(
+            ownerUid = session.uid,
+            key = key,
+            refreshMode = refreshMode,
+            revision = {
+                withFreshIdToken { token ->
+                    val manifest = if (tournamentId == null) {
+                        backendApi.globalDataVersions(token)
+                    } else {
+                        backendApi.tournamentDataVersions(token, tournamentId)
+                    }
+                    manifest.resources[resource]?.revision ?: 0
+                }
+            },
+            load = { withFreshIdToken(block) },
+        )
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "$action failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )
@@ -693,6 +829,81 @@ class DefaultTournamentRepository(
     )
 }
 
+private const val GLOBAL_TOURNAMENTS_CACHE_KEY = "global:tournaments"
+private const val GLOBAL_COUNTRIES_CACHE_KEY = "global:countries"
+private const val GLOBAL_USERS_CACHE_KEY = "global:users"
+
+@Serializable
+private data class TableConflictResponseDto(
+    val details: TableConflictDetailsDto? = null,
+)
+
+@Serializable
+private data class TableConflictDetailsDto(
+    val expectedVersion: Long? = null,
+    val currentVersion: Long? = null,
+    val current: TableWithHandsResponseDto? = null,
+)
+
+private fun Throwable.toTableSaveError(json: Json): AppError {
+    if (this !is BackendHttpException || status != HttpStatusCode.Conflict) return toAppError()
+    val details = runCatching {
+        json.decodeFromString<TableConflictResponseDto>(responseBody).details
+    }.getOrNull()
+    val current = details?.current?.toDomain()
+    return AppError.Conflict(
+        message = "This table changed on the server. Compare each changed field before you save again.",
+        expectedVersion = details?.expectedVersion,
+        currentVersion = details?.currentVersion,
+        currentTable = current?.first,
+        currentHands = current?.second.orEmpty(),
+    )
+}
+
+private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHand>> =
+    TableState(
+        version = table.version,
+        roundId = table.roundId,
+        tableId = table.tableId,
+        playerIds = table.playerIds,
+        playerEastId = table.playerEastId,
+        playerSouthId = table.playerSouthId,
+        playerWestId = table.playerWestId,
+        playerNorthId = table.playerNorthId,
+        playerEastScore = table.playerEastScore,
+        playerSouthScore = table.playerSouthScore,
+        playerWestScore = table.playerWestScore,
+        playerNorthScore = table.playerNorthScore,
+        playerEastPoints = table.playerEastPoints,
+        playerSouthPoints = table.playerSouthPoints,
+        playerWestPoints = table.playerWestPoints,
+        playerNorthPoints = table.playerNorthPoints,
+        manualPlayerEastScore = table.manualPlayerEastScore,
+        manualPlayerSouthScore = table.manualPlayerSouthScore,
+        manualPlayerWestScore = table.manualPlayerWestScore,
+        manualPlayerNorthScore = table.manualPlayerNorthScore,
+        manualPlayerEastPoints = table.manualPlayerEastPoints,
+        manualPlayerSouthPoints = table.manualPlayerSouthPoints,
+        manualPlayerWestPoints = table.manualPlayerWestPoints,
+        manualPlayerNorthPoints = table.manualPlayerNorthPoints,
+        isCompleted = table.isCompleted,
+        useTotalsOnly = table.useTotalsOnly,
+        usePointsCalculation = table.usePointsCalculation,
+    ) to hands.map { hand ->
+        TableHand(
+            handId = hand.handId,
+            playerWinnerId = hand.playerWinnerId,
+            playerLooserId = hand.playerLooserId,
+            handScore = hand.handScore,
+            isChickenHand = hand.isChickenHand,
+            isDone = hand.isDone,
+            playerEastPenalty = hand.playerEastPenalty,
+            playerSouthPenalty = hand.playerSouthPenalty,
+            playerWestPenalty = hand.playerWestPenalty,
+            playerNorthPenalty = hand.playerNorthPenalty,
+        )
+    }
+
 internal fun List<Tournament>.sortedRecentFirst(): List<Tournament> =
     sortedWith(
         compareByDescending<Tournament> { it.createdAt ?: "" }
@@ -706,6 +917,11 @@ private fun Throwable.toAppError(): AppError = when (this) {
     -> AppError.Unexpected("Request timed out contacting the backend. Check VPN/firewall and try again.")
     is BackendHttpException -> {
         val body = responseBody.limitForUi()
+        if (status == HttpStatusCode.Conflict) {
+            return AppError.Conflict(
+                message = "The server rejected this change because related data changed. Refresh and review the latest data.",
+            )
+        }
         val looksLikeOutdatedServerSideScheduleGeneration =
             status == HttpStatusCode.BadRequest &&
                 (body.contains("\"maxTries\"", ignoreCase = true) ||

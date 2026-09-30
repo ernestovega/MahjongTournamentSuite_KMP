@@ -23,5 +23,5 @@ interface AuthRepository {
 
     suspend fun signOut()
 
-    suspend fun getMe(): AppResult<UserProfile>
+    suspend fun getMe(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<UserProfile>
 }

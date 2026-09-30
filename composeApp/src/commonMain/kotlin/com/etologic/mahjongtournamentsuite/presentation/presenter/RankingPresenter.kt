@@ -11,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -39,32 +40,33 @@ class RankingPresenter(
         rankings: List<PlayerRanking>,
     ): AppResult<ByteArray> = tournamentRepository.generateEmaReport(tournamentId, rankings)
 
-    suspend fun load(tournamentId: String): AppResult<RankingSnapshot> {
+    suspend fun load(tournamentId: String, force: Boolean = false): AppResult<RankingSnapshot> {
         logger.i { "Loading tournament rankings." }
 
-        val tournaments = when (val result = tournamentRepository.listTournaments()) {
+        val refreshMode = if (force) RefreshMode.FORCE else RefreshMode.IF_CHANGED
+        val tournaments = when (val result = tournamentRepository.listTournaments(refreshMode)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
         }
-        val players = when (val result = tournamentRepository.listTournamentPlayers(tournamentId)) {
+        val players = when (val result = tournamentRepository.listTournamentPlayers(tournamentId, refreshMode)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
         }
         val tournament = tournaments.firstOrNull { it.id == tournamentId }
             ?: return AppResult.Failure(com.etologic.mahjongtournamentsuite.domain.model.AppError.Unexpected("Tournament not found"))
         val tournamentTeams = if (tournament.isTeams) {
-            when (val result = tournamentRepository.listTournamentTeams(tournamentId)) {
+            when (val result = tournamentRepository.listTournamentTeams(tournamentId, refreshMode)) {
                 is AppResult.Success -> result.value
                 is AppResult.Failure -> return result
             }
         } else {
             emptyList()
         }
-        val basePlayers = when (val result = playerRepository.listPlayers()) {
+        val basePlayers = when (val result = playerRepository.listPlayers(refreshMode)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
         }
-        val tableSummaries = when (val result = tournamentRepository.listTournamentTables(tournamentId)) {
+        val tableSummaries = when (val result = tournamentRepository.listTournamentTables(tournamentId, refreshMode = refreshMode)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
         }
@@ -78,6 +80,7 @@ class RankingPresenter(
                             tournamentId = tournamentId,
                             roundId = summary.roundId,
                             tableId = summary.tableId,
+                            refreshMode = refreshMode,
                         )
                     }
                 }

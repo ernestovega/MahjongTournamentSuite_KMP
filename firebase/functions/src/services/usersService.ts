@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { auth, db } from "../firebase";
 import { conflict, forbidden, notFound } from "../api/httpError";
+import { tournamentVersionUpdate } from "./dataVersionsService";
 import { getGlobalUserRole, type GlobalUserRole } from "../models/globalRole";
 
 export type { GlobalUserRole } from "../models/globalRole";
@@ -198,11 +199,13 @@ export async function syncUserTournamentAssignments(
   const current = await db.collectionGroup("members").where("uid", "==", uid).get();
   const batch = db.batch();
   let operationCount = 0;
+  const affectedTournamentIds = new Set<string>();
   current.docs.forEach((membership) => {
     const tournamentId = membership.ref.parent.parent?.id;
     const isInScope = tournamentId && (!scopeTournamentIds || scopeTournamentIds.has(tournamentId));
     if (tournamentId && isInScope && !desired.has(tournamentId)) {
       batch.delete(membership.ref);
+      affectedTournamentIds.add(tournamentId);
       operationCount++;
     }
   });
@@ -212,6 +215,11 @@ export async function syncUserTournamentAssignments(
       updatedAt: FieldValue.serverTimestamp(),
       createdAt: FieldValue.serverTimestamp(),
     });
+    affectedTournamentIds.add(assignment.tournamentId);
+    operationCount++;
+  });
+  affectedTournamentIds.forEach((tournamentId) => {
+    batch.update(db.doc(`tournaments/${tournamentId}`), tournamentVersionUpdate("members"));
     operationCount++;
   });
   if (operationCount > 0) await batch.commit();

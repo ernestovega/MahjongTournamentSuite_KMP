@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const firebase_1 = require("../firebase");
+const dataVersionsService_1 = require("../services/dataVersionsService");
 const countryCodes = [
     "AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AX", "AZ",
     "BA", "BB", "BD", "BE", "BF", "BG", "BH", "BI", "BJ", "BL", "BM", "BN", "BO", "BQ", "BR", "BS", "BT", "BV", "BW", "BY", "BZ",
@@ -36,6 +37,7 @@ async function seedCountries() {
         batch.set(firebase_1.db.collection("countries").doc(code), { code, name: names.of(code) ?? code }, { merge: true });
     });
     await batch.commit();
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("countries");
     console.log(`Seeded ${countryCodes.length} countries.`);
 }
 seedCountries().catch((error) => {

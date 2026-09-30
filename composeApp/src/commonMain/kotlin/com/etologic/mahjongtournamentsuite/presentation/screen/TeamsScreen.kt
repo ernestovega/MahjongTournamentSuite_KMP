@@ -140,22 +140,22 @@ fun TeamsScreen(
         filteredTeams.map { FocusRequester() }
     }
 
-    fun refresh() = scope.launch {
+    fun refresh(force: Boolean = false) = scope.launch {
         loading = true
         error = null
-        when (val result = presenter.loadTeams(tournamentId)) {
+        when (val result = presenter.loadTeams(tournamentId, force)) {
             is AppResult.Success -> teams = result.value
             is AppResult.Failure -> error = result.error.toUiMessage()
         }
-        when (val result = presenter.loadTournamentPlayers(tournamentId)) {
+        when (val result = presenter.loadTournamentPlayers(tournamentId, force)) {
             is AppResult.Success -> slots = result.value
             is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
         }
-        when (val result = presenter.loadBasePlayers()) {
+        when (val result = presenter.loadBasePlayers(force)) {
             is AppResult.Success -> basePlayers = result.value
             is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
         }
-        when (val result = presenter.loadTables(tournamentId)) {
+        when (val result = presenter.loadTables(tournamentId, force)) {
             is AppResult.Success -> tables = result.value
             is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
         }
@@ -211,7 +211,7 @@ fun TeamsScreen(
                         is AppResult.Success -> {
                             restoreTeamId = editingTeam.id
                             editingTeamId = null
-                            refresh()
+                            refresh(force = true)
                         }
                         is AppResult.Failure -> error = result.error.toUiMessage()
                     }
@@ -229,7 +229,7 @@ fun TeamsScreen(
         title = "Tournament teams",
         isLoading = loading || saving,
         onBack = { navController.popBackStack() },
-        actions = { AppTopBarActions(onRefresh = ::refresh) },
+        actions = { AppTopBarActions(onRefresh = { refresh(force = true) }) },
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,

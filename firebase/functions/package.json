@@ -7,13 +7,15 @@
   },
   "scripts": {
     "build": "tsc && node scripts/syncIdCardAssets.cjs",
-    "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/services/tournamentContentRules.test.js lib/services/tournamentsService.test.js lib/models/globalRole.test.js lib/services/idCardsService.test.js lib/services/idListService.test.js lib/services/mers.test.js lib/services/playerSyncService.test.js lib/services/emaReportService.test.js",
+    "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/services/tournamentContentRules.test.js lib/services/tableManagerService.test.js lib/services/tournamentsService.test.js lib/models/globalRole.test.js lib/services/idCardsService.test.js lib/services/idListService.test.js lib/services/mers.test.js lib/services/playerSyncService.test.js lib/services/emaReportService.test.js",
     "proof:id-cards": "npm run build && node lib/scripts/createIdCardsProof.js",
     "verify:roles": "npm run build && node lib/scripts/verifyRolePermissions.js",
     "seed:countries": "npm run build && node lib/scripts/seedCountries.js",
     "seed:players": "npm run build && node --env-file=local-player-sync.env lib/scripts/seedPlayers.js",
     "reset:access": "npm run build && node lib/scripts/resetAccess.js",
     "sync:players": "npm run build && node --env-file=local-player-sync.env lib/scripts/syncPlayers.js",
+    "backfill:data-versions": "npm run build && node lib/scripts/backfillDataVersions.js",
+    "backfill:data-versions:apply": "npm run build && node lib/scripts/backfillDataVersions.js --apply",
     "watch": "tsc -w"
   },
   "dependencies": {

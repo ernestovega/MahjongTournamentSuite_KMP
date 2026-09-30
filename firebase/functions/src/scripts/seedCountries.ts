@@ -1,4 +1,5 @@
 import { db } from "../firebase";
+import { bumpGlobalDataVersion } from "../services/dataVersionsService";
 
 const countryCodes = [
   "AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AX", "AZ",
@@ -42,6 +43,7 @@ async function seedCountries(): Promise<void> {
   });
 
   await batch.commit();
+  await bumpGlobalDataVersion("countries");
   console.log(`Seeded ${countryCodes.length} countries.`);
 }
 

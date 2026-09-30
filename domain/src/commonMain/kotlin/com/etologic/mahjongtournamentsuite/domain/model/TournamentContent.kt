@@ -71,4 +71,5 @@ data class TournamentTable(
     val usePointsCalculation: Boolean,
     val hasProgress: Boolean,
     val hasValidManualTotals: Boolean = false,
+    val version: Long = 0,
 )

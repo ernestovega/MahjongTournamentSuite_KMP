@@ -4,6 +4,7 @@ import { auth, db } from "../firebase";
 import { badRequest } from "../api/httpError";
 import { getGlobalUserRole, type GlobalUserRole } from "../models/globalRole";
 import { listEnabledAdmins } from "./usersService";
+import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 
 export type TournamentMember = {
   uid: string;
@@ -56,6 +57,10 @@ export async function upsertTournamentMember(params: {
       createdAt: FieldValue.serverTimestamp(),
     },
   );
+  await Promise.all([
+    bumpTournamentDataVersion(params.tournamentId, "members"),
+    bumpGlobalDataVersion("users"),
+  ]);
 }
 
 export async function removeTournamentMember(params: {
@@ -67,4 +72,8 @@ export async function removeTournamentMember(params: {
     throw badRequest("Admins cannot be removed from a tournament");
   }
   await db.doc(`tournaments/${params.tournamentId}/members/${params.uid}`).delete();
+  await Promise.all([
+    bumpTournamentDataVersion(params.tournamentId, "members"),
+    bumpGlobalDataVersion("users"),
+  ]);
 }

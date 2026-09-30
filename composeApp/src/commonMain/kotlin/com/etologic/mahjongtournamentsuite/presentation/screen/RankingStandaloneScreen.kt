@@ -113,10 +113,10 @@ private fun RankingStandaloneContent(
     var playing by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
-    fun refresh() = scope.launch {
+    fun refresh(force: Boolean = false) = scope.launch {
         loading = true
         error = null
-        when (val result = presenter.load(tournamentId)) {
+        when (val result = presenter.load(tournamentId, force)) {
             is AppResult.Success -> {
                 snapshot = result.value
                 pageIndex = 0
@@ -214,7 +214,7 @@ private fun RankingStandaloneContent(
                 onNext = {
                     if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
                 },
-                onRefresh = { refresh() },
+                onRefresh = { refresh(force = true) },
                 onToggleTheme = onToggleTheme,
                 modifier = Modifier
                     .align(Alignment.CenterStart)

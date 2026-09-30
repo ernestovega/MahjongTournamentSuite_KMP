@@ -6,6 +6,7 @@ import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
 import { getUserProfile } from "./usersService";
 import { calculateMers } from "./mers";
+import { bumpGlobalDataVersion } from "./dataVersionsService";
 
 export type Tournament = {
   id: string;
@@ -152,6 +153,13 @@ export async function createTournament(params: {
     createdByUid: params.createdByUid,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
+    dataVersions: {
+      members: { revision: 0, changedAt: null },
+      players: { revision: 1, changedAt: FieldValue.serverTimestamp() },
+      teams: { revision: params.isTeams ? 1 : 0, changedAt: FieldValue.serverTimestamp() },
+      rounds: { revision: 1, changedAt: FieldValue.serverTimestamp() },
+      tables: { revision: 1, changedAt: FieldValue.serverTimestamp() },
+    },
   };
 
   await ref.set(tournamentDoc);
@@ -248,6 +256,9 @@ export async function createTournament(params: {
       isCompleted: Boolean(table.isCompleted ?? false),
       useTotalsOnly: Boolean(table.useTotalsOnly ?? true),
       usePointsCalculation: true,
+      hasProgress: Boolean(table.isCompleted ?? false),
+      hasValidManualTotals: false,
+      version: 0,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -257,6 +268,7 @@ export async function createTournament(params: {
   await Promise.all(batchCommits);
 
   const snap = await ref.get();
+  await bumpGlobalDataVersion("tournaments");
   return mapTournamentDoc(snap);
 }
 
@@ -277,6 +289,7 @@ export async function renameTournament(tournamentId: string, name: string): Prom
     name: normalizedName,
     updatedAt: FieldValue.serverTimestamp(),
   });
+  await bumpGlobalDataVersion("tournaments");
 }
 
 const logoExtensions: Record<string, string> = {
@@ -418,6 +431,7 @@ export async function updateTournamentSettings(params: {
     update.associationLogoUrl = logo?.url ?? null;
   }
   await ref.update(update);
+  await bumpGlobalDataVersion("tournaments");
 
   if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
     await storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);
@@ -471,4 +485,5 @@ export async function deleteTournament(tournamentId: string): Promise<void> {
       await db.recursiveDelete(ref);
     },
   });
+  await bumpGlobalDataVersion("tournaments");
 }

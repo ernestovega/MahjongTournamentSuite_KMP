@@ -10,6 +10,7 @@ const globalRole_1 = require("../../models/globalRole");
 const firebaseAuthRest_1 = require("../../services/firebaseAuthRest");
 const usersService_1 = require("../../services/usersService");
 const config_1 = require("../../config");
+const dataVersionsService_1 = require("../../services/dataVersionsService");
 function requireEmail(value, fieldName) {
     const email = String(value ?? "").trim();
     if (!email || !email.includes("@"))
@@ -63,6 +64,7 @@ function adminRouter() {
             const claims = { ...(user.customClaims ?? {}), admin: true };
             delete claims.superadmin;
             await firebase_1.auth.setCustomUserClaims(uid, claims);
+            await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
             res.status(200).json({ ok: true });
         }
         catch (error) {
@@ -107,6 +109,7 @@ function adminRouter() {
             await (0, usersService_1.setGlobalUserRole)(user.uid, role);
             await (0, usersService_1.syncUserTournamentAssignments)(user.uid, tournamentAssignments, assignmentScope);
             await (0, firebaseAuthRest_1.sendPasswordResetEmail)(email);
+            await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
             res.status(201).json(await (0, usersService_1.getManagedUser)(user.uid, assignmentScope));
         }
         catch (error) {
@@ -147,6 +150,7 @@ function adminRouter() {
                 tournamentAssignments,
                 assignmentScope,
             });
+            await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
             res.status(200).json(await (0, usersService_1.getManagedUser)(current.uid, assignmentScope));
         }
         catch (error) {
@@ -164,6 +168,7 @@ function adminRouter() {
                 throw (0, httpError_1.badRequest)("You cannot disable your own account");
             await assertAdminRemainsEnabled(current.role, current.disabled, current.role, disabled);
             await (0, usersService_1.setManagedUserDisabled)(current.uid, disabled);
+            await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
             res.status(200).json(await (0, usersService_1.getManagedUser)(current.uid));
         }
         catch (error) {

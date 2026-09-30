@@ -5,7 +5,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 
 /** Access to the shared player base. EMA number is the player primary key. */
 interface PlayerRepository {
-    suspend fun listPlayers(): AppResult<List<Player>>
+    suspend fun listPlayers(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Player>>
 
     suspend fun createPlayer(player: Player): AppResult<Player>
 

@@ -16,7 +16,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 
 interface TournamentRepository {
-    suspend fun listTournaments(): AppResult<List<Tournament>>
+    suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>>
 
     suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament>
 
@@ -53,7 +53,10 @@ interface TournamentRepository {
 
     suspend fun deleteTournament(tournamentId: String): AppResult<Unit>
 
-    suspend fun listTournamentMembers(tournamentId: String): AppResult<List<TournamentMember>>
+    suspend fun listTournamentMembers(
+        tournamentId: String,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
+    ): AppResult<List<TournamentMember>>
 
     suspend fun upsertTournamentMember(
         tournamentId: String,
@@ -65,9 +68,15 @@ interface TournamentRepository {
         uid: String,
     ): AppResult<Unit>
 
-    suspend fun listTournamentPlayers(tournamentId: String): AppResult<List<TournamentPlayer>>
+    suspend fun listTournamentPlayers(
+        tournamentId: String,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
+    ): AppResult<List<TournamentPlayer>>
 
-    suspend fun listTournamentTeams(tournamentId: String): AppResult<List<TournamentTeam>>
+    suspend fun listTournamentTeams(
+        tournamentId: String,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
+    ): AppResult<List<TournamentTeam>>
 
     /**
      * Renames a team and assigns EMA players to its fixed schedule slots.
@@ -80,7 +89,7 @@ interface TournamentRepository {
         emaIds: List<String?>,
     ): AppResult<Unit>
 
-    suspend fun listCountries(): AppResult<List<Country>>
+    suspend fun listCountries(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Country>>
 
     /** Assigns an EMA player or a tournament-only non-member. Pass both null to clear it. */
     suspend fun assignTournamentPlayer(
@@ -90,17 +99,22 @@ interface TournamentRepository {
         nonMember: NonMemberPlayer? = null,
     ): AppResult<Unit>
 
-    suspend fun listTournamentRounds(tournamentId: String): AppResult<List<TournamentRound>>
+    suspend fun listTournamentRounds(
+        tournamentId: String,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
+    ): AppResult<List<TournamentRound>>
 
     suspend fun listTournamentTables(
         tournamentId: String,
         roundId: Int? = null,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<List<TournamentTable>>
 
     suspend fun getTableWithHands(
         tournamentId: String,
         roundId: Int,
         tableId: Int,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<Pair<TableState, List<TableHand>>>
 
     suspend fun patchTable(
@@ -117,6 +131,16 @@ interface TournamentRepository {
         handId: Int,
         patch: Map<String, Any?>,
     ): AppResult<Unit>
+
+    /** Saves all table and hand changes in one remote transaction. */
+    suspend fun saveTableState(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        expectedVersion: Long,
+        tablePatch: Map<String, Any?>,
+        handPatches: Map<Int, Map<String, Any?>>,
+    ): AppResult<Pair<TableState, List<TableHand>>>
 
     suspend fun resetTable(
         tournamentId: String,

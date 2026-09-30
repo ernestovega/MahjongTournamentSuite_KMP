@@ -15,11 +15,13 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -30,6 +32,7 @@ import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -78,6 +81,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -93,6 +97,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ResetTableDia
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
@@ -122,17 +131,19 @@ fun TableManagerScreen(
     var showResetConfirmation by remember { mutableStateOf(false) }
     var restoreResetFocus by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
+    var saveConflict by remember { mutableStateOf<TableSaveConflict?>(null) }
+    var conflictChoices by remember { mutableStateOf<Map<String, ConflictChoice>>(emptyMap()) }
     val initialEditorFocusRequester = remember { FocusRequester() }
     val resetFocusRequester = remember { FocusRequester() }
     val saveFocusRequester = remember { FocusRequester() }
     var initialEditorFocusPending by rememberSaveable(tournamentId, roundId, tableId) {
         mutableStateOf(true)
     }
-    fun refresh() {
+    fun refresh(force: Boolean = false) {
         coroutineScope.launch {
             isLoading = true
             errorMessage = null
-            when (val result = presenter.loadTableWithHands(tournamentId, roundId, tableId)) {
+            when (val result = presenter.loadTableWithHands(tournamentId, roundId, tableId, force)) {
                 is AppResult.Success -> {
                     tableState = result.value.first
                     hands = result.value.second
@@ -145,7 +156,7 @@ fun TableManagerScreen(
     }
 
     LaunchedEffect(tournamentId, roundId, tableId) {
-        refresh()
+        refresh(force = false)
     }
 
     val table = tableState
@@ -182,27 +193,37 @@ fun TableManagerScreen(
         isLoading = true
         errorMessage = null
         try {
-            if (tablePatch.isNotEmpty()) {
-                when (val result = presenter.patchTable(tournamentId, roundId, tableId, tablePatch)) {
-                    is AppResult.Success -> Unit
-                    is AppResult.Failure -> {
+            when (val result = presenter.saveTableState(
+                tournamentId = tournamentId,
+                roundId = roundId,
+                tableId = tableId,
+                expectedVersion = editor.version,
+                tablePatch = tablePatch,
+                handPatches = handPatches.toMap(),
+            )) {
+                is AppResult.Success -> {
+                    tableState = result.value.first
+                    hands = result.value.second
+                }
+                is AppResult.Failure -> {
+                    val conflict = result.error as? AppError.Conflict
+                    val currentTable = conflict?.currentTable
+                    if (currentTable != null && table != null) {
+                        saveConflict = TableSaveConflict(
+                            baseTable = table,
+                            baseHands = hands,
+                            serverTable = currentTable,
+                            serverHands = conflict.currentHands,
+                            tablePatch = tablePatch,
+                            handPatches = handPatches.toMap(),
+                        )
+                        conflictChoices = emptyMap()
+                    } else {
                         errorMessage = result.error.toUiMessage()
-                        return false
                     }
+                    return false
                 }
             }
-
-            for ((handId, patch) in handPatches) {
-                when (val result = presenter.patchHand(tournamentId, roundId, tableId, handId, patch)) {
-                    is AppResult.Success -> Unit
-                    is AppResult.Failure -> {
-                        errorMessage = result.error.toUiMessage()
-                        return false
-                    }
-                }
-            }
-
-            refresh()
             return true
         } finally {
             isLoading = false
@@ -212,7 +233,7 @@ fun TableManagerScreen(
     fun performUnsavedAction(action: TableManagerPendingUnsavedAction) {
         when (action) {
             TableManagerPendingUnsavedAction.Back -> navController.popBackStack()
-            TableManagerPendingUnsavedAction.Refresh -> refresh()
+            TableManagerPendingUnsavedAction.Refresh -> refresh(force = true)
         }
     }
 
@@ -237,6 +258,47 @@ fun TableManagerScreen(
         }
     }
 
+    fun resolveConflict(conflict: TableSaveConflict) {
+        coroutineScope.launch {
+            isLoading = true
+            val resolvedTablePatch = conflict.resolvedTablePatch(conflictChoices)
+            val resolvedHandPatches = conflict.resolvedHandPatches(conflictChoices)
+            when (val result = presenter.saveTableState(
+                tournamentId = tournamentId,
+                roundId = roundId,
+                tableId = tableId,
+                expectedVersion = conflict.serverTable.version,
+                tablePatch = resolvedTablePatch,
+                handPatches = resolvedHandPatches,
+            )) {
+                is AppResult.Success -> {
+                    tableState = result.value.first
+                    hands = result.value.second
+                    saveConflict = null
+                    conflictChoices = emptyMap()
+                }
+                is AppResult.Failure -> {
+                    val next = result.error as? AppError.Conflict
+                    val nextTable = next?.currentTable
+                    if (nextTable != null) {
+                        saveConflict = TableSaveConflict(
+                            baseTable = conflict.serverTable,
+                            baseHands = conflict.serverHands,
+                            serverTable = nextTable,
+                            serverHands = next.currentHands,
+                            tablePatch = resolvedTablePatch,
+                            handPatches = resolvedHandPatches,
+                        )
+                        conflictChoices = emptyMap()
+                    } else {
+                        errorMessage = result.error.toUiMessage()
+                    }
+                }
+            }
+            isLoading = false
+        }
+    }
+
     fun requestSave(action: TableManagerPendingUnsavedAction? = null) {
         val nonZeroTotal = editorState?.nonZeroManualScoreTotal
         if (nonZeroTotal != null) {
@@ -257,7 +319,7 @@ fun TableManagerScreen(
                     restoreResetFocus = true
                     tableState = null
                     hands = emptyList()
-                    refresh()
+                    refresh(force = true)
                 }
                 is AppResult.Failure -> {
                     showResetConfirmation = false
@@ -308,6 +370,30 @@ fun TableManagerScreen(
             onCancel = {
                 showResetConfirmation = false
                 restoreResetFocus = true
+            },
+        )
+    }
+
+    LaunchedEffect(saveConflict, isLoading) {
+        val conflict = saveConflict
+        if (conflict != null && conflict.fields.isEmpty() && !isLoading) {
+            resolveConflict(conflict)
+        }
+    }
+
+    saveConflict?.let { conflict ->
+        TableSaveConflictDialog(
+            conflict = conflict,
+            choices = conflictChoices,
+            isSaving = isLoading,
+            onChoice = { fieldId, choice ->
+                conflictChoices = conflictChoices + (fieldId to choice)
+            },
+            onConfirm = { resolveConflict(conflict) },
+            onCancel = {
+                saveConflict = null
+                conflictChoices = emptyMap()
+                restoreSaveFocus = true
             },
         )
     }
@@ -1893,6 +1979,191 @@ private fun SimpleHandCellDisplay(
     }
 }
 
+internal enum class ConflictChoice { MINE, SERVER }
+
+internal data class ConflictField(
+    val id: String,
+    val label: String,
+    val base: Any?,
+    val mine: Any?,
+    val server: Any?,
+)
+
+internal data class TableSaveConflict(
+    val baseTable: TableState,
+    val baseHands: List<TableHand>,
+    val serverTable: TableState,
+    val serverHands: List<TableHand>,
+    val tablePatch: Map<String, Any?>,
+    val handPatches: Map<Int, Map<String, Any?>>,
+) {
+    val fields: List<ConflictField> = buildList {
+        tablePatch.forEach { (field, mine) ->
+            val base = baseTable.fieldValue(field)
+            val server = serverTable.fieldValue(field)
+            if (server != base && mine != server) {
+                add(ConflictField("table:$field", field.toFieldLabel(), base, mine, server))
+            }
+        }
+        handPatches.forEach { (handId, patch) ->
+            val baseHand = baseHands.firstOrNull { it.handId == handId }
+            val serverHand = serverHands.firstOrNull { it.handId == handId }
+            patch.forEach { (field, mine) ->
+                val base = baseHand?.fieldValue(field)
+                val server = serverHand?.fieldValue(field)
+                if (server != base && mine != server) {
+                    add(ConflictField("hand:$handId:$field", "Hand $handId · ${field.toFieldLabel()}", base, mine, server))
+                }
+            }
+        }
+    }
+
+    fun resolvedTablePatch(choices: Map<String, ConflictChoice>): Map<String, Any?> =
+        tablePatch.filterKeys { field -> choices["table:$field"] != ConflictChoice.SERVER }
+
+    fun resolvedHandPatches(choices: Map<String, ConflictChoice>): Map<Int, Map<String, Any?>> =
+        handPatches.mapValues { (handId, patch) ->
+            patch.filterKeys { field -> choices["hand:$handId:$field"] != ConflictChoice.SERVER }
+        }.filterValues { it.isNotEmpty() }
+}
+
+@Composable
+private fun TableSaveConflictDialog(
+    conflict: TableSaveConflict,
+    choices: Map<String, ConflictChoice>,
+    isSaving: Boolean,
+    onChoice: (String, ConflictChoice) -> Unit,
+    onConfirm: () -> Unit,
+    onCancel: () -> Unit,
+) {
+    val scrollState = rememberScrollState()
+    val confirmFocusRequester = remember { FocusRequester() }
+    val cancelFocusRequester = remember { FocusRequester() }
+    val allChosen = conflict.fields.all { it.id in choices }
+
+    LaunchedEffect(conflict) { cancelFocusRequester.requestFocus() }
+
+    AlertDialog(
+        modifier = Modifier.appFocusGroup(),
+        onDismissRequest = { if (!isSaving) onCancel() },
+        title = { Text("Resolve table changes") },
+        text = {
+            ScrollableColumnWithScrollbar(
+                state = scrollState,
+                modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
+            ) {
+                Text(
+                    "The table changed after you opened it. Server-only changes are accepted automatically. " +
+                        "Choose a value for each field changed in both places.",
+                )
+                Spacer(Modifier.height(12.dp))
+                if (conflict.fields.isEmpty()) {
+                    Text("No field needs a choice. Select Continue to keep your independent edits.")
+                }
+                conflict.fields.forEach { field ->
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
+                        Text(field.label, fontWeight = FontWeight.Bold)
+                        Text("Base: ${field.base.displayConflictValue()}")
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FocusedOutlinedButton(
+                                buttonModifier = Modifier.fillMaxWidth(),
+                                onClick = { onChoice(field.id, ConflictChoice.MINE) },
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (choices[field.id] == ConflictChoice.MINE) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        Color.Transparent
+                                    },
+                                ),
+                            ) { Text("Mine: ${field.mine.displayConflictValue()}") }
+                            FocusedOutlinedButton(
+                                buttonModifier = Modifier.fillMaxWidth(),
+                                onClick = { onChoice(field.id, ConflictChoice.SERVER) },
+                                colors = ButtonDefaults.outlinedButtonColors(
+                                    containerColor = if (choices[field.id] == ConflictChoice.SERVER) {
+                                        MaterialTheme.colorScheme.primaryContainer
+                                    } else {
+                                        Color.Transparent
+                                    },
+                                ),
+                            ) { Text("Server: ${field.server.displayConflictValue()}") }
+                        }
+                    }
+                    HorizontalDivider()
+                }
+            }
+        },
+        confirmButton = {
+            FocusedButton(
+                enabled = !isSaving && allChosen,
+                onClick = onConfirm,
+                focusRequester = confirmFocusRequester,
+                buttonModifier = Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester),
+            ) { Text("Continue") }
+        },
+        dismissButton = {
+            FocusedTextButton(
+                enabled = !isSaving,
+                onClick = onCancel,
+                focusRequester = cancelFocusRequester,
+                buttonModifier = Modifier.focusLoop(confirmFocusRequester, confirmFocusRequester),
+            ) { Text("Keep editing") }
+        },
+    )
+}
+
+private fun Any?.displayConflictValue(): String = when (this) {
+    null -> "empty"
+    is String -> if (isBlank()) "empty" else this
+    else -> toString()
+}
+
+private fun String.toFieldLabel(): String =
+    replace(Regex("([a-z])([A-Z])"), "$1 $2").replaceFirstChar { it.uppercase() }
+
+private fun TableState.fieldValue(field: String): Any? = when (field) {
+    "playerEastId" -> playerEastId
+    "playerSouthId" -> playerSouthId
+    "playerWestId" -> playerWestId
+    "playerNorthId" -> playerNorthId
+    "playerEastScore" -> playerEastScore
+    "playerSouthScore" -> playerSouthScore
+    "playerWestScore" -> playerWestScore
+    "playerNorthScore" -> playerNorthScore
+    "playerEastPoints" -> playerEastPoints
+    "playerSouthPoints" -> playerSouthPoints
+    "playerWestPoints" -> playerWestPoints
+    "playerNorthPoints" -> playerNorthPoints
+    "manualPlayerEastScore" -> manualPlayerEastScore
+    "manualPlayerSouthScore" -> manualPlayerSouthScore
+    "manualPlayerWestScore" -> manualPlayerWestScore
+    "manualPlayerNorthScore" -> manualPlayerNorthScore
+    "manualPlayerEastPoints" -> manualPlayerEastPoints
+    "manualPlayerSouthPoints" -> manualPlayerSouthPoints
+    "manualPlayerWestPoints" -> manualPlayerWestPoints
+    "manualPlayerNorthPoints" -> manualPlayerNorthPoints
+    "isCompleted" -> isCompleted
+    "useTotalsOnly" -> useTotalsOnly
+    "usePointsCalculation" -> usePointsCalculation
+    else -> null
+}
+
+private fun TableHand.fieldValue(field: String): Any? = when (field) {
+    "playerWinnerId" -> playerWinnerId
+    "playerLooserId" -> playerLooserId
+    "handScore" -> handScore
+    "isChickenHand" -> isChickenHand
+    "isDone" -> isDone
+    "playerEastPenalty" -> playerEastPenalty
+    "playerSouthPenalty" -> playerSouthPenalty
+    "playerWestPenalty" -> playerWestPenalty
+    "playerNorthPenalty" -> playerNorthPenalty
+    else -> null
+}
+
 private enum class TableManagerPendingUnsavedAction {
     Back,
     Refresh,
@@ -2037,6 +2308,7 @@ internal class TableManagerEditorState private constructor(
 ) {
     val roundId: Int = initialTable.roundId
     val tableId: Int = initialTable.tableId
+    val version: Long = initialTable.version
     val playerIds: List<Int> = initialTable.playerIds
 
     var isCompleted by mutableStateOf(initialTable.isCompleted)

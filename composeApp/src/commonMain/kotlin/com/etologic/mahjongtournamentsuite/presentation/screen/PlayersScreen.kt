@@ -116,26 +116,26 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var initialAssignmentScrollPending by rememberSaveable(tournamentId) { mutableStateOf(true) }
     var assignmentFocusRestoreSlotId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
 
-    fun refresh() = scope.launch {
+    fun refresh(force: Boolean = false) = scope.launch {
         loading = true
         error = null
-        when (val result = presenter.loadPlayers(tournamentId)) {
+        when (val result = presenter.loadPlayers(tournamentId, force)) {
             is AppResult.Success -> store.upsertPlayers(tournamentId, result.value)
             is AppResult.Failure -> error = result.error.toUiMessage()
         }
-        when (val result = presenter.loadBasePlayers()) {
+        when (val result = presenter.loadBasePlayers(force)) {
             is AppResult.Success -> store.upsertBasePlayers(result.value)
             is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
         }
-        when (val result = presenter.loadCountries()) {
+        when (val result = presenter.loadCountries(force)) {
             is AppResult.Success -> countries = result.value
             is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
         }
-        when (val result = presenter.loadTeams(tournamentId)) {
+        when (val result = presenter.loadTeams(tournamentId, force)) {
             is AppResult.Success -> teams = result.value
             is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
         }
-        when (val result = presenter.loadTables(tournamentId)) {
+        when (val result = presenter.loadTables(tournamentId, force)) {
             is AppResult.Success -> {
                 tables = result.value
                 store.upsertTables(tournamentId, roundId = null, tables = result.value)
@@ -149,7 +149,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         savingId = slotId
         error = null
         when (val result = presenter.assignPlayer(tournamentId, slotId, player?.emaId)) {
-            is AppResult.Success -> refresh()
+            is AppResult.Success -> refresh(force = true)
             is AppResult.Failure -> error = result.error.toUiMessage()
         }
         assignmentSlotId = null
@@ -177,7 +177,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         )) {
             is AppResult.Success -> {
                 nonMemberSlotId = null
-                refresh()
+                refresh(force = true)
             }
             is AppResult.Failure -> {
                 nonMemberSlotId = null
@@ -868,7 +868,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             AppTopBarActions(
                 onIdCards = ::exportIdCards,
                 onIdList = ::exportIdList,
-                onRefresh = ::refresh,
+                onRefresh = { refresh(force = true) },
             )
         },
     ) {

@@ -100,12 +100,12 @@ fun TablesScreen(
         }
     }
 
-    fun refreshMeta() {
+    fun refreshMeta(force: Boolean = false) {
         coroutineScope.launch {
             isLoading = true
             errorMessage = null
 
-            when (val playersResult = presenter.loadPlayers(tournamentId)) {
+            when (val playersResult = presenter.loadPlayers(tournamentId, force)) {
                 is AppResult.Success -> store.upsertPlayers(tournamentId, playersResult.value)
                 is AppResult.Failure -> {
                     errorMessage = playersResult.error.toUiMessage()
@@ -114,7 +114,7 @@ fun TablesScreen(
                 }
             }
 
-            when (val roundsResult = presenter.loadRounds(tournamentId)) {
+            when (val roundsResult = presenter.loadRounds(tournamentId, force)) {
                 is AppResult.Success -> store.upsertRounds(tournamentId, roundsResult.value)
                 is AppResult.Failure -> {
                     errorMessage = roundsResult.error.toUiMessage()
@@ -127,12 +127,12 @@ fun TablesScreen(
         }
     }
 
-    fun refreshTables(roundId: Int?) {
+    fun refreshTables(roundId: Int?, force: Boolean = false) {
         coroutineScope.launch {
             isLoading = true
             errorMessage = null
 
-            when (val tablesResult = presenter.loadTables(tournamentId, roundId)) {
+            when (val tablesResult = presenter.loadTables(tournamentId, roundId, force)) {
                 is AppResult.Success -> store.upsertTables(tournamentId, roundId, tablesResult.value)
                 is AppResult.Failure -> errorMessage = tablesResult.error.toUiMessage()
             }
@@ -161,8 +161,8 @@ fun TablesScreen(
         actions = {
             AppTopBarActions(
                 onRefresh = {
-                    refreshMeta()
-                    refreshTables(roundId = selectedRoundId)
+                    refreshMeta(force = true)
+                    refreshTables(roundId = selectedRoundId, force = true)
                 },
             )
         },

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { normalizePlayerNamePart } from "./playerName";
+import { bumpGlobalDataVersion } from "./dataVersionsService";
 
 /** Firestore collection for EMA registry records. Never use this for tournament player slots. */
 export const EMA_PLAYER_REGISTRY_COLLECTION = "emaPlayerRegistry";
@@ -69,6 +70,7 @@ export async function createPlayer(params: { emaId: string; firstName: string; l
     updatedAt: FieldValue.serverTimestamp(),
   });
   const created = await ref.get();
+  await bumpGlobalDataVersion("emaPlayers");
   return toPlayer(params.emaId, created.data() ?? {});
 }
 
@@ -96,6 +98,7 @@ export async function updatePlayer(params: {
   };
   if (params.previousEmaId === params.emaId) {
     await previousRef.update({ ...update, name: FieldValue.delete() });
+    await bumpGlobalDataVersion("emaPlayers");
     return;
   }
 
@@ -109,6 +112,7 @@ export async function updatePlayer(params: {
   batch.delete(previousRef);
   references.docs.forEach((reference) => batch.update(reference.ref, { assignedEmaId: params.emaId, updatedAt: FieldValue.serverTimestamp() }));
   await batch.commit();
+  await bumpGlobalDataVersion("emaPlayers");
 }
 
 const photoExtensions: Record<string, string> = {
@@ -166,6 +170,7 @@ export async function updatePlayerPhoto(params: {
   const photoUrl = `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${objectName}?alt=media&token=${token}`;
   await ref.update({ photoUrl, updatedAt: FieldValue.serverTimestamp() });
   const updated = await ref.get();
+  await bumpGlobalDataVersion("emaPlayers");
   return toPlayer(params.emaId, updated.data() ?? {});
 }
 

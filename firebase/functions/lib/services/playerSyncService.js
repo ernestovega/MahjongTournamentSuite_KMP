@@ -9,6 +9,7 @@ const node_path_1 = require("node:path");
 const firebase_1 = require("../firebase");
 const playersService_1 = require("./playersService");
 const playerName_1 = require("./playerName");
+const dataVersionsService_1 = require("./dataVersionsService");
 const baseUrl = `${process.env.EMA_SOURCE_BASE_URL ?? "https://mahjong-europe.org"}/ranking/`;
 const EMA_RANKING_TOURNAMENT_RESULT_INDEX = "emaRankingTournamentResultIndex";
 async function mapWithConcurrency(items, worker, concurrency = 6) {
@@ -269,6 +270,8 @@ async function runEmaPlayerRegistrySync(mode) {
     const report = { id: reportRef.id, mode, startedAt, completedAt, additions, updates, noLongerRanked, sourceUrls: [baseUrl + "Tournament/Tournaments_all.html"] };
     await reportRef.set({ ...report, createdAt: firestore_1.Timestamp.now(), backupCount: current.size, newTournamentPaths: newTournaments.paths });
     await firebase_1.db.doc("emaPlayerRegistrySyncState/current").set({ lastSuccessfulSyncAt: firestore_1.Timestamp.now(), lastReportId: reportRef.id }, { merge: true });
+    if (players.length > 0)
+        await (0, dataVersionsService_1.bumpGlobalDataVersion)("emaPlayers");
     return report;
 }
 //# sourceMappingURL=playerSyncService.js.map

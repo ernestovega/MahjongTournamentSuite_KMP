@@ -12,6 +12,7 @@ const httpError_1 = require("../api/httpError");
 const mers_1 = require("./mers");
 const playersService_1 = require("./playersService");
 const tournamentContentRules_1 = require("./tournamentContentRules");
+const dataVersionsService_1 = require("./dataVersionsService");
 function readNonMember(value) {
     if (value == null || typeof value !== "object")
         return null;
@@ -230,6 +231,11 @@ async function updateTournamentTeam(params) {
         }, { merge: true });
     });
     await refreshAssignmentCountries(params.tournamentId);
+    await Promise.all([
+        (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "teams"),
+        (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "players"),
+        (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments"),
+    ]);
 }
 async function assignTournamentPlayer(params) {
     const playerRef = firebase_1.db.collection("tournaments").doc(params.tournamentId)
@@ -292,6 +298,10 @@ async function assignTournamentPlayer(params) {
         });
     });
     await refreshAssignmentCountries(params.tournamentId);
+    await Promise.all([
+        (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "players"),
+        (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments"),
+    ]);
 }
 async function listTournamentRounds(tournamentId) {
     const snap = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("rounds").get();
@@ -307,6 +317,22 @@ async function listTournamentTables(tournamentId, roundId) {
         ? await collection.get()
         : await collection.where("roundId", "==", roundId).get();
     const tables = await Promise.all(snap.docs.map(async (d) => {
+        const storedHasProgress = d.get("hasProgress");
+        const storedHasValidManualTotals = d.get("hasValidManualTotals");
+        if (typeof storedHasProgress === "boolean" && typeof storedHasValidManualTotals === "boolean") {
+            return {
+                version: Number(d.get("version") ?? 0),
+                roundId: Number(d.get("roundId")),
+                tableId: Number(d.get("tableId")),
+                playerIds: (d.get("playerIds") ?? []).map((x) => Number(x)),
+                isCompleted: Boolean(d.get("isCompleted") ?? false),
+                useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? true),
+                usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
+                hasProgress: storedHasProgress,
+                hasValidManualTotals: storedHasValidManualTotals,
+            };
+        }
+        // Old documents use this fallback until the summary backfill runs.
         const hands = await d.ref.collection("hands").get();
         const hasHandProgress = hands.docs.some((hand) => {
             const value = hand.data();
@@ -351,6 +377,7 @@ async function listTournamentTables(tournamentId, roundId) {
         const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? true);
         const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
         return {
+            version: Number(d.get("version") ?? 0),
             roundId: Number(d.get("roundId")),
             tableId: Number(d.get("tableId")),
             playerIds: (d.get("playerIds") ?? []).map((x) => Number(x)),

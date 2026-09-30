@@ -6,6 +6,7 @@ import { join } from "node:path";
 import { db, storage } from "../firebase";
 import { EMA_PLAYER_REGISTRY_COLLECTION, validateEmaId } from "./playersService";
 import { decodePlayerNameEntities, normalizePlayerNamePart } from "./playerName";
+import { bumpGlobalDataVersion } from "./dataVersionsService";
 
 const baseUrl = `${process.env.EMA_SOURCE_BASE_URL ?? "https://mahjong-europe.org"}/ranking/`;
 const EMA_RANKING_TOURNAMENT_RESULT_INDEX = "emaRankingTournamentResultIndex";
@@ -292,5 +293,6 @@ export async function runEmaPlayerRegistrySync(mode: "seed" | "incremental"): Pr
   const report: EmaPlayerRegistrySyncReport = { id: reportRef.id, mode, startedAt, completedAt, additions, updates, noLongerRanked, sourceUrls: [baseUrl + "Tournament/Tournaments_all.html"] };
   await reportRef.set({ ...report, createdAt: Timestamp.now(), backupCount: current.size, newTournamentPaths: newTournaments.paths });
   await db.doc("emaPlayerRegistrySyncState/current").set({ lastSuccessfulSyncAt: Timestamp.now(), lastReportId: reportRef.id }, { merge: true });
+  if (players.length > 0) await bumpGlobalDataVersion("emaPlayers");
   return report;
 }
