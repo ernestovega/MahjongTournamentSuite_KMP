@@ -1,8 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -48,13 +50,16 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -71,6 +76,7 @@ fun SignInScreen(
     navController: NavHostController,
 ) {
     val authPresenter = koinInject<AuthPresenter>()
+    val versionPresenter = koinInject<VersionPresenter>()
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
@@ -84,6 +90,11 @@ fun SignInScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var infoMessage by remember { mutableStateOf<String?>(null) }
+    var backendVersion by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(versionPresenter) {
+        backendVersion = versionPresenter.loadBackendVersion()
+    }
 
     LaunchedEffect(authPresenter) {
         // Chrome mediates this request through its password manager UI.
@@ -104,6 +115,7 @@ fun SignInScreen(
         title = "Sign in",
         isLoading = isLoading,
         autoFocusFirst = false,
+        showBackgroundLogo = false,
         leadingActions = { AppTopBarLeadingActions(showThemeToggle = true) },
     ) {
         fun submit() {
@@ -148,19 +160,22 @@ fun SignInScreen(
             }
         }
 
-        ScreenColumn(
-            maxWidth = 520.dp,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
-        ) {
-            Text(
-                text = "Use your email to sign in. Accounts are invitation-only.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        Box(modifier = Modifier.fillMaxSize()) {
+            ScreenColumn(
+                maxWidth = 520.dp,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
+            ) {
+                AppLogo(size = 144.dp)
 
-            Card(modifier = Modifier.fillMaxWidth()) {
+                Text(
+                    text = "Use your email to sign in. Accounts are invitation-only.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+
+                Card(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier.padding(20.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -301,7 +316,13 @@ fun SignInScreen(
                         }
                     }
                 }
+                }
             }
+
+            AppVersionLabel(
+                backendVersion = backendVersion,
+                modifier = Modifier.align(Alignment.BottomStart),
+            )
         }
     }
 }

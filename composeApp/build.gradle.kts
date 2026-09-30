@@ -81,7 +81,9 @@ compose.desktop {
         nativeDistributions {
             targetFormats(TargetFormat.Dmg, TargetFormat.Msi, TargetFormat.Deb)
             packageName = "com.etologic.mahjongtournamentsuite"
-            packageVersion = libs.versions.app.versionName.get()
+            // Compose desktop requires a package version with a major version above zero.
+            // The user-facing app version remains the pre-production 0.x version.
+            packageVersion = "1.0.0"
         }
     }
 }

@@ -31,6 +31,7 @@ export function buildApp(): express.Express {
   app.get("/version", (_req, res) => {
     res.status(200).json({
       ok: true,
+      version: "1.0.0",
       project: process.env.GCLOUD_PROJECT ?? null,
       service: process.env.K_SERVICE ?? null,
       revision: process.env.K_REVISION ?? null,

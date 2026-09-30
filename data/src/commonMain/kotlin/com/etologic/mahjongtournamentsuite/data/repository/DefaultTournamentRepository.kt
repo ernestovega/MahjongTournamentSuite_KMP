@@ -234,26 +234,46 @@ class DefaultTournamentRepository(
         },
     )
 
-    override suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray> = runCatching {
-        withFreshIdToken { idToken ->
-            backendApi.generateTournamentIdCards(idToken, tournamentId)
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Generating tournament ID cards failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
+    override suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray> = cachedGeneratedFile(
+        tournamentId = tournamentId,
+        cacheSuffix = "id-cards",
+        action = "Generating tournament ID cards",
+        load = { token -> backendApi.generateTournamentIdCards(token, tournamentId) },
     )
 
-    override suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray> = runCatching {
-        withFreshIdToken { idToken ->
-            backendApi.generateTournamentIdList(idToken, tournamentId)
-        }
+    override suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray> = cachedGeneratedFile(
+        tournamentId = tournamentId,
+        cacheSuffix = "id-list",
+        action = "Generating tournament ID list",
+        load = { token -> backendApi.generateTournamentIdList(token, tournamentId) },
+    )
+
+    private suspend fun cachedGeneratedFile(
+        tournamentId: String,
+        cacheSuffix: String,
+        action: String,
+        load: suspend (String) -> ByteArray,
+    ): AppResult<ByteArray> = runCatching {
+        val session = authRepository.currentSession() ?: error("No active session")
+        cache.getOrLoad(
+            ownerUid = session.uid,
+            key = "tournament:$tournamentId:players:$cacheSuffix",
+            refreshMode = RefreshMode.IF_CHANGED,
+            revision = {
+                withFreshIdToken { token ->
+                    val tournamentRevision = backendApi.tournamentDataVersions(token, tournamentId)
+                        .resources.values.sumOf { it.revision }
+                    val globalPlayerRevision = backendApi.globalDataVersions(token)
+                        .resources["players"]?.revision ?: 0
+                    tournamentRevision * 31 + globalPlayerRevision
+                }
+            },
+            load = { withFreshIdToken(load) },
+        )
     }.fold(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
-            logger.w(throwable) { "Generating tournament ID list failed." }
+            logger.w(throwable) { "$action failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )
@@ -261,8 +281,11 @@ class DefaultTournamentRepository(
     override suspend fun generateEmaReport(
         tournamentId: String,
         rankings: List<PlayerRanking>,
-    ): AppResult<ByteArray> = runCatching {
-        withFreshIdToken { idToken ->
+    ): AppResult<ByteArray> = cachedGeneratedFile(
+        tournamentId = tournamentId,
+        cacheSuffix = "ema-report-${rankings.hashCode()}",
+        action = "Generating EMA report",
+        load = { idToken ->
             backendApi.generateEmaReport(
                 idToken = idToken,
                 tournamentId = tournamentId,
@@ -277,12 +300,6 @@ class DefaultTournamentRepository(
                     },
                 ),
             )
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(it) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Generating EMA report failed." }
-            AppResult.Failure(throwable.toAppError())
         },
     )
 

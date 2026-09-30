@@ -28,6 +28,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseD
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpsertMemberRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.BackendVersionDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
@@ -59,6 +60,8 @@ class FunctionsBackendApi(
     private val apiConfiguration: ApiConfiguration,
 ) {
     private fun url(path: String): String = apiConfiguration.baseUrl.trimEnd('/') + path
+
+    suspend fun version(): BackendVersionDto = get(path = "/version")
 
     suspend fun signIn(request: SignInRequestDto): SignInResponseDto =
         post(path = "/auth/signIn", requestBody = request)
@@ -196,7 +199,7 @@ class FunctionsBackendApi(
     ): ByteArray {
         val response = httpClient.post(url("/tournaments/id-card-proof")) {
             header(HttpHeaders.Authorization, "Bearer $idToken")
-            header(HttpHeaders.Accept, "image/png")
+            header(HttpHeaders.Accept, "application/pdf")
             timeout { requestTimeoutMillis = 60_000 }
             setBody(request)
         }
@@ -424,10 +427,12 @@ class FunctionsBackendApi(
 
     private suspend inline fun <reified TResponse> get(
         path: String,
-        idToken: String,
+        idToken: String? = null,
     ): TResponse {
         val response = httpClient.get(url(path)) {
-            header(HttpHeaders.Authorization, "Bearer $idToken")
+            if (idToken != null) {
+                header(HttpHeaders.Authorization, "Bearer $idToken")
+            }
         }
         return response.requireSuccessBody()
     }

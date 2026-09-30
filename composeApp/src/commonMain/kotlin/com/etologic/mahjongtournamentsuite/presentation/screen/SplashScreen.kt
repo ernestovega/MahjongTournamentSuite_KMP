@@ -18,6 +18,7 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.AppBackground
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import org.koin.compose.koinInject
@@ -36,18 +37,20 @@ fun SplashScreen(
         }
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-    ) {
-        Text(
-            text = "Mahjong Tournament Suite",
-            style = MaterialTheme.typography.headlineMedium,
-        )
-        CircularProgressIndicator()
+    AppBackground {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+        ) {
+            Text(
+                text = "Mahjong Tournament Suite",
+                style = MaterialTheme.typography.headlineMedium,
+            )
+            CircularProgressIndicator()
+        }
     }
 }
 

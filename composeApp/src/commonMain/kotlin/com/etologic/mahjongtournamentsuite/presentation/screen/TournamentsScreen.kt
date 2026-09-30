@@ -47,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -85,6 +86,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
@@ -115,6 +117,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiIsoDateTimeOrDash
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
@@ -140,6 +143,7 @@ fun TournamentsScreen(
     navController: NavHostController,
 ) {
     val presenter = koinInject<TournamentsPresenter>()
+    val versionPresenter = koinInject<VersionPresenter>()
     val store = koinInject<AppMemoryStore>()
     val coroutineScope = rememberCoroutineScope()
 
@@ -151,6 +155,7 @@ fun TournamentsScreen(
     var isRefreshing by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var backendVersion by remember { mutableStateOf<String?>(null) }
     var deleteDialogTournament by remember { mutableStateOf<Tournament?>(null) }
     var renameDialogTournament by remember { mutableStateOf<Tournament?>(null) }
     var showCreateTournamentDialog by remember { mutableStateOf(false) }
@@ -276,6 +281,10 @@ fun TournamentsScreen(
         refresh()
     }
 
+    LaunchedEffect(versionPresenter) {
+        backendVersion = versionPresenter.loadBackendVersion()
+    }
+
     val roleLabel = adminStatus?.let {
         when (it.role) {
             com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.ADMIN -> "Admin"
@@ -291,6 +300,7 @@ fun TournamentsScreen(
 
     LaunchedEffect(isRefreshing, tournaments.map { it.id }) {
         if (!tournamentFocusApplied && !isRefreshing) {
+            withFrameNanos { }
             when (lastFocusedControl) {
                 "player-base" -> playerBaseFocusRequester.requestFocus()
                 "users" -> if (adminStatus?.canManageUsers == true) {
@@ -994,7 +1004,6 @@ fun TournamentsScreen(
                     lastFocusedControl = "player-base"
                     navController.navigate(PlayerBaseRoute)
                 },
-                onRefresh = { refresh(force = true) },
                 onNewTournament = if (adminStatus?.canCreateTournaments == true) {
                     {
                         lastFocusedControl = "new-tournament"
@@ -1008,13 +1017,14 @@ fun TournamentsScreen(
             )
         },
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(PaddingValues(horizontal = 24.dp, vertical = 24.dp)),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(PaddingValues(horizontal = 24.dp, vertical = 24.dp)),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
             SectionCard(
                 content = {
                     when {
@@ -1156,6 +1166,12 @@ fun TournamentsScreen(
                     onDismiss = { errorMessage = null },
                 )
             }
+            }
+
+            AppVersionLabel(
+                backendVersion = backendVersion,
+                modifier = Modifier.align(Alignment.BottomStart),
+            )
         }
     }
 }

@@ -203,7 +203,6 @@ fun GlobalUsersScreen(navController: NavHostController) {
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
-                onRefresh = { refresh(force = true) },
                 onNewUser = { showCreateDialog = true },
                 newUserFocusRequester = addFocusRequester,
             )

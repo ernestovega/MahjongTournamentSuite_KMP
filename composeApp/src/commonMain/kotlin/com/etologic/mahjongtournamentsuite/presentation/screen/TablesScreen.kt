@@ -158,14 +158,6 @@ fun TablesScreen(
         subtitle = tournamentId,
         isLoading = isLoading,
         onBack = { navController.popBackStack() },
-        actions = {
-            AppTopBarActions(
-                onRefresh = {
-                    refreshMeta(force = true)
-                    refreshTables(roundId = selectedRoundId, force = true)
-                },
-            )
-        },
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,

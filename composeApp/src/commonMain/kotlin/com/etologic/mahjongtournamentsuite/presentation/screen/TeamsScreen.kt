@@ -229,7 +229,6 @@ fun TeamsScreen(
         title = "Tournament teams",
         isLoading = loading || saving,
         onBack = { navController.popBackStack() },
-        actions = { AppTopBarActions(onRefresh = { refresh(force = true) }) },
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,

@@ -10,7 +10,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -64,8 +63,8 @@ private const val DisabledTopBarButtonAlpha = 0.38f
 private fun AppTopBarButtonPreview() {
     MtsTheme(useDarkTheme = false) {
         AppTopBarButton(
-            text = "Refresh",
-            icon = Icons.Default.Refresh,
+            text = "Example",
+            icon = Icons.Default.Add,
             onClick = {},
         )
     }

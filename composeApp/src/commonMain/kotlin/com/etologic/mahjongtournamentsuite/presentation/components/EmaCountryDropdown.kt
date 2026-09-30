@@ -191,7 +191,10 @@ fun EmaCountryDropdown(
             supportingText = errorMessage?.let { message -> { Text(message) } },
             singleLine = true,
             modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
+                .menuAnchor(
+                    type = ExposedDropdownMenuAnchorType.PrimaryEditable,
+                    enabled = true,
+                )
                 .then(focusRequester?.let(Modifier::focusRequester) ?: Modifier)
                 .focusRequester(anchorFocusRequester)
                 .onFocusChanged { focusState ->

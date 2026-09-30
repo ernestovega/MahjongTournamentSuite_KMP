@@ -232,7 +232,7 @@ function tournamentsRouter() {
             next(e);
         }
     });
-    router.post("/id-card-proof", requireAuth_1.requireAuth, async (req, res, next) => {
+    const generateIdCardProof = async (req, res, next) => {
         try {
             const body = (req.body != null && typeof req.body === "object")
                 ? req.body
@@ -270,7 +270,10 @@ function tournamentsRouter() {
         catch (e) {
             next(e);
         }
-    });
+    };
+    router.post("/id-card-proof", requireAuth_1.requireAuth, generateIdCardProof);
+    // Keep the previous route working for already deployed web bundles.
+    router.post("/id-card-preview", requireAuth_1.requireAuth, generateIdCardProof);
     router.get("/:tournamentId/id-cards", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const pdf = await (0, idCardsService_1.generateTournamentIdCards)(req.params.tournamentId);

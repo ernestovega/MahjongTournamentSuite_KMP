@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { NextFunction, Request, Response, Router } from "express";
 
 import { auth } from "../../firebase";
 import { requireAuth } from "../middleware/requireAuth";
@@ -254,7 +254,7 @@ export function tournamentsRouter(): Router {
     }
   });
 
-  router.post("/id-card-proof", requireAuth, async (req, res, next) => {
+  const generateIdCardProof = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const body = (req.body != null && typeof req.body === "object")
         ? req.body as Record<string, unknown>
@@ -293,7 +293,11 @@ export function tournamentsRouter(): Router {
     } catch (e) {
       next(e);
     }
-  });
+  };
+
+  router.post("/id-card-proof", requireAuth, generateIdCardProof);
+  // Keep the previous route working for already deployed web bundles.
+  router.post("/id-card-preview", requireAuth, generateIdCardProof);
 
   router.get("/:tournamentId/id-cards", requireAuth, requireTournamentEditor, async (req, res, next) => {
     try {

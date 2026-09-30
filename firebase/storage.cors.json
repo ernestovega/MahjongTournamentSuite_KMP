@@ -1,0 +1,12 @@
+[
+  {
+    "origin": [
+      "https://mahjong-tournament-suite.web.app",
+      "http://localhost:8080",
+      "http://localhost:8000"
+    ],
+    "method": ["GET", "HEAD"],
+    "responseHeader": ["Content-Type", "Content-Length", "Cache-Control", "ETag"],
+    "maxAgeSeconds": 3600
+  }
+]

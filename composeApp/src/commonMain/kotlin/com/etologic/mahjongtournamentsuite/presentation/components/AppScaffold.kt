@@ -30,6 +30,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -62,12 +63,18 @@ fun AppScaffold(
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
     autoFocusFirst: Boolean = true,
+    showBackgroundLogo: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
-        if (autoFocusFirst) focusManager.moveFocus(FocusDirection.Next)
+        if (autoFocusFirst) {
+            // Wait until the first layout pass. Web focus changes can otherwise
+            // run while Compose is still measuring the focus group.
+            withFrameNanos { }
+            focusManager.moveFocus(FocusDirection.Next)
+        }
     }
 
     Scaffold(
@@ -162,8 +169,15 @@ fun AppScaffold(
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                content()
+            val contentWithBackground: @Composable () -> Unit = {
+                CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                    content()
+                }
+            }
+            if (showBackgroundLogo) {
+                AppBackground(contentWithBackground)
+            } else {
+                contentWithBackground()
             }
         }
     }
@@ -236,7 +250,7 @@ private fun AppScaffoldPreview() {
                     AppTopBarLeadingActions(showThemeToggle = true, onTimer = {}, onRanking = {})
                 },
                 actions = {
-                    AppTopBarActions(onPlayers = {}, onRefresh = {}, onNewTournament = {})
+                    AppTopBarActions(onPlayers = {}, onNewTournament = {})
                 },
             ) {
                 Box(modifier = Modifier.padding(24.dp)) {

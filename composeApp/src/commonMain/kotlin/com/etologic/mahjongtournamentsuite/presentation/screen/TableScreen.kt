@@ -233,7 +233,6 @@ fun TableManagerScreen(
     fun performUnsavedAction(action: TableManagerPendingUnsavedAction) {
         when (action) {
             TableManagerPendingUnsavedAction.Back -> navController.popBackStack()
-            TableManagerPendingUnsavedAction.Refresh -> refresh(force = true)
         }
     }
 
@@ -403,11 +402,6 @@ fun TableManagerScreen(
         subtitle = tournamentId,
         isLoading = isLoading,
         onBack = { requestUnsavedAction(TableManagerPendingUnsavedAction.Back) },
-        actions = {
-            AppTopBarActions(
-                onRefresh = { requestUnsavedAction(TableManagerPendingUnsavedAction.Refresh) },
-            )
-        },
         floatingActionButton = {
             if (editorState != null && editorState.hasUnsavedChanges) {
                 val discardInteractionSource = remember { MutableInteractionSource() }
@@ -2166,7 +2160,6 @@ private fun TableHand.fieldValue(field: String): Any? = when (field) {
 
 private enum class TableManagerPendingUnsavedAction {
     Back,
-    Refresh,
 }
 
 private val HandRowHorizontalPadding = 10.dp
@@ -2728,41 +2721,45 @@ internal class TableManagerEditorState private constructor(
     }
 
     private fun calculatePointsFromScores(scores: SeatTextValues): SeatTextValues {
-        val ranked = listOf(
-            RankedSeat(Seat.EAST, scores.east.toIntOrNull()),
-            RankedSeat(Seat.SOUTH, scores.south.toIntOrNull()),
-            RankedSeat(Seat.WEST, scores.west.toIntOrNull()),
-            RankedSeat(Seat.NORTH, scores.north.toIntOrNull()),
-        )
-        if (ranked.any { it.score == null }) return SeatTextValues.EMPTY
+        return try {
+            val ranked = listOf(
+                RankedSeat(Seat.EAST, scores.east.toIntOrNull()),
+                RankedSeat(Seat.SOUTH, scores.south.toIntOrNull()),
+                RankedSeat(Seat.WEST, scores.west.toIntOrNull()),
+                RankedSeat(Seat.NORTH, scores.north.toIntOrNull()),
+            )
+            if (ranked.any { it.score == null }) return SeatTextValues.EMPTY
 
-        val sorted = ranked.sortedByDescending { it.score ?: Int.MIN_VALUE }
-        val assigned = when {
-            sorted[0].score == sorted[1].score && sorted[1].score == sorted[2].score && sorted[2].score == sorted[3].score ->
-                listOf("1,75", "1,75", "1,75", "1,75")
-            sorted[0].score == sorted[1].score && sorted[1].score == sorted[2].score ->
-                listOf("2,33", "2,33", "2,33", "0")
-            sorted[1].score == sorted[2].score && sorted[2].score == sorted[3].score ->
-                listOf("4", "1", "1", "1")
-            sorted[0].score == sorted[1].score && sorted[2].score == sorted[3].score ->
-                listOf("3", "3", "0,5", "0,5")
-            sorted[0].score == sorted[1].score ->
-                listOf("3", "3", "1", "0")
-            sorted[1].score == sorted[2].score ->
-                listOf("4", "1,5", "1,5", "0")
-            sorted[2].score == sorted[3].score ->
-                listOf("4", "2", "0,5", "0,5")
-            else ->
-                listOf("4", "2", "1", "0")
+            val sorted = ranked.sortedByDescending { it.score ?: Int.MIN_VALUE }
+            val assigned = when {
+                sorted[0].score == sorted[1].score && sorted[1].score == sorted[2].score && sorted[2].score == sorted[3].score ->
+                    listOf("1,75", "1,75", "1,75", "1,75")
+                sorted[0].score == sorted[1].score && sorted[1].score == sorted[2].score ->
+                    listOf("2,33", "2,33", "2,33", "0")
+                sorted[1].score == sorted[2].score && sorted[2].score == sorted[3].score ->
+                    listOf("4", "1", "1", "1")
+                sorted[0].score == sorted[1].score && sorted[2].score == sorted[3].score ->
+                    listOf("3", "3", "0,5", "0,5")
+                sorted[0].score == sorted[1].score ->
+                    listOf("3", "3", "1", "0")
+                sorted[1].score == sorted[2].score ->
+                    listOf("4", "1,5", "1,5", "0")
+                sorted[2].score == sorted[3].score ->
+                    listOf("4", "2", "0,5", "0,5")
+                else ->
+                    listOf("4", "2", "1", "0")
+            }
+
+            val bySeat = sorted.mapIndexed { index, rankedSeat -> rankedSeat.seat to assigned[index] }.toMap()
+            SeatTextValues(
+                east = bySeat[Seat.EAST].orEmpty(),
+                south = bySeat[Seat.SOUTH].orEmpty(),
+                west = bySeat[Seat.WEST].orEmpty(),
+                north = bySeat[Seat.NORTH].orEmpty(),
+            )
+        } catch (_: Exception) {
+            SeatTextValues.EMPTY
         }
-
-        val bySeat = sorted.mapIndexed { index, rankedSeat -> rankedSeat.seat to assigned[index] }.toMap()
-        return SeatTextValues(
-            east = bySeat[Seat.EAST].orEmpty(),
-            south = bySeat[Seat.SOUTH].orEmpty(),
-            west = bySeat[Seat.WEST].orEmpty(),
-            north = bySeat[Seat.NORTH].orEmpty(),
-        )
     }
 
     private fun currentSeatIds(): SeatIds? {

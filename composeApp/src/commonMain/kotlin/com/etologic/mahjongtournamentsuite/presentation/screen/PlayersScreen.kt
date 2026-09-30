@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -25,6 +27,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -91,6 +94,7 @@ import coil3.compose.AsyncImage
 
 /** Links generated tournament slots to players in the shared base. */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val presenter = koinInject<PlayersPresenter>()
     val store = koinInject<AppMemoryStore>()
@@ -112,6 +116,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var nonMemberError by remember { mutableStateOf<String?>(null) }
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var assignmentSearchQuery by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
+    var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
+    val searchFocusRequester = remember { FocusRequester() }
     val assignmentsListState = rememberLazyListState()
     var initialAssignmentScrollPending by rememberSaveable(tournamentId) { mutableStateOf(true) }
     var assignmentFocusRestoreSlotId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
@@ -254,6 +261,35 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 }
         }
     }
+    val tournamentCountryCodes = remember(players, playersByEma) {
+        players.mapNotNull { slot ->
+            slot.assignedEmaId?.let(playersByEma::get)?.country ?: slot.nonMember?.country
+        }.map { it.trim().uppercase() }
+            .filter { it.isNotEmpty() && it != "EU" }
+            .distinct()
+            .sorted()
+    }
+    val filteredPlayers = remember(players, playersByEma, teamNamesById, tableNumbersByPlayerId, searchQuery, selectedCountryCodes) {
+        val query = normalizeSearchText(searchQuery.trim())
+        players.filter { slot ->
+            val assigned = slot.assignedEmaId?.let(playersByEma::get)
+            val name = assigned?.displayName ?: slot.nonMember?.displayName.orEmpty()
+            val country = assigned?.country ?: slot.nonMember?.country.orEmpty()
+            val team = teamNamesById[slot.team] ?: "Team ${slot.team}"
+            val tablesForPlayer = tableNumbersByPlayerId[slot.id].orEmpty()
+            val matchesSearch = query.isEmpty() || listOf(
+                name, assigned?.emaId.orEmpty(), slot.id.toString(), team, tablesForPlayer,
+            ).any { normalizeSearchText(it).contains(query) }
+            val matchesCountry = selectedCountryCodes.isEmpty() || country.trim().uppercase() in selectedCountryCodes
+            matchesSearch && matchesCountry
+        }
+    }
+    val filteredPlayerIndexes = remember(players, filteredPlayers) {
+        filteredPlayers.map { filtered -> players.indexOfFirst { it.id == filtered.id } }
+    }
+    LaunchedEffect(tournamentCountryCodes) {
+        selectedCountryCodes = selectedCountryCodes.intersect(tournamentCountryCodes.toSet())
+    }
     val assignedEmaIds = remember(players) { players.mapNotNullTo(mutableSetOf()) { it.assignedEmaId } }
     val filteredBasePlayers = remember(basePlayers, countries, assignmentSearchQuery, assignedEmaIds) {
         val query = normalizeSearchText(assignmentSearchQuery.trim())
@@ -289,6 +325,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     }
 
     suspend fun revealPlayerAction(index: Int) {
+        // Wait for the web layout pass before reading or changing the list state.
+        withFrameNanos { }
         val initialLayout = assignmentsListState.layoutInfo
         val initialVisibleItems = initialLayout.visibleItemsInfo
         val initialTarget = initialVisibleItems.firstOrNull { it.index == index }
@@ -868,7 +906,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             AppTopBarActions(
                 onIdCards = ::exportIdCards,
                 onIdList = ::exportIdList,
-                onRefresh = { refresh(force = true) },
             )
         },
     ) {
@@ -880,7 +917,62 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 )
             }
             SectionCard {
+                if (players.isNotEmpty()) {
+                    OutlinedTextField(
+                        value = searchQuery,
+                        onValueChange = { searchQuery = it },
+                        label = { Text("Search by name, EMA number, player ID, team, or table") },
+                        singleLine = true,
+                        trailingIcon = if (searchQuery.isNotEmpty()) {
+                            {
+                                IconButton(onClick = {
+                                    searchQuery = ""
+                                    searchFocusRequester.requestFocus()
+                                }) { Icon(Icons.Default.Close, contentDescription = "Clear search") }
+                            }
+                        } else null,
+                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
+                    )
+                    if (tournamentCountryCodes.isNotEmpty()) {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text("Filter by country", style = MaterialTheme.typography.labelMedium)
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                tournamentCountryCodes.forEach { code ->
+                                    val isSelected = code in selectedCountryCodes
+                                    val count = players.count { slot ->
+                                        val assigned = slot.assignedEmaId?.let(playersByEma::get)
+                                        (assigned?.country ?: slot.nonMember?.country).orEmpty().uppercase() == code
+                                    }
+                                    TextButton(
+                                        onClick = {
+                                            selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code
+                                        },
+                                        shape = CircleShape,
+                                        colors = if (isSelected) ButtonDefaults.textButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.primary,
+                                            contentColor = MaterialTheme.colorScheme.onPrimary,
+                                        ) else ButtonDefaults.textButtonColors(
+                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        ),
+                                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
+                                    ) {
+                                        CountryFlag(code = code, contentDescription = "Filter by $code")
+                                        Spacer(Modifier.width(4.dp))
+                                        Text("$code ($count)")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 if (players.isEmpty() && !loading) Text("No generated tournament players found.")
+                if (players.isNotEmpty() && filteredPlayers.isEmpty() && !loading) {
+                    Text("No tournament players match the current filters.")
+                }
                 Column(Modifier.fillMaxWidth()) {
                     DataTableHeaderRow {
                         TournamentPlayerHeader("Photo", Modifier.width(TournamentPlayerPhotoColumnWidth))
@@ -903,8 +995,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         state = assignmentsListState,
                         modifier = Modifier.weight(1f, fill = false),
                     ) {
-                        items(players.size, key = { players[it].id }) { index ->
-                            val slot = players[index]
+                        items(filteredPlayers.size, key = { filteredPlayers[it].id }) { index ->
+                            val slot = filteredPlayers[index]
                             val assigned = slot.assignedEmaId?.let(playersByEma::get)
                             val playerCountry = assigned?.country ?: slot.nonMember?.country.orEmpty()
                             val playerName = assigned?.displayName ?: slot.nonMember?.displayName
@@ -986,7 +1078,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             enabled = !loading && savingId == null,
                                             onClick = { openAssignment(slot.id) },
                                             modifier = Modifier
-                                                .focusRequester(assignFocusRequesters[index])
+                                                .focusRequester(assignFocusRequesters[filteredPlayerIndexes[index]])
                                                 .onFocusChanged {
                                                     focusedAssignRowIndex = if (it.isFocused) index else null
                                                 }
@@ -1000,11 +1092,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                             true
                                                         }
                                                         Key.DirectionUp -> {
-                                                            requestPlayerActionFocus(index - 1)
+                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
                                                             true
                                                         }
                                                         Key.DirectionDown -> {
-                                                            requestPlayerActionFocus(index + 1)
+                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
                                                             true
                                                         }
                                                         else -> false
@@ -1029,7 +1121,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 enabled = !loading && savingId == null,
                                                 onClick = { openClearAssignment(slot.id) },
                                                 modifier = Modifier
-                                                    .focusRequester(clearFocusRequesters[index])
+                                                    .focusRequester(clearFocusRequesters[filteredPlayerIndexes[index]])
                                                     .onFocusChanged {
                                                         focusedClearRowIndex = if (it.isFocused) index else null
                                                     }
@@ -1043,11 +1135,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                             }
                                                             Key.DirectionRight -> true
                                                             Key.DirectionUp -> {
-                                                                requestPlayerActionFocus(index - 1)
+                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
                                                                 true
                                                             }
                                                             Key.DirectionDown -> {
-                                                                requestPlayerActionFocus(index + 1)
+                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
                                                                 true
                                                             }
                                                             else -> false

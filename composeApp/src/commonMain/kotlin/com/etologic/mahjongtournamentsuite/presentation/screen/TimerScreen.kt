@@ -62,6 +62,7 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.AppBackground
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
@@ -79,11 +80,13 @@ fun TimerStandaloneScreen(
 
     MtsTheme(useDarkTheme = useDarkTheme) {
         Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-            TimerContent(
-                initialRound = initialRound,
-                useDarkTheme = useDarkTheme,
-                onToggleTheme = { themeOverride = !useDarkTheme },
-            )
+            AppBackground {
+                TimerContent(
+                    initialRound = initialRound,
+                    useDarkTheme = useDarkTheme,
+                    onToggleTheme = { themeOverride = !useDarkTheme },
+                )
+            }
         }
     }
 }

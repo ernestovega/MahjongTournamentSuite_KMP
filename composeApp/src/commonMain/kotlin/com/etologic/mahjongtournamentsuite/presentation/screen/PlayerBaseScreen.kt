@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
@@ -50,6 +51,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -80,6 +82,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
@@ -379,6 +382,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         val cancelFocusRequester = remember { FocusRequester() }
 
         LaunchedEffect(Unit) {
+            withFrameNanos { }
             confirmFocusRequester.requestFocus()
         }
 
@@ -437,6 +441,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         val newEmaFocusRequester = remember { FocusRequester() }
 
         LaunchedEffect(Unit) {
+            withFrameNanos { }
             newEmaFocusRequester.requestFocus()
         }
 
@@ -528,7 +533,6 @@ fun PlayerBaseScreen(navController: NavHostController) {
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
-                onRefresh = { refresh(force = true) },
                 onNewPlayer = if (canEdit) ::openNewPlayerDialog else null,
             )
         },
@@ -634,6 +638,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                                 ) {
                                     CountryFlag(code = code)
+                                    Spacer(Modifier.width(4.dp))
+                                    Text("$code ($countryPlayerCount)")
                                 }
                             }
                         }
@@ -734,13 +740,11 @@ fun PlayerBaseScreen(navController: NavHostController) {
                             )
                             OutlinedTextField(firstName, { firstName = it }, label = { Text("First name") }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
                             OutlinedTextField(lastName, { lastName = it }, label = { Text("Last name") }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                            OutlinedTextField(
-                                value = country,
-                                onValueChange = { country = it.uppercase().take(3) },
-                                label = { Text("Country") },
-                                placeholder = { Text("Three-letter EMA code") },
-                                singleLine = true,
+                            EmaCountryDropdown(
+                                selectedCode = country,
+                                onCountrySelected = { country = it },
                                 enabled = canEdit,
+                                label = "Country",
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }

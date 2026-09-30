@@ -8,7 +8,6 @@ import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assessment
@@ -28,7 +27,6 @@ fun AppTopBarActions(
     onPlayerBase: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
     onEmaReport: (() -> Unit)? = null,
-    onRefresh: (() -> Unit)? = null,
     onNewTournament: (() -> Unit)? = null,
     onNewPlayer: (() -> Unit)? = null,
     onNewUser: (() -> Unit)? = null,
@@ -39,7 +37,6 @@ fun AppTopBarActions(
     playerBaseFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
     exportFocusRequester: FocusRequester? = null,
-    refreshFocusRequester: FocusRequester? = null,
     newTournamentFocusRequester: FocusRequester? = null,
     newPlayerFocusRequester: FocusRequester? = null,
     newUserFocusRequester: FocusRequester? = null,
@@ -57,7 +54,6 @@ fun AppTopBarActions(
             onAppUsers?.let { AppTopBarButton("App users", Icons.Default.ManageAccounts, it, usersFocusRequester) }
             onEmaReport?.let { AppTopBarButton("EMA report", Icons.Outlined.Assessment, it, exportFocusRequester) }
             onPlayerBase?.let { AppTopBarButton("EMA players", Icons.Default.People, it, playerBaseFocusRequester) }
-            onRefresh?.let { AppTopBarButton("Refresh", Icons.Default.Refresh, it, refreshFocusRequester) }
             onNewTournament?.let { AppTopBarButton("New tournament", Icons.Outlined.AddBox, it, newTournamentFocusRequester) }
             onNewPlayer?.let { AppTopBarButton("New player", Icons.Default.PersonAdd, it, newPlayerFocusRequester) }
             onNewUser?.let { AppTopBarButton("New user", Icons.Default.PersonAdd, it, newUserFocusRequester) }
@@ -72,7 +68,6 @@ private fun AppTopBarActionsPreview() {
             onPlayers = {},
             onPlayerBase = {},
             onAppUsers = {},
-            onRefresh = {},
             onNewTournament = {},
             onNewPlayer = {},
         )

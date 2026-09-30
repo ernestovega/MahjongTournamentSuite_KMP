@@ -349,28 +349,24 @@ fun TournamentScreen(
         isLoading = true
         errorMessage = null
         try {
-            if (tablePatch.isNotEmpty()) {
-                when (val result = tablePresenter.patchTable(tournamentId, roundId, tableId, tablePatch)) {
-                    is AppResult.Success -> Unit
-                    is AppResult.Failure -> {
-                        errorMessage = result.error.toUiMessage()
-                        return false
-                    }
+            return when (val result = tablePresenter.saveTableState(
+                tournamentId = tournamentId,
+                roundId = roundId,
+                tableId = tableId,
+                expectedVersion = editor.version,
+                tablePatch = tablePatch,
+                handPatches = handPatches.toMap(),
+            )) {
+                is AppResult.Success -> {
+                    tableState = result.value.first
+                    hands = result.value.second
+                    true
+                }
+                is AppResult.Failure -> {
+                    errorMessage = result.error.toUiMessage()
+                    false
                 }
             }
-
-            for ((handId, patch) in handPatches) {
-                when (val result = tablePresenter.patchHand(tournamentId, roundId, tableId, handId, patch)) {
-                    is AppResult.Success -> Unit
-                    is AppResult.Failure -> {
-                        errorMessage = result.error.toUiMessage()
-                        return false
-                    }
-                }
-            }
-
-            refresh()
-            return true
         } finally {
             isLoading = false
         }
@@ -476,6 +472,7 @@ fun TournamentScreen(
     }
 
     fun requestSave(action: PendingUnsavedAction? = null) {
+        if (isLoading) return
         val nonZeroTotal = editorState?.nonZeroManualScoreTotal
         if (nonZeroTotal != null) {
             actionAfterManualScoreConfirmation = action
@@ -576,7 +573,6 @@ fun TournamentScreen(
                     lastFocusedControl = "export"
                     requestUnsavedAction(PendingUnsavedAction.ExportResults)
                 },
-                onRefresh = { requestUnsavedAction(PendingUnsavedAction.Refresh) },
                 playersFocusRequester = playersFocusRequester,
                 teamsFocusRequester = teamsFocusRequester,
                 exportFocusRequester = exportFocusRequester,

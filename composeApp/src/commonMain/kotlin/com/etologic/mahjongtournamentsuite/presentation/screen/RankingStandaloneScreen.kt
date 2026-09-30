@@ -26,9 +26,9 @@ import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,7 +40,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -62,6 +64,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppBackground
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
@@ -73,6 +76,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -110,6 +114,7 @@ private fun RankingStandaloneContent(
     var pageIndex by remember { mutableIntStateOf(0) }
     var remainingSeconds by remember { mutableIntStateOf(intervalSeconds) }
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
+    var showTopThree by rememberSaveable { mutableStateOf(true) }
     var playing by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
@@ -120,7 +125,6 @@ private fun RankingStandaloneContent(
             is AppResult.Success -> {
                 snapshot = result.value
                 pageIndex = 0
-                listState.scrollToItem(0)
                 remainingSeconds = intervalSeconds
             }
             is AppResult.Failure -> error = result.error.toUiMessage()
@@ -129,11 +133,22 @@ private fun RankingStandaloneContent(
     }
 
     LaunchedEffect(tournamentId) { refresh() }
-    val pages = remember(snapshot) { snapshot?.toPages().orEmpty() }
+    val pages = remember(snapshot, showTopThree) {
+        snapshot?.toPages(showTopThree).orEmpty()
+    }
     LaunchedEffect(pages.size) {
         if (pages.isNotEmpty()) pageIndex = pageIndex.coerceIn(0, pages.lastIndex)
     }
-    LaunchedEffect(pageIndex, pages.getOrNull(pageIndex)?.key) { listState.scrollToItem(0) }
+    LaunchedEffect(pageIndex, pages.getOrNull(pageIndex)?.key) {
+        if (pages.isNotEmpty()) {
+            snapshotFlow { listState.layoutInfo.totalItemsCount }
+                .first { it > 0 }
+            withFrameNanos { }
+            listState.scrollToItem(0)
+        }
+    }
+
+    val currentPage = pages.getOrNull(pageIndex)
 
     LaunchedEffect(maxRowsPerScreen) {
         rowsPerScroll = rowsPerScroll.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen)
@@ -159,7 +174,8 @@ private fun RankingStandaloneContent(
     }
 
     Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-        Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
+        AppBackground {
+            Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(20.dp).appFocusGroup(),
             ) {
@@ -174,12 +190,12 @@ private fun RankingStandaloneContent(
                         message = "Loading rankings…",
                         modifier = Modifier.weight(1f),
                     )
-                    pages.isEmpty() -> CenteredMessage(
+                    currentPage == null -> CenteredMessage(
                         message = "No ranking data is available.",
                         modifier = Modifier.weight(1f),
                     )
                     else -> RankingPage(
-                        page = pages[pageIndex],
+                        page = currentPage,
                         listState = listState,
                         rowsPerScroll = rowsPerScroll,
                         onMaxRowsChanged = { maxRowsPerScreen = it },
@@ -214,12 +230,14 @@ private fun RankingStandaloneContent(
                 onNext = {
                     if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
                 },
-                onRefresh = { refresh(force = true) },
                 onToggleTheme = onToggleTheme,
+                showTopThree = showTopThree,
+                onShowTopThreeChanged = { showTopThree = it },
                 modifier = Modifier
                     .align(Alignment.CenterStart)
                     .padding(12.dp),
             )
+            }
         }
     }
 }
@@ -244,8 +262,9 @@ private fun RankingControls(
     onIntervalChanged: (Int) -> Unit,
     onPrevious: () -> Unit,
     onNext: () -> Unit,
-    onRefresh: () -> Unit,
     onToggleTheme: () -> Unit,
+    showTopThree: Boolean,
+    onShowTopThreeChanged: (Boolean) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val playFocusRequester = remember { FocusRequester() }
@@ -255,7 +274,6 @@ private fun RankingControls(
     val moreRowsFocusRequester = remember { FocusRequester() }
     val shorterIntervalFocusRequester = remember { FocusRequester() }
     val longerIntervalFocusRequester = remember { FocusRequester() }
-    val refreshFocusRequester = remember { FocusRequester() }
     val themeFocusRequester = remember { FocusRequester() }
 
     val activeFocusRequesters = buildList {
@@ -268,7 +286,6 @@ private fun RankingControls(
         if (rowsPerScroll < minOf(MAX_ROWS_PER_SCROLL, maxVisibleRows)) add(moreRowsFocusRequester)
         if (intervalSeconds > MIN_INTERVAL_SECONDS) add(shorterIntervalFocusRequester)
         add(longerIntervalFocusRequester)
-        if (!loading) add(refreshFocusRequester)
         add(themeFocusRequester)
     }
 
@@ -304,6 +321,8 @@ private fun RankingControls(
                 modifier = Modifier.size(34.dp),
             )
         }
+
+        RankingOption("Show first 3", showTopThree, onShowTopThreeChanged)
 
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             FocusedIconButton(
@@ -365,14 +384,6 @@ private fun RankingControls(
         }
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             FocusedIconButton(
-                onClick = onRefresh,
-                enabled = !loading,
-                focusRequester = refreshFocusRequester,
-                buttonModifier = focusLoopFor(refreshFocusRequester),
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Refresh rankings")
-            }
-            FocusedIconButton(
                 onClick = onToggleTheme,
                 focusRequester = themeFocusRequester,
                 buttonModifier = focusLoopFor(themeFocusRequester),
@@ -383,6 +394,14 @@ private fun RankingControls(
                 )
             }
         }
+    }
+}
+
+@Composable
+private fun RankingOption(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+        Text(label, style = MaterialTheme.typography.labelSmall)
     }
 }
 
@@ -480,19 +499,50 @@ private fun RankingPage(
                                 TextAlign.Center,
                                 textStyle,
                             )
-                            if (page.showCountry) RankingCountryCell(row.country, widths.country, textStyle)
-                            RankingCell(row.name, widths.name, TextAlign.Start, textStyle)
+                            if (page.showCountry) {
+                                if (row.isMasked) {
+                                    RankingCell("???", widths.country, TextAlign.Center, textStyle)
+                                } else {
+                                    RankingCountryCell(row.country, widths.country, textStyle)
+                                }
+                            }
+                            RankingCell(
+                                text = if (row.isMasked) "???" else row.name,
+                                width = widths.name,
+                                textAlign = TextAlign.Start,
+                                style = textStyle,
+                            )
                             if (page.extraHeader != null) {
-                                RankingCell(row.extra.orEmpty(), widths.extra, TextAlign.Center, textStyle)
+                                RankingCell(
+                                    if (row.isMasked) "???" else row.extra.orEmpty(),
+                                    widths.extra,
+                                    TextAlign.Center,
+                                    textStyle,
+                                )
                             }
                             if (page.showPoints) {
-                                RankingCell(formatPoints(row.points), widths.points, TextAlign.Center, textStyle)
+                                RankingCell(
+                                    if (row.isMasked) "???" else formatPoints(row.points),
+                                    widths.points,
+                                    TextAlign.Center,
+                                    textStyle,
+                                )
                             }
                             if (page.showScore) {
-                                RankingCell(row.score.toString(), widths.score, TextAlign.Center, textStyle)
+                                RankingCell(
+                                    if (row.isMasked) "???" else row.score.toString(),
+                                    widths.score,
+                                    TextAlign.Center,
+                                    textStyle,
+                                )
                             }
                             if (page.teamHeader != null) {
-                                RankingCell(row.team.orEmpty(), widths.team, TextAlign.Center, textStyle)
+                                RankingCell(
+                                    if (row.isMasked) "???" else row.team.orEmpty(),
+                                    widths.team,
+                                    TextAlign.Center,
+                                    textStyle,
+                                )
                             }
                         }
                     }
@@ -604,9 +654,10 @@ private data class RankingRow(
     val points: Double,
     val score: Int,
     val country: String = "",
+    val isMasked: Boolean = false,
 )
 
-private fun RankingSnapshot.toPages(): List<RankingPage> {
+private fun RankingSnapshot.toPages(showTopThree: Boolean = true): List<RankingPage> {
     val slotsById = tournamentPlayers.associateBy { it.id }
     val playersByEma = basePlayers.associateBy { it.emaId }
     val teamNamesById = tournamentTeams.associate { it.id to it.name }
@@ -618,7 +669,9 @@ private fun RankingSnapshot.toPages(): List<RankingPage> {
             title = "Players",
             nameHeader = "Player",
             teamHeader = "Team",
-            rows = rankings.players.map { it.toRow(slotsById, playersByEma, teamNamesById) },
+            rows = rankings.players.map {
+                it.toRow(slotsById, playersByEma, teamNamesById)
+            }.maskTopThree(!showTopThree),
         )
     }
     if (isTeams && rankings.teams.isNotEmpty()) {
@@ -627,7 +680,7 @@ private fun RankingSnapshot.toPages(): List<RankingPage> {
             title = "Teams",
             nameHeader = "Team",
             showCountry = false,
-            rows = rankings.teams.map { it.toRow(teamNamesById) },
+            rows = rankings.teams.map { it.toRow(teamNamesById) }.maskTopThree(!showTopThree),
         )
     }
     if (rankings.chickenHands.isNotEmpty()) {
@@ -636,7 +689,9 @@ private fun RankingSnapshot.toPages(): List<RankingPage> {
             title = "Chicken hands",
             nameHeader = "Player",
             extraHeader = "Chicken hands",
-            rows = rankings.chickenHands.map { it.toRow(slotsById, playersByEma) },
+            rows = rankings.chickenHands.map {
+                it.toRow(slotsById, playersByEma)
+            }.maskTopThree(!showTopThree),
         )
     }
     if (rankings.bestHands.isNotEmpty()) {
@@ -647,10 +702,16 @@ private fun RankingSnapshot.toPages(): List<RankingPage> {
             extraHeader = "Hand score",
             showPoints = false,
             showScore = false,
-            rows = rankings.bestHands.map { it.toRow(slotsById, playersByEma) },
+            rows = rankings.bestHands.map {
+                it.toRow(slotsById, playersByEma)
+            }.maskTopThree(!showTopThree),
         )
     }
     return pages
+}
+
+private fun List<RankingRow>.maskTopThree(mask: Boolean): List<RankingRow> = mapIndexed { index, row ->
+    row.copy(isMasked = mask && index < 3)
 }
 
 private fun PlayerRanking.toRow(
