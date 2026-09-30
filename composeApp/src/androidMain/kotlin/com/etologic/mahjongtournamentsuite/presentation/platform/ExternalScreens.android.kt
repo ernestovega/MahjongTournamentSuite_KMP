@@ -16,11 +16,9 @@ actual fun openTimer(
 actual fun openRankings(
     navController: NavHostController,
     tournamentId: String,
-    tournamentName: String,
 ) {
     startStandaloneActivity(RANKINGS_ACTIVITY) {
         putExtra(EXTRA_TOURNAMENT_ID, tournamentId)
-        putExtra(EXTRA_TOURNAMENT_NAME, tournamentName)
     }
 }
 
@@ -42,4 +40,3 @@ private const val TIMER_ACTIVITY = "com.etologic.mahjongtournamentsuite.TimerAct
 private const val RANKINGS_ACTIVITY = "com.etologic.mahjongtournamentsuite.RankingsActivity"
 private const val EXTRA_INITIAL_ROUND = "initialRound"
 private const val EXTRA_TOURNAMENT_ID = "tournamentId"
-private const val EXTRA_TOURNAMENT_NAME = "tournamentName"

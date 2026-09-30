@@ -99,7 +99,6 @@ private sealed class PendingUnsavedAction {
 fun TournamentScreen(
     navController: NavHostController,
     tournamentId: String,
-    tournamentName: String,
 ) {
     val presenter = koinInject<TablesPresenter>()
     val tablePresenter = koinInject<TableManagerPresenter>()
@@ -444,7 +443,7 @@ fun TournamentScreen(
             is PendingUnsavedAction.SelectTable -> selectTable(action.tableId)
             PendingUnsavedAction.NavigatePlayers -> navController.navigate(PlayersRoute(tournamentId = tournamentId))
             PendingUnsavedAction.NavigateTeams -> navController.navigate(TeamsRoute(tournamentId = tournamentId))
-            PendingUnsavedAction.OpenRankings -> openRankings(navController, tournamentId, tournamentName)
+            PendingUnsavedAction.OpenRankings -> openRankings(navController, tournamentId)
             PendingUnsavedAction.OpenTimer -> openTimer(navController, timerInitialRound)
             PendingUnsavedAction.ExportResults -> exportResults()
         }
@@ -537,7 +536,10 @@ fun TournamentScreen(
     }
 
     AppScaffold(
-        title = tournamentName.ifBlank { "Tournament" },
+        title = tournaments.firstOrNull { it.id == tournamentId }
+            ?.name
+            ?.ifBlank { "Tournament" }
+            ?: "Tournament",
         isLoading = isLoading,
         onBack = { requestUnsavedAction(PendingUnsavedAction.Back) },
         leadingActions = {
@@ -549,7 +551,7 @@ fun TournamentScreen(
                 },
                 onRanking = {
                     lastFocusedControl = "ranking"
-                    openRankings(navController, tournamentId, tournamentName)
+                    openRankings(navController, tournamentId)
                 },
                 timerFocusRequester = timerFocusRequester,
                 rankingFocusRequester = rankingFocusRequester,

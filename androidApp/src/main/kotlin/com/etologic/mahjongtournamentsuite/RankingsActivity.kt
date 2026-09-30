@@ -11,15 +11,11 @@ class RankingsActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         initAndroidApp(applicationContext)
         setContent {
-            RankingApp(
-                tournamentId = intent.getStringExtra(EXTRA_TOURNAMENT_ID).orEmpty(),
-                tournamentName = intent.getStringExtra(EXTRA_TOURNAMENT_NAME),
-            )
+            RankingApp(intent.getStringExtra(EXTRA_TOURNAMENT_ID).orEmpty())
         }
     }
 
     private companion object {
         const val EXTRA_TOURNAMENT_ID = "tournamentId"
-        const val EXTRA_TOURNAMENT_NAME = "tournamentName"
     }
 }

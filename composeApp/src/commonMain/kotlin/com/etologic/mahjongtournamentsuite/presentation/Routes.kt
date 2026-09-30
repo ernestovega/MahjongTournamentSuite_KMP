@@ -17,7 +17,6 @@ data object PlayerBaseRoute
 @Serializable
 data class TournamentRoute(
     val tournamentId: String,
-    val tournamentName: String,
 )
 
 @Serializable
@@ -57,5 +56,4 @@ data object TimerRoute
 @Serializable
 data class RankingsRoute(
     val tournamentId: String,
-    val tournamentName: String,
 )

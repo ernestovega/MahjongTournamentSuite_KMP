@@ -2,6 +2,7 @@
   {
     "origin": [
       "https://mahjong-tournament-suite.web.app",
+      "https://mts.mahjongmadrid.com",
       "http://localhost:8080",
       "http://localhost:8000"
     ],

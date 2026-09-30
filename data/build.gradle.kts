@@ -8,6 +8,10 @@ plugins {
 }
 
 kotlin {
+    compilerOptions {
+        freeCompilerArgs.add("-Xexpect-actual-classes")
+    }
+
     android {
         namespace = "com.etologic.mahjongtournamentsuite.data"
         compileSdk = libs.versions.android.compileSdk.get().toInt()

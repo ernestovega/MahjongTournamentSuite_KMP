@@ -81,10 +81,7 @@ import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
 @Composable
-fun RankingStandaloneScreen(
-    tournamentId: String,
-    tournamentName: String?,
-) {
+fun RankingStandaloneScreen(tournamentId: String) {
     val appThemeController = rememberThemeController()
     var themeOverride by rememberSaveable { mutableStateOf<Boolean?>(null) }
     val useDarkTheme = themeOverride ?: appThemeController.isDarkTheme
@@ -114,7 +111,7 @@ private fun RankingStandaloneContent(
     var pageIndex by remember { mutableIntStateOf(0) }
     var remainingSeconds by remember { mutableIntStateOf(intervalSeconds) }
     var maxRowsPerScreen by remember { mutableIntStateOf(MAX_ROWS_PER_SCROLL) }
-    var showTopThree by rememberSaveable { mutableStateOf(true) }
+    var showTopThree by rememberSaveable { mutableStateOf(false) }
     var playing by remember { mutableStateOf(false) }
     val listState = rememberLazyListState()
 
@@ -214,7 +211,6 @@ private fun RankingStandaloneContent(
             }
             RankingControls(
                 playing = playing,
-                loading = loading,
                 useDarkTheme = useDarkTheme,
                 rowsPerScroll = rowsPerScroll,
                 maxVisibleRows = maxRowsPerScreen,
@@ -250,7 +246,6 @@ private fun CenteredMessage(message: String, modifier: Modifier = Modifier) {
 @Composable
 private fun RankingControls(
     playing: Boolean,
-    loading: Boolean,
     useDarkTheme: Boolean,
     rowsPerScroll: Int,
     maxVisibleRows: Int,
@@ -322,9 +317,12 @@ private fun RankingControls(
             )
         }
 
-        RankingOption("Show first 3", showTopThree, onShowTopThreeChanged)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(checked = showTopThree, onCheckedChange = onShowTopThreeChanged)
+            Text("Show first 3", style = MaterialTheme.typography.labelSmall)
+        }
 
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = onPrevious,
                 enabled = pageCount > 1,
@@ -343,7 +341,8 @@ private fun RankingControls(
                 Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = "Next ranking list")
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = { onRowsChanged((rowsPerScroll - 1).coerceAtLeast(MIN_ROWS_PER_SCROLL)) },
                 enabled = rowsPerScroll > MIN_ROWS_PER_SCROLL,
@@ -364,7 +363,8 @@ private fun RankingControls(
                 Icon(Icons.Default.Add, contentDescription = "Show more rows")
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = { onIntervalChanged((intervalSeconds - 1).coerceAtLeast(MIN_INTERVAL_SECONDS)) },
                 enabled = intervalSeconds > MIN_INTERVAL_SECONDS,
@@ -382,7 +382,8 @@ private fun RankingControls(
                 Icon(Icons.Default.Add, contentDescription = "Use a longer page interval")
             }
         }
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+        Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = onToggleTheme,
                 focusRequester = themeFocusRequester,
@@ -394,14 +395,6 @@ private fun RankingControls(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun RankingOption(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
-        Text(label, style = MaterialTheme.typography.labelSmall)
     }
 }
 

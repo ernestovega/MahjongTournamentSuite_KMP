@@ -256,7 +256,6 @@ fun TournamentsScreen(
                         navController.navigate(
                             TournamentRoute(
                                 tournamentId = tournament.id,
-                                tournamentName = tournament.name,
                             ),
                         )
                         navController.navigate(PlayersRoute(tournamentId = tournament.id))
@@ -264,7 +263,6 @@ fun TournamentsScreen(
                         navController.navigate(
                             TournamentRoute(
                                 tournamentId = tournament.id,
-                                tournamentName = tournament.name,
                             ),
                         )
                     }
@@ -344,7 +342,6 @@ fun TournamentsScreen(
                 navController.navigate(
                     TournamentRoute(
                         tournamentId = tournament.id,
-                        tournamentName = tournament.name,
                     ),
                 )
                 navController.navigate(PlayersRoute(tournamentId = tournament.id))
@@ -975,6 +972,7 @@ fun TournamentsScreen(
     AppScaffold(
         title = "Tournaments",
         isLoading = isRefreshing || isLoading,
+        showBackgroundLogo = false,
         navigationIcon = {
             Row(
                 verticalAlignment = Alignment.CenterVertically,

@@ -13,7 +13,6 @@ actual fun openTimer(
 actual fun openRankings(
     navController: NavHostController,
     tournamentId: String,
-    tournamentName: String,
 ) {
     window.open(
         "${window.location.pathname}?standalone=rankings&tournamentId=$tournamentId",

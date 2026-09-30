@@ -10,5 +10,4 @@ expect fun openTimer(
 expect fun openRankings(
     navController: NavHostController,
     tournamentId: String,
-    tournamentName: String,
 )

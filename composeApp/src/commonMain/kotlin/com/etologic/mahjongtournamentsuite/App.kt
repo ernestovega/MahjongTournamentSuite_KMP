@@ -54,10 +54,7 @@ fun App() {
 }
 
 @Composable
-fun RankingApp(
-    tournamentId: String,
-    tournamentName: String?,
-) {
+fun RankingApp(tournamentId: String) {
     KoinApplication(
         configuration = koinConfiguration {
             modules(dataModule, presentationModule)
@@ -66,10 +63,7 @@ fun RankingApp(
         val themeController = rememberThemeController()
         CompositionLocalProvider(LocalThemeController provides themeController) {
             MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-                RankingStandaloneScreen(
-                    tournamentId = tournamentId,
-                    tournamentName = tournamentName,
-                )
+                RankingStandaloneScreen(tournamentId)
             }
         }
     }
@@ -101,7 +95,6 @@ private fun MahjongTournamentSuiteApp() {
                     TournamentScreen(
                         navController = navController,
                         tournamentId = args.tournamentId,
-                        tournamentName = args.tournamentName,
                     )
                 }
                 composable<UsersRoute> { GlobalUsersScreen(navController = navController) }
@@ -140,7 +133,6 @@ private fun MahjongTournamentSuiteApp() {
                     val args = backStackEntry.toRoute<RankingsRoute>()
                     RankingStandaloneScreen(
                         tournamentId = args.tournamentId,
-                        tournamentName = args.tournamentName,
                     )
                 }
             }

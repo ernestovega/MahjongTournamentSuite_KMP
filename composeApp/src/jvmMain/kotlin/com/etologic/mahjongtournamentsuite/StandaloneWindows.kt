@@ -18,7 +18,6 @@ sealed class StandaloneWindow {
 
     data class Rankings(
         val tournamentId: String,
-        val tournamentName: String?,
         override val id: String = UUID.randomUUID().toString(),
     ) : StandaloneWindow()
 }
@@ -33,12 +32,10 @@ object StandaloneWindows {
 
     fun openRankings(
         tournamentId: String,
-        tournamentName: String? = null,
     ) {
         windows.add(
             StandaloneWindow.Rankings(
                 tournamentId = tournamentId,
-                tournamentName = tournamentName,
             ),
         )
     }
@@ -63,10 +60,7 @@ object StandaloneWindows {
                         onCloseRequest = { windows.removeAll { it.id == w.id } },
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {
-                        RankingApp(
-                            tournamentId = w.tournamentId,
-                            tournamentName = w.tournamentName,
-                        )
+                        RankingApp(w.tournamentId)
                     }
                 }
             }

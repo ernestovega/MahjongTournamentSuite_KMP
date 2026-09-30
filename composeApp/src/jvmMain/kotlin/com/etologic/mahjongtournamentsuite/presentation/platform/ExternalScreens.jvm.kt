@@ -13,10 +13,8 @@ actual fun openTimer(
 actual fun openRankings(
     navController: NavHostController,
     tournamentId: String,
-    tournamentName: String,
 ) {
     StandaloneWindows.openRankings(
         tournamentId = tournamentId,
-        tournamentName = tournamentName,
     )
 }

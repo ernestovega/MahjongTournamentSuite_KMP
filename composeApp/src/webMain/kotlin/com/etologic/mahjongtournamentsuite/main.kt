@@ -16,11 +16,8 @@ fun main() {
         .toMap()
     ComposeViewport {
         when (parameters["standalone"]) {
-            "timer" -> TimerApp(initialRound = parameters["initialRound"]?.toIntOrNull() ?: 1)
-            "rankings" -> RankingApp(
-                tournamentId = parameters["tournamentId"].orEmpty(),
-                tournamentName = null,
-            )
+            "timer" -> TimerApp(parameters["initialRound"]?.toIntOrNull() ?: 1)
+            "rankings" -> RankingApp(parameters["tournamentId"].orEmpty())
             else -> App()
         }
     }
