@@ -1,30 +1,24 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -52,29 +46,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.isShiftPressed
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -92,7 +69,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentCol
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreviewButton
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -103,7 +80,6 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTourname
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import kotlinx.coroutines.CancellationException
@@ -532,11 +508,14 @@ fun CreateTournamentDialog(
                             }
                         }
                     }
-                    TournamentIdCardPreview(
+                    TournamentIdCardPreviewButton(
                         shortName = shortName,
                         primaryColor = primaryColor,
-                        eventStartDate = eventStartDate,
-                        logoModel = logoModel,
+                        year = eventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
+                        associationLogoContentType = associationLogo?.contentType,
+                        associationLogoBytes = associationLogo?.bytes,
+                        associationLogoUrl = reusedLogoTournament?.associationLogoUrl,
+                        onError = { errorMessage = it },
                     )
 
                     FocusHighlightContainer(

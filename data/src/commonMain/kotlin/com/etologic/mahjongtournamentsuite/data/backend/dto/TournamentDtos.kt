@@ -75,6 +75,16 @@ data class UpdateTournamentSettingsRequestDto(
 )
 
 @Serializable
+data class IdCardProofRequestDto(
+    val shortName: String,
+    val year: String,
+    val primaryColor: String,
+    val associationLogoContentType: String? = null,
+    val associationLogoDataBase64: String? = null,
+    val associationLogoUrl: String? = null,
+)
+
+@Serializable
 data class TournamentMemberDto(
     val uid: String,
     val email: String = "",

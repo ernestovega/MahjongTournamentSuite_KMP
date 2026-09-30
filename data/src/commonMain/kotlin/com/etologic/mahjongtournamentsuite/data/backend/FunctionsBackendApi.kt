@@ -21,6 +21,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersRes
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
@@ -169,6 +170,22 @@ class FunctionsBackendApi(
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, "application/pdf")
             timeout { requestTimeoutMillis = 180_000 }
+        }
+        if (!response.status.isSuccess()) {
+            throw BackendHttpException(response.status, response.bodyAsText())
+        }
+        return response.body()
+    }
+
+    suspend fun generateIdCardProof(
+        idToken: String,
+        request: IdCardProofRequestDto,
+    ): ByteArray {
+        val response = httpClient.post(url("/tournaments/id-card-proof")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            header(HttpHeaders.Accept, "image/png")
+            timeout { requestTimeoutMillis = 60_000 }
+            setBody(request)
         }
         if (!response.status.isSuccess()) {
             throw BackendHttpException(response.status, response.bodyAsText())

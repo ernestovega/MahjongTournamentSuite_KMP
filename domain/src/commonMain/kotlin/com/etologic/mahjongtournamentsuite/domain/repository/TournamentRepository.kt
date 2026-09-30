@@ -13,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 
 interface TournamentRepository {
     suspend fun listTournaments(): AppResult<List<Tournament>>
@@ -40,6 +41,8 @@ interface TournamentRepository {
     ): AppResult<Tournament>
 
     suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray>
+
+    suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray>
 
     suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray>
 

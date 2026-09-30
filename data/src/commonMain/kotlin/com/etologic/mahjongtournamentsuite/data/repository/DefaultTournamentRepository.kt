@@ -27,6 +27,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -670,6 +672,25 @@ class DefaultTournamentRepository(
             }
         }
     }
+
+    override suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.generateIdCardProof(
+                idToken,
+                IdCardProofRequestDto(
+                    shortName = request.shortName,
+                    year = request.year,
+                    primaryColor = request.primaryColor,
+                    associationLogoContentType = request.associationLogoContentType,
+                    associationLogoDataBase64 = request.associationLogoBytes?.let(Base64.Default::encode),
+                    associationLogoUrl = request.associationLogoUrl,
+                ),
+            )
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { AppResult.Failure(it.toAppError()) },
+    )
 }
 
 internal fun List<Tournament>.sortedRecentFirst(): List<Tournament> =

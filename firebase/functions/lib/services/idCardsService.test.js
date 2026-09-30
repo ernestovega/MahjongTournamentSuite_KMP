@@ -31,4 +31,14 @@ const idCardsService_1 = require("./idCardsService");
     const pageObjects = pdf.toString("latin1").match(/\/Type \/Page\b/g) ?? [];
     strict_1.default.equal(pageObjects.length, 2);
 });
+(0, node_test_1.default)("creates a proof PDF with one front and one back page", async () => {
+    const pdf = await (0, idCardsService_1.buildIdCardProofPdf)({
+        shortName: "6th MMC",
+        year: "2026",
+        primaryColor: "#02B16B",
+    });
+    strict_1.default.equal(pdf.subarray(0, 5).toString("ascii"), "%PDF-");
+    const pageObjects = pdf.toString("latin1").match(/\/Type \/Page\b/g) ?? [];
+    strict_1.default.equal(pageObjects.length, 2);
+});
 //# sourceMappingURL=idCardsService.test.js.map

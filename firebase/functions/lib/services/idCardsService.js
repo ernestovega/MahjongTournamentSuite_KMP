@@ -8,6 +8,7 @@ exports.splitPlayerName = splitPlayerName;
 exports.iso2CountryCode = iso2CountryCode;
 exports.flagSvgFor = flagSvgFor;
 exports.buildIdCardsPdf = buildIdCardsPdf;
+exports.buildIdCardProofPdf = buildIdCardProofPdf;
 exports.loadIdCardsDocument = loadIdCardsDocument;
 exports.generateTournamentIdCards = generateTournamentIdCards;
 const pdfkit_1 = __importDefault(require("pdfkit"));
@@ -273,6 +274,36 @@ async function buildIdCardsPdf(model) {
         });
         doc.end();
     });
+}
+async function buildIdCardProofPdf(request) {
+    let associationLogo = null;
+    if (request.associationLogoDataBase64) {
+        associationLogo = Buffer.from(request.associationLogoDataBase64, "base64");
+    }
+    else if (request.associationLogoUrl) {
+        const logoUrl = new URL(request.associationLogoUrl);
+        if (logoUrl.protocol === "https:" &&
+            (logoUrl.hostname === "firebasestorage.googleapis.com" || logoUrl.hostname === "storage.googleapis.com")) {
+            const response = await fetch(logoUrl);
+            if (response.ok)
+                associationLogo = Buffer.from(await response.arrayBuffer());
+        }
+    }
+    const pdf = await buildIdCardsPdf({
+        tournamentShortName: request.shortName,
+        year: request.year,
+        primaryColor: request.primaryColor,
+        associationLogo,
+        players: [{
+                playerId: 21,
+                name: "Ernesto Vega de la Iglesia",
+                country: "Europe",
+                countryCode: "EUR",
+                teamName: "Mahjong Madrid",
+                tableNumbers: [1],
+            }],
+    });
+    return pdf;
 }
 async function loadIdCardsDocument(tournamentId) {
     const tournamentRef = firebase_1.db.collection("tournaments").doc(tournamentId);

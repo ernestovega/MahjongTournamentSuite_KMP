@@ -98,7 +98,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreviewButton
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
@@ -615,12 +615,6 @@ fun TournamentsScreen(
                                 }
                             }
                         }
-                        TournamentIdCardPreview(
-                            shortName = settingsShortName,
-                            primaryColor = settingsPrimaryColor,
-                            eventStartDate = settingsEventStartDate,
-                            logoModel = logoModel,
-                        )
                         renameError?.let { message ->
                             Text(
                                 text = message,
@@ -631,6 +625,17 @@ fun TournamentsScreen(
                         TournamentReadOnlyField(
                             label = "Logo URL",
                             value = tournament.associationLogoUrl ?: "—",
+                        )
+
+                        TournamentIdCardPreviewButton(
+                            shortName = settingsShortName,
+                            primaryColor = settingsPrimaryColor,
+                            year = settingsEventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
+                            associationLogoContentType = settingsLogo?.contentType,
+                            associationLogoBytes = settingsLogo?.bytes,
+                            associationLogoUrl = reusedSettingsLogoTournament?.associationLogoUrl
+                                ?: if (settingsLogo == null && !removeSettingsLogo) tournament.associationLogoUrl else null,
+                            onError = { renameError = it },
                         )
 
                         Text("Tournament data", style = MaterialTheme.typography.titleSmall)

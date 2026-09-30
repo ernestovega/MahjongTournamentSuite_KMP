@@ -14,7 +14,7 @@ import {
   renameTournament,
   updateTournamentSettings,
 } from "../../services/tournamentsService";
-import { generateTournamentIdCards } from "../../services/idCardsService";
+import { buildIdCardProofPdf, generateTournamentIdCards } from "../../services/idCardsService";
 import { generateTournamentIdList } from "../../services/idListService";
 import { generateEmaReport } from "../../services/emaReportService";
 import {
@@ -190,6 +190,47 @@ export function tournamentsRouter(): Router {
       });
 
       res.status(200).json(tournament);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  router.post("/id-card-proof", requireAuth, async (req, res, next) => {
+    try {
+      const body = (req.body != null && typeof req.body === "object")
+        ? req.body as Record<string, unknown>
+        : {};
+      const shortName = String(body.shortName ?? "").trim();
+      const year = String(body.year ?? "").trim();
+      const primaryColor = String(body.primaryColor ?? "#02B16B").trim().toUpperCase();
+      const associationLogoContentType = body.associationLogoContentType == null
+        ? null
+        : String(body.associationLogoContentType).trim();
+      const associationLogoDataBase64 = body.associationLogoDataBase64 == null
+        ? null
+        : String(body.associationLogoDataBase64).trim();
+      const associationLogoUrl = body.associationLogoUrl == null
+        ? null
+        : String(body.associationLogoUrl).trim();
+
+      if (shortName.length > 32 || year.length > 4 || !/^#[0-9A-F]{6}$/.test(primaryColor)) {
+        throw badRequest("Invalid ID card preview fields");
+      }
+      if (associationLogoDataBase64 && associationLogoDataBase64.length > 3_000_000) {
+        throw badRequest("ID card preview logo is too large");
+      }
+
+      const pdf = await buildIdCardProofPdf({
+        shortName,
+        year,
+        primaryColor,
+        associationLogoContentType,
+        associationLogoDataBase64,
+        associationLogoUrl,
+      });
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader("Cache-Control", "private, max-age=3600");
+      res.status(200).send(pdf);
     } catch (e) {
       next(e);
     }

@@ -182,6 +182,45 @@ function tournamentsRouter() {
             next(e);
         }
     });
+    router.post("/id-card-proof", requireAuth_1.requireAuth, async (req, res, next) => {
+        try {
+            const body = (req.body != null && typeof req.body === "object")
+                ? req.body
+                : {};
+            const shortName = String(body.shortName ?? "").trim();
+            const year = String(body.year ?? "").trim();
+            const primaryColor = String(body.primaryColor ?? "#02B16B").trim().toUpperCase();
+            const associationLogoContentType = body.associationLogoContentType == null
+                ? null
+                : String(body.associationLogoContentType).trim();
+            const associationLogoDataBase64 = body.associationLogoDataBase64 == null
+                ? null
+                : String(body.associationLogoDataBase64).trim();
+            const associationLogoUrl = body.associationLogoUrl == null
+                ? null
+                : String(body.associationLogoUrl).trim();
+            if (shortName.length > 32 || year.length > 4 || !/^#[0-9A-F]{6}$/.test(primaryColor)) {
+                throw (0, httpError_1.badRequest)("Invalid ID card preview fields");
+            }
+            if (associationLogoDataBase64 && associationLogoDataBase64.length > 3000000) {
+                throw (0, httpError_1.badRequest)("ID card preview logo is too large");
+            }
+            const pdf = await (0, idCardsService_1.buildIdCardProofPdf)({
+                shortName,
+                year,
+                primaryColor,
+                associationLogoContentType,
+                associationLogoDataBase64,
+                associationLogoUrl,
+            });
+            res.setHeader("Content-Type", "application/pdf");
+            res.setHeader("Cache-Control", "private, max-age=3600");
+            res.status(200).send(pdf);
+        }
+        catch (e) {
+            next(e);
+        }
+    });
     router.get("/:tournamentId/id-cards", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const pdf = await (0, idCardsService_1.generateTournamentIdCards)(req.params.tournamentId);

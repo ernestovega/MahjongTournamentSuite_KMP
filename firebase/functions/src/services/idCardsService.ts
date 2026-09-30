@@ -52,6 +52,15 @@ export type IdCardsDocument = {
   players: IdCardPlayer[];
 };
 
+export type IdCardProofRequest = {
+  shortName: string;
+  year: string;
+  primaryColor: string;
+  associationLogoContentType?: string | null;
+  associationLogoDataBase64?: string | null;
+  associationLogoUrl?: string | null;
+};
+
 function normalizeHexColor(value: string): string {
   const color = value.trim().toUpperCase();
   return /^#[0-9A-F]{6}$/.test(color) ? color : DEFAULT_PRIMARY_COLOR;
@@ -380,6 +389,39 @@ export async function buildIdCardsPdf(model: IdCardsDocument): Promise<Buffer> {
     });
     doc.end();
   });
+}
+
+export async function buildIdCardProofPdf(request: IdCardProofRequest): Promise<Buffer> {
+  let associationLogo: Buffer | null = null;
+  if (request.associationLogoDataBase64) {
+    associationLogo = Buffer.from(request.associationLogoDataBase64, "base64");
+  } else if (request.associationLogoUrl) {
+    const logoUrl = new URL(request.associationLogoUrl);
+    if (
+      logoUrl.protocol === "https:" &&
+      (logoUrl.hostname === "firebasestorage.googleapis.com" || logoUrl.hostname === "storage.googleapis.com")
+    ) {
+      const response = await fetch(logoUrl);
+      if (response.ok) associationLogo = Buffer.from(await response.arrayBuffer());
+    }
+  }
+
+  const pdf = await buildIdCardsPdf({
+    tournamentShortName: request.shortName,
+    year: request.year,
+    primaryColor: request.primaryColor,
+    associationLogo,
+    players: [{
+      playerId: 21,
+      name: "Ernesto Vega de la Iglesia",
+      country: "Europe",
+      countryCode: "EUR",
+      teamName: "Mahjong Madrid",
+      tableNumbers: [1],
+    }],
+  });
+
+  return pdf;
 }
 
 export async function loadIdCardsDocument(tournamentId: string): Promise<IdCardsDocument> {
