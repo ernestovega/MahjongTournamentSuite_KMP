@@ -24,7 +24,6 @@ import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.di.presentationModule
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TeamsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
@@ -105,17 +104,7 @@ private fun MahjongTournamentSuiteApp() {
                         tournamentName = args.tournamentName,
                     )
                 }
-                composable<UsersRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<UsersRoute>()
-                    if (args.tournamentId == null) {
-                        GlobalUsersScreen(navController = navController)
-                    } else {
-                        TournamentUsersScreen(
-                            navController = navController,
-                            tournamentId = args.tournamentId,
-                        )
-                    }
-                }
+                composable<UsersRoute> { GlobalUsersScreen(navController = navController) }
                 composable<PlayersRoute> { backStackEntry ->
                     val args = backStackEntry.toRoute<PlayersRoute>()
                     PlayersScreen(

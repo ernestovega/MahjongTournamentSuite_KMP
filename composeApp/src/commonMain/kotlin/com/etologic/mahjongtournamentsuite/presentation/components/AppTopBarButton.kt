@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EmojiEvents
@@ -30,12 +32,14 @@ fun AppTopBarButton(
     textColor: Color = Color.White,
     iconContent: (@Composable () -> Unit)? = null,
 ) {
+    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
     AppTextButton(
         onClick = onClick,
         enabled = enabled,
         focusRequester = focusRequester,
     ) {
         Column(
+            modifier = Modifier.alpha(if (buttonEnabled) 1f else DisabledTopBarButtonAlpha),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
@@ -52,6 +56,8 @@ fun AppTopBarButton(
         }
     }
 }
+
+private const val DisabledTopBarButtonAlpha = 0.38f
 
 @Preview(device = Devices.DESKTOP)
 @Composable

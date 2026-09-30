@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -83,7 +82,6 @@ import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
@@ -107,6 +105,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentCol
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
@@ -164,6 +165,9 @@ fun TournamentsScreen(
     var showDateRangePicker by remember { mutableStateOf(false) }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var settingsLogo by remember { mutableStateOf<SelectedImage?>(null) }
+    var settingsLogoToCrop by remember { mutableStateOf<SelectedImage?>(null) }
+    var reusedSettingsLogoTournament by remember { mutableStateOf<Tournament?>(null) }
+    var showSettingsLogoLibrary by remember { mutableStateOf(false) }
     var removeSettingsLogo by remember { mutableStateOf(false) }
     var logoImageInfo by remember { mutableStateOf<String?>(null) }
     var renameError by remember { mutableStateOf<String?>(null) }
@@ -191,10 +195,7 @@ fun TournamentsScreen(
             } else if (image.bytes.size > 2 * 1024 * 1024) {
                 renameError = "Logo must be 2 MB or smaller."
             } else {
-                settingsLogo = image
-                removeSettingsLogo = false
-                logoImageInfo = null
-                renameError = null
+                settingsLogoToCrop = image
             }
         },
         onError = { message ->
@@ -552,6 +553,7 @@ fun TournamentsScreen(
                         val logoModel = when {
                             removeSettingsLogo -> null
                             settingsLogo != null -> settingsLogo?.dataUrl
+                            reusedSettingsLogoTournament != null -> reusedSettingsLogoTournament?.associationLogoUrl
                             else -> tournament.associationLogoUrl
                         }
                         Row(
@@ -577,6 +579,8 @@ fun TournamentsScreen(
                                             append(formatByteSize(settingsLogo?.bytes?.size?.toLong() ?: 0L))
                                             logoImageInfo?.let { append(" · ").append(it) }
                                         }
+                                        reusedSettingsLogoTournament != null ->
+                                            "Logo from ${reusedSettingsLogoTournament?.name}"
                                         tournament.associationLogoUrl != null ->
                                             logoImageInfo?.let { "Current logo · $it" } ?: "Current logo"
                                         else -> "No logo"
@@ -589,12 +593,20 @@ fun TournamentsScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Button(onClick = settingsLogoPicker::launch) {
-                                        Text(if (logoModel == null) "Choose logo" else "Change logo")
+                                        Text(if (logoModel == null) "Choose logo" else "Upload logo")
+                                    }
+                                    if (tournaments.any {
+                                            it.id != tournament.id && !it.associationLogoUrl.isNullOrBlank()
+                                        }) {
+                                        Button(onClick = { showSettingsLogoLibrary = true }) {
+                                            Text("Reuse")
+                                        }
                                     }
                                     if (logoModel != null) {
                                         FocusedTextButton(
                                             onClick = {
                                                 settingsLogo = null
+                                                reusedSettingsLogoTournament = null
                                                 removeSettingsLogo = true
                                                 logoImageInfo = null
                                             },
@@ -603,6 +615,12 @@ fun TournamentsScreen(
                                 }
                             }
                         }
+                        TournamentIdCardPreview(
+                            shortName = settingsShortName,
+                            primaryColor = settingsPrimaryColor,
+                            eventStartDate = settingsEventStartDate,
+                            logoModel = logoModel,
+                        )
                         renameError?.let { message ->
                             Text(
                                 text = message,
@@ -779,6 +797,7 @@ fun TournamentsScreen(
                                     hostCity = newHostCity,
                                     associationLogoContentType = settingsLogo?.contentType,
                                     associationLogoBytes = settingsLogo?.bytes,
+                                    associationLogoSourceTournamentId = reusedSettingsLogoTournament?.id,
                                     removeAssociationLogo = removeSettingsLogo,
                                 )) {
                                     is AppResult.Success -> {
@@ -836,6 +855,37 @@ fun TournamentsScreen(
                     invalidEditFields = invalidEditFields - TournamentEditField.PRIMARY_COLOR
                     renameError = null
                     showColorPickerDialog = false
+                },
+            )
+        }
+
+        settingsLogoToCrop?.let { image ->
+            TournamentLogoCropDialog(
+                image = image,
+                onDismiss = { settingsLogoToCrop = null },
+                onCropped = { croppedImage ->
+                    settingsLogo = croppedImage
+                    reusedSettingsLogoTournament = null
+                    removeSettingsLogo = false
+                    logoImageInfo = null
+                    renameError = null
+                    settingsLogoToCrop = null
+                },
+                onError = { message -> renameError = message },
+            )
+        }
+
+        if (showSettingsLogoLibrary) {
+            TournamentLogoLibraryDialog(
+                tournaments = tournaments.filter { it.id != tournament.id },
+                onDismiss = { showSettingsLogoLibrary = false },
+                onSelect = { sourceTournament ->
+                    settingsLogo = null
+                    reusedSettingsLogoTournament = sourceTournament
+                    removeSettingsLogo = false
+                    logoImageInfo = null
+                    renameError = null
+                    showSettingsLogoLibrary = false
                 },
             )
         }
@@ -921,10 +971,10 @@ fun TournamentsScreen(
         leadingActions = {
             AppTopBarLeadingActions(
                 showThemeToggle = true,
-                onUsers = if (adminStatus?.canManageUsers == true) {
+                onAppUsers = if (adminStatus?.canManageUsers == true) {
                     {
                         lastFocusedControl = "users"
-                        navController.navigate(UsersRoute())
+                        navController.navigate(UsersRoute)
                     }
                 } else {
                     null
@@ -1030,10 +1080,12 @@ fun TournamentsScreen(
                                                     settingsHostCountry = tournament.hostCountry
                                                     settingsHostCity = tournament.hostCity
                                                     settingsLogo = null
+                                                    reusedSettingsLogoTournament = null
                                                     removeSettingsLogo = false
                                                     logoImageInfo = null
                                                     showDateRangePicker = false
                                                     showColorPickerDialog = false
+                                                    showSettingsLogoLibrary = false
                                                     renameDialogTournament = tournament
                                                 },
                                             )

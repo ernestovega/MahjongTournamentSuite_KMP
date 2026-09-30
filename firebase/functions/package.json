@@ -6,7 +6,7 @@
     "node": "22"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node scripts/syncIdCardAssets.cjs",
     "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/services/tournamentContentRules.test.js lib/services/tournamentsService.test.js lib/models/globalRole.test.js lib/services/idCardsService.test.js lib/services/mers.test.js lib/services/playerSyncService.test.js lib/services/emaReportService.test.js",
     "proof:id-cards": "npm run build && node lib/scripts/createIdCardsProof.js",
     "verify:roles": "npm run build && node lib/scripts/verifyRolePermissions.js",
@@ -21,8 +21,9 @@
     "express": "^4.21.2",
     "firebase-admin": "^14.5.0",
     "firebase-functions": "^7.4.0",
+    "flag-icons": "^7.5.0",
     "pdfkit": "^0.16.0",
-    "roboto-font": "^0.1.0"
+    "svg-to-pdfkit": "^0.1.8"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

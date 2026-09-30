@@ -21,7 +21,7 @@ val presentationModule = module {
     factory { TournamentsPresenter(get(), get(), get()) }
     factory { GenerateTournamentScheduleBruteForceParallelUseCase() }
     factory { CreateTournamentPresenter(get(), get(), get()) }
-    factory { UsersPresenter(get(), get(), get(), get()) }
+    factory { UsersPresenter(get(), get(), get()) }
     factory { PlayersPresenter(get(), get(), get()) }
     factory { TeamsPresenter(get(), get(), get()) }
     factory { PlayerBasePresenter(get(), get()) }

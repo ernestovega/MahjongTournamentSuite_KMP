@@ -85,7 +85,9 @@ async function createTournament(params) {
     const ref = firebase_1.db.collection("tournaments").doc();
     const logo = params.associationLogoContentType && params.associationLogoDataBase64
         ? await saveAssociationLogo(ref.id, params.associationLogoContentType, params.associationLogoDataBase64)
-        : null;
+        : params.associationLogoSourceTournamentId
+            ? await copyAssociationLogo(params.associationLogoSourceTournamentId, ref.id)
+            : null;
     const tournamentDoc = {
         name: params.name,
         shortName: normalizeShortName(params.shortName),
@@ -278,6 +280,22 @@ async function saveAssociationLogo(tournamentId, contentType, dataBase64) {
         url: `https://firebasestorage.googleapis.com/v0/b/${firebase_1.storage.name}/o/${objectName}?alt=media&token=${token}`,
     };
 }
+async function copyAssociationLogo(sourceTournamentId, targetTournamentId) {
+    const source = await firebase_1.db.collection("tournaments").doc(sourceTournamentId).get();
+    if (!source.exists)
+        throw (0, httpError_1.notFound)("Source tournament not found");
+    const sourcePath = String(source.get("associationLogoPath") ?? "").trim();
+    if (sourcePath.length === 0)
+        throw (0, httpError_1.badRequest)("The selected tournament has no reusable logo");
+    const sourceFile = firebase_1.storage.file(sourcePath);
+    const [metadata] = await sourceFile.getMetadata();
+    const contentType = String(metadata.contentType ?? "").trim();
+    if (!(contentType in logoExtensions)) {
+        throw (0, httpError_1.badRequest)("The selected tournament logo has an unsupported image type");
+    }
+    const [bytes] = await sourceFile.download();
+    return saveAssociationLogo(targetTournamentId, contentType, bytes.toString("base64"));
+}
 async function updateTournamentSettings(params) {
     const normalizedName = params.name.trim();
     if (normalizedName.length === 0)
@@ -298,6 +316,12 @@ async function updateTournamentSettings(params) {
     }
     else if (params.associationLogoContentType && params.associationLogoDataBase64) {
         logo = await saveAssociationLogo(params.tournamentId, params.associationLogoContentType, params.associationLogoDataBase64);
+    }
+    else if (params.associationLogoSourceTournamentId) {
+        if (params.associationLogoSourceTournamentId === params.tournamentId) {
+            throw (0, httpError_1.badRequest)("Select a different tournament logo to reuse");
+        }
+        logo = await copyAssociationLogo(params.associationLogoSourceTournamentId, params.tournamentId);
     }
     const update = {
         name: normalizedName,

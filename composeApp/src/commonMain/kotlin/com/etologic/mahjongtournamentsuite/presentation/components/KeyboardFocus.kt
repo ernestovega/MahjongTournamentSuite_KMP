@@ -14,6 +14,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonElevation
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
@@ -21,15 +23,21 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -41,8 +49,30 @@ import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 private val FocusHaloPadding = 3.dp
+private val ButtonPressThreshold = 500.milliseconds
+
+/** Controls buttons in the current app screen. The back button is outside this scope. */
+val LocalAppButtonsEnabled = staticCompositionLocalOf { true }
+
+@Composable
+private fun rememberThresholdOnClick(onClick: () -> Unit): () -> Unit {
+    val currentOnClick by rememberUpdatedState(onClick)
+    return remember {
+        var lastPress: TimeMark? = null
+        {
+            val previousPress = lastPress
+            if (previousPress == null || previousPress.elapsedNow() >= ButtonPressThreshold) {
+                lastPress = TimeSource.Monotonic.markNow()
+                currentOnClick()
+            }
+        }
+    }
+}
 
 /** Preserves child focus and handles arrow keys that the focused control does not use. */
 @Composable
@@ -157,25 +187,29 @@ fun FocusedButton(
     border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     focusRequester: FocusRequester? = null,
+    interactionSource: MutableInteractionSource? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val thresholdOnClick = rememberThresholdOnClick(onClick)
+    val defaultInteractionSource = remember { MutableInteractionSource() }
+    val resolvedInteractionSource = interactionSource ?: defaultInteractionSource
     FocusHighlightContainer(
         modifier = modifier,
-        interactionSource = interactionSource,
+        interactionSource = resolvedInteractionSource,
     ) {
         Button(
-            onClick = onClick,
+            onClick = thresholdOnClick,
             modifier = buttonModifier.then(
                 if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
             ),
-            enabled = enabled,
+            enabled = buttonEnabled,
             shape = shape,
             colors = colors,
             elevation = elevation,
             border = border,
             contentPadding = contentPadding,
-            interactionSource = interactionSource,
+            interactionSource = resolvedInteractionSource,
             content = content,
         )
     }
@@ -193,25 +227,29 @@ fun FocusedOutlinedButton(
     border: BorderStroke? = ButtonDefaults.outlinedButtonBorder(enabled),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     focusRequester: FocusRequester? = null,
+    interactionSource: MutableInteractionSource? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val thresholdOnClick = rememberThresholdOnClick(onClick)
+    val defaultInteractionSource = remember { MutableInteractionSource() }
+    val resolvedInteractionSource = interactionSource ?: defaultInteractionSource
     FocusHighlightContainer(
         modifier = modifier,
-        interactionSource = interactionSource,
+        interactionSource = resolvedInteractionSource,
     ) {
         OutlinedButton(
-            onClick = onClick,
+            onClick = thresholdOnClick,
             modifier = buttonModifier.then(
                 if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
             ),
-            enabled = enabled,
+            enabled = buttonEnabled,
             shape = shape,
             colors = colors,
             elevation = elevation,
-            border = border,
+            border = if (buttonEnabled) border else ButtonDefaults.outlinedButtonBorder(false),
             contentPadding = contentPadding,
-            interactionSource = interactionSource,
+            interactionSource = resolvedInteractionSource,
             content = content,
         )
     }
@@ -229,25 +267,29 @@ fun FocusedTextButton(
     border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.TextButtonContentPadding,
     focusRequester: FocusRequester? = null,
+    interactionSource: MutableInteractionSource? = null,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val interactionSource = remember { MutableInteractionSource() }
+    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val thresholdOnClick = rememberThresholdOnClick(onClick)
+    val defaultInteractionSource = remember { MutableInteractionSource() }
+    val resolvedInteractionSource = interactionSource ?: defaultInteractionSource
     FocusHighlightContainer(
         modifier = modifier,
-        interactionSource = interactionSource,
+        interactionSource = resolvedInteractionSource,
     ) {
         TextButton(
-            onClick = onClick,
+            onClick = thresholdOnClick,
             modifier = buttonModifier.then(
                 if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
             ),
-            enabled = enabled,
+            enabled = buttonEnabled,
             shape = shape,
             colors = colors,
             elevation = elevation,
             border = border,
             contentPadding = contentPadding,
-            interactionSource = interactionSource,
+            interactionSource = resolvedInteractionSource,
             content = content,
         )
     }
@@ -262,18 +304,20 @@ fun FocusedAssistChip(
     enabled: Boolean = true,
     focusRequester: FocusRequester? = null,
 ) {
+    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val thresholdOnClick = rememberThresholdOnClick(onClick)
     val interactionSource = remember { MutableInteractionSource() }
     FocusHighlightContainer(
         modifier = modifier,
         interactionSource = interactionSource,
     ) {
         AssistChip(
-            onClick = onClick,
+            onClick = thresholdOnClick,
             label = label,
             modifier = chipModifier.then(
                 if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
             ),
-            enabled = enabled,
+            enabled = buttonEnabled,
             interactionSource = interactionSource,
         )
     }
@@ -290,6 +334,8 @@ fun FocusedIconButton(
     showFocusHighlight: Boolean = true,
     content: @Composable () -> Unit,
 ) {
+    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val thresholdOnClick = rememberThresholdOnClick(onClick)
     val interactionSource = remember { MutableInteractionSource() }
     FocusHighlightContainer(
         modifier = modifier,
@@ -297,17 +343,50 @@ fun FocusedIconButton(
         showFocusHighlight = showFocusHighlight,
     ) {
         IconButton(
-            onClick = onClick,
+            onClick = thresholdOnClick,
             modifier = buttonModifier.then(
                 if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
             ),
-            enabled = enabled,
+            enabled = buttonEnabled,
             colors = colors,
             interactionSource = interactionSource,
             content = content,
         )
     }
 }
+
+@Composable
+fun FocusedExtendedFloatingActionButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    containerColor: Color = FloatingActionButtonDefaults.containerColor,
+    contentColor: Color = contentColorFor(containerColor),
+    interactionSource: MutableInteractionSource? = null,
+    content: @Composable RowScope.() -> Unit,
+) {
+    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val thresholdOnClick = rememberThresholdOnClick(onClick)
+    val defaultInteractionSource = remember { MutableInteractionSource() }
+    val resolvedInteractionSource = interactionSource ?: defaultInteractionSource
+    FocusHighlightContainer(
+        modifier = Modifier,
+        interactionSource = resolvedInteractionSource,
+    ) {
+        ExtendedFloatingActionButton(
+            onClick = if (buttonEnabled) thresholdOnClick else emptyFunction,
+            modifier = modifier
+                .focusProperties { canFocus = buttonEnabled }
+                .alpha(if (buttonEnabled) 1f else 0.38f),
+            containerColor = containerColor,
+            contentColor = contentColor,
+            interactionSource = resolvedInteractionSource,
+            content = content,
+        )
+    }
+}
+
+private val emptyFunction: () -> Unit = {}
 
 @Composable
 fun FocusHighlightContainer(

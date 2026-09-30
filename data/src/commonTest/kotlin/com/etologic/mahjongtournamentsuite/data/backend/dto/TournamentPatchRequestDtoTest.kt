@@ -65,4 +65,25 @@ class TournamentPatchRequestDtoTest {
             encoded,
         )
     }
+
+    @Test
+    fun serializesReusableTournamentLogoSource() {
+        val payload = UpdateTournamentSettingsRequestDto(
+            name = "European Championship",
+            shortName = "EC2026",
+            primaryColor = "#123456",
+            eventStartDate = "2026-10-03",
+            eventEndDate = "2026-10-04",
+            hostCountry = "ESP",
+            hostCity = "Madrid",
+            associationLogoSourceTournamentId = "source-tournament",
+        )
+
+        val encoded = json.encodeToString(payload)
+
+        assertEquals(
+            """{"name":"European Championship","shortName":"EC2026","primaryColor":"#123456","eventStartDate":"2026-10-03","eventEndDate":"2026-10-04","hostCountry":"ESP","hostCity":"Madrid","associationLogoSourceTournamentId":"source-tournament"}""",
+            encoded,
+        )
+    }
 }

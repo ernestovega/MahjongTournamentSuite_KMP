@@ -23,7 +23,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.background
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -84,6 +83,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
@@ -217,7 +217,10 @@ fun TableManagerScreen(
     }
 
     fun requestUnsavedAction(action: TableManagerPendingUnsavedAction) {
-        if (isLoading) return
+        if (isLoading) {
+            if (action == TableManagerPendingUnsavedAction.Back) navController.popBackStack()
+            return
+        }
         if (hasUnsavedChanges) {
             pendingUnsavedAction = action
             return

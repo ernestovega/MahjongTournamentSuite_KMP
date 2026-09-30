@@ -35,12 +35,12 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -91,6 +91,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentCol
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
@@ -123,6 +126,7 @@ fun CreateTournamentDialog(
 ) {
     val presenter = koinInject<CreateTournamentPresenter>()
     val store = koinInject<AppMemoryStore>()
+    val tournaments by store.tournaments.collectAsState()
     val coroutineScope = rememberCoroutineScope()
     val nameFocusRequester = remember { FocusRequester() }
     val shortNameFocusRequester = remember { FocusRequester() }
@@ -142,6 +146,9 @@ fun CreateTournamentDialog(
     var hostCity by remember { mutableStateOf("") }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var associationLogo by remember { mutableStateOf<SelectedImage?>(null) }
+    var logoToCrop by remember { mutableStateOf<SelectedImage?>(null) }
+    var reusedLogoTournament by remember { mutableStateOf<Tournament?>(null) }
+    var showLogoLibrary by remember { mutableStateOf(false) }
     var logoImageInfo by remember { mutableStateOf<String?>(null) }
     val today = remember {
         Clock.System.now()
@@ -170,9 +177,7 @@ fun CreateTournamentDialog(
             } else if (image.bytes.size > 2 * 1024 * 1024) {
                 errorMessage = "* Logo must be 2 MB or smaller."
             } else {
-                associationLogo = image
-                logoImageInfo = null
-                errorMessage = null
+                logoToCrop = image
             }
         },
         onError = { message -> errorMessage = "* $message" },
@@ -288,6 +293,7 @@ fun CreateTournamentDialog(
                     primaryColor = normalizedPrimaryColor,
                     associationLogoContentType = associationLogo?.contentType,
                     associationLogoBytes = associationLogo?.bytes,
+                    associationLogoSourceTournamentId = reusedLogoTournament?.id,
                     eventStartDate = trimmedStartDate,
                     eventEndDate = trimmedEndDate,
                     hostCountry = normalizedHostCountry,
@@ -469,13 +475,14 @@ fun CreateTournamentDialog(
                     )
 
                     Text("Logo", style = MaterialTheme.typography.titleSmall)
+                    val logoModel = associationLogo?.dataUrl ?: reusedLogoTournament?.associationLogoUrl
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalAlignment = Alignment.Top,
                     ) {
                         TournamentLogoPreview(
-                            model = associationLogo?.dataUrl,
+                            model = logoModel,
                             onImageInfo = { logoImageInfo = it },
                             modifier = Modifier.size(120.dp),
                         )
@@ -484,14 +491,16 @@ fun CreateTournamentDialog(
                             verticalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             Text(
-                                text = associationLogo?.let { image ->
-                                    buildString {
-                                        append(image.fileName)
+                                text = when {
+                                    associationLogo != null -> buildString {
+                                        append(associationLogo?.fileName.orEmpty())
                                         append(" · ")
-                                        append(formatByteSize(image.bytes.size.toLong()))
+                                        append(formatByteSize(associationLogo?.bytes?.size?.toLong() ?: 0L))
                                         logoImageInfo?.let { append(" · ").append(it) }
                                     }
-                                } ?: "No logo",
+                                    reusedLogoTournament != null -> "Logo from ${reusedLogoTournament?.name}"
+                                    else -> "No logo"
+                                },
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 style = MaterialTheme.typography.bodySmall,
                             )
@@ -500,13 +509,22 @@ fun CreateTournamentDialog(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Button(enabled = !isLoading, onClick = logoPicker::launch) {
-                                    Text(if (associationLogo == null) "Choose logo" else "Change logo")
+                                    Text(if (logoModel == null) "Choose logo" else "Upload logo")
                                 }
-                                if (associationLogo != null) {
+                                if (tournaments.any { !it.associationLogoUrl.isNullOrBlank() }) {
+                                    Button(
+                                        enabled = !isLoading,
+                                        onClick = { showLogoLibrary = true },
+                                    ) {
+                                        Text("Reuse existing")
+                                    }
+                                }
+                                if (logoModel != null) {
                                     AppTextButton(
                                         enabled = !isLoading,
                                         onClick = {
                                             associationLogo = null
+                                            reusedLogoTournament = null
                                             logoImageInfo = null
                                         },
                                     ) { Text("Remove") }
@@ -514,6 +532,12 @@ fun CreateTournamentDialog(
                             }
                         }
                     }
+                    TournamentIdCardPreview(
+                        shortName = shortName,
+                        primaryColor = primaryColor,
+                        eventStartDate = eventStartDate,
+                        logoModel = logoModel,
+                    )
 
                     FocusHighlightContainer(
                         modifier = Modifier.fillMaxWidth(),
@@ -652,6 +676,35 @@ fun CreateTournamentDialog(
             onColorSelected = { selectedColor ->
                 primaryColor = selectedColor
                 showColorPickerDialog = false
+            },
+        )
+    }
+
+    logoToCrop?.let { image ->
+        TournamentLogoCropDialog(
+            image = image,
+            onDismiss = { logoToCrop = null },
+            onCropped = { croppedImage ->
+                associationLogo = croppedImage
+                reusedLogoTournament = null
+                logoImageInfo = null
+                errorMessage = null
+                logoToCrop = null
+            },
+            onError = { message -> errorMessage = "* $message" },
+        )
+    }
+
+    if (showLogoLibrary) {
+        TournamentLogoLibraryDialog(
+            tournaments = tournaments,
+            onDismiss = { showLogoLibrary = false },
+            onSelect = { tournament ->
+                associationLogo = null
+                reusedLogoTournament = tournament
+                logoImageInfo = null
+                errorMessage = null
+                showLogoLibrary = false
             },
         )
     }

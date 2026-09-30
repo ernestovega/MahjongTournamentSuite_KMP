@@ -49,6 +49,7 @@ data class CreateTournamentRequestDto(
     val primaryColor: String,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
+    val associationLogoSourceTournamentId: String? = null,
     val hostCountry: String,
     val hostCity: String,
 )
@@ -69,6 +70,7 @@ data class UpdateTournamentSettingsRequestDto(
     val hostCity: String,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
+    val associationLogoSourceTournamentId: String? = null,
     val removeAssociationLogo: Boolean = false,
 )
 

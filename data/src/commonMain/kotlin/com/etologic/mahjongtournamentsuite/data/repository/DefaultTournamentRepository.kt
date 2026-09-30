@@ -101,6 +101,7 @@ class DefaultTournamentRepository(
                 primaryColor = request.primaryColor,
                 associationLogoContentType = request.associationLogoContentType,
                 associationLogoDataBase64 = request.associationLogoBytes?.let(Base64.Default::encode),
+                associationLogoSourceTournamentId = request.associationLogoSourceTournamentId,
                 hostCountry = request.hostCountry,
                 hostCity = request.hostCity,
             )
@@ -168,6 +169,7 @@ class DefaultTournamentRepository(
         hostCity: String,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
+        associationLogoSourceTournamentId: String?,
         removeAssociationLogo: Boolean,
     ): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
@@ -184,6 +186,7 @@ class DefaultTournamentRepository(
                     hostCity = hostCity.trim(),
                     associationLogoContentType = associationLogoContentType,
                     associationLogoDataBase64 = associationLogoBytes?.let(Base64.Default::encode),
+                    associationLogoSourceTournamentId = associationLogoSourceTournamentId,
                     removeAssociationLogo = removeAssociationLogo,
                 ),
             )

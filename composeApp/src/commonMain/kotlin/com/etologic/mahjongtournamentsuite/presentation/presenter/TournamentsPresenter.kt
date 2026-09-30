@@ -45,6 +45,7 @@ class TournamentsPresenter(
         hostCity: String,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
+        associationLogoSourceTournamentId: String?,
         removeAssociationLogo: Boolean,
     ): AppResult<Tournament> = tournamentRepository.updateTournamentSettings(
         tournamentId = tournamentId,
@@ -57,6 +58,7 @@ class TournamentsPresenter(
         hostCity = hostCity,
         associationLogoContentType = associationLogoContentType,
         associationLogoBytes = associationLogoBytes,
+        associationLogoSourceTournamentId = associationLogoSourceTournamentId,
         removeAssociationLogo = removeAssociationLogo,
     )
 

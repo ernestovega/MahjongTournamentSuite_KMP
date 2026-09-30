@@ -43,6 +43,9 @@ function tournamentsRouter() {
             const associationLogoDataBase64 = body?.associationLogoDataBase64 == null
                 ? null
                 : String(body.associationLogoDataBase64).trim();
+            const associationLogoSourceTournamentId = body?.associationLogoSourceTournamentId == null
+                ? null
+                : String(body.associationLogoSourceTournamentId).trim();
             const eventStartDate = String(body?.eventStartDate ?? body?.eventDate ?? "").trim();
             const eventEndDate = String(body?.eventEndDate ?? body?.eventDate ?? "").trim();
             const hostCountry = String(body?.hostCountry ?? "").trim().toUpperCase();
@@ -74,6 +77,9 @@ function tournamentsRouter() {
             }
             if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
                 issues.push({ field: "associationLogo", message: "Content type and image data must be supplied together" });
+            }
+            if (associationLogoSourceTournamentId && associationLogoDataBase64) {
+                issues.push({ field: "associationLogo", message: "Supply an uploaded logo or a reusable logo, not both" });
             }
             if (!(0, tournamentDates_1.isValidIsoDate)(eventStartDate)) {
                 issues.push({ field: "eventStartDate", message: "Must use yyyy-MM-dd", value: body?.eventStartDate });
@@ -156,6 +162,7 @@ function tournamentsRouter() {
                 primaryColor,
                 associationLogoContentType,
                 associationLogoDataBase64,
+                associationLogoSourceTournamentId,
                 eventStartDate,
                 eventEndDate,
                 hostCountry,
@@ -234,6 +241,9 @@ function tournamentsRouter() {
             const associationLogoDataBase64 = body.associationLogoDataBase64 == null
                 ? null
                 : String(body.associationLogoDataBase64).trim();
+            const associationLogoSourceTournamentId = body.associationLogoSourceTournamentId == null
+                ? null
+                : String(body.associationLogoSourceTournamentId).trim();
             if (!name)
                 throw (0, httpError_1.badRequest)("Tournament name is required");
             if (!shortName || shortName.length > 10) {
@@ -253,6 +263,9 @@ function tournamentsRouter() {
             if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
                 throw (0, httpError_1.badRequest)("Association logo content type and image data must be supplied together");
             }
+            if (associationLogoSourceTournamentId && associationLogoDataBase64) {
+                throw (0, httpError_1.badRequest)("Supply an uploaded logo or a reusable logo, not both");
+            }
             const tournament = await (0, tournamentsService_1.updateTournamentSettings)({
                 tournamentId: req.params.tournamentId,
                 name,
@@ -264,6 +277,7 @@ function tournamentsRouter() {
                 hostCity,
                 associationLogoContentType,
                 associationLogoDataBase64,
+                associationLogoSourceTournamentId,
                 removeAssociationLogo: body.removeAssociationLogo === true,
             });
             res.status(200).json(tournament);

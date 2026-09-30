@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -50,16 +49,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
-import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ManualScoreTotalConfirmationDialog
@@ -95,7 +90,6 @@ private sealed class PendingUnsavedAction {
     data class SelectTable(val tableId: Int) : PendingUnsavedAction()
     data object NavigatePlayers : PendingUnsavedAction()
     data object NavigateTeams : PendingUnsavedAction()
-    data object NavigateUsers : PendingUnsavedAction()
     data object OpenRankings : PendingUnsavedAction()
     data object OpenTimer : PendingUnsavedAction()
     data object ExportResults : PendingUnsavedAction()
@@ -138,7 +132,6 @@ fun TournamentScreen(
     val initialRoundFocusRequester = remember { FocusRequester() }
     val playersFocusRequester = remember { FocusRequester() }
     val teamsFocusRequester = remember { FocusRequester() }
-    val usersFocusRequester = remember { FocusRequester() }
     val timerFocusRequester = remember { FocusRequester() }
     val rankingFocusRequester = remember { FocusRequester() }
     val exportFocusRequester = remember { FocusRequester() }
@@ -321,7 +314,6 @@ fun TournamentScreen(
             when (lastFocusedControl) {
                 "players" -> playersFocusRequester.requestFocus()
                 "teams" -> teamsFocusRequester.requestFocus()
-                "users" -> usersFocusRequester.requestFocus()
                 "timer" -> timerFocusRequester.requestFocus()
                 "ranking" -> rankingFocusRequester.requestFocus()
                 "export" -> exportFocusRequester.requestFocus()
@@ -456,7 +448,6 @@ fun TournamentScreen(
             is PendingUnsavedAction.SelectTable -> selectTable(action.tableId)
             PendingUnsavedAction.NavigatePlayers -> navController.navigate(PlayersRoute(tournamentId = tournamentId))
             PendingUnsavedAction.NavigateTeams -> navController.navigate(TeamsRoute(tournamentId = tournamentId))
-            PendingUnsavedAction.NavigateUsers -> navController.navigate(UsersRoute(tournamentId = tournamentId))
             PendingUnsavedAction.OpenRankings -> openRankings(navController, tournamentId, tournamentName)
             PendingUnsavedAction.OpenTimer -> openTimer(navController, timerInitialRound)
             PendingUnsavedAction.ExportResults -> exportResults()
@@ -464,7 +455,10 @@ fun TournamentScreen(
     }
 
     fun requestUnsavedAction(action: PendingUnsavedAction) {
-        if (isLoading) return
+        if (isLoading) {
+            if (action == PendingUnsavedAction.Back) navController.popBackStack()
+            return
+        }
         if (hasUnsavedChanges) {
             pendingUnsavedAction = action
             return
@@ -552,10 +546,6 @@ fun TournamentScreen(
         leadingActions = {
             ProfileInfo(profile, roleLabel)
             AppTopBarLeadingActions(
-                onUsers = {
-                    lastFocusedControl = "users"
-                    requestUnsavedAction(PendingUnsavedAction.NavigateUsers)
-                },
                 onTimer = {
                     lastFocusedControl = "timer"
                     openTimer(navController, timerInitialRound)
@@ -566,7 +556,6 @@ fun TournamentScreen(
                 },
                 timerFocusRequester = timerFocusRequester,
                 rankingFocusRequester = rankingFocusRequester,
-                usersFocusRequester = usersFocusRequester,
             )
         },
         actions = {
@@ -583,7 +572,7 @@ fun TournamentScreen(
                     lastFocusedControl = "players"
                     requestUnsavedAction(PendingUnsavedAction.NavigatePlayers)
                 },
-                onExport = {
+                onEmaReport = {
                     lastFocusedControl = "export"
                     requestUnsavedAction(PendingUnsavedAction.ExportResults)
                 },
@@ -604,7 +593,7 @@ fun TournamentScreen(
                     onClick = { showResetConfirmation = true },
                     enabled = !isLoading,
                     focusRequester = resetFocusRequester,
-                    textColor = MaterialTheme.colorScheme.error,
+                    textColor = MaterialTheme.colorScheme.scrim,
                 )
             }
         }

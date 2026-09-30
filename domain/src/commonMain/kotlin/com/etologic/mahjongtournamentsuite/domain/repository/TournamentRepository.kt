@@ -35,6 +35,7 @@ interface TournamentRepository {
         hostCity: String,
         associationLogoContentType: String? = null,
         associationLogoBytes: ByteArray? = null,
+        associationLogoSourceTournamentId: String? = null,
         removeAssociationLogo: Boolean = false,
     ): AppResult<Tournament>
 

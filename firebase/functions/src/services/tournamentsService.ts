@@ -98,6 +98,7 @@ export async function createTournament(params: {
   primaryColor: string;
   associationLogoContentType?: string | null;
   associationLogoDataBase64?: string | null;
+  associationLogoSourceTournamentId?: string | null;
   eventStartDate: string;
   eventEndDate: string;
   hostCountry: string;
@@ -123,7 +124,9 @@ export async function createTournament(params: {
 
   const logo = params.associationLogoContentType && params.associationLogoDataBase64
     ? await saveAssociationLogo(ref.id, params.associationLogoContentType, params.associationLogoDataBase64)
-    : null;
+    : params.associationLogoSourceTournamentId
+      ? await copyAssociationLogo(params.associationLogoSourceTournamentId, ref.id)
+      : null;
 
   const tournamentDoc = {
     name: params.name,
@@ -332,6 +335,25 @@ async function saveAssociationLogo(
   };
 }
 
+async function copyAssociationLogo(
+  sourceTournamentId: string,
+  targetTournamentId: string,
+): Promise<{ path: string; url: string }> {
+  const source = await db.collection("tournaments").doc(sourceTournamentId).get();
+  if (!source.exists) throw notFound("Source tournament not found");
+  const sourcePath = String(source.get("associationLogoPath") ?? "").trim();
+  if (sourcePath.length === 0) throw badRequest("The selected tournament has no reusable logo");
+
+  const sourceFile = storage.file(sourcePath);
+  const [metadata] = await sourceFile.getMetadata();
+  const contentType = String(metadata.contentType ?? "").trim();
+  if (!(contentType in logoExtensions)) {
+    throw badRequest("The selected tournament logo has an unsupported image type");
+  }
+  const [bytes] = await sourceFile.download();
+  return saveAssociationLogo(targetTournamentId, contentType, bytes.toString("base64"));
+}
+
 export async function updateTournamentSettings(params: {
   tournamentId: string;
   name: string;
@@ -343,6 +365,7 @@ export async function updateTournamentSettings(params: {
   hostCity: string;
   associationLogoContentType?: string | null;
   associationLogoDataBase64?: string | null;
+  associationLogoSourceTournamentId?: string | null;
   removeAssociationLogo?: boolean;
 }): Promise<Tournament> {
   const normalizedName = params.name.trim();
@@ -366,6 +389,11 @@ export async function updateTournamentSettings(params: {
       params.associationLogoContentType,
       params.associationLogoDataBase64,
     );
+  } else if (params.associationLogoSourceTournamentId) {
+    if (params.associationLogoSourceTournamentId === params.tournamentId) {
+      throw badRequest("Select a different tournament logo to reuse");
+    }
+    logo = await copyAssociationLogo(params.associationLogoSourceTournamentId, params.tournamentId);
   }
 
   const update: Record<string, unknown> = {

@@ -25,13 +25,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -74,6 +71,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
@@ -187,7 +187,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         savingId = null
     }
 
+    LaunchedEffect(tournamentId) { refresh() }
+    val playersByEma = basePlayers.associateBy { it.emaId }
+    val players = slots[tournamentId].orEmpty()
+
     fun exportIdCards() = scope.launch {
+        val unassigned = players.filterNot { it.isAssigned }
+        if (unassigned.isNotEmpty()) {
+            error = "Assign an EMA player or non-member to every tournament slot before creating ID cards."
+            return@launch
+        }
+
         loading = true
         error = null
         when (val result = presenter.generateIdCards(tournamentId)) {
@@ -204,9 +214,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         loading = false
     }
 
-    LaunchedEffect(tournamentId) { refresh() }
-    val playersByEma = basePlayers.associateBy { it.emaId }
-    val players = slots[tournamentId].orEmpty()
     val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
     val teamNamesById = remember(teams) { teams.associate { it.id to it.name } }
     val tableNumbersByPlayerId = remember(tables) {

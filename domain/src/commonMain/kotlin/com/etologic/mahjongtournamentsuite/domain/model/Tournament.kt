@@ -38,6 +38,7 @@ data class CreateTournamentRequest(
     val primaryColor: String,
     val associationLogoContentType: String? = null,
     val associationLogoBytes: ByteArray? = null,
+    val associationLogoSourceTournamentId: String? = null,
     val hostCountry: String,
     val hostCity: String,
 )

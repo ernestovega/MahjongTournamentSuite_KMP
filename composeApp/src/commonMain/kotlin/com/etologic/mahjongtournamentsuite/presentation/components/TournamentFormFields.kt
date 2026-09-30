@@ -8,18 +8,26 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CalendarLocale
@@ -38,12 +46,14 @@ import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +63,12 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -65,12 +81,18 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
+import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -388,6 +410,394 @@ fun TournamentLogoPreview(
             )
         }
     }
+}
+
+@Composable
+fun TournamentLogoCropDialog(
+    image: SelectedImage,
+    onDismiss: () -> Unit,
+    onCropped: (SelectedImage) -> Unit,
+    onError: (String) -> Unit,
+) {
+    var zoom by remember(image) { mutableFloatStateOf(1f) }
+    var horizontalPosition by remember(image) { mutableFloatStateOf(0f) }
+    var verticalPosition by remember(image) { mutableFloatStateOf(0f) }
+    var imageSize by remember(image) { mutableStateOf(IntSize.Zero) }
+    var isCropping by remember(image) { mutableStateOf(false) }
+    val zoomFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(image) {
+        zoomFocusRequester.requestFocus()
+    }
+
+    AlertDialog(
+        modifier = Modifier.appFocusGroup(),
+        onDismissRequest = { if (!isCropping) onDismiss() },
+        title = { Text("Crop tournament logo") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    "Drag the image or use the controls. The circle shows the ID card logo area.",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                CircularLogoCropPreview(
+                    model = image.dataUrl,
+                    imageSize = imageSize,
+                    zoom = zoom,
+                    horizontalPosition = horizontalPosition,
+                    verticalPosition = verticalPosition,
+                    onImageSize = { imageSize = it },
+                    onPositionChange = { horizontal, vertical ->
+                        horizontalPosition = horizontal
+                        verticalPosition = vertical
+                    },
+                )
+                CropSlider(
+                    label = "Zoom",
+                    value = zoom,
+                    valueRange = 1f..3f,
+                    onValueChange = { zoom = it },
+                    modifier = Modifier.focusRequester(zoomFocusRequester),
+                )
+                CropSlider(
+                    label = "Left / right",
+                    value = horizontalPosition,
+                    valueRange = -1f..1f,
+                    onValueChange = { horizontalPosition = it },
+                )
+                CropSlider(
+                    label = "Up / down",
+                    value = verticalPosition,
+                    valueRange = -1f..1f,
+                    onValueChange = { verticalPosition = it },
+                )
+            }
+        },
+        confirmButton = {
+            FocusedButton(
+                enabled = !isCropping && imageSize != IntSize.Zero,
+                onClick = {
+                    isCropping = true
+                    cropSelectedImage(
+                        image = image,
+                        crop = SquareImageCrop(zoom, horizontalPosition, verticalPosition),
+                        onCropped = onCropped,
+                        onError = {
+                            isCropping = false
+                            onError(it)
+                        },
+                    )
+                },
+            ) {
+                if (isCropping) {
+                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                } else {
+                    Text("Use crop")
+                }
+            }
+        },
+        dismissButton = {
+            FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+@Composable
+private fun CircularLogoCropPreview(
+    model: Any,
+    imageSize: IntSize,
+    zoom: Float,
+    horizontalPosition: Float,
+    verticalPosition: Float,
+    onImageSize: (IntSize) -> Unit,
+    onPositionChange: (horizontal: Float, vertical: Float) -> Unit,
+) {
+    val viewport = 240.dp
+    val minimumDimension = min(imageSize.width, imageSize.height).coerceAtLeast(1)
+    val renderedWidth = viewport * imageSize.width.coerceAtLeast(1) / minimumDimension
+    val renderedHeight = viewport * imageSize.height.coerceAtLeast(1) / minimumDimension
+    val viewportPixels = with(androidx.compose.ui.platform.LocalDensity.current) { viewport.toPx() }
+    val baseScale = viewportPixels / minimumDimension
+    val sourceCropSize = minimumDimension / zoom
+    val translationX = -horizontalPosition * (imageSize.width - sourceCropSize) / 2f * baseScale * zoom
+    val translationY = -verticalPosition * (imageSize.height - sourceCropSize) / 2f * baseScale * zoom
+    val maximumTranslationX = (imageSize.width - sourceCropSize) / 2f * baseScale * zoom
+    val maximumTranslationY = (imageSize.height - sourceCropSize) / 2f * baseScale * zoom
+    val currentHorizontalPosition by rememberUpdatedState(horizontalPosition)
+    val currentVerticalPosition by rememberUpdatedState(verticalPosition)
+
+    Box(
+        modifier = Modifier
+            .size(viewport)
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
+            .pointerInput(maximumTranslationX, maximumTranslationY) {
+                var dragHorizontal = currentHorizontalPosition
+                var dragVertical = currentVerticalPosition
+                detectDragGestures(
+                    onDragStart = {
+                        dragHorizontal = currentHorizontalPosition
+                        dragVertical = currentVerticalPosition
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        if (maximumTranslationX > 0f) {
+                            dragHorizontal = (dragHorizontal - dragAmount.x / maximumTranslationX)
+                                .coerceIn(-1f, 1f)
+                        }
+                        if (maximumTranslationY > 0f) {
+                            dragVertical = (dragVertical - dragAmount.y / maximumTranslationY)
+                                .coerceIn(-1f, 1f)
+                        }
+                        onPositionChange(dragHorizontal, dragVertical)
+                    },
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        AsyncImage(
+            model = model,
+            contentDescription = "Logo crop preview",
+            contentScale = ContentScale.FillBounds,
+            modifier = Modifier
+                .requiredSize(renderedWidth, renderedHeight)
+                .graphicsLayer {
+                    scaleX = zoom
+                    scaleY = zoom
+                    this.translationX = translationX
+                    this.translationY = translationY
+                },
+            onSuccess = { state ->
+                val loadedImage = state.result.image
+                if (loadedImage.width > 0 && loadedImage.height > 0) {
+                    onImageSize(IntSize(loadedImage.width, loadedImage.height))
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun CropSlider(
+    label: String,
+    value: Float,
+    valueRange: ClosedFloatingPointRange<Float>,
+    onValueChange: (Float) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Text(label, style = MaterialTheme.typography.bodySmall)
+        Slider(
+            value = value,
+            onValueChange = onValueChange,
+            valueRange = valueRange,
+            modifier = modifier
+                .fillMaxWidth()
+                .semantics { contentDescription = label },
+        )
+    }
+}
+
+@Composable
+fun TournamentIdCardPreview(
+    shortName: String,
+    primaryColor: String,
+    eventStartDate: String,
+    logoModel: Any?,
+    modifier: Modifier = Modifier.fillMaxWidth(),
+) {
+    val cardColor = primaryColor.toTournamentColorOrNull() ?: DefaultTournamentColor
+    val year = eventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty()
+
+    Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text("ID card preview", style = MaterialTheme.typography.titleSmall)
+        BoxWithConstraints(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(242.88f / 153f)
+                .clip(RoundedCornerShape(8.dp))
+                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(8.dp)),
+        ) {
+            val cardWidth = maxWidth
+            val cardHeight = maxHeight
+            Canvas(Modifier.fillMaxSize()) {
+                drawRect(Color(0xFFFFFDF5))
+                drawRect(cardColor, size = androidx.compose.ui.geometry.Size(size.width, size.height * 76f / 153f))
+                drawCircle(
+                    color = cardColor,
+                    radius = size.width * 46.9f / 242.88f,
+                    center = Offset(size.width * 68.66f / 242.88f, size.height * 71.39f / 153f),
+                )
+                if (logoModel != null) {
+                    drawCircle(
+                        color = Color.White,
+                        radius = size.width * 34.5f / 242.88f,
+                        center = Offset(size.width * 68.66f / 242.88f, size.height * 71.39f / 153f),
+                    )
+                }
+            }
+            if (logoModel != null) {
+                AsyncImage(
+                    model = logoModel,
+                    contentDescription = "Logo on ID card preview",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .offset(x = cardWidth * 36.16f / 242.88f, y = cardHeight * 38.89f / 153f)
+                        .size(cardWidth * 65f / 242.88f)
+                        .clip(CircleShape),
+                )
+            }
+            Text(
+                text = shortName.ifBlank { "TOURNAMENT" },
+                modifier = Modifier
+                    .offset(x = cardWidth * 22f / 242.88f, y = cardHeight * 12f / 153f)
+                    .width(cardWidth * 94f / 242.88f),
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Text(
+                text = "TEAM",
+                modifier = Modifier
+                    .offset(x = cardWidth * 142f / 242.88f, y = cardHeight * 25f / 153f)
+                    .width(cardWidth * 94f / 242.88f),
+                color = Color.White,
+                style = MaterialTheme.typography.labelSmall,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = "00",
+                modifier = Modifier
+                    .offset(x = cardWidth * 151f / 242.88f, y = cardHeight * 45f / 153f)
+                    .width(cardWidth * 76f / 242.88f),
+                color = Color.White,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+            Text(
+                text = "Preview Player",
+                modifier = Modifier
+                    .offset(x = cardWidth * 116f / 242.88f, y = cardHeight * 90f / 153f)
+                    .width(cardWidth * 120f / 242.88f),
+                color = Color.Black,
+                style = MaterialTheme.typography.bodyMedium,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            if (year.isNotEmpty()) {
+                Text(
+                    text = year,
+                    modifier = Modifier
+                        .offset(x = cardWidth * 42f / 242.88f, y = cardHeight * 122f / 153f)
+                        .width(cardWidth * 54f / 242.88f),
+                    color = cardColor,
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TournamentLogoLibraryDialog(
+    tournaments: List<Tournament>,
+    onDismiss: () -> Unit,
+    onSelect: (Tournament) -> Unit,
+) {
+    val logos = remember(tournaments) {
+        tournaments.filter { !it.associationLogoUrl.isNullOrBlank() }
+    }
+    val listState = rememberLazyListState()
+    val itemFocusRequesters = remember(logos.map { it.id }) { logos.map { FocusRequester() } }
+    val cancelFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(logos) {
+        if (itemFocusRequesters.isNotEmpty()) {
+            itemFocusRequesters.first().requestFocus()
+        } else {
+            cancelFocusRequester.requestFocus()
+        }
+    }
+
+    AlertDialog(
+        modifier = Modifier.appFocusGroup(),
+        onDismissRequest = onDismiss,
+        title = { Text("Reuse tournament logo") },
+        text = {
+            if (logos.isEmpty()) {
+                Text("No saved tournament logos are available.")
+            } else {
+                LazyColumnWithScrollbar(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 400.dp),
+                    contentPadding = PaddingValues(end = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    itemsIndexed(logos, key = { _, tournament -> tournament.id }) { index, tournament ->
+                        val previous = if (index == 0) cancelFocusRequester else itemFocusRequesters[index - 1]
+                        val next = if (index == logos.lastIndex) cancelFocusRequester else itemFocusRequesters[index + 1]
+                        FocusedButton(
+                            onClick = { onSelect(tournament) },
+                            modifier = Modifier.fillMaxWidth(),
+                            focusRequester = itemFocusRequesters[index],
+                            buttonModifier = Modifier
+                                .fillMaxWidth()
+                                .focusLoop(previous = previous, next = next),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                        ) {
+                            AsyncImage(
+                                model = tournament.associationLogoUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(Color.White),
+                            )
+
+                            Spacer(Modifier.width(16.dp))
+
+                            Text(
+                                tournament.name,
+                                modifier = Modifier.weight(1f),
+                                textAlign = TextAlign.Start,
+                                maxLines = 2,
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        confirmButton = {},
+        dismissButton = {
+            FocusedTextButton(
+                onClick = onDismiss,
+                focusRequester = cancelFocusRequester,
+                buttonModifier = if (itemFocusRequesters.isEmpty()) {
+                    Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
+                } else {
+                    Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
+                },
+            ) {
+                Text("Cancel")
+            }
+        },
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

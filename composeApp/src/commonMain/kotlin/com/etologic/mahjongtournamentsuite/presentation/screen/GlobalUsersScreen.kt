@@ -23,7 +23,6 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -65,6 +64,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivi
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer

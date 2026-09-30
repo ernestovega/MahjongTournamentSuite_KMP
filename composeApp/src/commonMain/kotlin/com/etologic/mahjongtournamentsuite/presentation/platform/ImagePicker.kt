@@ -12,6 +12,12 @@ data class SelectedImage(
         get() = "data:$contentType;base64,${Base64.Default.encode(bytes)}"
 }
 
+data class SquareImageCrop(
+    val zoom: Float,
+    val horizontalPosition: Float,
+    val verticalPosition: Float,
+)
+
 class ImagePicker internal constructor(
     private val launchAction: () -> Unit,
 ) {
@@ -23,6 +29,13 @@ expect fun rememberImagePicker(
     onImageSelected: (SelectedImage) -> Unit,
     onError: (String) -> Unit,
 ): ImagePicker
+
+expect fun cropSelectedImage(
+    image: SelectedImage,
+    crop: SquareImageCrop,
+    onCropped: (SelectedImage) -> Unit,
+    onError: (String) -> Unit,
+)
 
 internal fun selectedImageFromBase64(
     fileName: String,

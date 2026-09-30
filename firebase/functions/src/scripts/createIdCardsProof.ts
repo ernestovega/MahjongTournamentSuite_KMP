@@ -13,11 +13,13 @@ async function main(): Promise<void> {
     year: "2026",
     primaryColor: "#7C3AED",
     associationLogo,
+    numberOfRounds: 7,
     players: [
       {
         playerId: 21,
         name: "ÁLVARO DE LA TORRE",
         country: "Spain",
+        countryCode: "ESP",
         teamName: "Madrid Dragons",
         tableNumbers: [11, 4, 21, 19, 7, 12, 3],
       },

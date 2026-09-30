@@ -100,14 +100,20 @@ fun AppScaffold(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         when {
-                            navigationIcon != null -> navigationIcon()
+                            navigationIcon != null -> {
+                                CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                    navigationIcon()
+                                }
+                            }
                             onBack != null -> {
                                 AppBackButton(onClick = onBack)
                             }
                         }
 
                         if (leadingActions != null) {
-                            leadingActions()
+                            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                leadingActions()
+                            }
                         }
                     }
                 }
@@ -120,7 +126,9 @@ fun AppScaffold(
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                actions()
+                                CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                    actions()
+                                }
                             }
                         }
                     }
@@ -146,13 +154,17 @@ fun AppScaffold(
             }
         },
         floatingActionButton = {
-            floatingActionButton?.invoke()
+            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                floatingActionButton?.invoke()
+            }
         },
         floatingActionButtonPosition = floatingActionButtonPosition,
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Box(modifier = Modifier.padding(padding)) {
-            content()
+            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                content()
+            }
         }
     }
 }

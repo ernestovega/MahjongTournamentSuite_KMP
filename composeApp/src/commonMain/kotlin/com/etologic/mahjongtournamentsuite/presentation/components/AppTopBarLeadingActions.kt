@@ -25,22 +25,19 @@ fun AppTopBarLeadingActions(
     showThemeToggle: Boolean = false,
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
-    onExport: (() -> Unit)? = null,
-    onUsers: (() -> Unit)? = null,
+    onAppUsers: (() -> Unit)? = null,
     timerFocusRequester: FocusRequester? = null,
     rankingFocusRequester: FocusRequester? = null,
-    exportFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Start,
     ) {
-        onUsers?.let { AppTopBarButton("App Users", Icons.Default.Person, it, usersFocusRequester) }
+        onAppUsers?.let { AppTopBarButton("App Users", Icons.Default.Person, it, usersFocusRequester) }
         if (showThemeToggle) { ThemeModeToggleButton() }
         onTimer?.let { AppTopBarButton("Timer", Icons.Default.AccessTime, it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton("Ranking", Icons.Default.Leaderboard, it, rankingFocusRequester) }
-        onExport?.let { AppTopBarButton("Export", Icons.Default.FileUpload, it, exportFocusRequester) }
     }
 }
 
@@ -51,7 +48,7 @@ private fun ThemeModeToggleButton() {
 
     AppTopBarButton(
         text = label,
-        icon = if (themeController.isDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
+        icon = if (themeController.isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
         onClick = themeController.onTogglePreference,
     )
 }

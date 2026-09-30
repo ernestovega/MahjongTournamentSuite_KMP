@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildIdCardsPdf = buildIdCardsPdf;
 exports.generateTournamentIdCards = generateTournamentIdCards;
 const pdfkit_1 = __importDefault(require("pdfkit"));
+const node_fs_1 = require("node:fs");
+const node_path_1 = require("node:path");
 const httpError_1 = require("../api/httpError");
 const firebase_1 = require("../firebase");
 const countriesService_1 = require("./countriesService");
@@ -14,17 +16,16 @@ const CARD_WIDTH = 242.88;
 const CARD_HEIGHT = 153;
 const DEFAULT_PRIMARY_COLOR = "#02B16B";
 const BACKGROUND_COLOR = "#FFFDF5";
-const bodyFontPath = require.resolve("roboto-font/fonts/Roboto/roboto-regular-webfont.ttf");
-const titleFontPath = require.resolve("roboto-font/fonts/Roboto_condensed/robotocondensed-bold-webfont.ttf");
+const appFontPath = (0, node_path_1.resolve)(__dirname, "../assets/go3v2.ttf");
+const flagDirectory = (0, node_path_1.dirname)(require.resolve("flag-icons/flags/4x3/es.svg"));
+const flagSvgCache = new Map();
+const svgToPdf = require("svg-to-pdfkit");
 function normalizeHexColor(value) {
     const color = value.trim().toUpperCase();
     return /^#[0-9A-F]{6}$/.test(color) ? color : DEFAULT_PRIMARY_COLOR;
 }
 function titleCase(value) {
     return value.toLocaleLowerCase().replace(/(^|[\s'-])\p{L}/gu, (match) => match.toLocaleUpperCase());
-}
-function valueOrFallback(value, fallback) {
-    return value.trim().length === 0 ? fallback : value;
 }
 function splitPlayerName(value) {
     const words = value.trim().split(/\s+/).filter(Boolean);
@@ -34,6 +35,31 @@ function splitPlayerName(value) {
         givenName: titleCase(words[0]),
         surname: words.slice(1).join(" ").toLocaleUpperCase(),
     };
+}
+function iso2CountryCode(value) {
+    const code = value.trim().toUpperCase();
+    if (code === "EU" || code.length === 0)
+        return null;
+    if (/^[A-Z]{2}$/.test(code))
+        return code;
+    return emaCountryCodeToIso2[code] ?? null;
+}
+function flagSvgFor(countryCode) {
+    const code = iso2CountryCode(countryCode ?? "");
+    if (code == null)
+        return null;
+    const cached = flagSvgCache.get(code);
+    if (cached !== undefined)
+        return cached;
+    try {
+        const svg = (0, node_fs_1.readFileSync)((0, node_path_1.join)(flagDirectory, `${code.toLowerCase()}.svg`), "utf8");
+        flagSvgCache.set(code, svg);
+        return svg;
+    }
+    catch (_error) {
+        flagSvgCache.set(code, null);
+        return null;
+    }
 }
 function fitText(doc, text, maxWidth, initialSize, minimumSize) {
     let size = initialSize;
@@ -58,24 +84,46 @@ function drawCurvedText(doc, text, centerX, centerY, radius, centerAngle, spread
         doc.save();
         doc.translate(x, y);
         doc.rotate(rotation);
-        doc.font("CardTitle").fontSize(fontSize).fillColor(color);
+        doc.font("CardApp").fontSize(fontSize).fillColor(color);
         const width = doc.widthOfString(character);
         doc.text(character, -width / 2, -fontSize / 2, { lineBreak: false });
         doc.restore();
     });
+}
+function drawCenteredText(doc, text, width, height) {
+    const textHeight = doc.heightOfString(text, { width, align: "center", lineBreak: false });
+    doc.text(text, 0, (height - textHeight) / 2, { width, align: "center", lineBreak: false });
+}
+function drawCountryFlag(doc, countryCode) {
+    const svg = flagSvgFor(countryCode);
+    if (svg != null) {
+        doc.save();
+        svgToPdf(doc, svg, 189, 8, { width: 24, height: 18, preserveAspectRatio: "xMidYMid meet" });
+        doc.restore();
+        return;
+    }
+    doc.font("CardApp").fontSize(7).fillColor("#FFFFFF");
+    doc.text("Guest", 174, 12, { width: 54, align: "center", lineBreak: false });
 }
 function drawFront(doc, model, player, associationLogo) {
     const primary = normalizeHexColor(model.primaryColor);
     const { givenName, surname } = splitPlayerName(player.name);
     doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
     doc.rect(0, 0, CARD_WIDTH, 76).fill(primary);
-    doc.circle(68.66, 71.39, 46.9).fill(primary);
+    const logoCenterX = 68.66;
+    const logoCenterY = 71.39;
+    doc.circle(logoCenterX, logoCenterY, 46.9).fill(primary);
     if (associationLogo != null) {
-        doc.circle(68.66, 70.5, 34.5).fill("#FFFFFF");
+        const logoRadius = 32.5;
+        doc.circle(logoCenterX, logoCenterY, 34.5).fill("#FFFFFF");
         try {
             doc.save();
-            doc.circle(68.66, 70.5, 32).clip();
-            doc.image(associationLogo, 38.66, 40.5, { fit: [60, 60], align: "center", valign: "center" });
+            doc.circle(logoCenterX, logoCenterY, logoRadius).clip();
+            doc.image(associationLogo, logoCenterX - logoRadius, logoCenterY - logoRadius, {
+                cover: [logoRadius * 2, logoRadius * 2],
+                align: "center",
+                valign: "center",
+            });
             doc.restore();
         }
         catch (_error) {
@@ -85,26 +133,24 @@ function drawFront(doc, model, player, associationLogo) {
     }
     drawCurvedText(doc, model.tournamentShortName, 68.66, 71.39, 53, -90, Math.min(124, 54 + model.tournamentShortName.length * 7), model.tournamentShortName.length > 8 ? 17 : 20, "#FFFFFF");
     drawCurvedText(doc, model.year, 68.66, 71.39, 52, 90, 94, 16, primary, true);
-    doc.font("CardBody").fillColor("#FFFFFF");
-    const countryText = valueOrFallback(player.country, "Guest");
-    const countrySize = fitText(doc, countryText, 64, 7, 5);
-    doc.fontSize(countrySize).text(countryText, 162, 10, { width: 68, align: "center", lineBreak: false });
+    doc.font("CardApp").fillColor("#FFFFFF");
     const teamText = player.teamName == null ? "" : player.teamName.trim();
     if (teamText.length > 0) {
-        const teamSize = fitText(doc.font("CardTitle"), teamText, 93, 10, 6);
+        const teamSize = fitText(doc.font("CardApp"), teamText, 93, 10, 6);
         doc.fontSize(teamSize).text(teamText, 142, 31, { width: 94, align: "center", lineBreak: false });
     }
-    doc.font("CardTitle").fontSize(27).text(String(player.playerId), 151, 49, {
+    doc.font("CardApp").fontSize(27).text(String(player.playerId), 151, 49, {
         width: 76,
         align: "center",
         lineBreak: false,
     });
-    doc.font("CardTitle").fillColor("#000000");
+    doc.font("CardApp").fillColor("#000000");
     const givenSize = fitText(doc, givenName, 118, 29, 15);
     doc.fontSize(givenSize).text(givenName, 116, 86, { width: 120, align: "center", lineBreak: false });
-    doc.font("CardBody");
+    doc.font("CardApp");
     const surnameSize = fitText(doc, surname, 116, 9, 6);
     doc.fontSize(surnameSize).text(surname, 118, 126, { width: 116, align: "center", lineBreak: false });
+    drawCountryFlag(doc, player.countryCode);
 }
 function drawCellText(doc, text, x, y, width, height) {
     const textHeight = doc.heightOfString(text, { width: width - 4, align: "center" });
@@ -118,31 +164,30 @@ function drawBack(doc, model, player) {
     const primary = normalizeHexColor(model.primaryColor);
     doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
     doc.save();
-    doc.opacity(0.28).font("CardTitle").fontSize(88).fillColor(primary);
-    doc.text(String(player.playerId), 45, 35, {
-        width: 153,
-        height: 100,
-        align: "center",
-        lineBreak: false,
-    });
+    const backgroundNumber = String(player.playerId);
+    const backgroundNumberSize = fitText(doc.font("CardApp"), backgroundNumber, 190, 132, 88);
+    doc.opacity(0.28).fontSize(backgroundNumberSize).fillColor(primary);
+    drawCenteredText(doc, backgroundNumber, CARD_WIDTH, CARD_HEIGHT);
     doc.restore();
     const x = 14;
     const y = 10;
     const width = CARD_WIDTH - 28;
     const headerHeight = 22;
+    const roundCount = Math.max(1, model.numberOfRounds ?? player.tableNumbers.length);
+    const tableNumbers = Array.from({ length: roundCount }, (_, index) => player.tableNumbers[index] ?? 0);
     const availableRowsHeight = CARD_HEIGHT - y - 10 - headerHeight;
-    const rowHeight = availableRowsHeight / Math.max(1, player.tableNumbers.length);
+    const rowHeight = availableRowsHeight / roundCount;
     const columns = [38, 42, 67, width - 38 - 42 - 67];
     const headers = ["Round", "Table", "Table points", "Score"];
-    doc.lineWidth(0.65).strokeColor("#000000").fillColor("#000000").font("CardBody");
-    doc.rect(x, y, width, headerHeight + rowHeight * player.tableNumbers.length).stroke();
+    doc.lineWidth(0.65).strokeColor("#000000").fillColor("#000000").font("CardApp");
+    doc.rect(x, y, width, headerHeight + rowHeight * roundCount).stroke();
     let columnX = x;
     columns.slice(0, -1).forEach((columnWidth) => {
         columnX += columnWidth;
-        doc.moveTo(columnX, y).lineTo(columnX, y + headerHeight + rowHeight * player.tableNumbers.length).stroke();
+        doc.moveTo(columnX, y).lineTo(columnX, y + headerHeight + rowHeight * roundCount).stroke();
     });
     doc.moveTo(x, y + headerHeight).lineTo(x + width, y + headerHeight).stroke();
-    for (let index = 1; index < player.tableNumbers.length; index += 1) {
+    for (let index = 1; index < roundCount; index += 1) {
         const rowY = y + headerHeight + rowHeight * index;
         doc.moveTo(x, rowY).lineTo(x + width, rowY).stroke();
     }
@@ -153,7 +198,7 @@ function drawBack(doc, model, player) {
         columnX += columns[index];
     });
     const rowFontSize = Math.max(4.5, Math.min(8, rowHeight * 0.55));
-    player.tableNumbers.forEach((tableNumber, index) => {
+    tableNumbers.forEach((tableNumber, index) => {
         const rowY = y + headerHeight + rowHeight * index;
         doc.fontSize(rowFontSize);
         drawCellText(doc, String(index + 1), x, rowY, columns[0], rowHeight);
@@ -171,8 +216,7 @@ async function buildIdCardsPdf(model) {
         doc.on("data", (chunk) => chunks.push(chunk));
         doc.on("error", reject);
         doc.on("end", () => resolve(Buffer.concat(chunks)));
-        doc.registerFont("CardBody", bodyFontPath);
-        doc.registerFont("CardTitle", titleFontPath);
+        doc.registerFont("CardApp", appFontPath);
         const reusableLogo = model.associationLogo == null
             ? null
             : doc.openImage(model.associationLogo);
@@ -242,7 +286,8 @@ async function generateTournamentIdCards(tournamentId) {
             name: player == null
                 ? `${String(nonMember?.firstName ?? "")} ${String(nonMember?.lastName ?? "")}`.trim()
                 : `${String(player.get("firstName") ?? "")} ${String(player.get("lastName") ?? "")}`.trim(),
-            country: countryNames.get(countryCode) ?? countryCode,
+            country: countryNames.get(iso2CountryCode(countryCode) ?? "") ?? countryCode,
+            countryCode,
             teamName: tournament.get("isTeams") === true ? teamNames.get(teamId) ?? `Team ${teamId}` : null,
             tableNumbers: Array.from({ length: numRounds }, (_, roundIndex) => rounds.get(roundIndex + 1) ?? 0),
         };
@@ -259,7 +304,14 @@ async function generateTournamentIdCards(tournamentId) {
         year: /^\d{4}-/.test(eventStartDate) ? eventStartDate.slice(0, 4) : String(new Date().getUTCFullYear()),
         primaryColor: normalizeHexColor(String(tournament.get("primaryColor") ?? DEFAULT_PRIMARY_COLOR)),
         associationLogo,
+        numberOfRounds: numRounds,
         players,
     });
 }
+const emaCountryCodeToIso2 = {
+    AUT: "AT", BEL: "BE", BLR: "BY", CHE: "CH", CZE: "CZ", DEU: "DE", DEN: "DK", DNK: "DK",
+    ESP: "ES", FIN: "FI", FRA: "FR", GBR: "GB", GER: "DE", HUN: "HU", IRL: "IE", ITA: "IT",
+    LAT: "LV", NED: "NL", NLD: "NL", NOR: "NO", POL: "PL", POR: "PT", PRT: "PT", ROU: "RO",
+    RUS: "RU", SUI: "CH", SVK: "SK", SWE: "SE", UKR: "UA",
+};
 //# sourceMappingURL=idCardsService.js.map
