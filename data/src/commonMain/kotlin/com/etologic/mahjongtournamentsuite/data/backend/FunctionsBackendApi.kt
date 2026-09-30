@@ -176,6 +176,21 @@ class FunctionsBackendApi(
         return response.body()
     }
 
+    suspend fun generateTournamentIdList(
+        idToken: String,
+        tournamentId: String,
+    ): ByteArray {
+        val response = httpClient.get(url("/tournaments/$tournamentId/id-list")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            header(HttpHeaders.Accept, XLSX_MIME_TYPE)
+            timeout { requestTimeoutMillis = 180_000 }
+        }
+        if (!response.status.isSuccess()) {
+            throw BackendHttpException(response.status, response.bodyAsText())
+        }
+        return response.body()
+    }
+
     suspend fun generateEmaReport(
         idToken: String,
         tournamentId: String,
@@ -412,7 +427,8 @@ class FunctionsBackendApi(
     }
 }
 
-private const val EMA_REPORT_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+private const val XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+private const val EMA_REPORT_MIME_TYPE = XLSX_MIME_TYPE
 
 private suspend inline fun <reified T> HttpResponse.requireSuccessBody(): T {
     if (!status.isSuccess()) {

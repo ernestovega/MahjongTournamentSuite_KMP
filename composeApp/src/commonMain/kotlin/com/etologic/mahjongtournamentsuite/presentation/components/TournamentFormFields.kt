@@ -63,6 +63,7 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.CircleShape
@@ -81,11 +82,15 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
@@ -93,6 +98,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
 import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -616,6 +622,9 @@ fun TournamentIdCardPreview(
 ) {
     val cardColor = primaryColor.toTournamentColorOrNull() ?: DefaultTournamentColor
     val year = eventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty()
+    val cardFont = GangOfThreeFontFamily()
+    val textMeasurer = rememberTextMeasurer()
+    val displayShortName = shortName.ifBlank { "TOURNAMENT" }
 
     Column(modifier = modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Text("ID card preview", style = MaterialTheme.typography.titleSmall)
@@ -628,6 +637,7 @@ fun TournamentIdCardPreview(
         ) {
             val cardWidth = maxWidth
             val cardHeight = maxHeight
+            val widthScale = cardWidth.value / 242.88f
             Canvas(Modifier.fillMaxSize()) {
                 drawRect(Color(0xFFFFFDF5))
                 drawRect(cardColor, size = androidx.compose.ui.geometry.Size(size.width, size.height * 76f / 153f))
@@ -655,58 +665,126 @@ fun TournamentIdCardPreview(
                         .clip(CircleShape),
                 )
             }
+            Canvas(Modifier.fillMaxSize()) {
+                fun drawCurvedText(
+                    text: String,
+                    radius: Float,
+                    centerAngle: Float,
+                    spread: Float,
+                    style: TextStyle,
+                    bottomArc: Boolean = false,
+                ) {
+                    val characters = text.toList()
+                    val start = if (bottomArc) centerAngle + spread / 2f else centerAngle - spread / 2f
+                    val step = if (characters.size > 1) spread / (characters.size - 1) else 0f
+                    val center = Offset(size.width * 68.66f / 242.88f, size.height * 71.39f / 153f)
+                    val scaledRadius = size.width * radius / 242.88f
+
+                    characters.forEachIndexed { index, character ->
+                        val degrees = if (bottomArc) start - step * index else start + step * index
+                        val radians = degrees * PI.toFloat() / 180f
+                        val characterCenter = Offset(
+                            x = center.x + scaledRadius * cos(radians),
+                            y = center.y + scaledRadius * sin(radians),
+                        )
+                        val layout = textMeasurer.measure(character.toString(), style)
+                        val rotation = if (bottomArc) degrees - 90f else degrees + 90f
+                        rotate(rotation, pivot = characterCenter) {
+                            drawText(
+                                textLayoutResult = layout,
+                                topLeft = Offset(
+                                    x = characterCenter.x - layout.size.width / 2f,
+                                    y = characterCenter.y - layout.size.height / 2f,
+                                ),
+                            )
+                        }
+                    }
+                }
+
+                val shortNameFontSize = if (displayShortName.length > 8) 22f else 27f
+                drawCurvedText(
+                    text = displayShortName,
+                    radius = 34.5f + shortNameFontSize * 0.45f - 0.625f * 72f / 25.4f,
+                    centerAngle = -90f,
+                    spread = min(138f, 56f + displayShortName.length * 8.2f),
+                    style = TextStyle(
+                        color = Color.White,
+                        fontFamily = cardFont,
+                        fontSize = (shortNameFontSize * widthScale).sp,
+                    ),
+                )
+                if (year.isNotEmpty()) {
+                    val yearFontSize = 29f
+                    drawCurvedText(
+                        text = year,
+                        radius = 46.9f + yearFontSize * 0.2f,
+                        centerAngle = 90f,
+                        spread = 50f,
+                        style = TextStyle(
+                            color = cardColor,
+                            fontFamily = cardFont,
+                            fontSize = (yearFontSize * widthScale).sp,
+                        ),
+                        bottomArc = true,
+                    )
+                }
+            }
             Text(
-                text = shortName.ifBlank { "TOURNAMENT" },
+                text = "Mahjong Madrid",
                 modifier = Modifier
-                    .offset(x = cardWidth * 22f / 242.88f, y = cardHeight * 12f / 153f)
+                    .offset(x = cardWidth * 129f / 242.88f, y = cardHeight * 31f / 153f)
                     .width(cardWidth * 94f / 242.88f),
                 color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.Bold,
+                fontFamily = cardFont,
+                fontSize = (10f * widthScale).sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
             Text(
-                text = "TEAM",
+                text = "21",
                 modifier = Modifier
-                    .offset(x = cardWidth * 142f / 242.88f, y = cardHeight * 25f / 153f)
-                    .width(cardWidth * 94f / 242.88f),
-                color = Color.White,
-                style = MaterialTheme.typography.labelSmall,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = "00",
-                modifier = Modifier
-                    .offset(x = cardWidth * 151f / 242.88f, y = cardHeight * 45f / 153f)
+                    .offset(
+                        x = cardWidth * 138f / 242.88f,
+                        y = cardHeight * (49f + 0.5f * 72f / 25.4f - (33.75f - 27f) / 2f) / 153f,
+                    )
                     .width(cardWidth * 76f / 242.88f),
                 color = Color.White,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = "Preview Player",
-                modifier = Modifier
-                    .offset(x = cardWidth * 116f / 242.88f, y = cardHeight * 90f / 153f)
-                    .width(cardWidth * 120f / 242.88f),
-                color = Color.Black,
-                style = MaterialTheme.typography.bodyMedium,
+                fontFamily = cardFont,
+                fontSize = (33.75f * widthScale).sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
             )
-            if (year.isNotEmpty()) {
-                Text(
-                    text = year,
-                    modifier = Modifier
-                        .offset(x = cardWidth * 42f / 242.88f, y = cardHeight * 122f / 153f)
-                        .width(cardWidth * 54f / 242.88f),
-                    color = cardColor,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-            }
+            Text(
+                text = "Mahatma",
+                modifier = Modifier
+                    .offset(x = cardWidth * 116f / 242.88f, y = cardHeight * 86f / 153f)
+                    .width(cardWidth * 120f / 242.88f),
+                color = Color.Black,
+                fontFamily = cardFont,
+                fontSize = (29f * widthScale).sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            Text(
+                text = "Gandhi",
+                modifier = Modifier
+                    .offset(x = cardWidth * 118f / 242.88f, y = cardHeight * 126f / 153f)
+                    .width(cardWidth * 116f / 242.88f),
+                color = Color.Black,
+                fontFamily = cardFont,
+                fontSize = (9f * widthScale).sp,
+                textAlign = TextAlign.Center,
+                maxLines = 1,
+            )
+            CountryFlag(
+                code = "EU",
+                width = cardWidth * 24f / 242.88f,
+                contentDescription = "European flag",
+                modifier = Modifier.offset(
+                    x = cardWidth * 164f / 242.88f,
+                    y = cardHeight * 8f / 153f,
+                ),
+            )
         }
     }
 }

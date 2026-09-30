@@ -3,7 +3,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MISSING_FLAG_SVG = void 0;
+exports.splitPlayerName = splitPlayerName;
+exports.iso2CountryCode = iso2CountryCode;
+exports.flagSvgFor = flagSvgFor;
 exports.buildIdCardsPdf = buildIdCardsPdf;
+exports.loadIdCardsDocument = loadIdCardsDocument;
 exports.generateTournamentIdCards = generateTournamentIdCards;
 const pdfkit_1 = __importDefault(require("pdfkit"));
 const node_fs_1 = require("node:fs");
@@ -16,6 +21,17 @@ const CARD_WIDTH = 242.88;
 const CARD_HEIGHT = 153;
 const DEFAULT_PRIMARY_COLOR = "#02B16B";
 const BACKGROUND_COLOR = "#FFFDF5";
+const POINTS_PER_MILLIMETER = 72 / 25.4;
+const LOGO_CENTER_X = 68.66;
+const LOGO_CENTER_Y = 71.39;
+const LOGO_OUTER_RADIUS = 46.9;
+const LOGO_WHITE_RADIUS = 34.5;
+const PLAYER_DETAILS_CENTER_X = 176;
+exports.MISSING_FLAG_SVG = `
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 36">
+  <rect width="48" height="36" rx="2" fill="#808080"/>
+  <path fill="#FFFFFF" d="M17 11.5C17.6 7.8 20.4 5.8 24.4 5.8c4.5 0 7.6 2.5 7.6 6.2 0 2.9-1.6 4.6-4.2 6.2-2 1.3-2.7 2.2-2.7 4.2v.8h-4.6v-1.1c0-3.2 1.4-5 4.2-6.8 1.6-1 2.2-1.9 2.2-3 0-1.5-1.1-2.5-2.9-2.5-1.9 0-3.1 1.1-3.5 3.2L17 11.5zM20.5 26h4.9v4.9h-4.9z"/>
+</svg>`;
 const appFontPath = (0, node_path_1.resolve)(__dirname, "../assets/go3v2.ttf");
 const flagDirectory = (0, node_path_1.dirname)(require.resolve("flag-icons/flags/4x3/es.svg"));
 const flagSvgCache = new Map();
@@ -90,36 +106,59 @@ function drawCurvedText(doc, text, centerX, centerY, radius, centerAngle, spread
         doc.restore();
     });
 }
-function drawCenteredText(doc, text, width, height) {
-    const textHeight = doc.heightOfString(text, { width, align: "center", lineBreak: false });
-    doc.text(text, 0, (height - textHeight) / 2, { width, align: "center", lineBreak: false });
+function drawCenteredText(doc, text, width, height, fontSize) {
+    const internalFont = doc._font?.font;
+    const layout = internalFont?.layout(text);
+    let textX = null;
+    if (internalFont != null && layout != null && layout.glyphs.length === layout.positions.length) {
+        let penX = 0;
+        let inkMinX = Number.POSITIVE_INFINITY;
+        let inkMaxX = Number.NEGATIVE_INFINITY;
+        layout.glyphs.forEach((glyph, index) => {
+            const position = layout.positions[index];
+            const glyphX = penX + position.xOffset;
+            inkMinX = Math.min(inkMinX, glyphX + glyph.bbox.minX);
+            inkMaxX = Math.max(inkMaxX, glyphX + glyph.bbox.maxX);
+            penX += position.xAdvance;
+        });
+        if (Number.isFinite(inkMinX) && Number.isFinite(inkMaxX) && inkMaxX > inkMinX) {
+            const fontScale = fontSize / internalFont.unitsPerEm;
+            const inkWidth = (inkMaxX - inkMinX) * fontScale;
+            textX = (width - inkWidth) / 2 - inkMinX * fontScale;
+        }
+    }
+    const textHeight = doc.heightOfString(text, { lineBreak: false });
+    const textY = (height - textHeight) / 2;
+    if (textX == null) {
+        doc.text(text, 0, textY, { width, align: "center", lineBreak: false });
+    }
+    else {
+        doc.text(text, textX, textY, { lineBreak: false });
+    }
 }
 function drawCountryFlag(doc, countryCode) {
-    const svg = flagSvgFor(countryCode);
-    if (svg != null) {
-        doc.save();
-        svgToPdf(doc, svg, 189, 8, { width: 24, height: 18, preserveAspectRatio: "xMidYMid meet" });
-        doc.restore();
-        return;
-    }
-    doc.font("CardApp").fontSize(7).fillColor("#FFFFFF");
-    doc.text("Guest", 174, 12, { width: 54, align: "center", lineBreak: false });
+    const flagWidth = 24;
+    doc.save();
+    svgToPdf(doc, flagSvgFor(countryCode) ?? exports.MISSING_FLAG_SVG, PLAYER_DETAILS_CENTER_X - flagWidth / 2, 8, {
+        width: flagWidth,
+        height: 18,
+        preserveAspectRatio: "xMidYMid meet",
+    });
+    doc.restore();
 }
 function drawFront(doc, model, player, associationLogo) {
     const primary = normalizeHexColor(model.primaryColor);
     const { givenName, surname } = splitPlayerName(player.name);
     doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
     doc.rect(0, 0, CARD_WIDTH, 76).fill(primary);
-    const logoCenterX = 68.66;
-    const logoCenterY = 71.39;
-    doc.circle(logoCenterX, logoCenterY, 46.9).fill(primary);
+    doc.circle(LOGO_CENTER_X, LOGO_CENTER_Y, LOGO_OUTER_RADIUS).fill(primary);
     if (associationLogo != null) {
         const logoRadius = 32.5;
-        doc.circle(logoCenterX, logoCenterY, 34.5).fill("#FFFFFF");
+        doc.circle(LOGO_CENTER_X, LOGO_CENTER_Y, LOGO_WHITE_RADIUS).fill("#FFFFFF");
         try {
             doc.save();
-            doc.circle(logoCenterX, logoCenterY, logoRadius).clip();
-            doc.image(associationLogo, logoCenterX - logoRadius, logoCenterY - logoRadius, {
+            doc.circle(LOGO_CENTER_X, LOGO_CENTER_Y, logoRadius).clip();
+            doc.image(associationLogo, LOGO_CENTER_X - logoRadius, LOGO_CENTER_Y - logoRadius, {
                 cover: [logoRadius * 2, logoRadius * 2],
                 align: "center",
                 valign: "center",
@@ -131,15 +170,21 @@ function drawFront(doc, model, player, associationLogo) {
             // Keep the card usable if an old logo file has an unsupported format.
         }
     }
-    drawCurvedText(doc, model.tournamentShortName, 68.66, 71.39, 53, -90, Math.min(124, 54 + model.tournamentShortName.length * 7), model.tournamentShortName.length > 8 ? 17 : 20, "#FFFFFF");
-    drawCurvedText(doc, model.year, 68.66, 71.39, 52, 90, 94, 16, primary, true);
+    const tournamentNameFontSize = model.tournamentShortName.length > 8 ? 22 : 27;
+    drawCurvedText(doc, model.tournamentShortName, LOGO_CENTER_X, LOGO_CENTER_Y, LOGO_WHITE_RADIUS + tournamentNameFontSize * 0.45 - 0.625 * POINTS_PER_MILLIMETER, -90, Math.min(138, 56 + model.tournamentShortName.length * 8.2), tournamentNameFontSize, "#FFFFFF");
+    const yearFontSize = 29;
+    drawCurvedText(doc, model.year, LOGO_CENTER_X, LOGO_CENTER_Y, LOGO_OUTER_RADIUS + yearFontSize * 0.2, 90, 50, yearFontSize, primary, true);
     doc.font("CardApp").fillColor("#FFFFFF");
     const teamText = player.teamName == null ? "" : player.teamName.trim();
     if (teamText.length > 0) {
         const teamSize = fitText(doc.font("CardApp"), teamText, 93, 10, 6);
-        doc.fontSize(teamSize).text(teamText, 142, 31, { width: 94, align: "center", lineBreak: false });
+        doc.fontSize(teamSize).text(teamText, PLAYER_DETAILS_CENTER_X - 47, 31, {
+            width: 94,
+            align: "center",
+            lineBreak: false,
+        });
     }
-    doc.font("CardApp").fontSize(27).text(String(player.playerId), 151, 49, {
+    doc.font("CardApp").fontSize(33.75).text(String(player.playerId), PLAYER_DETAILS_CENTER_X - 38, 49 + 0.5 * POINTS_PER_MILLIMETER - (33.75 - 27) / 2, {
         width: 76,
         align: "center",
         lineBreak: false,
@@ -167,7 +212,7 @@ function drawBack(doc, model, player) {
     const backgroundNumber = String(player.playerId);
     const backgroundNumberSize = fitText(doc.font("CardApp"), backgroundNumber, 190, 132, 88);
     doc.opacity(0.28).fontSize(backgroundNumberSize).fillColor(primary);
-    drawCenteredText(doc, backgroundNumber, CARD_WIDTH, CARD_HEIGHT);
+    drawCenteredText(doc, backgroundNumber, CARD_WIDTH, CARD_HEIGHT, backgroundNumberSize);
     doc.restore();
     const x = 14;
     const y = 10;
@@ -229,7 +274,7 @@ async function buildIdCardsPdf(model) {
         doc.end();
     });
 }
-async function generateTournamentIdCards(tournamentId) {
+async function loadIdCardsDocument(tournamentId) {
     const tournamentRef = firebase_1.db.collection("tournaments").doc(tournamentId);
     const [tournament, slots, teams, tables, countries] = await Promise.all([
         tournamentRef.get(),
@@ -299,17 +344,20 @@ async function generateTournamentIdCards(tournamentId) {
     const eventStartDate = String(tournament.get("eventStartDate") ?? "");
     const storedShortName = String(tournament.get("shortName") ?? "").trim();
     const fallbackName = String(tournament.get("name") ?? "Tournament").trim().slice(0, 10);
-    return buildIdCardsPdf({
+    return {
         tournamentShortName: (storedShortName || fallbackName).slice(0, 10),
         year: /^\d{4}-/.test(eventStartDate) ? eventStartDate.slice(0, 4) : String(new Date().getUTCFullYear()),
         primaryColor: normalizeHexColor(String(tournament.get("primaryColor") ?? DEFAULT_PRIMARY_COLOR)),
         associationLogo,
         numberOfRounds: numRounds,
         players,
-    });
+    };
+}
+async function generateTournamentIdCards(tournamentId) {
+    return buildIdCardsPdf(await loadIdCardsDocument(tournamentId));
 }
 const emaCountryCodeToIso2 = {
-    AUT: "AT", BEL: "BE", BLR: "BY", CHE: "CH", CZE: "CZ", DEU: "DE", DEN: "DK", DNK: "DK",
+    AUT: "AT", BEL: "BE", BLR: "BY", CHE: "CH", CZE: "CZ", DEU: "DE", DEN: "DK", DNK: "DK", EUR: "EU",
     ESP: "ES", FIN: "FI", FRA: "FR", GBR: "GB", GER: "DE", HUN: "HU", IRL: "IE", ITA: "IT",
     LAT: "LV", NED: "NL", NLD: "NL", NOR: "NO", POL: "PL", POR: "PT", PRT: "PT", ROU: "RO",
     RUS: "RU", SUI: "CH", SVK: "SK", SWE: "SE", UKR: "UA",

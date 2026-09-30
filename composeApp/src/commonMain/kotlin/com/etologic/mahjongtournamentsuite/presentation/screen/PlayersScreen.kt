@@ -214,6 +214,33 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         loading = false
     }
 
+    fun exportIdList() = scope.launch {
+        val unassigned = players.filterNot { it.isAssigned }
+        if (unassigned.isNotEmpty()) {
+            error = "Assign an EMA player or non-member to every tournament slot before creating the ID list."
+            return@launch
+        }
+
+        loading = true
+        error = null
+        when (val result = presenter.generateIdList(tournamentId)) {
+            is AppResult.Success -> {
+                val tournament = tournaments.firstOrNull { it.id == tournamentId }
+                val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
+                val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
+                val safeName = baseName.replace(Regex("[^A-Za-z0-9_-]+"), "-").trim('-').ifBlank { "tournament" }
+                val fileName = listOfNotNull(safeName, year, "id-list").joinToString("-") + ".xlsx"
+                saveBinaryFile(
+                    fileName,
+                    result.value,
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                )
+            }
+            is AppResult.Failure -> error = result.error.toUiMessage()
+        }
+        loading = false
+    }
+
     val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
     val teamNamesById = remember(teams) { teams.associate { it.id to it.name } }
     val tableNumbersByPlayerId = remember(tables) {
@@ -840,6 +867,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         actions = {
             AppTopBarActions(
                 onIdCards = ::exportIdCards,
+                onIdList = ::exportIdList,
                 onRefresh = ::refresh,
             )
         },

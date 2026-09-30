@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.ManageAccounts
@@ -23,6 +24,7 @@ fun AppTopBarActions(
     onTeams: (() -> Unit)? = null,
     onPlayers: (() -> Unit)? = null,
     onIdCards: (() -> Unit)? = null,
+    onIdList: (() -> Unit)? = null,
     onPlayerBase: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
     onEmaReport: (() -> Unit)? = null,
@@ -33,6 +35,7 @@ fun AppTopBarActions(
     teamsFocusRequester: FocusRequester? = null,
     playersFocusRequester: FocusRequester? = null,
     idCardsFocusRequester: FocusRequester? = null,
+    idListFocusRequester: FocusRequester? = null,
     playerBaseFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
     exportFocusRequester: FocusRequester? = null,
@@ -48,6 +51,9 @@ fun AppTopBarActions(
             onTeams?.let { AppTopBarButton("Teams", Icons.Default.Groups, it, teamsFocusRequester) }
             onPlayers?.let { AppTopBarButton("Players", Icons.Default.People, it, playersFocusRequester) }
             onIdCards?.let { AppTopBarButton("ID cards", Icons.Default.Badge, it, idCardsFocusRequester) }
+            onIdList?.let {
+                AppTopBarButton("ID list", Icons.AutoMirrored.Filled.FormatListBulleted, it, idListFocusRequester)
+            }
             onAppUsers?.let { AppTopBarButton("App users", Icons.Default.ManageAccounts, it, usersFocusRequester) }
             onEmaReport?.let { AppTopBarButton("EMA report", Icons.Outlined.Assessment, it, exportFocusRequester) }
             onPlayerBase?.let { AppTopBarButton("EMA players", Icons.Default.People, it, playerBaseFocusRequester) }

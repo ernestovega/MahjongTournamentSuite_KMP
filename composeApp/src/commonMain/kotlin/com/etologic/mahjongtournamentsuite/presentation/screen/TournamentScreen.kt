@@ -593,7 +593,7 @@ fun TournamentScreen(
                     onClick = { showResetConfirmation = true },
                     enabled = !isLoading,
                     focusRequester = resetFocusRequester,
-                    textColor = MaterialTheme.colorScheme.scrim,
+                    textColor = MaterialTheme.colorScheme.error,
                 )
             }
         }

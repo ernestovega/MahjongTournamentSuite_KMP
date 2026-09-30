@@ -10,6 +10,7 @@ const httpError_1 = require("../httpError");
 const membersService_1 = require("../../services/membersService");
 const tournamentsService_1 = require("../../services/tournamentsService");
 const idCardsService_1 = require("../../services/idCardsService");
+const idListService_1 = require("../../services/idListService");
 const emaReportService_1 = require("../../services/emaReportService");
 const tournamentContentService_1 = require("../../services/tournamentContentService");
 const playersService_1 = require("../../services/playersService");
@@ -187,6 +188,17 @@ function tournamentsRouter() {
             res.setHeader("Content-Type", "application/pdf");
             res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-cards.pdf"`);
             res.status(200).send(pdf);
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.get("/:tournamentId/id-list", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const workbook = await (0, idListService_1.generateTournamentIdList)(req.params.tournamentId);
+            res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-list.xlsx"`);
+            res.status(200).send(workbook);
         }
         catch (e) {
             next(e);

@@ -15,6 +15,7 @@ import {
   updateTournamentSettings,
 } from "../../services/tournamentsService";
 import { generateTournamentIdCards } from "../../services/idCardsService";
+import { generateTournamentIdList } from "../../services/idListService";
 import { generateEmaReport } from "../../services/emaReportService";
 import {
   assignTournamentPlayer,
@@ -200,6 +201,17 @@ export function tournamentsRouter(): Router {
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-cards.pdf"`);
       res.status(200).send(pdf);
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  router.get("/:tournamentId/id-list", requireAuth, requireTournamentEditor, async (req, res, next) => {
+    try {
+      const workbook = await generateTournamentIdList(req.params.tournamentId);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-list.xlsx"`);
+      res.status(200).send(workbook);
     } catch (e) {
       next(e);
     }

@@ -5,9 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,6 +15,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.resources.painterResource
+import mahjongtournamentsuite.composeapp.generated.resources.Res
+import mahjongtournamentsuite.composeapp.generated.resources.flag_placeholder
 
 @Composable
 fun CountryFlag(
@@ -31,7 +30,9 @@ fun CountryFlag(
         modifier = modifier.width(width).aspectRatio(4f / 3f),
         contentAlignment = Alignment.Center,
     ) {
-        val resource = normalizedCode?.let(::flagResourceFor)
+        val resource = normalizedCode
+            ?.takeUnless { it == "EU" }
+            ?.let(::flagResourceFor)
         when {
             resource != null -> Image(
                 painter = painterResource(resource),
@@ -39,16 +40,17 @@ fun CountryFlag(
                 modifier = Modifier.fillMaxSize(),
                 contentScale = ContentScale.Fit,
             )
-            normalizedCode != null -> Text(
+            normalizedCode != null && normalizedCode != "EU" -> Text(
                 text = normalizedCode,
                 modifier = Modifier.clearAndSetSemantics {
                     if (contentDescription != null) this.contentDescription = contentDescription
                 },
             )
-            else -> Icon(
-                imageVector = Icons.Default.Public,
+            else -> Image(
+                painter = painterResource(Res.drawable.flag_placeholder),
                 contentDescription = contentDescription,
                 modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Fit,
             )
         }
     }

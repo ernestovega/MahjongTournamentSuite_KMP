@@ -6,6 +6,10 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const strict_1 = __importDefault(require("node:assert/strict"));
 const node_test_1 = __importDefault(require("node:test"));
 const idCardsService_1 = require("./idCardsService");
+(0, node_test_1.default)("supports the European flag proof code without changing the EU guest code", () => {
+    strict_1.default.equal((0, idCardsService_1.iso2CountryCode)("EUR"), "EU");
+    strict_1.default.equal((0, idCardsService_1.iso2CountryCode)("EU"), null);
+});
 (0, node_test_1.default)("creates one front and one back page for each player", async () => {
     const pdf = await (0, idCardsService_1.buildIdCardsPdf)({
         tournamentShortName: "6th MMC",

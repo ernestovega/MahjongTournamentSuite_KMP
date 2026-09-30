@@ -27,10 +27,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,8 +59,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -74,29 +74,23 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
-import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
-import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
-import com.etologic.mahjongtournamentsuite.presentation.components.textFieldFocusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
-import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
@@ -104,17 +98,21 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
+import com.etologic.mahjongtournamentsuite.presentation.components.textFieldFocusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
-import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -123,6 +121,8 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 private enum class TournamentEditField {
     NAME,
@@ -1470,9 +1470,9 @@ private fun RowScope.TeamModeCell(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = if (isTeams) Icons.Default.Check else Icons.Default.Close,
+            imageVector = if (isTeams) Icons.Outlined.Check else Icons.Outlined.Close,
             contentDescription = if (isTeams) "Team tournament" else "Individual tournament",
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            tint = if (isTeams) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
         )
     }
 }

@@ -7,21 +7,23 @@ const idCardsService_1 = require("../services/idCardsService");
 async function main() {
     const outputPath = (0, node_path_1.resolve)(process.argv[2] ?? "../../../output/pdf/id-cards-proof.pdf");
     const logoPath = process.argv[3]?.trim();
+    const variant = process.argv[4]?.trim() ?? "standard";
+    const numberOfRounds = variant === "12-rounds" ? 12 : 7;
     const associationLogo = logoPath ? await (0, promises_1.readFile)((0, node_path_1.resolve)(logoPath)) : null;
     const pdf = await (0, idCardsService_1.buildIdCardsPdf)({
         tournamentShortName: "6th MMC",
         year: "2026",
-        primaryColor: "#7C3AED",
+        primaryColor: "#02B16B",
         associationLogo,
-        numberOfRounds: 7,
+        numberOfRounds,
         players: [
             {
                 playerId: 21,
-                name: "ÁLVARO DE LA TORRE",
-                country: "Spain",
-                countryCode: "ESP",
-                teamName: "Madrid Dragons",
-                tableNumbers: [11, 4, 21, 19, 7, 12, 3],
+                name: "Ernesto Vega de la Iglesia",
+                country: "Europe",
+                countryCode: "EUR",
+                teamName: "Mahjong Madrid",
+                tableNumbers: Array.from({ length: numberOfRounds }, (_, index) => ((index * 7) % 23) + 1),
             },
         ],
     });

@@ -34,6 +34,9 @@ class PlayersPresenter(
     suspend fun generateIdCards(tournamentId: String): AppResult<ByteArray> =
         tournamentRepository.generateTournamentIdCards(tournamentId)
 
+    suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> =
+        tournamentRepository.generateTournamentIdList(tournamentId)
+
     suspend fun assignPlayer(
         tournamentId: String,
         tournamentPlayerId: Int,

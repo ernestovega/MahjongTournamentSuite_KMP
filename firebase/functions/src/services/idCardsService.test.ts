@@ -1,7 +1,12 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { buildIdCardsPdf } from "./idCardsService";
+import { buildIdCardsPdf, iso2CountryCode } from "./idCardsService";
+
+test("supports the European flag proof code without changing the EU guest code", () => {
+  assert.equal(iso2CountryCode("EUR"), "EU");
+  assert.equal(iso2CountryCode("EU"), null);
+});
 
 test("creates one front and one back page for each player", async () => {
   const pdf = await buildIdCardsPdf({

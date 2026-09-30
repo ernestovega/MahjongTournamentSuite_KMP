@@ -41,6 +41,8 @@ interface TournamentRepository {
 
     suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray>
 
+    suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray>
+
     suspend fun generateEmaReport(
         tournamentId: String,
         rankings: List<PlayerRanking>,

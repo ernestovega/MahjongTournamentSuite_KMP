@@ -232,6 +232,18 @@ class DefaultTournamentRepository(
         },
     )
 
+    override suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.generateTournamentIdList(idToken, tournamentId)
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Generating tournament ID list failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
     override suspend fun generateEmaReport(
         tournamentId: String,
         rankings: List<PlayerRanking>,
