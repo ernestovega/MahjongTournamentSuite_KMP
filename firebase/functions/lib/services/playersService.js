@@ -12,6 +12,7 @@ const node_crypto_1 = require("node:crypto");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const playerName_1 = require("./playerName");
+const dataVersionsService_1 = require("./dataVersionsService");
 /** Firestore collection for EMA registry records. Never use this for tournament player slots. */
 exports.EMA_PLAYER_REGISTRY_COLLECTION = "emaPlayerRegistry";
 function timestampToIso(value) {
@@ -61,6 +62,7 @@ async function createPlayer(params) {
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
     const created = await ref.get();
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("emaPlayers");
     return toPlayer(params.emaId, created.data() ?? {});
 }
 async function updatePlayer(params) {
@@ -81,6 +83,7 @@ async function updatePlayer(params) {
     };
     if (params.previousEmaId === params.emaId) {
         await previousRef.update({ ...update, name: firestore_1.FieldValue.delete() });
+        await (0, dataVersionsService_1.bumpGlobalDataVersion)("emaPlayers");
         return;
     }
     const references = await firebase_1.db.collectionGroup("players")
@@ -93,6 +96,7 @@ async function updatePlayer(params) {
     batch.delete(previousRef);
     references.docs.forEach((reference) => batch.update(reference.ref, { assignedEmaId: params.emaId, updatedAt: firestore_1.FieldValue.serverTimestamp() }));
     await batch.commit();
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("emaPlayers");
 }
 const photoExtensions = {
     "image/gif": "gif",
@@ -145,6 +149,7 @@ async function updatePlayerPhoto(params) {
     const photoUrl = `https://firebasestorage.googleapis.com/v0/b/${firebase_1.storage.name}/o/${objectName}?alt=media&token=${token}`;
     await ref.update({ photoUrl, updatedAt: firestore_1.FieldValue.serverTimestamp() });
     const updated = await ref.get();
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("emaPlayers");
     return toPlayer(params.emaId, updated.data() ?? {});
 }
 async function playerExists(emaId) {

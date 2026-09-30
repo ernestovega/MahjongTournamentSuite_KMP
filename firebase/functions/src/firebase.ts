@@ -5,9 +5,13 @@ import { getStorage } from "firebase-admin/storage";
 
 const storageBucketName = process.env.EMA_FIREBASE_STORAGE_BUCKET?.trim()
   || "mahjong-tournament-suite.firebasestorage.app";
+export const firebaseProjectId = process.env.EMA_FIREBASE_PROJECT?.trim()
+  || process.env.GCLOUD_PROJECT?.trim()
+  || process.env.GOOGLE_CLOUD_PROJECT?.trim()
+  || "mahjong-tournament-suite";
 
 const adminApp = initializeApp({
-  projectId: process.env.EMA_FIREBASE_PROJECT?.trim() || undefined,
+  projectId: firebaseProjectId,
   storageBucket: storageBucketName,
 });
 

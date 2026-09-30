@@ -140,11 +140,11 @@ fun TournamentScreen(
     var screenFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedControl by rememberSaveable(tournamentId) { mutableStateOf<String?>(null) }
 
-    suspend fun loadSelectedTable() {
+    suspend fun loadSelectedTable(force: Boolean = false) {
         val roundId = selectedRoundId ?: return
         val tableId = selectedTableId ?: return
 
-        when (val tableResult = tablePresenter.loadTableWithHands(tournamentId, roundId, tableId)) {
+        when (val tableResult = tablePresenter.loadTableWithHands(tournamentId, roundId, tableId, force)) {
             is AppResult.Success -> {
                 tableState = tableResult.value.first
                 hands = tableResult.value.second
@@ -195,12 +195,12 @@ fun TournamentScreen(
         isLoading = false
     }
 
-    suspend fun refresh() {
+    suspend fun refresh(force: Boolean = false) {
         val chooseInitialTable = initialTableSelectionPending
         isLoading = true
         errorMessage = null
 
-        val basePlayersByEma = when (val basePlayersResult = presenter.loadBasePlayers()) {
+        val basePlayersByEma = when (val basePlayersResult = presenter.loadBasePlayers(force)) {
             is AppResult.Success -> basePlayersResult.value.associateBy { it.emaId }
             is AppResult.Failure -> {
                 errorMessage = basePlayersResult.error.toUiMessage()
@@ -208,7 +208,7 @@ fun TournamentScreen(
             }
         }
 
-        when (val playersResult = presenter.loadPlayers(tournamentId)) {
+        when (val playersResult = presenter.loadPlayers(tournamentId, force)) {
             is AppResult.Success -> {
                 playerNamesById = playersResult.value.associate { slot ->
                     val assignedName = slot.assignedEmaId
@@ -225,7 +225,7 @@ fun TournamentScreen(
             }
         }
 
-        val roundsResult = presenter.loadRounds(tournamentId)
+        val roundsResult = presenter.loadRounds(tournamentId, force)
         val newRounds = when (roundsResult) {
             is AppResult.Success -> roundsResult.value.sortedBy { it.roundId }
             is AppResult.Failure -> {
@@ -251,7 +251,7 @@ fun TournamentScreen(
             return
         }
 
-        when (val tablesResult = presenter.loadTables(tournamentId, roundId = null)) {
+        when (val tablesResult = presenter.loadTables(tournamentId, roundId = null, force = force)) {
             is AppResult.Success -> {
                 allTables = tablesResult.value.sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
                 tables = allTables.filter { it.roundId == roundId }
@@ -284,7 +284,7 @@ fun TournamentScreen(
 
         tableState = null
         hands = emptyList()
-        loadSelectedTable()
+        loadSelectedTable(force)
 
         isLoading = false
     }
@@ -443,7 +443,7 @@ fun TournamentScreen(
     suspend fun performUnsavedAction(action: PendingUnsavedAction) {
         when (action) {
             PendingUnsavedAction.Back -> navController.popBackStack()
-            PendingUnsavedAction.Refresh -> refresh()
+            PendingUnsavedAction.Refresh -> refresh(force = true)
             is PendingUnsavedAction.SelectRound -> selectRound(action.roundId)
             is PendingUnsavedAction.SelectTable -> selectTable(action.tableId)
             PendingUnsavedAction.NavigatePlayers -> navController.navigate(PlayersRoute(tournamentId = tournamentId))

@@ -27,6 +27,6 @@ export function notFound(message = "Not found"): HttpError {
   return new HttpError(404, "not_found", message);
 }
 
-export function conflict(message: string): HttpError {
-  return new HttpError(409, "conflict", message);
+export function conflict(message: string, details?: unknown): HttpError {
+  return new HttpError(409, "conflict", message, details);
 }

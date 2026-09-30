@@ -6,6 +6,7 @@ import { authRouter } from "./routes/auth.routes";
 import { countriesRouter } from "./routes/countries.routes";
 import { playersRouter } from "./routes/players.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
+import { syncRouter } from "./routes/sync.routes";
 
 export function buildApp(): express.Express {
   const app = express();
@@ -42,6 +43,7 @@ export function buildApp(): express.Express {
   app.use("/countries", countriesRouter());
   app.use("/ema-player-registry", playersRouter());
   app.use("/admin", adminRouter());
+  app.use("/sync", syncRouter());
   app.use("/tournaments", tournamentsRouter());
 
   app.use(errorHandler);

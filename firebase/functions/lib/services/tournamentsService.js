@@ -14,6 +14,7 @@ const httpError_1 = require("../api/httpError");
 const tournamentDates_1 = require("./tournamentDates");
 const usersService_1 = require("./usersService");
 const mers_1 = require("./mers");
+const dataVersionsService_1 = require("./dataVersionsService");
 function toIsoString(value) {
     if (value instanceof firestore_1.Timestamp)
         return value.toDate().toISOString();
@@ -112,6 +113,13 @@ async function createTournament(params) {
         createdByUid: params.createdByUid,
         createdAt: firestore_1.FieldValue.serverTimestamp(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        dataVersions: {
+            members: { revision: 0, changedAt: null },
+            players: { revision: 1, changedAt: firestore_1.FieldValue.serverTimestamp() },
+            teams: { revision: params.isTeams ? 1 : 0, changedAt: firestore_1.FieldValue.serverTimestamp() },
+            rounds: { revision: 1, changedAt: firestore_1.FieldValue.serverTimestamp() },
+            tables: { revision: 1, changedAt: firestore_1.FieldValue.serverTimestamp() },
+        },
     };
     await ref.set(tournamentDoc);
     // Persist the client-generated schedule payload (players/rounds/tables).
@@ -201,6 +209,9 @@ async function createTournament(params) {
             isCompleted: Boolean(table.isCompleted ?? false),
             useTotalsOnly: Boolean(table.useTotalsOnly ?? true),
             usePointsCalculation: true,
+            hasProgress: Boolean(table.isCompleted ?? false),
+            hasValidManualTotals: false,
+            version: 0,
             createdAt: firestore_1.FieldValue.serverTimestamp(),
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });
@@ -208,6 +219,7 @@ async function createTournament(params) {
     await flushBatch();
     await Promise.all(batchCommits);
     const snap = await ref.get();
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments");
     return mapTournamentDoc(snap);
 }
 async function listAllTournaments() {
@@ -226,6 +238,7 @@ async function renameTournament(tournamentId, name) {
         name: normalizedName,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments");
 }
 const logoExtensions = {
     "image/jpeg": "jpg",
@@ -345,6 +358,7 @@ async function updateTournamentSettings(params) {
         update.associationLogoUrl = logo?.url ?? null;
     }
     await ref.update(update);
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments");
     if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
         await firebase_1.storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);
     }
@@ -386,5 +400,6 @@ async function deleteTournament(tournamentId) {
             await firebase_1.db.recursiveDelete(ref);
         },
     });
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments");
 }
 //# sourceMappingURL=tournamentsService.js.map

@@ -7,6 +7,7 @@ import {
   hasFourValidScores,
   hasValidTablePoints,
 } from "./tournamentContentRules";
+import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 
 export type TournamentPlayer = {
   id: number;
@@ -77,6 +78,7 @@ export type TournamentRound = {
 };
 
 export type TournamentTable = {
+  version: number;
   roundId: number;
   tableId: number;
   playerIds: number[];
@@ -269,6 +271,11 @@ export async function updateTournamentTeam(params: {
     }, { merge: true });
   });
   await refreshAssignmentCountries(params.tournamentId);
+  await Promise.all([
+    bumpTournamentDataVersion(params.tournamentId, "teams"),
+    bumpTournamentDataVersion(params.tournamentId, "players"),
+    bumpGlobalDataVersion("tournaments"),
+  ]);
 }
 
 export async function assignTournamentPlayer(params: {
@@ -341,6 +348,10 @@ export async function assignTournamentPlayer(params: {
     });
   });
   await refreshAssignmentCountries(params.tournamentId);
+  await Promise.all([
+    bumpTournamentDataVersion(params.tournamentId, "players"),
+    bumpGlobalDataVersion("tournaments"),
+  ]);
 }
 
 export async function listTournamentRounds(tournamentId: string): Promise<TournamentRound[]> {
@@ -362,6 +373,22 @@ export async function listTournamentTables(
     : await collection.where("roundId", "==", roundId).get();
 
   const tables = await Promise.all(snap.docs.map(async (d) => {
+    const storedHasProgress = d.get("hasProgress");
+    const storedHasValidManualTotals = d.get("hasValidManualTotals");
+    if (typeof storedHasProgress === "boolean" && typeof storedHasValidManualTotals === "boolean") {
+      return {
+        version: Number(d.get("version") ?? 0),
+        roundId: Number(d.get("roundId")),
+        tableId: Number(d.get("tableId")),
+        playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
+        isCompleted: Boolean(d.get("isCompleted") ?? false),
+        useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? true),
+        usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
+        hasProgress: storedHasProgress,
+        hasValidManualTotals: storedHasValidManualTotals,
+      };
+    }
+    // Old documents use this fallback until the summary backfill runs.
     const hands = await d.ref.collection("hands").get();
     const hasHandProgress = hands.docs.some((hand) => {
       const value = hand.data();
@@ -407,6 +434,7 @@ export async function listTournamentTables(
     const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
 
     return {
+      version: Number(d.get("version") ?? 0),
       roundId: Number(d.get("roundId")),
       tableId: Number(d.get("tableId")),
       playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),

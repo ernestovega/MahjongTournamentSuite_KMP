@@ -8,6 +8,7 @@ const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const globalRole_1 = require("../models/globalRole");
 const usersService_1 = require("./usersService");
+const dataVersionsService_1 = require("./dataVersionsService");
 async function listTournamentMembers(tournamentId) {
     const [membersSnapshot, admins] = await Promise.all([
         firebase_1.db.collection(`tournaments/${tournamentId}/members`).get(),
@@ -46,6 +47,10 @@ async function upsertTournamentMember(params) {
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
         createdAt: firestore_1.FieldValue.serverTimestamp(),
     });
+    await Promise.all([
+        (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "members"),
+        (0, dataVersionsService_1.bumpGlobalDataVersion)("users"),
+    ]);
 }
 async function removeTournamentMember(params) {
     const user = await firebase_1.auth.getUser(params.uid);
@@ -53,5 +58,9 @@ async function removeTournamentMember(params) {
         throw (0, httpError_1.badRequest)("Admins cannot be removed from a tournament");
     }
     await firebase_1.db.doc(`tournaments/${params.tournamentId}/members/${params.uid}`).delete();
+    await Promise.all([
+        (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "members"),
+        (0, dataVersionsService_1.bumpGlobalDataVersion)("users"),
+    ]);
 }
 //# sourceMappingURL=membersService.js.map

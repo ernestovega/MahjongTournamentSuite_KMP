@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 
 fun AppError.toUiMessage(): String = when (this) {
     AppError.Network -> "Network request failed."
+    is AppError.Conflict -> message
     is AppError.Unexpected -> message.toFriendlyErrorMessage()
 }
 

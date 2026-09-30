@@ -6,6 +6,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
+import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
 import com.etologic.mahjongtournamentsuite.data.session.CredentialStore
 import com.etologic.mahjongtournamentsuite.data.session.SavedCredentials
@@ -15,6 +16,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.CancellationException
@@ -24,6 +26,7 @@ class DefaultAuthRepository(
     private val sessionStore: AuthSessionStore,
     private val logger: Logger,
     private val credentialStore: CredentialStore,
+    private val cache: RepositoryCache,
 ) : AuthRepository {
     private var loadedFromStore: Boolean = false
     private var session: AuthSession? = null
@@ -58,6 +61,7 @@ class DefaultAuthRepository(
         )
     }.fold(
         onSuccess = { newSession ->
+            cache.clear()
             session = newSession
             sessionStore.save(newSession.toStored())
             runCatching { credentialStore.save(SavedCredentials(email = email, password = password)) }
@@ -107,21 +111,32 @@ class DefaultAuthRepository(
         ensureLoadedFromStore()
         session = null
         sessionStore.save(null)
+        cache.clear()
     }
 
     override suspend fun savedCredentials(): SavedCredentials? = credentialStore.load()
 
     override suspend fun clearSavedCredentials() = credentialStore.clear()
 
-    override suspend fun getMe(): AppResult<UserProfile> = runCatching {
-        val me = withFreshIdToken { idToken ->
-            backendApi.me(idToken = idToken)
-        }
-
-        UserProfile(
-            uid = me.uid,
-            email = me.email,
-            alias = me.alias,
+    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> = runCatching {
+        val current = currentSession() ?: error("No active session")
+        cache.getOrLoad(
+            ownerUid = current.uid,
+            key = "global:profile",
+            refreshMode = refreshMode,
+            revision = {
+                withFreshIdToken { token ->
+                    backendApi.globalDataVersions(token).resources["users"]?.revision ?: 0
+                }
+            },
+            load = {
+                val me = withFreshIdToken { idToken -> backendApi.me(idToken = idToken) }
+                UserProfile(
+                    uid = me.uid,
+                    email = me.email,
+                    alias = me.alias,
+                )
+            },
         )
     }.fold(
         onSuccess = { profile -> AppResult.Success(profile) },

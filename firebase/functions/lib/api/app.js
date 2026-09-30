@@ -11,6 +11,7 @@ const auth_routes_1 = require("./routes/auth.routes");
 const countries_routes_1 = require("./routes/countries.routes");
 const players_routes_1 = require("./routes/players.routes");
 const tournaments_routes_1 = require("./routes/tournaments.routes");
+const sync_routes_1 = require("./routes/sync.routes");
 function buildApp() {
     const app = (0, express_1.default)();
     app.use(express_1.default.json({ limit: "8mb" }));
@@ -42,6 +43,7 @@ function buildApp() {
     app.use("/countries", (0, countries_routes_1.countriesRouter)());
     app.use("/ema-player-registry", (0, players_routes_1.playersRouter)());
     app.use("/admin", (0, admin_routes_1.adminRouter)());
+    app.use("/sync", (0, sync_routes_1.syncRouter)());
     app.use("/tournaments", (0, tournaments_routes_1.tournamentsRouter)());
     app.use(errorHandler_1.errorHandler);
     return app;

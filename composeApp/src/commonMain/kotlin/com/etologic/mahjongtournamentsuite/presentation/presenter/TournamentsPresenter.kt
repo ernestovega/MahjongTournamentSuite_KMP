@@ -9,22 +9,23 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 
 class TournamentsPresenter(
     private val tournamentRepository: TournamentRepository,
     private val adminRepository: AdminRepository,
     private val authRepository: AuthRepository,
 ) {
-    suspend fun loadProfile(): AppResult<UserProfile> = authRepository.getMe()
+    suspend fun loadProfile(force: Boolean = false): AppResult<UserProfile> = authRepository.getMe(force.toRefreshMode())
 
-    suspend fun loadAdminStatus(): AppResult<AdminStatus> = adminRepository.whoAmI()
+    suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.toRefreshMode())
 
-    suspend fun loadTournaments(): AppResult<List<Tournament>> = tournamentRepository.listTournaments()
+    suspend fun loadTournaments(force: Boolean = false): AppResult<List<Tournament>> = tournamentRepository.listTournaments(force.toRefreshMode())
 
-    suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
+    suspend fun loadCountries(force: Boolean = false): AppResult<List<Country>> = tournamentRepository.listCountries(force.toRefreshMode())
 
-    suspend fun loadPlayers(tournamentId: String): AppResult<List<TournamentPlayer>> =
-        tournamentRepository.listTournamentPlayers(tournamentId)
+    suspend fun loadPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> =
+        tournamentRepository.listTournamentPlayers(tournamentId, force.toRefreshMode())
 
     suspend fun lookupUser(identifier: String): AppResult<UserProfile> = adminRepository.lookupUser(identifier)
 
@@ -64,3 +65,5 @@ class TournamentsPresenter(
 
     suspend fun signOut() = authRepository.signOut()
 }
+
+private fun Boolean.toRefreshMode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED

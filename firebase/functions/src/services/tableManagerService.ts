@@ -2,6 +2,9 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { notFound } from "../api/httpError";
+import { conflict } from "../api/httpError";
+import { hasFourValidScores, hasValidTablePoints } from "./tournamentContentRules";
+import { globalVersionUpdate, tournamentVersionUpdate } from "./dataVersionsService";
 
 export type TableHand = {
   handId: number;
@@ -17,6 +20,7 @@ export type TableHand = {
 };
 
 export type TableState = {
+  version: number;
   roundId: number;
   tableId: number;
   playerIds: number[];
@@ -108,6 +112,7 @@ export async function getTableWithHands(params: {
     isCompleted: Boolean(tableSnap.get("isCompleted") ?? false),
     useTotalsOnly: Boolean(tableSnap.get("useTotalsOnly") ?? true),
     usePointsCalculation: Boolean(tableSnap.get("usePointsCalculation") ?? true),
+    version: Number(tableSnap.get("version") ?? 0),
   };
 
   const hands: TableHand[] = handsSnap.docs
@@ -126,6 +131,122 @@ export async function getTableWithHands(params: {
     .sort((a, b) => a.handId - b.handId);
 
   return { table, hands };
+}
+
+export function calculateTableSummary(table: Record<string, unknown>, hands: Array<Record<string, unknown>>): {
+  hasProgress: boolean;
+  hasValidManualTotals: boolean;
+} {
+  const hasTableProgress = [
+    "playerEastId", "playerSouthId", "playerWestId", "playerNorthId",
+    "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
+    "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
+  ].some((field) => String(table[field] ?? "").trim().length > 0);
+  const hasHandProgress = hands.some((hand) => [
+    "playerWinnerId", "playerLooserId", "handScore", "playerEastPenalty",
+    "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",
+  ].some((field) => String(hand[field] ?? "").trim().length > 0)
+    || Boolean(hand.isChickenHand) || Boolean(hand.isDone));
+  const useTotalsOnly = Boolean(table.useTotalsOnly ?? true);
+  const usePointsCalculation = Boolean(table.usePointsCalculation ?? true);
+  const validScores = hasFourValidScores([
+    table.manualPlayerEastScore || table.playerEastScore,
+    table.manualPlayerSouthScore || table.playerSouthScore,
+    table.manualPlayerWestScore || table.playerWestScore,
+    table.manualPlayerNorthScore || table.playerNorthScore,
+  ]);
+  const validPoints = hasValidTablePoints([
+    table.manualPlayerEastPoints || table.playerEastPoints,
+    table.manualPlayerSouthPoints || table.playerSouthPoints,
+    table.manualPlayerWestPoints || table.playerWestPoints,
+    table.manualPlayerNorthPoints || table.playerNorthPoints,
+  ]);
+  return {
+    hasProgress: hasTableProgress || hasHandProgress || Boolean(table.isCompleted),
+    hasValidManualTotals: useTotalsOnly ? validScores : !usePointsCalculation && validPoints,
+  };
+}
+
+class StaleTableVersion extends Error {
+  constructor(
+    readonly expectedVersion: number,
+    readonly currentVersion: number,
+  ) {
+    super("Stale table version");
+  }
+}
+
+export async function saveTableState(params: {
+  tournamentId: string;
+  roundId: number;
+  tableId: number;
+  expectedVersion: number | null;
+  tablePatch: Partial<Omit<TableState, "roundId" | "tableId" | "playerIds" | "version">>;
+  handPatches: Array<{ handId: number; patch: Partial<Omit<TableHand, "handId">> }>;
+}): Promise<{ table: TableState; hands: TableHand[] }> {
+  const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
+  const tableRef = tournamentRef.collection("tables").doc(`${params.roundId}_${params.tableId}`);
+  const handRefs = params.handPatches.map((item) => tableRef.collection("hands").doc(String(item.handId)));
+
+  try {
+    await db.runTransaction(async (transaction) => {
+    const tableSnapshot = await transaction.get(tableRef);
+    if (!tableSnapshot.exists) throw notFound("Table not found");
+    const currentVersion = Number(tableSnapshot.get("version") ?? 0);
+    if (params.expectedVersion != null && params.expectedVersion !== currentVersion) {
+      throw new StaleTableVersion(params.expectedVersion, currentVersion);
+    }
+    const currentHands = new Map<string, Record<string, unknown>>();
+    const allHandsSnapshot = await transaction.get(tableRef.collection("hands"));
+    const incompleteTables = await transaction.get(
+      tournamentRef.collection("tables").where("isCompleted", "==", false),
+    );
+    allHandsSnapshot.docs.forEach((snapshot) => currentHands.set(snapshot.id, snapshot.data()));
+    if (params.handPatches.some((item) => !currentHands.has(String(item.handId)))) {
+      throw notFound("Hand not found");
+    }
+
+    const mergedTable = { ...(tableSnapshot.data() ?? {}), ...params.tablePatch };
+    params.handPatches.forEach((item) => {
+      const key = String(item.handId);
+      currentHands.set(key, { ...(currentHands.get(key) ?? {}), ...item.patch, handId: item.handId });
+    });
+    const summary = calculateTableSummary(mergedTable, [...currentHands.values()]);
+    const currentTableIsComplete = Boolean(mergedTable.isCompleted);
+    const tournamentIsComplete = currentTableIsComplete && incompleteTables.docs.every((document) => {
+      return document.ref.path === tableRef.path;
+    });
+    transaction.update(tableRef, {
+      ...params.tablePatch,
+      ...summary,
+      version: currentVersion + 1,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+    params.handPatches.forEach((item, index) => {
+      transaction.update(handRefs[index], {
+        ...item.patch,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    });
+    transaction.update(tournamentRef, {
+      isCompleted: tournamentIsComplete,
+      updatedAt: FieldValue.serverTimestamp(),
+      ...tournamentVersionUpdate("tables"),
+    });
+    transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
+    });
+  } catch (error) {
+    if (error instanceof StaleTableVersion) {
+      throw conflict("Table data changed on the server", {
+        expectedVersion: error.expectedVersion,
+        currentVersion: error.currentVersion,
+        current: await getTableWithHands(params),
+      });
+    }
+    throw error;
+  }
+
+  return getTableWithHands(params);
 }
 
 export async function updateTable(params: {
@@ -158,39 +279,12 @@ export async function updateTable(params: {
     | "usePointsCalculation"
   >>;
 }): Promise<void> {
-  const tableDocId = `${params.roundId}_${params.tableId}`;
-  const tableRef = db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
-  const snap = await tableRef.get();
-  if (!snap.exists) throw notFound("Table not found");
-
-  await tableRef.update({
-    ...params.patch,
-    updatedAt: FieldValue.serverTimestamp(),
+  await saveTableState({
+    ...params,
+    expectedVersion: null,
+    tablePatch: params.patch,
+    handPatches: [],
   });
-
-  if (Object.prototype.hasOwnProperty.call(params.patch, "isCompleted")) {
-    const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
-    const newIsCompleted = Boolean(params.patch.isCompleted);
-
-    if (!newIsCompleted) {
-      await tournamentRef.update({
-        isCompleted: false,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      return;
-    }
-
-    const incomplete = await tournamentRef
-      .collection("tables")
-      .where("isCompleted", "==", false)
-      .limit(1)
-      .get();
-
-    await tournamentRef.update({
-      isCompleted: incomplete.empty,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  }
 }
 
 export async function updateHand(params: {
@@ -200,18 +294,13 @@ export async function updateHand(params: {
   handId: number;
   patch: Partial<Omit<TableHand, "handId">>;
 }): Promise<void> {
-  const tableDocId = `${params.roundId}_${params.tableId}`;
-  const tableRef = db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
-  const tableSnap = await tableRef.get();
-  if (!tableSnap.exists) throw notFound("Table not found");
-
-  const handRef = tableRef.collection("hands").doc(String(params.handId));
-  const handSnap = await handRef.get();
-  if (!handSnap.exists) throw notFound("Hand not found");
-
-  await handRef.update({
-    ...params.patch,
-    updatedAt: FieldValue.serverTimestamp(),
+  await saveTableState({
+    tournamentId: params.tournamentId,
+    roundId: params.roundId,
+    tableId: params.tableId,
+    expectedVersion: null,
+    tablePatch: {},
+    handPatches: [{ handId: params.handId, patch: params.patch }],
   });
 }
 
@@ -254,6 +343,9 @@ export async function resetTable(params: {
     isCompleted: false,
     useTotalsOnly: true,
     usePointsCalculation: true,
+    hasProgress: false,
+    hasValidManualTotals: false,
+    version: FieldValue.increment(1),
     updatedAt: FieldValue.serverTimestamp(),
   });
   handsSnap.docs.forEach((hand) => {
@@ -273,6 +365,8 @@ export async function resetTable(params: {
   batch.update(tournamentRef, {
     isCompleted: false,
     updatedAt: FieldValue.serverTimestamp(),
+    ...tournamentVersionUpdate("tables"),
   });
+  batch.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
   await batch.commit();
 }

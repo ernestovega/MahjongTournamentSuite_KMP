@@ -27,7 +27,7 @@ function forbidden(message = "Forbidden") {
 function notFound(message = "Not found") {
     return new HttpError(404, "not_found", message);
 }
-function conflict(message) {
-    return new HttpError(409, "conflict", message);
+function conflict(message, details) {
+    return new HttpError(409, "conflict", message, details);
 }
 //# sourceMappingURL=httpError.js.map

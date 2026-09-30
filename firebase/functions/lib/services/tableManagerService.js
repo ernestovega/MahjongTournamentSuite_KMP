@@ -1,12 +1,17 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getTableWithHands = getTableWithHands;
+exports.calculateTableSummary = calculateTableSummary;
+exports.saveTableState = saveTableState;
 exports.updateTable = updateTable;
 exports.updateHand = updateHand;
 exports.resetTable = resetTable;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
+const httpError_2 = require("../api/httpError");
+const tournamentContentRules_1 = require("./tournamentContentRules");
+const dataVersionsService_1 = require("./dataVersionsService");
 async function getTableWithHands(params) {
     const tableDocId = `${params.roundId}_${params.tableId}`;
     const tableRef = firebase_1.db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
@@ -65,6 +70,7 @@ async function getTableWithHands(params) {
         isCompleted: Boolean(tableSnap.get("isCompleted") ?? false),
         useTotalsOnly: Boolean(tableSnap.get("useTotalsOnly") ?? true),
         usePointsCalculation: Boolean(tableSnap.get("usePointsCalculation") ?? true),
+        version: Number(tableSnap.get("version") ?? 0),
     };
     const hands = handsSnap.docs
         .map((d) => ({
@@ -82,50 +88,121 @@ async function getTableWithHands(params) {
         .sort((a, b) => a.handId - b.handId);
     return { table, hands };
 }
-async function updateTable(params) {
-    const tableDocId = `${params.roundId}_${params.tableId}`;
-    const tableRef = firebase_1.db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
-    const snap = await tableRef.get();
-    if (!snap.exists)
-        throw (0, httpError_1.notFound)("Table not found");
-    await tableRef.update({
-        ...params.patch,
-        updatedAt: firestore_1.FieldValue.serverTimestamp(),
-    });
-    if (Object.prototype.hasOwnProperty.call(params.patch, "isCompleted")) {
-        const tournamentRef = firebase_1.db.collection("tournaments").doc(params.tournamentId);
-        const newIsCompleted = Boolean(params.patch.isCompleted);
-        if (!newIsCompleted) {
-            await tournamentRef.update({
-                isCompleted: false,
-                updatedAt: firestore_1.FieldValue.serverTimestamp(),
-            });
-            return;
-        }
-        const incomplete = await tournamentRef
-            .collection("tables")
-            .where("isCompleted", "==", false)
-            .limit(1)
-            .get();
-        await tournamentRef.update({
-            isCompleted: incomplete.empty,
-            updatedAt: firestore_1.FieldValue.serverTimestamp(),
-        });
+function calculateTableSummary(table, hands) {
+    const hasTableProgress = [
+        "playerEastId", "playerSouthId", "playerWestId", "playerNorthId",
+        "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
+        "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
+    ].some((field) => String(table[field] ?? "").trim().length > 0);
+    const hasHandProgress = hands.some((hand) => [
+        "playerWinnerId", "playerLooserId", "handScore", "playerEastPenalty",
+        "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",
+    ].some((field) => String(hand[field] ?? "").trim().length > 0)
+        || Boolean(hand.isChickenHand) || Boolean(hand.isDone));
+    const useTotalsOnly = Boolean(table.useTotalsOnly ?? true);
+    const usePointsCalculation = Boolean(table.usePointsCalculation ?? true);
+    const validScores = (0, tournamentContentRules_1.hasFourValidScores)([
+        table.manualPlayerEastScore || table.playerEastScore,
+        table.manualPlayerSouthScore || table.playerSouthScore,
+        table.manualPlayerWestScore || table.playerWestScore,
+        table.manualPlayerNorthScore || table.playerNorthScore,
+    ]);
+    const validPoints = (0, tournamentContentRules_1.hasValidTablePoints)([
+        table.manualPlayerEastPoints || table.playerEastPoints,
+        table.manualPlayerSouthPoints || table.playerSouthPoints,
+        table.manualPlayerWestPoints || table.playerWestPoints,
+        table.manualPlayerNorthPoints || table.playerNorthPoints,
+    ]);
+    return {
+        hasProgress: hasTableProgress || hasHandProgress || Boolean(table.isCompleted),
+        hasValidManualTotals: useTotalsOnly ? validScores : !usePointsCalculation && validPoints,
+    };
+}
+class StaleTableVersion extends Error {
+    constructor(expectedVersion, currentVersion) {
+        super("Stale table version");
+        this.expectedVersion = expectedVersion;
+        this.currentVersion = currentVersion;
     }
 }
+async function saveTableState(params) {
+    const tournamentRef = firebase_1.db.collection("tournaments").doc(params.tournamentId);
+    const tableRef = tournamentRef.collection("tables").doc(`${params.roundId}_${params.tableId}`);
+    const handRefs = params.handPatches.map((item) => tableRef.collection("hands").doc(String(item.handId)));
+    try {
+        await firebase_1.db.runTransaction(async (transaction) => {
+            const tableSnapshot = await transaction.get(tableRef);
+            if (!tableSnapshot.exists)
+                throw (0, httpError_1.notFound)("Table not found");
+            const currentVersion = Number(tableSnapshot.get("version") ?? 0);
+            if (params.expectedVersion != null && params.expectedVersion !== currentVersion) {
+                throw new StaleTableVersion(params.expectedVersion, currentVersion);
+            }
+            const currentHands = new Map();
+            const allHandsSnapshot = await transaction.get(tableRef.collection("hands"));
+            const incompleteTables = await transaction.get(tournamentRef.collection("tables").where("isCompleted", "==", false));
+            allHandsSnapshot.docs.forEach((snapshot) => currentHands.set(snapshot.id, snapshot.data()));
+            if (params.handPatches.some((item) => !currentHands.has(String(item.handId)))) {
+                throw (0, httpError_1.notFound)("Hand not found");
+            }
+            const mergedTable = { ...(tableSnapshot.data() ?? {}), ...params.tablePatch };
+            params.handPatches.forEach((item) => {
+                const key = String(item.handId);
+                currentHands.set(key, { ...(currentHands.get(key) ?? {}), ...item.patch, handId: item.handId });
+            });
+            const summary = calculateTableSummary(mergedTable, [...currentHands.values()]);
+            const currentTableIsComplete = Boolean(mergedTable.isCompleted);
+            const tournamentIsComplete = currentTableIsComplete && incompleteTables.docs.every((document) => {
+                return document.ref.path === tableRef.path;
+            });
+            transaction.update(tableRef, {
+                ...params.tablePatch,
+                ...summary,
+                version: currentVersion + 1,
+                updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            });
+            params.handPatches.forEach((item, index) => {
+                transaction.update(handRefs[index], {
+                    ...item.patch,
+                    updatedAt: firestore_1.FieldValue.serverTimestamp(),
+                });
+            });
+            transaction.update(tournamentRef, {
+                isCompleted: tournamentIsComplete,
+                updatedAt: firestore_1.FieldValue.serverTimestamp(),
+                ...(0, dataVersionsService_1.tournamentVersionUpdate)("tables"),
+            });
+            transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
+        });
+    }
+    catch (error) {
+        if (error instanceof StaleTableVersion) {
+            throw (0, httpError_2.conflict)("Table data changed on the server", {
+                expectedVersion: error.expectedVersion,
+                currentVersion: error.currentVersion,
+                current: await getTableWithHands(params),
+            });
+        }
+        throw error;
+    }
+    return getTableWithHands(params);
+}
+async function updateTable(params) {
+    await saveTableState({
+        ...params,
+        expectedVersion: null,
+        tablePatch: params.patch,
+        handPatches: [],
+    });
+}
 async function updateHand(params) {
-    const tableDocId = `${params.roundId}_${params.tableId}`;
-    const tableRef = firebase_1.db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
-    const tableSnap = await tableRef.get();
-    if (!tableSnap.exists)
-        throw (0, httpError_1.notFound)("Table not found");
-    const handRef = tableRef.collection("hands").doc(String(params.handId));
-    const handSnap = await handRef.get();
-    if (!handSnap.exists)
-        throw (0, httpError_1.notFound)("Hand not found");
-    await handRef.update({
-        ...params.patch,
-        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    await saveTableState({
+        tournamentId: params.tournamentId,
+        roundId: params.roundId,
+        tableId: params.tableId,
+        expectedVersion: null,
+        tablePatch: {},
+        handPatches: [{ handId: params.handId, patch: params.patch }],
     });
 }
 async function resetTable(params) {
@@ -163,6 +240,9 @@ async function resetTable(params) {
         isCompleted: false,
         useTotalsOnly: true,
         usePointsCalculation: true,
+        hasProgress: false,
+        hasValidManualTotals: false,
+        version: firestore_1.FieldValue.increment(1),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });
     handsSnap.docs.forEach((hand) => {
@@ -182,7 +262,9 @@ async function resetTable(params) {
     batch.update(tournamentRef, {
         isCompleted: false,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        ...(0, dataVersionsService_1.tournamentVersionUpdate)("tables"),
     });
+    batch.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
     await batch.commit();
 }
 //# sourceMappingURL=tableManagerService.js.map

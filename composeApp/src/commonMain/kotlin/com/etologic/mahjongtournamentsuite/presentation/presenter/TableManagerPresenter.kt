@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 
 class TableManagerPresenter(
     private val tournamentRepository: TournamentRepository,
@@ -14,12 +15,33 @@ class TableManagerPresenter(
         tournamentId: String,
         roundId: Int,
         tableId: Int,
+        forceRefresh: Boolean = false,
     ): AppResult<Pair<TableState, List<TableHand>>> {
         logger.i { "Loading table with hands." }
         return tournamentRepository.getTableWithHands(
             tournamentId = tournamentId,
             roundId = roundId,
             tableId = tableId,
+            refreshMode = if (forceRefresh) RefreshMode.FORCE else RefreshMode.IF_CHANGED,
+        )
+    }
+
+    suspend fun saveTableState(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        expectedVersion: Long,
+        tablePatch: Map<String, Any?>,
+        handPatches: Map<Int, Map<String, Any?>>,
+    ): AppResult<Pair<TableState, List<TableHand>>> {
+        logger.i { "Saving table state." }
+        return tournamentRepository.saveTableState(
+            tournamentId = tournamentId,
+            roundId = roundId,
+            tableId = tableId,
+            expectedVersion = expectedVersion,
+            tablePatch = tablePatch,
+            handPatches = handPatches,
         )
     }
 

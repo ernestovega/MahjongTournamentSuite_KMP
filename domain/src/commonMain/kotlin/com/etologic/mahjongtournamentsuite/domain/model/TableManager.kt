@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.domain.model
 
 data class TableState(
+    val version: Long = 0,
     val roundId: Int,
     val tableId: Int,
     val playerIds: List<Int>,

@@ -9,15 +9,16 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 
 class UsersPresenter(
     private val tournamentRepository: TournamentRepository,
     private val adminRepository: AdminRepository,
     private val authRepository: AuthRepository,
 ) {
-    suspend fun loadAdminStatus(): AppResult<AdminStatus> = adminRepository.whoAmI()
+    suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.mode())
 
-    suspend fun loadUsers(): AppResult<List<ManagedUser>> = adminRepository.listUsers()
+    suspend fun loadUsers(force: Boolean = false): AppResult<List<ManagedUser>> = adminRepository.listUsers(force.mode())
 
     suspend fun createUser(
         email: String,
@@ -34,5 +35,7 @@ class UsersPresenter(
     suspend fun requestPasswordReset(email: String): AppResult<Unit> =
         authRepository.requestPasswordReset(email)
 
-    suspend fun loadTournaments(): AppResult<List<Tournament>> = tournamentRepository.listTournaments()
+    suspend fun loadTournaments(force: Boolean = false): AppResult<List<Tournament>> = tournamentRepository.listTournaments(force.mode())
 }
+
+private fun Boolean.mode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED

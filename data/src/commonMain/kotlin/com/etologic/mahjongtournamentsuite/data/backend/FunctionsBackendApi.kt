@@ -36,6 +36,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoReq
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.WhoAmIResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -72,6 +74,17 @@ class FunctionsBackendApi(
 
     suspend fun whoAmI(idToken: String): WhoAmIResponseDto =
         get(path = "/admin/whoami", idToken = idToken)
+
+    suspend fun globalDataVersions(idToken: String): DataVersionsManifestDto =
+        get(path = "/sync/manifest", idToken = idToken)
+
+    suspend fun tournamentDataVersions(
+        idToken: String,
+        tournamentId: String,
+    ): DataVersionsManifestDto = get(
+        path = "/tournaments/$tournamentId/sync/manifest",
+        idToken = idToken,
+    )
 
     suspend fun listUsers(idToken: String): ManagedUsersResponseDto =
         get(path = "/admin/users", idToken = idToken)
@@ -382,6 +395,18 @@ class FunctionsBackendApi(
     ): OkResponseDto = put(
         path = "/tournaments/$tournamentId/tables/$roundId/$tableId/hands/$handId",
         requestBody = patch,
+        idToken = idToken,
+    )
+
+    suspend fun saveTableState(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        request: SaveTableStateRequestDto,
+    ): TableWithHandsResponseDto = put(
+        path = "/tournaments/$tournamentId/tables/$roundId/$tableId/state",
+        requestBody = request,
         idToken = idToken,
     )
 

@@ -236,6 +236,7 @@ data class TournamentTableDto(
     val usePointsCalculation: Boolean = true,
     val hasProgress: Boolean = false,
     val hasValidManualTotals: Boolean = false,
+    val version: Long = 0,
 )
 
 @Serializable
@@ -245,6 +246,7 @@ data class TournamentTablesResponseDto(
 
 @Serializable
 data class TableStateDto(
+    val version: Long = 0,
     val roundId: Int,
     val tableId: Int,
     val playerIds: List<Int>,
@@ -331,4 +333,17 @@ data class HandPatchRequestDto(
     val playerSouthPenalty: String? = null,
     val playerWestPenalty: String? = null,
     val playerNorthPenalty: String? = null,
+)
+
+@Serializable
+data class TableHandPatchDto(
+    val handId: Int,
+    val patch: HandPatchRequestDto,
+)
+
+@Serializable
+data class SaveTableStateRequestDto(
+    val expectedVersion: Long,
+    val tablePatch: TablePatchRequestDto,
+    val handPatches: List<TableHandPatchDto>,
 )

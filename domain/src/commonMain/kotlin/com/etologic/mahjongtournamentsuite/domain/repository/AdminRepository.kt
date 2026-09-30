@@ -8,11 +8,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 
 interface AdminRepository {
-    suspend fun whoAmI(): AppResult<AdminStatus>
+    suspend fun whoAmI(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<AdminStatus>
 
     suspend fun lookupUser(identifier: String, tournamentId: String? = null): AppResult<UserProfile>
 
-    suspend fun listUsers(): AppResult<List<ManagedUser>>
+    suspend fun listUsers(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<ManagedUser>>
 
     suspend fun createUser(
         email: String,

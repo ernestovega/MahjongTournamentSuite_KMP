@@ -204,23 +204,23 @@ fun TournamentsScreen(
         },
     )
 
-    fun refresh() {
+    fun refresh(force: Boolean = false) {
         coroutineScope.launch {
             isRefreshing = true
             errorMessage = null
 
-            when (val profileResult = presenter.loadProfile()) {
+            when (val profileResult = presenter.loadProfile(force)) {
                 is AppResult.Success -> store.profile.value = profileResult.value
                 is AppResult.Failure -> errorMessage = profileResult.error.toUiMessage()
             }
 
-            when (val adminResult = presenter.loadAdminStatus()) {
+            when (val adminResult = presenter.loadAdminStatus(force)) {
                 is AppResult.Success -> store.adminStatus.value = adminResult.value
                 is AppResult.Failure -> if (errorMessage == null) errorMessage =
                     adminResult.error.toUiMessage()
             }
 
-            when (val tournamentsResult = presenter.loadTournaments()) {
+            when (val tournamentsResult = presenter.loadTournaments(force)) {
                 is AppResult.Success -> {
                     store.upsertTournaments(tournamentsResult.value)
                 }
@@ -229,7 +229,7 @@ fun TournamentsScreen(
                     tournamentsResult.error.toUiMessage()
             }
 
-            when (val countriesResult = presenter.loadCountries()) {
+            when (val countriesResult = presenter.loadCountries(force)) {
                 is AppResult.Success -> countries = countriesResult.value
                 is AppResult.Failure -> if (errorMessage == null) errorMessage =
                     countriesResult.error.toUiMessage()
@@ -994,7 +994,7 @@ fun TournamentsScreen(
                     lastFocusedControl = "player-base"
                     navController.navigate(PlayerBaseRoute)
                 },
-                onRefresh = { refresh() },
+                onRefresh = { refresh(force = true) },
                 onNewTournament = if (adminStatus?.canCreateTournaments == true) {
                     {
                         lastFocusedControl = "new-tournament"

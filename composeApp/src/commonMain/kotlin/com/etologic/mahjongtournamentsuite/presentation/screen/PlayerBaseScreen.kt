@@ -221,9 +221,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
         newPlayerError = null
         showNewPlayerDialog = true
     }
-    fun refresh() = scope.launch {
+    fun refresh(force: Boolean = false) = scope.launch {
         loading = true
-        when (val result = presenter.loadPlayers()) {
+        when (val result = presenter.loadPlayers(force)) {
             is AppResult.Success -> store.upsertBasePlayers(result.value)
             is AppResult.Failure -> error = result.error.toUiMessage()
         }
@@ -278,7 +278,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         upsertPlayerLocally(currentPlayer.emaId, finalPlayer)
         pendingPhoto = null
         select(finalPlayer)
-        when (val result = presenter.loadPlayers()) {
+        when (val result = presenter.loadPlayers(force = true)) {
             is AppResult.Success -> store.upsertBasePlayers(result.value)
             is AppResult.Failure -> error = result.error.toUiMessage()
         }
@@ -528,7 +528,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
-                onRefresh = ::refresh,
+                onRefresh = { refresh(force = true) },
                 onNewPlayer = if (canEdit) ::openNewPlayerDialog else null,
             )
         },

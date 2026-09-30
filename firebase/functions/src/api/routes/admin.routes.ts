@@ -22,6 +22,7 @@ import {
   type TournamentAssignment,
 } from "../../services/usersService";
 import { BOOTSTRAP_KEY } from "../../config";
+import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 
 type Actor = { uid: string; admin?: boolean };
 
@@ -81,6 +82,7 @@ export function adminRouter(): Router {
       const claims: Record<string, unknown> = { ...(user.customClaims ?? {}), admin: true };
       delete claims.superadmin;
       await auth.setCustomUserClaims(uid, claims);
+      await bumpGlobalDataVersion("users");
       res.status(200).json({ ok: true });
     } catch (error) {
       next(error);
@@ -124,6 +126,7 @@ export function adminRouter(): Router {
       await setGlobalUserRole(user.uid, role);
       await syncUserTournamentAssignments(user.uid, tournamentAssignments, assignmentScope);
       await sendPasswordResetEmail(email);
+      await bumpGlobalDataVersion("users");
 
       res.status(201).json(await getManagedUser(user.uid, assignmentScope));
     } catch (error) {
@@ -166,6 +169,7 @@ export function adminRouter(): Router {
         tournamentAssignments,
         assignmentScope,
       });
+      await bumpGlobalDataVersion("users");
       res.status(200).json(await getManagedUser(current.uid, assignmentScope));
     } catch (error) {
       next(error);
@@ -182,6 +186,7 @@ export function adminRouter(): Router {
       await assertAdminRemainsEnabled(current.role, current.disabled, current.role, disabled);
 
       await setManagedUserDisabled(current.uid, disabled);
+      await bumpGlobalDataVersion("users");
       res.status(200).json(await getManagedUser(current.uid));
     } catch (error) {
       next(error);

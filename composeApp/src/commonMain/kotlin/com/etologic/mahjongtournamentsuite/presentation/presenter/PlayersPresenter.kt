@@ -10,26 +10,27 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 
 class PlayersPresenter(
     private val tournamentRepository: TournamentRepository,
     private val playerRepository: PlayerRepository,
     private val logger: Logger,
 ) {
-    suspend fun loadPlayers(tournamentId: String): AppResult<List<TournamentPlayer>> {
+    suspend fun loadPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> {
         logger.i { "Loading tournament players." }
-        return tournamentRepository.listTournamentPlayers(tournamentId)
+        return tournamentRepository.listTournamentPlayers(tournamentId, force.mode())
     }
 
-    suspend fun loadBasePlayers(): AppResult<List<Player>> = playerRepository.listPlayers()
+    suspend fun loadBasePlayers(force: Boolean = false): AppResult<List<Player>> = playerRepository.listPlayers(force.mode())
 
-    suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
+    suspend fun loadCountries(force: Boolean = false): AppResult<List<Country>> = tournamentRepository.listCountries(force.mode())
 
-    suspend fun loadTeams(tournamentId: String): AppResult<List<TournamentTeam>> =
-        tournamentRepository.listTournamentTeams(tournamentId)
+    suspend fun loadTeams(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTeam>> =
+        tournamentRepository.listTournamentTeams(tournamentId, force.mode())
 
-    suspend fun loadTables(tournamentId: String): AppResult<List<TournamentTable>> =
-        tournamentRepository.listTournamentTables(tournamentId)
+    suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> =
+        tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
 
     suspend fun generateIdCards(tournamentId: String): AppResult<ByteArray> =
         tournamentRepository.generateTournamentIdCards(tournamentId)
@@ -49,3 +50,5 @@ class PlayersPresenter(
         nonMember,
     )
 }
+
+private fun Boolean.mode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED
