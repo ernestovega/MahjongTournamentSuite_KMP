@@ -9,7 +9,6 @@ exports.listTournamentTables = listTournamentTables;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
-const mers_1 = require("./mers");
 const playersService_1 = require("./playersService");
 const tournamentContentRules_1 = require("./tournamentContentRules");
 const dataVersionsService_1 = require("./dataVersionsService");
@@ -21,21 +20,6 @@ function readNonMember(value) {
     const lastName = String(data.lastName ?? "").trim();
     const country = String(data.country ?? "").trim().toUpperCase();
     return firstName && lastName && country ? { firstName, lastName, country } : null;
-}
-async function updateTournamentMers(tournamentId) {
-    const ref = firebase_1.db.collection("tournaments").doc(tournamentId);
-    const [tournament, players] = await Promise.all([ref.get(), ref.collection("players").get()]);
-    if (!tournament.exists)
-        return;
-    await ref.update({
-        mers: (0, mers_1.calculateMers)({
-            startDate: String(tournament.get("eventStartDate") ?? ""),
-            endDate: String(tournament.get("eventEndDate") ?? ""),
-            participantCount: Number(tournament.get("numPlayers") ?? 0),
-            representedCountries: players.docs.map((player) => String(player.get("assignedCountry") ?? "")),
-        }),
-        updatedAt: firestore_1.FieldValue.serverTimestamp(),
-    });
 }
 async function refreshAssignmentCountries(tournamentId) {
     const players = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("players").get();
@@ -51,7 +35,6 @@ async function refreshAssignmentCountries(tournamentId) {
         batch.update(player.ref, { assignedCountry: emaId == null ? nonMember?.country ?? "" : countries.get(emaId) ?? "" });
     });
     await batch.commit();
-    await updateTournamentMers(tournamentId);
 }
 function timestampToIso(value) {
     return value instanceof firestore_1.Timestamp ? value.toDate().toISOString() : null;
@@ -138,10 +121,10 @@ async function updateTournamentTeam(params) {
             throw (0, httpError_1.conflict)("Team assignments must match its schedule slots");
         }
         const desiredEmaIds = params.emaIds.map((emaId) => emaId?.trim() || null);
-        const assignedDesired = desiredEmaIds.filter((emaId) => emaId != null);
-        if (new Set(assignedDesired).size !== assignedDesired.length) {
+        if ((0, tournamentContentRules_1.hasDuplicateEmaAssignments)(desiredEmaIds)) {
             throw (0, httpError_1.conflict)("A player cannot occupy two team slots");
         }
+        const assignedDesired = desiredEmaIds.filter((emaId) => emaId != null);
         const currentByRef = new Map();
         const sourceByEma = new Map();
         playerDocs.forEach((player) => {

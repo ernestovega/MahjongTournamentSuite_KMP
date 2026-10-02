@@ -15,7 +15,6 @@ const emaReportService_1 = require("./emaReportService");
         endDate: "2025-02-02",
         hostCountry: "ESP",
         hostCity: "Madrid",
-        mers: 3.5,
         shortName: "MMC2025",
         rows: [{
                 place: 1,
@@ -40,7 +39,7 @@ const emaReportService_1 = require("./emaReportService");
     strict_1.default.equal(sheet.getCell("E2").value, "KÖSTERS");
     strict_1.default.ok(sheet.getCell("K2").value instanceof Date);
     strict_1.default.equal(sheet.getCell("K2").numFmt, "d/m/yyyy");
-    strict_1.default.equal(sheet.getCell("P2").value, "Chinese official");
-    strict_1.default.equal(sheet.getCell("S2").value, "NO");
+    strict_1.default.equal(sheet.getCell("O2").value, "Chinese official");
+    strict_1.default.equal(sheet.getCell("R2").value, "NO");
 });
 //# sourceMappingURL=emaReportService.test.js.map

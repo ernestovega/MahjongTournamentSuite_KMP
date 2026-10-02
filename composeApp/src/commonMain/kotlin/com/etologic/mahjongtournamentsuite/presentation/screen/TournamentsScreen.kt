@@ -104,6 +104,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdC
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.AgendaItemEditorRow
+import com.etologic.mahjongtournamentsuite.presentation.components.RoundScheduleEditorRow
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentScheduleEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
@@ -113,6 +116,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.textFieldFocu
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
+import com.etologic.mahjongtournamentsuite.presentation.components.synchronizeRoundScheduleRows
+import com.etologic.mahjongtournamentsuite.presentation.components.toEditorRow
+import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentAgendaItems
+import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentRoundSchedules
+import com.etologic.mahjongtournamentsuite.presentation.components.tournamentScheduleEditorError
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
@@ -167,6 +175,8 @@ fun TournamentsScreen(
     var settingsEventEndDate by remember { mutableStateOf("") }
     var settingsHostCountry by remember { mutableStateOf("") }
     var settingsHostCity by remember { mutableStateOf("") }
+    var settingsRoundScheduleRows by remember { mutableStateOf<List<RoundScheduleEditorRow>>(emptyList()) }
+    var settingsAgendaRows by remember { mutableStateOf<List<AgendaItemEditorRow>>(emptyList()) }
     var showDateRangePicker by remember { mutableStateOf(false) }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var settingsLogo by remember { mutableStateOf<SelectedImage?>(null) }
@@ -535,6 +545,16 @@ fun TournamentsScreen(
                             )
                         }
 
+                        TournamentScheduleEditor(
+                            roundRows = settingsRoundScheduleRows,
+                            onRoundRowsChange = { settingsRoundScheduleRows = it },
+                            agendaRows = settingsAgendaRows,
+                            onAgendaRowsChange = { settingsAgendaRows = it },
+                            enabled = !isLoading,
+                            minimumDisplayDate = settingsEventStartDate,
+                            maximumDisplayDate = settingsEventEndDate,
+                        )
+
                         TournamentColorField(
                             value = settingsPrimaryColor,
                             enabled = !isLoading,
@@ -642,6 +662,7 @@ fun TournamentsScreen(
                             associationLogoBytes = settingsLogo?.bytes,
                             associationLogoUrl = reusedSettingsLogoTournament?.associationLogoUrl
                                 ?: if (settingsLogo == null && !removeSettingsLogo) tournament.associationLogoUrl else null,
+                            roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
                             onError = { renameError = it },
                         )
 
@@ -794,6 +815,16 @@ fun TournamentsScreen(
                             }
                             val validEventStartDate = newEventStartDate ?: return@Button
                             val validEventEndDate = newEventEndDate ?: return@Button
+                            val scheduleError = tournamentScheduleEditorError(
+                                roundRows = settingsRoundScheduleRows,
+                                agendaRows = settingsAgendaRows,
+                                eventStartDate = validEventStartDate,
+                                eventEndDate = validEventEndDate,
+                            )
+                            if (scheduleError != null) {
+                                renameError = scheduleError
+                                return@Button
+                            }
                             coroutineScope.launch {
                                 isLoading = true
                                 invalidEditFields = emptySet()
@@ -811,6 +842,8 @@ fun TournamentsScreen(
                                     associationLogoBytes = settingsLogo?.bytes,
                                     associationLogoSourceTournamentId = reusedSettingsLogoTournament?.id,
                                     removeAssociationLogo = removeSettingsLogo,
+                                    roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
+                                    agendaItems = settingsAgendaRows.toTournamentAgendaItems(),
                                 )) {
                                     is AppResult.Success -> {
                                         showDateRangePicker = false
@@ -1092,6 +1125,11 @@ fun TournamentsScreen(
                                                     settingsEventEndDate = tournament.eventEndDate.toDisplayTournamentDate()
                                                     settingsHostCountry = tournament.hostCountry
                                                     settingsHostCity = tournament.hostCity
+                                                    settingsRoundScheduleRows = synchronizeRoundScheduleRows(
+                                                        rows = tournament.roundSchedules.map { it.toEditorRow() },
+                                                        roundCount = tournament.numRounds,
+                                                    )
+                                                    settingsAgendaRows = tournament.agendaItems.map { it.toEditorRow() }
                                                     settingsLogo = null
                                                     reusedSettingsLogoTournament = null
                                                     removeSettingsLogo = false
@@ -1232,18 +1270,15 @@ private fun TournamentTableHeader(
     actionCellMinWidth: Dp,
 ) {
     DataTableHeaderRow {
-        HeaderCell(text = "Logo", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = "Color", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = "Name", minWidth = cellMinWidth, weight = 2.0f)
-        HeaderCell(text = "Short name", minWidth = cellMinWidth, weight = 1.0f)
         HeaderCell(text = "Country", minWidth = cellMinWidth, weight = .7f, textAlign = TextAlign.Center)
         HeaderCell(text = "City", minWidth = cellMinWidth, weight = 1.0f)
-        HeaderCell(text = "MERS", minWidth = cellMinWidth, weight = .6f, textAlign = TextAlign.Center)
-        HeaderCell(text = "Teams", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = "Logo", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = "Name", minWidth = cellMinWidth, weight = 2.0f)
+        HeaderCell(text = "Short name", minWidth = cellMinWidth, weight = 1.0f)
         HeaderCell(text = "Players", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = "Rounds", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = "From", minWidth = cellMinWidth, weight = 1.0f, textAlign = TextAlign.Center)
-        HeaderCell(text = "To", minWidth = cellMinWidth, weight = 1.0f, textAlign = TextAlign.Center)
+        HeaderCell(text = "Teams", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = "From-to", minWidth = cellMinWidth, weight = 1.8f, textAlign = TextAlign.Center)
         Text(
             text = "",
             style = MaterialTheme.typography.labelLarge,
@@ -1271,13 +1306,18 @@ private fun TournamentTableRow(
         modifier = modifier,
         onClick = if (enabled) onClick else null,
     ) {
+        TournamentColorCell(
+            colorValue = tournament.primaryColor,
+            minWidth = cellMinWidth,
+        )
+        TournamentCountryCell(
+            countryCode = tournament.hostCountry,
+            minWidth = cellMinWidth,
+        )
+        BodyCell(text = tournament.hostCity.ifBlank { "—" }, minWidth = cellMinWidth, weight = 1.0f)
         TournamentLogoCell(
             logoUrl = tournament.associationLogoUrl,
             tournamentName = tournament.name,
-            minWidth = cellMinWidth,
-        )
-        TournamentColorCell(
-            colorValue = tournament.primaryColor,
             minWidth = cellMinWidth,
         )
         BodyCell(text = tournament.name, minWidth = cellMinWidth, weight = 2.0f)
@@ -1288,15 +1328,10 @@ private fun TournamentTableRow(
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        TournamentCountryCell(
-            countryCode = tournament.hostCountry,
-            minWidth = cellMinWidth,
-        )
-        BodyCell(text = tournament.hostCity.ifBlank { "—" }, minWidth = cellMinWidth, weight = 1.0f)
         BodyCell(
-            text = tournament.mers.toString().removeSuffix(".0"),
+            text = tournament.numPlayers.toString(),
             minWidth = cellMinWidth,
-            weight = .6f,
+            weight = .5f,
             textAlign = TextAlign.Center,
         )
         TeamModeCell(
@@ -1305,29 +1340,9 @@ private fun TournamentTableRow(
             weight = .5f,
         )
         BodyCell(
-            text = tournament.numPlayers.toString(),
+            text = tournamentDateRange(tournament),
             minWidth = cellMinWidth,
-            weight = .5f,
-            textAlign = TextAlign.Center,
-        )
-        BodyCell(
-            text = tournament.numRounds.toString(),
-            minWidth = cellMinWidth,
-            weight = .5f,
-            textAlign = TextAlign.Center,
-        )
-        BodyCell(
-            text = tournament.eventStartDate.toDisplayTournamentDate().ifBlank { "—" },
-            minWidth = cellMinWidth,
-            weight = 1.0f,
-            textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        BodyCell(
-            text = tournament.eventEndDate.toDisplayTournamentDate().ifBlank { "—" },
-            minWidth = cellMinWidth,
-            weight = 1.0f,
+            weight = 1.8f,
             textAlign = TextAlign.Center,
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1348,6 +1363,18 @@ private fun TournamentTableRow(
                 }
             }
         }
+    }
+}
+
+private fun tournamentDateRange(tournament: Tournament): String {
+    val start = tournament.eventStartDate.toDisplayTournamentDate()
+    val end = tournament.eventEndDate.toDisplayTournamentDate()
+    return when {
+        start.isBlank() && end.isBlank() -> "—"
+        start.isBlank() -> end
+        end.isBlank() -> start
+        start == end -> start
+        else -> "$start – $end"
     }
 }
 

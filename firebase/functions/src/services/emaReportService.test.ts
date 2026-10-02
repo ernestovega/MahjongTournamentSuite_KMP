@@ -12,7 +12,6 @@ test("EMA report keeps exact columns and typed Excel values", async () => {
     endDate: "2025-02-02",
     hostCountry: "ESP",
     hostCity: "Madrid",
-    mers: 3.5,
     shortName: "MMC2025",
     rows: [{
       place: 1,
@@ -37,6 +36,6 @@ test("EMA report keeps exact columns and typed Excel values", async () => {
   assert.equal(sheet.getCell("E2").value, "KÖSTERS");
   assert.ok(sheet.getCell("K2").value instanceof Date);
   assert.equal(sheet.getCell("K2").numFmt, "d/m/yyyy");
-  assert.equal(sheet.getCell("P2").value, "Chinese official");
-  assert.equal(sheet.getCell("S2").value, "NO");
+  assert.equal(sheet.getCell("O2").value, "Chinese official");
+  assert.equal(sheet.getCell("R2").value, "NO");
 });

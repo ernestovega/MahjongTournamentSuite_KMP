@@ -5,8 +5,15 @@ import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
 import { getUserProfile } from "./usersService";
-import { calculateMers } from "./mers";
-import { bumpGlobalDataVersion } from "./dataVersionsService";
+import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
+import {
+  normalizeAgendaItems,
+  normalizeRoundSchedules,
+  readStoredAgendaItems,
+  readStoredRoundSchedules,
+  type TournamentAgendaItem,
+  type TournamentRoundSchedule,
+} from "./tournamentSchedule";
 
 export type Tournament = {
   id: string;
@@ -16,12 +23,13 @@ export type Tournament = {
   associationLogoUrl: string | null;
   hostCountry: string;
   hostCity: string;
-  mers: number;
   isTeams: boolean;
   numPlayers: number;
   numRounds: number;
   eventStartDate: string | null;
   eventEndDate: string | null;
+  roundSchedules: TournamentRoundSchedule[];
+  agendaItems: TournamentAgendaItem[];
   numTries: number;
   isCompleted: boolean;
   createdByUid: string | null;
@@ -67,6 +75,11 @@ async function resolveCreatedByName(uid: string | null): Promise<string | null> 
 async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<Tournament> {
   const createdByUid = (d.get("createdByUid") as string) ?? (d.get("createdBy") as string) ?? null;
   const createdByName = (d.get("createdByName") as string) ?? await resolveCreatedByName(createdByUid);
+  const numRounds = Number(d.get("numRounds") ?? 0);
+  const eventStartDate = (d.get("eventStartDate") as string) ?? (d.get("eventDate") as string) ?? null;
+  const eventEndDate = (d.get("eventEndDate") as string) ?? (d.get("eventDate") as string) ?? null;
+  const safeStartDate = eventStartDate ?? "0000-01-01";
+  const safeEndDate = eventEndDate ?? "9999-12-31";
 
   return {
     id: d.id,
@@ -78,12 +91,13 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
     hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
     hostCity: String(d.get("hostCity") ?? "").trim(),
-    mers: Number(d.get("mers") ?? 0),
     isTeams: (d.get("isTeams") as boolean) ?? false,
     numPlayers: (d.get("numPlayers") as number) ?? 0,
-    numRounds: (d.get("numRounds") as number) ?? 0,
-    eventStartDate: (d.get("eventStartDate") as string) ?? (d.get("eventDate") as string) ?? null,
-    eventEndDate: (d.get("eventEndDate") as string) ?? (d.get("eventDate") as string) ?? null,
+    numRounds,
+    eventStartDate,
+    eventEndDate,
+    roundSchedules: readStoredRoundSchedules(d.get("roundSchedules"), numRounds, safeStartDate, safeEndDate),
+    agendaItems: readStoredAgendaItems(d.get("agendaItems"), safeStartDate, safeEndDate),
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
     createdByUid,
@@ -110,6 +124,8 @@ export async function createTournament(params: {
   numTries: number;
   players: Array<{ id: number; team: number; name?: string; country?: string }>;
   tables: Array<{ roundId: number; tableId: number; playerIds: number[]; isCompleted?: boolean; useTotalsOnly?: boolean }>;
+  roundSchedules?: unknown;
+  agendaItems?: unknown;
   createdByUid: string;
 }): Promise<Tournament> {
   const numTablesPerRound = params.numPlayers / 4;
@@ -120,6 +136,13 @@ export async function createTournament(params: {
   if (params.tables.length !== expectedTables) {
     throw badRequest("Invalid tables payload", { expected: expectedTables, received: params.tables.length });
   }
+  const roundSchedules = normalizeRoundSchedules(
+    params.roundSchedules,
+    params.numRounds,
+    params.eventStartDate,
+    params.eventEndDate,
+  );
+  const agendaItems = normalizeAgendaItems(params.agendaItems, params.eventStartDate, params.eventEndDate);
 
   const ref = db.collection("tournaments").doc();
 
@@ -139,15 +162,11 @@ export async function createTournament(params: {
     eventEndDate: params.eventEndDate,
     hostCountry: params.hostCountry.trim().toUpperCase(),
     hostCity: params.hostCity.trim(),
-    mers: calculateMers({
-      startDate: params.eventStartDate,
-      endDate: params.eventEndDate,
-      participantCount: params.numPlayers,
-      representedCountries: [],
-    }),
     isTeams: params.isTeams,
     numPlayers: params.numPlayers,
     numRounds: params.numRounds,
+    roundSchedules,
+    agendaItems,
     numTries: params.numTries,
     isCompleted: false,
     createdByUid: params.createdByUid,
@@ -380,6 +399,8 @@ export async function updateTournamentSettings(params: {
   associationLogoDataBase64?: string | null;
   associationLogoSourceTournamentId?: string | null;
   removeAssociationLogo?: boolean;
+  roundSchedules?: unknown;
+  agendaItems?: unknown;
 }): Promise<Tournament> {
   const normalizedName = params.name.trim();
   if (normalizedName.length === 0) throw badRequest("Tournament name is required");
@@ -391,6 +412,13 @@ export async function updateTournamentSettings(params: {
   const ref = db.collection("tournaments").doc(params.tournamentId);
   const before = await ref.get();
   if (!before.exists) throw notFound("Tournament not found");
+  const numRounds = Number(before.get("numRounds") ?? 0);
+  const roundSchedules = params.roundSchedules === undefined
+    ? readStoredRoundSchedules(before.get("roundSchedules"), numRounds, params.eventStartDate, params.eventEndDate)
+    : normalizeRoundSchedules(params.roundSchedules, numRounds, params.eventStartDate, params.eventEndDate);
+  const agendaItems = params.agendaItems === undefined
+    ? readStoredAgendaItems(before.get("agendaItems"), params.eventStartDate, params.eventEndDate)
+    : normalizeAgendaItems(params.agendaItems, params.eventStartDate, params.eventEndDate);
 
   const oldLogoPath = String(before.get("associationLogoPath") ?? "").trim();
   let logo: { path: string; url: string } | null | undefined;
@@ -417,13 +445,8 @@ export async function updateTournamentSettings(params: {
     eventEndDate: params.eventEndDate,
     hostCountry: params.hostCountry.trim().toUpperCase(),
     hostCity: params.hostCity.trim(),
-    mers: calculateMers({
-      startDate: params.eventStartDate,
-      endDate: params.eventEndDate,
-      participantCount: Number(before.get("numPlayers") ?? 0),
-      representedCountries: (await ref.collection("players").get()).docs
-        .map((player) => String(player.get("assignedCountry") ?? "")),
-    }),
+    roundSchedules,
+    agendaItems,
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (logo !== undefined) {
@@ -431,7 +454,10 @@ export async function updateTournamentSettings(params: {
     update.associationLogoUrl = logo?.url ?? null;
   }
   await ref.update(update);
-  await bumpGlobalDataVersion("tournaments");
+  await Promise.all([
+    bumpGlobalDataVersion("tournaments"),
+    bumpTournamentDataVersion(params.tournamentId, "rounds"),
+  ]);
 
   if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
     await storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);

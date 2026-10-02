@@ -167,6 +167,19 @@ export function calculateTableSummary(table: Record<string, unknown>, hands: Arr
   };
 }
 
+/**
+ * Returns the tournament completion state after the current table changes.
+ * The query contains every table that was incomplete when the transaction read it.
+ */
+export function isTournamentCompleteAfterTableSave(params: {
+  currentTablePath: string;
+  currentTableIsComplete: boolean;
+  incompleteTablePaths: string[];
+}): boolean {
+  if (!params.currentTableIsComplete) return false;
+  return params.incompleteTablePaths.every((path) => path === params.currentTablePath);
+}
+
 class StaleTableVersion extends Error {
   constructor(
     readonly expectedVersion: number,
@@ -213,8 +226,10 @@ export async function saveTableState(params: {
     });
     const summary = calculateTableSummary(mergedTable, [...currentHands.values()]);
     const currentTableIsComplete = Boolean(mergedTable.isCompleted);
-    const tournamentIsComplete = currentTableIsComplete && incompleteTables.docs.every((document) => {
-      return document.ref.path === tableRef.path;
+    const tournamentIsComplete = isTournamentCompleteAfterTableSave({
+      currentTablePath: tableRef.path,
+      currentTableIsComplete,
+      incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
     });
     transaction.update(tableRef, {
       ...params.tablePatch,

@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
@@ -26,6 +27,7 @@ fun TournamentIdCardPreviewButton(
     associationLogoContentType: String?,
     associationLogoBytes: ByteArray?,
     associationLogoUrl: String?,
+    roundSchedules: List<TournamentRoundSchedule> = emptyList(),
     onError: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -46,6 +48,7 @@ fun TournamentIdCardPreviewButton(
                         associationLogoContentType = associationLogoContentType,
                         associationLogoBytes = associationLogoBytes,
                         associationLogoUrl = associationLogoUrl,
+                        roundSchedules = roundSchedules,
                     ),
                 )) {
                     is AppResult.Success -> {

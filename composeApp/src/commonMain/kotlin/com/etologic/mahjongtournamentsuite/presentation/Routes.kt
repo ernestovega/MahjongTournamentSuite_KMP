@@ -38,13 +38,6 @@ data class TablesRoute(
 )
 
 @Serializable
-data class TableRoute(
-    val tournamentId: String,
-    val roundId: Int,
-    val tableId: Int,
-)
-
-@Serializable
 data object EmaPlayersRoute
 
 @Serializable

@@ -11,6 +11,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundScheduleDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.NonMemberPlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRankingRowDto
@@ -28,6 +30,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
@@ -38,9 +42,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
-import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.CancellationException
 import kotlin.io.encoding.Base64
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -53,37 +55,13 @@ class DefaultTournamentRepository(
     private val cache: RepositoryCache,
     private val json: Json,
 ) : TournamentRepository {
-    private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf(String::isNotBlank)
-
     override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = cachedRequest(
         action = "Listing tournaments",
         key = GLOBAL_TOURNAMENTS_CACHE_KEY,
         resource = "tournaments",
         refreshMode = refreshMode,
     ) { idToken ->
-            backendApi.listTournaments(idToken).tournaments.map { dto ->
-                Tournament(
-                    id = dto.id,
-                    name = dto.name,
-                    isTeams = dto.isTeams,
-                    numPlayers = dto.numPlayers,
-                    numRounds = dto.numRounds,
-                    shortName = dto.shortName,
-                    primaryColor = dto.primaryColor,
-                    associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
-                    hostCountry = dto.hostCountry,
-                    hostCity = dto.hostCity,
-                    mers = dto.mers,
-                    eventStartDate = dto.eventStartDate.normalizedOrNull(),
-                    eventEndDate = dto.eventEndDate.normalizedOrNull(),
-                    numTries = dto.numTries,
-                    isCompleted = dto.isCompleted,
-                    createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
-                    createdByName = dto.createdByName.normalizedOrNull(),
-                    createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
-                    updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
-                )
-            }.sortedRecentFirst()
+            backendApi.listTournaments(idToken).tournaments.map { it.toDomain() }.sortedRecentFirst()
     }
 
     override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> = runCatching {
@@ -113,6 +91,8 @@ class DefaultTournamentRepository(
                 associationLogoSourceTournamentId = request.associationLogoSourceTournamentId,
                 hostCountry = request.hostCountry,
                 hostCity = request.hostCity,
+                roundSchedules = request.roundSchedules.map(TournamentRoundSchedule::toDto),
+                agendaItems = request.agendaItems.map(TournamentAgendaItem::toDto),
             )
 
             val dto = backendApi.createTournament(
@@ -120,27 +100,7 @@ class DefaultTournamentRepository(
                 request = requestDto,
             )
 
-            val tournament = Tournament(
-                id = dto.id,
-                name = dto.name,
-                isTeams = dto.isTeams,
-                numPlayers = dto.numPlayers,
-                numRounds = dto.numRounds,
-                shortName = dto.shortName,
-                primaryColor = dto.primaryColor,
-                associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
-                hostCountry = dto.hostCountry,
-                hostCity = dto.hostCity,
-                mers = dto.mers,
-                eventStartDate = dto.eventStartDate.normalizedOrNull(),
-                eventEndDate = dto.eventEndDate.normalizedOrNull(),
-                numTries = dto.numTries,
-                isCompleted = dto.isCompleted,
-                createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
-                createdByName = dto.createdByName.normalizedOrNull(),
-                createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
-                updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
-            )
+            val tournament = dto.toDomain()
             cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY)
             tournament
         }
@@ -183,6 +143,8 @@ class DefaultTournamentRepository(
         associationLogoBytes: ByteArray?,
         associationLogoSourceTournamentId: String?,
         removeAssociationLogo: Boolean,
+        roundSchedules: List<TournamentRoundSchedule>,
+        agendaItems: List<TournamentAgendaItem>,
     ): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
             val dto = backendApi.updateTournamentSettings(
@@ -200,29 +162,11 @@ class DefaultTournamentRepository(
                     associationLogoDataBase64 = associationLogoBytes?.let(Base64.Default::encode),
                     associationLogoSourceTournamentId = associationLogoSourceTournamentId,
                     removeAssociationLogo = removeAssociationLogo,
+                    roundSchedules = roundSchedules.map(TournamentRoundSchedule::toDto),
+                    agendaItems = agendaItems.map(TournamentAgendaItem::toDto),
                 ),
             )
-            val tournament = Tournament(
-                id = dto.id,
-                name = dto.name,
-                isTeams = dto.isTeams,
-                numPlayers = dto.numPlayers,
-                numRounds = dto.numRounds,
-                shortName = dto.shortName,
-                primaryColor = dto.primaryColor,
-                associationLogoUrl = dto.associationLogoUrl.normalizedOrNull(),
-                hostCountry = dto.hostCountry,
-                hostCity = dto.hostCity,
-                mers = dto.mers,
-                eventStartDate = dto.eventStartDate.normalizedOrNull(),
-                eventEndDate = dto.eventEndDate.normalizedOrNull(),
-                numTries = dto.numTries,
-                isCompleted = dto.isCompleted,
-                createdByUid = dto.createdByUid.normalizedOrNull() ?: dto.createdBy.normalizedOrNull(),
-                createdByName = dto.createdByName.normalizedOrNull(),
-                createdAt = dto.createdAt.normalizedOrNull() ?: dto.created.normalizedOrNull(),
-                updatedAt = dto.updatedAt.normalizedOrNull() ?: dto.updated.normalizedOrNull(),
-            )
+            val tournament = dto.toDomain()
             cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY)
             tournament
         }
@@ -811,20 +755,7 @@ class DefaultTournamentRepository(
 
     private suspend fun <T> withFreshIdToken(
         block: suspend (String) -> T,
-    ): T {
-        val session = authRepository.currentSession() ?: error("No active session")
-
-        return try {
-            block(session.idToken)
-        } catch (e: BackendHttpException) {
-            if (e.status != HttpStatusCode.Unauthorized) throw e
-
-            when (val refreshed = authRepository.refreshSession()) {
-                is AppResult.Success -> block(refreshed.value.idToken)
-                is AppResult.Failure -> throw e
-            }
-        }
-    }
+    ): T = authRepository.withFreshIdToken(block)
 
     override suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray> = runCatching {
         withFreshIdToken { idToken ->
@@ -837,6 +768,7 @@ class DefaultTournamentRepository(
                     associationLogoContentType = request.associationLogoContentType,
                     associationLogoDataBase64 = request.associationLogoBytes?.let(Base64.Default::encode),
                     associationLogoUrl = request.associationLogoUrl,
+                    roundSchedules = request.roundSchedules.map(TournamentRoundSchedule::toDto),
                 ),
             )
         }
@@ -845,6 +777,19 @@ class DefaultTournamentRepository(
         onFailure = { AppResult.Failure(it.toAppError()) },
     )
 }
+
+private fun TournamentRoundSchedule.toDto() = TournamentRoundScheduleDto(
+    roundId = roundId,
+    date = date,
+    startTime = startTime,
+)
+
+private fun TournamentAgendaItem.toDto() = TournamentAgendaItemDto(
+    title = title,
+    date = date,
+    startTime = startTime,
+    endTime = endTime,
+)
 
 private const val GLOBAL_TOURNAMENTS_CACHE_KEY = "global:tournaments"
 private const val GLOBAL_COUNTRIES_CACHE_KEY = "global:countries"
@@ -928,11 +873,8 @@ internal fun List<Tournament>.sortedRecentFirst(): List<Tournament> =
             .thenBy { it.id },
     )
 
-private fun Throwable.toAppError(): AppError = when (this) {
-    is CancellationException -> throw this
-    is HttpRequestTimeoutException,
-    -> AppError.Unexpected("Request timed out contacting the backend. Check VPN/firewall and try again.")
-    is BackendHttpException -> {
+private fun Throwable.toAppError(): AppError {
+    if (this is BackendHttpException) {
         val body = responseBody.limitForUi()
         if (status == HttpStatusCode.Conflict) {
             return AppError.Conflict(
@@ -945,36 +887,26 @@ private fun Throwable.toAppError(): AppError = when (this) {
                     body.contains("Unable to generate rounds/tables", ignoreCase = true))
 
         if (looksLikeOutdatedServerSideScheduleGeneration) {
-            AppError.Unexpected(
+            return AppError.Unexpected(
                 "Backend rejected tournament creation due to server-side schedule generation constraints. " +
                     "This app generates schedules locally; redeploy the latest Firebase Functions (and reset Firestore if needed) and try again.",
             )
-        } else {
-            AppError.Unexpected("Backend error ${status.value}: $body")
         }
     }
-    else -> {
-        val kind = this::class.simpleName ?: "Error"
-        val msg = message?.trim().orEmpty()
-        val looksLikeServerClosedConnection =
-            kind.contains("EOFException", ignoreCase = true) ||
-                msg.contains("prematurely closed the connection", ignoreCase = true) ||
-                msg.contains("failed to parse http response", ignoreCase = true)
+    val kind = this::class.simpleName ?: "Error"
+    val msg = message?.trim().orEmpty()
+    val looksLikeServerClosedConnection =
+        kind.contains("EOFException", ignoreCase = true) ||
+            msg.contains("prematurely closed the connection", ignoreCase = true) ||
+            msg.contains("failed to parse http response", ignoreCase = true)
 
-        if (looksLikeServerClosedConnection) {
-            AppError.Unexpected(
-                "Connection dropped while saving the tournament. The tournament may still have been created; open the tournaments list to confirm.",
-            )
-        } else {
-            val details = msg.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""
-            AppError.Unexpected("$kind$details")
-        }
+    if (looksLikeServerClosedConnection) {
+        return AppError.Unexpected(
+            "Connection dropped while saving the tournament. The tournament may still have been created; open the tournaments list to confirm.",
+        )
     }
-}
 
-private fun String.limitForUi(limit: Int = 10_000): String {
-    val trimmed = trim()
-    return if (trimmed.length <= limit) trimmed else trimmed.take(limit) + "…(truncated)"
+    return toRepositoryAppError()
 }
 
 private fun Map<String, Any?>.toTablePatchRequestDto(): TablePatchRequestDto = TablePatchRequestDto(

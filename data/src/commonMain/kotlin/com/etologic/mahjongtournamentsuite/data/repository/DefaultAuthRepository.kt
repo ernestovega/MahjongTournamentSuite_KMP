@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
 import co.touchlab.kermit.Logger
-import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
@@ -17,9 +16,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
-import io.ktor.client.plugins.HttpRequestTimeoutException
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.CancellationException
 
 class DefaultAuthRepository(
     private val backendApi: FunctionsBackendApi,
@@ -125,12 +121,12 @@ class DefaultAuthRepository(
             key = "global:profile",
             refreshMode = refreshMode,
             revision = {
-                withFreshIdToken { token ->
+                withFreshToken { token ->
                     backendApi.globalDataVersions(token).resources["users"]?.revision ?: 0
                 }
             },
             load = {
-                val me = withFreshIdToken { idToken -> backendApi.me(idToken = idToken) }
+                val me = withFreshToken { idToken -> backendApi.me(idToken = idToken) }
                 UserProfile(
                     uid = me.uid,
                     email = me.email,
@@ -146,40 +142,12 @@ class DefaultAuthRepository(
         },
     )
 
-    private suspend fun <T> withFreshIdToken(
+    private suspend fun <T> withFreshToken(
         block: suspend (String) -> T,
-    ): T {
-        val current = currentSession() ?: error("No active session")
-
-        return try {
-            block(current.idToken)
-        } catch (e: BackendHttpException) {
-            if (e.status != HttpStatusCode.Unauthorized) throw e
-
-            when (val refreshed = refreshSession()) {
-                is AppResult.Success -> block(refreshed.value.idToken)
-                is AppResult.Failure -> throw e
-            }
-        }
-    }
+    ): T = this@DefaultAuthRepository.withFreshIdToken(block)
 }
 
-private fun Throwable.toAppError(): AppError = when (this) {
-    is CancellationException -> throw this
-    is HttpRequestTimeoutException,
-    -> AppError.Unexpected("Request timed out contacting the backend. Check VPN/firewall and try again.")
-    is BackendHttpException -> AppError.Unexpected("Backend error ${status.value}: ${responseBody.limitForUi()}")
-    else -> {
-        val kind = this::class.simpleName ?: "Error"
-        val details = message?.takeIf { it.isNotBlank() }?.let { ": $it" } ?: ""
-        AppError.Unexpected("$kind$details")
-    }
-}
-
-private fun String.limitForUi(limit: Int = 10_000): String {
-    val trimmed = trim()
-    return if (trimmed.length <= limit) trimmed else trimmed.take(limit) + "…(truncated)"
-}
+private fun Throwable.toAppError(): AppError = toRepositoryAppError()
 
 private fun StoredAuthSession.toDomain(): AuthSession = AuthSession(
     uid = uid,

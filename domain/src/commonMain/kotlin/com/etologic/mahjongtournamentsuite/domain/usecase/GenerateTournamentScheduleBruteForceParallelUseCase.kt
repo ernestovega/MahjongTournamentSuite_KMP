@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.domain.usecase
 
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.coroutineScope
@@ -21,8 +23,10 @@ data class TournamentScheduleCalcProgress(
 
 data class TournamentScheduleCalcResult(
     val triesUsed: Long,
-    val players: List<com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer>,
-    val tables: List<com.etologic.mahjongtournamentsuite.domain.model.TournamentTable>,
+    /** Random seed used for this generation. Useful for diagnostics and audit logs. */
+    val randomSeed: Long,
+    val players: List<TournamentPlayer>,
+    val tables: List<TournamentTable>,
 )
 
 /**
@@ -42,6 +46,7 @@ class GenerateTournamentScheduleBruteForceParallelUseCase {
         if (numRounds <= 0) return@coroutineScope null
 
         val safeConcurrency = maxConcurrency.coerceAtLeast(1)
+        val randomSeed = Random.Default.nextLong()
 
         val players = generatePlayers(numPlayers)
         val teamByPlayerId = IntArray(numPlayers + 1) { 0 }.also { teams ->
@@ -87,7 +92,7 @@ class GenerateTournamentScheduleBruteForceParallelUseCase {
 
         val workers = List(safeConcurrency) { workerIndex ->
             launch(Dispatchers.Default) {
-                val seedBase = 0x1f3d5b79L + (workerIndex.toLong() shl 32)
+                val seedBase = randomSeed + (workerIndex.toLong() shl 32)
                 for (tryNumber in tries) {
                     ensureActive()
                     if (found.isCompleted) break
@@ -129,7 +134,7 @@ class GenerateTournamentScheduleBruteForceParallelUseCase {
 
         val (triesUsed, tablePlayers) = found.await()
         val domainPlayers = players.map { p ->
-            com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer(
+            TournamentPlayer(
                 id = p.id,
                 name = "Player ${p.id}",
                 team = p.team,
@@ -144,6 +149,7 @@ class GenerateTournamentScheduleBruteForceParallelUseCase {
 
         TournamentScheduleCalcResult(
             triesUsed = triesUsed,
+            randomSeed = randomSeed,
             players = domainPlayers,
             tables = domainTables,
         )
@@ -190,81 +196,77 @@ private fun attemptGenerateTournament(
 
         for (currentTable in 1..numTablesPerRound) {
             for (currentSeat in 1..4) {
-                val arrayPlayersIdsNotDiscarded = playersNotUsedThisRound.toIntArray()
-                val playersIdsNotDiscarded = BooleanArray(numPlayers + 1) { false }.also { alive ->
-                    for (id in arrayPlayersIdsNotDiscarded) alive[id] = true
-                }
-
-                var playerFound = false
-                var safeGuard = 0
-
-                while (!playerFound) {
-                    if (safeGuard++ > 50_000) return null
-
-                    var hasAnyCandidate = false
-                    for (id in 1..numPlayers) {
-                        if (playersIdsNotDiscarded[id]) {
-                            hasAnyCandidate = true
-                            break
-                        }
-                    }
-                    if (!hasAnyCandidate) break
-
-                    val r = rng.nextInt(arrayPlayersIdsNotDiscarded.size)
-                    val candidateId = arrayPlayersIdsNotDiscarded[r]
-                    if (!playersIdsNotDiscarded[candidateId]) continue
-
-                    playersIdsNotDiscarded[candidateId] = false
-
-                    val chosenId = candidateId
-
-                    val rivals = getRivals(
-                        tablePlayers = tablePlayers,
-                        chosenId = chosenId,
-                        currentRound = currentRound,
-                        numRounds = numRounds,
-                        numPlayers = numPlayers,
-                    )
-
-                    var anyoneHavePlayed = false
-                    var sameTeamConflict = false
-                    val chosenTeam = teamByPlayerId[chosenId]
-
-                    for (tp in tablePlayers) {
-                        if (tp.round == currentRound && tp.table == currentTable) {
-                            if (rivals[tp.playerId]) {
-                                anyoneHavePlayed = true
-                                break
-                            }
-                            if (isTeamsChecked && teamByPlayerId[tp.playerId] == chosenTeam) {
-                                sameTeamConflict = true
-                                break
-                            }
-                        }
-                    }
-
-                    if (anyoneHavePlayed || sameTeamConflict) {
-                        playerFound = false
-                    } else {
-                        playerFound = true
-                        tablePlayers.add(
-                            TablePlayer(
-                                round = currentRound,
-                                table = currentTable,
-                                seat = currentSeat,
-                                playerId = chosenId,
-                            ),
-                        )
-                        playersNotUsedThisRound.remove(chosenId)
-                    }
-                }
-
-                if (!playerFound) return null
+                val chosenId = choosePlayerForSeat(
+                    playersNotUsedThisRound = playersNotUsedThisRound,
+                    tablePlayers = tablePlayers,
+                    currentRound = currentRound,
+                    currentTable = currentTable,
+                    numRounds = numRounds,
+                    numPlayers = numPlayers,
+                    isTeamsChecked = isTeamsChecked,
+                    teamByPlayerId = teamByPlayerId,
+                    rng = rng,
+                ) ?: return null
+                tablePlayers.add(
+                    TablePlayer(
+                        round = currentRound,
+                        table = currentTable,
+                        seat = currentSeat,
+                        playerId = chosenId,
+                    ),
+                )
             }
         }
     }
 
     return tablePlayers
+}
+
+private fun choosePlayerForSeat(
+    playersNotUsedThisRound: MutableList<Int>,
+    tablePlayers: List<TablePlayer>,
+    currentRound: Int,
+    currentTable: Int,
+    numRounds: Int,
+    numPlayers: Int,
+    isTeamsChecked: Boolean,
+    teamByPlayerId: IntArray,
+    rng: Random,
+): Int? {
+    val candidateIds = playersNotUsedThisRound.toIntArray()
+    val available = BooleanArray(numPlayers + 1).also { flags ->
+        candidateIds.forEach { flags[it] = true }
+    }
+    var safeGuard = 0
+
+    while (true) {
+        if (safeGuard++ > 50_000) return null
+        if (candidateIds.none { available[it] }) return null
+
+        val candidateId = candidateIds[rng.nextInt(candidateIds.size)]
+        if (!available[candidateId]) continue
+        available[candidateId] = false
+
+        val rivals = getRivals(
+            tablePlayers = tablePlayers,
+            chosenId = candidateId,
+            currentRound = currentRound,
+            numRounds = numRounds,
+            numPlayers = numPlayers,
+        )
+        val chosenTeam = teamByPlayerId[candidateId]
+        val conflicts = tablePlayers.any { player ->
+            player.round == currentRound &&
+                player.table == currentTable &&
+                (rivals[player.playerId] ||
+                    (isTeamsChecked && teamByPlayerId[player.playerId] == chosenTeam))
+        }
+
+        if (!conflicts) {
+            playersNotUsedThisRound.remove(candidateId)
+            return candidateId
+        }
+    }
 }
 
 private fun getRivals(
@@ -300,25 +302,25 @@ private fun generateTables(
     tablePlayers: List<TablePlayer>,
     numRounds: Int,
     numTablesPerRound: Int,
-): List<com.etologic.mahjongtournamentsuite.domain.model.TournamentTable> {
-    val tables = ArrayList<com.etologic.mahjongtournamentsuite.domain.model.TournamentTable>(
+): List<TournamentTable> {
+    val tables = ArrayList<TournamentTable>(
         numRounds * numTablesPerRound,
     )
+    val playersByTable = tablePlayers.groupBy { it.round to it.table }
 
     for (currentRound in 1..numRounds) {
         for (currentTable in 1..numTablesPerRound) {
-            val p1 = tablePlayers.firstOrNull { it.round == currentRound && it.table == currentTable && it.seat == 1 }?.playerId
-            val p2 = tablePlayers.firstOrNull { it.round == currentRound && it.table == currentTable && it.seat == 2 }?.playerId
-            val p3 = tablePlayers.firstOrNull { it.round == currentRound && it.table == currentTable && it.seat == 3 }?.playerId
-            val p4 = tablePlayers.firstOrNull { it.round == currentRound && it.table == currentTable && it.seat == 4 }?.playerId
+            val players = playersByTable[currentRound to currentTable]
+                ?.sortedBy { it.seat }
+                ?.map { it.playerId }
 
-            if (p1 == null || p2 == null || p3 == null || p4 == null) return emptyList()
+            if (players == null || players.size != 4) return emptyList()
 
             tables.add(
-                com.etologic.mahjongtournamentsuite.domain.model.TournamentTable(
+                TournamentTable(
                     roundId = currentRound,
                     tableId = currentTable,
-                    playerIds = listOf(p1, p2, p3, p4),
+                    playerIds = players,
                     isCompleted = false,
                     useTotalsOnly = true,
                     usePointsCalculation = true,

@@ -30,5 +30,6 @@ out/
 Thumbs.db
 firebase/functions/local-player-sync.env
 firebase/functions/.firebase-reset-backups/
+firebase/functions/migration-audits/
 .firebase/
 firebase-debug.log

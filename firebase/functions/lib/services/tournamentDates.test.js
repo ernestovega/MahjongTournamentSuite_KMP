@@ -15,4 +15,7 @@ const tournamentDates_1 = require("./tournamentDates");
     strict_1.default.equal((0, tournamentDates_1.isValidIsoDate)("2028-02-29"), true);
     strict_1.default.equal((0, tournamentDates_1.isValidIsoDateRange)("2026-09-26", "2026-09-23"), false);
 });
+(0, node_test_1.default)("counts both dates in a valid period", () => {
+    strict_1.default.equal((0, tournamentDates_1.inclusiveDayCount)("2025-02-01", "2025-02-02"), 2);
+});
 //# sourceMappingURL=tournamentDates.test.js.map

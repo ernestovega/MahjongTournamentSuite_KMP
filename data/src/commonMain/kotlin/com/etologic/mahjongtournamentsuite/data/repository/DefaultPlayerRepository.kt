@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
 import co.touchlab.kermit.Logger
-import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
@@ -13,8 +12,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.CancellationException
 import kotlin.io.encoding.Base64
 
 class DefaultPlayerRepository(
@@ -95,18 +92,8 @@ class DefaultPlayerRepository(
         },
     )
 
-    private suspend fun <T> withFreshIdToken(block: suspend (String) -> T): T {
-        val session = authRepository.currentSession() ?: error("No active session")
-        return try {
-            block(session.idToken)
-        } catch (error: BackendHttpException) {
-            if (error.status != HttpStatusCode.Unauthorized) throw error
-            when (val refreshed = authRepository.refreshSession()) {
-                is AppResult.Success -> block(refreshed.value.idToken)
-                is AppResult.Failure -> throw error
-            }
-        }
-    }
+    private suspend fun <T> withFreshIdToken(block: suspend (String) -> T): T =
+        authRepository.withFreshIdToken(block)
 
     private fun com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto.toPlayer() = Player(
         emaId = emaId,
@@ -124,8 +111,4 @@ private const val PLAYERS_CACHE_KEY = "global:emaPlayers"
 private fun String.toPlayerCountryCode(): String =
     trim().uppercase().takeUnless { it == "EU" }.orEmpty()
 
-private fun Throwable.toAppError(): AppError = when (this) {
-    is CancellationException -> throw this
-    is BackendHttpException -> AppError.Unexpected("Backend error ${status.value}: ${responseBody}")
-    else -> AppError.Unexpected(message ?: "Shared player request failed.")
-}
+private fun Throwable.toAppError(): AppError = toRepositoryAppError("Shared player request failed.")

@@ -13,8 +13,8 @@ const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const tournamentDates_1 = require("./tournamentDates");
 const usersService_1 = require("./usersService");
-const mers_1 = require("./mers");
 const dataVersionsService_1 = require("./dataVersionsService");
+const tournamentSchedule_1 = require("./tournamentSchedule");
 function toIsoString(value) {
     if (value instanceof firestore_1.Timestamp)
         return value.toDate().toISOString();
@@ -50,6 +50,11 @@ async function resolveCreatedByName(uid) {
 async function mapTournamentDoc(d) {
     const createdByUid = d.get("createdByUid") ?? d.get("createdBy") ?? null;
     const createdByName = d.get("createdByName") ?? await resolveCreatedByName(createdByUid);
+    const numRounds = Number(d.get("numRounds") ?? 0);
+    const eventStartDate = d.get("eventStartDate") ?? d.get("eventDate") ?? null;
+    const eventEndDate = d.get("eventEndDate") ?? d.get("eventDate") ?? null;
+    const safeStartDate = eventStartDate ?? "0000-01-01";
+    const safeEndDate = eventEndDate ?? "9999-12-31";
     return {
         id: d.id,
         name: d.get("name") ?? "",
@@ -60,12 +65,13 @@ async function mapTournamentDoc(d) {
         associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
         hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
         hostCity: String(d.get("hostCity") ?? "").trim(),
-        mers: Number(d.get("mers") ?? 0),
         isTeams: d.get("isTeams") ?? false,
         numPlayers: d.get("numPlayers") ?? 0,
-        numRounds: d.get("numRounds") ?? 0,
-        eventStartDate: d.get("eventStartDate") ?? d.get("eventDate") ?? null,
-        eventEndDate: d.get("eventEndDate") ?? d.get("eventDate") ?? null,
+        numRounds,
+        eventStartDate,
+        eventEndDate,
+        roundSchedules: (0, tournamentSchedule_1.readStoredRoundSchedules)(d.get("roundSchedules"), numRounds, safeStartDate, safeEndDate),
+        agendaItems: (0, tournamentSchedule_1.readStoredAgendaItems)(d.get("agendaItems"), safeStartDate, safeEndDate),
         numTries: d.get("numTries") ?? 0,
         isCompleted: d.get("isCompleted") ?? false,
         createdByUid,
@@ -83,6 +89,8 @@ async function createTournament(params) {
     if (params.tables.length !== expectedTables) {
         throw (0, httpError_1.badRequest)("Invalid tables payload", { expected: expectedTables, received: params.tables.length });
     }
+    const roundSchedules = (0, tournamentSchedule_1.normalizeRoundSchedules)(params.roundSchedules, params.numRounds, params.eventStartDate, params.eventEndDate);
+    const agendaItems = (0, tournamentSchedule_1.normalizeAgendaItems)(params.agendaItems, params.eventStartDate, params.eventEndDate);
     const ref = firebase_1.db.collection("tournaments").doc();
     const logo = params.associationLogoContentType && params.associationLogoDataBase64
         ? await saveAssociationLogo(ref.id, params.associationLogoContentType, params.associationLogoDataBase64)
@@ -99,15 +107,11 @@ async function createTournament(params) {
         eventEndDate: params.eventEndDate,
         hostCountry: params.hostCountry.trim().toUpperCase(),
         hostCity: params.hostCity.trim(),
-        mers: (0, mers_1.calculateMers)({
-            startDate: params.eventStartDate,
-            endDate: params.eventEndDate,
-            participantCount: params.numPlayers,
-            representedCountries: [],
-        }),
         isTeams: params.isTeams,
         numPlayers: params.numPlayers,
         numRounds: params.numRounds,
+        roundSchedules,
+        agendaItems,
         numTries: params.numTries,
         isCompleted: false,
         createdByUid: params.createdByUid,
@@ -322,6 +326,13 @@ async function updateTournamentSettings(params) {
     const before = await ref.get();
     if (!before.exists)
         throw (0, httpError_1.notFound)("Tournament not found");
+    const numRounds = Number(before.get("numRounds") ?? 0);
+    const roundSchedules = params.roundSchedules === undefined
+        ? (0, tournamentSchedule_1.readStoredRoundSchedules)(before.get("roundSchedules"), numRounds, params.eventStartDate, params.eventEndDate)
+        : (0, tournamentSchedule_1.normalizeRoundSchedules)(params.roundSchedules, numRounds, params.eventStartDate, params.eventEndDate);
+    const agendaItems = params.agendaItems === undefined
+        ? (0, tournamentSchedule_1.readStoredAgendaItems)(before.get("agendaItems"), params.eventStartDate, params.eventEndDate)
+        : (0, tournamentSchedule_1.normalizeAgendaItems)(params.agendaItems, params.eventStartDate, params.eventEndDate);
     const oldLogoPath = String(before.get("associationLogoPath") ?? "").trim();
     let logo;
     if (params.removeAssociationLogo === true) {
@@ -344,13 +355,8 @@ async function updateTournamentSettings(params) {
         eventEndDate: params.eventEndDate,
         hostCountry: params.hostCountry.trim().toUpperCase(),
         hostCity: params.hostCity.trim(),
-        mers: (0, mers_1.calculateMers)({
-            startDate: params.eventStartDate,
-            endDate: params.eventEndDate,
-            participantCount: Number(before.get("numPlayers") ?? 0),
-            representedCountries: (await ref.collection("players").get()).docs
-                .map((player) => String(player.get("assignedCountry") ?? "")),
-        }),
+        roundSchedules,
+        agendaItems,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
     if (logo !== undefined) {
@@ -358,7 +364,10 @@ async function updateTournamentSettings(params) {
         update.associationLogoUrl = logo?.url ?? null;
     }
     await ref.update(update);
-    await (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments");
+    await Promise.all([
+        (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments"),
+        (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "rounds"),
+    ]);
     if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
         await firebase_1.storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);
     }

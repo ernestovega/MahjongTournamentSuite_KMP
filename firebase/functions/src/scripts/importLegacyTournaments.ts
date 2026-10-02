@@ -206,7 +206,6 @@ function buildDocuments(selectedTournamentIds: number[]): FirestoreDocument[] {
         associationLogoUrl: nullableStringValue(null),
         hostCountry: stringValue("ESP"),
         hostCity: stringValue("Madrid"),
-        mers: integerValue(0),
         isTeams: booleanValue(Boolean(tournament.IsTeams)),
         numPlayers: integerValue(Number(tournament.NumPlayers)),
         numRounds: integerValue(Number(tournament.NumRounds)),

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   blocksAssignmentChangeAfterProgress,
+  hasDuplicateEmaAssignments,
   hasFourValidScores,
   hasValidTablePoints,
 } from "./tournamentContentRules";
@@ -37,4 +38,10 @@ test("requires four numeric table-point values that total seven", () => {
   assert.equal(hasValidTablePoints([4, 2, 1, 0]), true);
   assert.equal(hasValidTablePoints([4, 2, 1, 1]), false);
   assert.equal(hasValidTablePoints([4, 2, 1]), false);
+});
+
+test("detects duplicate EMA assignments and ignores empty slots", () => {
+  assert.equal(hasDuplicateEmaAssignments(["12345678", "87654321", null, ""]), false);
+  assert.equal(hasDuplicateEmaAssignments(["12345678", "12345678", null]), true);
+  assert.equal(hasDuplicateEmaAssignments([" 12345678 ", "12345678"]), true);
 });

@@ -17,7 +17,6 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.RankingsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
-import com.etologic.mahjongtournamentsuite.presentation.TableRoute
 import com.etologic.mahjongtournamentsuite.presentation.TablesRoute
 import com.etologic.mahjongtournamentsuite.presentation.TimerRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
@@ -30,7 +29,6 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SplashScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.TableManagerScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TablesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
@@ -44,28 +42,31 @@ import org.koin.dsl.koinConfiguration
 @Composable
 @Preview
 fun App() {
-    KoinApplication(
-        configuration = koinConfiguration {
-            modules(dataModule, presentationModule)
-        },
-    ) {
+    AppWithModules {
         MahjongTournamentSuiteApp()
     }
 }
 
 @Composable
 fun RankingApp(tournamentId: String) {
-    KoinApplication(
-        configuration = koinConfiguration {
-            modules(dataModule, presentationModule)
-        },
-    ) {
+    AppWithModules {
         val themeController = rememberThemeController()
         CompositionLocalProvider(LocalThemeController provides themeController) {
             MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                 RankingStandaloneScreen(tournamentId)
             }
         }
+    }
+}
+
+@Composable
+private fun AppWithModules(content: @Composable () -> Unit) {
+    KoinApplication(
+        configuration = koinConfiguration {
+            modules(dataModule, presentationModule)
+        },
+    ) {
+        content()
     }
 }
 
@@ -117,15 +118,6 @@ private fun MahjongTournamentSuiteApp() {
                     TablesScreen(
                         navController = navController,
                         tournamentId = args.tournamentId,
-                    )
-                }
-                composable<TableRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<TableRoute>()
-                    TableManagerScreen(
-                        navController = navController,
-                        tournamentId = args.tournamentId,
-                        roundId = args.roundId,
-                        tableId = args.tableId,
                     )
                 }
                 composable<TimerRoute> { TimerStandaloneScreen() }

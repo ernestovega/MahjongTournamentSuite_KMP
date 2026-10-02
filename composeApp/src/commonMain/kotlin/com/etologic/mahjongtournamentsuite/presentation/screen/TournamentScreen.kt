@@ -96,7 +96,7 @@ private sealed class PendingUnsavedAction {
 }
 
 @Composable
-fun TournamentScreen(
+private fun LegacyTournamentScreen(
     navController: NavHostController,
     tournamentId: String,
 ) {
@@ -341,7 +341,7 @@ fun TournamentScreen(
         val roundId = selectedRoundId ?: return true
         val tableId = selectedTableId ?: return true
 
-        val tablePatch = editor.buildTablePatch()
+        val tablePatch = editor.buildApplicationTablePatch()
         val handPatches = editor.buildHandPatches()
         if (tablePatch.isEmpty() && handPatches.isEmpty()) return true
 
@@ -738,7 +738,7 @@ private fun RoundTableSidebar(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         CompletionStatusInfoIcon(
-                            description = "Empty: all tables are empty.\nProgress: at least one table has data.\nManual: at least one table has valid saved Manual Scores or Manual Points.\nCompleted: all tables are completed without a manual mode.",
+                            description = "Empty: all tables are empty.\nProgress: at least one table has data.\nManual: at least one table has valid saved Manual Scores.\nCompleted: all tables are completed without a manual mode.",
                         )
                     }
                     LazyColumnWithScrollbar(
@@ -791,7 +791,7 @@ private fun RoundTableSidebar(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         CompletionStatusInfoIcon(
-                            description = "Empty: no table data.\nProgress: table data exists.\nManual: valid Manual Scores or Manual Points are saved.\nCompleted: hands are completed and no manual mode is active.",
+                            description = "Empty: no table data.\nProgress: table data exists.\nManual: valid Manual Scores are saved.\nCompleted: hands are completed without manual mode.",
                         )
                     }
 
@@ -920,7 +920,7 @@ internal fun firstTournamentTableToOpen(tables: List<TournamentTable>): Tourname
     } ?: orderedTables.firstOrNull()
 }
 
-private fun roundCompletionStatus(tables: List<TournamentTable>): CompletionStatus = when {
+internal fun roundCompletionStatus(tables: List<TournamentTable>): CompletionStatus = when {
     tables.isEmpty() -> CompletionStatus.Empty
     tables.any { tableCompletionStatus(it) == CompletionStatus.Manual } -> CompletionStatus.Manual
     tables.all { tableCompletionStatus(it) == CompletionStatus.Completed } -> CompletionStatus.Completed

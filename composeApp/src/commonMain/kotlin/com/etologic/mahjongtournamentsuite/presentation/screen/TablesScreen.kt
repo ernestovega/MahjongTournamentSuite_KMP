@@ -31,7 +31,7 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.presentation.TableRoute
+import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
@@ -285,11 +285,7 @@ fun TablesScreen(
                                             lastFocusedTableKey = "${table.roundId}_${table.tableId}"
                                             lastFocusedTableControl = "row"
                                             navController.navigate(
-                                                TableRoute(
-                                                    tournamentId = tournamentId,
-                                                    roundId = table.roundId,
-                                                    tableId = table.tableId,
-                                                ),
+                                                TournamentRoute(tournamentId),
                                             )
                                         },
                                     ) {
@@ -332,11 +328,7 @@ fun TablesScreen(
                                                         lastFocusedTableKey = "${table.roundId}_${table.tableId}"
                                                         lastFocusedTableControl = "menu"
                                                         navController.navigate(
-                                                            TableRoute(
-                                                                tournamentId = tournamentId,
-                                                                roundId = table.roundId,
-                                                                tableId = table.tableId,
-                                                            ),
+                                                            TournamentRoute(tournamentId),
                                                         )
                                                     },
                                                 ),

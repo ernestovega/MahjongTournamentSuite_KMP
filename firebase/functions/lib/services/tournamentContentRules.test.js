@@ -31,4 +31,9 @@ const tournamentContentRules_1 = require("./tournamentContentRules");
     strict_1.default.equal((0, tournamentContentRules_1.hasValidTablePoints)([4, 2, 1, 1]), false);
     strict_1.default.equal((0, tournamentContentRules_1.hasValidTablePoints)([4, 2, 1]), false);
 });
+(0, node_test_1.default)("detects duplicate EMA assignments and ignores empty slots", () => {
+    strict_1.default.equal((0, tournamentContentRules_1.hasDuplicateEmaAssignments)(["12345678", "87654321", null, ""]), false);
+    strict_1.default.equal((0, tournamentContentRules_1.hasDuplicateEmaAssignments)(["12345678", "12345678", null]), true);
+    strict_1.default.equal((0, tournamentContentRules_1.hasDuplicateEmaAssignments)([" 12345678 ", "12345678"]), true);
+});
 //# sourceMappingURL=tournamentContentRules.test.js.map

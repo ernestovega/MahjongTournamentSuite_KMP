@@ -2,8 +2,8 @@ import ExcelJS = require("exceljs");
 
 import { badRequest, notFound } from "../api/httpError";
 import { db } from "../firebase";
-import { inclusiveDayCount } from "./mers";
 import { EMA_PLAYER_REGISTRY_COLLECTION, validateEmaId } from "./playersService";
+import { inclusiveDayCount } from "./tournamentDates";
 
 export const EMA_REPORT_HEADERS = [
   "Tournament name",
@@ -19,7 +19,6 @@ export const EMA_REPORT_HEADERS = [
   "Date",
   "Countrycourt",
   "city",
-  "mers",
   "shortname",
   "rules",
   "period",
@@ -45,7 +44,6 @@ export type EmaReportInput = {
   endDate: string;
   hostCountry: string;
   hostCity: string;
-  mers: number;
   shortName: string;
   rows: EmaReportRow[];
 };
@@ -113,7 +111,6 @@ export async function buildEmaReport(input: EmaReportInput): Promise<Buffer> {
       eventDate,
       input.hostCountry,
       input.hostCity,
-      input.mers,
       input.shortName,
       "Chinese official",
       period,
@@ -193,7 +190,6 @@ export async function generateEmaReport(params: {
     endDate: String(tournament.get("eventEndDate") ?? ""),
     hostCountry: String(tournament.get("hostCountry") ?? ""),
     hostCity: String(tournament.get("hostCity") ?? ""),
-    mers: Number(tournament.get("mers") ?? 0),
     shortName: String(tournament.get("shortName") ?? ""),
     rows: reportRows,
   });

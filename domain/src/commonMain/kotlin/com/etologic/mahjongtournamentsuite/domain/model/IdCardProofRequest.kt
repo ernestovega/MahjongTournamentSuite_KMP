@@ -7,4 +7,5 @@ data class IdCardProofRequest(
     val associationLogoContentType: String? = null,
     val associationLogoBytes: ByteArray? = null,
     val associationLogoUrl: String? = null,
+    val roundSchedules: List<TournamentRoundSchedule> = emptyList(),
 )

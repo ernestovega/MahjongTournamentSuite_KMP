@@ -14,9 +14,10 @@ data class TournamentDto(
     val associationLogoUrl: String? = null,
     val hostCountry: String = "",
     val hostCity: String = "",
-    val mers: Double = 0.0,
     val eventStartDate: String? = null,
     val eventEndDate: String? = null,
+    val roundSchedules: List<TournamentRoundScheduleDto> = emptyList(),
+    val agendaItems: List<TournamentAgendaItemDto> = emptyList(),
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
     val createdByUid: String? = null,
@@ -52,6 +53,8 @@ data class CreateTournamentRequestDto(
     val associationLogoSourceTournamentId: String? = null,
     val hostCountry: String,
     val hostCity: String,
+    val roundSchedules: List<TournamentRoundScheduleDto>? = null,
+    val agendaItems: List<TournamentAgendaItemDto>? = null,
 )
 
 @Serializable
@@ -72,6 +75,23 @@ data class UpdateTournamentSettingsRequestDto(
     val associationLogoDataBase64: String? = null,
     val associationLogoSourceTournamentId: String? = null,
     val removeAssociationLogo: Boolean = false,
+    val roundSchedules: List<TournamentRoundScheduleDto>? = null,
+    val agendaItems: List<TournamentAgendaItemDto>? = null,
+)
+
+@Serializable
+data class TournamentRoundScheduleDto(
+    val roundId: Int,
+    val date: String? = null,
+    val startTime: String? = null,
+)
+
+@Serializable
+data class TournamentAgendaItemDto(
+    val title: String,
+    val date: String? = null,
+    val startTime: String? = null,
+    val endTime: String? = null,
 )
 
 @Serializable
@@ -82,6 +102,7 @@ data class IdCardProofRequestDto(
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
     val associationLogoUrl: String? = null,
+    val roundSchedules: List<TournamentRoundScheduleDto> = emptyList(),
 )
 
 @Serializable

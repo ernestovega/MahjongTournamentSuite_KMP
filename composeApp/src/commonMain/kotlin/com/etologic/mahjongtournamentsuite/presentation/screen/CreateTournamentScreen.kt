@@ -71,11 +71,17 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreviewButton
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AgendaItemEditorRow
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentScheduleEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
+import com.etologic.mahjongtournamentsuite.presentation.components.synchronizeRoundScheduleRows
+import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentAgendaItems
+import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentRoundSchedules
+import com.etologic.mahjongtournamentsuite.presentation.components.tournamentScheduleEditorError
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
@@ -138,6 +144,10 @@ fun CreateTournamentDialog(
     var showDateRangePicker by remember { mutableStateOf(false) }
     var numPlayersText by remember { mutableStateOf("60") }
     var numRoundsText by remember { mutableStateOf("7") }
+    var roundScheduleRows by remember {
+        mutableStateOf(synchronizeRoundScheduleRows(emptyList(), 7))
+    }
+    var agendaRows by remember { mutableStateOf<List<AgendaItemEditorRow>>(emptyList()) }
     var isTeams by remember { mutableStateOf(true) }
     var computeMode by remember { mutableStateOf(CreateTournamentPresenter.ComputeMode.LIGHT) }
 
@@ -251,6 +261,16 @@ fun CreateTournamentDialog(
             roundsFocusRequester.requestFocus()
             return
         }
+        val scheduleError = tournamentScheduleEditorError(
+            roundRows = roundScheduleRows,
+            agendaRows = agendaRows,
+            eventStartDate = trimmedStartDate,
+            eventEndDate = trimmedEndDate,
+        )
+        if (scheduleError != null) {
+            errorMessage = "* $scheduleError"
+            return
+        }
 
         errorMessage = null
         isLoading = true
@@ -277,6 +297,8 @@ fun CreateTournamentDialog(
                     isTeams = isTeams,
                     numPlayers = numPlayers,
                     numRounds = numRounds,
+                    roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
+                    agendaItems = agendaRows.toTournamentAgendaItems(),
                     computeMode = computeMode,
                     onProgress = progressSink,
                 )) {
@@ -361,7 +383,13 @@ fun CreateTournamentDialog(
                         )
                         OutlinedTextField(
                             value = numRoundsText,
-                            onValueChange = { numRoundsText = it },
+                            onValueChange = { value ->
+                                numRoundsText = value
+                                roundScheduleRows = synchronizeRoundScheduleRows(
+                                    rows = roundScheduleRows,
+                                    roundCount = value.trim().toIntOrNull() ?: 0,
+                                )
+                            },
                             label = { Text("Rounds") },
                             modifier = Modifier.weight(1f).focusRequester(roundsFocusRequester),
                             singleLine = true,
@@ -438,6 +466,15 @@ fun CreateTournamentDialog(
                             enabled = !isLoading,
                         )
                     }
+                    TournamentScheduleEditor(
+                        roundRows = roundScheduleRows,
+                        onRoundRowsChange = { roundScheduleRows = it },
+                        agendaRows = agendaRows,
+                        onAgendaRowsChange = { agendaRows = it },
+                        enabled = !isLoading,
+                        minimumDisplayDate = eventStartDate,
+                        maximumDisplayDate = eventEndDate,
+                    )
                     TournamentColorField(
                         value = primaryColor,
                         enabled = !isLoading,
@@ -515,6 +552,7 @@ fun CreateTournamentDialog(
                         associationLogoContentType = associationLogo?.contentType,
                         associationLogoBytes = associationLogo?.bytes,
                         associationLogoUrl = reusedLogoTournament?.associationLogoUrl,
+                        roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
                         onError = { errorMessage = it },
                     )
 

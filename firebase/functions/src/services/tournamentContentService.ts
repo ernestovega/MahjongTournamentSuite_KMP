@@ -1,9 +1,9 @@
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { conflict, notFound } from "../api/httpError";
-import { calculateMers } from "./mers";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import {
+  hasDuplicateEmaAssignments,
   hasFourValidScores,
   hasValidTablePoints,
 } from "./tournamentContentRules";
@@ -31,21 +31,6 @@ function readNonMember(value: unknown): NonMemberPlayer | null {
   return firstName && lastName && country ? { firstName, lastName, country } : null;
 }
 
-async function updateTournamentMers(tournamentId: string): Promise<void> {
-  const ref = db.collection("tournaments").doc(tournamentId);
-  const [tournament, players] = await Promise.all([ref.get(), ref.collection("players").get()]);
-  if (!tournament.exists) return;
-  await ref.update({
-    mers: calculateMers({
-      startDate: String(tournament.get("eventStartDate") ?? ""),
-      endDate: String(tournament.get("eventEndDate") ?? ""),
-      participantCount: Number(tournament.get("numPlayers") ?? 0),
-      representedCountries: players.docs.map((player) => String(player.get("assignedCountry") ?? "")),
-    }),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-}
-
 async function refreshAssignmentCountries(tournamentId: string): Promise<void> {
   const players = await db.collection("tournaments").doc(tournamentId).collection("players").get();
   const emaIds = [...new Set(players.docs.map((player) => player.get("assignedEmaId"))
@@ -60,7 +45,6 @@ async function refreshAssignmentCountries(tournamentId: string): Promise<void> {
     batch.update(player.ref, { assignedCountry: emaId == null ? nonMember?.country ?? "" : countries.get(emaId) ?? "" });
   });
   await batch.commit();
-  await updateTournamentMers(tournamentId);
 }
 
 export type TournamentTeam = {
@@ -177,10 +161,10 @@ export async function updateTournamentTeam(params: {
     }
 
     const desiredEmaIds = params.emaIds.map((emaId) => emaId?.trim() || null);
-    const assignedDesired = desiredEmaIds.filter((emaId): emaId is string => emaId != null);
-    if (new Set(assignedDesired).size !== assignedDesired.length) {
+    if (hasDuplicateEmaAssignments(desiredEmaIds)) {
       throw conflict("A player cannot occupy two team slots");
     }
+    const assignedDesired = desiredEmaIds.filter((emaId): emaId is string => emaId != null);
 
     const currentByRef = new Map<string, string | null>();
     const sourceByEma = new Map<string, FirebaseFirestore.QueryDocumentSnapshot>();

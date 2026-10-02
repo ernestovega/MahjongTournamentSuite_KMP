@@ -6,8 +6,8 @@ exports.generateEmaReport = generateEmaReport;
 const ExcelJS = require("exceljs");
 const httpError_1 = require("../api/httpError");
 const firebase_1 = require("../firebase");
-const mers_1 = require("./mers");
 const playersService_1 = require("./playersService");
+const tournamentDates_1 = require("./tournamentDates");
 exports.EMA_REPORT_HEADERS = [
     "Tournament name",
     "Number of participants",
@@ -22,7 +22,6 @@ exports.EMA_REPORT_HEADERS = [
     "Date",
     "Countrycourt",
     "city",
-    "mers",
     "shortname",
     "rules",
     "period",
@@ -73,7 +72,7 @@ async function buildEmaReport(input) {
     sheet.addRow([...exports.EMA_REPORT_HEADERS]);
     const eventDate = dateFromIso(input.startDate);
     const period = periodText(input.startDate, input.endDate);
-    const days = (0, mers_1.inclusiveDayCount)(input.startDate, input.endDate);
+    const days = (0, tournamentDates_1.inclusiveDayCount)(input.startDate, input.endDate);
     input.rows.slice().sort((left, right) => left.place - right.place).forEach((row) => {
         sheet.addRow([
             input.tournamentName,
@@ -89,7 +88,6 @@ async function buildEmaReport(input) {
             eventDate,
             input.hostCountry,
             input.hostCity,
-            input.mers,
             input.shortName,
             "Chinese official",
             period,
@@ -170,7 +168,6 @@ async function generateEmaReport(params) {
         endDate: String(tournament.get("eventEndDate") ?? ""),
         hostCountry: String(tournament.get("hostCountry") ?? ""),
         hostCity: String(tournament.get("hostCity") ?? ""),
-        mers: Number(tournament.get("mers") ?? 0),
         shortName: String(tournament.get("shortName") ?? ""),
         rows: reportRows,
     });

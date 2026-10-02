@@ -74,6 +74,8 @@ import androidx.navigation.NavHostController
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -186,7 +188,7 @@ fun TableManagerScreen(
 
     suspend fun saveChanges(): Boolean {
         val editor = editorState ?: return true
-        val tablePatch = editor.buildTablePatch()
+        val tablePatch = editor.buildApplicationTablePatch()
         val handPatches = editor.buildHandPatches()
         if (tablePatch.isEmpty() && handPatches.isEmpty()) return true
 
@@ -485,13 +487,6 @@ fun TableManagerScreen(
                         editor.disableManualTotals()
                     }
                 },
-                onManualPointsChange = { checked ->
-                    if (checked) {
-                        editor.enableManualPoints()
-                    } else {
-                        editor.disableManualPoints()
-                    }
-                },
             )
         }
     }
@@ -506,9 +501,6 @@ internal fun TableManagerContent(
     initialFocusRequester: FocusRequester? = null,
     onManualTotalsChange: (Boolean) -> Unit = { checked ->
         if (checked) editor.enableManualTotals() else editor.disableManualTotals()
-    },
-    onManualPointsChange: (Boolean) -> Unit = { checked ->
-        if (checked) editor.enableManualPoints() else editor.disableManualPoints()
     },
 ) {
     val dependentSectionsEnabled = enabled && editor.hasCompleteSeatPositions
@@ -534,7 +526,6 @@ internal fun TableManagerContent(
     TablePointsSection(
         editor = editor,
         enabled = dependentSectionsEnabled,
-        onManualPointsChange = onManualPointsChange,
     )
 
     Spacer(modifier = Modifier.height(16.dp))
@@ -544,6 +535,420 @@ internal fun TableManagerContent(
         enabled = dependentSectionsEnabled,
         playerNamesById = playerNamesById,
     )
+}
+
+/** Compact card used by the round editor. The full hand grid opens in [TableHandsDialog]. */
+@Composable
+internal fun TableSummaryCard(
+    editor: TableManagerEditorState,
+    enabled: Boolean,
+    playerNamesById: Map<Int, String>,
+    onEditHands: () -> Unit,
+    cardFocusRequester: FocusRequester? = null,
+    editHandsFocusRequester: FocusRequester? = null,
+    onFocused: (() -> Unit)? = null,
+) {
+    val dependentSectionsEnabled = enabled && editor.hasCompleteSeatPositions
+    SectionCard(
+        modifier = Modifier
+            .then(cardFocusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
+            .focusable()
+            .appFocusGroup()
+            .onFocusChanged { if (it.isFocused) onFocused?.invoke() },
+        title = "Table ${editor.tableId}",
+        titleAction = {
+            CompletionStatusIcon(
+                status = if (!editor.useTotalsOnly && editor.isCompleted) {
+                    CompletionStatus.Completed
+                } else if (editor.useTotalsOnly) {
+                    CompletionStatus.Manual
+                } else if (editor.hands.any { it.isDone || it.handScore.isNotBlank() }) {
+                    CompletionStatus.InProgress
+                } else {
+                    CompletionStatus.Empty
+                },
+            )
+        },
+        actions = {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (editor.chickenHandCount > 0) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Chicken hands: ${editor.chickenHandCount}",
+                        tint = MaterialTheme.colorScheme.tertiary,
+                    )
+                }
+                editor.bestCompletedHandScore?.let { best ->
+                    Icon(
+                        imageVector = Icons.Default.Star,
+                        contentDescription = "Best completed hand: $best",
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
+            }
+        },
+    ) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            TableSummaryRow(label = "Seats") {
+            SeatPositionsRow(
+                playerIds = editor.playerIds,
+                east = editor.playerEastId,
+                south = editor.playerSouthId,
+                west = editor.playerWestId,
+                north = editor.playerNorthId,
+                enabled = enabled,
+                eastChanged = editor.hasEastSeatChanged,
+                southChanged = editor.hasSouthSeatChanged,
+                westChanged = editor.hasWestSeatChanged,
+                northChanged = editor.hasNorthSeatChanged,
+                onEastChange = { editor.setSeatAssignment(0, it) },
+                onSouthChange = { editor.setSeatAssignment(1, it) },
+                onWestChange = { editor.setSeatAssignment(2, it) },
+                onNorthChange = { editor.setSeatAssignment(3, it) },
+                playerNamesById = playerNamesById,
+                showPlayerIds = true,
+            )
+            }
+            TableSummaryRow(label = "Scores") {
+                SeatFieldRow(
+                    enabled = dependentSectionsEnabled && editor.useTotalsOnly,
+                    eastValue = editor.displayEastScore,
+                    southValue = editor.displaySouthScore,
+                    westValue = editor.displayWestScore,
+                    northValue = editor.displayNorthScore,
+                    eastChanged = editor.hasEastScoreChanged,
+                    southChanged = editor.hasSouthScoreChanged,
+                    westChanged = editor.hasWestScoreChanged,
+                    northChanged = editor.hasNorthScoreChanged,
+                    onEastChange = { editor.updateManualScore(0, it) },
+                    onSouthChange = { editor.updateManualScore(1, it) },
+                    onWestChange = { editor.updateManualScore(2, it) },
+                    onNorthChange = { editor.updateManualScore(3, it) },
+                )
+            }
+            TableSummaryRow(label = "Points") {
+                SeatFieldRow(
+                    enabled = false,
+                    eastValue = editor.displayEastPoints,
+                    southValue = editor.displaySouthPoints,
+                    westValue = editor.displayWestPoints,
+                    northValue = editor.displayNorthPoints,
+                    onEastChange = {},
+                    onSouthChange = {},
+                    onWestChange = {},
+                    onNorthChange = {},
+                )
+            }
+        }
+
+        Spacer(Modifier.height(10.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            LabeledSwitch(
+                label = "Detailed Hands",
+                description = "Calculate total scores and table points from the hand results.",
+                checked = !editor.useTotalsOnly,
+                enabled = dependentSectionsEnabled,
+                onCheckedChange = { detailed ->
+                    if (detailed) editor.disableManualTotals() else editor.enableManualTotals()
+                },
+            )
+            Spacer(Modifier.weight(1f))
+            FocusedOutlinedButton(
+                onClick = onEditHands,
+                enabled = enabled && editor.hasCompleteSeatPositions,
+                focusRequester = editHandsFocusRequester,
+            ) { Text("Edit hands") }
+        }
+    }
+}
+
+@Composable
+private fun CompletionStatusIcon(status: CompletionStatus) {
+    Icon(
+        imageVector = status.icon,
+        contentDescription = status.label,
+        tint = status.color,
+    )
+}
+
+@Composable
+private fun TableSummaryRow(
+    label: String,
+    content: @Composable RowScope.() -> Unit,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+            modifier = Modifier.width(TableSummaryRowLabelWidth),
+        )
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            content = content,
+        )
+    }
+}
+
+/** Wide dialog with a temporary hand draft. Save copies the draft to the table card. */
+@Composable
+internal fun TableHandsDialog(
+    editor: TableManagerEditorState,
+    enabled: Boolean,
+    playerNamesById: Map<Int, String>,
+    onDismiss: () -> Unit,
+) {
+    val drafts = remember {
+        mutableStateListOf<HandDraftState>().also { list ->
+            list.addAll(editor.hands.map { HandDraftState.from(it.snapshot()) })
+        }
+    }
+    var completion by remember { mutableStateOf(editor.isCompleted) }
+    val scrollState = rememberScrollState()
+    val cancelFocusRequester = remember { FocusRequester() }
+    val applyFocusRequester = remember { FocusRequester() }
+    var expandedPenaltyHands by remember { mutableStateOf(emptySet<Int>()) }
+    val rowNavigators = remember(drafts.map { it.handId }) {
+        drafts.map { HandRowKeyboardNavigator() }
+    }
+
+    fun applyDraft() {
+        drafts.forEach { it.markResultFieldsTouched() }
+        if (drafts.any { it.isResultSelectionInvalid }) return
+        if (completion && drafts.any { it.isResultSelectionInvalid }) return
+        editor.applyHandDrafts(drafts)
+        editor.updateCompletedState(if (editor.useTotalsOnly) false else completion)
+        onDismiss()
+    }
+
+    LaunchedEffect(Unit) { cancelFocusRequester.requestFocus() }
+
+    AlertDialog(
+        modifier = Modifier
+            // The hand grid needs a wide canvas and a bounded scroll area.
+            .widthIn(min = 1200.dp, max = 1600.dp)
+            .appFocusGroup(),
+        onDismissRequest = {},
+        title = { Text("Table ${editor.tableId} hands") },
+        text = {
+            ScrollableColumnWithScrollbar(
+                state = scrollState,
+                modifier = Modifier.fillMaxWidth().heightIn(max = 680.dp),
+            ) {
+                if (drafts.any { it.isResultSelectionInvalid }) {
+                    Text(
+                        "Invalid hand values must be fixed before Save.",
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                }
+                drafts.forEachIndexed { index, hand ->
+                    if (index > 0) HorizontalDivider()
+                    DialogHandRow(
+                        index = index,
+                        hand = hand,
+                        playerIds = editor.playerIds,
+                        playerNamesById = playerNamesById,
+                        enabled = enabled,
+                        forceDoneChecked = completion,
+                        subtotal = editor.cumulativeHandScoreSubtotals.getOrNull(index).orZero(),
+                        navigation = rowNavigators[index],
+                        previousNavigation = rowNavigators.getOrNull(index - 1),
+                        nextNavigation = rowNavigators.getOrNull(index + 1),
+                        showPenalties = index in expandedPenaltyHands,
+                        onTogglePenalties = {
+                            expandedPenaltyHands = if (index in expandedPenaltyHands) {
+                                expandedPenaltyHands - index
+                            } else {
+                                expandedPenaltyHands + index
+                            }
+                        },
+                    )
+                }
+                if (!editor.useTotalsOnly) {
+                    LabeledSwitch(
+                        label = "Completed",
+                        description = "Mark the table complete after every hand is valid.",
+                        checked = completion,
+                        enabled = enabled,
+                        onCheckedChange = { completion = it },
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            FocusedButton(
+                onClick = ::applyDraft,
+                enabled = enabled,
+                focusRequester = applyFocusRequester,
+                buttonModifier = Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester),
+            ) { Text("Save") }
+        },
+        dismissButton = {
+            FocusedTextButton(
+                onClick = onDismiss,
+                enabled = enabled,
+                focusRequester = cancelFocusRequester,
+                buttonModifier = Modifier.focusLoop(applyFocusRequester, applyFocusRequester),
+            ) { Text("Cancel") }
+        },
+    )
+}
+
+@Composable
+private fun DialogHandRow(
+    index: Int,
+    hand: HandDraftState,
+    playerIds: List<Int>,
+    playerNamesById: Map<Int, String>,
+    enabled: Boolean,
+    forceDoneChecked: Boolean,
+    subtotal: SeatTextValues,
+    navigation: HandRowKeyboardNavigator,
+    previousNavigation: HandRowKeyboardNavigator?,
+    nextNavigation: HandRowKeyboardNavigator?,
+    showPenalties: Boolean,
+    onTogglePenalties: () -> Unit,
+) {
+    val rowLocked = forceDoneChecked || hand.isDone
+    val rowEnabled = enabled && !rowLocked
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.small,
+        color = Color.Transparent,
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("${index + 1}", style = MaterialTheme.typography.titleLarge, modifier = Modifier.width(32.dp))
+                KeyboardAwareOutlinedTextField(
+                    value = hand.handScore,
+                    onValueChange = hand::updateHandScore,
+                    currentSlot = HandFieldSlot.Score,
+                    rowEnabled = rowEnabled,
+                    rowNavigation = navigation,
+                    previousNavigation = previousNavigation,
+                    nextNavigation = nextNavigation,
+                    label = { Text("Score") },
+                    enabled = rowEnabled,
+                    isChanged = hand.hasScoreChanged,
+                    modifier = Modifier.width(130.dp),
+                    focusRequester = navigation.score,
+                )
+                HandToggleControl(
+                    width = 130.dp,
+                    label = "Chicken hand",
+                    checked = hand.isChickenHand,
+                    enabled = rowEnabled && hand.hasLoserSelected,
+                    isChanged = hand.hasChickenHandChanged,
+                    onCheckedChange = hand::updateChickenHand,
+                )
+                Spacer(Modifier.weight(1f))
+                HandToggleControl(
+                    width = 90.dp,
+                    label = "Done",
+                    checked = hand.isDone,
+                    enabled = enabled && !forceDoneChecked,
+                    isChanged = hand.hasDoneChanged,
+                    onCheckedChange = hand::updateDoneState,
+                    focusRequester = navigation.done,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                PlayerDropdown(
+                    modifier = Modifier.weight(1f),
+                    label = "Winner",
+                    playerIds = playerIds,
+                    value = hand.playerWinnerId,
+                    enabled = rowEnabled,
+                    onChange = hand::setWinnerPlayerId,
+                    onDismiss = hand::markResultFieldsTouched,
+                    onFocusLost = hand::markResultFieldsTouched,
+                    playerNamesById = playerNamesById,
+                    showPlayerId = true,
+                    excludedPlayerIds = setOfNotNull(hand.selectedLoserPlayerId),
+                    emptyOptionLabel = "-",
+                )
+                PlayerDropdown(
+                    modifier = Modifier.weight(1f),
+                    label = "Loser",
+                    playerIds = playerIds,
+                    value = hand.playerLooserId,
+                    enabled = rowEnabled,
+                    onChange = hand::setLoserPlayerId,
+                    onDismiss = hand::markResultFieldsTouched,
+                    onFocusLost = hand::markResultFieldsTouched,
+                    playerNamesById = playerNamesById,
+                    showPlayerId = true,
+                    excludedPlayerIds = setOfNotNull(hand.selectedWinnerPlayerId),
+                    emptyOptionLabel = "-",
+                )
+                FocusedTextButton(onClick = onTogglePenalties, enabled = enabled) {
+                    Text(if (showPenalties) "Hide penalties" else "Show penalties")
+                }
+            }
+            if (showPenalties) {
+                hand.penaltyRows.forEachIndexed { penaltyIndex, penalty ->
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text("Penalty ${penaltyIndex + 1}", modifier = Modifier.width(100.dp))
+                        listOf("East", "South", "West", "North").forEachIndexed { seatIndex, label ->
+                            CompactOutlinedTextField(
+                                value = penalty.value(seatIndex),
+                                onValueChange = { hand.updatePenaltyValue(penaltyIndex, seatIndex, it) },
+                                enabled = rowEnabled,
+                                label = { Text(label) },
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                        FocusedTextButton(
+                            onClick = { hand.removePenaltyRow(penaltyIndex) },
+                            enabled = rowEnabled,
+                        ) { Text("Remove") }
+                    }
+                }
+                FocusedOutlinedButton(
+                    onClick = hand::addPenaltyRow,
+                    enabled = rowEnabled,
+                ) { Text("Add penalty row") }
+            }
+            HandFourFieldRow(title = "Subtotals", enabled = enabled) {
+                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.east)
+                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.south)
+                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.west)
+                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.north)
+            }
+            if (hand.showValidationError) {
+                Text(
+                    text = hand.validationErrorMessage ?: "This hand is invalid and cannot be saved.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
+            }
+        }
+    }
 }
 
 @Preview(device = Devices.DESKTOP)
@@ -686,7 +1091,7 @@ private fun TotalScoreSection(
         actions = {
             LabeledSwitch(
                 label = "Manual Scores",
-                description = "When on, enter each player's final score yourself. It turns off Manual Points and disables Hands.",
+                description = "When on, enter each player's final score yourself. Detailed Hands is disabled.",
                 checked = editor.useTotalsOnly,
                 enabled = enabled,
                 onCheckedChange = { onManualTotalsChange(it) },
@@ -718,23 +1123,13 @@ private fun TotalScoreSection(
 private fun TablePointsSection(
     editor: TableManagerEditorState,
     enabled: Boolean,
-    onManualPointsChange: (Boolean) -> Unit,
 ) {
     SectionCard(
         title = "Table Points",
         subtitle = if (!editor.hasCompleteSeatPositions) "Select all seat positions first" else null,
-        actions = {
-            LabeledSwitch(
-                label = "Manual Points",
-                description = "When on, enter each player's table points yourself. It turns off Manual Scores and disables Hands.",
-                checked = !editor.usePointsCalculation,
-                enabled = enabled,
-                onCheckedChange = { onManualPointsChange(it) },
-            )
-        },
         content = {
             SeatFieldRow(
-                enabled = enabled && !editor.usePointsCalculation,
+                enabled = false,
                 eastValue = editor.displayEastPoints,
                 southValue = editor.displaySouthPoints,
                 westValue = editor.displayWestPoints,
@@ -1649,7 +2044,7 @@ private fun PenaltyField(
         onValueChange = onValueChange,
         enabled = enabled,
         isChanged = isChanged,
-        placeholder = "-",
+        placeholder = "",
         focusRequester = focusRequester,
         onNavigateLeft = onNavigateLeft,
         onNavigateRight = onNavigateRight,
@@ -2022,7 +2417,7 @@ internal data class TableSaveConflict(
 }
 
 @Composable
-private fun TableSaveConflictDialog(
+internal fun TableSaveConflictDialog(
     conflict: TableSaveConflict,
     choices: Map<String, ConflictChoice>,
     isSaving: Boolean,
@@ -2173,6 +2568,7 @@ private val HandSubtotalFieldSpacing = 6.dp
 private val HandChickenControlWidth = 70.dp
 private val HandDoneControlWidth = HandChickenControlWidth
 private val HandDoneBlockSpacing = 6.dp
+private val TableSummaryRowLabelWidth = 84.dp
 private const val MIN_HAND_SCORE = 8
 private const val MAX_CHICKEN_HAND_SCORE = 12
 
@@ -2279,20 +2675,15 @@ private fun moveHandFieldFocus(
 /**
  * Holds the editable values for one table.
  *
- * The editor keeps hands, manual scores, and manual points at the same time. Switching modes only
- * changes which values apply. It never clears values from an inactive mode.
+ * The editor keeps hands and manual scores at the same time. Switching modes only changes which
+ * values apply. It never clears values from an inactive mode.
  *
  * - Hands mode applies calculated hand totals and calculated table points.
  * - Manual Scores applies manual scores and calculated table points.
- * - Manual Points applies manual table points.
- *
- * If a calculated value is not available, the editor keeps the matching manual value visible and
- * effective. A calculated value replaces it when the related calculation produces a result.
- *
- * Manual Scores and Manual Points cannot both be active. Either manual mode disables Hands.
- * Saving writes all changed hand and manual values, including values from inactive modes. Loading
- * the table again restores those values when the related mode becomes active. Discard restores the
- * values from the last saved table state.
+ * Legacy point fields remain readable for migration compatibility. The application never exposes
+ * them as an editing mode. Saving writes all changed hand and manual values, including values from
+ * inactive modes. Loading the table again restores those values when the related mode becomes
+ * active. Discard restores the values from the last saved table state.
  */
 @Stable
 internal class TableManagerEditorState private constructor(
@@ -2359,6 +2750,15 @@ internal class TableManagerEditorState private constructor(
 
     val hasInvalidHands: Boolean
         get() = hands.any { it.isResultSelectionInvalid }
+
+    val chickenHandCount: Int
+        get() = hands.count { it.isChickenHand }
+
+    val bestCompletedHandScore: Int?
+        get() = hands.asSequence()
+            .filter { it.isDone }
+            .mapNotNull { it.handScore.trim().toIntOrNull() }
+            .maxOrNull()
 
     val hasCompleteSeatPositions: Boolean
         get() = currentSeatIds() != null
@@ -2447,6 +2847,7 @@ internal class TableManagerEditorState private constructor(
     fun enableManualTotals() {
         useTotalsOnly = true
         usePointsCalculation = true
+        isCompleted = false
     }
 
     fun updateManualScore(seatIndex: Int, value: String) {
@@ -2461,16 +2862,38 @@ internal class TableManagerEditorState private constructor(
 
     fun disableManualTotals() {
         useTotalsOnly = false
+        usePointsCalculation = true
     }
 
+    @Deprecated("Legacy data compatibility. Manual Points is not an application mode.")
     fun enableManualPoints() {
         usePointsCalculation = false
         useTotalsOnly = false
     }
 
+    @Deprecated("Legacy data compatibility. Manual Points is not an application mode.")
     fun disableManualPoints() {
         usePointsCalculation = true
     }
+
+    /** Returns the patch used by the application. Manual Points is not an application mode. */
+    fun buildApplicationTablePatch(): Map<String, Any?> {
+        val patch = buildTablePatch().toMutableMap()
+        if (!usePointsCalculation) patch["usePointsCalculation"] = true
+        return patch
+    }
+
+    fun baseTableSnapshot(): TableState = initialTable
+
+    fun baseHandsSnapshot(): List<TableHand> = initialHandsSnapshot
+
+    fun applyHandDrafts(drafts: List<HandDraftState>) {
+        drafts.forEach { draft ->
+            hands.firstOrNull { it.handId == draft.handId }?.copyValuesFrom(draft)
+        }
+    }
+
+    private val initialHandsSnapshot: List<TableHand> = initialHands.map { it }
 
     fun updateCompletedState(value: Boolean) {
         if (!value) {
@@ -2821,7 +3244,38 @@ internal class TableManagerEditorState private constructor(
         )
     }
 
-    private fun parsePenalty(value: String): Int = value.trim().toIntOrNull() ?: 0
+    private fun parsePenalty(value: String): Int = value
+        .split(';')
+        .sumOf { it.trim().toIntOrNull() ?: 0 }
+}
+
+@Stable
+internal class PenaltyDraftState(
+    east: String = "",
+    south: String = "",
+    west: String = "",
+    north: String = "",
+) {
+    var east by mutableStateOf(east)
+    var south by mutableStateOf(south)
+    var west by mutableStateOf(west)
+    var north by mutableStateOf(north)
+
+    fun value(seatIndex: Int): String = when (seatIndex) {
+        0 -> east
+        1 -> south
+        2 -> west
+        else -> north
+    }
+
+    fun setValue(seatIndex: Int, value: String) {
+        when (seatIndex) {
+            0 -> east = value
+            1 -> south = value
+            2 -> west = value
+            else -> north = value
+        }
+    }
 }
 
 @Stable
@@ -2839,7 +3293,18 @@ internal class HandDraftState private constructor(
     var playerSouthPenalty by mutableStateOf(initial.playerSouthPenalty)
     var playerWestPenalty by mutableStateOf(initial.playerWestPenalty)
     var playerNorthPenalty by mutableStateOf(initial.playerNorthPenalty)
+    val penaltyRows = mutableStateListOf<PenaltyDraftState>()
+    private var penaltyRowsEdited by mutableStateOf(false)
     private var resultFieldsTouched by mutableStateOf(false)
+
+    init {
+        penaltyRows += PenaltyDraftState(
+            east = initial.playerEastPenalty,
+            south = initial.playerSouthPenalty,
+            west = initial.playerWestPenalty,
+            north = initial.playerNorthPenalty,
+        )
+    }
 
     val hasLoserSelected: Boolean
         get() = normalizedLoserId.isNotEmpty()
@@ -2901,10 +3366,10 @@ internal class HandDraftState private constructor(
     val hasScoreChanged: Boolean get() = handScore.trim() != initial.handScore
     val hasChickenHandChanged: Boolean get() = isChickenHand != initial.isChickenHand
     val hasDoneChanged: Boolean get() = isDone != initial.isDone
-    val hasEastPenaltyChanged: Boolean get() = playerEastPenalty.trim() != initial.playerEastPenalty
-    val hasSouthPenaltyChanged: Boolean get() = playerSouthPenalty.trim() != initial.playerSouthPenalty
-    val hasWestPenaltyChanged: Boolean get() = playerWestPenalty.trim() != initial.playerWestPenalty
-    val hasNorthPenaltyChanged: Boolean get() = playerNorthPenalty.trim() != initial.playerNorthPenalty
+    val hasEastPenaltyChanged: Boolean get() = currentPenalty(0) != initial.playerEastPenalty
+    val hasSouthPenaltyChanged: Boolean get() = currentPenalty(1) != initial.playerSouthPenalty
+    val hasWestPenaltyChanged: Boolean get() = currentPenalty(2) != initial.playerWestPenalty
+    val hasNorthPenaltyChanged: Boolean get() = currentPenalty(3) != initial.playerNorthPenalty
 
     val isIgnoredForCalculation: Boolean
         get() = isResultSelectionInvalid || isCompletelyEmpty
@@ -2975,6 +3440,25 @@ internal class HandDraftState private constructor(
         resultFieldsTouched = true
     }
 
+    fun updatePenaltyValue(rowIndex: Int, seatIndex: Int, value: String) {
+        penaltyRows[rowIndex].setValue(seatIndex, value)
+        penaltyRowsEdited = true
+    }
+
+    fun addPenaltyRow() {
+        penaltyRows += PenaltyDraftState()
+        penaltyRowsEdited = true
+    }
+
+    fun removePenaltyRow(rowIndex: Int) {
+        if (penaltyRows.size == 1) {
+            penaltyRows[0] = PenaltyDraftState()
+        } else {
+            penaltyRows.removeAt(rowIndex)
+        }
+        penaltyRowsEdited = true
+    }
+
     fun reset() {
         playerWinnerId = initial.playerWinnerId
         playerLooserId = initial.playerLooserId.ifBlank { "-" }
@@ -2985,7 +3469,46 @@ internal class HandDraftState private constructor(
         playerSouthPenalty = initial.playerSouthPenalty
         playerWestPenalty = initial.playerWestPenalty
         playerNorthPenalty = initial.playerNorthPenalty
+        penaltyRows.clear()
+        penaltyRows += PenaltyDraftState(
+            east = initial.playerEastPenalty,
+            south = initial.playerSouthPenalty,
+            west = initial.playerWestPenalty,
+            north = initial.playerNorthPenalty,
+        )
+        penaltyRowsEdited = false
         resultFieldsTouched = false
+    }
+
+    fun snapshot(): TableHand = TableHand(
+        handId = handId,
+        playerWinnerId = playerWinnerId.trim(),
+        playerLooserId = normalizedLoserId,
+        handScore = handScore.trim(),
+        isChickenHand = isChickenHand,
+        isDone = isDone,
+        playerEastPenalty = currentPenalty(0),
+        playerSouthPenalty = currentPenalty(1),
+        playerWestPenalty = currentPenalty(2),
+        playerNorthPenalty = currentPenalty(3),
+    )
+
+    fun copyValuesFrom(other: HandDraftState) {
+        playerWinnerId = other.playerWinnerId
+        playerLooserId = other.playerLooserId
+        handScore = other.handScore
+        isChickenHand = other.isChickenHand
+        isDone = other.isDone
+        playerEastPenalty = other.playerEastPenalty
+        playerSouthPenalty = other.playerSouthPenalty
+        playerWestPenalty = other.playerWestPenalty
+        playerNorthPenalty = other.playerNorthPenalty
+        penaltyRows.clear()
+        other.penaltyRows.forEach { row ->
+            penaltyRows += PenaltyDraftState(row.east, row.south, row.west, row.north)
+        }
+        penaltyRowsEdited = other.penaltyRowsEdited
+        resultFieldsTouched = other.resultFieldsTouched
     }
 
     fun buildPatch(): Map<String, Any?> {
@@ -3000,12 +3523,22 @@ internal class HandDraftState private constructor(
         putIfChanged("handScore", handScore.trim(), initial.handScore)
         putIfChanged("isChickenHand", isChickenHand, initial.isChickenHand)
         putIfChanged("isDone", isDone, initial.isDone)
-        putIfChanged("playerEastPenalty", playerEastPenalty.trim(), initial.playerEastPenalty)
-        putIfChanged("playerSouthPenalty", playerSouthPenalty.trim(), initial.playerSouthPenalty)
-        putIfChanged("playerWestPenalty", playerWestPenalty.trim(), initial.playerWestPenalty)
-        putIfChanged("playerNorthPenalty", playerNorthPenalty.trim(), initial.playerNorthPenalty)
+        putIfChanged("playerEastPenalty", currentPenalty(0), initial.playerEastPenalty)
+        putIfChanged("playerSouthPenalty", currentPenalty(1), initial.playerSouthPenalty)
+        putIfChanged("playerWestPenalty", currentPenalty(2), initial.playerWestPenalty)
+        putIfChanged("playerNorthPenalty", currentPenalty(3), initial.playerNorthPenalty)
 
         return patch
+    }
+
+    private fun currentPenalty(seatIndex: Int): String {
+        if (!penaltyRowsEdited) return when (seatIndex) {
+            0 -> playerEastPenalty.trim()
+            1 -> playerSouthPenalty.trim()
+            2 -> playerWestPenalty.trim()
+            else -> playerNorthPenalty.trim()
+        }
+        return penaltyRows.joinToString(";") { it.value(seatIndex).trim() }
     }
 
     companion object {

@@ -5,6 +5,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -48,6 +50,8 @@ class TournamentsPresenter(
         associationLogoBytes: ByteArray?,
         associationLogoSourceTournamentId: String?,
         removeAssociationLogo: Boolean,
+        roundSchedules: List<TournamentRoundSchedule>,
+        agendaItems: List<TournamentAgendaItem>,
     ): AppResult<Tournament> = tournamentRepository.updateTournamentSettings(
         tournamentId = tournamentId,
         name = name,
@@ -61,6 +65,8 @@ class TournamentsPresenter(
         associationLogoBytes = associationLogoBytes,
         associationLogoSourceTournamentId = associationLogoSourceTournamentId,
         removeAssociationLogo = removeAssociationLogo,
+        roundSchedules = roundSchedules,
+        agendaItems = agendaItems,
     )
 
     suspend fun signOut() = authRepository.signOut()

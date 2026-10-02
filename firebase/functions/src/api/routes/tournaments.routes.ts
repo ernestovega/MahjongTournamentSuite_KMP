@@ -245,6 +245,8 @@ export function tournamentsRouter(): Router {
         numTries,
         players: parsedPlayers,
         tables: parsedTables,
+        roundSchedules: body?.roundSchedules,
+        agendaItems: body?.agendaItems,
         createdByUid: decoded.uid,
       });
 
@@ -271,6 +273,7 @@ export function tournamentsRouter(): Router {
       const associationLogoUrl = body.associationLogoUrl == null
         ? null
         : String(body.associationLogoUrl).trim();
+      const roundSchedules = body.roundSchedules;
 
       if (shortName.length > 32 || year.length > 4 || !/^#[0-9A-F]{6}$/.test(primaryColor)) {
         throw badRequest("Invalid ID card preview fields");
@@ -286,6 +289,7 @@ export function tournamentsRouter(): Router {
         associationLogoContentType,
         associationLogoDataBase64,
         associationLogoUrl,
+        roundSchedules,
       });
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Cache-Control", "private, max-age=3600");
@@ -403,6 +407,8 @@ export function tournamentsRouter(): Router {
         associationLogoDataBase64,
         associationLogoSourceTournamentId,
         removeAssociationLogo: body.removeAssociationLogo === true,
+        roundSchedules: body.roundSchedules,
+        agendaItems: body.agendaItems,
       });
       res.status(200).json(tournament);
     } catch (e) {

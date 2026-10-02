@@ -22,6 +22,27 @@ class TableManagerEditorStateTest {
     }
 
     @Test
+    fun applicationPatchAlwaysEnablesCalculatedPoints() {
+        val editor = TableManagerEditorState.from(sampleTableState(usePointsCalculation = false), emptyList())
+
+        assertEquals(true, editor.buildApplicationTablePatch()["usePointsCalculation"])
+    }
+
+    @Test
+    fun handSummaryCountsChickenHandsAndFindsBestCompletedHand() {
+        val editor = TableManagerEditorState.from(
+            sampleTableState(),
+            listOf(
+                sampleHand(handId = 1, score = "8").copy(isChickenHand = true, isDone = true),
+                sampleHand(handId = 2, score = "16").copy(isDone = true),
+            ),
+        )
+
+        assertEquals(1, editor.chickenHandCount)
+        assertEquals(16, editor.bestCompletedHandScore)
+    }
+
+    @Test
     fun manualScoresWithNonZeroTotalNeedSaveConfirmation() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(useTotalsOnly = true),

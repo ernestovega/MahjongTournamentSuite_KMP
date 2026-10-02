@@ -7,6 +7,7 @@ exports.MISSING_FLAG_SVG = void 0;
 exports.splitPlayerName = splitPlayerName;
 exports.iso2CountryCode = iso2CountryCode;
 exports.flagSvgFor = flagSvgFor;
+exports.buildIdCardBackRows = buildIdCardBackRows;
 exports.buildIdCardsPdf = buildIdCardsPdf;
 exports.buildIdCardProofPdf = buildIdCardProofPdf;
 exports.loadIdCardsDocument = loadIdCardsDocument;
@@ -18,6 +19,7 @@ const httpError_1 = require("../api/httpError");
 const firebase_1 = require("../firebase");
 const countriesService_1 = require("./countriesService");
 const playersService_1 = require("./playersService");
+const tournamentSchedule_1 = require("./tournamentSchedule");
 const CARD_WIDTH = 242.88;
 const CARD_HEIGHT = 153;
 const DEFAULT_PRIMARY_COLOR = "#02B16B";
@@ -206,6 +208,30 @@ function drawCellText(doc, text, x, y, width, height) {
         lineBreak: false,
     });
 }
+function displayCardDate(value) {
+    return `${value.slice(8, 10)}/${value.slice(5, 7)}/${value.slice(0, 4)}`;
+}
+function buildIdCardBackRows(roundCount, roundSchedules, tableNumbers) {
+    const scheduleByRound = new Map(roundSchedules.map((schedule) => [schedule.roundId, schedule]));
+    const rows = [];
+    let currentDate = null;
+    for (let index = 0; index < roundCount; index += 1) {
+        const roundId = index + 1;
+        const schedule = scheduleByRound.get(roundId);
+        const date = schedule?.date ?? null;
+        if (date != null && date !== currentDate) {
+            rows.push({ kind: "date", date });
+        }
+        currentDate = date;
+        rows.push({
+            kind: "round",
+            roundId,
+            startTime: schedule?.startTime ?? null,
+            tableNumber: tableNumbers[index] ?? 0,
+        });
+    }
+    return rows;
+}
 function drawBack(doc, model, player) {
     const primary = normalizeHexColor(model.primaryColor);
     doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
@@ -221,34 +247,50 @@ function drawBack(doc, model, player) {
     const headerHeight = 22;
     const roundCount = Math.max(1, model.numberOfRounds ?? player.tableNumbers.length);
     const tableNumbers = Array.from({ length: roundCount }, (_, index) => player.tableNumbers[index] ?? 0);
+    const rows = buildIdCardBackRows(roundCount, model.roundSchedules ?? [], tableNumbers);
     const availableRowsHeight = CARD_HEIGHT - y - 10 - headerHeight;
-    const rowHeight = availableRowsHeight / roundCount;
-    const columns = [38, 42, 67, width - 38 - 42 - 67];
-    const headers = ["Round", "Table", "Table points", "Score"];
+    const rowHeight = availableRowsHeight / Math.max(1, rows.length);
+    const columns = [30, 36, 38, 62, width - 30 - 36 - 38 - 62];
+    const headers = ["Round", "Start", "Table", "Table points", "Score"];
     doc.lineWidth(0.65).strokeColor("#000000").fillColor("#000000").font("CardApp");
-    doc.rect(x, y, width, headerHeight + rowHeight * roundCount).stroke();
+    doc.rect(x, y, width, headerHeight + rowHeight * rows.length).stroke();
     let columnX = x;
     columns.slice(0, -1).forEach((columnWidth) => {
         columnX += columnWidth;
-        doc.moveTo(columnX, y).lineTo(columnX, y + headerHeight + rowHeight * roundCount).stroke();
+        doc.moveTo(columnX, y).lineTo(columnX, y + headerHeight).stroke();
     });
     doc.moveTo(x, y + headerHeight).lineTo(x + width, y + headerHeight).stroke();
-    for (let index = 1; index < roundCount; index += 1) {
+    for (let index = 1; index < rows.length; index += 1) {
         const rowY = y + headerHeight + rowHeight * index;
         doc.moveTo(x, rowY).lineTo(x + width, rowY).stroke();
     }
     columnX = x;
-    doc.fontSize(6.2);
+    doc.fontSize(5.6);
     headers.forEach((header, index) => {
         drawCellText(doc, header, columnX, y, columns[index], headerHeight);
         columnX += columns[index];
     });
     const rowFontSize = Math.max(4.5, Math.min(8, rowHeight * 0.55));
-    tableNumbers.forEach((tableNumber, index) => {
+    rows.forEach((row, index) => {
         const rowY = y + headerHeight + rowHeight * index;
         doc.fontSize(rowFontSize);
-        drawCellText(doc, String(index + 1), x, rowY, columns[0], rowHeight);
-        drawCellText(doc, tableNumber > 0 ? String(tableNumber) : "-", x + columns[0], rowY, columns[1], rowHeight);
+        if (row.kind === "date") {
+            doc.save();
+            doc.opacity(0.88).rect(x, rowY, width, rowHeight).fill(primary);
+            doc.restore();
+            doc.fillColor("#FFFFFF").fontSize(Math.max(4.5, Math.min(7, rowHeight * 0.52)));
+            drawCellText(doc, displayCardDate(row.date), x, rowY, width, rowHeight);
+            doc.fillColor("#000000");
+            return;
+        }
+        let cellX = x;
+        columns.slice(0, -1).forEach((columnWidth) => {
+            cellX += columnWidth;
+            doc.moveTo(cellX, rowY).lineTo(cellX, rowY + rowHeight).stroke();
+        });
+        drawCellText(doc, String(row.roundId), x, rowY, columns[0], rowHeight);
+        drawCellText(doc, row.startTime ?? "-", x + columns[0], rowY, columns[1], rowHeight);
+        drawCellText(doc, row.tableNumber > 0 ? String(row.tableNumber) : "-", x + columns[0] + columns[1], rowY, columns[2], rowHeight);
     });
 }
 async function buildIdCardsPdf(model) {
@@ -289,18 +331,36 @@ async function buildIdCardProofPdf(request) {
                 associationLogo = Buffer.from(await response.arrayBuffer());
         }
     }
+    const rawRoundSchedules = Array.isArray(request.roundSchedules) ? request.roundSchedules : [];
+    const numberOfRounds = Math.max(1, ...rawRoundSchedules.map((value) => {
+        if (value == null || typeof value !== "object")
+            return 0;
+        return Number(value.roundId) || 0;
+    }));
+    const configuredDates = rawRoundSchedules.flatMap((value) => {
+        if (value == null || typeof value !== "object")
+            return [];
+        const date = String(value.date ?? "").trim();
+        return /^\d{4}-\d{2}-\d{2}$/.test(date) ? [date] : [];
+    });
+    const sortedDates = configuredDates.slice().sort();
+    const scheduleStartDate = sortedDates[0] ?? "0000-01-01";
+    const scheduleEndDate = sortedDates[sortedDates.length - 1] ?? "9999-12-31";
+    const roundSchedules = (0, tournamentSchedule_1.readStoredRoundSchedules)(request.roundSchedules, numberOfRounds, scheduleStartDate, scheduleEndDate);
     const pdf = await buildIdCardsPdf({
         tournamentShortName: request.shortName,
         year: request.year,
         primaryColor: request.primaryColor,
         associationLogo,
+        numberOfRounds,
+        roundSchedules,
         players: [{
                 playerId: 21,
                 name: "Ernesto Vega de la Iglesia",
                 country: "Europe",
                 countryCode: "EUR",
                 teamName: "Mahjong Madrid",
-                tableNumbers: [1],
+                tableNumbers: Array.from({ length: numberOfRounds }, (_, index) => index + 1),
             }],
     });
     return pdf;
@@ -373,6 +433,7 @@ async function loadIdCardsDocument(tournamentId) {
         ? await firebase_1.storage.file(logoPath).download().then(([bytes]) => bytes).catch(() => null)
         : null;
     const eventStartDate = String(tournament.get("eventStartDate") ?? "");
+    const eventEndDate = String(tournament.get("eventEndDate") ?? eventStartDate);
     const storedShortName = String(tournament.get("shortName") ?? "").trim();
     const fallbackName = String(tournament.get("name") ?? "Tournament").trim().slice(0, 10);
     return {
@@ -381,6 +442,7 @@ async function loadIdCardsDocument(tournamentId) {
         primaryColor: normalizeHexColor(String(tournament.get("primaryColor") ?? DEFAULT_PRIMARY_COLOR)),
         associationLogo,
         numberOfRounds: numRounds,
+        roundSchedules: (0, tournamentSchedule_1.readStoredRoundSchedules)(tournament.get("roundSchedules"), numRounds, eventStartDate || "0000-01-01", eventEndDate || "9999-12-31"),
         players,
     };
 }

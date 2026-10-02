@@ -46,7 +46,9 @@ import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TimePicker
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -706,22 +708,30 @@ fun TournamentLogoLibraryDialog(
 fun TournamentDatePickerDialog(
     selectedDisplayDate: String,
     minimumDisplayDate: String? = null,
+    maximumDisplayDate: String? = null,
     onDismiss: () -> Unit,
     onDateSelected: (String) -> Unit,
 ) {
     val initialMillis = displayDateToEpochMillis(selectedDisplayDate)
     val minimumMillis = minimumDisplayDate?.let(::displayDateToEpochMillis)
-    val selectableDates = remember(minimumMillis) {
+    val maximumMillis = maximumDisplayDate
+        ?.let(::displayDateToEpochMillis)
+        ?.takeIf { minimumMillis == null || it >= minimumMillis }
+    val selectableDates = remember(minimumMillis, maximumMillis) {
         object : SelectableDates {
             override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                minimumMillis == null || utcTimeMillis >= minimumMillis
+                (minimumMillis == null || utcTimeMillis >= minimumMillis) &&
+                    (maximumMillis == null || utcTimeMillis <= maximumMillis)
         }
     }
     val locale = remember { mondayFirstCalendarLocale() }
-    val state = remember(initialMillis, minimumMillis) {
+    val state = remember(initialMillis, minimumMillis, maximumMillis) {
         DatePickerState(
             locale = locale,
-            initialSelectedDateMillis = initialMillis?.coerceAtLeast(minimumMillis ?: Long.MIN_VALUE),
+            initialSelectedDateMillis = (initialMillis ?: minimumMillis)?.coerceIn(
+                minimumValue = minimumMillis ?: Long.MIN_VALUE,
+                maximumValue = maximumMillis ?: Long.MAX_VALUE,
+            ),
             selectableDates = selectableDates,
         )
     }
@@ -745,6 +755,69 @@ fun TournamentDatePickerDialog(
         },
     ) {
         DatePicker(state = state)
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TournamentTimePickerDialog(
+    selectedTime: String,
+    onDismiss: () -> Unit,
+    onTimeSelected: (String) -> Unit,
+) {
+    val parsedTime = remember(selectedTime) { selectedTime.toPickerHourAndMinute() }
+    val state = rememberTimePickerState(
+        initialHour = parsedTime.first,
+        initialMinute = parsedTime.second,
+        is24Hour = true,
+    )
+    val confirmFocusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        confirmFocusRequester.requestFocus()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        modifier = Modifier.appFocusGroup(),
+        title = { Text("Select time") },
+        text = {
+            Box(
+                modifier = Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                TimePicker(state = state)
+            }
+        },
+        confirmButton = {
+            FocusedTextButton(
+                onClick = {
+                    onTimeSelected(
+                        "${state.hour.toString().padStart(2, '0')}:" +
+                            state.minute.toString().padStart(2, '0'),
+                    )
+                },
+                focusRequester = confirmFocusRequester,
+            ) {
+                Text("OK")
+            }
+        },
+        dismissButton = {
+            FocusedTextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        },
+    )
+}
+
+private fun String.toPickerHourAndMinute(): Pair<Int, Int> {
+    val parts = trim().split(':')
+    val hour = parts.getOrNull(0)?.toIntOrNull()
+    val minute = parts.getOrNull(1)?.toIntOrNull()
+    return if (hour != null && minute != null && hour in 0..23 && minute in 0..59) {
+        hour to minute
+    } else {
+        9 to 0
     }
 }
 

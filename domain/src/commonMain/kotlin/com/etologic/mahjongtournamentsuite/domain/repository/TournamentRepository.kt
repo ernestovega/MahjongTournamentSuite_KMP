@@ -14,6 +14,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 
 interface TournamentRepository {
     suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>>
@@ -38,6 +40,8 @@ interface TournamentRepository {
         associationLogoBytes: ByteArray? = null,
         associationLogoSourceTournamentId: String? = null,
         removeAssociationLogo: Boolean = false,
+        roundSchedules: List<TournamentRoundSchedule> = emptyList(),
+        agendaItems: List<TournamentAgendaItem> = emptyList(),
     ): AppResult<Tournament>
 
     suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray>
