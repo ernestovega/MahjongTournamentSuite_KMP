@@ -51,6 +51,11 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.snapshotFlow
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -736,18 +741,17 @@ fun TournamentDatePickerDialog(
         )
     }
 
+    // Picking a date confirms it immediately; there is no OK button.
+    LaunchedEffect(state) {
+        val initialSelection = state.selectedDateMillis
+        snapshotFlow { state.selectedDateMillis }
+            .first { it != null && it != initialSelection }
+            ?.let { onDateSelected(epochMillisToDisplayDate(it)) }
+    }
+
     DatePickerDialog(
         onDismissRequest = onDismiss,
-        confirmButton = {
-            FocusedTextButton(
-                enabled = state.selectedDateMillis != null,
-                onClick = {
-                    state.selectedDateMillis?.let { onDateSelected(epochMillisToDisplayDate(it)) }
-                },
-            ) {
-                Text("OK")
-            }
-        },
+        confirmButton = {},
         dismissButton = {
             FocusedTextButton(onClick = onDismiss) {
                 Text("Cancel")
@@ -771,10 +775,24 @@ fun TournamentTimePickerDialog(
         initialMinute = parsedTime.second,
         is24Hour = true,
     )
-    val confirmFocusRequester = remember { FocusRequester() }
+    val cancelFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        confirmFocusRequester.requestFocus()
+        cancelFocusRequester.requestFocus()
+    }
+
+    // Picking a minute confirms the time immediately; there is no OK button.
+    // The short delay lets a dial drag settle before confirming.
+    LaunchedEffect(state) {
+        snapshotFlow { state.minute }
+            .drop(1)
+            .collectLatest {
+                delay(350)
+                onTimeSelected(
+                    "${state.hour.toString().padStart(2, '0')}:" +
+                        state.minute.toString().padStart(2, '0'),
+                )
+            }
     }
 
     AlertDialog(
@@ -789,21 +807,9 @@ fun TournamentTimePickerDialog(
                 TimePicker(state = state)
             }
         },
-        confirmButton = {
-            FocusedTextButton(
-                onClick = {
-                    onTimeSelected(
-                        "${state.hour.toString().padStart(2, '0')}:" +
-                            state.minute.toString().padStart(2, '0'),
-                    )
-                },
-                focusRequester = confirmFocusRequester,
-            ) {
-                Text("OK")
-            }
-        },
+        confirmButton = {},
         dismissButton = {
-            FocusedTextButton(onClick = onDismiss) {
+            FocusedTextButton(onClick = onDismiss, focusRequester = cancelFocusRequester) {
                 Text("Cancel")
             }
         },
