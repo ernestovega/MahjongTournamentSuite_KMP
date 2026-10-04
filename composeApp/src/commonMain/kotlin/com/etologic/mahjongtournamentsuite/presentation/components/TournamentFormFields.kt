@@ -35,6 +35,8 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerState
+import androidx.compose.material3.DisplayMode
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DateRangePickerDefaults
 import androidx.compose.material3.DateRangePickerState
@@ -53,10 +55,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -101,6 +105,9 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
 import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.atStartOfDayIn
@@ -725,8 +732,10 @@ fun TournamentDatePickerDialog(
         }
     }
     val locale = remember { mondayFirstCalendarLocale() }
+    // Counts day clicks, including clicks on the day that is already selected.
+    var dayClickCount by remember { mutableIntStateOf(0) }
     val state = remember(initialMillis, minimumMillis, maximumMillis) {
-        DatePickerState(
+        val delegate = DatePickerState(
             locale = locale,
             initialSelectedDateMillis = (initialMillis ?: minimumMillis)?.coerceIn(
                 minimumValue = minimumMillis ?: Long.MIN_VALUE,
@@ -734,6 +743,17 @@ fun TournamentDatePickerDialog(
             ),
             selectableDates = selectableDates,
         )
+        DayClickDatePickerState(delegate) { dayClickCount++ }
+    }
+    val currentOnDateSelected by rememberUpdatedState(onDateSelected)
+
+    // Picking a day confirms it immediately. The OK button stays available.
+    LaunchedEffect(state) {
+        snapshotFlow { dayClickCount }
+            .drop(1)
+            .collect {
+                state.selectedDateMillis?.let { currentOnDateSelected(epochMillisToDisplayDate(it)) }
+            }
     }
 
     DatePickerDialog(
@@ -766,15 +786,33 @@ fun TournamentTimePickerDialog(
     onTimeSelected: (String) -> Unit,
 ) {
     val parsedTime = remember(selectedTime) { selectedTime.toPickerHourAndMinute() }
-    val state = rememberTimePickerState(
+    val delegate = rememberTimePickerState(
         initialHour = parsedTime.first,
         initialMinute = parsedTime.second,
         is24Hour = true,
     )
+    // Counts minute selections, including selecting the minute that is already set.
+    var minuteSelectionCount by remember { mutableIntStateOf(0) }
+    val state = remember(delegate) { MinuteSelectionTimePickerState(delegate) { minuteSelectionCount++ } }
+    val currentOnTimeSelected by rememberUpdatedState(onTimeSelected)
     val confirmFocusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         confirmFocusRequester.requestFocus()
+    }
+
+    // Picking a minute confirms the time immediately. The OK button stays available.
+    // The short delay lets a dial drag settle before confirming.
+    LaunchedEffect(state) {
+        snapshotFlow { minuteSelectionCount }
+            .drop(1)
+            .collectLatest {
+                delay(350)
+                currentOnTimeSelected(
+                    "${state.hour.toString().padStart(2, '0')}:" +
+                        state.minute.toString().padStart(2, '0'),
+                )
+            }
     }
 
     AlertDialog(
@@ -808,6 +846,35 @@ fun TournamentTimePickerDialog(
             }
         },
     )
+}
+
+/** Reports every day click made in the picker, even when the clicked day is already selected. */
+@OptIn(ExperimentalMaterial3Api::class)
+private class DayClickDatePickerState(
+    private val delegate: DatePickerState,
+    private val onDayClick: () -> Unit,
+) : DatePickerState by delegate {
+    override var selectedDateMillis: Long?
+        get() = delegate.selectedDateMillis
+        set(value) {
+            delegate.selectedDateMillis = value
+            // Typed dates in input mode must not confirm the dialog while the user is still typing.
+            if (delegate.displayMode == DisplayMode.Picker) onDayClick()
+        }
+}
+
+/** Reports every minute selection made on the dial, even when the minute is already set. */
+@OptIn(ExperimentalMaterial3Api::class)
+private class MinuteSelectionTimePickerState(
+    private val delegate: TimePickerState,
+    private val onMinuteSelected: () -> Unit,
+) : TimePickerState by delegate {
+    override var minuteInput: Int
+        get() = delegate.minuteInput
+        set(value) {
+            delegate.minuteInput = value
+            onMinuteSelected()
+        }
 }
 
 private fun String.toPickerHourAndMinute(): Pair<Int, Int> {
