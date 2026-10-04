@@ -850,7 +850,9 @@ fun TournamentsScreen(
                                         showColorPickerDialog = false
                                         renameDialogTournament = null
                                         store.updateTournament(result.value)
-                                        refresh()
+                                        // A non-forced refresh serves the stale cached list while it revalidates
+                                        // in the background, which would overwrite the saved schedule.
+                                        refresh(force = true)
                                     }
 
                                     is AppResult.Failure -> {
@@ -971,7 +973,7 @@ fun TournamentsScreen(
                                     deleteDialogTournament = null
                                     renameDialogTournament = null
                                     store.removeTournament(tournament.id)
-                                    refresh()
+                                    refresh(force = true)
                                 }
 
                                 is AppResult.Failure -> {
