@@ -47,6 +47,8 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -465,6 +467,16 @@ fun TournamentScreen(
 
     AppScaffold(
         title = tournament?.name?.ifBlank { "Tournament" } ?: "Tournament",
+        titleAction = {
+            TournamentEditTitleAction(
+                tournamentId = tournamentId,
+                onDeleted = {
+                    navController.navigate(TournamentsRoute) {
+                        popUpTo(TournamentsRoute) { inclusive = true }
+                    }
+                },
+            )
+        },
         isLoading = isLoading,
         onBack = { requestAction(RoundEditorAction.Back) },
         leadingActions = {

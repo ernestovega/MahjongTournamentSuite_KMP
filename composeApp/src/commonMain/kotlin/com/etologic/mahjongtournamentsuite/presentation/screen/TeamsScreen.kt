@@ -46,6 +46,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
@@ -227,6 +229,16 @@ fun TeamsScreen(
 
     AppScaffold(
         title = "Tournament teams",
+        titleAction = {
+            TournamentEditTitleAction(
+                tournamentId = tournamentId,
+                onDeleted = {
+                    navController.navigate(TournamentsRoute) {
+                        popUpTo(TournamentsRoute) { inclusive = true }
+                    }
+                },
+            )
+        },
         isLoading = loading || saving,
         onBack = { navController.popBackStack() },
     ) {

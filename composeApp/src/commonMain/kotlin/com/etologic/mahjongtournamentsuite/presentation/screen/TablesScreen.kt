@@ -30,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -156,6 +158,16 @@ fun TablesScreen(
     AppScaffold(
         title = "Tables",
         subtitle = tournamentId,
+        titleAction = {
+            TournamentEditTitleAction(
+                tournamentId = tournamentId,
+                onDeleted = {
+                    navController.navigate(TournamentsRoute) {
+                        popUpTo(TournamentsRoute) { inclusive = true }
+                    }
+                },
+            )
+        },
         isLoading = isLoading,
         onBack = { navController.popBackStack() },
     ) {

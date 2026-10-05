@@ -55,6 +55,7 @@ private val AppLoadingBarHeight = 4.dp
 fun AppScaffold(
     title: String,
     subtitle: String? = null,
+    titleAction: @Composable (() -> Unit)? = null,
     isLoading: Boolean = false,
     onBack: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
@@ -82,19 +83,29 @@ fun AppScaffold(
         topBar = {
             Column {
                 val titleContent: @Composable () -> Unit = {
-                    Box {
-                        if (subtitle == null) {
-                            Text(title)
-                        } else {
-                            Column(
-                                verticalArrangement = Arrangement.spacedBy(2.dp),
-                            ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Box {
+                            if (subtitle == null) {
                                 Text(title)
-                                Text(
-                                    text = subtitle,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
+                            } else {
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                                ) {
+                                    Text(title)
+                                    Text(
+                                        text = subtitle,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            }
+                        }
+                        if (titleAction != null) {
+                            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                titleAction()
                             }
                         }
                     }

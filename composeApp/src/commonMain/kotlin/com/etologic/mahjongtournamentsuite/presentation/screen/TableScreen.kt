@@ -82,6 +82,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -402,6 +404,16 @@ fun TableManagerScreen(
     AppScaffold(
         title = "Round $roundId • Table $tableId",
         subtitle = tournamentId,
+        titleAction = {
+            TournamentEditTitleAction(
+                tournamentId = tournamentId,
+                onDeleted = {
+                    navController.navigate(TournamentsRoute) {
+                        popUpTo(TournamentsRoute) { inclusive = true }
+                    }
+                },
+            )
+        },
         isLoading = isLoading,
         onBack = { requestUnsavedAction(TableManagerPendingUnsavedAction.Back) },
         floatingActionButton = {

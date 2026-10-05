@@ -40,6 +40,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -540,6 +542,16 @@ private fun LegacyTournamentScreen(
             ?.name
             ?.ifBlank { "Tournament" }
             ?: "Tournament",
+        titleAction = {
+            TournamentEditTitleAction(
+                tournamentId = tournamentId,
+                onDeleted = {
+                    navController.navigate(TournamentsRoute) {
+                        popUpTo(TournamentsRoute) { inclusive = true }
+                    }
+                },
+            )
+        },
         isLoading = isLoading,
         onBack = { requestUnsavedAction(PendingUnsavedAction.Back) },
         leadingActions = {
