@@ -20,9 +20,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
+import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -33,6 +36,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -69,13 +73,27 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.PopupProperties
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.window.PopupPositionProvider
+import androidx.compose.ui.window.Popup
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import androidx.navigation.NavHostController
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
 import androidx.compose.ui.input.key.KeyEventType
@@ -88,6 +106,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
@@ -100,6 +119,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ManualScoreTo
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
+import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
@@ -561,46 +583,78 @@ internal fun TableSummaryCard(
     onFocused: (() -> Unit)? = null,
 ) {
     val dependentSectionsEnabled = enabled && editor.hasCompleteSeatPositions
+    // Scores and points use the same text size.
+    val tableTotalsTextStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
     SectionCard(
         modifier = Modifier
             .then(cardFocusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
             .focusable()
             .appFocusGroup()
             .onFocusChanged { if (it.isFocused) onFocused?.invoke() },
-        title = "Table ${editor.tableId}",
+        title = "Round ${editor.roundId} • Table ${editor.tableId}",
+        // Same size as the labels in the rounds and tables columns.
+        titleStyle = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
         titleAction = {
-            CompletionStatusIcon(
-                status = if (!editor.useTotalsOnly && editor.isCompleted) {
-                    CompletionStatus.Completed
-                } else if (editor.useTotalsOnly) {
-                    CompletionStatus.Manual
-                } else if (editor.hands.any { it.isDone || it.handScore.isNotBlank() }) {
-                    CompletionStatus.InProgress
-                } else {
-                    CompletionStatus.Empty
-                },
-            )
-        },
-        actions = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Spacer(Modifier.width(10.dp))
+                StatusIconWithTooltip(status = editor.completionStatus)
                 if (editor.chickenHandCount > 0) {
-                    Icon(
-                        imageVector = Icons.Default.Warning,
-                        contentDescription = "Chicken hands: ${editor.chickenHandCount}",
-                        tint = MaterialTheme.colorScheme.tertiary,
-                    )
+                    val chickenText = if (editor.chickenHandCount == 1) {
+                        "1 chicken hand"
+                    } else {
+                        "${editor.chickenHandCount} chicken hands"
+                    }
+                    HintTooltip(chickenText) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            ChickenIcon(contentDescription = chickenText)
+                            Text(text = "${editor.chickenHandCount}", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
                 }
                 editor.bestCompletedHandScore?.let { best ->
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = "Best completed hand: $best",
-                        tint = MaterialTheme.colorScheme.primary,
-                    )
+                    val bestText = "Best hand: $best"
+                    HintTooltip(bestText) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            TrophyIcon(contentDescription = bestText)
+                            Text(text = "$best", style = MaterialTheme.typography.titleMedium)
+                        }
+                    }
                 }
+            }
+        },
+        actions = {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                LabeledSwitch(
+                    label = "Use hands totals",
+                    description = "Calculate total scores and table points from the hand results.",
+                    checked = !editor.useTotalsOnly,
+                    enabled = dependentSectionsEnabled,
+                    onCheckedChange = { detailed ->
+                        if (detailed) editor.disableManualTotals() else editor.enableManualTotals()
+                    },
+                )
+                FocusedButton(
+                    onClick = onEditHands,
+                    enabled = enabled && editor.hasCompleteSeatPositions,
+                    focusRequester = editHandsFocusRequester,
+                ) { Text("Edit hands") }
             }
         },
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            SeatColumnHeader()
             TableSummaryRow(label = "Seats") {
             SeatPositionsRow(
                 playerIds = editor.playerIds,
@@ -619,11 +673,13 @@ internal fun TableSummaryCard(
                 onNorthChange = { editor.setSeatAssignment(3, it) },
                 playerNamesById = playerNamesById,
                 showPlayerIds = true,
+                showLabels = false,
             )
             }
             TableSummaryRow(label = "Scores") {
+                if (editor.useTotalsOnly) {
                 SeatFieldRow(
-                    enabled = dependentSectionsEnabled && editor.useTotalsOnly,
+                    enabled = dependentSectionsEnabled,
                     eastValue = editor.displayEastScore,
                     southValue = editor.displaySouthScore,
                     westValue = editor.displayWestScore,
@@ -636,55 +692,30 @@ internal fun TableSummaryCard(
                     onSouthChange = { editor.updateManualScore(1, it) },
                     onWestChange = { editor.updateManualScore(2, it) },
                     onNorthChange = { editor.updateManualScore(3, it) },
+                    showLabels = false,
+                    textStyle = tableTotalsTextStyle,
                 )
+                } else {
+                    SeatReadOnlyRow(
+                        eastValue = editor.displayEastScore,
+                        southValue = editor.displaySouthScore,
+                        westValue = editor.displayWestScore,
+                        northValue = editor.displayNorthScore,
+                        textStyle = tableTotalsTextStyle,
+                    )
+                }
             }
             TableSummaryRow(label = "Points") {
-                SeatFieldRow(
-                    enabled = false,
+                SeatReadOnlyRow(
                     eastValue = editor.displayEastPoints,
                     southValue = editor.displaySouthPoints,
                     westValue = editor.displayWestPoints,
                     northValue = editor.displayNorthPoints,
-                    onEastChange = {},
-                    onSouthChange = {},
-                    onWestChange = {},
-                    onNorthChange = {},
+                    textStyle = tableTotalsTextStyle,
                 )
             }
         }
-
-        Spacer(Modifier.height(10.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            LabeledSwitch(
-                label = "Detailed Hands",
-                description = "Calculate total scores and table points from the hand results.",
-                checked = !editor.useTotalsOnly,
-                enabled = dependentSectionsEnabled,
-                onCheckedChange = { detailed ->
-                    if (detailed) editor.disableManualTotals() else editor.enableManualTotals()
-                },
-            )
-            Spacer(Modifier.weight(1f))
-            FocusedOutlinedButton(
-                onClick = onEditHands,
-                enabled = enabled && editor.hasCompleteSeatPositions,
-                focusRequester = editHandsFocusRequester,
-            ) { Text("Edit hands") }
-        }
     }
-}
-
-@Composable
-private fun CompletionStatusIcon(status: CompletionStatus) {
-    Icon(
-        imageVector = status.icon,
-        contentDescription = status.label,
-        tint = status.color,
-    )
 }
 
 @Composable
@@ -712,6 +743,7 @@ private fun TableSummaryRow(
 }
 
 /** Wide dialog with a temporary hand draft. Save copies the draft to the table card. */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun TableHandsDialog(
     editor: TableManagerEditorState,
@@ -744,76 +776,112 @@ internal fun TableHandsDialog(
 
     LaunchedEffect(Unit) { cancelFocusRequester.requestFocus() }
 
-    AlertDialog(
-        modifier = Modifier
-            // The hand grid needs a wide canvas and a bounded scroll area.
-            .widthIn(min = 1200.dp, max = 1600.dp)
-            .appFocusGroup(),
-        onDismissRequest = {},
-        title = { Text("Table ${editor.tableId} hands") },
-        text = {
-            ScrollableColumnWithScrollbar(
-                state = scrollState,
-                modifier = Modifier.fillMaxWidth().heightIn(max = 680.dp),
-            ) {
-                if (drafts.any { it.isResultSelectionInvalid }) {
-                    Text(
-                        "Invalid hand values must be fixed before Save.",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                }
-                drafts.forEachIndexed { index, hand ->
-                    if (index > 0) HorizontalDivider()
-                    DialogHandRow(
-                        index = index,
-                        hand = hand,
-                        playerIds = editor.playerIds,
-                        playerNamesById = playerNamesById,
-                        enabled = enabled,
-                        forceDoneChecked = completion,
-                        subtotal = editor.cumulativeHandScoreSubtotals.getOrNull(index).orZero(),
-                        navigation = rowNavigators[index],
-                        previousNavigation = rowNavigators.getOrNull(index - 1),
-                        nextNavigation = rowNavigators.getOrNull(index + 1),
-                        showPenalties = index in expandedPenaltyHands,
-                        onTogglePenalties = {
-                            expandedPenaltyHands = if (index in expandedPenaltyHands) {
-                                expandedPenaltyHands - index
-                            } else {
-                                expandedPenaltyHands + index
-                            }
-                        },
-                    )
-                }
-                if (!editor.useTotalsOnly) {
-                    LabeledSwitch(
-                        label = "Completed",
-                        description = "Mark the table complete after every hand is valid.",
-                        checked = completion,
-                        enabled = enabled,
-                        onCheckedChange = { completion = it },
-                    )
-                }
+    val handSubtotals = editor.cumulativeSubtotalsFor(drafts, blankUncalculatedHands = true, allHandsDone = completion)
+
+    // Dialog windows cap their width on some platforms (hit testing stops at that width too).
+    // A popup that covers the whole app window has no such cap.
+    val density = LocalDensity.current
+    val windowSize = LocalWindowInfo.current.containerSize
+    val windowWidth = with(density) { windowSize.width.toDp() }
+    val windowHeight = with(density) { windowSize.height.toDp() }
+    val dialogWidth = (windowWidth - 48.dp).coerceAtLeast(320.dp)
+
+    Popup(
+        popupPositionProvider = remember {
+            object : PopupPositionProvider {
+                override fun calculatePosition(
+                    anchorBounds: IntRect,
+                    windowSize: IntSize,
+                    layoutDirection: LayoutDirection,
+                    popupContentSize: IntSize,
+                ): IntOffset = IntOffset.Zero
             }
         },
-        confirmButton = {
-            FocusedButton(
-                onClick = ::applyDraft,
-                enabled = enabled,
-                focusRequester = applyFocusRequester,
-                buttonModifier = Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester),
-            ) { Text("Save") }
-        },
-        dismissButton = {
-            FocusedTextButton(
-                onClick = onDismiss,
-                enabled = enabled,
-                focusRequester = cancelFocusRequester,
-                buttonModifier = Modifier.focusLoop(applyFocusRequester, applyFocusRequester),
-            ) { Text("Cancel") }
-        },
-    )
+        properties = PopupProperties(focusable = true),
+    ) {
+      Box(
+        modifier = Modifier
+            .size(windowWidth, windowHeight)
+            .background(Color.Black.copy(alpha = 0.5f))
+            .pointerInput(Unit) { detectTapGestures { } },
+        contentAlignment = Alignment.Center,
+      ) {
+        Surface(
+            modifier = Modifier.width(dialogWidth).appFocusGroup(),
+            shape = MaterialTheme.shapes.extraLarge,
+            color = MaterialTheme.colorScheme.surfaceContainerHigh,
+            tonalElevation = 6.dp,
+        ) {
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text("Table ${editor.tableId} hands", style = MaterialTheme.typography.headlineSmall)
+                Spacer(Modifier.height(16.dp))
+                ScrollableColumnWithScrollbar(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 680.dp),
+                ) {
+                    if (drafts.any { it.isResultSelectionInvalid }) {
+                        Text(
+                            "Invalid hand values must be fixed before Save.",
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                    drafts.forEachIndexed { index, hand ->
+                        if (index > 0) HorizontalDivider()
+                        DialogHandRow(
+                            index = index,
+                            hand = hand,
+                            playerIds = editor.playerIds,
+                            playerNamesById = playerNamesById,
+                            enabled = enabled,
+                            forceDoneChecked = completion,
+                            subtotal = handSubtotals.getOrNull(index).orZero(),
+                            navigation = rowNavigators[index],
+                            previousNavigation = rowNavigators.getOrNull(index - 1),
+                            nextNavigation = rowNavigators.getOrNull(index + 1),
+                            showPenalties = index in expandedPenaltyHands,
+                            onTogglePenalties = {
+                                expandedPenaltyHands = if (index in expandedPenaltyHands) {
+                                    expandedPenaltyHands - index
+                                } else {
+                                    expandedPenaltyHands + index
+                                }
+                            },
+                        )
+                    }
+                    if (!editor.useTotalsOnly) {
+                        LabeledSwitch(
+                            label = "Completed",
+                            description = "Mark the table complete after every hand is valid.",
+                            checked = completion,
+                            enabled = enabled,
+                            onCheckedChange = { completion = it },
+                        )
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        enabled = enabled,
+                        focusRequester = cancelFocusRequester,
+                        buttonModifier = Modifier.focusLoop(applyFocusRequester, applyFocusRequester),
+                    ) { Text("Cancel") }
+                    FocusedButton(
+                        onClick = ::applyDraft,
+                        enabled = enabled,
+                        focusRequester = applyFocusRequester,
+                        buttonModifier = Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester),
+                    ) { Text("Save") }
+                }
+            }
+        }
+      }
+    }
 }
 
 @Composable
@@ -849,45 +917,8 @@ private fun DialogHandRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text("${index + 1}", style = MaterialTheme.typography.titleLarge, modifier = Modifier.width(32.dp))
-                KeyboardAwareOutlinedTextField(
-                    value = hand.handScore,
-                    onValueChange = hand::updateHandScore,
-                    currentSlot = HandFieldSlot.Score,
-                    rowEnabled = rowEnabled,
-                    rowNavigation = navigation,
-                    previousNavigation = previousNavigation,
-                    nextNavigation = nextNavigation,
-                    label = { Text("Score") },
-                    enabled = rowEnabled,
-                    isChanged = hand.hasScoreChanged,
-                    modifier = Modifier.width(130.dp),
-                    focusRequester = navigation.score,
-                )
-                HandToggleControl(
-                    width = 130.dp,
-                    label = "Chicken hand",
-                    checked = hand.isChickenHand,
-                    enabled = rowEnabled && hand.hasLoserSelected,
-                    isChanged = hand.hasChickenHandChanged,
-                    onCheckedChange = hand::updateChickenHand,
-                )
-                Spacer(Modifier.weight(1f))
-                HandToggleControl(
-                    width = 90.dp,
-                    label = "Done",
-                    checked = hand.isDone,
-                    enabled = enabled && !forceDoneChecked,
-                    isChanged = hand.hasDoneChanged,
-                    onCheckedChange = hand::updateDoneState,
-                    focusRequester = navigation.done,
-                )
-            }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
                 PlayerDropdown(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1.4f),
                     label = "Winner",
                     playerIds = playerIds,
                     value = hand.playerWinnerId,
@@ -901,7 +932,7 @@ private fun DialogHandRow(
                     emptyOptionLabel = "-",
                 )
                 PlayerDropdown(
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1.4f),
                     label = "Loser",
                     playerIds = playerIds,
                     value = hand.playerLooserId,
@@ -914,9 +945,55 @@ private fun DialogHandRow(
                     excludedPlayerIds = setOfNotNull(hand.selectedWinnerPlayerId),
                     emptyOptionLabel = "-",
                 )
-                FocusedTextButton(onClick = onTogglePenalties, enabled = enabled) {
-                    Text(if (showPenalties) "Hide penalties" else "Show penalties")
+                KeyboardAwareOutlinedTextField(
+                    value = hand.handScore,
+                    onValueChange = hand::updateHandScore,
+                    currentSlot = HandFieldSlot.Score,
+                    rowEnabled = rowEnabled,
+                    rowNavigation = navigation,
+                    previousNavigation = previousNavigation,
+                    nextNavigation = nextNavigation,
+                    label = { Text("Score") },
+                    enabled = rowEnabled,
+                    isChanged = hand.hasScoreChanged,
+                    modifier = Modifier.width(110.dp),
+                    focusRequester = navigation.score,
+                )
+                HandToggleControl(
+                    width = 130.dp,
+                    label = "Chicken hand",
+                    checked = hand.isChickenHand,
+                    enabled = rowEnabled && hand.hasLoserSelected,
+                    isChanged = hand.hasChickenHandChanged,
+                    onCheckedChange = hand::updateChickenHand,
+                )
+                Text(
+                    text = "Subtotals",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.38f),
+                )
+                Row(
+                    modifier = Modifier.weight(2f),
+                    horizontalArrangement = Arrangement.spacedBy(HandSubtotalFieldSpacing),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    ReadOnlySubtotalField(Modifier.weight(1f), subtotal.east)
+                    ReadOnlySubtotalField(Modifier.weight(1f), subtotal.south)
+                    ReadOnlySubtotalField(Modifier.weight(1f), subtotal.west)
+                    ReadOnlySubtotalField(Modifier.weight(1f), subtotal.north)
                 }
+                HandToggleControl(
+                    width = 90.dp,
+                    label = "Done",
+                    checked = hand.isDone,
+                    enabled = enabled && !forceDoneChecked,
+                    isChanged = hand.hasDoneChanged,
+                    onCheckedChange = hand::updateDoneState,
+                    focusRequester = navigation.done,
+                )
+            }
+            FocusedTextButton(onClick = onTogglePenalties, enabled = enabled) {
+                Text(if (showPenalties) "Hide penalties" else "Show penalties")
             }
             if (showPenalties) {
                 hand.penaltyRows.forEachIndexed { penaltyIndex, penalty ->
@@ -945,12 +1022,6 @@ private fun DialogHandRow(
                     onClick = hand::addPenaltyRow,
                     enabled = rowEnabled,
                 ) { Text("Add penalty row") }
-            }
-            HandFourFieldRow(title = "Subtotals", enabled = enabled) {
-                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.east)
-                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.south)
-                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.west)
-                ReadOnlySubtotalField(Modifier.weight(1f), subtotal.north)
             }
             if (hand.showValidationError) {
                 Text(
@@ -1159,6 +1230,63 @@ private fun TablePointsSection(
     )
 }
 
+/** One shared East/South/West/North title row. It matches the column layout of [TableSummaryRow]. */
+@Composable
+private fun SeatColumnHeader() {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Spacer(modifier = Modifier.width(TableSummaryRowLabelWidth))
+        Row(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            listOf("East", "South", "West", "North").forEach { seat ->
+                Text(
+                    text = seat,
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.weight(1f),
+                )
+            }
+        }
+    }
+}
+
+/** Four read-only values. They look like plain text, not like inputs. */
+@Composable
+private fun SeatReadOnlyRow(
+    eastValue: String,
+    southValue: String,
+    westValue: String,
+    northValue: String,
+    textStyle: TextStyle,
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        listOf(eastValue, southValue, westValue, northValue).forEach { value ->
+            Box(
+                modifier = Modifier.weight(1f).height(56.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = value,
+                    style = textStyle.copy(textAlign = TextAlign.Center),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+    }
+}
+
 @Composable
 private fun SeatFieldRow(
     enabled: Boolean,
@@ -1174,7 +1302,10 @@ private fun SeatFieldRow(
     onSouthChange: (String) -> Unit,
     onWestChange: (String) -> Unit,
     onNorthChange: (String) -> Unit,
+    showLabels: Boolean = true,
+    textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
 ) {
+    val centeredTextStyle = textStyle.copy(textAlign = TextAlign.Center)
     Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -1186,7 +1317,8 @@ private fun SeatFieldRow(
                 onValueChange = onEastChange,
                 enabled = enabled,
                 isChanged = eastChanged,
-                label = { Text("East") },
+                label = if (showLabels) { { Text("East") } } else null,
+                textStyle = centeredTextStyle,
                 modifier = Modifier.weight(1f),
                 singleLine = true,
             )
@@ -1195,7 +1327,8 @@ private fun SeatFieldRow(
                 onValueChange = onSouthChange,
                 enabled = enabled,
                 isChanged = southChanged,
-                label = { Text("South") },
+                label = if (showLabels) { { Text("South") } } else null,
+                textStyle = centeredTextStyle,
                 modifier = Modifier.weight(1f),
                 singleLine = true,
             )
@@ -1204,7 +1337,8 @@ private fun SeatFieldRow(
                 onValueChange = onWestChange,
                 enabled = enabled,
                 isChanged = westChanged,
-                label = { Text("West") },
+                label = if (showLabels) { { Text("West") } } else null,
+                textStyle = centeredTextStyle,
                 modifier = Modifier.weight(1f),
                 singleLine = true,
             )
@@ -1213,7 +1347,8 @@ private fun SeatFieldRow(
                 onValueChange = onNorthChange,
                 enabled = enabled,
                 isChanged = northChanged,
-                label = { Text("North") },
+                label = if (showLabels) { { Text("North") } } else null,
+                textStyle = centeredTextStyle,
                 modifier = Modifier.weight(1f),
                 singleLine = true,
             )
@@ -2775,6 +2910,69 @@ internal class TableManagerEditorState private constructor(
     val hasCompleteSeatPositions: Boolean
         get() = currentSeatIds() != null
 
+    /** Same rules as the server (`tableManagerService.ts`), so the card matches the tables list. */
+    private val summaryHasProgress: Boolean
+        get() = isCompleted || summaryHasData
+
+    private val summaryHasData: Boolean
+        get() {
+            val scores = manualTableScores().let { listOf(it.east, it.south, it.west, it.north) }
+            val points = manualTablePoints().let { listOf(it.east, it.south, it.west, it.north) }
+            return listOf(playerEastId, playerSouthId, playerWestId, playerNorthId).any { it.isNotBlank() } ||
+                scores.any { it.isNotBlank() } ||
+                points.any { it.isNotBlank() } ||
+                hands.any { hand ->
+                    hand.isDone || hand.isChickenHand || listOf(
+                        hand.playerWinnerId, hand.playerLooserId, hand.handScore,
+                        hand.playerEastPenalty, hand.playerSouthPenalty,
+                        hand.playerWestPenalty, hand.playerNorthPenalty,
+                    ).any { it.isNotBlank() }
+                }
+        }
+
+    private val summaryHasValidManualTotals: Boolean
+        get() {
+            val scores = manualTableScores().let { listOf(it.east, it.south, it.west, it.north) }
+            val points = manualTablePoints().let { listOf(it.east, it.south, it.west, it.north) }
+            val validScores = scores.all { it.matches(Regex("^-?\\d+$")) }
+            val validPoints = points.all { it.matches(Regex("^-?\\d+(?:[,.]\\d+)?$")) } &&
+                kotlin.math.abs(points.sumOf { it.replace(',', '.').toDouble() } - 7.0) < 0.011
+            return if (useTotalsOnly) validScores else !usePointsCalculation && validPoints
+        }
+
+    /** Hands mode needs valid effective scores. It needs no hands, because scores fall back to the manual ones. */
+    private val hasValidEffectiveScores: Boolean
+        get() = effectiveTableScores().let { listOf(it.east, it.south, it.west, it.north) }
+            .all { it.matches(Regex("^-?\\d+$")) }
+
+    /** Same rules as `calculateTableCompletionStatus` on the server. */
+    val completionStatus: CompletionStatus
+        get() = when {
+            !summaryHasData -> CompletionStatus.Empty
+            !hasCompleteSeatPositions -> CompletionStatus.InProgress
+            useTotalsOnly -> if (summaryHasValidManualTotals) CompletionStatus.Manual else CompletionStatus.InProgress
+            hasValidEffectiveScores -> CompletionStatus.Completed
+            else -> CompletionStatus.InProgress
+        }
+
+    /** Copies this saved table state into the summary shown in the rounds and tables columns. */
+    fun applyTo(summary: TournamentTable): TournamentTable = summary.copy(
+        isCompleted = isCompleted,
+        useTotalsOnly = useTotalsOnly,
+        usePointsCalculation = usePointsCalculation,
+        hasProgress = summaryHasProgress,
+        hasValidManualTotals = summaryHasValidManualTotals,
+        completionStatus = when (completionStatus) {
+            CompletionStatus.Empty -> "empty"
+            CompletionStatus.InProgress -> "incomplete"
+            CompletionStatus.Manual -> "partial"
+            CompletionStatus.Completed -> "completed"
+        },
+        bestHandScore = bestCompletedHandScore,
+        chickenHandCount = chickenHandCount,
+        version = version,
+    )
+
     val nonZeroManualScoreTotal: Long?
         get() {
             if (!useTotalsOnly) return null
@@ -3085,6 +3283,7 @@ internal class TableManagerEditorState private constructor(
         var hasCalculatedHand = false
 
         for (hand in hands) {
+            if (!hand.isDone && !isCompleted) continue
             val handTotals = calculateHandSeatScores(hand, seats) ?: continue
             totals += handTotals
             hasCalculatedHand = true
@@ -3093,18 +3292,34 @@ internal class TableManagerEditorState private constructor(
         return if (hasCalculatedHand) totals.asTextValues() else SeatTextValues.EMPTY
     }
 
-    private fun calculateCumulativeHandScoreSubtotals(): List<SeatTextValues> {
-        val seats = currentSeatIds() ?: return List(hands.size) { SeatTextValues.EMPTY }
+    private fun calculateCumulativeHandScoreSubtotals(): List<SeatTextValues> =
+        cumulativeSubtotalsFor(hands, blankUncalculatedHands = false, allHandsDone = isCompleted)
+
+    /**
+     * Running totals for [source]. The hands dialog passes its draft hands, so the subtotals follow
+     * unsaved edits. A hand counts only when it is done or [allHandsDone] is true. With
+     * [blankUncalculatedHands], a hand that does not count shows no value.
+     */
+    fun cumulativeSubtotalsFor(
+        source: List<HandDraftState>,
+        blankUncalculatedHands: Boolean,
+        allHandsDone: Boolean,
+    ): List<SeatTextValues> {
+        val seats = currentSeatIds() ?: return List(source.size) { SeatTextValues.EMPTY }
         var totals = SeatIntValues.ZERO
         var hasCalculatedHand = false
 
-        return hands.map { hand ->
-            val handTotals = calculateHandSeatScores(hand, seats)
+        return source.map { hand ->
+            val handTotals = if (hand.isDone || allHandsDone) calculateHandSeatScores(hand, seats) else null
             if (handTotals != null) {
                 totals += handTotals
                 hasCalculatedHand = true
             }
-            if (hasCalculatedHand) totals.asTextValues() else SeatTextValues.EMPTY
+            when {
+                blankUncalculatedHands && handTotals == null -> SeatTextValues.EMPTY
+                hasCalculatedHand -> totals.asTextValues()
+                else -> SeatTextValues.EMPTY
+            }
         }
     }
 
@@ -3679,7 +3894,10 @@ private fun SeatPositionsRow(
     playerNamesById: Map<Int, String>,
     showPlayerIds: Boolean,
     eastFocusRequester: FocusRequester? = null,
+    showLabels: Boolean = true,
 ) {
+    val centeredTextStyle = MaterialTheme.typography.bodyMedium.copy(textAlign = TextAlign.Center)
+
     fun seatMarksByPlayerId(): Map<Int, String> {
         fun parseId(value: String): Int? = value.trim().toIntOrNull()
 
@@ -3704,7 +3922,8 @@ private fun SeatPositionsRow(
     ) {
         PlayerDropdown(
             modifier = Modifier.weight(1f),
-            label = "East",
+            label = "East".takeIf { showLabels },
+            textStyle = centeredTextStyle,
             playerIds = playerIds,
             value = east,
             enabled = enabled,
@@ -3717,7 +3936,8 @@ private fun SeatPositionsRow(
         )
         PlayerDropdown(
             modifier = Modifier.weight(1f),
-            label = "South",
+            label = "South".takeIf { showLabels },
+            textStyle = centeredTextStyle,
             playerIds = playerIds,
             value = south,
             enabled = enabled,
@@ -3729,7 +3949,8 @@ private fun SeatPositionsRow(
         )
         PlayerDropdown(
             modifier = Modifier.weight(1f),
-            label = "West",
+            label = "West".takeIf { showLabels },
+            textStyle = centeredTextStyle,
             playerIds = playerIds,
             value = west,
             enabled = enabled,
@@ -3741,7 +3962,8 @@ private fun SeatPositionsRow(
         )
         PlayerDropdown(
             modifier = Modifier.weight(1f),
-            label = "North",
+            label = "North".takeIf { showLabels },
+            textStyle = centeredTextStyle,
             playerIds = playerIds,
             value = north,
             enabled = enabled,
@@ -3758,7 +3980,8 @@ private fun SeatPositionsRow(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun PlayerDropdown(
     modifier: Modifier = Modifier,
-    label: String,
+    label: String?,
+    textStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     playerIds: List<Int>,
     value: String,
     enabled: Boolean,
@@ -3778,8 +4001,8 @@ private fun PlayerDropdown(
     onNavigateDown: (() -> Boolean)? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var lastDismissMark by remember { mutableStateOf<TimeMark?>(null) }
     val anchorFocusRequester = remember { FocusRequester() }
-    val menuFocusRequester = remember { FocusRequester() }
     data class DropdownOption(
         val value: String,
         val label: String,
@@ -3859,14 +4082,20 @@ private fun PlayerDropdown(
             activeOptionIndex = selectedOptionIndex
         } else {
             activeOptionIndex = activeOptionIndex.coerceIn(0, options.lastIndex.coerceAtLeast(0))
-            menuFocusRequester.requestFocus()
         }
     }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
         // The menu remains inspectable when the field is disabled. Its options stay disabled below.
-        onExpandedChange = { shouldExpand -> expanded = shouldExpand },
+        onExpandedChange = { shouldExpand ->
+            // The popup closes on the press and the anchor toggles on the release.
+            // Ignore that release so a click on the open anchor does not reopen the menu.
+            if (shouldExpand && (lastDismissMark?.elapsedNow() ?: 1.seconds) < 400.milliseconds) {
+                return@ExposedDropdownMenuBox
+            }
+            expanded = shouldExpand
+        },
         modifier = modifier,
     ) {
         CompactOutlinedTextField(
@@ -3923,7 +4152,8 @@ private fun PlayerDropdown(
             onValueChange = {},
             readOnly = true,
             enabled = enabled,
-            label = { Text(label) },
+            label = label?.let { { Text(it) } },
+            textStyle = textStyle,
             singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
         colors = if (enabled && isChanged) {
@@ -3936,17 +4166,20 @@ private fun PlayerDropdown(
             ExposedDropdownMenuDefaults.outlinedTextFieldColors()
         },
         )
-        ExposedDropdownMenu(
+        // A non-focusable popup lets the click reach another dropdown below it.
+        // A focusable popup would swallow that click and need a second one.
+        DropdownMenu(
             expanded = expanded,
             onDismissRequest = {
+                lastDismissMark = TimeSource.Monotonic.markNow()
                 expanded = false
                 onDismiss()
             },
+            modifier = Modifier.exposedDropdownSize(),
+            properties = PopupProperties(focusable = false, dismissOnClickOutside = true),
         ) {
             Column(
                 modifier = Modifier
-                    .focusRequester(menuFocusRequester)
-                    .focusable()
                     .onPreviewKeyEvent { e ->
                         if (!enabled || !expanded || e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                         when (e.key) {

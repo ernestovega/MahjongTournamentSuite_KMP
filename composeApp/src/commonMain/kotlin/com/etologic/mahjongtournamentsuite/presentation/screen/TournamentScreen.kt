@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,6 +54,8 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
+import com.etologic.mahjongtournamentsuite.presentation.components.TableStatBadges
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
@@ -77,12 +80,19 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.DoneAll
-import androidx.compose.material.icons.filled.RadioButtonUnchecked
 import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Timelapse
+import androidx.compose.foundation.Image
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
+import mahjongtournamentsuite.composeapp.generated.resources.Res
+import mahjongtournamentsuite.composeapp.generated.resources.icon_status_completed
+import mahjongtournamentsuite.composeapp.generated.resources.icon_status_empty
+import mahjongtournamentsuite.composeapp.generated.resources.icon_status_in_progress
+import mahjongtournamentsuite.composeapp.generated.resources.icon_status_manual
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 
 private sealed class PendingUnsavedAction {
@@ -361,6 +371,9 @@ private fun LegacyTournamentScreen(
                 is AppResult.Success -> {
                     tableState = result.value.first
                     hands = result.value.second
+                    val saved = TableManagerEditorState.from(result.value.first, result.value.second)
+                    allTables = allTables.map { if (it.roundId == roundId && it.tableId == tableId) saved.applyTo(it) else it }
+                    tables = tables.map { if (it.roundId == roundId && it.tableId == tableId) saved.applyTo(it) else it }
                     true
                 }
                 is AppResult.Failure -> {
@@ -705,6 +718,7 @@ private fun RoundTableSidebar(
     onSelectTable: (Int) -> Unit,
     initialRoundFocusRequester: FocusRequester? = null,
 ) {
+    val bestHandScore = tournamentBestHandScore(allTables)
     val roundsListState = rememberLazyListState()
     val tablesListState = rememberLazyListState()
     Card(
@@ -762,8 +776,12 @@ private fun RoundTableSidebar(
                     ) {
                         itemsIndexed(rounds, key = { _, round -> round.roundId }) { index, round ->
                             RoundTableSidebarItem(
-                                label = "Round ${round.roundId}",
+                                label = "${round.roundId}",
                                 status = roundCompletionStatus(allTables.filter { it.roundId == round.roundId }),
+                                chickenHandCount = allTables.filter { it.roundId == round.roundId }.sumOf { it.chickenHandCount },
+                                bestHandScore = bestHandScore.takeIf {
+                                    allTables.any { table -> table.roundId == round.roundId && table.hasTournamentBestHand(it) }
+                                },
                                 selected = round.roundId == selectedRoundId,
                                 enabled = enabled,
                                 onClick = { onSelectRound(round.roundId) },
@@ -834,8 +852,10 @@ private fun RoundTableSidebar(
                             ) {
                                 items(tables, key = { it.tableId }) { table ->
                                     RoundTableSidebarItem(
-                                        label = "Table ${table.tableId}",
+                                        label = "${table.tableId}",
                                         status = tableCompletionStatus(table),
+                                        chickenHandCount = table.chickenHandCount,
+                                        bestHandScore = bestHandScore.takeIf { table.hasTournamentBestHand(it) },
                                         selected = table.tableId == selectedTableId,
                                         enabled = enabled,
                                         onClick = { onSelectTable(table.tableId) },
@@ -854,6 +874,8 @@ private fun RoundTableSidebar(
 private fun RoundTableSidebarItem(
     label: String,
     status: CompletionStatus,
+    chickenHandCount: Int,
+    bestHandScore: Int?,
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -886,14 +908,21 @@ private fun RoundTableSidebarItem(
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 10.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(SidebarIconSpacing),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(text = label, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-                Icon(
-                    imageVector = status.icon,
-                    contentDescription = status.label,
-                    tint = if (selected) LocalContentColor.current else status.color,
+                // The title gives way when the row is narrow, so the icons keep their full size.
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
+                Spacer(Modifier.width(SidebarTitleIconSpacing))
+                StatusIconWithTooltip(status = status)
+                TableStatBadges(chickenHandCount = chickenHandCount, bestHandScore = bestHandScore)
             }
         }
     }
@@ -901,13 +930,26 @@ private fun RoundTableSidebarItem(
 
 internal enum class CompletionStatus(
     val label: String,
-    val icon: ImageVector,
-    val color: Color,
+    val description: String,
+    val image: DrawableResource,
 ) {
-    Empty("Empty", Icons.Default.RadioButtonUnchecked, Color.Gray),
-    InProgress("In progress", Icons.Default.Timelapse, Color(0xFFB26A00)),
-    Manual("Manual", Icons.Default.Check, Color(0xFF1565C0)),
-    Completed("Completed", Icons.Default.DoneAll, Color(0xFF2E7D32)),
+    Empty("Empty", "Empty", Res.drawable.icon_status_empty),
+    InProgress("Incomplete", "Incomplete", Res.drawable.icon_status_in_progress),
+    Manual("Partially complete", "Partially complete", Res.drawable.icon_status_manual),
+    Completed("Completed", "Completed", Res.drawable.icon_status_completed),
+}
+
+/** Status icon with a hover and click tooltip. An empty status shows no icon. */
+@Composable
+internal fun StatusIconWithTooltip(status: CompletionStatus) {
+    if (status == CompletionStatus.Empty) return
+    HintTooltip(status.description) {
+        Image(
+            painter = painterResource(status.image),
+            contentDescription = status.label,
+            modifier = Modifier.size(24.dp),
+        )
+    }
 }
 
 @Composable
@@ -918,11 +960,30 @@ private fun CompletionStatusInfoIcon(description: String) {
     )
 }
 
-internal fun tableCompletionStatus(table: TournamentTable): CompletionStatus = when {
-    table.hasValidManualTotals -> CompletionStatus.Manual
-    table.isCompleted -> CompletionStatus.Completed
-    table.hasProgress -> CompletionStatus.InProgress
-    else -> CompletionStatus.Empty
+/** Space between the icons of a list entry. */
+internal val SidebarIconSpacing = 12.dp
+
+/** Extra space between a list entry title and its first icon. It adds to [SidebarIconSpacing]. */
+internal val SidebarTitleIconSpacing = 2.dp
+
+/** Highest best-hand score among all tables of the tournament, or null when no hand is done. */
+internal fun tournamentBestHandScore(tables: List<TournamentTable>): Int? = tables.mapNotNull { it.bestHandScore }.maxOrNull()
+
+internal fun TournamentTable.hasTournamentBestHand(tournamentBest: Int?): Boolean =
+    tournamentBest != null && bestHandScore == tournamentBest
+
+internal fun tableCompletionStatus(table: TournamentTable): CompletionStatus = when (table.completionStatus) {
+    "empty" -> CompletionStatus.Empty
+    "incomplete" -> CompletionStatus.InProgress
+    "partial" -> CompletionStatus.Manual
+    "completed" -> CompletionStatus.Completed
+    // Data from an older server has no status. Use the old flags until the next refresh.
+    else -> when {
+        table.hasValidManualTotals -> CompletionStatus.Manual
+        table.isCompleted -> CompletionStatus.Completed
+        table.hasProgress -> CompletionStatus.InProgress
+        else -> CompletionStatus.Empty
+    }
 }
 
 internal fun firstTournamentTableToOpen(tables: List<TournamentTable>): TournamentTable? {
@@ -932,12 +993,17 @@ internal fun firstTournamentTableToOpen(tables: List<TournamentTable>): Tourname
     } ?: orderedTables.firstOrNull()
 }
 
-internal fun roundCompletionStatus(tables: List<TournamentTable>): CompletionStatus = when {
-    tables.isEmpty() -> CompletionStatus.Empty
-    tables.any { tableCompletionStatus(it) == CompletionStatus.Manual } -> CompletionStatus.Manual
-    tables.all { tableCompletionStatus(it) == CompletionStatus.Completed } -> CompletionStatus.Completed
-    tables.any { tableCompletionStatus(it) == CompletionStatus.InProgress } -> CompletionStatus.InProgress
-    else -> CompletionStatus.Empty
+/** A round is complete only when all its tables are. Any other data makes it incomplete. */
+internal fun roundCompletionStatus(tables: List<TournamentTable>): CompletionStatus {
+    if (tables.isEmpty()) return CompletionStatus.Empty
+    val statuses = tables.map(::tableCompletionStatus)
+    val finished = setOf(CompletionStatus.Manual, CompletionStatus.Completed)
+    return when {
+        statuses.all { it in finished } ->
+            if (CompletionStatus.Manual in statuses) CompletionStatus.Manual else CompletionStatus.Completed
+        statuses.any { it != CompletionStatus.Empty } -> CompletionStatus.InProgress
+        else -> CompletionStatus.Empty
+    }
 }
 
 private fun safeFileName(value: String): String = value

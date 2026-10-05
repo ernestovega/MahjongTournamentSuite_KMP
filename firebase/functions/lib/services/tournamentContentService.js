@@ -302,7 +302,14 @@ async function listTournamentTables(tournamentId, roundId) {
     const tables = await Promise.all(snap.docs.map(async (d) => {
         const storedHasProgress = d.get("hasProgress");
         const storedHasValidManualTotals = d.get("hasValidManualTotals");
-        if (typeof storedHasProgress === "boolean" && typeof storedHasValidManualTotals === "boolean") {
+        const storedCompletionStatus = d.get("completionStatus");
+        const storedChickenHandCount = d.get("chickenHandCount");
+        const storedBestHandScore = d.get("bestHandScore");
+        if (typeof storedHasProgress === "boolean"
+            && typeof storedHasValidManualTotals === "boolean"
+            && typeof storedCompletionStatus === "string"
+            && typeof storedChickenHandCount === "number"
+            && (storedBestHandScore === null || typeof storedBestHandScore === "number")) {
             return {
                 version: Number(d.get("version") ?? 0),
                 roundId: Number(d.get("roundId")),
@@ -313,6 +320,9 @@ async function listTournamentTables(tournamentId, roundId) {
                 usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
                 hasProgress: storedHasProgress,
                 hasValidManualTotals: storedHasValidManualTotals,
+                completionStatus: storedCompletionStatus,
+                bestHandScore: storedBestHandScore,
+                chickenHandCount: storedChickenHandCount,
             };
         }
         // Old documents use this fallback until the summary backfill runs.
@@ -359,6 +369,7 @@ async function listTournamentTables(tournamentId, roundId) {
         ]);
         const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? true);
         const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
+        const hasValidManualTotals = useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints;
         return {
             version: Number(d.get("version") ?? 0),
             roundId: Number(d.get("roundId")),
@@ -368,7 +379,17 @@ async function listTournamentTables(tournamentId, roundId) {
             useTotalsOnly,
             usePointsCalculation,
             hasProgress: hasTableProgress || hasHandProgress || Boolean(d.get("isCompleted") ?? false),
-            hasValidManualTotals: useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints,
+            hasValidManualTotals,
+            completionStatus: (0, tournamentContentRules_1.calculateTableCompletionStatus)({
+                hasData: hasTableProgress || hasHandProgress,
+                seatIds: [d.get("playerEastId"), d.get("playerSouthId"), d.get("playerWestId"), d.get("playerNorthId")],
+                useTotalsOnly,
+                hasValidTotals: useTotalsOnly ? hasValidManualScores : (0, tournamentContentRules_1.hasFourValidScores)([
+                    d.get("playerEastScore"), d.get("playerSouthScore"), d.get("playerWestScore"), d.get("playerNorthScore"),
+                ]),
+            }),
+            bestHandScore: (0, tournamentContentRules_1.calculateBestHandScore)(hands.docs.map((hand) => hand.data())),
+            chickenHandCount: (0, tournamentContentRules_1.countChickenHands)(hands.docs.map((hand) => hand.data())),
         };
     }));
     return tables

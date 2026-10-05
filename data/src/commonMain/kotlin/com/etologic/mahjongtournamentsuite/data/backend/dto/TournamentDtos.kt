@@ -257,6 +257,9 @@ data class TournamentTableDto(
     val usePointsCalculation: Boolean = true,
     val hasProgress: Boolean = false,
     val hasValidManualTotals: Boolean = false,
+    val completionStatus: String = "",
+    val bestHandScore: Int? = null,
+    val chickenHandCount: Int = 0,
     val version: Long = 0,
 )
 

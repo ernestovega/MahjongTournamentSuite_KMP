@@ -36,4 +36,33 @@ const tournamentContentRules_1 = require("./tournamentContentRules");
     strict_1.default.equal((0, tournamentContentRules_1.hasDuplicateEmaAssignments)(["12345678", "12345678", null]), true);
     strict_1.default.equal((0, tournamentContentRules_1.hasDuplicateEmaAssignments)([" 12345678 ", "12345678"]), true);
 });
+const seats = ["1", "2", "3", "4"];
+(0, node_test_1.default)("table status is empty without data", () => {
+    strict_1.default.equal((0, tournamentContentRules_1.calculateTableCompletionStatus)({
+        hasData: false, seatIds: ["", "", "", ""], useTotalsOnly: true, hasValidTotals: false,
+    }), "empty");
+});
+(0, node_test_1.default)("table status is incomplete with data but no valid totals", () => {
+    strict_1.default.equal((0, tournamentContentRules_1.calculateTableCompletionStatus)({
+        hasData: true, seatIds: seats, useTotalsOnly: true, hasValidTotals: false,
+    }), "incomplete");
+    strict_1.default.equal((0, tournamentContentRules_1.calculateTableCompletionStatus)({
+        hasData: true, seatIds: seats, useTotalsOnly: false, hasValidTotals: false,
+    }), "incomplete");
+});
+(0, node_test_1.default)("table status is incomplete when seats are missing", () => {
+    strict_1.default.equal((0, tournamentContentRules_1.calculateTableCompletionStatus)({
+        hasData: true, seatIds: ["1", "2", "3", ""], useTotalsOnly: true, hasValidTotals: true,
+    }), "incomplete");
+});
+(0, node_test_1.default)("table status is partial with manual totals", () => {
+    strict_1.default.equal((0, tournamentContentRules_1.calculateTableCompletionStatus)({
+        hasData: true, seatIds: seats, useTotalsOnly: true, hasValidTotals: true,
+    }), "partial");
+});
+(0, node_test_1.default)("table status is completed in hands mode with valid totals", () => {
+    strict_1.default.equal((0, tournamentContentRules_1.calculateTableCompletionStatus)({
+        hasData: true, seatIds: seats, useTotalsOnly: false, hasValidTotals: true,
+    }), "completed");
+});
 //# sourceMappingURL=tournamentContentRules.test.js.map

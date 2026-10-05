@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { db, firebaseProjectId } from "../firebase";
-import { hasFourValidScores, hasValidTablePoints } from "../services/tournamentContentRules";
+import { calculateBestHandScore, calculateTableCompletionStatus, countChickenHands, hasFourValidScores, hasValidTablePoints } from "../services/tournamentContentRules";
 
 const applyChanges = process.argv.includes("--apply");
 
@@ -78,6 +78,16 @@ async function backfill(): Promise<void> {
         pending.push(table.ref.update({
           hasProgress: hasTableProgress || hasHandProgress || Boolean(table.get("isCompleted")),
           hasValidManualTotals: useTotalsOnly ? validScores : !usePointsCalculation && validPoints,
+          completionStatus: calculateTableCompletionStatus({
+            hasData: hasTableProgress || hasHandProgress,
+            seatIds: [table.get("playerEastId"), table.get("playerSouthId"), table.get("playerWestId"), table.get("playerNorthId")],
+            useTotalsOnly,
+            hasValidTotals: useTotalsOnly ? validScores : hasFourValidScores([
+              table.get("playerEastScore"), table.get("playerSouthScore"), table.get("playerWestScore"), table.get("playerNorthScore"),
+            ]),
+          }),
+          bestHandScore: calculateBestHandScore(tableHands.map((hand) => hand.data())),
+          chickenHandCount: countChickenHands(tableHands.map((hand) => hand.data())),
           ...(Number.isSafeInteger(table.get("version")) ? {} : { version: 0 }),
         }));
       }

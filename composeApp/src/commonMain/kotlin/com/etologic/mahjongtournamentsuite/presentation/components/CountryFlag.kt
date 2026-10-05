@@ -38,7 +38,8 @@ fun CountryFlag(
                 painter = painterResource(resource),
                 contentDescription = contentDescription,
                 modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Fit,
+                // Twemoji flags are drawn in a square. The flag fills the width and the empty top and bottom are cut.
+                contentScale = ContentScale.FillWidth,
             )
             normalizedCode != null && normalizedCode != "EU" -> Text(
                 text = normalizedCode,

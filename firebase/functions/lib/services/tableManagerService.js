@@ -114,9 +114,20 @@ function calculateTableSummary(table, hands) {
         table.manualPlayerWestPoints || table.playerWestPoints,
         table.manualPlayerNorthPoints || table.playerNorthPoints,
     ]);
+    const hasValidManualTotals = useTotalsOnly ? validScores : !usePointsCalculation && validPoints;
     return {
         hasProgress: hasTableProgress || hasHandProgress || Boolean(table.isCompleted),
-        hasValidManualTotals: useTotalsOnly ? validScores : !usePointsCalculation && validPoints,
+        hasValidManualTotals,
+        completionStatus: (0, tournamentContentRules_1.calculateTableCompletionStatus)({
+            hasData: hasTableProgress || hasHandProgress,
+            seatIds: [table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId],
+            useTotalsOnly,
+            hasValidTotals: useTotalsOnly ? validScores : (0, tournamentContentRules_1.hasFourValidScores)([
+                table.playerEastScore, table.playerSouthScore, table.playerWestScore, table.playerNorthScore,
+            ]),
+        }),
+        bestHandScore: (0, tournamentContentRules_1.calculateBestHandScore)(hands),
+        chickenHandCount: (0, tournamentContentRules_1.countChickenHands)(hands),
     };
 }
 /**
@@ -254,6 +265,9 @@ async function resetTable(params) {
         usePointsCalculation: true,
         hasProgress: false,
         hasValidManualTotals: false,
+        completionStatus: "empty",
+        bestHandScore: null,
+        chickenHandCount: 0,
         version: firestore_1.FieldValue.increment(1),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     });

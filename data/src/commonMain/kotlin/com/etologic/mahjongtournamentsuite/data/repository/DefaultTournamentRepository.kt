@@ -499,6 +499,9 @@ class DefaultTournamentRepository(
                     usePointsCalculation = dto.usePointsCalculation,
                     hasProgress = dto.hasProgress,
                     hasValidManualTotals = dto.hasValidManualTotals,
+                    completionStatus = dto.completionStatus,
+                    bestHandScore = dto.bestHandScore,
+                    chickenHandCount = dto.chickenHandCount,
                     version = dto.version,
                 )
             }

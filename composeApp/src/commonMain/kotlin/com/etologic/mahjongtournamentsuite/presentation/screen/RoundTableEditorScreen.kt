@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,9 +8,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
@@ -45,6 +46,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -68,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighligh
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ManualScoreTotalConfirmationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetTableDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TableStatBadges
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
@@ -115,6 +119,8 @@ fun TournamentScreen(
     var allTables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var selectedRoundId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
     var selectedTableId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
+    // Set when a click inside a card selects its table. That selection must not scroll or move the focus.
+    var tableSelectedByFocus by remember { mutableStateOf<Int?>(null) }
     var tableEditors by remember { mutableStateOf<Map<Int, TableManagerEditorState>>(emptyMap()) }
     var playerNamesById by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
     var handsDialogTableId by remember { mutableStateOf<Int?>(null) }
@@ -220,6 +226,11 @@ fun TournamentScreen(
     LaunchedEffect(selectedRoundId, selectedTableId, isLoading, tableEditors.keys.toList()) {
         val tableId = selectedTableId ?: return@LaunchedEffect
         if (isLoading) return@LaunchedEffect
+        if (tableSelectedByFocus == tableId) {
+            // The card already has the focus. Scrolling would move the button away from the pointer.
+            tableSelectedByFocus = null
+            return@LaunchedEffect
+        }
         val index = selectedRoundTables.indexOfFirst { it.tableId == tableId }
         if (index >= 0) {
             tableListState.animateScrollToItem(index)
@@ -243,7 +254,11 @@ fun TournamentScreen(
                 handPatches = handPatches,
             )) {
                 is AppResult.Success -> {
-                    tableEditors = tableEditors + (tableId to TableManagerEditorState.from(result.value.first, result.value.second))
+                    val saved = TableManagerEditorState.from(result.value.first, result.value.second)
+                    tableEditors = tableEditors + (tableId to saved)
+                    allTables = allTables.map { summary ->
+                        if (summary.roundId == saved.roundId && summary.tableId == tableId) saved.applyTo(summary) else summary
+                    }
                 }
                 is AppResult.Failure -> {
                     val saveError = result.error as? AppError.Conflict
@@ -287,7 +302,11 @@ fun TournamentScreen(
         )
         when (result) {
             is AppResult.Success -> {
-                tableEditors = tableEditors + (tableId to TableManagerEditorState.from(result.value.first, result.value.second))
+                val saved = TableManagerEditorState.from(result.value.first, result.value.second)
+                tableEditors = tableEditors + (tableId to saved)
+                allTables = allTables.map { summary ->
+                    if (summary.roundId == saved.roundId && summary.tableId == tableId) saved.applyTo(summary) else summary
+                }
                 conflict = null
                 conflictTableId = null
                 conflictChoices = emptyMap()
@@ -345,6 +364,8 @@ fun TournamentScreen(
     }
 
     fun perform(action: RoundEditorAction) {
+        // The unsaved changes dialog is done once its action runs, also after Save.
+        pendingAction = null
         when (action) {
             RoundEditorAction.Back -> navController.popBackStack()
             is RoundEditorAction.SelectRound -> scope.launch { selectedRoundId = action.roundId; loadRound(action.roundId) }
@@ -482,6 +503,7 @@ fun TournamentScreen(
         leadingActions = {
             ProfileInfo(profile, roleLabel)
             AppTopBarLeadingActions(
+                showThemeToggle = true,
                 onTimer = { requestAction(RoundEditorAction.Timer) },
                 onRanking = { requestAction(RoundEditorAction.Rankings) },
             )
@@ -502,21 +524,6 @@ fun TournamentScreen(
                     focusRequester = resetFocusRequester,
                     textColor = MaterialTheme.colorScheme.error,
                 )
-            }
-        },
-        floatingActionButton = {
-            if (hasUnsavedChanges) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton(
-                        onClick = ::discardAll,
-                        colors = ButtonDefaults.filledTonalButtonColors(),
-                    ) { Text("Discard") }
-                    com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton(
-                        onClick = { requestSave() },
-                        enabled = !isLoading,
-                        focusRequester = saveFocusRequester,
-                    ) { Text("Save") }
-                }
             }
         },
     ) {
@@ -550,9 +557,38 @@ fun TournamentScreen(
                                 cardFocusRequester = cardFocusRequesters[summary.tableId],
                                 editHandsFocusRequester = editHandsFocusRequesters[summary.tableId],
                                 onEditHands = { handsDialogTableId = summary.tableId },
-                                onFocused = { selectedTableId = summary.tableId },
+                                onFocused = {
+                                    if (selectedTableId != summary.tableId) {
+                                        tableSelectedByFocus = summary.tableId
+                                        selectedTableId = summary.tableId
+                                    }
+                                },
                             )
                         }
+                    }
+                }
+                if (hasUnsavedChanges) {
+                    Row(
+                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton(
+                            onClick = ::discardAll,
+                            modifier = Modifier.weight(1f),
+                            buttonModifier = Modifier.fillMaxWidth().height(56.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = MaterialTheme.colorScheme.error,
+                                contentColor = MaterialTheme.colorScheme.onError,
+                            ),
+                        ) { Text("Discard", style = MaterialTheme.typography.titleMedium) }
+                        com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton(
+                            onClick = { requestSave() },
+                            modifier = Modifier.weight(3f),
+                            buttonModifier = Modifier.fillMaxWidth().height(56.dp),
+                            enabled = !isLoading,
+                            // Default button colors: the theme primary, which is green.
+                            focusRequester = saveFocusRequester,
+                        ) { Text("Save", style = MaterialTheme.typography.titleMedium) }
                     }
                 }
             }
@@ -572,6 +608,7 @@ private fun RoundEditorSidebar(
     onSelectTable: (Int) -> Unit,
 ) {
     val tables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
+    val bestHandScore = tournamentBestHandScore(allTables)
     val roundsListState = rememberLazyListState()
     val tablesListState = rememberLazyListState()
     Card(modifier = Modifier.fillMaxHeight().widthIn(min = 280.dp, max = 420.dp).appFocusGroup()) {
@@ -588,8 +625,12 @@ private fun RoundEditorSidebar(
                 ) {
                     items(rounds, key = { it.roundId }) { round ->
                         SidebarEntry(
-                            label = "Round ${round.roundId}",
+                            label = "${round.roundId}",
                             status = roundCompletionStatus(allTables.filter { it.roundId == round.roundId }),
+                            chickenHandCount = allTables.filter { it.roundId == round.roundId }.sumOf { it.chickenHandCount },
+                            bestHandScore = bestHandScore.takeIf {
+                                allTables.any { table -> table.roundId == round.roundId && table.hasTournamentBestHand(it) }
+                            },
                             selected = round.roundId == selectedRoundId,
                             enabled = enabled,
                             focusRequester = if (round.roundId == selectedRoundId) roundFocusRequester else null,
@@ -608,8 +649,10 @@ private fun RoundEditorSidebar(
                 ) {
                     items(tables, key = { it.tableId }) { table ->
                         SidebarEntry(
-                            label = "Table ${table.tableId}",
+                            label = "${table.tableId}",
                             status = tableCompletionStatus(table),
+                            chickenHandCount = table.chickenHandCount,
+                            bestHandScore = bestHandScore.takeIf { table.hasTournamentBestHand(it) },
                             selected = table.tableId == selectedTableId,
                             enabled = enabled,
                             onClick = { onSelectTable(table.tableId) },
@@ -625,6 +668,8 @@ private fun RoundEditorSidebar(
 private fun SidebarEntry(
     label: String,
     status: CompletionStatus,
+    chickenHandCount: Int,
+    bestHandScore: Int?,
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -643,14 +688,22 @@ private fun SidebarEntry(
         ) {
             Row(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(SidebarIconSpacing),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(label, color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current)
-                Icon(
-                    imageVector = status.icon,
-                    contentDescription = status.label,
-                    tint = if (selected) LocalContentColor.current else status.color,
+                // The title gives way when the row is narrow, so the icons keep their full size.
+                Text(
+                    text = label,
+                    color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f, fill = false),
                 )
+                Spacer(Modifier.width(SidebarTitleIconSpacing))
+                StatusIconWithTooltip(status = status)
+                TableStatBadges(chickenHandCount = chickenHandCount, bestHandScore = bestHandScore)
             }
         }
     }

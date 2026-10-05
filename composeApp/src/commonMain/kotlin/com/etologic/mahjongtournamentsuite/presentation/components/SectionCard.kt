@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -24,6 +25,7 @@ fun SectionCard(
     title: String? = null,
     subtitle: String? = null,
     verticalSpacing: Dp = 12.dp,
+    titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
     titleAction: @Composable (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
@@ -51,7 +53,7 @@ fun SectionCard(
                                 if (!title.isNullOrBlank()) {
                                     Text(
                                         text = title,
-                                        style = MaterialTheme.typography.titleMedium,
+                                        style = titleStyle,
                                     )
                                 }
                                 titleAction?.invoke()

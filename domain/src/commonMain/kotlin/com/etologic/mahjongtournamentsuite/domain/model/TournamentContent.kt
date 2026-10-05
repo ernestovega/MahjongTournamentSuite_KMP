@@ -71,5 +71,9 @@ data class TournamentTable(
     val usePointsCalculation: Boolean,
     val hasProgress: Boolean,
     val hasValidManualTotals: Boolean = false,
+    /** Server status: `empty`, `incomplete`, `partial` or `completed`. Blank for data from an older server. */
+    val completionStatus: String = "",
+    val bestHandScore: Int? = null,
+    val chickenHandCount: Int = 0,
     val version: Long = 0,
 )

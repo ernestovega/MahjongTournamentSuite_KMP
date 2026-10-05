@@ -58,6 +58,31 @@ class TournamentScreenTest {
         assertEquals(2, selected?.tableId)
     }
 
+    @Test
+    fun tableStatusFollowsServerStatus() {
+        assertEquals(CompletionStatus.Empty, tableCompletionStatus(statusTable("empty")))
+        assertEquals(CompletionStatus.InProgress, tableCompletionStatus(statusTable("incomplete")))
+        assertEquals(CompletionStatus.Manual, tableCompletionStatus(statusTable("partial")))
+        assertEquals(CompletionStatus.Completed, tableCompletionStatus(statusTable("completed")))
+    }
+
+    @Test
+    fun roundWithSomeTablesWithDataIsIncomplete() {
+        val tables = listOf(statusTable("partial"), statusTable("incomplete"), statusTable("empty"), statusTable("empty"))
+
+        assertEquals(CompletionStatus.InProgress, roundCompletionStatus(tables))
+    }
+
+    @Test
+    fun roundIsCompleteOnlyWhenEveryTableIsFinished() {
+        assertEquals(CompletionStatus.Completed, roundCompletionStatus(listOf(statusTable("completed"), statusTable("completed"))))
+        assertEquals(CompletionStatus.Manual, roundCompletionStatus(listOf(statusTable("completed"), statusTable("partial"))))
+        assertEquals(CompletionStatus.Empty, roundCompletionStatus(listOf(statusTable("empty"), statusTable("empty"))))
+    }
+
+    private fun statusTable(status: String) =
+        tournamentTable(roundId = 1, tableId = 1, isCompleted = false, hasProgress = false).copy(completionStatus = status)
+
     private fun tournamentTable(
         roundId: Int,
         tableId: Int,

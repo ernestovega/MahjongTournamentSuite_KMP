@@ -73,6 +73,16 @@ async function backfill() {
                 pending.push(table.ref.update({
                     hasProgress: hasTableProgress || hasHandProgress || Boolean(table.get("isCompleted")),
                     hasValidManualTotals: useTotalsOnly ? validScores : !usePointsCalculation && validPoints,
+                    completionStatus: (0, tournamentContentRules_1.calculateTableCompletionStatus)({
+                        hasData: hasTableProgress || hasHandProgress,
+                        seatIds: [table.get("playerEastId"), table.get("playerSouthId"), table.get("playerWestId"), table.get("playerNorthId")],
+                        useTotalsOnly,
+                        hasValidTotals: useTotalsOnly ? validScores : (0, tournamentContentRules_1.hasFourValidScores)([
+                            table.get("playerEastScore"), table.get("playerSouthScore"), table.get("playerWestScore"), table.get("playerNorthScore"),
+                        ]),
+                    }),
+                    bestHandScore: (0, tournamentContentRules_1.calculateBestHandScore)(tableHands.map((hand) => hand.data())),
+                    chickenHandCount: (0, tournamentContentRules_1.countChickenHands)(tableHands.map((hand) => hand.data())),
                     ...(Number.isSafeInteger(table.get("version")) ? {} : { version: 0 }),
                 }));
             }

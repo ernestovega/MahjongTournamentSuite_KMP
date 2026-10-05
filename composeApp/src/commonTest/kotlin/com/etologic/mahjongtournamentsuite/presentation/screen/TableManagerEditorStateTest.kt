@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -370,6 +371,107 @@ class TableManagerEditorStateTest {
     }
 
     @Test
+    fun statusIsEmptyWithoutData() {
+        val editor = TableManagerEditorState.from(blankTableState(), emptyList())
+
+        assertEquals(CompletionStatus.Empty, editor.completionStatus)
+    }
+
+    @Test
+    fun statusIsIncompleteWhenSeatsAreMissing() {
+        val editor = TableManagerEditorState.from(
+            blankTableState().copy(playerEastId = "1", playerSouthId = "2", manualPlayerEastScore = "10"),
+            emptyList(),
+        )
+
+        assertEquals(CompletionStatus.InProgress, editor.completionStatus)
+    }
+
+    @Test
+    fun statusIsIncompleteWhenManualScoresAreNotValid() {
+        val editor = TableManagerEditorState.from(
+            sampleTableState(useTotalsOnly = true, playerEastScore = "32000", playerSouthScore = "", playerWestScore = "", playerNorthScore = ""),
+            emptyList(),
+        )
+
+        assertEquals(CompletionStatus.InProgress, editor.completionStatus)
+    }
+
+    @Test
+    fun statusIsPartiallyCompleteWithSeatsAndValidManualScores() {
+        val editor = TableManagerEditorState.from(sampleTableState(useTotalsOnly = true), emptyList())
+
+        assertEquals(CompletionStatus.Manual, editor.completionStatus)
+    }
+
+    @Test
+    fun statusIsCompletedInHandsModeWithoutHandsWhenScoresAreValid() {
+        val editor = TableManagerEditorState.from(
+            sampleTableState(
+                useTotalsOnly = false,
+                manualPlayerEastScore = "32000",
+                manualPlayerSouthScore = "28000",
+                manualPlayerWestScore = "22000",
+                manualPlayerNorthScore = "18000",
+            ),
+            emptyList(),
+        )
+
+        assertEquals(CompletionStatus.Completed, editor.completionStatus)
+    }
+
+    @Test
+    fun statusIsCompletedInHandsModeWithCalculatedHandScores() {
+        val editor = TableManagerEditorState.from(
+            blankTableState().copy(
+                playerEastId = "1", playerSouthId = "2", playerWestId = "3", playerNorthId = "4",
+                useTotalsOnly = false,
+            ),
+            listOf(sampleHand(handId = 1, winner = "1", loser = "2", score = "8").copy(isDone = true)),
+        )
+
+        assertEquals(CompletionStatus.Completed, editor.completionStatus)
+    }
+
+    @Test
+    fun statusIsIncompleteInHandsModeWhenNoScoresCanBeCalculated() {
+        val editor = TableManagerEditorState.from(
+            blankTableState().copy(
+                playerEastId = "1", playerSouthId = "2", playerWestId = "3", playerNorthId = "4",
+                useTotalsOnly = false,
+            ),
+            emptyList(),
+        )
+
+        assertEquals(CompletionStatus.InProgress, editor.completionStatus)
+    }
+
+    @Test
+    fun statusChangesWhenTheSwitchIsToggled() {
+        val editor = TableManagerEditorState.from(sampleTableState(useTotalsOnly = true), emptyList())
+
+        editor.disableManualTotals()
+        assertEquals(CompletionStatus.Completed, editor.completionStatus)
+
+        editor.enableManualTotals()
+        assertEquals(CompletionStatus.Manual, editor.completionStatus)
+    }
+
+    @Test
+    fun applyToCopiesTheStatusToTheTableSummary() {
+        val editor = TableManagerEditorState.from(sampleTableState(useTotalsOnly = true), emptyList())
+        val summary = TournamentTable(
+            roundId = 1, tableId = 1, playerIds = listOf(1, 2, 3, 4), isCompleted = false,
+            useTotalsOnly = true, usePointsCalculation = true, hasProgress = false,
+        )
+
+        assertEquals("partial", editor.applyTo(summary).completionStatus)
+
+        editor.disableManualTotals()
+        assertEquals("completed", editor.applyTo(summary).completionStatus)
+    }
+
+    @Test
     fun invalidHandsPreventMarkingTableAsCompleted() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(useTotalsOnly = false),
@@ -545,3 +647,10 @@ private fun sampleTableState(
     useTotalsOnly = useTotalsOnly,
     usePointsCalculation = usePointsCalculation,
 )
+
+private fun blankTableState() = sampleTableState(
+    playerEastScore = "",
+    playerSouthScore = "",
+    playerWestScore = "",
+    playerNorthScore = "",
+).copy(playerEastId = "", playerSouthId = "", playerWestId = "", playerNorthId = "")

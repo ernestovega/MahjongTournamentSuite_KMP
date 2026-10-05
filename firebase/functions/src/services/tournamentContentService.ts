@@ -3,6 +3,9 @@ import { db } from "../firebase";
 import { conflict, notFound } from "../api/httpError";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import {
+  calculateBestHandScore,
+  calculateTableCompletionStatus,
+  countChickenHands,
   hasDuplicateEmaAssignments,
   hasFourValidScores,
   hasValidTablePoints,
@@ -71,6 +74,9 @@ export type TournamentTable = {
   usePointsCalculation: boolean;
   hasProgress: boolean;
   hasValidManualTotals: boolean;
+  completionStatus: string;
+  bestHandScore: number | null;
+  chickenHandCount: number;
 };
 
 export async function listTournamentPlayers(tournamentId: string): Promise<TournamentPlayer[]> {
@@ -359,7 +365,16 @@ export async function listTournamentTables(
   const tables = await Promise.all(snap.docs.map(async (d) => {
     const storedHasProgress = d.get("hasProgress");
     const storedHasValidManualTotals = d.get("hasValidManualTotals");
-    if (typeof storedHasProgress === "boolean" && typeof storedHasValidManualTotals === "boolean") {
+    const storedCompletionStatus = d.get("completionStatus");
+    const storedChickenHandCount = d.get("chickenHandCount");
+    const storedBestHandScore = d.get("bestHandScore");
+    if (
+      typeof storedHasProgress === "boolean"
+      && typeof storedHasValidManualTotals === "boolean"
+      && typeof storedCompletionStatus === "string"
+      && typeof storedChickenHandCount === "number"
+      && (storedBestHandScore === null || typeof storedBestHandScore === "number")
+    ) {
       return {
         version: Number(d.get("version") ?? 0),
         roundId: Number(d.get("roundId")),
@@ -370,6 +385,9 @@ export async function listTournamentTables(
         usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
         hasProgress: storedHasProgress,
         hasValidManualTotals: storedHasValidManualTotals,
+        completionStatus: storedCompletionStatus,
+        bestHandScore: storedBestHandScore,
+        chickenHandCount: storedChickenHandCount,
       };
     }
     // Old documents use this fallback until the summary backfill runs.
@@ -417,6 +435,7 @@ export async function listTournamentTables(
     const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? true);
     const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
 
+    const hasValidManualTotals = useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints;
     return {
       version: Number(d.get("version") ?? 0),
       roundId: Number(d.get("roundId")),
@@ -426,7 +445,17 @@ export async function listTournamentTables(
       useTotalsOnly,
       usePointsCalculation,
       hasProgress: hasTableProgress || hasHandProgress || Boolean(d.get("isCompleted") ?? false),
-      hasValidManualTotals: useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints,
+      hasValidManualTotals,
+      completionStatus: calculateTableCompletionStatus({
+        hasData: hasTableProgress || hasHandProgress,
+        seatIds: [d.get("playerEastId"), d.get("playerSouthId"), d.get("playerWestId"), d.get("playerNorthId")],
+        useTotalsOnly,
+        hasValidTotals: useTotalsOnly ? hasValidManualScores : hasFourValidScores([
+          d.get("playerEastScore"), d.get("playerSouthScore"), d.get("playerWestScore"), d.get("playerNorthScore"),
+        ]),
+      }),
+      bestHandScore: calculateBestHandScore(hands.docs.map((hand) => hand.data())),
+      chickenHandCount: countChickenHands(hands.docs.map((hand) => hand.data())),
     };
   }));
 

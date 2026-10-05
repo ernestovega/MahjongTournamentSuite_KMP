@@ -3,7 +3,13 @@ import { FieldValue } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { notFound } from "../api/httpError";
 import { conflict } from "../api/httpError";
-import { hasFourValidScores, hasValidTablePoints } from "./tournamentContentRules";
+import {
+  calculateBestHandScore,
+  countChickenHands,
+  calculateTableCompletionStatus,
+  hasFourValidScores,
+  hasValidTablePoints,
+} from "./tournamentContentRules";
 import { globalVersionUpdate, tournamentVersionUpdate } from "./dataVersionsService";
 
 export type TableHand = {
@@ -136,6 +142,9 @@ export async function getTableWithHands(params: {
 export function calculateTableSummary(table: Record<string, unknown>, hands: Array<Record<string, unknown>>): {
   hasProgress: boolean;
   hasValidManualTotals: boolean;
+  completionStatus: string;
+  bestHandScore: number | null;
+  chickenHandCount: number;
 } {
   const hasTableProgress = [
     "playerEastId", "playerSouthId", "playerWestId", "playerNorthId",
@@ -161,9 +170,20 @@ export function calculateTableSummary(table: Record<string, unknown>, hands: Arr
     table.manualPlayerWestPoints || table.playerWestPoints,
     table.manualPlayerNorthPoints || table.playerNorthPoints,
   ]);
+  const hasValidManualTotals = useTotalsOnly ? validScores : !usePointsCalculation && validPoints;
   return {
     hasProgress: hasTableProgress || hasHandProgress || Boolean(table.isCompleted),
-    hasValidManualTotals: useTotalsOnly ? validScores : !usePointsCalculation && validPoints,
+    hasValidManualTotals,
+    completionStatus: calculateTableCompletionStatus({
+      hasData: hasTableProgress || hasHandProgress,
+      seatIds: [table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId],
+      useTotalsOnly,
+      hasValidTotals: useTotalsOnly ? validScores : hasFourValidScores([
+        table.playerEastScore, table.playerSouthScore, table.playerWestScore, table.playerNorthScore,
+      ]),
+    }),
+    bestHandScore: calculateBestHandScore(hands),
+    chickenHandCount: countChickenHands(hands),
   };
 }
 
@@ -360,6 +380,9 @@ export async function resetTable(params: {
     usePointsCalculation: true,
     hasProgress: false,
     hasValidManualTotals: false,
+    completionStatus: "empty",
+    bestHandScore: null,
+    chickenHandCount: 0,
     version: FieldValue.increment(1),
     updatedAt: FieldValue.serverTimestamp(),
   });

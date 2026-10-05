@@ -44,7 +44,7 @@ fun AppTopBarLeadingActions(
 @Composable
 private fun ThemeModeToggleButton() {
     val themeController = LocalThemeController.current
-    val label = "Theme: ${themeController.preference.name}"
+    val label = themeController.preference.name
 
     AppTopBarButton(
         text = label,

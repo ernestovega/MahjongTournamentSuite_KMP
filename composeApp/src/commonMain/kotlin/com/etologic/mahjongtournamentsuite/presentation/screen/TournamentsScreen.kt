@@ -270,7 +270,7 @@ fun TournamentsScreen(
                 else -> {
                     if (tournamentFocusRequesters.isNotEmpty()) {
                         val index = tournaments.indexOfFirst { it.id == lastFocusedTournamentId }.coerceAtLeast(0)
-                        tournamentFocusRequesters[index].requestFocus()
+                        tournamentFocusRequesters.getOrNull(index)?.requestFocus()
                     } else {
                         usersFocusRequester.requestFocus()
                     }
@@ -404,7 +404,12 @@ fun TournamentsScreen(
                                         itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
                                             TournamentTableRow(
                                                 modifier = Modifier
-                                                    .focusRequester(tournamentFocusRequesters[index])
+                                                    // The lazy item can compose before the requester list catches up with the tournaments list.
+                                                    .then(
+                                                        tournamentFocusRequesters.getOrNull(index)
+                                                            ?.let { Modifier.focusRequester(it) }
+                                                            ?: Modifier,
+                                                    )
                                                     .onFocusChanged {
                                                         if (it.isFocused) lastFocusedTournamentId = tournament.id
                                                         if (it.isFocused) lastFocusedControl = "tournament"
