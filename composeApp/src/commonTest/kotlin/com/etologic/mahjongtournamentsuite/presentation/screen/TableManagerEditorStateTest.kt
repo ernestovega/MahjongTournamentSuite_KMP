@@ -12,6 +12,43 @@ import kotlin.test.assertTrue
 class TableManagerEditorStateTest {
 
     @Test
+    fun tableWithoutAnyDataIsEmpty() {
+        val editor = TableManagerEditorState.from(blankTableState(), (1..16).map { sampleHand(handId = it) })
+
+        assertEquals(CompletionStatus.Empty, editor.completionStatus)
+    }
+
+    @Test
+    fun markingEmptyHandAsDoneSetsScoreToZero() {
+        val hand = HandDraftState.from(sampleHand(handId = 1))
+
+        hand.updateDoneState(true)
+
+        assertTrue(hand.isDone)
+        assertEquals("0", hand.handScore)
+    }
+
+    @Test
+    fun handWithOnlyChickenCheckedCannotBeDone() {
+        val hand = HandDraftState.from(sampleHand(handId = 1))
+
+        hand.updateChickenHand(true)
+        hand.updateDoneState(true)
+
+        assertFalse(hand.isDone)
+        assertTrue(hand.showValidationError)
+    }
+
+    @Test
+    fun savedPenaltiesSplitIntoRows() {
+        val hand = HandDraftState.from(sampleHand(handId = 1).copy(playerEastPenalty = "-8;-4"))
+
+        assertEquals(2, hand.penaltyRows.size)
+        assertEquals("-4", hand.penaltyRows[1].east)
+        assertEquals("-8;-4", hand.currentPenalty(0))
+    }
+
+    @Test
     fun freshEditorHasNoUnsavedChanges() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(),
@@ -20,6 +57,23 @@ class TableManagerEditorStateTest {
 
         assertFalse(editor.hasUnsavedChanges)
         assertTrue(editor.buildTablePatch().isEmpty())
+    }
+
+    @Test
+    fun manualScoreSumNeedsFourWholeNumbers() {
+        assertEquals(0L, TableManagerEditorState.from(sampleTableState(playerEastScore = "32000", playerSouthScore = "-12000", playerWestScore = "-8000", playerNorthScore = "-12000"), emptyList()).manualScoreSum)
+        assertNull(TableManagerEditorState.from(sampleTableState(playerNorthScore = ""), emptyList()).manualScoreSum)
+    }
+
+    @Test
+    fun bestCompletedHandsKeepThreeHighestScoresAndTies() {
+        val scores = listOf("8", "40", "30", "30", "30", "12")
+        val editor = TableManagerEditorState.from(
+            sampleTableState(),
+            scores.mapIndexed { index, score -> sampleHand(handId = index + 1, score = score).copy(isDone = true) },
+        )
+
+        assertEquals(listOf(40, 30, 30, 30), editor.bestCompletedHands.map { it.first })
     }
 
     @Test
@@ -40,43 +94,7 @@ class TableManagerEditorStateTest {
         )
 
         assertEquals(1, editor.chickenHandCount)
-        assertEquals(16, editor.bestCompletedHandScore)
-    }
-
-    @Test
-    fun manualScoresWithNonZeroTotalNeedSaveConfirmation() {
-        val editor = TableManagerEditorState.from(
-            table = sampleTableState(useTotalsOnly = true),
-            hands = emptyList(),
-        )
-
-        assertEquals(100_000L, editor.nonZeroManualScoreTotal)
-    }
-
-    @Test
-    fun manualScoresWithZeroTotalDoNotNeedSaveConfirmation() {
-        val editor = TableManagerEditorState.from(
-            table = sampleTableState(
-                useTotalsOnly = true,
-                playerEastScore = "40",
-                playerSouthScore = "-24",
-                playerWestScore = "-8",
-                playerNorthScore = "-8",
-            ),
-            hands = emptyList(),
-        )
-
-        assertNull(editor.nonZeroManualScoreTotal)
-    }
-
-    @Test
-    fun inactiveManualScoresDoNotNeedSaveConfirmation() {
-        val editor = TableManagerEditorState.from(
-            table = sampleTableState(useTotalsOnly = false),
-            hands = emptyList(),
-        )
-
-        assertNull(editor.nonZeroManualScoreTotal)
+        assertEquals(listOf(16, 8), editor.bestCompletedHands.map { it.first })
     }
 
     @Test
@@ -169,6 +187,7 @@ class TableManagerEditorStateTest {
         hand.setWinnerPlayerId("1")
         hand.setLoserPlayerId("2")
         hand.updateHandScore("16")
+        hand.updateDoneState(true)
 
         editor.enableManualTotals()
         assertTrue(editor.useTotalsOnly)
@@ -328,7 +347,7 @@ class TableManagerEditorStateTest {
             table = sampleTableState(useTotalsOnly = false),
             hands = listOf(
                 sampleHand(handId = 1, winner = "1", loser = "", score = ""),
-                sampleHand(handId = 2, winner = "2", loser = "-", score = "8"),
+                sampleHand(handId = 2, winner = "2", loser = "-", score = "8").copy(isDone = true),
             ),
         )
 
@@ -345,7 +364,7 @@ class TableManagerEditorStateTest {
     fun loserHyphenBehavesAsEmptyTsumoValue() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(useTotalsOnly = false),
-            hands = listOf(sampleHand(handId = 1, winner = "1", loser = "", score = "8")),
+            hands = listOf(sampleHand(handId = 1, winner = "1", loser = "", score = "8").copy(isDone = true)),
         )
 
         val hand = editor.hands.single()

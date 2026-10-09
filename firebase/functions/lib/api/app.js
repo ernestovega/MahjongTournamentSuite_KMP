@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildApp = buildApp;
 const express_1 = __importDefault(require("express"));
+const gzipJson_1 = require("./middleware/gzipJson");
 const errorHandler_1 = require("./middleware/errorHandler");
 const admin_routes_1 = require("./routes/admin.routes");
 const auth_routes_1 = require("./routes/auth.routes");
@@ -14,6 +15,7 @@ const tournaments_routes_1 = require("./routes/tournaments.routes");
 const sync_routes_1 = require("./routes/sync.routes");
 function buildApp() {
     const app = (0, express_1.default)();
+    app.use(gzipJson_1.gzipJson);
     app.use(express_1.default.json({ limit: "8mb" }));
     // Firebase Hosting keeps the rewrite source in the forwarded path.
     // Remove it so hosted web requests use the same routes as direct function calls.

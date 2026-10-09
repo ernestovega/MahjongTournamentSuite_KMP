@@ -47,6 +47,7 @@ import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
 import androidx.compose.material3.CircularProgressIndicator
@@ -157,7 +158,7 @@ fun TournamentColorField(
         }
         OutlinedTextField(
             value = value,
-            onValueChange = { onValueChange(it.take(7)) },
+            onValueChange = { onValueChange(it.toHexColorInput()) },
             modifier = fieldModifier.weight(1f),
             label = { Text("Tournament color") },
             placeholder = { Text("#RRGGBB") },
@@ -245,7 +246,7 @@ fun TournamentColorPickerDialog(
                 OutlinedTextField(
                     value = hexValue,
                     onValueChange = { newValue ->
-                        val limitedText = newValue.text.take(7)
+                        val limitedText = newValue.text.toHexColorInput()
                         hexValue = newValue.copy(
                             text = limitedText,
                             selection = TextRange(
@@ -1102,3 +1103,36 @@ private fun normalizeHue(value: Float): Float = ((value % 360f) + 360f) % 360f
 
 private val DefaultTournamentColor = Color(red = 2 / 255f, green = 177 / 255f, blue = 107 / 255f)
 private val DefaultTournamentHsv = RgbColor(2, 177, 107).toHsvColor()
+
+/** Switch for a tournament option, with a label and an information tooltip. */
+@Composable
+fun TournamentOptionSwitch(
+    label: String,
+    description: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    FocusHighlightContainer(
+        modifier = Modifier.fillMaxWidth(),
+        interactionSource = interactionSource,
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+        ) {
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                enabled = enabled,
+                interactionSource = interactionSource,
+            )
+            Text(text = label)
+            InfoTooltipIcon(
+                description = description,
+                contentDescription = "Show $label information",
+            )
+        }
+    }
+}

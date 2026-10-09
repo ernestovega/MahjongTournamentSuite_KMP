@@ -138,6 +138,8 @@ fun EditTournamentDialog(
     }
     var settingsHostCountry by remember(tournament.id) { mutableStateOf(tournament.hostCountry) }
     var settingsHostCity by remember(tournament.id) { mutableStateOf(tournament.hostCity) }
+    var settingsCountBestHands by remember(tournament.id) { mutableStateOf(tournament.countBestHands) }
+    var settingsCountChickenHands by remember(tournament.id) { mutableStateOf(tournament.countChickenHands) }
     var settingsRoundScheduleRows by remember(tournament.id) {
         mutableStateOf(
             synchronizeRoundScheduleRows(
@@ -318,7 +320,7 @@ fun EditTournamentDialog(
                         OutlinedTextField(
                             value = settingsEventStartDate,
                             onValueChange = {
-                                settingsEventStartDate = it.take(10)
+                                settingsEventStartDate = it.toDateInput()
                                 settingsEventEndDate = adjustedEndDate(
                                     startDisplayDate = settingsEventStartDate,
                                     endDisplayDate = settingsEventEndDate,
@@ -351,7 +353,7 @@ fun EditTournamentDialog(
                         OutlinedTextField(
                             value = settingsEventEndDate,
                             onValueChange = {
-                                val newValue = it.take(10)
+                                val newValue = it.toDateInput()
                                 settingsEventEndDate = when {
                                     newValue.isEmpty() && settingsEventStartDate.toIsoTournamentDateOrNull() != null ->
                                         settingsEventStartDate
@@ -503,6 +505,21 @@ fun EditTournamentDialog(
                             ?: if (settingsLogo == null && !removeSettingsLogo) tournament.associationLogoUrl else null,
                         roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
                         onError = { renameError = it },
+                    )
+
+                    TournamentOptionSwitch(
+                        label = "Best hands",
+                        description = "Count the best hands and show them in the ranking and the tournament screens.",
+                        checked = settingsCountBestHands,
+                        enabled = !isLoading,
+                        onCheckedChange = { settingsCountBestHands = it },
+                    )
+                    TournamentOptionSwitch(
+                        label = "Chicken hands",
+                        description = "Count the chicken hands and show them in the ranking and the tournament screens.",
+                        checked = settingsCountChickenHands,
+                        enabled = !isLoading,
+                        onCheckedChange = { settingsCountChickenHands = it },
                     )
 
                     Text("Tournament data", style = MaterialTheme.typography.titleSmall)
@@ -683,6 +700,8 @@ fun EditTournamentDialog(
                                 removeAssociationLogo = removeSettingsLogo,
                                 roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
                                 agendaItems = settingsAgendaRows.toTournamentAgendaItems(),
+                                countBestHands = settingsCountBestHands,
+                                countChickenHands = settingsCountChickenHands,
                             )) {
                                 is AppResult.Success -> {
                                     showDateRangePicker = false

@@ -1,7 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { db, firebaseProjectId } from "../firebase";
-import { calculateBestHandScore, calculateTableCompletionStatus, countChickenHands, hasFourValidScores, hasValidTablePoints } from "../services/tournamentContentRules";
+import { calculateTableCompletionStatus, hasFourValidScores, hasValidTablePoints, calculateHandSummary } from "../services/tournamentContentRules";
 
 const applyChanges = process.argv.includes("--apply");
 
@@ -86,8 +86,10 @@ async function backfill(): Promise<void> {
               table.get("playerEastScore"), table.get("playerSouthScore"), table.get("playerWestScore"), table.get("playerNorthScore"),
             ]),
           }),
-          bestHandScore: calculateBestHandScore(tableHands.map((hand) => hand.data())),
-          chickenHandCount: countChickenHands(tableHands.map((hand) => hand.data())),
+          ...calculateHandSummary(tableHands.map((hand) => hand.data())),
+          bestHandScore: FieldValue.delete(),
+          manualChickenHandCount: FieldValue.delete(),
+          manualBestHandScore: FieldValue.delete(),
           ...(Number.isSafeInteger(table.get("version")) ? {} : { version: 0 }),
         }));
       }

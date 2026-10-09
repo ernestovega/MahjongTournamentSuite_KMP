@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
+import com.etologic.mahjongtournamentsuite.presentation.components.toCountryCodeInput
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -464,7 +466,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     }
                     OutlinedTextField(
                         value = newEmaId,
-                        onValueChange = { newEmaId = it; newPlayerError = null },
+                        onValueChange = { newEmaId = it.toDigitsInput(8); newPlayerError = null },
                         label = { Text("EMA number") },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().focusRequester(newEmaFocusRequester),
@@ -485,7 +487,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     )
                     OutlinedTextField(
                         value = newCountry,
-                        onValueChange = { newCountry = it.uppercase().take(3); newPlayerError = null },
+                        onValueChange = { newCountry = it.toCountryCodeInput(); newPlayerError = null },
                         label = { Text("Country") },
                         placeholder = { Text("Three-letter EMA code") },
                         singleLine = true,
@@ -733,7 +735,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                             ) {
                             OutlinedTextField(
                                 value = emaId,
-                                onValueChange = { emaId = it },
+                                onValueChange = { emaId = it.toDigitsInput(8) },
                                 label = { Text("EMA number") },
                                 enabled = canEditEmaNumber && !saving,
                                 modifier = Modifier.fillMaxWidth(),

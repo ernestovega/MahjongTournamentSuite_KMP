@@ -71,6 +71,8 @@ class DefaultTournamentRepository(
                 eventStartDate = request.eventStartDate,
                 eventEndDate = request.eventEndDate,
                 isTeams = request.isTeams,
+                countBestHands = request.countBestHands,
+                countChickenHands = request.countChickenHands,
                 numPlayers = request.numPlayers,
                 numRounds = request.numRounds,
                 numTries = request.numTries,
@@ -145,6 +147,8 @@ class DefaultTournamentRepository(
         removeAssociationLogo: Boolean,
         roundSchedules: List<TournamentRoundSchedule>,
         agendaItems: List<TournamentAgendaItem>,
+        countBestHands: Boolean?,
+        countChickenHands: Boolean?,
     ): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
             val dto = backendApi.updateTournamentSettings(
@@ -158,6 +162,8 @@ class DefaultTournamentRepository(
                     eventEndDate = eventEndDate.trim(),
                     hostCountry = hostCountry.trim().uppercase(),
                     hostCity = hostCity.trim(),
+                    countBestHands = countBestHands,
+                    countChickenHands = countChickenHands,
                     associationLogoContentType = associationLogoContentType,
                     associationLogoDataBase64 = associationLogoBytes?.let(Base64.Default::encode),
                     associationLogoSourceTournamentId = associationLogoSourceTournamentId,
@@ -500,7 +506,7 @@ class DefaultTournamentRepository(
                     hasProgress = dto.hasProgress,
                     hasValidManualTotals = dto.hasValidManualTotals,
                     completionStatus = dto.completionStatus,
-                    bestHandScore = dto.bestHandScore,
+                    bestHandScores = dto.bestHandScores,
                     chickenHandCount = dto.chickenHandCount,
                     version = dto.version,
                 )
@@ -519,59 +525,81 @@ class DefaultTournamentRepository(
         tournamentId = tournamentId,
         refreshMode = refreshMode,
     ) { idToken ->
-            val dto = backendApi.getTableWithHands(
+            backendApi.getTableWithHands(
                 idToken = idToken,
                 tournamentId = tournamentId,
                 roundId = roundId,
                 tableId = tableId,
+            ).toDomain()
+    }
+
+    override suspend fun getRoundTablesWithHands(
+        tournamentId: String,
+        roundId: Int,
+        refreshMode: RefreshMode,
+    ): AppResult<List<Pair<TableState, List<TableHand>>>> = cachedRequest(
+        action = "Getting round tables with hands",
+        // The key starts with the table prefix, so table saves mark it stale.
+        key = "tournament:$tournamentId:tables-with-hands:$roundId",
+        resource = "tables",
+        tournamentId = tournamentId,
+        refreshMode = refreshMode,
+    ) { idToken ->
+        backendApi.getRoundTablesWithHands(
+            idToken = idToken,
+            tournamentId = tournamentId,
+            roundId = roundId,
+        ).tables.map { it.toDomain() }
+    }
+
+    private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHand>> {
+        val dto = this
+        val table = TableState(
+            version = dto.table.version,
+            roundId = dto.table.roundId,
+            tableId = dto.table.tableId,
+            playerIds = dto.table.playerIds,
+            playerEastId = dto.table.playerEastId,
+            playerSouthId = dto.table.playerSouthId,
+            playerWestId = dto.table.playerWestId,
+            playerNorthId = dto.table.playerNorthId,
+            playerEastScore = dto.table.playerEastScore,
+            playerSouthScore = dto.table.playerSouthScore,
+            playerWestScore = dto.table.playerWestScore,
+            playerNorthScore = dto.table.playerNorthScore,
+            playerEastPoints = dto.table.playerEastPoints,
+            playerSouthPoints = dto.table.playerSouthPoints,
+            playerWestPoints = dto.table.playerWestPoints,
+            playerNorthPoints = dto.table.playerNorthPoints,
+            manualPlayerEastScore = dto.table.manualPlayerEastScore,
+            manualPlayerSouthScore = dto.table.manualPlayerSouthScore,
+            manualPlayerWestScore = dto.table.manualPlayerWestScore,
+            manualPlayerNorthScore = dto.table.manualPlayerNorthScore,
+            manualPlayerEastPoints = dto.table.manualPlayerEastPoints,
+            manualPlayerSouthPoints = dto.table.manualPlayerSouthPoints,
+            manualPlayerWestPoints = dto.table.manualPlayerWestPoints,
+            manualPlayerNorthPoints = dto.table.manualPlayerNorthPoints,
+            isCompleted = dto.table.isCompleted,
+            useTotalsOnly = dto.table.useTotalsOnly,
+            usePointsCalculation = dto.table.usePointsCalculation,
+        )
+
+        val hands = dto.hands.map { h ->
+            TableHand(
+                handId = h.handId,
+                playerWinnerId = h.playerWinnerId,
+                playerLooserId = h.playerLooserId,
+                handScore = h.handScore,
+                isChickenHand = h.isChickenHand,
+                isDone = h.isDone,
+                playerEastPenalty = h.playerEastPenalty,
+                playerSouthPenalty = h.playerSouthPenalty,
+                playerWestPenalty = h.playerWestPenalty,
+                playerNorthPenalty = h.playerNorthPenalty,
             )
+        }
 
-            val table = TableState(
-                version = dto.table.version,
-                roundId = dto.table.roundId,
-                tableId = dto.table.tableId,
-                playerIds = dto.table.playerIds,
-                playerEastId = dto.table.playerEastId,
-                playerSouthId = dto.table.playerSouthId,
-                playerWestId = dto.table.playerWestId,
-                playerNorthId = dto.table.playerNorthId,
-                playerEastScore = dto.table.playerEastScore,
-                playerSouthScore = dto.table.playerSouthScore,
-                playerWestScore = dto.table.playerWestScore,
-                playerNorthScore = dto.table.playerNorthScore,
-                playerEastPoints = dto.table.playerEastPoints,
-                playerSouthPoints = dto.table.playerSouthPoints,
-                playerWestPoints = dto.table.playerWestPoints,
-                playerNorthPoints = dto.table.playerNorthPoints,
-                manualPlayerEastScore = dto.table.manualPlayerEastScore,
-                manualPlayerSouthScore = dto.table.manualPlayerSouthScore,
-                manualPlayerWestScore = dto.table.manualPlayerWestScore,
-                manualPlayerNorthScore = dto.table.manualPlayerNorthScore,
-                manualPlayerEastPoints = dto.table.manualPlayerEastPoints,
-                manualPlayerSouthPoints = dto.table.manualPlayerSouthPoints,
-                manualPlayerWestPoints = dto.table.manualPlayerWestPoints,
-                manualPlayerNorthPoints = dto.table.manualPlayerNorthPoints,
-                isCompleted = dto.table.isCompleted,
-                useTotalsOnly = dto.table.useTotalsOnly,
-                usePointsCalculation = dto.table.usePointsCalculation,
-            )
-
-            val hands = dto.hands.map { h ->
-                TableHand(
-                    handId = h.handId,
-                    playerWinnerId = h.playerWinnerId,
-                    playerLooserId = h.playerLooserId,
-                    handScore = h.handScore,
-                    isChickenHand = h.isChickenHand,
-                    isDone = h.isDone,
-                    playerEastPenalty = h.playerEastPenalty,
-                    playerSouthPenalty = h.playerSouthPenalty,
-                    playerWestPenalty = h.playerWestPenalty,
-                    playerNorthPenalty = h.playerNorthPenalty,
-                )
-            }
-
-            table to hands
+        return table to hands
     }
 
     override suspend fun patchTable(

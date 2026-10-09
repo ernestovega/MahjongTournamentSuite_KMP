@@ -9,6 +9,8 @@ data class TournamentDto(
     val isTeams: Boolean,
     val numPlayers: Int,
     val numRounds: Int,
+    val countBestHands: Boolean = true,
+    val countChickenHands: Boolean = true,
     val shortName: String = "",
     val primaryColor: String = "#02B16B",
     val associationLogoUrl: String? = null,
@@ -44,6 +46,8 @@ data class CreateTournamentRequestDto(
     val numPlayers: Int,
     val numRounds: Int,
     val numTries: Long,
+    val countBestHands: Boolean = true,
+    val countChickenHands: Boolean = true,
     val players: List<TournamentPlayerDto>,
     val tables: List<TournamentTableDto>,
     val shortName: String,
@@ -71,6 +75,9 @@ data class UpdateTournamentSettingsRequestDto(
     val eventEndDate: String,
     val hostCountry: String,
     val hostCity: String,
+    /** Null keeps the stored value. */
+    val countBestHands: Boolean? = null,
+    val countChickenHands: Boolean? = null,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
     val associationLogoSourceTournamentId: String? = null,
@@ -258,7 +265,7 @@ data class TournamentTableDto(
     val hasProgress: Boolean = false,
     val hasValidManualTotals: Boolean = false,
     val completionStatus: String = "",
-    val bestHandScore: Int? = null,
+    val bestHandScores: List<Int> = emptyList(),
     val chickenHandCount: Int = 0,
     val version: Long = 0,
 )
@@ -317,6 +324,11 @@ data class TableHandDto(
 data class TableWithHandsResponseDto(
     val table: TableStateDto,
     val hands: List<TableHandDto>,
+)
+
+@Serializable
+data class RoundTablesWithHandsResponseDto(
+    val tables: List<TableWithHandsResponseDto>,
 )
 
 @Serializable

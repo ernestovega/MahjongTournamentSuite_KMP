@@ -1,5 +1,6 @@
 import express from "express";
 
+import { gzipJson } from "./middleware/gzipJson";
 import { errorHandler } from "./middleware/errorHandler";
 import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
@@ -11,6 +12,7 @@ import { syncRouter } from "./routes/sync.routes";
 export function buildApp(): express.Express {
   const app = express();
 
+  app.use(gzipJson);
   app.use(express.json({ limit: "8mb" }));
 
   // Firebase Hosting keeps the rewrite source in the forwarded path.

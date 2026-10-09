@@ -16,8 +16,6 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRan
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withPermit
 
 data class RankingSnapshot(
     val tournament: Tournament,
@@ -71,27 +69,24 @@ class RankingPresenter(
             is AppResult.Failure -> return result
         }
 
-        val tableResults = coroutineScope {
-            val requestLimit = Semaphore(TABLE_REQUEST_LIMIT)
-            tableSummaries.map { summary ->
+        // One request for each round, not for each table. The editor uses the same cache entries.
+        val roundResults = coroutineScope {
+            tableSummaries.map { it.roundId }.distinct().map { roundId ->
                 async {
-                    requestLimit.withPermit {
-                        tournamentRepository.getTableWithHands(
-                            tournamentId = tournamentId,
-                            roundId = summary.roundId,
-                            tableId = summary.tableId,
-                            refreshMode = refreshMode,
-                        )
-                    }
+                    tournamentRepository.getRoundTablesWithHands(
+                        tournamentId = tournamentId,
+                        roundId = roundId,
+                        refreshMode = refreshMode,
+                    )
                 }
             }.awaitAll()
         }
-        val firstFailure = tableResults.filterIsInstance<AppResult.Failure>().firstOrNull()
+        val firstFailure = roundResults.filterIsInstance<AppResult.Failure>().firstOrNull()
         if (firstFailure != null) return firstFailure
-        val rankingTables = tableResults.map { result ->
-            val value = (result as AppResult.Success).value
-            RankingTable(table = value.first, hands = value.second)
-        }
+        val rankingTables = roundResults
+            .flatMap { (it as AppResult.Success).value }
+            .sortedWith(compareBy({ it.first.roundId }, { it.first.tableId }))
+            .map { (table, hands) -> RankingTable(table = table, hands = hands) }
 
         val isTeams = tournament.isTeams
         return AppResult.Success(
@@ -105,9 +100,5 @@ class RankingPresenter(
                 rankingTables = rankingTables,
             ),
         )
-    }
-
-    private companion object {
-        const val TABLE_REQUEST_LIMIT = 8
     }
 }

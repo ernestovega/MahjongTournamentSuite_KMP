@@ -80,6 +80,8 @@ class PresenterDelegationTest {
             hostCountry = "ES",
             hostCity = "Madrid",
             isTeams = false,
+            countBestHands = false,
+            countChickenHands = true,
             numPlayers = 4,
             numRounds = 1,
             roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-01", "09:30")),
@@ -90,6 +92,8 @@ class PresenterDelegationTest {
 
         assertEquals(AppResult.Success(tournament), result)
         assertEquals("Small Open", repository.lastCreateRequest?.name)
+        assertEquals(false, repository.lastCreateRequest?.countBestHands)
+        assertEquals(true, repository.lastCreateRequest?.countChickenHands)
         assertEquals(4, repository.lastCreateRequest?.players?.size)
         assertEquals(1, repository.lastCreateRequest?.tables?.size)
         assertEquals("09:30", repository.lastCreateRequest?.roundSchedules?.single()?.startTime)
@@ -142,6 +146,8 @@ private class RecordingTournamentRepository(
         removeAssociationLogo: Boolean,
         roundSchedules: List<TournamentRoundSchedule>,
         agendaItems: List<TournamentAgendaItem>,
+        countBestHands: Boolean?,
+        countChickenHands: Boolean?,
     ) = unusedResult<Tournament>()
 
     override suspend fun generateTournamentIdCards(tournamentId: String) = unusedResult<ByteArray>()
@@ -185,6 +191,12 @@ private class RecordingTournamentRepository(
         tableId: Int,
         refreshMode: RefreshMode,
     ) = unusedResult<Pair<TableState, List<TableHand>>>()
+
+    override suspend fun getRoundTablesWithHands(
+        tournamentId: String,
+        roundId: Int,
+        refreshMode: RefreshMode,
+    ) = unusedResult<List<Pair<TableState, List<TableHand>>>>()
 
     override suspend fun patchTable(tournamentId: String, roundId: Int, tableId: Int, patch: Map<String, Any?>) = unusedResult<Unit>()
     override suspend fun patchHand(tournamentId: String, roundId: Int, tableId: Int, handId: Int, patch: Map<String, Any?>) = unusedResult<Unit>()

@@ -1,11 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MAX_BEST_HANDS = void 0;
 exports.blocksAssignmentChangeAfterProgress = blocksAssignmentChangeAfterProgress;
 exports.hasFourValidScores = hasFourValidScores;
 exports.hasValidTablePoints = hasValidTablePoints;
 exports.calculateTableCompletionStatus = calculateTableCompletionStatus;
-exports.calculateBestHandScore = calculateBestHandScore;
+exports.calculateBestHandScores = calculateBestHandScores;
 exports.countChickenHands = countChickenHands;
+exports.calculateHandSummary = calculateHandSummary;
 exports.hasDuplicateEmaAssignments = hasDuplicateEmaAssignments;
 function blocksAssignmentChangeAfterProgress(previousEmaId, nextEmaId, tournamentHasProgress) {
     return tournamentHasProgress && previousEmaId != null && previousEmaId !== nextEmaId;
@@ -33,17 +35,29 @@ function calculateTableCompletionStatus(input) {
         return "incomplete";
     return input.useTotalsOnly ? "partial" : "completed";
 }
-/** Highest integer score among the done hands, or null when no done hand has a score. */
-function calculateBestHandScore(hands) {
+exports.MAX_BEST_HANDS = 3;
+/**
+ * Scores of the best done hands, from highest to lowest. It keeps the three highest scores
+ * and every score tied with the third one, so a tie never hides a hand.
+ */
+function calculateBestHandScores(hands) {
     const scores = hands
         .filter((hand) => Boolean(hand.isDone))
         .map((hand) => String(hand.handScore ?? "").trim())
         .filter((score) => /^-?\d+$/.test(score))
-        .map(Number);
-    return scores.length > 0 ? Math.max(...scores) : null;
+        .map(Number)
+        .sort((a, b) => b - a);
+    if (scores.length <= exports.MAX_BEST_HANDS)
+        return scores;
+    const threshold = scores[exports.MAX_BEST_HANDS - 1];
+    return scores.filter((score) => score >= threshold);
 }
 function countChickenHands(hands) {
     return hands.filter((hand) => Boolean(hand.isChickenHand)).length;
+}
+/** Chicken hand count and best hand scores of a table. Only the hands give the values. */
+function calculateHandSummary(hands) {
+    return { chickenHandCount: countChickenHands(hands), bestHandScores: calculateBestHandScores(hands) };
 }
 function hasDuplicateEmaAssignments(values) {
     const assigned = values

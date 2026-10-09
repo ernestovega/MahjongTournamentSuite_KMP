@@ -676,7 +676,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean = true): List<RankingP
             rows = rankings.teams.map { it.toRow(teamNamesById) }.maskTopThree(!showTopThree),
         )
     }
-    if (rankings.chickenHands.isNotEmpty()) {
+    if (tournament.countChickenHands && rankings.chickenHands.isNotEmpty()) {
         pages += RankingPage(
             key = "chicken-hands",
             title = "Chicken hands",
@@ -687,7 +687,7 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean = true): List<RankingP
             }.maskTopThree(!showTopThree),
         )
     }
-    if (rankings.bestHands.isNotEmpty()) {
+    if (tournament.countBestHands && rankings.bestHands.isNotEmpty()) {
         pages += RankingPage(
             key = "best-hands",
             title = "Best hands",

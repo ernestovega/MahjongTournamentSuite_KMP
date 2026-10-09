@@ -42,6 +42,9 @@ interface TournamentRepository {
         removeAssociationLogo: Boolean = false,
         roundSchedules: List<TournamentRoundSchedule> = emptyList(),
         agendaItems: List<TournamentAgendaItem> = emptyList(),
+        /** Null keeps the stored value. */
+        countBestHands: Boolean? = null,
+        countChickenHands: Boolean? = null,
     ): AppResult<Tournament>
 
     suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray>
@@ -120,6 +123,13 @@ interface TournamentRepository {
         tableId: Int,
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<Pair<TableState, List<TableHand>>>
+
+    /** Loads every table of a round with its hands in one request, sorted by table id. */
+    suspend fun getRoundTablesWithHands(
+        tournamentId: String,
+        roundId: Int,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
+    ): AppResult<List<Pair<TableState, List<TableHand>>>>
 
     suspend fun patchTable(
         tournamentId: String,

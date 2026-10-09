@@ -73,7 +73,8 @@ data class TournamentTable(
     val hasValidManualTotals: Boolean = false,
     /** Server status: `empty`, `incomplete`, `partial` or `completed`. Blank for data from an older server. */
     val completionStatus: String = "",
-    val bestHandScore: Int? = null,
+    /** Scores of the best done hands of the table, from highest to lowest. See [topHandScores]. */
+    val bestHandScores: List<Int> = emptyList(),
     val chickenHandCount: Int = 0,
     val version: Long = 0,
 )

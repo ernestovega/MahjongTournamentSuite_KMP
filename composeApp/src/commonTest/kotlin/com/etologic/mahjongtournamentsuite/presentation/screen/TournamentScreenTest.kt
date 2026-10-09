@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 
 class TournamentScreenTest {
 
@@ -17,6 +18,19 @@ class TournamentScreenTest {
         )
 
         assertEquals(CompletionStatus.Manual, tableCompletionStatus(table))
+    }
+
+    @Test
+    fun nextTableToOpenPrefersTablesThatNeedData() {
+        val needsData = setOf(1, 4)
+        assertEquals(4, nextTableToOpen(listOf(1, 2, 3, 4), currentId = 2) { it in needsData })
+        assertEquals(1, nextTableToOpen(listOf(1, 2, 3, 4), currentId = 4) { it in needsData })
+    }
+
+    @Test
+    fun nextTableToOpenFollowsOrderWhenEveryTableHasData() {
+        assertEquals(3, nextTableToOpen(listOf(1, 2, 3), currentId = 2) { false })
+        assertNull(nextTableToOpen(listOf(1, 2, 3), currentId = 3) { false })
     }
 
     @Test

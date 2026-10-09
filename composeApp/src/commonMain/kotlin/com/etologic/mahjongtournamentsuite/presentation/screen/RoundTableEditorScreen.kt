@@ -16,7 +16,29 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.filled.NavigateBefore
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.runtime.withFrameNanos
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -45,8 +67,12 @@ import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -69,8 +95,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButt
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.ManualScoreTotalConfirmationDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetTableDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.TableStatBadges
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
@@ -84,6 +111,11 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPr
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.draw.alpha
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -91,6 +123,8 @@ private sealed class RoundEditorAction {
     data object Back : RoundEditorAction()
     data class SelectRound(val roundId: Int) : RoundEditorAction()
     data class SelectTable(val tableId: Int) : RoundEditorAction()
+    /** Opens the next table that needs data. It runs after the current table is saved. */
+    data class NextTable(val fromTableId: Int) : RoundEditorAction()
     data object Players : RoundEditorAction()
     data object Teams : RoundEditorAction()
     data object Rankings : RoundEditorAction()
@@ -114,20 +148,17 @@ fun TournamentScreen(
     val tournament = tournaments.firstOrNull { it.id == tournamentId }
 
     var isLoading by remember { mutableStateOf(true) }
+    // True while the tables of the selected round load in the background. It only keeps the progress bar on.
+    var isLoadingRest by remember { mutableStateOf(false) }
+    var restJob by remember { mutableStateOf<Job?>(null) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var rounds by remember { mutableStateOf<List<TournamentRound>>(emptyList()) }
     var allTables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var selectedRoundId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
     var selectedTableId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
-    // Set when a click inside a card selects its table. That selection must not scroll or move the focus.
-    var tableSelectedByFocus by remember { mutableStateOf<Int?>(null) }
     var tableEditors by remember { mutableStateOf<Map<Int, TableManagerEditorState>>(emptyMap()) }
     var playerNamesById by remember { mutableStateOf<Map<Int, String>>(emptyMap()) }
-    var handsDialogTableId by remember { mutableStateOf<Int?>(null) }
-    var restoreHandsFocusTableId by remember { mutableStateOf<Int?>(null) }
     var pendingAction by remember { mutableStateOf<RoundEditorAction?>(null) }
-    var scoreTotalToConfirm by remember { mutableStateOf<Long?>(null) }
-    var actionAfterScoreConfirmation by remember { mutableStateOf<RoundEditorAction?>(null) }
     var showResetConfirmation by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
     var restoreResetFocus by remember { mutableStateOf(false) }
@@ -138,42 +169,88 @@ fun TournamentScreen(
     val saveFocusRequester = remember { FocusRequester() }
     val resetFocusRequester = remember { FocusRequester() }
     val roundFocusRequester = remember { FocusRequester() }
-    val exportFocusRequester = remember { FocusRequester() }
-    val cardFocusRequesters = remember(selectedRoundId, tableEditors.keys.toList()) {
-        tableEditors.keys.associateWith { FocusRequester() }
-    }
-    val editHandsFocusRequesters = remember(selectedRoundId, tableEditors.keys.toList()) {
-        tableEditors.keys.associateWith { FocusRequester() }
-    }
+    val scoreFocusRequester = remember { FocusRequester() }
     val selectedRoundTables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
-    val tableListState = rememberLazyListState()
     val hasUnsavedChanges = tableEditors.values.any { it.hasUnsavedChanges }
     val roleLabel = adminStatus?.let { if (it.isAdmin) "Admin" else "Editor" }
 
-    suspend fun loadRound(roundId: Int, force: Boolean = false) {
+    /**
+     * Loads the table summaries of the round, then selects a table.
+     * The details of all tables load in the background in one request. The selectors work as soon as the summaries arrive.
+     */
+    suspend fun loadRound(
+        roundId: Int,
+        force: Boolean = false,
+        firstTableId: Int? = null,
+        summaries: List<TournamentTable>? = null,
+    ) {
+        restJob?.cancel()
+        restJob = null
+        isLoadingRest = false
         isLoading = true
         errorMessage = null
-        when (val result = tablesPresenter.loadTables(tournamentId, roundId, force)) {
-            is AppResult.Failure -> errorMessage = result.error.toUiMessage()
-            is AppResult.Success -> {
-                val loaded = linkedMapOf<Int, TableManagerEditorState>()
-                result.value.sortedBy { it.tableId }.forEach { summary ->
-                    when (val detail = tablePresenter.loadTableWithHands(
-                        tournamentId = tournamentId,
-                        roundId = roundId,
-                        tableId = summary.tableId,
-                        forceRefresh = force,
-                    )) {
-                        is AppResult.Success -> loaded[summary.tableId] =
-                            TableManagerEditorState.from(detail.value.first, detail.value.second)
-                        is AppResult.Failure -> errorMessage = detail.error.toUiMessage()
+        tableEditors = emptyMap()
+        val roundTables = if (summaries != null) {
+            summaries
+        } else {
+            when (val result = tablesPresenter.loadTables(tournamentId, roundId, force)) {
+                is AppResult.Failure -> {
+                    errorMessage = result.error.toUiMessage()
+                    isLoading = false
+                    return
+                }
+                is AppResult.Success -> result.value
+            }
+        }.sortedBy { it.tableId }
+        val tableIds = roundTables.map { it.tableId }
+        val firstId = firstTableId?.takeIf { it in tableIds }
+            ?: selectedTableId?.takeIf { it in tableIds }
+            ?: roundTables.firstOrNull {
+                tableCompletionStatus(it).let { s -> s == CompletionStatus.Empty || s == CompletionStatus.InProgress }
+            }?.tableId
+            ?: tableIds.firstOrNull()
+        selectedTableId = firstId
+        if (firstId == null) {
+            isLoading = false
+            return
+        }
+        isLoadingRest = true
+        isLoading = false
+        val job = scope.launch(start = CoroutineStart.LAZY) {
+            val self = currentCoroutineContext()[Job]
+            try {
+                fun add(tableId: Int, detail: Pair<TableState, List<TableHand>>) {
+                    // A table that is already in the map has newer data, for example after a save.
+                    if (tableId !in tableEditors) {
+                        tableEditors = tableEditors + (tableId to TableManagerEditorState.from(detail.first, detail.second))
                     }
                 }
-                tableEditors = loaded
-                selectedTableId = selectedTableId?.takeIf { it in loaded } ?: loaded.keys.firstOrNull()
+                // All tables of the round come in one request.
+                when (val batch = tablePresenter.loadRoundTablesWithHands(tournamentId, roundId, force)) {
+                    is AppResult.Success -> if (selectedRoundId == roundId) {
+                        batch.value.forEach { (table, hands) -> add(table.tableId, table to hands) }
+                    }
+                    is AppResult.Failure -> {
+                        // Fall back to one request per table, for example if the backend is older.
+                        for (tableId in tableIds) {
+                            val detail = tablePresenter.loadTableWithHands(tournamentId, roundId, tableId, force)
+                            if (selectedRoundId != roundId) return@launch
+                            when (detail) {
+                                is AppResult.Success -> add(tableId, detail.value)
+                                is AppResult.Failure -> errorMessage = detail.error.toUiMessage()
+                            }
+                        }
+                    }
+                }
+            } finally {
+                if (restJob === self) {
+                    restJob = null
+                    isLoadingRest = false
+                }
             }
         }
-        isLoading = false
+        restJob = job
+        job.start()
     }
 
     suspend fun refresh(force: Boolean = false) {
@@ -210,8 +287,11 @@ fun TournamentScreen(
                 emptyList()
             }
         }
+        // On the first open, start at the first table that is not completed. A later refresh keeps the selection.
+        val firstToOpen = firstTournamentTableToOpen(allTables)
+        val isFirstOpen = selectedRoundId == null
         val nextRound = selectedRoundId?.takeIf { id -> newRounds.any { it.roundId == id } }
-            ?: firstTournamentTableToOpen(allTables)?.roundId
+            ?: firstToOpen?.roundId
             ?: newRounds.firstOrNull()?.roundId
         selectedRoundId = nextRound
         if (nextRound == null) {
@@ -219,27 +299,26 @@ fun TournamentScreen(
             isLoading = false
             return
         }
-        loadRound(nextRound, force)
+        loadRound(
+            roundId = nextRound,
+            force = force,
+            firstTableId = firstToOpen?.takeIf { isFirstOpen && it.roundId == nextRound }?.tableId,
+            summaries = if (allTablesResult is AppResult.Success) allTables.filter { it.roundId == nextRound } else null,
+        )
     }
 
     LaunchedEffect(tournamentId) { refresh() }
-    LaunchedEffect(selectedRoundId, selectedTableId, isLoading, tableEditors.keys.toList()) {
-        val tableId = selectedTableId ?: return@LaunchedEffect
-        if (isLoading) return@LaunchedEffect
-        if (tableSelectedByFocus == tableId) {
-            // The card already has the focus. Scrolling would move the button away from the pointer.
-            tableSelectedByFocus = null
-            return@LaunchedEffect
-        }
-        val index = selectedRoundTables.indexOfFirst { it.tableId == tableId }
-        if (index >= 0) {
-            tableListState.animateScrollToItem(index)
-            cardFocusRequesters[tableId]?.requestFocus()
-        }
+    DisposableEffect(Unit) { onDispose { restJob?.cancel() } }
+    val selectedTableLoaded = selectedTableId in tableEditors
+    LaunchedEffect(selectedRoundId, selectedTableId, isLoading, selectedTableLoaded) {
+        if (isLoading || selectedTableId == null || !selectedTableLoaded) return@LaunchedEffect
+        // Wait for the first layout pass. Then the first score field takes the focus, so the keyboard flow can start.
+        withFrameNanos { }
+        runCatching { scoreFocusRequester.requestFocus() }
     }
 
-    suspend fun saveAll(): Boolean {
-        val current = tableEditors.toList()
+    suspend fun saveTables(tableIds: Collection<Int>): Boolean {
+        val current = tableEditors.filterKeys { it in tableIds }.toList()
         for ((tableId, editor) in current) {
             val tablePatch = editor.buildApplicationTablePatch()
             val handPatches = editor.buildHandPatches().toMap()
@@ -333,7 +412,7 @@ fun TournamentScreen(
     }
 
     suspend fun exportResults() {
-        if (isLoading) return
+        if (isLoading || isLoadingRest) return
         isLoading = true
         errorMessage = null
         when (val result = rankingPresenter.load(tournamentId)) {
@@ -370,6 +449,15 @@ fun TournamentScreen(
             RoundEditorAction.Back -> navController.popBackStack()
             is RoundEditorAction.SelectRound -> scope.launch { selectedRoundId = action.roundId; loadRound(action.roundId) }
             is RoundEditorAction.SelectTable -> selectedTableId = action.tableId
+            is RoundEditorAction.NextTable -> selectedTableId = nextTableToOpen(
+                tableIds = selectedRoundTables.map { it.tableId },
+                currentId = action.fromTableId,
+                needsData = { id ->
+                    tableEditors[id]?.completionStatus.let {
+                        it == CompletionStatus.Empty || it == CompletionStatus.InProgress
+                    }
+                },
+            )?.takeIf { it in tableEditors } ?: selectedTableId
             RoundEditorAction.Players -> navController.navigate(PlayersRoute(tournamentId))
             RoundEditorAction.Teams -> navController.navigate(TeamsRoute(tournamentId))
             RoundEditorAction.Rankings -> openRankings(navController, tournamentId)
@@ -380,17 +468,15 @@ fun TournamentScreen(
 
     fun requestAction(action: RoundEditorAction) {
         if (isLoading) return
-        if (hasUnsavedChanges) pendingAction = action else perform(action)
+        // Changes stay in each table editor while the user moves between tables of the round.
+        val keepsEditors = action is RoundEditorAction.SelectTable || action is RoundEditorAction.NextTable
+        if (hasUnsavedChanges && !keepsEditors) pendingAction = action else perform(action)
     }
 
-    fun requestSave(action: RoundEditorAction? = null) {
-        val total = tableEditors.values.mapNotNull { it.nonZeroManualScoreTotal }.sum().takeIf { it != 0L }
-        if (total != null) {
-            actionAfterScoreConfirmation = action
-            scoreTotalToConfirm = total
-        } else {
-            scope.launch { if (saveAll()) action?.let(::perform) }
-        }
+    /** Saves the given tables, or all tables with changes. Table saves are independent, so one failure keeps the other data. */
+    fun requestSave(action: RoundEditorAction? = null, tableIds: List<Int>? = null) {
+        val targets = tableIds ?: tableEditors.filterValues { it.hasUnsavedChanges }.keys.toList()
+        scope.launch { if (saveTables(targets)) action?.let(::perform) }
     }
 
     fun discardAll() {
@@ -403,22 +489,6 @@ fun TournamentScreen(
             onSave = { requestSave(action) },
             onDiscard = { pendingAction = null; discardAll(); perform(action) },
             onCancel = { pendingAction = null },
-        )
-    }
-    scoreTotalToConfirm?.let { total ->
-        ManualScoreTotalConfirmationDialog(
-            total = total,
-            onConfirm = {
-                val action = actionAfterScoreConfirmation
-                actionAfterScoreConfirmation = null
-                scoreTotalToConfirm = null
-                scope.launch { if (saveAll()) action?.let(::perform) }
-            },
-            onCancel = {
-                restoreSaveFocus = actionAfterScoreConfirmation == null
-                actionAfterScoreConfirmation = null
-                scoreTotalToConfirm = null
-            },
         )
     }
     if (showResetConfirmation && selectedRoundId != null && selectedTableId != null) {
@@ -445,17 +515,10 @@ fun TournamentScreen(
             resetFocusRequester.requestFocus()
         }
     }
-    LaunchedEffect(scoreTotalToConfirm, restoreSaveFocus, isLoading) {
-        if (scoreTotalToConfirm == null && restoreSaveFocus && !isLoading) {
+    LaunchedEffect(restoreSaveFocus, isLoading) {
+        if (restoreSaveFocus && !isLoading) {
             restoreSaveFocus = false
             saveFocusRequester.requestFocus()
-        }
-    }
-    LaunchedEffect(handsDialogTableId, restoreHandsFocusTableId) {
-        val tableId = restoreHandsFocusTableId ?: return@LaunchedEffect
-        if (handsDialogTableId == null) {
-            restoreHandsFocusTableId = null
-            editHandsFocusRequesters[tableId]?.requestFocus()
         }
     }
     LaunchedEffect(conflict, isLoading) {
@@ -470,19 +533,6 @@ fun TournamentScreen(
             onConfirm = { scope.launch { resolveConflict() } },
             onCancel = { conflict = null; conflictTableId = null; conflictChoices = emptyMap(); restoreSaveFocus = true },
         )
-    }
-    handsDialogTableId?.let { tableId ->
-        tableEditors[tableId]?.let { editor ->
-            TableHandsDialog(
-                editor = editor,
-                enabled = !isLoading,
-                playerNamesById = playerNamesById,
-                onDismiss = {
-                    handsDialogTableId = null
-                    restoreHandsFocusTableId = tableId
-                },
-            )
-        }
     }
     errorMessage?.let { message -> AppErrorDialog(message) { errorMessage = null } }
 
@@ -499,6 +549,7 @@ fun TournamentScreen(
             )
         },
         isLoading = isLoading,
+        showProgress = isLoading || isLoadingRest,
         onBack = { requestAction(RoundEditorAction.Back) },
         leadingActions = {
             ProfileInfo(profile, roleLabel)
@@ -509,86 +560,159 @@ fun TournamentScreen(
             )
         },
         actions = {
-            AppTopBarActions(
-                onTeams = if (tournament?.isTeams == true) ({ requestAction(RoundEditorAction.Teams) }) else null,
-                onPlayers = { requestAction(RoundEditorAction.Players) },
-                onEmaReport = { requestAction(RoundEditorAction.Export) },
-                exportFocusRequester = exportFocusRequester,
+            val showReset = adminStatus?.isAdmin == true && selectedRoundId != null && selectedTableId != null
+            if (tournament?.isTeams == true) {
+                AppTopBarButton(
+                    text = "Teams",
+                    icon = Icons.Default.Groups,
+                    onClick = { requestAction(RoundEditorAction.Teams) },
+                    enabled = !isLoading,
+                )
+            }
+            AppTopBarButton(
+                text = "Players",
+                icon = Icons.Default.People,
+                onClick = { requestAction(RoundEditorAction.Players) },
+                enabled = !isLoading,
+                focusRequester = if (showReset) null else resetFocusRequester,
             )
-            if (adminStatus?.isAdmin == true && selectedRoundId != null && selectedTableId != null) {
+            AppTopBarButton(
+                text = "EMA report",
+                icon = Icons.Outlined.Assessment,
+                onClick = { requestAction(RoundEditorAction.Export) },
+                enabled = !isLoading && !isLoadingRest,
+            )
+            if (showReset) {
                 AppTopBarButton(
                     text = "Reset table",
                     icon = Icons.Default.RestartAlt,
                     onClick = { showResetConfirmation = true },
-                    enabled = !isLoading,
+                    enabled = !isLoading && !isLoadingRest,
                     focusRequester = resetFocusRequester,
-                    textColor = MaterialTheme.colorScheme.error,
+                    textColor = MaterialTheme.colorScheme.errorContainer,
                 )
             }
         },
     ) {
-        Row(
-            modifier = Modifier.fillMaxSize().padding(16.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        CompositionLocalProvider(
+            LocalHandStatOptions provides HandStatOptions(
+                countBestHands = tournament?.countBestHands ?: true,
+                countChickenHands = tournament?.countChickenHands ?: true,
+            ),
         ) {
-            RoundEditorSidebar(
-                rounds = rounds,
-                allTables = allTables,
-                selectedRoundId = selectedRoundId,
-                selectedTableId = selectedTableId,
-                enabled = !isLoading,
-                roundFocusRequester = roundFocusRequester,
-                onSelectRound = { requestAction(RoundEditorAction.SelectRound(it)) },
-                onSelectTable = { requestAction(RoundEditorAction.SelectTable(it)) },
+        TournamentContent(
+            rounds = rounds,
+            allTables = allTables,
+            tableEditors = tableEditors,
+            selectedRoundId = selectedRoundId,
+            selectedTableId = selectedTableId,
+            enabled = !isLoading,
+            playerNamesById = playerNamesById,
+            roundFocusRequester = roundFocusRequester,
+            scoreFocusRequester = scoreFocusRequester,
+            saveFocusRequester = saveFocusRequester,
+            onSelectRound = { requestAction(RoundEditorAction.SelectRound(it)) },
+            onSelectTable = { requestAction(RoundEditorAction.SelectTable(it)) },
+            onRanking = { requestAction(RoundEditorAction.Rankings) },
+            onSave = { requestSave(tableIds = listOf(it)) },
+            onSaveAndNext = { requestSave(RoundEditorAction.NextTable(it), listOf(it)) },
+        )
+        }
+    }
+}
+
+/** The stateless body of the tournament screen: the round and table strip, and the editor of the selected table. */
+@Composable
+internal fun TournamentContent(
+    rounds: List<TournamentRound>,
+    allTables: List<TournamentTable>,
+    tableEditors: Map<Int, TableManagerEditorState>,
+    selectedRoundId: Int?,
+    selectedTableId: Int?,
+    enabled: Boolean,
+    playerNamesById: Map<Int, String>,
+    roundFocusRequester: FocusRequester,
+    scoreFocusRequester: FocusRequester,
+    saveFocusRequester: FocusRequester,
+    onSelectRound: (Int) -> Unit,
+    onSelectTable: (Int) -> Unit,
+    onRanking: () -> Unit,
+    onSave: (Int) -> Unit,
+    onSaveAndNext: (Int) -> Unit,
+) {
+    val selectedEditor = selectedTableId?.let { tableEditors[it] }
+    val roundTableCount = allTables.count { it.roundId == selectedRoundId }
+    Column(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        RoundTableStrip(
+            rounds = rounds,
+            allTables = allTables,
+            tableEditors = tableEditors,
+            selectedRoundId = selectedRoundId,
+            selectedTableId = selectedTableId,
+            enabled = enabled,
+            roundFocusRequester = roundFocusRequester,
+            onSelectRound = onSelectRound,
+            onSelectTable = onSelectTable,
+            onRanking = onRanking,
+        )
+        if (selectedEditor != null) {
+            Text(
+                text = "Round ${selectedEditor.roundId} • Table ${selectedEditor.tableId}",
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
             )
-            Box(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                LazyColumnWithScrollbar(
-                    state = tableListState,
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(bottom = if (hasUnsavedChanges) 88.dp else 16.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+        }
+        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+            if (selectedEditor != null) {
+                val tableId = selectedEditor.tableId
+                val accent = MaterialTheme.colorScheme.tertiary
+                val scrollState = rememberScrollState()
+                val stickyHost = remember(scrollState) { StickyHeaderHost(scrollState) }
+                Column(
+                    modifier = Modifier
+                        .widthIn(max = 1600.dp)
+                        .fillMaxWidth()
+                        .align(Alignment.TopCenter)
+                        .onGloballyPositioned { stickyHost.viewportTop = it.positionInRoot().y }
+                        .verticalScroll(scrollState)
+                        .padding(bottom = 96.dp),
                 ) {
-                    items(selectedRoundTables, key = { it.tableId }) { summary ->
-                        tableEditors[summary.tableId]?.let { editor ->
-                            TableSummaryCard(
-                                editor = editor,
-                                enabled = !isLoading,
-                                playerNamesById = playerNamesById,
-                                cardFocusRequester = cardFocusRequesters[summary.tableId],
-                                editHandsFocusRequester = editHandsFocusRequesters[summary.tableId],
-                                onEditHands = { handsDialogTableId = summary.tableId },
-                                onFocused = {
-                                    if (selectedTableId != summary.tableId) {
-                                        tableSelectedByFocus = summary.tableId
-                                        selectedTableId = summary.tableId
-                                    }
-                                },
-                            )
-                        }
+                    CompositionLocalProvider(LocalStickyHeaderHost provides stickyHost) {
+                    TableEditorPanel(
+                        editor = selectedEditor,
+                        enabled = enabled,
+                        playerNamesById = playerNamesById,
+                        scoreFocusRequester = scoreFocusRequester,
+                        otherTablesBestHandScores = allTables
+                            .filterNot { it.roundId == selectedEditor.roundId && it.tableId == tableId }
+                            .flatMap { it.bestHandScores },
+                    )
                     }
                 }
-                if (hasUnsavedChanges) {
+                if (selectedEditor.hasUnsavedChanges) {
                     Row(
-                        modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(bottom = 8.dp),
+                        modifier = Modifier.align(Alignment.BottomEnd).padding(end = 8.dp, bottom = 8.dp),
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton(
-                            onClick = ::discardAll,
-                            modifier = Modifier.weight(1f),
-                            buttonModifier = Modifier.fillMaxWidth().height(56.dp),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error,
-                                contentColor = MaterialTheme.colorScheme.onError,
-                            ),
-                        ) { Text("Discard", style = MaterialTheme.typography.titleMedium) }
-                        com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton(
-                            onClick = { requestSave() },
-                            modifier = Modifier.weight(3f),
-                            buttonModifier = Modifier.fillMaxWidth().height(56.dp),
-                            enabled = !isLoading,
-                            // Default button colors: the theme primary, which is green.
-                            focusRequester = saveFocusRequester,
-                        ) { Text("Save", style = MaterialTheme.typography.titleMedium) }
+                        ExtendedFloatingActionButton(
+                            onClick = { onSave(tableId) },
+                            modifier = Modifier.focusRequester(saveFocusRequester),
+                            containerColor = accent,
+                            contentColor = MaterialTheme.colorScheme.onTertiary,
+                        ) { Text("Save") }
+                        if (roundTableCount > 1) {
+                            ExtendedFloatingActionButton(
+                                onClick = { onSaveAndNext(tableId) },
+                                containerColor = accent,
+                                contentColor = MaterialTheme.colorScheme.onTertiary,
+                            ) { Text("Save and next table") }
+                        }
                     }
                 }
             }
@@ -596,68 +720,151 @@ fun TournamentScreen(
     }
 }
 
+@Preview(device = Devices.DESKTOP)
 @Composable
-private fun RoundEditorSidebar(
+private fun TournamentContentPreview() {
+    MtsTheme(useDarkTheme = false) {
+        val editor = remember { previewTableManagerEditorState() }
+        val tables = listOf(1, 2, 3).map { id ->
+            TournamentTable(
+                roundId = editor.roundId,
+                tableId = id,
+                playerIds = listOf(101, 102, 103, 104),
+                isCompleted = false,
+                useTotalsOnly = false,
+                usePointsCalculation = true,
+                hasProgress = id == editor.tableId,
+            )
+        }
+        AppScaffold(title = "Preview Tournament") {
+            TournamentContent(
+                rounds = listOf(TournamentRound(1), TournamentRound(editor.roundId)),
+                allTables = tables,
+                tableEditors = mapOf(editor.tableId to editor),
+                selectedRoundId = editor.roundId,
+                selectedTableId = editor.tableId,
+                enabled = true,
+                playerNamesById = previewTablePlayerNamesById(),
+                roundFocusRequester = remember { FocusRequester() },
+                scoreFocusRequester = remember { FocusRequester() },
+                saveFocusRequester = remember { FocusRequester() },
+                onSelectRound = {},
+                onSelectTable = {},
+                onRanking = {},
+                onSave = {},
+                onSaveAndNext = {},
+            )
+        }
+    }
+}
+
+/**
+ * Returns the table to open after [currentId]. It prefers the next table that needs data and wraps around.
+ * When every table has data, it returns the table after [currentId], or null for the last table.
+ */
+internal fun nextTableToOpen(tableIds: List<Int>, currentId: Int, needsData: (Int) -> Boolean): Int? {
+    val index = tableIds.indexOf(currentId)
+    if (index < 0) return tableIds.firstOrNull()
+    val following = tableIds.drop(index + 1) + tableIds.take(index)
+    return following.firstOrNull(needsData) ?: tableIds.getOrNull(index + 1)
+}
+
+/** One slim row: round picker, one chip per table, and a ranking shortcut once the round has all data. */
+@Composable
+private fun RoundTableStrip(
     rounds: List<TournamentRound>,
     allTables: List<TournamentTable>,
+    tableEditors: Map<Int, TableManagerEditorState>,
     selectedRoundId: Int?,
     selectedTableId: Int?,
     enabled: Boolean,
     roundFocusRequester: FocusRequester,
     onSelectRound: (Int) -> Unit,
     onSelectTable: (Int) -> Unit,
+    onRanking: () -> Unit,
 ) {
     val tables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
-    val bestHandScore = tournamentBestHandScore(allTables)
-    val roundsListState = rememberLazyListState()
-    val tablesListState = rememberLazyListState()
-    Card(modifier = Modifier.fillMaxHeight().widthIn(min = 280.dp, max = 420.dp).appFocusGroup()) {
+    val roundIndex = rounds.indexOfFirst { it.roundId == selectedRoundId }
+    val chipsState = rememberLazyListState()
+    var roundMenuOpen by remember { mutableStateOf(false) }
+    val roundStatus = roundCompletionStatus(tables)
+    val roundIsFinished = roundStatus == CompletionStatus.Completed || roundStatus == CompletionStatus.Manual
+    Card(modifier = Modifier.fillMaxWidth().appFocusGroup()) {
         Row(
-            modifier = Modifier.fillMaxSize().padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Column(modifier = Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Rounds", style = MaterialTheme.typography.titleMedium)
-                LazyColumnWithScrollbar(
-                    state = roundsListState,
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+            FocusedIconButton(
+                onClick = { rounds.getOrNull(roundIndex - 1)?.let { onSelectRound(it.roundId) } },
+                enabled = enabled && roundIndex > 0,
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = "Previous round") }
+            Box {
+                FocusedOutlinedButton(
+                    onClick = { roundMenuOpen = true },
+                    enabled = enabled,
+                    focusRequester = roundFocusRequester,
                 ) {
-                    items(rounds, key = { it.roundId }) { round ->
-                        SidebarEntry(
-                            label = "${round.roundId}",
-                            status = roundCompletionStatus(allTables.filter { it.roundId == round.roundId }),
-                            chickenHandCount = allTables.filter { it.roundId == round.roundId }.sumOf { it.chickenHandCount },
-                            bestHandScore = bestHandScore.takeIf {
-                                allTables.any { table -> table.roundId == round.roundId && table.hasTournamentBestHand(it) }
+                    Text("Round ${selectedRoundId ?: "-"}", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.width(8.dp))
+                    StatusIconWithTooltip(roundStatus)
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                }
+                DropdownMenu(expanded = roundMenuOpen, onDismissRequest = { roundMenuOpen = false }) {
+                    rounds.forEach { round ->
+                        DropdownMenuItem(
+                            text = { Text("Round ${round.roundId}") },
+                            trailingIcon = {
+                                StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId }))
                             },
-                            selected = round.roundId == selectedRoundId,
-                            enabled = enabled,
-                            focusRequester = if (round.roundId == selectedRoundId) roundFocusRequester else null,
-                            onClick = { onSelectRound(round.roundId) },
+                            onClick = {
+                                roundMenuOpen = false
+                                onSelectRound(round.roundId)
+                            },
                         )
                     }
                 }
             }
-            Box(Modifier.fillMaxHeight().width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
-            Column(modifier = Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Tables", style = MaterialTheme.typography.titleMedium)
-                LazyColumnWithScrollbar(
-                    state = tablesListState,
-                    modifier = Modifier.fillMaxWidth().weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
-                ) {
-                    items(tables, key = { it.tableId }) { table ->
-                        SidebarEntry(
+            FocusedIconButton(
+                onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },
+                enabled = enabled && roundIndex in 0 until rounds.lastIndex,
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = "Next round") }
+            }
+            Box(Modifier.height(32.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+            LazyRow(
+                state = chipsState,
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                itemsIndexed(tables, key = { _, table -> table.tableId }) { index, table ->
+                    val editor = tableEditors[table.tableId]
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        if (index > 0) {
+                            Box(Modifier.height(24.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                        }
+                        TableChip(
                             label = "${table.tableId}",
-                            status = tableCompletionStatus(table),
-                            chickenHandCount = table.chickenHandCount,
-                            bestHandScore = bestHandScore.takeIf { table.hasTournamentBestHand(it) },
+                            status = editor?.completionStatus ?: tableCompletionStatus(table),
+                            hasUnsavedChanges = editor?.hasUnsavedChanges == true,
                             selected = table.tableId == selectedTableId,
-                            enabled = enabled,
+                            // A table that is not loaded yet stays disabled until its data arrives.
+                            enabled = enabled && editor != null,
                             onClick = { onSelectTable(table.tableId) },
+                            loaded = editor != null,
                         )
                     }
+                }
+            }
+            if (roundIsFinished) {
+                FocusedButton(onClick = onRanking, enabled = enabled) {
+                    Icon(Icons.Default.Leaderboard, contentDescription = null)
+                    Spacer(Modifier.width(6.dp))
+                    Text("Ranking")
                 }
             }
         }
@@ -665,45 +872,44 @@ private fun RoundEditorSidebar(
 }
 
 @Composable
-private fun SidebarEntry(
+private fun TableChip(
     label: String,
     status: CompletionStatus,
-    chickenHandCount: Int,
-    bestHandScore: Int?,
+    hasUnsavedChanges: Boolean,
     selected: Boolean,
     enabled: Boolean,
     onClick: () -> Unit,
-    focusRequester: FocusRequester? = null,
+    loaded: Boolean = true,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
-    FocusHighlightContainer(modifier = Modifier.fillMaxWidth(), interactionSource = interactionSource) {
+    FocusHighlightContainer(modifier = Modifier, interactionSource = interactionSource) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth()
-                .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
+                .alpha(if (loaded) 1f else 0.38f)
                 .clickable(interactionSource = interactionSource, indication = null, enabled = enabled, onClick = onClick)
                 .activateOnEnter(enabled = enabled, onClick = onClick),
             color = if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
             shape = MaterialTheme.shapes.small,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 8.dp, vertical = 7.dp),
-                horizontalArrangement = Arrangement.spacedBy(SidebarIconSpacing),
+                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                // The title gives way when the row is narrow, so the icons keep their full size.
                 Text(
                     text = label,
                     color = if (selected) MaterialTheme.colorScheme.onPrimaryContainer else LocalContentColor.current,
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
                 )
-                Spacer(Modifier.width(SidebarTitleIconSpacing))
                 StatusIconWithTooltip(status = status)
-                TableStatBadges(chickenHandCount = chickenHandCount, bestHandScore = bestHandScore)
+                if (hasUnsavedChanges) {
+                    // Marks a table with changes that are not saved yet.
+                    Box(
+                        Modifier.size(8.dp).background(MaterialTheme.colorScheme.tertiary, CircleShape),
+                    )
+                }
             }
         }
     }

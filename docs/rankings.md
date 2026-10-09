@@ -58,6 +58,17 @@ The calculation uses hands with a valid winner and numeric hand score.
 
 It sorts hands by score and shows the ten highest hands. A player can appear more than once.
 
+## Tournament best hands
+
+The tournament has up to three best hands. Hands tied with the third hand also count, so the tournament can have more than three.
+
+- A table can have more than one best hand of the tournament.
+- Each table stores its own best hand scores (`bestHandScores`): its three highest done hand scores and their ties.
+- The Tournament screen shows a trophy for each round and table that has a best hand of the tournament. The trophy shows a count when there is more than one.
+- Each tournament has two switches, **Best hands** and **Chicken hands** (`countBestHands`, `countChickenHands`). Both are on by default and for old tournaments. The admin sets them when creating the tournament and can change them in the tournament settings.
+- When a switch is off, the Rankings screen does not show that list. The app also hides that statistic in the table header and the tournament badges. When Chicken hands is off, the hands table has no Chicken column.
+- Only done hands with a numeric score count. The server and the app calculate the chicken hand count and the best hand scores from the hands. Users cannot type these values.
+
 ## Player identity rules
 
 Tournament player records are schedule slots. The Rankings screen does not use their stored name or country.

@@ -304,12 +304,13 @@ async function listTournamentTables(tournamentId, roundId) {
         const storedHasValidManualTotals = d.get("hasValidManualTotals");
         const storedCompletionStatus = d.get("completionStatus");
         const storedChickenHandCount = d.get("chickenHandCount");
-        const storedBestHandScore = d.get("bestHandScore");
+        const storedBestHandScores = d.get("bestHandScores");
         if (typeof storedHasProgress === "boolean"
             && typeof storedHasValidManualTotals === "boolean"
             && typeof storedCompletionStatus === "string"
             && typeof storedChickenHandCount === "number"
-            && (storedBestHandScore === null || typeof storedBestHandScore === "number")) {
+            && Array.isArray(storedBestHandScores)
+            && storedBestHandScores.every((score) => typeof score === "number")) {
             return {
                 version: Number(d.get("version") ?? 0),
                 roundId: Number(d.get("roundId")),
@@ -321,7 +322,7 @@ async function listTournamentTables(tournamentId, roundId) {
                 hasProgress: storedHasProgress,
                 hasValidManualTotals: storedHasValidManualTotals,
                 completionStatus: storedCompletionStatus,
-                bestHandScore: storedBestHandScore,
+                bestHandScores: storedBestHandScores,
                 chickenHandCount: storedChickenHandCount,
             };
         }
@@ -388,8 +389,7 @@ async function listTournamentTables(tournamentId, roundId) {
                     d.get("playerEastScore"), d.get("playerSouthScore"), d.get("playerWestScore"), d.get("playerNorthScore"),
                 ]),
             }),
-            bestHandScore: (0, tournamentContentRules_1.calculateBestHandScore)(hands.docs.map((hand) => hand.data())),
-            chickenHandCount: (0, tournamentContentRules_1.countChickenHands)(hands.docs.map((hand) => hand.data())),
+            ...(0, tournamentContentRules_1.calculateHandSummary)(hands.docs.map((hand) => hand.data())),
         };
     }));
     return tables

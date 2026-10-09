@@ -57,6 +57,7 @@ fun AppScaffold(
     subtitle: String? = null,
     titleAction: @Composable (() -> Unit)? = null,
     isLoading: Boolean = false,
+    showProgress: Boolean = isLoading,
     onBack: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     leadingActions: @Composable (RowScope.() -> Unit)? = null,
@@ -166,7 +167,7 @@ fun AppScaffold(
                     colors = colors,
                 )
 
-                if (isLoading) {
+                if (showProgress) {
                     SlowLinearLoadingIndicator()
                 }
             }

@@ -66,6 +66,8 @@ async function mapTournamentDoc(d) {
         hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
         hostCity: String(d.get("hostCity") ?? "").trim(),
         isTeams: d.get("isTeams") ?? false,
+        countBestHands: d.get("countBestHands") !== false,
+        countChickenHands: d.get("countChickenHands") !== false,
         numPlayers: d.get("numPlayers") ?? 0,
         numRounds,
         eventStartDate,
@@ -108,6 +110,8 @@ async function createTournament(params) {
         hostCountry: params.hostCountry.trim().toUpperCase(),
         hostCity: params.hostCity.trim(),
         isTeams: params.isTeams,
+        countBestHands: params.countBestHands ?? true,
+        countChickenHands: params.countChickenHands ?? true,
         numPlayers: params.numPlayers,
         numRounds: params.numRounds,
         roundSchedules,
@@ -216,7 +220,7 @@ async function createTournament(params) {
             hasProgress: Boolean(table.isCompleted ?? false),
             hasValidManualTotals: false,
             completionStatus: "empty",
-            bestHandScore: null,
+            bestHandScores: [],
             chickenHandCount: 0,
             version: 0,
             createdAt: firestore_1.FieldValue.serverTimestamp(),
@@ -362,6 +366,10 @@ async function updateTournamentSettings(params) {
         agendaItems,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
+    if (params.countBestHands !== undefined)
+        update.countBestHands = params.countBestHands;
+    if (params.countChickenHands !== undefined)
+        update.countChickenHands = params.countChickenHands;
     if (logo !== undefined) {
         update.associationLogoPath = logo?.path ?? null;
         update.associationLogoUrl = logo?.url ?? null;

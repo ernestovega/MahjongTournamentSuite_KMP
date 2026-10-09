@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -203,7 +204,16 @@ private fun TimerContent(
                     Text("Enter remaining time in minutes:")
                     OutlinedTextField(
                         value = minutesValue,
-                        onValueChange = { minutesValue = it },
+                        onValueChange = { typed ->
+                            val text = typed.text.toDigitsInput()
+                            minutesValue = typed.copy(
+                                text = text,
+                                selection = TextRange(
+                                    typed.selection.start.coerceAtMost(text.length),
+                                    typed.selection.end.coerceAtMost(text.length),
+                                ),
+                            )
+                        },
                         keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
                             keyboardType = KeyboardType.Number,
                             imeAction = ImeAction.Done,

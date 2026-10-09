@@ -40,18 +40,33 @@ export function calculateTableCompletionStatus(input: {
   return input.useTotalsOnly ? "partial" : "completed";
 }
 
-/** Highest integer score among the done hands, or null when no done hand has a score. */
-export function calculateBestHandScore(hands: Array<Record<string, unknown>>): number | null {
+export const MAX_BEST_HANDS = 3;
+
+/**
+ * Scores of the best done hands, from highest to lowest. It keeps the three highest scores
+ * and every score tied with the third one, so a tie never hides a hand.
+ */
+export function calculateBestHandScores(hands: Array<Record<string, unknown>>): number[] {
   const scores = hands
     .filter((hand) => Boolean(hand.isDone))
     .map((hand) => String(hand.handScore ?? "").trim())
     .filter((score) => /^-?\d+$/.test(score))
-    .map(Number);
-  return scores.length > 0 ? Math.max(...scores) : null;
+    .map(Number)
+    .sort((a, b) => b - a);
+  if (scores.length <= MAX_BEST_HANDS) return scores;
+  const threshold = scores[MAX_BEST_HANDS - 1];
+  return scores.filter((score) => score >= threshold);
 }
 
 export function countChickenHands(hands: Array<Record<string, unknown>>): number {
   return hands.filter((hand) => Boolean(hand.isChickenHand)).length;
+}
+
+/** Chicken hand count and best hand scores of a table. Only the hands give the values. */
+export function calculateHandSummary(
+  hands: Array<Record<string, unknown>>,
+): { chickenHandCount: number; bestHandScores: number[] } {
+  return { chickenHandCount: countChickenHands(hands), bestHandScores: calculateBestHandScores(hands) };
 }
 
 export function hasDuplicateEmaAssignments(values: Array<string | null | undefined>): boolean {

@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,10 @@ fun SectionCard(
     verticalSpacing: Dp = 12.dp,
     titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
     titleAction: @Composable (() -> Unit)? = null,
+    centerTitle: Boolean = false,
+    titleActionAtStart: Boolean = false,
+    /** Content at the start (left) of the title row. It works only with [centerTitle]. */
+    startContent: @Composable (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
@@ -35,7 +40,39 @@ fun SectionCard(
             modifier = Modifier.padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         ) {
-            if (title != null || subtitle != null || titleAction != null || actions != null) {
+            if (centerTitle && (title != null || subtitle != null || titleAction != null || actions != null || startContent != null)) {
+                Box(modifier = Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier.align(Alignment.Center),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            if (!title.isNullOrBlank()) Text(text = title, style = titleStyle)
+                            if (!titleActionAtStart) titleAction?.invoke()
+                        }
+                        if (!subtitle.isNullOrBlank()) {
+                            Text(
+                                text = subtitle,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
+                    if (startContent != null) {
+                        Box(modifier = Modifier.align(Alignment.CenterStart)) { startContent() }
+                    }
+                    if (titleActionAtStart && titleAction != null) {
+                        Box(modifier = Modifier.align(Alignment.CenterStart)) { titleAction() }
+                    }
+                    if (actions != null) {
+                        Box(modifier = Modifier.align(Alignment.CenterEnd)) { actions() }
+                    }
+                }
+            } else if (title != null || subtitle != null || titleAction != null || actions != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),

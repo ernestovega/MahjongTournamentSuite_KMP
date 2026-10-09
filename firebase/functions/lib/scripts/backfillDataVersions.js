@@ -81,8 +81,10 @@ async function backfill() {
                             table.get("playerEastScore"), table.get("playerSouthScore"), table.get("playerWestScore"), table.get("playerNorthScore"),
                         ]),
                     }),
-                    bestHandScore: (0, tournamentContentRules_1.calculateBestHandScore)(tableHands.map((hand) => hand.data())),
-                    chickenHandCount: (0, tournamentContentRules_1.countChickenHands)(tableHands.map((hand) => hand.data())),
+                    ...(0, tournamentContentRules_1.calculateHandSummary)(tableHands.map((hand) => hand.data())),
+                    bestHandScore: firestore_1.FieldValue.delete(),
+                    manualChickenHandCount: firestore_1.FieldValue.delete(),
+                    manualBestHandScore: firestore_1.FieldValue.delete(),
                     ...(Number.isSafeInteger(table.get("version")) ? {} : { version: 0 }),
                 }));
             }

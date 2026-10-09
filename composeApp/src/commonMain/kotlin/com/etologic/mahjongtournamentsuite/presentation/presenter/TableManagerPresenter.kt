@@ -26,6 +26,19 @@ class TableManagerPresenter(
         )
     }
 
+    suspend fun loadRoundTablesWithHands(
+        tournamentId: String,
+        roundId: Int,
+        forceRefresh: Boolean = false,
+    ): AppResult<List<Pair<TableState, List<TableHand>>>> {
+        logger.i { "Loading round tables with hands." }
+        return tournamentRepository.getRoundTablesWithHands(
+            tournamentId = tournamentId,
+            roundId = roundId,
+            refreshMode = if (forceRefresh) RefreshMode.FORCE else RefreshMode.IF_CHANGED,
+        )
+    }
+
     suspend fun saveTableState(
         tournamentId: String,
         roundId: Int,

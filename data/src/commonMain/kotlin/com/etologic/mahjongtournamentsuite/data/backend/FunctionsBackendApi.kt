@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeam
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResponseDto
@@ -373,6 +374,15 @@ class FunctionsBackendApi(
         tableId: Int,
     ): TableWithHandsResponseDto = get(
         path = "/tournaments/$tournamentId/tables/$roundId/$tableId",
+        idToken = idToken,
+    )
+
+    suspend fun getRoundTablesWithHands(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+    ): RoundTablesWithHandsResponseDto = get(
+        path = "/tournaments/$tournamentId/rounds/$roundId/tables-with-hands",
         idToken = idToken,
     )
 

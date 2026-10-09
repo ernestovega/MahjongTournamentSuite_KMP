@@ -103,9 +103,15 @@ test("table summary reports the best done hand and the chicken hand count", () =
     { handScore: "abc", isDone: true },
   ]);
 
-  assert.equal(summary.bestHandScore, 30);
+  assert.deepEqual(summary.bestHandScores, [30, 12]);
   assert.equal(summary.chickenHandCount, 2);
-  assert.equal(calculateTableSummary({}, []).bestHandScore, null);
+  assert.deepEqual(calculateTableSummary({}, []).bestHandScores, []);
+});
+
+test("table summary keeps up to three best hands and the ties with the third one", () => {
+  const hands = [8, 40, 30, 30, 30, 12].map((score) => ({ handScore: String(score), isDone: true }));
+  assert.deepEqual(calculateTableSummary({}, hands).bestHandScores, [40, 30, 30, 30]);
+  assert.deepEqual(calculateTableSummary({}, hands.slice(0, 2)).bestHandScores, [40, 8]);
 });
 
 const seatedTable = {

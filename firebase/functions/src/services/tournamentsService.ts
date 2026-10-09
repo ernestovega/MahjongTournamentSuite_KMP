@@ -24,6 +24,10 @@ export type Tournament = {
   hostCountry: string;
   hostCity: string;
   isTeams: boolean;
+  /** When false, the app does not count or show the best hands. Old documents count them. */
+  countBestHands: boolean;
+  /** When false, the app does not count or show the chicken hands. Old documents count them. */
+  countChickenHands: boolean;
   numPlayers: number;
   numRounds: number;
   eventStartDate: string | null;
@@ -92,6 +96,8 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
     hostCity: String(d.get("hostCity") ?? "").trim(),
     isTeams: (d.get("isTeams") as boolean) ?? false,
+    countBestHands: d.get("countBestHands") !== false,
+    countChickenHands: d.get("countChickenHands") !== false,
     numPlayers: (d.get("numPlayers") as number) ?? 0,
     numRounds,
     eventStartDate,
@@ -119,6 +125,8 @@ export async function createTournament(params: {
   hostCountry: string;
   hostCity: string;
   isTeams: boolean;
+  countBestHands?: boolean;
+  countChickenHands?: boolean;
   numPlayers: number;
   numRounds: number;
   numTries: number;
@@ -163,6 +171,8 @@ export async function createTournament(params: {
     hostCountry: params.hostCountry.trim().toUpperCase(),
     hostCity: params.hostCity.trim(),
     isTeams: params.isTeams,
+    countBestHands: params.countBestHands ?? true,
+    countChickenHands: params.countChickenHands ?? true,
     numPlayers: params.numPlayers,
     numRounds: params.numRounds,
     roundSchedules,
@@ -278,7 +288,7 @@ export async function createTournament(params: {
       hasProgress: Boolean(table.isCompleted ?? false),
       hasValidManualTotals: false,
       completionStatus: "empty",
-      bestHandScore: null,
+      bestHandScores: [],
       chickenHandCount: 0,
       version: 0,
       createdAt: FieldValue.serverTimestamp(),
@@ -398,6 +408,8 @@ export async function updateTournamentSettings(params: {
   eventEndDate: string;
   hostCountry: string;
   hostCity: string;
+  countBestHands?: boolean;
+  countChickenHands?: boolean;
   associationLogoContentType?: string | null;
   associationLogoDataBase64?: string | null;
   associationLogoSourceTournamentId?: string | null;
@@ -452,6 +464,8 @@ export async function updateTournamentSettings(params: {
     agendaItems,
     updatedAt: FieldValue.serverTimestamp(),
   };
+  if (params.countBestHands !== undefined) update.countBestHands = params.countBestHands;
+  if (params.countChickenHands !== undefined) update.countChickenHands = params.countChickenHands;
   if (logo !== undefined) {
     update.associationLogoPath = logo?.path ?? null;
     update.associationLogoUrl = logo?.url ?? null;

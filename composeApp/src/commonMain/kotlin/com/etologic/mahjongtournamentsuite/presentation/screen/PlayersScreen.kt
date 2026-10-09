@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.toCountryCodeInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -769,7 +770,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     )
                     OutlinedTextField(
                         value = nonMemberCountry,
-                        onValueChange = { nonMemberCountry = it.uppercase().take(3); nonMemberError = null },
+                        onValueChange = { nonMemberCountry = it.toCountryCodeInput(); nonMemberError = null },
                         label = { Text("Country") },
                         placeholder = { Text("Three-letter EMA code") },
                         singleLine = true,

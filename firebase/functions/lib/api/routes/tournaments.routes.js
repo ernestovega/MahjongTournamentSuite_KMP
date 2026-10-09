@@ -102,6 +102,8 @@ function tournamentsRouter() {
             const hostCountry = String(body?.hostCountry ?? "").trim().toUpperCase();
             const hostCity = String(body?.hostCity ?? "").trim();
             const isTeams = Boolean(body?.isTeams ?? false);
+            const countBestHands = body?.countBestHands !== false;
+            const countChickenHands = body?.countChickenHands !== false;
             const numPlayersValue = body?.numPlayers;
             const numRoundsValue = body?.numRounds;
             const numTriesValue = body?.numTries;
@@ -219,6 +221,8 @@ function tournamentsRouter() {
                 hostCountry,
                 hostCity,
                 isTeams,
+                countBestHands,
+                countChickenHands,
                 numPlayers,
                 numRounds,
                 numTries,
@@ -386,6 +390,8 @@ function tournamentsRouter() {
                 associationLogoContentType,
                 associationLogoDataBase64,
                 associationLogoSourceTournamentId,
+                countBestHands: typeof body.countBestHands === "boolean" ? body.countBestHands : undefined,
+                countChickenHands: typeof body.countChickenHands === "boolean" ? body.countChickenHands : undefined,
                 removeAssociationLogo: body.removeAssociationLogo === true,
                 roundSchedules: body.roundSchedules,
                 agendaItems: body.agendaItems,
@@ -586,6 +592,19 @@ function tournamentsRouter() {
                 throw (0, httpError_1.badRequest)("roundId must be a positive integer");
             }
             const tables = await (0, tournamentContentService_1.listTournamentTables)(req.params.tournamentId, roundId);
+            res.status(200).json({ tables });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.get("/:tournamentId/rounds/:roundId/tables-with-hands", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const roundId = Number(req.params.roundId);
+            if (!Number.isInteger(roundId) || roundId <= 0) {
+                throw (0, httpError_1.badRequest)("roundId must be a positive integer");
+            }
+            const tables = await (0, tableManagerService_1.getRoundTablesWithHands)({ tournamentId: req.params.tournamentId, roundId });
             res.status(200).json({ tables });
         }
         catch (e) {

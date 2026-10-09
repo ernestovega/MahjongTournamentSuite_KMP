@@ -85,9 +85,14 @@ const tableManagerService_1 = require("./tableManagerService");
         { handScore: "80", isDone: false, isChickenHand: true },
         { handScore: "abc", isDone: true },
     ]);
-    strict_1.default.equal(summary.bestHandScore, 30);
+    strict_1.default.deepEqual(summary.bestHandScores, [30, 12]);
     strict_1.default.equal(summary.chickenHandCount, 2);
-    strict_1.default.equal((0, tableManagerService_1.calculateTableSummary)({}, []).bestHandScore, null);
+    strict_1.default.deepEqual((0, tableManagerService_1.calculateTableSummary)({}, []).bestHandScores, []);
+});
+(0, node_test_1.default)("table summary keeps up to three best hands and the ties with the third one", () => {
+    const hands = [8, 40, 30, 30, 30, 12].map((score) => ({ handScore: String(score), isDone: true }));
+    strict_1.default.deepEqual((0, tableManagerService_1.calculateTableSummary)({}, hands).bestHandScores, [40, 30, 30, 30]);
+    strict_1.default.deepEqual((0, tableManagerService_1.calculateTableSummary)({}, hands.slice(0, 2)).bestHandScores, [40, 8]);
 });
 const seatedTable = {
     playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",

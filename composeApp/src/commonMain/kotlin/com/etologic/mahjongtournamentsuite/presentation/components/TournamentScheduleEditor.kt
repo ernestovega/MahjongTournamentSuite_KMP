@@ -115,7 +115,7 @@ fun TournamentScheduleEditor(
                         value = row.date,
                         onValueChange = { value ->
                             onRoundRowsChange(
-                                roundRows.replaceAt(index, row.copy(date = value.take(10))),
+                                roundRows.replaceAt(index, row.copy(date = value.toDateInput())),
                             )
                         },
                         modifier = Modifier.weight(1f),
@@ -147,7 +147,7 @@ fun TournamentScheduleEditor(
                         value = row.startTime,
                         onValueChange = { value ->
                             onRoundRowsChange(
-                                roundRows.replaceAt(index, row.copy(startTime = value.take(5))),
+                                roundRows.replaceAt(index, row.copy(startTime = value.toTimeInput())),
                             )
                         },
                         modifier = Modifier.width(128.dp),
@@ -231,7 +231,7 @@ fun TournamentScheduleEditor(
                         value = row.date,
                         onValueChange = { value ->
                             onAgendaRowsChange(
-                                agendaRows.replaceAt(index, row.copy(date = value.take(10))),
+                                agendaRows.replaceAt(index, row.copy(date = value.toDateInput())),
                             )
                         },
                         modifier = Modifier.weight(1f),
@@ -264,7 +264,7 @@ fun TournamentScheduleEditor(
                         value = row.startTime,
                         onValueChange = { value ->
                             onAgendaRowsChange(
-                                agendaRows.replaceAt(index, row.copy(startTime = value.take(5))),
+                                agendaRows.replaceAt(index, row.copy(startTime = value.toTimeInput())),
                             )
                         },
                         modifier = Modifier.width(128.dp),
@@ -297,7 +297,7 @@ fun TournamentScheduleEditor(
                         value = row.endTime,
                         onValueChange = { value ->
                             onAgendaRowsChange(
-                                agendaRows.replaceAt(index, row.copy(endTime = value.take(5))),
+                                agendaRows.replaceAt(index, row.copy(endTime = value.toTimeInput())),
                             )
                         },
                         modifier = Modifier.width(128.dp),

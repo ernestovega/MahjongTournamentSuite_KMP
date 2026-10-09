@@ -52,6 +52,8 @@ class TournamentsPresenter(
         removeAssociationLogo: Boolean,
         roundSchedules: List<TournamentRoundSchedule>,
         agendaItems: List<TournamentAgendaItem>,
+        countBestHands: Boolean? = null,
+        countChickenHands: Boolean? = null,
     ): AppResult<Tournament> = tournamentRepository.updateTournamentSettings(
         tournamentId = tournamentId,
         name = name,
@@ -67,6 +69,8 @@ class TournamentsPresenter(
         removeAssociationLogo = removeAssociationLogo,
         roundSchedules = roundSchedules,
         agendaItems = agendaItems,
+        countBestHands = countBestHands,
+        countChickenHands = countChickenHands,
     )
 
     suspend fun signOut() = authRepository.signOut()

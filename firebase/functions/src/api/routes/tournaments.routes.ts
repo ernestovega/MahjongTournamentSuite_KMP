@@ -26,7 +26,7 @@ import {
   updateTournamentTeam,
 } from "../../services/tournamentContentService";
 import { playerExists, validateEmaId } from "../../services/playersService";
-import { getTableWithHands, resetTable, saveTableState, updateHand, updateTable } from "../../services/tableManagerService";
+import { getRoundTablesWithHands, getTableWithHands, resetTable, saveTableState, updateHand, updateTable } from "../../services/tableManagerService";
 import { getUserProfile } from "../../services/usersService";
 import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
 import { getTournamentDataVersions } from "../../services/dataVersionsService";
@@ -127,6 +127,8 @@ export function tournamentsRouter(): Router {
       const hostCountry = String(body?.hostCountry ?? "").trim().toUpperCase();
       const hostCity = String(body?.hostCity ?? "").trim();
       const isTeams = Boolean(body?.isTeams ?? false);
+      const countBestHands = body?.countBestHands !== false;
+      const countChickenHands = body?.countChickenHands !== false;
 
       const numPlayersValue = body?.numPlayers;
       const numRoundsValue = body?.numRounds;
@@ -240,6 +242,8 @@ export function tournamentsRouter(): Router {
         hostCountry,
         hostCity,
         isTeams,
+        countBestHands,
+        countChickenHands,
         numPlayers,
         numRounds,
         numTries,
@@ -406,6 +410,8 @@ export function tournamentsRouter(): Router {
         associationLogoContentType,
         associationLogoDataBase64,
         associationLogoSourceTournamentId,
+        countBestHands: typeof body.countBestHands === "boolean" ? body.countBestHands : undefined,
+        countChickenHands: typeof body.countChickenHands === "boolean" ? body.countChickenHands : undefined,
         removeAssociationLogo: body.removeAssociationLogo === true,
         roundSchedules: body.roundSchedules,
         agendaItems: body.agendaItems,
@@ -654,6 +660,25 @@ export function tournamentsRouter(): Router {
         }
 
         const tables = await listTournamentTables(req.params.tournamentId, roundId);
+        res.status(200).json({ tables });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.get(
+    "/:tournamentId/rounds/:roundId/tables-with-hands",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const roundId = Number(req.params.roundId);
+        if (!Number.isInteger(roundId) || roundId <= 0) {
+          throw badRequest("roundId must be a positive integer");
+        }
+
+        const tables = await getRoundTablesWithHands({ tournamentId: req.params.tournamentId, roundId });
         res.status(200).json({ tables });
       } catch (e) {
         next(e);

@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.toDateInput
+import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
@@ -58,6 +60,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as AppTextButton
@@ -149,6 +152,8 @@ fun CreateTournamentDialog(
     }
     var agendaRows by remember { mutableStateOf<List<AgendaItemEditorRow>>(emptyList()) }
     var isTeams by remember { mutableStateOf(true) }
+    var countBestHands by remember { mutableStateOf(true) }
+    var countChickenHands by remember { mutableStateOf(true) }
     var computeMode by remember { mutableStateOf(CreateTournamentPresenter.ComputeMode.LIGHT) }
 
     var isLoading by remember { mutableStateOf(false) }
@@ -295,6 +300,8 @@ fun CreateTournamentDialog(
                     hostCountry = normalizedHostCountry,
                     hostCity = trimmedHostCity,
                     isTeams = isTeams,
+                    countBestHands = countBestHands,
+                    countChickenHands = countChickenHands,
                     numPlayers = numPlayers,
                     numRounds = numRounds,
                     roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
@@ -374,7 +381,7 @@ fun CreateTournamentDialog(
                     ) {
                         OutlinedTextField(
                             value = numPlayersText,
-                            onValueChange = { numPlayersText = it },
+                            onValueChange = { numPlayersText = it.toDigitsInput() },
                             label = { Text("Players") },
                             placeholder = { Text("Multiple of 4") },
                             modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
@@ -383,7 +390,8 @@ fun CreateTournamentDialog(
                         )
                         OutlinedTextField(
                             value = numRoundsText,
-                            onValueChange = { value ->
+                            onValueChange = { typed ->
+                                val value = typed.toDigitsInput()
                                 numRoundsText = value
                                 roundScheduleRows = synchronizeRoundScheduleRows(
                                     rows = roundScheduleRows,
@@ -425,7 +433,7 @@ fun CreateTournamentDialog(
                         OutlinedTextField(
                             value = eventStartDate,
                             onValueChange = {
-                                eventStartDate = it.take(10)
+                                eventStartDate = it.toDateInput()
                                 eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
                             },
                             label = { Text("From") },
@@ -445,7 +453,7 @@ fun CreateTournamentDialog(
                         OutlinedTextField(
                             value = eventEndDate,
                             onValueChange = {
-                                val newValue = it.take(10)
+                                val newValue = it.toDateInput()
                                 eventEndDate = when {
                                     newValue.isEmpty() && eventStartDate.toIsoTournamentDateOrNull() != null -> eventStartDate
                                     else -> adjustedEndDate(eventStartDate, newValue)
@@ -586,6 +594,22 @@ fun CreateTournamentDialog(
                             )
                         }
                     }
+
+                    TournamentOptionSwitch(
+                        label = "Best hands",
+                        description = "Count the best hands and show them in the ranking and the tournament screens.",
+                        checked = countBestHands,
+                        enabled = !isLoading,
+                        onCheckedChange = { countBestHands = it },
+                    )
+
+                    TournamentOptionSwitch(
+                        label = "Chicken hands",
+                        description = "Count the chicken hands and show them in the ranking and the tournament screens.",
+                        checked = countChickenHands,
+                        enabled = !isLoading,
+                        onCheckedChange = { countChickenHands = it },
+                    )
 
                     FocusHighlightContainer(
                         modifier = Modifier.fillMaxWidth(),

@@ -3,12 +3,11 @@ import { db } from "../firebase";
 import { conflict, notFound } from "../api/httpError";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import {
-  calculateBestHandScore,
   calculateTableCompletionStatus,
-  countChickenHands,
   hasDuplicateEmaAssignments,
   hasFourValidScores,
   hasValidTablePoints,
+  calculateHandSummary,
 } from "./tournamentContentRules";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 
@@ -75,7 +74,7 @@ export type TournamentTable = {
   hasProgress: boolean;
   hasValidManualTotals: boolean;
   completionStatus: string;
-  bestHandScore: number | null;
+  bestHandScores: number[];
   chickenHandCount: number;
 };
 
@@ -367,13 +366,14 @@ export async function listTournamentTables(
     const storedHasValidManualTotals = d.get("hasValidManualTotals");
     const storedCompletionStatus = d.get("completionStatus");
     const storedChickenHandCount = d.get("chickenHandCount");
-    const storedBestHandScore = d.get("bestHandScore");
+    const storedBestHandScores = d.get("bestHandScores");
     if (
       typeof storedHasProgress === "boolean"
       && typeof storedHasValidManualTotals === "boolean"
       && typeof storedCompletionStatus === "string"
       && typeof storedChickenHandCount === "number"
-      && (storedBestHandScore === null || typeof storedBestHandScore === "number")
+      && Array.isArray(storedBestHandScores)
+      && storedBestHandScores.every((score) => typeof score === "number")
     ) {
       return {
         version: Number(d.get("version") ?? 0),
@@ -386,7 +386,7 @@ export async function listTournamentTables(
         hasProgress: storedHasProgress,
         hasValidManualTotals: storedHasValidManualTotals,
         completionStatus: storedCompletionStatus,
-        bestHandScore: storedBestHandScore,
+        bestHandScores: storedBestHandScores as number[],
         chickenHandCount: storedChickenHandCount,
       };
     }
@@ -454,8 +454,7 @@ export async function listTournamentTables(
           d.get("playerEastScore"), d.get("playerSouthScore"), d.get("playerWestScore"), d.get("playerNorthScore"),
         ]),
       }),
-      bestHandScore: calculateBestHandScore(hands.docs.map((hand) => hand.data())),
-      chickenHandCount: countChickenHands(hands.docs.map((hand) => hand.data())),
+      ...calculateHandSummary(hands.docs.map((hand) => hand.data())),
     };
   }));
 

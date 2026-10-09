@@ -1,14 +1,19 @@
-import { FieldValue } from "firebase-admin/firestore";
+import {
+  type CollectionReference,
+  type DocumentReference,
+  type DocumentSnapshot,
+  FieldValue,
+  type QuerySnapshot,
+} from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { notFound } from "../api/httpError";
 import { conflict } from "../api/httpError";
 import {
-  calculateBestHandScore,
-  countChickenHands,
   calculateTableCompletionStatus,
   hasFourValidScores,
   hasValidTablePoints,
+  calculateHandSummary,
 } from "./tournamentContentRules";
 import { globalVersionUpdate, tournamentVersionUpdate } from "./dataVersionsService";
 
@@ -55,43 +60,8 @@ export type TableState = {
   usePointsCalculation: boolean;
 };
 
-export async function getTableWithHands(params: {
-  tournamentId: string;
-  roundId: number;
-  tableId: number;
-}): Promise<{ table: TableState; hands: TableHand[] }> {
-  const tableDocId = `${params.roundId}_${params.tableId}`;
-  const tableRef = db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
-  const tableSnap = await tableRef.get();
-  if (!tableSnap.exists) throw notFound("Table not found");
-
-  const handsCollection = tableRef.collection("hands");
-  let handsSnap = await handsCollection.get();
-  if (handsSnap.empty) {
-    // Hands are created lazily to keep tournament creation write volume manageable.
-    const batch = db.batch();
-    for (let handId = 1; handId <= 16; handId++) {
-      const handRef = handsCollection.doc(String(handId));
-        batch.set(handRef, {
-          handId,
-          playerWinnerId: "",
-          playerLooserId: "",
-          handScore: "",
-          isChickenHand: false,
-          isDone: false,
-          playerEastPenalty: "",
-          playerSouthPenalty: "",
-          playerWestPenalty: "",
-          playerNorthPenalty: "",
-        createdAt: FieldValue.serverTimestamp(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-    }
-    await batch.commit();
-    handsSnap = await handsCollection.get();
-  }
-
-  const table: TableState = {
+function toTableState(tableSnap: DocumentSnapshot): TableState {
+  return {
     roundId: Number(tableSnap.get("roundId")),
     tableId: Number(tableSnap.get("tableId")),
     playerIds: (tableSnap.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
@@ -120,8 +90,10 @@ export async function getTableWithHands(params: {
     usePointsCalculation: Boolean(tableSnap.get("usePointsCalculation") ?? true),
     version: Number(tableSnap.get("version") ?? 0),
   };
+}
 
-  const hands: TableHand[] = handsSnap.docs
+function toTableHands(docs: DocumentSnapshot[]): TableHand[] {
+  return docs
     .map((d) => ({
       handId: Number(d.get("handId")),
       playerWinnerId: String(d.get("playerWinnerId") ?? ""),
@@ -135,15 +107,75 @@ export async function getTableWithHands(params: {
       playerNorthPenalty: String(d.get("playerNorthPenalty") ?? ""),
     }))
     .sort((a, b) => a.handId - b.handId);
+}
 
-  return { table, hands };
+/** Hands are created lazily to keep tournament creation write volume manageable. Returns the new hands without a second read. */
+async function createDefaultHands(handsCollection: CollectionReference): Promise<TableHand[]> {
+  const batch = db.batch();
+  const hands: TableHand[] = [];
+  for (let handId = 1; handId <= 16; handId++) {
+    const hand: TableHand = {
+      handId,
+      playerWinnerId: "",
+      playerLooserId: "",
+      handScore: "",
+      isChickenHand: false,
+      isDone: false,
+      playerEastPenalty: "",
+      playerSouthPenalty: "",
+      playerWestPenalty: "",
+      playerNorthPenalty: "",
+    };
+    hands.push(hand);
+    batch.set(handsCollection.doc(String(handId)), {
+      ...hand,
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  }
+  await batch.commit();
+  return hands;
+}
+
+async function readHands(tableRef: DocumentReference, handsSnap: QuerySnapshot): Promise<TableHand[]> {
+  return handsSnap.empty
+    ? createDefaultHands(tableRef.collection("hands"))
+    : toTableHands(handsSnap.docs);
+}
+
+export async function getTableWithHands(params: {
+  tournamentId: string;
+  roundId: number;
+  tableId: number;
+}): Promise<{ table: TableState; hands: TableHand[] }> {
+  const tableDocId = `${params.roundId}_${params.tableId}`;
+  const tableRef = db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
+  // The table and its hands are independent reads, so run them together.
+  const [tableSnap, handsSnap] = await Promise.all([tableRef.get(), tableRef.collection("hands").get()]);
+  if (!tableSnap.exists) throw notFound("Table not found");
+  return { table: toTableState(tableSnap), hands: await readHands(tableRef, handsSnap) };
+}
+
+/** Reads every table of a round with its hands in one call, so the client needs one request instead of one per table. */
+export async function getRoundTablesWithHands(params: {
+  tournamentId: string;
+  roundId: number;
+}): Promise<{ table: TableState; hands: TableHand[] }[]> {
+  const tablesSnap = await db.collection("tournaments").doc(params.tournamentId).collection("tables")
+    .where("roundId", "==", params.roundId)
+    .get();
+  const tables = await Promise.all(tablesSnap.docs.map(async (tableSnap) => {
+    const handsSnap = await tableSnap.ref.collection("hands").get();
+    return { table: toTableState(tableSnap), hands: await readHands(tableSnap.ref, handsSnap) };
+  }));
+  return tables.sort((a, b) => a.table.tableId - b.table.tableId);
 }
 
 export function calculateTableSummary(table: Record<string, unknown>, hands: Array<Record<string, unknown>>): {
   hasProgress: boolean;
   hasValidManualTotals: boolean;
   completionStatus: string;
-  bestHandScore: number | null;
+  bestHandScores: number[];
   chickenHandCount: number;
 } {
   const hasTableProgress = [
@@ -182,8 +214,7 @@ export function calculateTableSummary(table: Record<string, unknown>, hands: Arr
         table.playerEastScore, table.playerSouthScore, table.playerWestScore, table.playerNorthScore,
       ]),
     }),
-    bestHandScore: calculateBestHandScore(hands),
-    chickenHandCount: countChickenHands(hands),
+    ...calculateHandSummary(hands),
   };
 }
 
@@ -381,7 +412,7 @@ export async function resetTable(params: {
     hasProgress: false,
     hasValidManualTotals: false,
     completionStatus: "empty",
-    bestHandScore: null,
+    bestHandScores: [],
     chickenHandCount: 0,
     version: FieldValue.increment(1),
     updatedAt: FieldValue.serverTimestamp(),

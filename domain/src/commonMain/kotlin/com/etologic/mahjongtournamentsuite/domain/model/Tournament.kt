@@ -6,6 +6,10 @@ data class Tournament(
     val isTeams: Boolean,
     val numPlayers: Int,
     val numRounds: Int,
+    /** When false, the app does not count or show the best hands. */
+    val countBestHands: Boolean = true,
+    /** When false, the app does not count or show the chicken hands. */
+    val countChickenHands: Boolean = true,
     val shortName: String = "",
     val primaryColor: String = "#02B16B",
     val associationLogoUrl: String? = null,
@@ -33,6 +37,8 @@ data class CreateTournamentRequest(
     val numPlayers: Int,
     val numRounds: Int,
     val numTries: Long,
+    val countBestHands: Boolean = true,
+    val countChickenHands: Boolean = true,
     val players: List<TournamentPlayer>,
     val tables: List<TournamentTable>,
     val shortName: String,
