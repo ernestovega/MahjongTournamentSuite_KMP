@@ -1,10 +1,4 @@
-import {
-  type CollectionReference,
-  type DocumentReference,
-  type DocumentSnapshot,
-  FieldValue,
-  type QuerySnapshot,
-} from "firebase-admin/firestore";
+import { FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { notFound } from "../api/httpError";
@@ -15,7 +9,8 @@ import {
   hasValidTablePoints,
   calculateHandSummary,
 } from "./tournamentContentRules";
-import { globalVersionUpdate, tournamentVersionUpdate } from "./dataVersionsService";
+import { globalVersionUpdate, tableVersionKey, tableVersionUpdate } from "./dataVersionsService";
+import { buildResetChangeEntry, buildSaveChangeEntry, type ChangeActor } from "./changeLog";
 
 export type TableHand = {
   handId: number;
@@ -60,87 +55,74 @@ export type TableState = {
   usePointsCalculation: boolean;
 };
 
-function toTableState(tableSnap: DocumentSnapshot): TableState {
+type Data = Record<string, unknown>;
+
+/** Reads a table from its stored fields. The stored document and a merged document in memory use the same code. */
+export function tableStateFromData(data: Data): TableState {
+  const text = (field: string) => String(data[field] ?? "");
   return {
-    roundId: Number(tableSnap.get("roundId")),
-    tableId: Number(tableSnap.get("tableId")),
-    playerIds: (tableSnap.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
-    playerEastId: String(tableSnap.get("playerEastId") ?? ""),
-    playerSouthId: String(tableSnap.get("playerSouthId") ?? ""),
-    playerWestId: String(tableSnap.get("playerWestId") ?? ""),
-    playerNorthId: String(tableSnap.get("playerNorthId") ?? ""),
-    playerEastScore: String(tableSnap.get("playerEastScore") ?? ""),
-    playerSouthScore: String(tableSnap.get("playerSouthScore") ?? ""),
-    playerWestScore: String(tableSnap.get("playerWestScore") ?? ""),
-    playerNorthScore: String(tableSnap.get("playerNorthScore") ?? ""),
-    playerEastPoints: String(tableSnap.get("playerEastPoints") ?? ""),
-    playerSouthPoints: String(tableSnap.get("playerSouthPoints") ?? ""),
-    playerWestPoints: String(tableSnap.get("playerWestPoints") ?? ""),
-    playerNorthPoints: String(tableSnap.get("playerNorthPoints") ?? ""),
-    manualPlayerEastScore: String(tableSnap.get("manualPlayerEastScore") ?? ""),
-    manualPlayerSouthScore: String(tableSnap.get("manualPlayerSouthScore") ?? ""),
-    manualPlayerWestScore: String(tableSnap.get("manualPlayerWestScore") ?? ""),
-    manualPlayerNorthScore: String(tableSnap.get("manualPlayerNorthScore") ?? ""),
-    manualPlayerEastPoints: String(tableSnap.get("manualPlayerEastPoints") ?? ""),
-    manualPlayerSouthPoints: String(tableSnap.get("manualPlayerSouthPoints") ?? ""),
-    manualPlayerWestPoints: String(tableSnap.get("manualPlayerWestPoints") ?? ""),
-    manualPlayerNorthPoints: String(tableSnap.get("manualPlayerNorthPoints") ?? ""),
-    isCompleted: Boolean(tableSnap.get("isCompleted") ?? false),
-    useTotalsOnly: Boolean(tableSnap.get("useTotalsOnly") ?? true),
-    usePointsCalculation: Boolean(tableSnap.get("usePointsCalculation") ?? true),
-    version: Number(tableSnap.get("version") ?? 0),
+    roundId: Number(data.roundId),
+    tableId: Number(data.tableId),
+    playerIds: (data.playerIds as unknown[] | undefined ?? []).map((x) => Number(x)),
+    playerEastId: text("playerEastId"),
+    playerSouthId: text("playerSouthId"),
+    playerWestId: text("playerWestId"),
+    playerNorthId: text("playerNorthId"),
+    playerEastScore: text("playerEastScore"),
+    playerSouthScore: text("playerSouthScore"),
+    playerWestScore: text("playerWestScore"),
+    playerNorthScore: text("playerNorthScore"),
+    playerEastPoints: text("playerEastPoints"),
+    playerSouthPoints: text("playerSouthPoints"),
+    playerWestPoints: text("playerWestPoints"),
+    playerNorthPoints: text("playerNorthPoints"),
+    manualPlayerEastScore: text("manualPlayerEastScore"),
+    manualPlayerSouthScore: text("manualPlayerSouthScore"),
+    manualPlayerWestScore: text("manualPlayerWestScore"),
+    manualPlayerNorthScore: text("manualPlayerNorthScore"),
+    manualPlayerEastPoints: text("manualPlayerEastPoints"),
+    manualPlayerSouthPoints: text("manualPlayerSouthPoints"),
+    manualPlayerWestPoints: text("manualPlayerWestPoints"),
+    manualPlayerNorthPoints: text("manualPlayerNorthPoints"),
+    isCompleted: Boolean(data.isCompleted ?? false),
+    useTotalsOnly: Boolean(data.useTotalsOnly ?? true),
+    usePointsCalculation: Boolean(data.usePointsCalculation ?? true),
+    version: Number(data.version ?? 0),
   };
 }
 
-function toTableHands(docs: DocumentSnapshot[]): TableHand[] {
-  return docs
+export function handsFromData(list: Data[]): TableHand[] {
+  return list
     .map((d) => ({
-      handId: Number(d.get("handId")),
-      playerWinnerId: String(d.get("playerWinnerId") ?? ""),
-      playerLooserId: String(d.get("playerLooserId") ?? ""),
-      handScore: String(d.get("handScore") ?? ""),
-      isChickenHand: Boolean(d.get("isChickenHand") ?? false),
-      isDone: Boolean(d.get("isDone") ?? false),
-      playerEastPenalty: String(d.get("playerEastPenalty") ?? ""),
-      playerSouthPenalty: String(d.get("playerSouthPenalty") ?? ""),
-      playerWestPenalty: String(d.get("playerWestPenalty") ?? ""),
-      playerNorthPenalty: String(d.get("playerNorthPenalty") ?? ""),
+      handId: Number(d.handId),
+      playerWinnerId: String(d.playerWinnerId ?? ""),
+      playerLooserId: String(d.playerLooserId ?? ""),
+      handScore: String(d.handScore ?? ""),
+      isChickenHand: Boolean(d.isChickenHand ?? false),
+      isDone: Boolean(d.isDone ?? false),
+      playerEastPenalty: String(d.playerEastPenalty ?? ""),
+      playerSouthPenalty: String(d.playerSouthPenalty ?? ""),
+      playerWestPenalty: String(d.playerWestPenalty ?? ""),
+      playerNorthPenalty: String(d.playerNorthPenalty ?? ""),
     }))
     .sort((a, b) => a.handId - b.handId);
 }
 
-/** Hands are created lazily to keep tournament creation write volume manageable. Returns the new hands without a second read. */
-async function createDefaultHands(handsCollection: CollectionReference): Promise<TableHand[]> {
-  const batch = db.batch();
-  const hands: TableHand[] = [];
-  for (let handId = 1; handId <= 16; handId++) {
-    const hand: TableHand = {
-      handId,
-      playerWinnerId: "",
-      playerLooserId: "",
-      handScore: "",
-      isChickenHand: false,
-      isDone: false,
-      playerEastPenalty: "",
-      playerSouthPenalty: "",
-      playerWestPenalty: "",
-      playerNorthPenalty: "",
-    };
-    hands.push(hand);
-    batch.set(handsCollection.doc(String(handId)), {
-      ...hand,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-  }
-  await batch.commit();
-  return hands;
-}
+export const HANDS_PER_TABLE = 16;
 
-async function readHands(tableRef: DocumentReference, handsSnap: QuerySnapshot): Promise<TableHand[]> {
-  return handsSnap.empty
-    ? createDefaultHands(tableRef.collection("hands"))
-    : toTableHands(handsSnap.docs);
+export function defaultHand(handId: number): TableHand {
+  return {
+    handId,
+    playerWinnerId: "",
+    playerLooserId: "",
+    handScore: "",
+    isChickenHand: false,
+    isDone: false,
+    playerEastPenalty: "",
+    playerSouthPenalty: "",
+    playerWestPenalty: "",
+    playerNorthPenalty: "",
+  };
 }
 
 export async function getTableWithHands(params: {
@@ -153,7 +135,10 @@ export async function getTableWithHands(params: {
   // The table and its hands are independent reads, so run them together.
   const [tableSnap, handsSnap] = await Promise.all([tableRef.get(), tableRef.collection("hands").get()]);
   if (!tableSnap.exists) throw notFound("Table not found");
-  return { table: toTableState(tableSnap), hands: await readHands(tableRef, handsSnap) };
+  return {
+    table: tableStateFromData(tableSnap.data() ?? {}),
+    hands: handsFromData(handsSnap.docs.map((doc) => doc.data())),
+  };
 }
 
 /** Reads every table of a round with its hands in one call, so the client needs one request instead of one per table. */
@@ -164,11 +149,28 @@ export async function getRoundTablesWithHands(params: {
   const tablesSnap = await db.collection("tournaments").doc(params.tournamentId).collection("tables")
     .where("roundId", "==", params.roundId)
     .get();
-  const tables = await Promise.all(tablesSnap.docs.map(async (tableSnap) => {
+  return readTablesWithHands(tablesSnap.docs);
+}
+
+/** Reads every table of the tournament with its hands in one call. The ranking needs all of them. */
+export async function getAllTablesWithHands(params: {
+  tournamentId: string;
+}): Promise<{ table: TableState; hands: TableHand[] }[]> {
+  const tablesSnap = await db.collection("tournaments").doc(params.tournamentId).collection("tables").get();
+  return readTablesWithHands(tablesSnap.docs);
+}
+
+async function readTablesWithHands(
+  tableDocs: FirebaseFirestore.QueryDocumentSnapshot[],
+): Promise<{ table: TableState; hands: TableHand[] }[]> {
+  const tables = await Promise.all(tableDocs.map(async (tableSnap) => {
     const handsSnap = await tableSnap.ref.collection("hands").get();
-    return { table: toTableState(tableSnap), hands: await readHands(tableSnap.ref, handsSnap) };
+    return {
+      table: tableStateFromData(tableSnap.data()),
+      hands: handsFromData(handsSnap.docs.map((doc) => doc.data())),
+    };
   }));
-  return tables.sort((a, b) => a.table.tableId - b.table.tableId);
+  return tables.sort((a, b) => a.table.roundId - b.table.roundId || a.table.tableId - b.table.tableId);
 }
 
 export function calculateTableSummary(table: Record<string, unknown>, hands: Array<Record<string, unknown>>): {
@@ -231,6 +233,10 @@ export function isTournamentCompleteAfterTableSave(params: {
   return params.incompleteTablePaths.every((path) => path === params.currentTablePath);
 }
 
+function handRefsOf(tableRef: FirebaseFirestore.DocumentReference): FirebaseFirestore.DocumentReference[] {
+  return Array.from({ length: HANDS_PER_TABLE }, (_, index) => tableRef.collection("hands").doc(String(index + 1)));
+}
+
 class StaleTableVersion extends Error {
   constructor(
     readonly expectedVersion: number,
@@ -240,66 +246,115 @@ class StaleTableVersion extends Error {
   }
 }
 
+/** A table counts as started when it has any data. The tournament keeps the number of started tables. */
+function progressDelta(before: boolean, after: boolean): number {
+  return Number(after) - Number(before);
+}
+
 export async function saveTableState(params: {
   tournamentId: string;
   roundId: number;
   tableId: number;
-  expectedVersion: number | null;
+  expectedVersion: number;
   tablePatch: Partial<Omit<TableState, "roundId" | "tableId" | "playerIds" | "version">>;
   handPatches: Array<{ handId: number; patch: Partial<Omit<TableHand, "handId">> }>;
+  actor?: ChangeActor | null;
 }): Promise<{ table: TableState; hands: TableHand[] }> {
   const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
-  const tableRef = tournamentRef.collection("tables").doc(`${params.roundId}_${params.tableId}`);
-  const handRefs = params.handPatches.map((item) => tableRef.collection("hands").doc(String(item.handId)));
+  const tableRef = tournamentRef.collection("tables").doc(tableVersionKey(params.roundId, params.tableId));
 
   try {
-    await db.runTransaction(async (transaction) => {
-    const tableSnapshot = await transaction.get(tableRef);
-    if (!tableSnapshot.exists) throw notFound("Table not found");
-    const currentVersion = Number(tableSnapshot.get("version") ?? 0);
-    if (params.expectedVersion != null && params.expectedVersion !== currentVersion) {
-      throw new StaleTableVersion(params.expectedVersion, currentVersion);
-    }
-    const currentHands = new Map<string, Record<string, unknown>>();
-    const allHandsSnapshot = await transaction.get(tableRef.collection("hands"));
-    const incompleteTables = await transaction.get(
-      tournamentRef.collection("tables").where("isCompleted", "==", false),
-    );
-    allHandsSnapshot.docs.forEach((snapshot) => currentHands.set(snapshot.id, snapshot.data()));
-    if (params.handPatches.some((item) => !currentHands.has(String(item.handId)))) {
-      throw notFound("Hand not found");
-    }
+    return await db.runTransaction(async (transaction) => {
+      const tableSnapshot = await transaction.get(tableRef);
+      if (!tableSnapshot.exists) throw notFound("Table not found");
+      const currentVersion = Number(tableSnapshot.get("version") ?? 0);
+      if (params.expectedVersion !== currentVersion) {
+        throw new StaleTableVersion(params.expectedVersion, currentVersion);
+      }
+      // The hands are read by document, not by query. A query locks a whole range, and then editors of
+      // different tables would wait for each other.
+      const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
+      if (handSnapshots.some((snapshot) => !snapshot.exists)) throw notFound("Hands not found");
+      const handsBefore = new Map<string, Data>(
+        handSnapshots.map((snapshot) => [snapshot.id, snapshot.data() ?? {}] as [string, Data]),
+      );
+      if (params.handPatches.some((item) => !handsBefore.has(String(item.handId)))) {
+        throw notFound("Hand not found");
+      }
 
-    const mergedTable = { ...(tableSnapshot.data() ?? {}), ...params.tablePatch };
-    params.handPatches.forEach((item) => {
-      const key = String(item.handId);
-      currentHands.set(key, { ...(currentHands.get(key) ?? {}), ...item.patch, handId: item.handId });
-    });
-    const summary = calculateTableSummary(mergedTable, [...currentHands.values()]);
-    const currentTableIsComplete = Boolean(mergedTable.isCompleted);
-    const tournamentIsComplete = isTournamentCompleteAfterTableSave({
-      currentTablePath: tableRef.path,
-      currentTableIsComplete,
-      incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
-    });
-    transaction.update(tableRef, {
-      ...params.tablePatch,
-      ...summary,
-      version: currentVersion + 1,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-    params.handPatches.forEach((item, index) => {
-      transaction.update(handRefs[index], {
-        ...item.patch,
+      const tableBefore = tableSnapshot.data() ?? {};
+      const mergedTable: Data = { ...tableBefore, ...params.tablePatch };
+      const handsAfter = new Map(handsBefore);
+      params.handPatches.forEach((item) => {
+        const key = String(item.handId);
+        handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
+      });
+      const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
+      const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
+      const wasComplete = Boolean(tableBefore.isCompleted);
+      const isComplete = Boolean(mergedTable.isCompleted);
+
+      // Only a table that becomes complete can finish the tournament. Other saves skip this query,
+      // so editors of different tables do not lock each other.
+      let tournamentIsComplete = false;
+      if (isComplete) {
+        const incompleteTables = await transaction.get(
+          tournamentRef.collection("tables").where("isCompleted", "==", false).limit(2),
+        );
+        tournamentIsComplete = isTournamentCompleteAfterTableSave({
+          currentTablePath: tableRef.path,
+          currentTableIsComplete: true,
+          incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
+        });
+      }
+
+      const nextVersion = currentVersion + 1;
+      const editedBy = params.actor == null
+        ? {}
+        : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: FieldValue.serverTimestamp() };
+      transaction.update(tableRef, {
+        ...params.tablePatch,
+        ...summary,
+        ...editedBy,
+        version: nextVersion,
         updatedAt: FieldValue.serverTimestamp(),
       });
-    });
-    transaction.update(tournamentRef, {
-      isCompleted: tournamentIsComplete,
-      updatedAt: FieldValue.serverTimestamp(),
-      ...tournamentVersionUpdate("tables"),
-    });
-    transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
+      params.handPatches.forEach((item) => {
+        transaction.update(tableRef.collection("hands").doc(String(item.handId)), {
+          ...item.patch,
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      });
+      const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
+      transaction.update(tournamentRef, {
+        isCompleted: tournamentIsComplete,
+        updatedAt: FieldValue.serverTimestamp(),
+        ...(startedChange === 0 ? {} : { tablesWithProgress: FieldValue.increment(startedChange) }),
+        ...tableVersionUpdate(params.roundId, params.tableId, nextVersion),
+      });
+      // The tournament list shows only whether the tournament is complete. That can change only when a table changes.
+      if (wasComplete !== isComplete) {
+        transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
+      }
+      transaction.set(tournamentRef.collection("changes").doc(), {
+        ...buildSaveChangeEntry({
+          roundId: params.roundId,
+          tableId: params.tableId,
+          version: nextVersion,
+          actor: params.actor ?? null,
+          tableBefore,
+          tablePatch: params.tablePatch,
+          handsBefore,
+          handPatches: params.handPatches,
+        }),
+        at: FieldValue.serverTimestamp(),
+      });
+
+      // The answer comes from the data that the transaction wrote, so the client needs no second read.
+      return {
+        table: tableStateFromData({ ...mergedTable, ...summary, version: nextVersion }),
+        hands: handsFromData([...handsAfter.values()]),
+      };
     });
   } catch (error) {
     if (error instanceof StaleTableVersion) {
@@ -311,131 +366,86 @@ export async function saveTableState(params: {
     }
     throw error;
   }
-
-  return getTableWithHands(params);
 }
 
-export async function updateTable(params: {
-  tournamentId: string;
-  roundId: number;
-  tableId: number;
-  patch: Partial<Pick<TableState,
-    | "playerEastId"
-    | "playerSouthId"
-    | "playerWestId"
-    | "playerNorthId"
-    | "playerEastScore"
-    | "playerSouthScore"
-    | "playerWestScore"
-    | "playerNorthScore"
-    | "playerEastPoints"
-    | "playerSouthPoints"
-    | "playerWestPoints"
-    | "playerNorthPoints"
-    | "manualPlayerEastScore"
-    | "manualPlayerSouthScore"
-    | "manualPlayerWestScore"
-    | "manualPlayerNorthScore"
-    | "manualPlayerEastPoints"
-    | "manualPlayerSouthPoints"
-    | "manualPlayerWestPoints"
-    | "manualPlayerNorthPoints"
-    | "isCompleted"
-    | "useTotalsOnly"
-    | "usePointsCalculation"
-  >>;
-}): Promise<void> {
-  await saveTableState({
-    ...params,
-    expectedVersion: null,
-    tablePatch: params.patch,
-    handPatches: [],
-  });
-}
-
-export async function updateHand(params: {
-  tournamentId: string;
-  roundId: number;
-  tableId: number;
-  handId: number;
-  patch: Partial<Omit<TableHand, "handId">>;
-}): Promise<void> {
-  await saveTableState({
-    tournamentId: params.tournamentId,
-    roundId: params.roundId,
-    tableId: params.tableId,
-    expectedVersion: null,
-    tablePatch: {},
-    handPatches: [{ handId: params.handId, patch: params.patch }],
-  });
-}
+const EMPTY_TABLE_FIELDS = {
+  playerEastId: "",
+  playerSouthId: "",
+  playerWestId: "",
+  playerNorthId: "",
+  playerEastScore: "",
+  playerSouthScore: "",
+  playerWestScore: "",
+  playerNorthScore: "",
+  playerEastPoints: "",
+  playerSouthPoints: "",
+  playerWestPoints: "",
+  playerNorthPoints: "",
+  manualPlayerEastScore: "",
+  manualPlayerSouthScore: "",
+  manualPlayerWestScore: "",
+  manualPlayerNorthScore: "",
+  manualPlayerEastPoints: "",
+  manualPlayerSouthPoints: "",
+  manualPlayerWestPoints: "",
+  manualPlayerNorthPoints: "",
+  isCompleted: false,
+  useTotalsOnly: true,
+  usePointsCalculation: true,
+  hasProgress: false,
+  hasValidManualTotals: false,
+  completionStatus: "empty",
+  bestHandScores: [] as number[],
+  chickenHandCount: 0,
+};
 
 export async function resetTable(params: {
   tournamentId: string;
   roundId: number;
   tableId: number;
+  actor?: ChangeActor | null;
 }): Promise<void> {
   const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
-  const tableDocId = `${params.roundId}_${params.tableId}`;
-  const tableRef = tournamentRef.collection("tables").doc(tableDocId);
-  const [tableSnap, handsSnap] = await Promise.all([
-    tableRef.get(),
-    tableRef.collection("hands").get(),
-  ]);
-  if (!tableSnap.exists) throw notFound("Table not found");
+  const tableRef = tournamentRef.collection("tables").doc(tableVersionKey(params.roundId, params.tableId));
+  // A transaction makes the reset atomic with saves. A save based on the old version fails after it.
+  await db.runTransaction(async (transaction) => {
+    const tableSnap = await transaction.get(tableRef);
+    if (!tableSnap.exists) throw notFound("Table not found");
+    const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
+    if (handSnapshots.some((snapshot) => !snapshot.exists)) throw notFound("Hands not found");
+    const tableBefore = tableSnap.data() ?? {};
+    const nextVersion = Number(tableBefore.version ?? 0) + 1;
+    const previous = calculateTableSummary(tableBefore, handSnapshots.map((hand) => hand.data() ?? {}));
 
-  const batch = db.batch();
-  batch.update(tableRef, {
-    playerEastId: "",
-    playerSouthId: "",
-    playerWestId: "",
-    playerNorthId: "",
-    playerEastScore: "",
-    playerSouthScore: "",
-    playerWestScore: "",
-    playerNorthScore: "",
-    playerEastPoints: "",
-    playerSouthPoints: "",
-    playerWestPoints: "",
-    playerNorthPoints: "",
-    manualPlayerEastScore: "",
-    manualPlayerSouthScore: "",
-    manualPlayerWestScore: "",
-    manualPlayerNorthScore: "",
-    manualPlayerEastPoints: "",
-    manualPlayerSouthPoints: "",
-    manualPlayerWestPoints: "",
-    manualPlayerNorthPoints: "",
-    isCompleted: false,
-    useTotalsOnly: true,
-    usePointsCalculation: true,
-    hasProgress: false,
-    hasValidManualTotals: false,
-    completionStatus: "empty",
-    bestHandScores: [],
-    chickenHandCount: 0,
-    version: FieldValue.increment(1),
-    updatedAt: FieldValue.serverTimestamp(),
-  });
-  handsSnap.docs.forEach((hand) => {
-    batch.update(hand.ref, {
-      playerWinnerId: "",
-      playerLooserId: "",
-      handScore: "",
-      isChickenHand: false,
-      isDone: false,
-      playerEastPenalty: "",
-      playerSouthPenalty: "",
-      playerWestPenalty: "",
-      playerNorthPenalty: "",
+    transaction.update(tableRef, {
+      ...EMPTY_TABLE_FIELDS,
+      version: nextVersion,
       updatedAt: FieldValue.serverTimestamp(),
     });
+    handSnapshots.forEach((hand) => {
+      transaction.update(hand.ref, {
+        ...defaultHand(Number(hand.get("handId") ?? hand.id)),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    });
+    const startedChange = progressDelta(previous.hasProgress, false);
+    transaction.update(tournamentRef, {
+      isCompleted: false,
+      updatedAt: FieldValue.serverTimestamp(),
+      ...(startedChange === 0 ? {} : { tablesWithProgress: FieldValue.increment(startedChange) }),
+      ...tableVersionUpdate(params.roundId, params.tableId, nextVersion),
+    });
+    if (Boolean(tableBefore.isCompleted)) {
+      transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
+    }
+    transaction.set(tournamentRef.collection("changes").doc(), {
+      ...buildResetChangeEntry({
+        roundId: params.roundId,
+        tableId: params.tableId,
+        version: nextVersion,
+        actor: params.actor ?? null,
+      }),
+      at: FieldValue.serverTimestamp(),
+    });
   });
-  batch.update(tournamentRef, {
-    isCompleted: false,
-    updatedAt: FieldValue.serverTimestamp(),
-    ...tournamentVersionUpdate("tables"),
-  });
-  batch.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
-  await batch.commit();
 }

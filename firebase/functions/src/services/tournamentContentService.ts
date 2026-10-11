@@ -9,7 +9,12 @@ import {
   hasValidTablePoints,
   calculateHandSummary,
 } from "./tournamentContentRules";
-import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
+import {
+  bumpGlobalDataVersion,
+  bumpTournamentDataVersion,
+  globalVersionUpdate,
+  tournamentVersionUpdate,
+} from "./dataVersionsService";
 
 export type TournamentPlayer = {
   id: number;
@@ -128,6 +133,11 @@ export async function listTournamentTeams(tournamentId: string): Promise<Tournam
     .sort((a, b) => a.id - b.id);
 }
 
+/** Tables with data are counted on the tournament document by every save and reset. */
+export function tournamentHasStartedTables(tournament: { get(field: string): unknown }): boolean {
+  return Number(tournament.get("tablesWithProgress") ?? 0) > 0;
+}
+
 /**
  * Updates one team and its fixed schedule slots.
  * Players selected from other teams exchange slots with displaced players.
@@ -142,9 +152,6 @@ export async function updateTournamentTeam(params: {
   const players = tournament.collection("players");
   const teams = tournament.collection("teams");
   const assignmentRefs = tournament.collection("emaPlayerAssignments");
-  const tableSummaries = await listTournamentTables(params.tournamentId, null);
-  const tournamentHasProgress = tableSummaries.some((table) => table.hasProgress);
-
   await db.runTransaction(async (transaction) => {
     const [tournamentSnapshot, playerSnapshot, teamSnapshot, currentTeam] = await Promise.all([
       transaction.get(tournament),
@@ -206,7 +213,7 @@ export async function updateTournamentTeam(params: {
     const membershipChanged = playerDocs.some((player) => {
       return (currentByRef.get(player.ref.path) ?? null) !== (finalByRef.get(player.ref.path) ?? null);
     });
-    if (membershipChanged && tournamentHasProgress) {
+    if (membershipChanged && tournamentHasStartedTables(tournamentSnapshot)) {
       throw conflict("Team players cannot change after table results have started");
     }
 
@@ -258,6 +265,9 @@ export async function updateTournamentTeam(params: {
       ...(currentTeam.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
       updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
+    // The versions change in the same commit as the data. If the server stops after the commit, caches still see it.
+    transaction.update(tournament, { ...tournamentVersionUpdate("teams"), ...tournamentVersionUpdate("players") });
+    transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
   });
   await refreshAssignmentCountries(params.tournamentId);
   await Promise.all([
@@ -278,10 +288,10 @@ export async function assignTournamentPlayer(params: {
   const players = playerRef.parent;
   const assignmentRefs = db.collection("tournaments").doc(params.tournamentId)
     .collection("emaPlayerAssignments");
-  const tableSummaries = await listTournamentTables(params.tournamentId, null);
-  const tournamentHasProgress = tableSummaries.some((table) => table.hasProgress);
-
+  const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
   await db.runTransaction(async (transaction) => {
+    const tournament = await transaction.get(tournamentRef);
+    const tournamentHasProgress = tournamentHasStartedTables(tournament);
     const player = await transaction.get(playerRef);
     if (!player.exists) {
       throw new Error("Player not found");
@@ -335,6 +345,8 @@ export async function assignTournamentPlayer(params: {
       assignedCountry,
       updatedAt: FieldValue.serverTimestamp(),
     });
+    transaction.update(tournamentRef, tournamentVersionUpdate("players"));
+    transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
   });
   await refreshAssignmentCountries(params.tournamentId);
   await Promise.all([

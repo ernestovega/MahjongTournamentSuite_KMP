@@ -6,11 +6,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.jsonResponse
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
-import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.request.HttpRequestData
@@ -99,32 +95,6 @@ class DefaultPlayerRepositoryTest {
     )
 }
 
-private class FakeAuthRepository : AuthRepository {
-    override suspend fun currentSession(): AuthSession = AuthSession(
-        uid = "user-1",
-        idToken = "id-token",
-        refreshToken = "refresh-token",
-    )
-
-    override suspend fun signIn(email: String, password: String): AppResult<AuthSession> =
-        error("Not used in this test")
-
-    override suspend fun requestPasswordReset(email: String): AppResult<Unit> =
-        error("Not used in this test")
-
-    override suspend fun savedCredentials(): SavedCredentials? = null
-
-    override suspend fun clearSavedCredentials() = Unit
-
-    override suspend fun refreshSession(): AppResult<AuthSession> =
-        error("Not used in this test")
-
-    override suspend fun signOut() = Unit
-
-    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> =
-        error("Not used in this test")
-}
-
 private class RecordingRepositoryCache : RepositoryCache {
     val stalePrefixes = mutableListOf<String>()
 
@@ -135,6 +105,12 @@ private class RecordingRepositoryCache : RepositoryCache {
         revision: suspend () -> Long,
         load: suspend () -> T,
     ): T = load()
+
+    override suspend fun <T : Any> shared(
+        key: String,
+        maxAge: kotlin.time.Duration,
+        fetch: suspend () -> T,
+    ): T = fetch()
 
     override suspend fun markStale(vararg keyPrefixes: String) {
         stalePrefixes += keyPrefixes

@@ -33,3 +33,4 @@ firebase/functions/.firebase-reset-backups/
 firebase/functions/migration-audits/
 .firebase/
 firebase-debug.log
+firestore-debug.log

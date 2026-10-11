@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.data.backend
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
@@ -15,7 +14,6 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
@@ -386,28 +384,12 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    suspend fun patchTable(
+    /** Every table of every round with its hands, in one request. */
+    suspend fun getAllTablesWithHands(
         idToken: String,
         tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        patch: TablePatchRequestDto,
-    ): OkResponseDto = put(
-        path = "/tournaments/$tournamentId/tables/$roundId/$tableId",
-        requestBody = patch,
-        idToken = idToken,
-    )
-
-    suspend fun patchHand(
-        idToken: String,
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        handId: Int,
-        patch: HandPatchRequestDto,
-    ): OkResponseDto = put(
-        path = "/tournaments/$tournamentId/tables/$roundId/$tableId/hands/$handId",
-        requestBody = patch,
+    ): RoundTablesWithHandsResponseDto = get(
+        path = "/tournaments/$tournamentId/tables-with-hands",
         idToken = idToken,
     )
 

@@ -74,7 +74,10 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresent
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapshot
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
+import com.etologic.mahjongtournamentsuite.presentation.util.dataStatusLabel
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import kotlin.time.Clock
+import kotlin.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -105,6 +108,7 @@ private fun RankingStandaloneContent(
     val scope = rememberCoroutineScope()
     var snapshot by remember { mutableStateOf<RankingSnapshot?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
+    var loadedAt by remember { mutableStateOf<Instant?>(null) }
     var loading by remember { mutableStateOf(false) }
     var rowsPerScroll by remember { mutableIntStateOf(DEFAULT_ROWS_PER_SCROLL) }
     var intervalSeconds by remember { mutableIntStateOf(DEFAULT_INTERVAL_SECONDS) }
@@ -121,6 +125,7 @@ private fun RankingStandaloneContent(
         when (val result = presenter.load(tournamentId, force)) {
             is AppResult.Success -> {
                 snapshot = result.value
+                loadedAt = Clock.System.now()
                 pageIndex = 0
                 remainingSeconds = intervalSeconds
             }
@@ -199,6 +204,15 @@ private fun RankingStandaloneContent(
                         modifier = Modifier.weight(1f),
                     )
                 }
+            }
+            snapshot?.let { held ->
+                // Which data this screen shows. The screen stays still, so it also says when it loaded.
+                Text(
+                    text = dataStatusLabel(held.dataRevision, loadedAt, verb = "loaded"),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                )
             }
             if (playing) {
                 Text(

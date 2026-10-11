@@ -7,7 +7,6 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRan
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertIs
 import kotlinx.coroutines.test.runTest
 
 class PresenterDelegationTest {
@@ -198,8 +197,9 @@ private class RecordingTournamentRepository(
         refreshMode: RefreshMode,
     ) = unusedResult<List<Pair<TableState, List<TableHand>>>>()
 
-    override suspend fun patchTable(tournamentId: String, roundId: Int, tableId: Int, patch: Map<String, Any?>) = unusedResult<Unit>()
-    override suspend fun patchHand(tournamentId: String, roundId: Int, tableId: Int, handId: Int, patch: Map<String, Any?>) = unusedResult<Unit>()
+    override suspend fun getAllTablesWithHands(tournamentId: String, refreshMode: RefreshMode) =
+        unusedResult<List<Pair<TableState, List<TableHand>>>>()
+
 
     override suspend fun saveTableState(
         tournamentId: String,
@@ -211,6 +211,8 @@ private class RecordingTournamentRepository(
     ) = unusedResult<Pair<TableState, List<TableHand>>>()
 
     override suspend fun resetTable(tournamentId: String, roundId: Int, tableId: Int) = unusedResult<Unit>()
+
+    override suspend fun getTournamentManifest(tournamentId: String) = unusedResult<TournamentManifest>()
 }
 
 private class RecordingPlayerRepository : PlayerRepository {

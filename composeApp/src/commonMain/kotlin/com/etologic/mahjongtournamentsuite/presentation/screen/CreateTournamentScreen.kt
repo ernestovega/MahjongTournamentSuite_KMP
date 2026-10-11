@@ -786,38 +786,6 @@ private fun formatWithDots(value: Long): String {
     return reversed.reversed()
 }
 
-private fun formatAvgPerTry(
-    tried: Long,
-    startMark: TimeMark?,
-): String? {
-    if (startMark == null) return null
-    if (tried <= 0) return null
-
-    val elapsedNs = startMark.elapsedNow().inWholeNanoseconds
-    if (elapsedNs <= 0) return null
-
-    val nsPerTry = elapsedNs.toDouble() / tried.toDouble()
-
-    return when {
-        nsPerTry >= 1_000_000_000.0 -> {
-            val s = nsPerTry / 1_000_000_000.0
-            "(${formatDecimal(s, 2)} s/try)"
-        }
-
-        nsPerTry >= 1_000_000.0 -> {
-            val ms = nsPerTry / 1_000_000.0
-            "(${formatDecimal(ms, if (ms >= 10) 1 else 2)} ms/try)"
-        }
-
-        nsPerTry >= 1_000.0 -> {
-            val us = nsPerTry / 1_000.0
-            "(${formatDecimal(us, if (us >= 10) 1 else 2)} µs/try)"
-        }
-
-        else -> "(${formatDecimal(nsPerTry, 0)} ns/try)"
-    }
-}
-
 private fun formatDecimal(value: Double, decimals: Int): String {
     val safeDecimals = decimals.coerceIn(0, 6)
     val factor = (0 until safeDecimals).fold(1.0) { acc, _ -> acc * 10.0 }

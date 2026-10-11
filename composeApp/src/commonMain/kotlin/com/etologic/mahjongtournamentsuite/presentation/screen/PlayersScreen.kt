@@ -21,7 +21,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -89,7 +88,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import kotlin.time.Clock
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
@@ -215,8 +216,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 val tournament = tournaments.firstOrNull { it.id == tournamentId }
                 val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
                 val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
-                val safeName = baseName.replace(Regex("[^A-Za-z0-9_-]+"), "-").trim('-').ifBlank { "tournament" }
-                val fileName = listOfNotNull(safeName, year, "id-cards").joinToString("-") + ".pdf"
+                val fileName = generatedFileName(baseName, "id-cards", "pdf", Clock.System.now(), year = year)
                 saveBinaryFile(fileName, result.value, "application/pdf")
             }
             is AppResult.Failure -> error = result.error.toUiMessage()
@@ -238,8 +238,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 val tournament = tournaments.firstOrNull { it.id == tournamentId }
                 val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
                 val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
-                val safeName = baseName.replace(Regex("[^A-Za-z0-9_-]+"), "-").trim('-').ifBlank { "tournament" }
-                val fileName = listOfNotNull(safeName, year, "id-list").joinToString("-") + ".xlsx"
+                val fileName = generatedFileName(baseName, "id-list", "xlsx", Clock.System.now(), year = year)
                 saveBinaryFile(
                     fileName,
                     result.value,

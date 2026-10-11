@@ -11,4 +11,8 @@ data class DataVersionDto(
 @Serializable
 data class DataVersionsManifestDto(
     val resources: Map<String, DataVersionDto> = emptyMap(),
+    /** Revisions shared by all tournaments. Only the tournament manifest has them. */
+    val globalResources: Map<String, DataVersionDto> = emptyMap(),
+    /** Exact version of each saved table. The key is `<roundId>_<tableId>`. Only tournaments have it. */
+    val tableVersions: Map<String, Long> = emptyMap(),
 )

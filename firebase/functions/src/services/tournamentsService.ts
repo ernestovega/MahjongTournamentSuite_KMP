@@ -6,6 +6,7 @@ import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
 import { getUserProfile } from "./usersService";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
+import { defaultHand, HANDS_PER_TABLE } from "./tableManagerService";
 import {
   normalizeAgendaItems,
   normalizeRoundSchedules,
@@ -113,6 +114,9 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
   };
 }
 
+/** Firestore allows 500 writes in a batch. Keep a margin. */
+const MAX_WRITES_PER_BATCH = 450;
+
 export async function createTournament(params: {
   name: string;
   shortName: string;
@@ -179,6 +183,8 @@ export async function createTournament(params: {
     agendaItems,
     numTries: params.numTries,
     isCompleted: false,
+    // The number of tables with data. Saves keep it current. Imported tables can arrive completed.
+    tablesWithProgress: params.tables.filter((table) => Boolean(table.isCompleted ?? false)).length,
     createdByUid: params.createdByUid,
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),
@@ -191,28 +197,12 @@ export async function createTournament(params: {
     },
   };
 
-  await ref.set(tournamentDoc);
-
-  // Persist the client-generated schedule payload (players/rounds/tables).
-  // Hands are created lazily when a table is first opened to keep write volume manageable.
-  const batchCommits: Array<Promise<FirebaseFirestore.WriteResult[]>> = [];
-  let batch = db.batch();
-  let opsInBatch = 0;
-
-  const flushBatch = async () => {
-    if (opsInBatch === 0) return;
-    batchCommits.push(batch.commit());
-    batch = db.batch();
-    opsInBatch = 0;
-  };
-
+  // The children are written first and the tournament document last. A tournament that is missing its
+  // document is invisible, so a failure in the middle never shows a half-built tournament.
+  // If anything fails, everything written so far is deleted.
+  const writes: Array<{ ref: FirebaseFirestore.DocumentReference; data: Record<string, unknown> }> = [];
   const addSet = (docRef: FirebaseFirestore.DocumentReference, data: Record<string, unknown>) => {
-    batch.set(docRef, data);
-    opsInBatch++;
-    if (opsInBatch >= 450) {
-      // Keep a margin under 500 for safety if we add more writes later.
-      return flushBatch();
-    }
+    writes.push({ ref: docRef, data });
     return Promise.resolve();
   };
 
@@ -294,10 +284,36 @@ export async function createTournament(params: {
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     });
+    for (let handId = 1; handId <= HANDS_PER_TABLE; handId++) {
+      // eslint-disable-next-line no-await-in-loop
+      await addSet(tableRef.collection("hands").doc(String(handId)), {
+        ...defaultHand(handId),
+        createdAt: FieldValue.serverTimestamp(),
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    }
   }
 
-  await flushBatch();
-  await Promise.all(batchCommits);
+  try {
+    const chunks: typeof writes[] = [];
+    for (let index = 0; index < writes.length; index += MAX_WRITES_PER_BATCH) {
+      chunks.push(writes.slice(index, index + MAX_WRITES_PER_BATCH));
+    }
+    const results = await Promise.allSettled(chunks.map((chunk) => {
+      const batch = db.batch();
+      chunk.forEach(({ ref: docRef, data }) => batch.set(docRef, data));
+      return batch.commit();
+    }));
+    const failed = results.find((result): result is PromiseRejectedResult => result.status === "rejected");
+    if (failed) throw failed.reason;
+    await ref.set(tournamentDoc);
+  } catch (error) {
+    await Promise.allSettled([
+      db.recursiveDelete(ref),
+      logo?.path ? storage.file(logo.path).delete({ ignoreNotFound: true }) : Promise.resolve(),
+    ]);
+    throw error;
+  }
 
   const snap = await ref.get();
   await bumpGlobalDataVersion("tournaments");

@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 
@@ -39,6 +40,12 @@ class TableManagerPresenter(
         )
     }
 
+    /** One cheap request that tells which tables changed on the server. It does not use the cache. */
+    suspend fun loadManifest(tournamentId: String): AppResult<TournamentManifest> {
+        logger.d { "Checking the tournament for changes." }
+        return tournamentRepository.getTournamentManifest(tournamentId)
+    }
+
     suspend fun saveTableState(
         tournamentId: String,
         roundId: Int,
@@ -55,38 +62,6 @@ class TableManagerPresenter(
             expectedVersion = expectedVersion,
             tablePatch = tablePatch,
             handPatches = handPatches,
-        )
-    }
-
-    suspend fun patchTable(
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        patch: Map<String, Any?>,
-    ): AppResult<Unit> {
-        logger.i { "Patching table." }
-        return tournamentRepository.patchTable(
-            tournamentId = tournamentId,
-            roundId = roundId,
-            tableId = tableId,
-            patch = patch,
-        )
-    }
-
-    suspend fun patchHand(
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        handId: Int,
-        patch: Map<String, Any?>,
-    ): AppResult<Unit> {
-        logger.i { "Patching hand." }
-        return tournamentRepository.patchHand(
-            tournamentId = tournamentId,
-            roundId = roundId,
-            tableId = tableId,
-            handId = handId,
-            patch = patch,
         )
     }
 

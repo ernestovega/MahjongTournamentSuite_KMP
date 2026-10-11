@@ -13,9 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
-import kotlinx.coroutines.coroutineScope
+import com.etologic.mahjongtournamentsuite.presentation.util.tournamentDataRevision
 
 data class RankingSnapshot(
     val tournament: Tournament,
@@ -25,7 +23,10 @@ data class RankingSnapshot(
     val tournamentTeams: List<TournamentTeam>,
     val isTeams: Boolean,
     val rankingTables: List<RankingTable>,
-)
+) {
+    /** The data revision of the tables behind these rankings. See [tournamentDataRevision]. */
+    val dataRevision: Long get() = tournamentDataRevision(rankingTables.map { it.table.version })
+}
 
 class RankingPresenter(
     private val tournamentRepository: TournamentRepository,
@@ -41,7 +42,9 @@ class RankingPresenter(
     suspend fun load(tournamentId: String, force: Boolean = false): AppResult<RankingSnapshot> {
         logger.i { "Loading tournament rankings." }
 
-        val refreshMode = if (force) RefreshMode.FORCE else RefreshMode.IF_CHANGED
+        // A ranking screen stays still while it is open. It uses what the app holds and asks the server only
+        // when nothing is held yet. The table editor keeps the held tables current.
+        val refreshMode = if (force) RefreshMode.FORCE else RefreshMode.CACHED
         val tournaments = when (val result = tournamentRepository.listTournaments(refreshMode)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
@@ -64,29 +67,12 @@ class RankingPresenter(
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
         }
-        val tableSummaries = when (val result = tournamentRepository.listTournamentTables(tournamentId, refreshMode = refreshMode)) {
+        // One call gives every table. After the first load it makes no request.
+        val tables = when (val result = tournamentRepository.getAllTablesWithHands(tournamentId, refreshMode)) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> return result
         }
-
-        // One request for each round, not for each table. The editor uses the same cache entries.
-        val roundResults = coroutineScope {
-            tableSummaries.map { it.roundId }.distinct().map { roundId ->
-                async {
-                    tournamentRepository.getRoundTablesWithHands(
-                        tournamentId = tournamentId,
-                        roundId = roundId,
-                        refreshMode = refreshMode,
-                    )
-                }
-            }.awaitAll()
-        }
-        val firstFailure = roundResults.filterIsInstance<AppResult.Failure>().firstOrNull()
-        if (firstFailure != null) return firstFailure
-        val rankingTables = roundResults
-            .flatMap { (it as AppResult.Success).value }
-            .sortedWith(compareBy({ it.first.roundId }, { it.first.tableId }))
-            .map { (table, hands) -> RankingTable(table = table, hands = hands) }
+        val rankingTables = tables.map { (table, hands) -> RankingTable(table = table, hands = hands) }
 
         val isTeams = tournament.isTeams
         return AppResult.Success(

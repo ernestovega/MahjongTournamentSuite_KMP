@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.listTournamentPlayers = listTournamentPlayers;
 exports.listTournamentTeams = listTournamentTeams;
+exports.tournamentHasStartedTables = tournamentHasStartedTables;
 exports.updateTournamentTeam = updateTournamentTeam;
 exports.assignTournamentPlayer = assignTournamentPlayer;
 exports.listTournamentRounds = listTournamentRounds;
@@ -88,6 +89,10 @@ async function listTournamentTeams(tournamentId) {
     }))
         .sort((a, b) => a.id - b.id);
 }
+/** Tables with data are counted on the tournament document by every save and reset. */
+function tournamentHasStartedTables(tournament) {
+    return Number(tournament.get("tablesWithProgress") ?? 0) > 0;
+}
 /**
  * Updates one team and its fixed schedule slots.
  * Players selected from other teams exchange slots with displaced players.
@@ -97,8 +102,6 @@ async function updateTournamentTeam(params) {
     const players = tournament.collection("players");
     const teams = tournament.collection("teams");
     const assignmentRefs = tournament.collection("emaPlayerAssignments");
-    const tableSummaries = await listTournamentTables(params.tournamentId, null);
-    const tournamentHasProgress = tableSummaries.some((table) => table.hasProgress);
     await firebase_1.db.runTransaction(async (transaction) => {
         const [tournamentSnapshot, playerSnapshot, teamSnapshot, currentTeam] = await Promise.all([
             transaction.get(tournament),
@@ -158,7 +161,7 @@ async function updateTournamentTeam(params) {
         const membershipChanged = playerDocs.some((player) => {
             return (currentByRef.get(player.ref.path) ?? null) !== (finalByRef.get(player.ref.path) ?? null);
         });
-        if (membershipChanged && tournamentHasProgress) {
+        if (membershipChanged && tournamentHasStartedTables(tournamentSnapshot)) {
             throw (0, httpError_1.conflict)("Team players cannot change after table results have started");
         }
         const namesByTeam = new Map();
@@ -212,6 +215,9 @@ async function updateTournamentTeam(params) {
             ...(currentTeam.exists ? {} : { createdAt: firestore_1.FieldValue.serverTimestamp() }),
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         }, { merge: true });
+        // The versions change in the same commit as the data. If the server stops after the commit, caches still see it.
+        transaction.update(tournament, { ...(0, dataVersionsService_1.tournamentVersionUpdate)("teams"), ...(0, dataVersionsService_1.tournamentVersionUpdate)("players") });
+        transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
     });
     await refreshAssignmentCountries(params.tournamentId);
     await Promise.all([
@@ -226,9 +232,10 @@ async function assignTournamentPlayer(params) {
     const players = playerRef.parent;
     const assignmentRefs = firebase_1.db.collection("tournaments").doc(params.tournamentId)
         .collection("emaPlayerAssignments");
-    const tableSummaries = await listTournamentTables(params.tournamentId, null);
-    const tournamentHasProgress = tableSummaries.some((table) => table.hasProgress);
+    const tournamentRef = firebase_1.db.collection("tournaments").doc(params.tournamentId);
     await firebase_1.db.runTransaction(async (transaction) => {
+        const tournament = await transaction.get(tournamentRef);
+        const tournamentHasProgress = tournamentHasStartedTables(tournament);
         const player = await transaction.get(playerRef);
         if (!player.exists) {
             throw new Error("Player not found");
@@ -279,6 +286,8 @@ async function assignTournamentPlayer(params) {
             assignedCountry,
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });
+        transaction.update(tournamentRef, (0, dataVersionsService_1.tournamentVersionUpdate)("players"));
+        transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
     });
     await refreshAssignmentCountries(params.tournamentId);
     await Promise.all([

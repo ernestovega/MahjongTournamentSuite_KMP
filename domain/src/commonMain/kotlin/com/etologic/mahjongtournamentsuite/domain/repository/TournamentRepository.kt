@@ -15,6 +15,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 
 interface TournamentRepository {
@@ -131,20 +132,15 @@ interface TournamentRepository {
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<List<Pair<TableState, List<TableHand>>>>
 
-    suspend fun patchTable(
+    /**
+     * Loads every table of the tournament with its hands, sorted by round and table. The rankings need all of them.
+     * The first call makes one request. Later calls make none, unless [refreshMode] is [RefreshMode.FORCE].
+     * The table editor keeps the held tables current with its saves, loads and polling.
+     */
+    suspend fun getAllTablesWithHands(
         tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        patch: Map<String, Any?>,
-    ): AppResult<Unit>
-
-    suspend fun patchHand(
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        handId: Int,
-        patch: Map<String, Any?>,
-    ): AppResult<Unit>
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
+    ): AppResult<List<Pair<TableState, List<TableHand>>>>
 
     /** Saves all table and hand changes in one remote transaction. */
     suspend fun saveTableState(
@@ -161,4 +157,10 @@ interface TournamentRepository {
         roundId: Int,
         tableId: Int,
     ): AppResult<Unit>
+
+    /**
+     * Asks the backend for the current table versions. It always makes a request, and it costs one
+     * remote read. Other cached requests of the tournament reuse the answer for a short time.
+     */
+    suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest>
 }

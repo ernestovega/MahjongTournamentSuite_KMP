@@ -38,12 +38,6 @@ data class TablesRoute(
 )
 
 @Serializable
-data object EmaPlayersRoute
-
-@Serializable
-data object CountriesRoute
-
-@Serializable
 data object TimerRoute
 
 @Serializable

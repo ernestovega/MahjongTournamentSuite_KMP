@@ -1,0 +1,99 @@
+/**
+ * The change log keeps one record for each table save or reset: who changed what, and when.
+ * It is append-only. The app does not show it yet. It also answers "who edited this table last".
+ */
+
+type Data = Record<string, unknown>;
+
+export type ChangeActor = {
+  uid: string;
+  name: string | null;
+};
+
+export type FieldChange = {
+  field: string;
+  from: unknown;
+  to: unknown;
+};
+
+export type HandChange = FieldChange & { handId: number };
+
+export type ChangeEntry = {
+  kind: "save" | "reset";
+  roundId: number;
+  tableId: number;
+  /** The table version that this change created. */
+  version: number;
+  uid: string | null;
+  name: string | null;
+  tableChanges: FieldChange[];
+  handChanges: HandChange[];
+};
+
+/** The totals follow from the hands. A person did not type them, so the log leaves them out. */
+const DERIVED_FIELDS = new Set([
+  "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
+  "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
+]);
+
+function sameValue(a: unknown, b: unknown): boolean {
+  return (a ?? "") === (b ?? "");
+}
+
+/** Reads the acting user from the verified token. A missing token gives an anonymous entry. */
+export function actorFromToken(token: { uid?: string; name?: string; email?: string } | undefined): ChangeActor | null {
+  if (!token?.uid) return null;
+  return { uid: token.uid, name: token.name?.trim() || token.email?.trim() || null };
+}
+
+export function buildSaveChangeEntry(params: {
+  roundId: number;
+  tableId: number;
+  version: number;
+  actor: ChangeActor | null;
+  tableBefore: Data;
+  tablePatch: Data;
+  handsBefore: Map<string, Data>;
+  handPatches: Array<{ handId: number; patch: Data }>;
+}): ChangeEntry {
+  const tableChanges: FieldChange[] = Object.entries(params.tablePatch)
+    .filter(([field]) => !DERIVED_FIELDS.has(field))
+    .filter(([field, to]) => !sameValue(params.tableBefore[field], to))
+    .map(([field, to]) => ({ field, from: params.tableBefore[field] ?? null, to: to ?? null }));
+  const handChanges: HandChange[] = [];
+  for (const { handId, patch } of [...params.handPatches].sort((a, b) => a.handId - b.handId)) {
+    const before = params.handsBefore.get(String(handId)) ?? {};
+    for (const [field, to] of Object.entries(patch)) {
+      if (sameValue(before[field], to)) continue;
+      handChanges.push({ handId, field, from: before[field] ?? null, to: to ?? null });
+    }
+  }
+  return {
+    kind: "save",
+    roundId: params.roundId,
+    tableId: params.tableId,
+    version: params.version,
+    uid: params.actor?.uid ?? null,
+    name: params.actor?.name ?? null,
+    tableChanges,
+    handChanges,
+  };
+}
+
+export function buildResetChangeEntry(params: {
+  roundId: number;
+  tableId: number;
+  version: number;
+  actor: ChangeActor | null;
+}): ChangeEntry {
+  return {
+    kind: "reset",
+    roundId: params.roundId,
+    tableId: params.tableId,
+    version: params.version,
+    uid: params.actor?.uid ?? null,
+    name: params.actor?.name ?? null,
+    tableChanges: [],
+    handChanges: [],
+  };
+}

@@ -156,7 +156,8 @@ class TableManagerEditorStateTest {
             hands = emptyList(),
         )
 
-        editor.enableManualPoints()
+        editor.usePointsCalculation = false
+        editor.useTotalsOnly = false
 
         assertFalse(editor.useTotalsOnly)
         assertFalse(editor.usePointsCalculation)
@@ -194,14 +195,15 @@ class TableManagerEditorStateTest {
         assertTrue(editor.usePointsCalculation)
         assertEquals("33000", editor.displayEastScore)
 
-        editor.enableManualPoints()
+        editor.usePointsCalculation = false
+        editor.useTotalsOnly = false
         assertFalse(editor.useTotalsOnly)
         assertFalse(editor.usePointsCalculation)
         assertEquals("4", editor.displayEastPoints)
         assertEquals("33000", editor.displayEastScore)
         assertEquals("33000", editor.playerEastScore)
 
-        editor.disableManualPoints()
+        editor.usePointsCalculation = true
         assertFalse(editor.useTotalsOnly)
         assertTrue(editor.usePointsCalculation)
         assertEquals("40", editor.displayEastScore)
@@ -214,7 +216,8 @@ class TableManagerEditorStateTest {
         assertEquals("33000", editor.displayEastScore)
         assertEquals("4", editor.playerEastPoints)
 
-        editor.enableManualPoints()
+        editor.usePointsCalculation = false
+        editor.useTotalsOnly = false
         assertEquals("4", editor.displayEastPoints)
         assertEquals("33000", editor.playerEastScore)
     }
@@ -232,7 +235,8 @@ class TableManagerEditorStateTest {
         hand.setLoserPlayerId("2")
         hand.updateHandScore("16")
 
-        editor.enableManualPoints()
+        editor.usePointsCalculation = false
+        editor.useTotalsOnly = false
 
         val tablePatch = editor.buildTablePatch()
         val handPatch = editor.buildHandPatches().single().second
@@ -289,7 +293,7 @@ class TableManagerEditorStateTest {
         editor.playerWestPoints = "1"
         editor.playerNorthPoints = "0"
 
-        editor.disableManualPoints()
+        editor.usePointsCalculation = true
 
         assertTrue(editor.usePointsCalculation)
         assertEquals("4", editor.displayEastPoints)

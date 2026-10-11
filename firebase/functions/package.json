@@ -8,7 +8,7 @@
   },
   "scripts": {
     "build": "tsc && node scripts/syncIdCardAssets.cjs",
-    "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/services/tournamentSchedule.test.js lib/services/tournamentContentRules.test.js lib/services/tableManagerService.test.js lib/services/tournamentsService.test.js lib/models/globalRole.test.js lib/services/idCardsService.test.js lib/services/idListService.test.js lib/services/playerSyncService.test.js lib/services/emaReportService.test.js lib/scripts/migrateTableScoringSource.test.js",
+    "test": "npm run build && node --test lib/services/tournamentDates.test.js lib/services/tournamentSchedule.test.js lib/services/tournamentContentRules.test.js lib/services/tableManagerService.test.js lib/services/dataVersionsService.test.js lib/services/changeLog.test.js lib/services/tournamentBackfill.test.js lib/api/routes/tournaments.routes.test.js lib/api/tableRequests.test.js lib/services/tournamentsService.test.js lib/models/globalRole.test.js lib/services/idCardsService.test.js lib/services/idListService.test.js lib/services/playerSyncService.test.js lib/services/emaReportService.test.js lib/scripts/migrateTableScoringSource.test.js",
     "proof:id-cards": "npm run build && node lib/scripts/createIdCardsProof.js",
     "verify:roles": "npm run build && node lib/scripts/verifyRolePermissions.js",
     "seed:countries": "npm run build && node lib/scripts/seedCountries.js",
@@ -19,7 +19,10 @@
     "backfill:data-versions:apply": "npm run build && node lib/scripts/backfillDataVersions.js --apply",
     "migrate:table-scoring": "npm run build && node lib/scripts/migrateTableScoringSource.js",
     "migrate:table-scoring:apply": "npm run build && node lib/scripts/migrateTableScoringSource.js --apply",
-    "watch": "tsc -w"
+    "watch": "tsc -w",
+    "test:integration": "npm run build && firebase emulators:exec --config ../../firebase.json --only auth,firestore --project demo-mts-tests \"node --test --test-concurrency=1 lib/services/*.integration.test.js lib/api/*.integration.test.js\"",
+    "backfill:table-progress": "npm run build && node lib/scripts/backfillTableProgress.js",
+    "backfill:table-progress:apply": "npm run build && node lib/scripts/backfillTableProgress.js --apply"
   },
   "dependencies": {
     "exceljs": "^3.4.0",

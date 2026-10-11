@@ -26,52 +26,18 @@ import {
   updateTournamentTeam,
 } from "../../services/tournamentContentService";
 import { playerExists, validateEmaId } from "../../services/playersService";
-import { getRoundTablesWithHands, getTableWithHands, resetTable, saveTableState, updateHand, updateTable } from "../../services/tableManagerService";
+import {
+  getAllTablesWithHands,
+  getRoundTablesWithHands,
+  getTableWithHands,
+  resetTable,
+  saveTableState,
+} from "../../services/tableManagerService";
+import { actorFromToken } from "../../services/changeLog";
 import { getUserProfile } from "../../services/usersService";
 import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
-import { getTournamentDataVersions } from "../../services/dataVersionsService";
-
-const TABLE_STRING_FIELDS = [
-  "playerEastId", "playerSouthId", "playerWestId", "playerNorthId",
-  "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
-  "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
-  "manualPlayerEastScore", "manualPlayerSouthScore", "manualPlayerWestScore", "manualPlayerNorthScore",
-  "manualPlayerEastPoints", "manualPlayerSouthPoints", "manualPlayerWestPoints", "manualPlayerNorthPoints",
-] as const;
-const TABLE_BOOLEAN_FIELDS = ["isCompleted", "useTotalsOnly", "usePointsCalculation"] as const;
-const HAND_STRING_FIELDS = [
-  "playerWinnerId", "playerLooserId", "handScore", "playerEastPenalty",
-  "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",
-] as const;
-const HAND_BOOLEAN_FIELDS = ["isChickenHand", "isDone"] as const;
-
-function parsePatch(
-  value: unknown,
-  stringFields: readonly string[],
-  booleanFields: readonly string[],
-): Record<string, string | boolean> {
-  const source = value != null && typeof value === "object" ? value as Record<string, unknown> : {};
-  const result: Record<string, string | boolean> = {};
-  for (const field of stringFields) {
-    if (!(field in source)) continue;
-    if (typeof source[field] !== "string") throw badRequest(`${field} must be a string`);
-    result[field] = source[field] as string;
-  }
-  for (const field of booleanFields) {
-    if (!(field in source)) continue;
-    if (typeof source[field] !== "boolean") throw badRequest(`${field} must be a boolean`);
-    result[field] = source[field] as boolean;
-  }
-  return result;
-}
-
-function parseTablePatch(value: unknown) {
-  return parsePatch(value, TABLE_STRING_FIELDS, TABLE_BOOLEAN_FIELDS);
-}
-
-function parseHandPatch(value: unknown) {
-  return parsePatch(value, HAND_STRING_FIELDS, HAND_BOOLEAN_FIELDS);
-}
+import { getTournamentManifest } from "../../services/dataVersionsService";
+import { parseSaveTableRequest } from "../tableRequests";
 
 export function tournamentsRouter(): Router {
   const router = Router();
@@ -83,9 +49,7 @@ export function tournamentsRouter(): Router {
     async (req, res, next) => {
       try {
         res.setHeader("Cache-Control", "no-store");
-        res.status(200).json({
-          resources: await getTournamentDataVersions(req.params.tournamentId),
-        });
+        res.status(200).json(await getTournamentManifest(req.params.tournamentId));
       } catch (error) {
         next(error);
       }
@@ -668,6 +632,20 @@ export function tournamentsRouter(): Router {
   );
 
   router.get(
+    "/:tournamentId/tables-with-hands",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const tables = await getAllTablesWithHands({ tournamentId: req.params.tournamentId });
+        res.status(200).json({ tables });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.get(
     "/:tournamentId/rounds/:roundId/tables-with-hands",
     requireAuth,
     requireTournamentEditor,
@@ -716,36 +694,11 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const roundId = Number(req.params.roundId);
-        const tableId = Number(req.params.tableId);
-        const expectedVersion = Number(req.body?.expectedVersion);
-        if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
-          throw badRequest("roundId and tableId must be positive integers");
-        }
-        if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 0) {
-          throw badRequest("expectedVersion must be a non-negative integer");
-        }
-        const tablePatch = parseTablePatch(req.body?.tablePatch);
-        const handPatchesRaw = Array.isArray(req.body?.handPatches) ? req.body.handPatches : [];
-        const handPatches: Array<{ handId: number; patch: Record<string, string | boolean> }> =
-          handPatchesRaw.map((value: unknown) => {
-          const item = value != null && typeof value === "object" ? value as Record<string, unknown> : {};
-          const handId = Number(item.handId);
-          if (!Number.isInteger(handId) || handId <= 0 || handId > 16) {
-            throw badRequest("handId must be an integer from 1 to 16");
-          }
-          return { handId, patch: parseHandPatch(item.patch) };
-          });
-        if (new Set(handPatches.map((item) => item.handId)).size !== handPatches.length) {
-          throw badRequest("Each hand can occur only once");
-        }
+        const request = parseSaveTableRequest(req.params, req.body);
         res.status(200).json(await saveTableState({
           tournamentId: req.params.tournamentId,
-          roundId,
-          tableId,
-          expectedVersion,
-          tablePatch,
-          handPatches,
+          ...request,
+          actor: actorFromToken(res.locals.auth),
         }));
       } catch (error) {
         next(error);
@@ -753,68 +706,10 @@ export function tournamentsRouter(): Router {
     },
   );
 
-  router.put(
-    "/:tournamentId/tables/:roundId/:tableId",
-    requireAuth,
-    requireTournamentEditor,
-    async (req, res, next) => {
-      try {
-        const roundId = Number(req.params.roundId);
-        const tableId = Number(req.params.tableId);
-        if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
-          throw badRequest("roundId and tableId must be positive integers");
-        }
-
-        const patch = parseTablePatch(req.body);
-        await updateTable({
-          tournamentId: req.params.tournamentId,
-          roundId,
-          tableId,
-          patch,
-        });
-        res.status(200).json({ ok: true });
-      } catch (e) {
-        next(e);
-      }
-    },
-  );
-
-  router.put(
-    "/:tournamentId/tables/:roundId/:tableId/hands/:handId",
-    requireAuth,
-    requireTournamentEditor,
-    async (req, res, next) => {
-      try {
-        const roundId = Number(req.params.roundId);
-        const tableId = Number(req.params.tableId);
-        const handId = Number(req.params.handId);
-        if (
-          !Number.isInteger(roundId) || roundId <= 0
-          || !Number.isInteger(tableId) || tableId <= 0
-          || !Number.isInteger(handId) || handId <= 0
-        ) {
-          throw badRequest("roundId, tableId and handId must be positive integers");
-        }
-
-        const patch = parseHandPatch(req.body);
-        await updateHand({
-          tournamentId: req.params.tournamentId,
-          roundId,
-          tableId,
-          handId,
-          patch,
-        });
-        res.status(200).json({ ok: true });
-      } catch (e) {
-        next(e);
-      }
-    },
-  );
-
   router.post(
     "/:tournamentId/tables/:roundId/:tableId/reset",
     requireAuth,
-    requireTournamentEditor,
+    requireAdmin,
     async (req, res, next) => {
       try {
         const roundId = Number(req.params.roundId);
@@ -827,6 +722,7 @@ export function tournamentsRouter(): Router {
           tournamentId: req.params.tournamentId,
           roundId,
           tableId,
+          actor: actorFromToken(res.locals.auth),
         });
         res.status(200).json({ ok: true });
       } catch (e) {

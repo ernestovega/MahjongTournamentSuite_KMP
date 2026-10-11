@@ -37,12 +37,18 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateReques
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
+import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.http.HttpStatusCode
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.io.encoding.Base64
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -54,7 +60,11 @@ class DefaultTournamentRepository(
     private val logger: Logger,
     private val cache: RepositoryCache,
     private val json: Json,
+    private val tableStore: TournamentTableStore = TournamentTableStore(),
 ) : TournamentRepository {
+    private val lastPolledRevisions = mutableMapOf<String, Map<String, Long>>()
+    private var lastPolledGlobalRevisions: Map<String, Long>? = null
+
     override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = cachedRequest(
         action = "Listing tournaments",
         key = GLOBAL_TOURNAMENTS_CACHE_KEY,
@@ -208,13 +218,14 @@ class DefaultTournamentRepository(
         cache.getOrLoad(
             ownerUid = session.uid,
             key = "tournament:$tournamentId:players:$cacheSuffix",
-            refreshMode = RefreshMode.IF_CHANGED,
+            // Polling marks the file old when its data changed. Until then the file is reused without any request.
+            refreshMode = RefreshMode.CACHED,
             revision = {
                 withFreshIdToken { token ->
-                    val tournamentRevision = backendApi.tournamentDataVersions(token, tournamentId)
+                    val tournamentRevision = tournamentManifest(token, tournamentId)
                         .resources.values.sumOf { it.revision }
-                    val globalPlayerRevision = backendApi.globalDataVersions(token)
-                        .resources["players"]?.revision ?: 0
+                    val globalPlayerRevision = globalManifest(token)
+                        .resources["emaPlayers"]?.revision ?: 0
                     tournamentRevision * 31 + globalPlayerRevision
                 }
             },
@@ -531,6 +542,8 @@ class DefaultTournamentRepository(
                 roundId = roundId,
                 tableId = tableId,
             ).toDomain()
+    }.also { result ->
+        if (result is AppResult.Success) tableStore.put(tournamentId, result.value.first, result.value.second)
     }
 
     override suspend fun getRoundTablesWithHands(
@@ -550,106 +563,29 @@ class DefaultTournamentRepository(
             tournamentId = tournamentId,
             roundId = roundId,
         ).tables.map { it.toDomain() }
+    }.also { result ->
+        if (result is AppResult.Success) result.value.forEach { (table, hands) -> tableStore.put(tournamentId, table, hands) }
     }
 
-    private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHand>> {
-        val dto = this
-        val table = TableState(
-            version = dto.table.version,
-            roundId = dto.table.roundId,
-            tableId = dto.table.tableId,
-            playerIds = dto.table.playerIds,
-            playerEastId = dto.table.playerEastId,
-            playerSouthId = dto.table.playerSouthId,
-            playerWestId = dto.table.playerWestId,
-            playerNorthId = dto.table.playerNorthId,
-            playerEastScore = dto.table.playerEastScore,
-            playerSouthScore = dto.table.playerSouthScore,
-            playerWestScore = dto.table.playerWestScore,
-            playerNorthScore = dto.table.playerNorthScore,
-            playerEastPoints = dto.table.playerEastPoints,
-            playerSouthPoints = dto.table.playerSouthPoints,
-            playerWestPoints = dto.table.playerWestPoints,
-            playerNorthPoints = dto.table.playerNorthPoints,
-            manualPlayerEastScore = dto.table.manualPlayerEastScore,
-            manualPlayerSouthScore = dto.table.manualPlayerSouthScore,
-            manualPlayerWestScore = dto.table.manualPlayerWestScore,
-            manualPlayerNorthScore = dto.table.manualPlayerNorthScore,
-            manualPlayerEastPoints = dto.table.manualPlayerEastPoints,
-            manualPlayerSouthPoints = dto.table.manualPlayerSouthPoints,
-            manualPlayerWestPoints = dto.table.manualPlayerWestPoints,
-            manualPlayerNorthPoints = dto.table.manualPlayerNorthPoints,
-            isCompleted = dto.table.isCompleted,
-            useTotalsOnly = dto.table.useTotalsOnly,
-            usePointsCalculation = dto.table.usePointsCalculation,
+    override suspend fun getAllTablesWithHands(
+        tournamentId: String,
+        refreshMode: RefreshMode,
+    ): AppResult<List<Pair<TableState, List<TableHand>>>> = runCatching {
+        val session = authRepository.currentSession() ?: error("No active session")
+        tableStore.all(
+            ownerUid = session.uid,
+            tournamentId = tournamentId,
+            reload = refreshMode == RefreshMode.FORCE,
+            fetchAll = {
+                withFreshIdToken { token ->
+                    backendApi.getAllTablesWithHands(token, tournamentId).tables.map { it.toDomain() }
+                }
+            },
         )
-
-        val hands = dto.hands.map { h ->
-            TableHand(
-                handId = h.handId,
-                playerWinnerId = h.playerWinnerId,
-                playerLooserId = h.playerLooserId,
-                handScore = h.handScore,
-                isChickenHand = h.isChickenHand,
-                isDone = h.isDone,
-                playerEastPenalty = h.playerEastPenalty,
-                playerSouthPenalty = h.playerSouthPenalty,
-                playerWestPenalty = h.playerWestPenalty,
-                playerNorthPenalty = h.playerNorthPenalty,
-            )
-        }
-
-        return table to hands
-    }
-
-    override suspend fun patchTable(
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        patch: Map<String, Any?>,
-    ): AppResult<Unit> = runCatching {
-        withFreshIdToken { idToken ->
-            backendApi.patchTable(
-                idToken = idToken,
-                tournamentId = tournamentId,
-                roundId = roundId,
-                tableId = tableId,
-                patch = patch.toTablePatchRequestDto(),
-            )
-            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
-            Unit
-        }
     }.fold(
-        onSuccess = { AppResult.Success(Unit) },
+        onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
-            logger.w(throwable) { "Patching table failed." }
-            AppResult.Failure(throwable.toAppError())
-        },
-    )
-
-    override suspend fun patchHand(
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-        handId: Int,
-        patch: Map<String, Any?>,
-    ): AppResult<Unit> = runCatching {
-        withFreshIdToken { idToken ->
-            backendApi.patchHand(
-                idToken = idToken,
-                tournamentId = tournamentId,
-                roundId = roundId,
-                tableId = tableId,
-                handId = handId,
-                patch = patch.toHandPatchRequestDto(),
-            )
-            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
-            Unit
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(Unit) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Patching hand failed." }
+            logger.w(throwable) { "Getting all tables with hands failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )
@@ -677,54 +613,22 @@ class DefaultTournamentRepository(
                 ),
             )
             cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
-            TableState(
-                version = dto.table.version,
-                roundId = dto.table.roundId,
-                tableId = dto.table.tableId,
-                playerIds = dto.table.playerIds,
-                playerEastId = dto.table.playerEastId,
-                playerSouthId = dto.table.playerSouthId,
-                playerWestId = dto.table.playerWestId,
-                playerNorthId = dto.table.playerNorthId,
-                playerEastScore = dto.table.playerEastScore,
-                playerSouthScore = dto.table.playerSouthScore,
-                playerWestScore = dto.table.playerWestScore,
-                playerNorthScore = dto.table.playerNorthScore,
-                playerEastPoints = dto.table.playerEastPoints,
-                playerSouthPoints = dto.table.playerSouthPoints,
-                playerWestPoints = dto.table.playerWestPoints,
-                playerNorthPoints = dto.table.playerNorthPoints,
-                manualPlayerEastScore = dto.table.manualPlayerEastScore,
-                manualPlayerSouthScore = dto.table.manualPlayerSouthScore,
-                manualPlayerWestScore = dto.table.manualPlayerWestScore,
-                manualPlayerNorthScore = dto.table.manualPlayerNorthScore,
-                manualPlayerEastPoints = dto.table.manualPlayerEastPoints,
-                manualPlayerSouthPoints = dto.table.manualPlayerSouthPoints,
-                manualPlayerWestPoints = dto.table.manualPlayerWestPoints,
-                manualPlayerNorthPoints = dto.table.manualPlayerNorthPoints,
-                isCompleted = dto.table.isCompleted,
-                useTotalsOnly = dto.table.useTotalsOnly,
-                usePointsCalculation = dto.table.usePointsCalculation,
-            ) to dto.hands.map { hand ->
-                TableHand(
-                    handId = hand.handId,
-                    playerWinnerId = hand.playerWinnerId,
-                    playerLooserId = hand.playerLooserId,
-                    handScore = hand.handScore,
-                    isChickenHand = hand.isChickenHand,
-                    isDone = hand.isDone,
-                    playerEastPenalty = hand.playerEastPenalty,
-                    playerSouthPenalty = hand.playerSouthPenalty,
-                    playerWestPenalty = hand.playerWestPenalty,
-                    playerNorthPenalty = hand.playerNorthPenalty,
-                )
-            }
+            dto.toDomain()
         }
     }.fold(
-        onSuccess = { AppResult.Success(it) },
+        onSuccess = { saved ->
+            tableStore.put(tournamentId, saved.first, saved.second)
+            AppResult.Success(saved)
+        },
         onFailure = { throwable ->
             logger.w(throwable) { "Saving table state failed." }
-            AppResult.Failure(throwable.toTableSaveError(json))
+            val error = throwable.toTableSaveError(json)
+            if (error is AppError.Conflict) {
+                // The table changed on the server, so cached copies of it are old.
+                cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
+                error.currentTable?.let { tableStore.put(tournamentId, it, error.currentHands) }
+            }
+            AppResult.Failure(error)
         },
     )
 
@@ -767,9 +671,9 @@ class DefaultTournamentRepository(
             revision = {
                 withFreshIdToken { token ->
                     val manifest = if (tournamentId == null) {
-                        backendApi.globalDataVersions(token)
+                        globalManifest(token)
                     } else {
-                        backendApi.tournamentDataVersions(token, tournamentId)
+                        tournamentManifest(token, tournamentId)
                     }
                     manifest.resources[resource]?.revision ?: 0
                 }
@@ -783,6 +687,67 @@ class DefaultTournamentRepository(
             AppResult.Failure(throwable.toAppError())
         },
     )
+
+    override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> = runCatching {
+        withFreshIdToken { token ->
+            tournamentManifest(token, tournamentId, maxAge = Duration.ZERO).toDomain()
+        }.also { manifest -> markListsOldAfterChange(tournamentId, manifest) }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Getting the tournament manifest failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    /**
+     * Screens that use [RefreshMode.CACHED] never ask the server. Polling is how they learn that something is old.
+     * When a revision is higher than at the last poll, the cached copies that depend on it are marked old.
+     * The first poll only records the revisions.
+     */
+    private suspend fun markListsOldAfterChange(tournamentId: String, manifest: TournamentManifest) {
+        val tournamentNow = mapOf(
+            "players" to manifest.playersRevision,
+            "teams" to manifest.teamsRevision,
+            "rounds" to manifest.roundsRevision,
+            "members" to manifest.membersRevision,
+        )
+        val globalNow = mapOf(
+            "tournaments" to manifest.tournamentsRevision,
+            "emaPlayers" to manifest.emaPlayersRevision,
+            "countries" to manifest.countriesRevision,
+            "users" to manifest.usersRevision,
+        )
+        val tournamentBefore = lastPolledRevisions.put(tournamentId, tournamentNow)
+        val globalBefore = lastPolledGlobalRevisions.also { lastPolledGlobalRevisions = globalNow }
+        val prefixes = mutableSetOf<String>()
+        tournamentBefore?.let { before ->
+            tournamentNow.filter { (name, revision) -> revision > (before[name] ?: revision) }.keys
+                .mapTo(prefixes) { "tournament:$tournamentId:$it" }
+        }
+        globalBefore?.let { before ->
+            val changed = globalNow.filter { (name, revision) -> revision > (before[name] ?: revision) }.keys
+            // The generated files (ID cards, ID list, EMA report) use the tournament data and the EMA players.
+            val generatedFiles = "tournament:$tournamentId:players:"
+            if ("tournaments" in changed) prefixes += listOf(GLOBAL_TOURNAMENTS_CACHE_KEY, generatedFiles)
+            if ("emaPlayers" in changed) prefixes += listOf(GLOBAL_EMA_PLAYERS_CACHE_KEY, generatedFiles)
+            if ("countries" in changed) prefixes += GLOBAL_COUNTRIES_CACHE_KEY
+            if ("users" in changed) prefixes += listOf(GLOBAL_USERS_CACHE_KEY, GLOBAL_PROFILE_CACHE_KEY)
+        }
+        if (prefixes.isNotEmpty()) cache.markStale(*prefixes.toTypedArray())
+    }
+
+    /** Cached requests of one screen ask for the same manifest many times. They share one answer. */
+    private suspend fun tournamentManifest(
+        token: String,
+        tournamentId: String,
+        maxAge: Duration = MANIFEST_SHARE_TIME,
+    ): DataVersionsManifestDto = cache.shared("manifest:tournament:$tournamentId", maxAge) {
+        backendApi.tournamentDataVersions(token, tournamentId)
+    }
+
+    private suspend fun globalManifest(token: String): DataVersionsManifestDto =
+        cache.shared("manifest:global", MANIFEST_SHARE_TIME) { backendApi.globalDataVersions(token) }
 
     private suspend fun <T> withFreshIdToken(
         block: suspend (String) -> T,
@@ -822,9 +787,26 @@ private fun TournamentAgendaItem.toDto() = TournamentAgendaItemDto(
     endTime = endTime,
 )
 
+private val MANIFEST_SHARE_TIME = 2.seconds
+
+private fun DataVersionsManifestDto.toDomain(): TournamentManifest = TournamentManifest(
+    tablesRevision = resources["tables"]?.revision ?: 0,
+    playersRevision = resources["players"]?.revision ?: 0,
+    teamsRevision = resources["teams"]?.revision ?: 0,
+    roundsRevision = resources["rounds"]?.revision ?: 0,
+    membersRevision = resources["members"]?.revision ?: 0,
+    tournamentsRevision = globalResources["tournaments"]?.revision ?: 0,
+    emaPlayersRevision = globalResources["emaPlayers"]?.revision ?: 0,
+    countriesRevision = globalResources["countries"]?.revision ?: 0,
+    usersRevision = globalResources["users"]?.revision ?: 0,
+    tableVersions = tableVersions.mapNotNull { (key, version) -> TableKey.parse(key)?.let { it to version } }.toMap(),
+)
+
 private const val GLOBAL_TOURNAMENTS_CACHE_KEY = "global:tournaments"
 private const val GLOBAL_COUNTRIES_CACHE_KEY = "global:countries"
 private const val GLOBAL_USERS_CACHE_KEY = "global:users"
+private const val GLOBAL_EMA_PLAYERS_CACHE_KEY = "global:emaPlayers"
+private const val GLOBAL_PROFILE_CACHE_KEY = "global:profile"
 
 @Serializable
 private data class TableConflictResponseDto(

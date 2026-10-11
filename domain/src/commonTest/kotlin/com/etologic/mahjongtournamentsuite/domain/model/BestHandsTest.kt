@@ -30,8 +30,7 @@ class BestHandsTest {
 
         assertEquals(listOf(40, 38, 36), best)
         assertEquals(listOf(40, 36), tables[0].tournamentBestHandScores(best))
-        assertEquals(2, tables[0].tournamentBestHandCount(best))
-        assertEquals(1, tables[1].tournamentBestHandCount(best))
+        assertEquals(listOf(38), tables[1].tournamentBestHandScores(best))
     }
 
     private fun table(tableId: Int, scores: List<Int>) = TournamentTable(

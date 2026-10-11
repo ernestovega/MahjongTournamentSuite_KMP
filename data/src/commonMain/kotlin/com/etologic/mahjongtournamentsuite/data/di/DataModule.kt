@@ -8,7 +8,6 @@ import com.etologic.mahjongtournamentsuite.data.platform.PlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.platform.providePlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAdminRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAuthRepository
-import com.etologic.mahjongtournamentsuite.data.repository.DefaultGreetingRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
@@ -19,7 +18,6 @@ import com.etologic.mahjongtournamentsuite.data.cache.SessionRepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.GreetingRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import io.ktor.client.HttpClient
@@ -46,5 +44,4 @@ val dataModule = module {
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get()) }
     single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get(), get()) }
     single<PlatformNameProvider> { providePlatformNameProvider() }
-    single<GreetingRepository> { DefaultGreetingRepository(get(), get(), get()) }
 }

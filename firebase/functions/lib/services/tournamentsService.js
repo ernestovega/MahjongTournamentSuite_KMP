@@ -14,6 +14,7 @@ const httpError_1 = require("../api/httpError");
 const tournamentDates_1 = require("./tournamentDates");
 const usersService_1 = require("./usersService");
 const dataVersionsService_1 = require("./dataVersionsService");
+const tableManagerService_1 = require("./tableManagerService");
 const tournamentSchedule_1 = require("./tournamentSchedule");
 function toIsoString(value) {
     if (value instanceof firestore_1.Timestamp)
@@ -82,6 +83,8 @@ async function mapTournamentDoc(d) {
         updatedAt: toIsoString(d.get("updatedAt")),
     };
 }
+/** Firestore allows 500 writes in a batch. Keep a margin. */
+const MAX_WRITES_PER_BATCH = 450;
 async function createTournament(params) {
     const numTablesPerRound = params.numPlayers / 4;
     const expectedTables = params.numRounds * numTablesPerRound;
@@ -118,6 +121,8 @@ async function createTournament(params) {
         agendaItems,
         numTries: params.numTries,
         isCompleted: false,
+        // The number of tables with data. Saves keep it current. Imported tables can arrive completed.
+        tablesWithProgress: params.tables.filter((table) => Boolean(table.isCompleted ?? false)).length,
         createdByUid: params.createdByUid,
         createdAt: firestore_1.FieldValue.serverTimestamp(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
@@ -129,26 +134,12 @@ async function createTournament(params) {
             tables: { revision: 1, changedAt: firestore_1.FieldValue.serverTimestamp() },
         },
     };
-    await ref.set(tournamentDoc);
-    // Persist the client-generated schedule payload (players/rounds/tables).
-    // Hands are created lazily when a table is first opened to keep write volume manageable.
-    const batchCommits = [];
-    let batch = firebase_1.db.batch();
-    let opsInBatch = 0;
-    const flushBatch = async () => {
-        if (opsInBatch === 0)
-            return;
-        batchCommits.push(batch.commit());
-        batch = firebase_1.db.batch();
-        opsInBatch = 0;
-    };
+    // The children are written first and the tournament document last. A tournament that is missing its
+    // document is invisible, so a failure in the middle never shows a half-built tournament.
+    // If anything fails, everything written so far is deleted.
+    const writes = [];
     const addSet = (docRef, data) => {
-        batch.set(docRef, data);
-        opsInBatch++;
-        if (opsInBatch >= 450) {
-            // Keep a margin under 500 for safety if we add more writes later.
-            return flushBatch();
-        }
+        writes.push({ ref: docRef, data });
         return Promise.resolve();
     };
     for (const player of params.players) {
@@ -226,9 +217,37 @@ async function createTournament(params) {
             createdAt: firestore_1.FieldValue.serverTimestamp(),
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });
+        for (let handId = 1; handId <= tableManagerService_1.HANDS_PER_TABLE; handId++) {
+            // eslint-disable-next-line no-await-in-loop
+            await addSet(tableRef.collection("hands").doc(String(handId)), {
+                ...(0, tableManagerService_1.defaultHand)(handId),
+                createdAt: firestore_1.FieldValue.serverTimestamp(),
+                updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            });
+        }
     }
-    await flushBatch();
-    await Promise.all(batchCommits);
+    try {
+        const chunks = [];
+        for (let index = 0; index < writes.length; index += MAX_WRITES_PER_BATCH) {
+            chunks.push(writes.slice(index, index + MAX_WRITES_PER_BATCH));
+        }
+        const results = await Promise.allSettled(chunks.map((chunk) => {
+            const batch = firebase_1.db.batch();
+            chunk.forEach(({ ref: docRef, data }) => batch.set(docRef, data));
+            return batch.commit();
+        }));
+        const failed = results.find((result) => result.status === "rejected");
+        if (failed)
+            throw failed.reason;
+        await ref.set(tournamentDoc);
+    }
+    catch (error) {
+        await Promise.allSettled([
+            firebase_1.db.recursiveDelete(ref),
+            logo?.path ? firebase_1.storage.file(logo.path).delete({ ignoreNotFound: true }) : Promise.resolve(),
+        ]);
+        throw error;
+    }
     const snap = await ref.get();
     await (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments");
     return mapTournamentDoc(snap);

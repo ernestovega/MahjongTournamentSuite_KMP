@@ -18,12 +18,6 @@ fun topHandScores(scores: List<Int>): List<Int> {
 fun tournamentBestHandScores(tables: List<TournamentTable>): List<Int> =
     topHandScores(tables.flatMap { it.bestHandScores })
 
-/** Number of hands of this table that are among the tournament best hands. */
-fun TournamentTable.tournamentBestHandCount(tournamentBestScores: List<Int>): Int {
-    val threshold = tournamentBestScores.lastOrNull() ?: return 0
-    return bestHandScores.count { it >= threshold }
-}
-
 /** Scores of the hands of this table that are among the tournament best hands, from highest to lowest. */
 fun TournamentTable.tournamentBestHandScores(tournamentBestScores: List<Int>): List<Int> {
     val threshold = tournamentBestScores.lastOrNull() ?: return emptyList()

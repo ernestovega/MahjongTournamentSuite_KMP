@@ -15,55 +15,17 @@ const emaReportService_1 = require("../../services/emaReportService");
 const tournamentContentService_1 = require("../../services/tournamentContentService");
 const playersService_1 = require("../../services/playersService");
 const tableManagerService_1 = require("../../services/tableManagerService");
+const changeLog_1 = require("../../services/changeLog");
 const usersService_1 = require("../../services/usersService");
 const tournamentDates_1 = require("../../services/tournamentDates");
 const dataVersionsService_1 = require("../../services/dataVersionsService");
-const TABLE_STRING_FIELDS = [
-    "playerEastId", "playerSouthId", "playerWestId", "playerNorthId",
-    "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
-    "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
-    "manualPlayerEastScore", "manualPlayerSouthScore", "manualPlayerWestScore", "manualPlayerNorthScore",
-    "manualPlayerEastPoints", "manualPlayerSouthPoints", "manualPlayerWestPoints", "manualPlayerNorthPoints",
-];
-const TABLE_BOOLEAN_FIELDS = ["isCompleted", "useTotalsOnly", "usePointsCalculation"];
-const HAND_STRING_FIELDS = [
-    "playerWinnerId", "playerLooserId", "handScore", "playerEastPenalty",
-    "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",
-];
-const HAND_BOOLEAN_FIELDS = ["isChickenHand", "isDone"];
-function parsePatch(value, stringFields, booleanFields) {
-    const source = value != null && typeof value === "object" ? value : {};
-    const result = {};
-    for (const field of stringFields) {
-        if (!(field in source))
-            continue;
-        if (typeof source[field] !== "string")
-            throw (0, httpError_1.badRequest)(`${field} must be a string`);
-        result[field] = source[field];
-    }
-    for (const field of booleanFields) {
-        if (!(field in source))
-            continue;
-        if (typeof source[field] !== "boolean")
-            throw (0, httpError_1.badRequest)(`${field} must be a boolean`);
-        result[field] = source[field];
-    }
-    return result;
-}
-function parseTablePatch(value) {
-    return parsePatch(value, TABLE_STRING_FIELDS, TABLE_BOOLEAN_FIELDS);
-}
-function parseHandPatch(value) {
-    return parsePatch(value, HAND_STRING_FIELDS, HAND_BOOLEAN_FIELDS);
-}
+const tableRequests_1 = require("../tableRequests");
 function tournamentsRouter() {
     const router = (0, express_1.Router)();
     router.get("/:tournamentId/sync/manifest", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             res.setHeader("Cache-Control", "no-store");
-            res.status(200).json({
-                resources: await (0, dataVersionsService_1.getTournamentDataVersions)(req.params.tournamentId),
-            });
+            res.status(200).json(await (0, dataVersionsService_1.getTournamentManifest)(req.params.tournamentId));
         }
         catch (error) {
             next(error);
@@ -598,6 +560,15 @@ function tournamentsRouter() {
             next(e);
         }
     });
+    router.get("/:tournamentId/tables-with-hands", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const tables = await (0, tableManagerService_1.getAllTablesWithHands)({ tournamentId: req.params.tournamentId });
+            res.status(200).json({ tables });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
     router.get("/:tournamentId/rounds/:roundId/tables-with-hands", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
             const roundId = Number(req.params.roundId);
@@ -631,86 +602,18 @@ function tournamentsRouter() {
     });
     router.put("/:tournamentId/tables/:roundId/:tableId/state", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
-            const roundId = Number(req.params.roundId);
-            const tableId = Number(req.params.tableId);
-            const expectedVersion = Number(req.body?.expectedVersion);
-            if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
-                throw (0, httpError_1.badRequest)("roundId and tableId must be positive integers");
-            }
-            if (!Number.isSafeInteger(expectedVersion) || expectedVersion < 0) {
-                throw (0, httpError_1.badRequest)("expectedVersion must be a non-negative integer");
-            }
-            const tablePatch = parseTablePatch(req.body?.tablePatch);
-            const handPatchesRaw = Array.isArray(req.body?.handPatches) ? req.body.handPatches : [];
-            const handPatches = handPatchesRaw.map((value) => {
-                const item = value != null && typeof value === "object" ? value : {};
-                const handId = Number(item.handId);
-                if (!Number.isInteger(handId) || handId <= 0 || handId > 16) {
-                    throw (0, httpError_1.badRequest)("handId must be an integer from 1 to 16");
-                }
-                return { handId, patch: parseHandPatch(item.patch) };
-            });
-            if (new Set(handPatches.map((item) => item.handId)).size !== handPatches.length) {
-                throw (0, httpError_1.badRequest)("Each hand can occur only once");
-            }
+            const request = (0, tableRequests_1.parseSaveTableRequest)(req.params, req.body);
             res.status(200).json(await (0, tableManagerService_1.saveTableState)({
                 tournamentId: req.params.tournamentId,
-                roundId,
-                tableId,
-                expectedVersion,
-                tablePatch,
-                handPatches,
+                ...request,
+                actor: (0, changeLog_1.actorFromToken)(res.locals.auth),
             }));
         }
         catch (error) {
             next(error);
         }
     });
-    router.put("/:tournamentId/tables/:roundId/:tableId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
-        try {
-            const roundId = Number(req.params.roundId);
-            const tableId = Number(req.params.tableId);
-            if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
-                throw (0, httpError_1.badRequest)("roundId and tableId must be positive integers");
-            }
-            const patch = parseTablePatch(req.body);
-            await (0, tableManagerService_1.updateTable)({
-                tournamentId: req.params.tournamentId,
-                roundId,
-                tableId,
-                patch,
-            });
-            res.status(200).json({ ok: true });
-        }
-        catch (e) {
-            next(e);
-        }
-    });
-    router.put("/:tournamentId/tables/:roundId/:tableId/hands/:handId", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
-        try {
-            const roundId = Number(req.params.roundId);
-            const tableId = Number(req.params.tableId);
-            const handId = Number(req.params.handId);
-            if (!Number.isInteger(roundId) || roundId <= 0
-                || !Number.isInteger(tableId) || tableId <= 0
-                || !Number.isInteger(handId) || handId <= 0) {
-                throw (0, httpError_1.badRequest)("roundId, tableId and handId must be positive integers");
-            }
-            const patch = parseHandPatch(req.body);
-            await (0, tableManagerService_1.updateHand)({
-                tournamentId: req.params.tournamentId,
-                roundId,
-                tableId,
-                handId,
-                patch,
-            });
-            res.status(200).json({ ok: true });
-        }
-        catch (e) {
-            next(e);
-        }
-    });
-    router.post("/:tournamentId/tables/:roundId/:tableId/reset", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+    router.post("/:tournamentId/tables/:roundId/:tableId/reset", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
             const roundId = Number(req.params.roundId);
             const tableId = Number(req.params.tableId);
@@ -721,6 +624,7 @@ function tournamentsRouter() {
                 tournamentId: req.params.tournamentId,
                 roundId,
                 tableId,
+                actor: (0, changeLog_1.actorFromToken)(res.locals.auth),
             });
             res.status(200).json({ ok: true });
         }

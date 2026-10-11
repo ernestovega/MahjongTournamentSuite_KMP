@@ -103,7 +103,8 @@ Membership is stored at:
 - `tournaments/{tournamentId}/players/{playerId}`
 - `tournaments/{tournamentId}/teams/{teamId}`
 - `tournaments/{tournamentId}/tables/{tableKey}` (tableKey: `{roundId}_{tableId}`)
-- `tournaments/{tournamentId}/tables/{tableKey}/hands/{handId}` with hand fields including `isChickenHand` and `isDone`
+- `tournaments/{tournamentId}/tables/{tableKey}/hands/{handId}` with hand fields including `isChickenHand` and `isDone`. A new tournament stores the 16 hands of each table at creation.
+- `tournaments/{tournamentId}/changes/{changeId}` is the change log. It has one entry for each table save or reset.
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
 Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive. Legacy documents with only `eventDate` use that value for both dates. Older documents without dates use their creation date as a fallback.
@@ -119,11 +120,11 @@ npm run seed:countries
 
 ## Refresh strategy (client)
 
-No background polling for now.
+The table editor checks the server for changes while it is open. See [Multi-editor sync](multi-editor-sync.md).
 
-- Load when a screen opens
-- Reload after any write
-- Manual refresh button
+- Load when a screen opens. A cached copy is used for 10 seconds. After that, one manifest request decides if a reload is needed.
+- A save, a reset or a conflict marks the cached copies old.
+- The table editor polls the manifest. Other screens do not poll.
 
 ## Bootstrap admin
 
