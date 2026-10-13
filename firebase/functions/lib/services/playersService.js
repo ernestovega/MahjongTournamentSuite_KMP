@@ -1,8 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.EMA_PLAYER_REGISTRY_COLLECTION = void 0;
+exports.toPlayer = toPlayer;
 exports.validateEmaId = validateEmaId;
 exports.listPlayers = listPlayers;
+exports.listPlayersOfTournaments = listPlayersOfTournaments;
 exports.createPlayer = createPlayer;
 exports.updatePlayer = updatePlayer;
 exports.updatePlayerPhoto = updatePlayerPhoto;
@@ -47,6 +49,21 @@ async function listPlayers() {
         .sort((left, right) => left.lastName.localeCompare(right.lastName)
         || left.firstName.localeCompare(right.firstName)
         || left.emaId.localeCompare(right.emaId));
+}
+/** Registry players who play in the given tournaments. Players see only the people they play with. */
+async function listPlayersOfTournaments(tournamentIds) {
+    const slots = await Promise.all(tournamentIds.map((id) => firebase_1.db.collection(`tournaments/${id}/players`).get()));
+    const emaIds = new Set();
+    slots.forEach((snapshot) => snapshot.docs.forEach((doc) => {
+        const emaId = doc.get("assignedEmaId");
+        if (typeof emaId === "string" && emaId.length > 0)
+            emaIds.add(emaId);
+    }));
+    if (emaIds.size === 0)
+        return [];
+    const docs = await firebase_1.db.getAll(...[...emaIds].map((emaId) => firebase_1.db.collection(exports.EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId)));
+    return docs.filter((doc) => doc.exists).map((doc) => toPlayer(doc.id, doc.data() ?? {}))
+        .sort((left, right) => left.lastName.localeCompare(right.lastName) || left.emaId.localeCompare(right.emaId));
 }
 async function createPlayer(params) {
     const ref = firebase_1.db.collection(exports.EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId);

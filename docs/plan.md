@@ -26,7 +26,7 @@ _Last updated: 2026-09-20_
 - Clean architecture modules:
   - `domain`: models + repository contracts (no platform/framework dependencies)
   - `data`: Ktor backend client + repository implementations
-  - `composeApp`: UI + navigation + DI bootstrap
+  - `adminApp`: UI + navigation + DI bootstrap
   - `androidApp`: Android entrypoint only
 - **No Firebase SDK usage in the client**.
 - All backend calls go through a single Ktor-based client implementation.
@@ -112,7 +112,7 @@ Rules + docs:
 ## UI
 
 - Admin UI screens are **not implemented yet**.
-- `composeApp` still shows the starter “greeting” sample.
+- `adminApp` still shows the starter “greeting” sample.
 
 ---
 

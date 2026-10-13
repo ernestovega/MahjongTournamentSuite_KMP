@@ -2,6 +2,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { conflict, notFound } from "../api/httpError";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
+import { linkKnownAccountToSlot } from "./playerAccountsService";
 import {
   calculateTableCompletionStatus,
   hasDuplicateEmaAssignments,
@@ -16,6 +17,14 @@ import {
   tournamentVersionUpdate,
 } from "./dataVersionsService";
 
+/** The time of the last email to the player: the invitation, or the registration notice for a linked account. */
+function contactedAtOf(slot: FirebaseFirestore.DocumentSnapshot): string | null {
+  const value = slot.get("invitationStatus") === "INVITED"
+    ? slot.get("invitedAt")
+    : slot.get("notifiedAt") ?? slot.get("invitedAt");
+  return value && typeof value.toDate === "function" ? (value.toDate() as Date).toISOString() : null;
+}
+
 export type TournamentPlayer = {
   id: number;
   name: string;
@@ -23,6 +32,11 @@ export type TournamentPlayer = {
   country: string;
   assignedEmaId: string | null;
   nonMember: NonMemberPlayer | null;
+  accountUid: string | null;
+  invitationStatus: "NONE" | "INVITED" | "ACCEPTED";
+  /** When the last invitation or registration email was sent. Null when no email was sent yet. */
+  contactedAt: string | null;
+  invitedEmail: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -93,6 +107,11 @@ export async function listTournamentPlayers(tournamentId: string): Promise<Tourn
       country: String(d.get("country") ?? ""),
       assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
       nonMember: readNonMember(d.get("nonMember")),
+      accountUid: typeof d.get("accountUid") === "string" ? d.get("accountUid") : null,
+      invitationStatus: (d.get("invitationStatus") === "ACCEPTED" ? "ACCEPTED"
+        : d.get("invitationStatus") === "INVITED" ? "INVITED" : "NONE") as TournamentPlayer["invitationStatus"],
+      contactedAt: contactedAtOf(d),
+      invitedEmail: typeof d.get("invitedEmail") === "string" ? d.get("invitedEmail") : null,
       createdAt: timestampToIso(d.get("createdAt")),
       updatedAt: timestampToIso(d.get("updatedAt")),
     }))
@@ -323,6 +342,14 @@ export async function assignTournamentPlayer(params: {
       }
     }
 
+    // A new EMA id on a slot ends its invitation and account link.
+    const accountUid = typeof player.get("accountUid") === "string" ? String(player.get("accountUid")) : null;
+    const hadInvitation = player.get("invitationStatus") === "INVITED" || accountUid != null;
+    const pendingInvitations = previousEmaId !== params.emaId && hadInvitation
+      ? await transaction.get(db.collection(`tournaments/${params.tournamentId}/playerInvitations`)
+        .where("playerId", "==", params.playerId))
+      : null;
+
     let assignedCountry = params.nonMember?.country ?? "";
     if (params.emaId != null) {
       const registryPlayer = await transaction.get(db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId));
@@ -339,11 +366,30 @@ export async function assignTournamentPlayer(params: {
         updatedAt: FieldValue.serverTimestamp(),
       });
     }
+    if (pendingInvitations != null) {
+      pendingInvitations.docs.forEach((doc) => {
+        if (doc.get("status") === "PENDING" || doc.get("status") === "ACCEPTED") {
+          transaction.update(doc.ref, { status: "REVOKED", updatedAt: FieldValue.serverTimestamp() });
+        }
+      });
+      if (accountUid != null) {
+        transaction.delete(db.doc(`users/${accountUid}/playerTournaments/${params.tournamentId}`));
+      }
+    }
     transaction.update(playerRef, {
       assignedEmaId: params.emaId,
       nonMember: params.nonMember,
       assignedCountry,
       updatedAt: FieldValue.serverTimestamp(),
+      ...(pendingInvitations != null
+        ? {
+          invitationStatus: "NONE",
+          accountUid: FieldValue.delete(),
+          invitedEmail: FieldValue.delete(),
+          invitedAt: FieldValue.delete(),
+          notifiedAt: FieldValue.delete(),
+        }
+        : {}),
     });
     transaction.update(tournamentRef, tournamentVersionUpdate("players"));
     transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
@@ -353,6 +399,8 @@ export async function assignTournamentPlayer(params: {
     bumpTournamentDataVersion(params.tournamentId, "players"),
     bumpGlobalDataVersion("tournaments"),
   ]);
+  // An account that already owns this EMA id sees the tournament at once. No email is sent here.
+  if (params.emaId != null) await linkKnownAccountToSlot(params.tournamentId, params.playerId);
 }
 
 export async function listTournamentRounds(tournamentId: string): Promise<TournamentRound[]> {
@@ -393,7 +441,7 @@ export async function listTournamentTables(
         tableId: Number(d.get("tableId")),
         playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
         isCompleted: Boolean(d.get("isCompleted") ?? false),
-        useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? true),
+        useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? false),
         usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
         hasProgress: storedHasProgress,
         hasValidManualTotals: storedHasValidManualTotals,
@@ -444,7 +492,7 @@ export async function listTournamentTables(
       d.get("manualPlayerWestPoints") || d.get("playerWestPoints"),
       d.get("manualPlayerNorthPoints") || d.get("playerNorthPoints"),
     ]);
-    const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? true);
+    const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? false);
     const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
 
     const hasValidManualTotals = useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints;

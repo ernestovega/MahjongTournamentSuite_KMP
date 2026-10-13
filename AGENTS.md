@@ -35,7 +35,7 @@ The project uses a simple Clean Architecture split:
   - platform-specific infrastructure
   - depends on `domain`
 
-- `composeApp`
+- `adminApp`
   - presentation layer
   - Compose UI
   - navigation
@@ -82,13 +82,13 @@ Build Android:
 Run desktop:
 
 ```bash
-./gradlew :composeApp:run
+./gradlew :adminApp:run
 ```
 
 Run web (Wasm):
 
 ```bash
-./gradlew :composeApp:wasmJsBrowserDevelopmentRun
+./gradlew :adminApp:wasmJsBrowserDevelopmentRun
 ```
 
 Run tests:
@@ -109,11 +109,11 @@ Treat those as tooling noise unless a specific failure appears.
 
 ## Editing Guidance
 
-- Preserve the `domain` -> `data` -> `composeApp` direction.
+- Preserve the `domain` -> `data` -> `adminApp` direction.
 - Avoid putting networking, logging, or platform checks in `domain`.
 - Avoid leaking Ktor/Firebase/Android/Compose types into `domain`.
 - Prefer plain Koin DSL wiring unless there is a strong reason to introduce compiler/codegen tooling.
-- Keep Compose navigation and presentation concerns in `composeApp`.
+- Keep Compose navigation and presentation concerns in `adminApp`.
 - Keep `androidApp` thin.
 
 ## Testing Guidance

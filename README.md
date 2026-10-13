@@ -11,7 +11,7 @@ Kotlin Multiplatform project targeting:
 - [`androidApp`](./androidApp)  
   Android application entry point and Android resources.
 
-- [`composeApp`](./composeApp)  
+- [`adminApp`](./adminApp)  
   Presentation layer. Compose UI, navigation, previews, and app bootstrap.
 
 - [`domain`](./domain)  
@@ -52,13 +52,13 @@ Run from Android Studio using the `androidApp` configuration on an emulator/devi
 ### Desktop
 
 ```bash
-./gradlew :composeApp:run
+./gradlew :adminApp:run
 ```
 
 ### Web (Wasm)
 
 ```bash
-./gradlew :composeApp:wasmJsBrowserDevelopmentRun
+./gradlew :adminApp:wasmJsBrowserDevelopmentRun
 ```
 
 ## Tests

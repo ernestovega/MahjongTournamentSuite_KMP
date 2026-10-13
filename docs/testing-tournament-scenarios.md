@@ -21,7 +21,7 @@ La generación real usa una semilla aleatoria nueva en cada ejecución.
 Desde la raíz del proyecto:
 
 ```bash
-./gradlew :domain:allTests :data:allTests :composeApp:allTests
+./gradlew :domain:allTests :data:allTests :adminApp:allTests
 ```
 
 Para las reglas y servicios de Firebase:

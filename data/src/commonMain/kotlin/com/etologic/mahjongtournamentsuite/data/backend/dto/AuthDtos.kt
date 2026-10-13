@@ -6,8 +6,6 @@ import kotlinx.serialization.Serializable
 data class SignInRequestDto(
     val email: String,
     val password: String,
-    // Kept for compatibility with functions deployed before the email-only API.
-    val identifier: String? = null,
 )
 
 @Serializable
@@ -38,4 +36,6 @@ data class UserProfileDto(
     val uid: String,
     val email: String,
     val alias: String = "",
+    val emaId: String? = null,
+    val roles: List<GlobalUserRoleDto> = emptyList(),
 )

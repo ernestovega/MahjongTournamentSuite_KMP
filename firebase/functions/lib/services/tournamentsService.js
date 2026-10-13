@@ -4,6 +4,7 @@ exports.createTournament = createTournament;
 exports.listAllTournaments = listAllTournaments;
 exports.renameTournament = renameTournament;
 exports.updateTournamentSettings = updateTournamentSettings;
+exports.listTournamentsForPlayer = listTournamentsForPlayer;
 exports.listTournamentsForUser = listTournamentsForUser;
 exports.deleteTournamentResources = deleteTournamentResources;
 exports.deleteTournament = deleteTournament;
@@ -206,7 +207,7 @@ async function createTournament(params) {
             manualPlayerWestPoints: "",
             manualPlayerNorthPoints: "",
             isCompleted: Boolean(table.isCompleted ?? false),
-            useTotalsOnly: Boolean(table.useTotalsOnly ?? true),
+            useTotalsOnly: Boolean(table.useTotalsOnly ?? false),
             usePointsCalculation: true,
             hasProgress: Boolean(table.isCompleted ?? false),
             hasValidManualTotals: false,
@@ -405,6 +406,14 @@ async function updateTournamentSettings(params) {
 }
 function isDocRef(value) {
     return value != null;
+}
+/** Tournaments where the player account is registered through an accepted invitation. */
+async function listTournamentsForPlayer(uid) {
+    const registrations = await firebase_1.db.collection(`users/${uid}/playerTournaments`).get();
+    if (registrations.empty)
+        return [];
+    const snaps = await firebase_1.db.getAll(...registrations.docs.map((doc) => firebase_1.db.doc(`tournaments/${doc.id}`)));
+    return Promise.all(snaps.filter((snap) => snap.exists).map((snap) => mapTournamentDoc(snap)));
 }
 async function listTournamentsForUser(uid) {
     const memberSnaps = await firebase_1.db.collectionGroup("members").where("uid", "==", uid).get();

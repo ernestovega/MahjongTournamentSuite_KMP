@@ -110,6 +110,7 @@ async function main(): Promise<void> {
   let testAdmin: UserRecord;
   let editorOne: UserRecord;
   let editorTwo: UserRecord;
+  let playerOne: UserRecord;
   let tournamentId: string | null = null;
 
   try {
@@ -130,6 +131,7 @@ async function main(): Promise<void> {
       displayName: "Role Test Editor One",
       emailVerified: true,
     });
+    await auth.setCustomUserClaims(editorOne.uid, { editor: true });
     temporaryUsers.push(editorOne);
     editorTwo = await auth.createUser({
       email: `role-test-editor-two-${timestamp}@example.invalid`,
@@ -137,7 +139,17 @@ async function main(): Promise<void> {
       displayName: "Role Test Editor Two",
       emailVerified: true,
     });
+    await auth.setCustomUserClaims(editorTwo.uid, { editor: true });
     temporaryUsers.push(editorTwo);
+    const playerOnePassword = randomBytes(24).toString("base64url");
+    playerOne = await auth.createUser({
+      email: `role-test-player-one-${timestamp}@example.invalid`,
+      password: playerOnePassword,
+      displayName: "Role Test Player One",
+      emailVerified: true,
+    });
+    await auth.setCustomUserClaims(playerOne.uid, { player: true });
+    temporaryUsers.push(playerOne);
 
     for (const user of temporaryUsers) {
       await db.doc(`users/${user.uid}`).set({
@@ -151,9 +163,10 @@ async function main(): Promise<void> {
       });
     }
 
-    const [adminToken, editorOneToken] = await Promise.all([
+    const [adminToken, editorOneToken, playerToken] = await Promise.all([
       idTokenFor(testAdmin.email as string, testAdminPassword, options),
       idTokenFor(editorOne.email as string, editorOnePassword, options),
+      idTokenFor(playerOne.email as string, playerOnePassword, options),
     ]);
 
     const adminWhoAmI = await apiRequest(options, adminToken, "/admin/whoami");
@@ -168,6 +181,37 @@ async function main(): Promise<void> {
     assertCondition(
       (editorWhoAmI.body as { role?: string }).role === "EDITOR",
       "EDITOR whoami returned the wrong role",
+    );
+
+    for (const path of ["/admin/users", "/admin/users/lookup?identifier=a@b.c"]) {
+      expectStatus(await apiRequest(options, playerToken, path), 403, `PLAYER is refused on GET ${path}`);
+    }
+    // Global revisions and countries hold no private data. Any signed-in account may read them.
+    for (const path of ["/sync/manifest", "/countries"]) {
+      expectStatus(await apiRequest(options, playerToken, path), 200, `PLAYER may read GET ${path}`);
+    }
+    // These lists are scoped to the tournaments of the player. A new player has none.
+    const playerTournaments = await apiRequest(options, playerToken, "/tournaments");
+    expectStatus(playerTournaments, 200, "PLAYER lists own tournaments");
+    assertCondition(
+      ((playerTournaments.body as { tournaments?: unknown[] }).tournaments ?? []).length === 0,
+      "PLAYER without registrations must see no tournaments",
+    );
+    const playerRegistry = await apiRequest(options, playerToken, "/ema-player-registry");
+    expectStatus(playerRegistry, 200, "PLAYER lists own registry scope");
+    assertCondition(
+      ((playerRegistry.body as { players?: unknown[] }).players ?? []).length === 0,
+      "PLAYER without registrations must see no registry players",
+    );
+    expectStatus(
+      await apiRequest(options, playerToken, "/admin/users", "POST", {
+        email: `forbidden-editor-${timestamp}@example.invalid`,
+        alias: "Forbidden Editor",
+        role: "EDITOR",
+        tournamentAssignments: [],
+      }),
+      403,
+      "PLAYER cannot create an EDITOR",
     );
 
     const adminTournaments = await apiRequest(options, adminToken, "/tournaments");

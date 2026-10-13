@@ -1,6 +1,6 @@
 # Twemoji
 
-These images in `composeApp/src/commonMain/composeResources/drawable/` come from Twemoji:
+These images in `ui/src/commonMain/composeResources/drawable/` come from Twemoji:
 
 - `flag_xx.svg`: country flags
 - `icon_chicken.svg`, `icon_trophy.svg`: chicken and trophy

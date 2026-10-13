@@ -39,7 +39,7 @@ const fullHands = Array.from({ length: 16 }, (_, index) => (0, tableManagerServi
     strict_1.default.deepEqual(table.playerIds, [1, 2, 3, 4]);
     strict_1.default.equal(table.version, 5);
     strict_1.default.equal(table.playerEastId, "");
-    strict_1.default.equal(table.useTotalsOnly, true);
+    strict_1.default.equal(table.useTotalsOnly, false);
     strict_1.default.equal(table.usePointsCalculation, true);
     strict_1.default.equal(table.isCompleted, false);
 });

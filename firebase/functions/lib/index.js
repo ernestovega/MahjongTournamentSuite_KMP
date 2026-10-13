@@ -7,6 +7,6 @@ const config_1 = require("./config");
 const app = (0, app_1.buildApp)();
 exports.api = (0, https_1.onRequest)({
     region: "europe-west1",
-    secrets: [config_1.ID_TOOLKIT_API_KEY, config_1.BOOTSTRAP_KEY],
+    secrets: [config_1.ID_TOOLKIT_API_KEY, config_1.BOOTSTRAP_KEY, config_1.MAIL_SMTP_URI],
 }, app);
 //# sourceMappingURL=index.js.map

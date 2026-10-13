@@ -2,14 +2,23 @@ import { NextFunction, Request, Response, Router } from "express";
 
 import { auth } from "../../firebase";
 import { requireAuth } from "../middleware/requireAuth";
+import { requireEditor } from "../middleware/requireEditor";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
+import { requireTournamentReader } from "../middleware/requireTournamentReader";
+import {
+  listInvitations,
+  runAccountAction,
+  saveContactEmails,
+  type AccountAction,
+} from "../../services/playerAccountsService";
 import { badRequest } from "../httpError";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import {
   createTournament,
   deleteTournament,
   listAllTournaments,
+  listTournamentsForPlayer,
   listTournamentsForUser,
   renameTournament,
   updateTournamentSettings,
@@ -45,7 +54,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/sync/manifest",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         res.setHeader("Cache-Control", "no-store");
@@ -56,12 +65,21 @@ export function tournamentsRouter(): Router {
     },
   );
 
+  // Admins see every tournament. Editors see assigned ones. Players see the ones where they are registered.
   router.get("/", requireAuth, async (_req, res, next) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean };
-      const tournaments = decoded.admin === true
-        ? await listAllTournaments()
-        : await listTournamentsForUser(decoded.uid);
+      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
+      let tournaments: Awaited<ReturnType<typeof listAllTournaments>>;
+      if (decoded.admin === true) {
+        tournaments = await listAllTournaments();
+      } else {
+        const lists = await Promise.all([
+          decoded.editor === true ? listTournamentsForUser(decoded.uid) : Promise.resolve([]),
+          decoded.player === true ? listTournamentsForPlayer(decoded.uid) : Promise.resolve([]),
+        ]);
+        const byId = new Map(lists.flat().map((tournament) => [tournament.id, tournament]));
+        tournaments = [...byId.values()];
+      }
       res.status(200).json({ tournaments });
     } catch (e) {
       next(e);
@@ -267,9 +285,9 @@ export function tournamentsRouter(): Router {
     }
   };
 
-  router.post("/id-card-proof", requireAuth, generateIdCardProof);
+  router.post("/id-card-proof", requireAuth, requireEditor, generateIdCardProof);
   // Keep the previous route working for already deployed web bundles.
-  router.post("/id-card-preview", requireAuth, generateIdCardProof);
+  router.post("/id-card-preview", requireAuth, requireEditor, generateIdCardProof);
 
   router.get("/:tournamentId/id-cards", requireAuth, requireTournamentEditor, async (req, res, next) => {
     try {
@@ -520,10 +538,19 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/players",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         const players = await listTournamentPlayers(req.params.tournamentId);
+        if (res.locals.reader === "PLAYER") {
+          // Players see who plays and where, never the accounts or emails of other players.
+          res.status(200).json({
+            players: players.map((player) => ({
+              ...player, accountUid: null, invitationStatus: "NONE", invitedEmail: null,
+            })),
+          });
+          return;
+        }
         res.status(200).json({ players });
       } catch (e) {
         next(e);
@@ -534,7 +561,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/teams",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         const teams = await listTournamentTeams(req.params.tournamentId);
@@ -600,7 +627,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/rounds",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         const rounds = await listTournamentRounds(req.params.tournamentId);
@@ -614,7 +641,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         const roundIdParam = req.query.roundId;
@@ -634,7 +661,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables-with-hands",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         const tables = await getAllTablesWithHands({ tournamentId: req.params.tournamentId });
@@ -648,7 +675,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/rounds/:roundId/tables-with-hands",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         const roundId = Number(req.params.roundId);
@@ -667,7 +694,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables/:roundId/:tableId",
     requireAuth,
-    requireTournamentEditor,
+    requireTournamentReader,
     async (req, res, next) => {
       try {
         const roundId = Number(req.params.roundId);
@@ -724,6 +751,67 @@ export function tournamentsRouter(): Router {
           tableId,
           actor: actorFromToken(res.locals.auth),
         });
+        res.status(200).json({ ok: true });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.get(
+    "/:tournamentId/player-invitations",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        res.status(200).json({ invitations: await listInvitations(req.params.tournamentId) });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  // Send, resend and revoke work for one player or for many. The body always lists the players.
+  for (const action of ["send", "resend", "revoke"] as AccountAction[]) {
+    router.post(
+      `/:tournamentId/player-accounts/${action}`,
+      requireAuth,
+      requireTournamentEditor,
+      async (req, res, next) => {
+        try {
+          const raw = Array.isArray(req.body?.players) ? req.body.players as unknown[] : [];
+          const items = raw.map((entry) => {
+            const value = entry as { playerId?: unknown; email?: unknown };
+            const playerId = Number(value.playerId);
+            if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
+            return { playerId, email: typeof value.email === "string" ? value.email : undefined };
+          });
+          const actor = res.locals.auth as { uid: string };
+          const results = await runAccountAction({
+            tournamentId: req.params.tournamentId, action, items, invitedBy: actor.uid,
+          });
+          res.status(200).json({ results });
+        } catch (e) {
+          next(e);
+        }
+      },
+    );
+  }
+
+  router.put(
+    "/:tournamentId/player-accounts/emails",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const raw = Array.isArray(req.body?.players) ? req.body.players as unknown[] : [];
+        const items = raw.map((entry) => {
+          const value = entry as { playerId?: unknown; email?: unknown };
+          const playerId = Number(value.playerId);
+          if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
+          return { playerId, email: String(value.email ?? "") };
+        });
+        await saveContactEmails({ tournamentId: req.params.tournamentId, items });
         res.status(200).json({ ok: true });
       } catch (e) {
         next(e);

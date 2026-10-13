@@ -1,16 +1,24 @@
 import { Router } from "express";
 
-import { badRequest } from "../httpError";
+import { badRequest, forbidden } from "../httpError";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
-import { createPlayer, listPlayers, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
+import { listPlayerTournamentIds } from "../../services/playerAccountsService";
+import { createPlayer, listPlayers, listPlayersOfTournaments, updatePlayer, updatePlayerPhoto, validateEmaId } from "../../services/playersService";
 
 export function playersRouter(): Router {
   const router = Router();
 
   router.get("/", requireAuth, async (_req, res, next) => {
     try {
-      res.status(200).json({ players: await listPlayers() });
+      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
+      if (decoded.admin === true || decoded.editor === true) {
+        res.status(200).json({ players: await listPlayers() });
+        return;
+      }
+      if (decoded.player !== true) throw forbidden("Editor or player required");
+      const tournamentIds = await listPlayerTournamentIds(decoded.uid);
+      res.status(200).json({ players: await listPlayersOfTournaments(tournamentIds) });
     } catch (error) {
       next(error);
     }

@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
@@ -46,7 +48,6 @@ class DefaultAuthRepository(
             SignInRequestDto(
                 email = email,
                 password = password,
-                identifier = email,
             ),
         )
 
@@ -127,11 +128,7 @@ class DefaultAuthRepository(
             },
             load = {
                 val me = withFreshToken { idToken -> backendApi.me(idToken = idToken) }
-                UserProfile(
-                    uid = me.uid,
-                    email = me.email,
-                    alias = me.alias,
-                )
+                me.toDomain()
             },
         )
     }.fold(
@@ -148,6 +145,15 @@ class DefaultAuthRepository(
 }
 
 private fun Throwable.toAppError(): AppError = toRepositoryAppError()
+
+/** The profile keeps the EMA ID. The player app finds the slots of the player with it. */
+internal fun UserProfileDto.toDomain(): UserProfile = UserProfile(
+    uid = uid,
+    email = email,
+    alias = alias,
+    emaId = emaId?.ifBlank { null },
+    roles = roles.map { GlobalUserRole.valueOf(it.name) }.toSet(),
+)
 
 private fun StoredAuthSession.toDomain(): AuthSession = AuthSession(
     uid = uid,

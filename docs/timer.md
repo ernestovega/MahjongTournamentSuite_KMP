@@ -68,8 +68,8 @@ The Timer stores its countdown state inside the screen.
 
 ## Main source files
 
-- `composeApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TimerScreen.kt`
-- `composeApp/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/StandaloneWindows.kt`
+- `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TimerScreen.kt`
+- `adminApp/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/StandaloneWindows.kt`
 - `androidApp/src/main/kotlin/com/etologic/mahjongtournamentsuite/TimerActivity.kt`
-- `composeApp/src/webMain/kotlin/com/etologic/mahjongtournamentsuite/main.kt`
-- Platform launch functions under `composeApp/src/*Main/kotlin/.../presentation/platform/ExternalScreens.*.kt`
+- `adminApp/src/webMain/kotlin/com/etologic/mahjongtournamentsuite/main.kt`
+- Platform launch functions under `adminApp/src/*Main/kotlin/.../presentation/platform/ExternalScreens.*.kt`

@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireAuthEmulator = requireAuthEmulator;
 exports.createAccount = createAccount;
+exports.signInTestAccount = signInTestAccount;
 exports.startServer = startServer;
 const node_crypto_1 = require("node:crypto");
 const node_http_1 = __importDefault(require("node:http"));
@@ -24,10 +25,23 @@ async function createAccount(params) {
     const email = `${(0, node_crypto_1.randomUUID)()}@example.test`;
     const user = await firebase_1.auth.createUser({ email, password: PASSWORD, emailVerified: true });
     await (0, usersService_1.createUserProfile)(user.uid, email, "Test");
-    await (0, usersService_1.setGlobalUserRole)(user.uid, params.role);
+    if (params.role === "PLAYER")
+        await firebase_1.auth.setCustomUserClaims(user.uid, { player: true });
+    else
+        await (0, usersService_1.setGlobalUserRole)(user.uid, params.role);
     for (const tournamentId of params.memberOf ?? [])
         await (0, membersService_1.upsertTournamentMember)({ tournamentId, uid: user.uid });
+    for (const tournamentId of params.playerOf ?? []) {
+        await firebase_1.db.doc(`users/${user.uid}/playerTournaments/${tournamentId}`).set({ playerId: 1, emaId: "00000001", tournamentId });
+    }
     // The token carries the claims, so sign in after they are set.
+    const token = await signInTestAccount(email);
+    if (params.disabled)
+        await firebase_1.auth.updateUser(user.uid, { disabled: true });
+    return { uid: user.uid, email, token };
+}
+/** Signs in a test account again, for example after its tokens were revoked. */
+async function signInTestAccount(email) {
     const response = await fetch(`http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=test`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -36,9 +50,7 @@ async function createAccount(params) {
     const body = await response.json();
     if (!body.idToken)
         throw new Error(`Sign-in failed: ${JSON.stringify(body)}`);
-    if (params.disabled)
-        await firebase_1.auth.updateUser(user.uid, { disabled: true });
-    return { uid: user.uid, email, token: body.idToken };
+    return body.idToken;
 }
 /** Runs the real Express app on a free port. */
 async function startServer() {

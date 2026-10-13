@@ -41,6 +41,9 @@ async function upsertTournamentMember(params) {
     if ((0, globalRole_1.getGlobalUserRole)(user) === "ADMIN") {
         throw (0, httpError_1.badRequest)("Admins already have access to every tournament");
     }
+    if ((0, globalRole_1.getGlobalUserRole)(user) === "PLAYER") {
+        throw (0, httpError_1.badRequest)("A player account cannot be assigned as an editor");
+    }
     const ref = firebase_1.db.doc(`tournaments/${params.tournamentId}/members/${params.uid}`);
     await ref.set({
         uid: params.uid,

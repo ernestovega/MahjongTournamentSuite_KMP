@@ -55,7 +55,7 @@ async function backfill() {
                 table.get("playerEastScore"), table.get("playerSouthScore"), table.get("playerWestScore"), table.get("playerNorthScore"),
                 table.get("playerEastPoints"), table.get("playerSouthPoints"), table.get("playerWestPoints"), table.get("playerNorthPoints"),
             ].some(hasText);
-            const useTotalsOnly = Boolean(table.get("useTotalsOnly") ?? true);
+            const useTotalsOnly = Boolean(table.get("useTotalsOnly") ?? false);
             const usePointsCalculation = Boolean(table.get("usePointsCalculation") ?? true);
             const validScores = (0, tournamentContentRules_1.hasFourValidScores)([
                 table.get("manualPlayerEastScore") || table.get("playerEastScore"),

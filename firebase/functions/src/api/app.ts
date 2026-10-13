@@ -5,6 +5,7 @@ import { errorHandler } from "./middleware/errorHandler";
 import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
 import { countriesRouter } from "./routes/countries.routes";
+import { playerRouter } from "./routes/player.routes";
 import { playersRouter } from "./routes/players.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
 import { syncRouter } from "./routes/sync.routes";
@@ -47,6 +48,7 @@ export function buildApp(): express.Express {
   app.use("/ema-player-registry", playersRouter());
   app.use("/admin", adminRouter());
   app.use("/sync", syncRouter());
+  app.use("/player", playerRouter());
   app.use("/tournaments", tournamentsRouter());
 
   app.use(errorHandler);

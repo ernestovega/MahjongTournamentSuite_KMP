@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.domain.model
 data class AdminStatus(
     val uid: String,
     val role: GlobalUserRole,
+    val roles: Set<GlobalUserRole> = setOf(role),
 ) {
     val isAdmin: Boolean get() = role == GlobalUserRole.ADMIN
     val canCreateTournaments: Boolean get() = isAdmin

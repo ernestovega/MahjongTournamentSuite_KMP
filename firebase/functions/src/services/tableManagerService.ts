@@ -85,7 +85,7 @@ export function tableStateFromData(data: Data): TableState {
     manualPlayerWestPoints: text("manualPlayerWestPoints"),
     manualPlayerNorthPoints: text("manualPlayerNorthPoints"),
     isCompleted: Boolean(data.isCompleted ?? false),
-    useTotalsOnly: Boolean(data.useTotalsOnly ?? true),
+    useTotalsOnly: Boolean(data.useTotalsOnly ?? false),
     usePointsCalculation: Boolean(data.usePointsCalculation ?? true),
     version: Number(data.version ?? 0),
   };
@@ -190,7 +190,7 @@ export function calculateTableSummary(table: Record<string, unknown>, hands: Arr
     "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",
   ].some((field) => String(hand[field] ?? "").trim().length > 0)
     || Boolean(hand.isChickenHand) || Boolean(hand.isDone));
-  const useTotalsOnly = Boolean(table.useTotalsOnly ?? true);
+  const useTotalsOnly = Boolean(table.useTotalsOnly ?? false);
   const usePointsCalculation = Boolean(table.usePointsCalculation ?? true);
   const validScores = hasFourValidScores([
     table.manualPlayerEastScore || table.playerEastScore,
@@ -237,7 +237,7 @@ function handRefsOf(tableRef: FirebaseFirestore.DocumentReference): FirebaseFire
   return Array.from({ length: HANDS_PER_TABLE }, (_, index) => tableRef.collection("hands").doc(String(index + 1)));
 }
 
-class StaleTableVersion extends Error {
+export class StaleTableVersion extends Error {
   constructor(
     readonly expectedVersion: number,
     readonly currentVersion: number,
@@ -251,7 +251,7 @@ function progressDelta(before: boolean, after: boolean): number {
   return Number(after) - Number(before);
 }
 
-export async function saveTableState(params: {
+export type SaveTableStateParams = {
   tournamentId: string;
   roundId: number;
   tableId: number;
@@ -259,103 +259,113 @@ export async function saveTableState(params: {
   tablePatch: Partial<Omit<TableState, "roundId" | "tableId" | "playerIds" | "version">>;
   handPatches: Array<{ handId: number; patch: Partial<Omit<TableHand, "handId">> }>;
   actor?: ChangeActor | null;
-}): Promise<{ table: TableState; hands: TableHand[] }> {
+};
+
+/**
+ * Runs a save inside a transaction that the caller owns. The caller must finish its own reads before it calls this,
+ * because this function writes. It throws [StaleTableVersion] when the expected version is old.
+ */
+export async function saveTableStateInTransaction(
+  transaction: FirebaseFirestore.Transaction,
+  params: SaveTableStateParams,
+): Promise<{ table: TableState; hands: TableHand[] }> {
   const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
   const tableRef = tournamentRef.collection("tables").doc(tableVersionKey(params.roundId, params.tableId));
+  const tableSnapshot = await transaction.get(tableRef);
+  if (!tableSnapshot.exists) throw notFound("Table not found");
+  const currentVersion = Number(tableSnapshot.get("version") ?? 0);
+  if (params.expectedVersion !== currentVersion) {
+    throw new StaleTableVersion(params.expectedVersion, currentVersion);
+  }
+  // The hands are read by document, not by query. A query locks a whole range, and then editors of
+  // different tables would wait for each other.
+  const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
+  if (handSnapshots.some((snapshot) => !snapshot.exists)) throw notFound("Hands not found");
+  const handsBefore = new Map<string, Data>(
+    handSnapshots.map((snapshot) => [snapshot.id, snapshot.data() ?? {}] as [string, Data]),
+  );
+  if (params.handPatches.some((item) => !handsBefore.has(String(item.handId)))) {
+    throw notFound("Hand not found");
+  }
 
-  try {
-    return await db.runTransaction(async (transaction) => {
-      const tableSnapshot = await transaction.get(tableRef);
-      if (!tableSnapshot.exists) throw notFound("Table not found");
-      const currentVersion = Number(tableSnapshot.get("version") ?? 0);
-      if (params.expectedVersion !== currentVersion) {
-        throw new StaleTableVersion(params.expectedVersion, currentVersion);
-      }
-      // The hands are read by document, not by query. A query locks a whole range, and then editors of
-      // different tables would wait for each other.
-      const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
-      if (handSnapshots.some((snapshot) => !snapshot.exists)) throw notFound("Hands not found");
-      const handsBefore = new Map<string, Data>(
-        handSnapshots.map((snapshot) => [snapshot.id, snapshot.data() ?? {}] as [string, Data]),
-      );
-      if (params.handPatches.some((item) => !handsBefore.has(String(item.handId)))) {
-        throw notFound("Hand not found");
-      }
+  const tableBefore = tableSnapshot.data() ?? {};
+  const mergedTable: Data = { ...tableBefore, ...params.tablePatch };
+  const handsAfter = new Map(handsBefore);
+  params.handPatches.forEach((item) => {
+    const key = String(item.handId);
+    handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
+  });
+  const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
+  const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
+  const wasComplete = Boolean(tableBefore.isCompleted);
+  const isComplete = Boolean(mergedTable.isCompleted);
 
-      const tableBefore = tableSnapshot.data() ?? {};
-      const mergedTable: Data = { ...tableBefore, ...params.tablePatch };
-      const handsAfter = new Map(handsBefore);
-      params.handPatches.forEach((item) => {
-        const key = String(item.handId);
-        handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
-      });
-      const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
-      const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
-      const wasComplete = Boolean(tableBefore.isCompleted);
-      const isComplete = Boolean(mergedTable.isCompleted);
-
-      // Only a table that becomes complete can finish the tournament. Other saves skip this query,
-      // so editors of different tables do not lock each other.
-      let tournamentIsComplete = false;
-      if (isComplete) {
-        const incompleteTables = await transaction.get(
-          tournamentRef.collection("tables").where("isCompleted", "==", false).limit(2),
-        );
-        tournamentIsComplete = isTournamentCompleteAfterTableSave({
-          currentTablePath: tableRef.path,
-          currentTableIsComplete: true,
-          incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
-        });
-      }
-
-      const nextVersion = currentVersion + 1;
-      const editedBy = params.actor == null
-        ? {}
-        : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: FieldValue.serverTimestamp() };
-      transaction.update(tableRef, {
-        ...params.tablePatch,
-        ...summary,
-        ...editedBy,
-        version: nextVersion,
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      params.handPatches.forEach((item) => {
-        transaction.update(tableRef.collection("hands").doc(String(item.handId)), {
-          ...item.patch,
-          updatedAt: FieldValue.serverTimestamp(),
-        });
-      });
-      const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
-      transaction.update(tournamentRef, {
-        isCompleted: tournamentIsComplete,
-        updatedAt: FieldValue.serverTimestamp(),
-        ...(startedChange === 0 ? {} : { tablesWithProgress: FieldValue.increment(startedChange) }),
-        ...tableVersionUpdate(params.roundId, params.tableId, nextVersion),
-      });
-      // The tournament list shows only whether the tournament is complete. That can change only when a table changes.
-      if (wasComplete !== isComplete) {
-        transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
-      }
-      transaction.set(tournamentRef.collection("changes").doc(), {
-        ...buildSaveChangeEntry({
-          roundId: params.roundId,
-          tableId: params.tableId,
-          version: nextVersion,
-          actor: params.actor ?? null,
-          tableBefore,
-          tablePatch: params.tablePatch,
-          handsBefore,
-          handPatches: params.handPatches,
-        }),
-        at: FieldValue.serverTimestamp(),
-      });
-
-      // The answer comes from the data that the transaction wrote, so the client needs no second read.
-      return {
-        table: tableStateFromData({ ...mergedTable, ...summary, version: nextVersion }),
-        hands: handsFromData([...handsAfter.values()]),
-      };
+  // Only a table that becomes complete can finish the tournament. Other saves skip this query,
+  // so editors of different tables do not lock each other.
+  let tournamentIsComplete = false;
+  if (isComplete) {
+    const incompleteTables = await transaction.get(
+      tournamentRef.collection("tables").where("isCompleted", "==", false).limit(2),
+    );
+    tournamentIsComplete = isTournamentCompleteAfterTableSave({
+      currentTablePath: tableRef.path,
+      currentTableIsComplete: true,
+      incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
     });
+  }
+
+  const nextVersion = currentVersion + 1;
+  const editedBy = params.actor == null
+    ? {}
+    : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: FieldValue.serverTimestamp() };
+  transaction.update(tableRef, {
+    ...params.tablePatch,
+    ...summary,
+    ...editedBy,
+    version: nextVersion,
+    updatedAt: FieldValue.serverTimestamp(),
+  });
+  params.handPatches.forEach((item) => {
+    transaction.update(tableRef.collection("hands").doc(String(item.handId)), {
+      ...item.patch,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+  const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
+  transaction.update(tournamentRef, {
+    isCompleted: tournamentIsComplete,
+    updatedAt: FieldValue.serverTimestamp(),
+    ...(startedChange === 0 ? {} : { tablesWithProgress: FieldValue.increment(startedChange) }),
+    ...tableVersionUpdate(params.roundId, params.tableId, nextVersion),
+  });
+  // The tournament list shows only whether the tournament is complete. That can change only when a table changes.
+  if (wasComplete !== isComplete) {
+    transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
+  }
+  transaction.set(tournamentRef.collection("changes").doc(), {
+    ...buildSaveChangeEntry({
+      roundId: params.roundId,
+      tableId: params.tableId,
+      version: nextVersion,
+      actor: params.actor ?? null,
+      tableBefore,
+      tablePatch: params.tablePatch,
+      handsBefore,
+      handPatches: params.handPatches,
+    }),
+    at: FieldValue.serverTimestamp(),
+  });
+
+  // The answer comes from the data that the transaction wrote, so the client needs no second read.
+  return {
+    table: tableStateFromData({ ...mergedTable, ...summary, version: nextVersion }),
+    hands: handsFromData([...handsAfter.values()]),
+  };
+}
+
+export async function saveTableState(params: SaveTableStateParams): Promise<{ table: TableState; hands: TableHand[] }> {
+  try {
+    return await db.runTransaction((transaction) => saveTableStateInTransaction(transaction, params));
   } catch (error) {
     if (error instanceof StaleTableVersion) {
       throw conflict("Table data changed on the server", {
@@ -390,7 +400,7 @@ const EMPTY_TABLE_FIELDS = {
   manualPlayerWestPoints: "",
   manualPlayerNorthPoints: "",
   isCompleted: false,
-  useTotalsOnly: true,
+  useTotalsOnly: false,
   usePointsCalculation: true,
   hasProgress: false,
   hasValidManualTotals: false,

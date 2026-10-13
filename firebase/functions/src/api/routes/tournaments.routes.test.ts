@@ -4,6 +4,7 @@ import test from "node:test";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
+import { requireTournamentReader } from "../middleware/requireTournamentReader";
 import { tournamentsRouter } from "./tournaments.routes";
 
 type Route = { method: string; path: string; handlers: unknown[] };
@@ -51,7 +52,10 @@ test("editors can read and save tables of their tournament but cannot reset them
   ];
   for (const [method, path] of editorRoutes) {
     const route = find(method, path);
-    assert.ok(route.handlers.includes(requireTournamentEditor), `${method} ${path} checks membership`);
+    assert.ok(
+      route.handlers.includes(requireTournamentEditor) || route.handlers.includes(requireTournamentReader),
+      `${method} ${path} checks membership`,
+    );
     assert.ok(!route.handlers.includes(requireAdmin), `${method} ${path} stays open to editors`);
   }
 });
@@ -62,8 +66,8 @@ test("every route with a tournament id checks that the user may work in that tou
   for (const route of routes().filter((item) => item.path.startsWith("/:tournamentId"))) {
     if (adminOnlyOrGlobal(route)) continue;
     assert.ok(
-      route.handlers.includes(requireTournamentEditor),
-      `${route.method} ${route.path} needs requireTournamentEditor or requireAdmin`,
+      route.handlers.includes(requireTournamentEditor) || route.handlers.includes(requireTournamentReader),
+      `${route.method} ${route.path} needs requireTournamentEditor, requireTournamentReader or requireAdmin`,
     );
   }
 });
@@ -79,3 +83,5 @@ test("tables can be written only through the versioned save", () => {
     ],
   );
 });
+
+

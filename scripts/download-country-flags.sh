@@ -8,8 +8,8 @@ readonly script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 readonly project_dir="$(cd "$script_dir/.." && pwd)"
 readonly version="v15.1.0"
 readonly base_url="https://raw.githubusercontent.com/jdecked/twemoji/$version"
-readonly flags_dir="$project_dir/composeApp/src/commonMain/composeResources/drawable"
-readonly source_file="$project_dir/composeApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/CountryFlagResources.kt"
+readonly flags_dir="$project_dir/ui/src/commonMain/composeResources/drawable"
+readonly source_file="$project_dir/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/CountryFlagResources.kt"
 readonly license_file="$project_dir/third_party/twemoji/LICENSE-GRAPHICS"
 readonly codes=(
   AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ
@@ -63,9 +63,9 @@ cp "$tmp_dir"/*.svg "$flags_dir"/
   echo 'package com.etologic.mahjongtournamentsuite.presentation.components'
   echo
   echo 'import org.jetbrains.compose.resources.DrawableResource'
-  echo 'import mahjongtournamentsuite.composeapp.generated.resources.Res'
+  echo 'import mahjongtournamentsuite.ui.generated.resources.Res'
   for code in "${codes[@]}"; do
-    echo "import mahjongtournamentsuite.composeapp.generated.resources.flag_$(lowercase "$code")"
+    echo "import mahjongtournamentsuite.ui.generated.resources.flag_$(lowercase "$code")"
   done
   echo
   echo 'internal fun flagResourceFor(code: String): DrawableResource? = when (code) {'

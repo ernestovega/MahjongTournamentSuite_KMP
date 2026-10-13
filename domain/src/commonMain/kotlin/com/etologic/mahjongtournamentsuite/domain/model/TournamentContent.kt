@@ -9,15 +9,50 @@ data class TournamentPlayer(
     val assignedEmaId: String? = null,
     /** Tournament-only participant data when this slot is assigned to a non-member. */
     val nonMember: NonMemberPlayer? = null,
+    /** Player account linked to this slot after the player accepted the invitation. */
+    val accountUid: String? = null,
+    val invitationStatus: InvitationStatus = InvitationStatus.NONE,
+    val invitedEmail: String? = null,
+    /** When the last invitation or registration email was sent to the player. Null when none was sent. */
+    val contactedAt: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
+
+enum class InvitationStatus {
+    NONE,
+    INVITED,
+    ACCEPTED,
+}
 
 data class NonMemberPlayer(
     val firstName: String,
     val lastName: String,
     val country: String,
 )
+
+/** Where a player stands in the contact process. Editors filter and run bulk actions with it. */
+enum class PlayerContactState {
+    /** The slot has no EMA id, so nobody can be contacted. */
+    NO_EMA_ID,
+    /** No email was sent yet and no account is linked. */
+    NOT_INVITED,
+    /** An account is linked, but no email was sent yet. */
+    LINKED,
+    /** An invitation was sent and the player did not accept yet. */
+    INVITED,
+    /** The player has an account and an email was sent, or the player accepted. */
+    CONTACTED,
+}
+
+val TournamentPlayer.contactState: PlayerContactState
+    get() = when {
+        assignedEmaId.isNullOrBlank() -> PlayerContactState.NO_EMA_ID
+        invitationStatus == InvitationStatus.INVITED -> PlayerContactState.INVITED
+        accountUid != null && contactedAt != null -> PlayerContactState.CONTACTED
+        accountUid != null -> PlayerContactState.LINKED
+        else -> PlayerContactState.NOT_INVITED
+    }
 
 val TournamentPlayer.isAssigned: Boolean
     get() = !assignedEmaId.isNullOrBlank() || nonMember != null

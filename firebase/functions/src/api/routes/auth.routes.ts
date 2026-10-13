@@ -3,6 +3,8 @@ import { Router } from "express";
 import { badRequest } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword } from "../../services/firebaseAuthRest";
+import { auth } from "../../firebase";
+import { getGlobalUserRoles } from "../../models/globalRole";
 import { getUserProfile } from "../../services/usersService";
 
 export function authRouter(): Router {
@@ -10,8 +12,7 @@ export function authRouter(): Router {
 
   router.post("/signIn", async (req, res, next) => {
     try {
-      // Accept identifier during the rollout of the email-only API.
-      const email = String(req.body?.email ?? req.body?.identifier ?? "").trim();
+      const email = String(req.body?.email ?? "").trim();
       const password = String(req.body?.password ?? "");
 
       if (!email || !password) {
@@ -61,8 +62,8 @@ export function authRouter(): Router {
   router.get("/me", requireAuth, async (_req, res, next) => {
     try {
       const decoded = res.locals.auth as { uid: string };
-      const profile = await getUserProfile(decoded.uid);
-      res.status(200).json(profile);
+      const [profile, user] = await Promise.all([getUserProfile(decoded.uid), auth.getUser(decoded.uid)]);
+      res.status(200).json({ ...profile, roles: getGlobalUserRoles(user) });
     } catch (e) {
       next(e);
     }

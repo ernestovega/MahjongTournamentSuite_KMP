@@ -40,6 +40,9 @@ const strict_1 = __importDefault(require("node:assert/strict"));
 const node_test_1 = require("node:test");
 const firebase_1 = require("../firebase");
 const requireAdmin_1 = require("./middleware/requireAdmin");
+const requireEditor_1 = require("./middleware/requireEditor");
+const requireRegisteredPlayer_1 = require("./middleware/requireRegisteredPlayer");
+const requireTournamentReader_1 = require("./middleware/requireTournamentReader");
 const requireAuth_1 = require("./middleware/requireAuth");
 const requireTournamentEditor_1 = require("./middleware/requireTournamentEditor");
 const app_1 = require("./app");
@@ -52,18 +55,19 @@ const MATRIX = [
     ["POST", "/auth/passwordReset", "PUBLIC"],
     ["POST", "/auth/refresh", "PUBLIC"],
     ["POST", "/admin/bootstrapAdmin", "PUBLIC"],
+    ["POST", "/player/invitations/accept", "PUBLIC"],
     ["GET", "/auth/me", "SIGNED_IN"],
+    ["GET", "/admin/whoami", "SIGNED_IN"],
     ["GET", "/countries/", "SIGNED_IN"],
     ["GET", "/ema-player-registry/", "SIGNED_IN"],
-    ["GET", "/admin/whoami", "SIGNED_IN"],
-    ["GET", "/admin/users", "SIGNED_IN"],
-    ["POST", "/admin/users", "SIGNED_IN"],
-    ["PUT", "/admin/users/:uid", "SIGNED_IN"],
-    ["GET", "/admin/users/lookup", "SIGNED_IN"],
+    ["GET", "/admin/users", "EDITOR"],
+    ["POST", "/admin/users", "EDITOR"],
+    ["PUT", "/admin/users/:uid", "EDITOR"],
+    ["GET", "/admin/users/lookup", "EDITOR"],
     ["GET", "/sync/manifest", "SIGNED_IN"],
     ["GET", "/tournaments/", "SIGNED_IN"],
-    ["POST", "/tournaments/id-card-proof", "SIGNED_IN"],
-    ["POST", "/tournaments/id-card-preview", "SIGNED_IN"],
+    ["POST", "/tournaments/id-card-proof", "EDITOR"],
+    ["POST", "/tournaments/id-card-preview", "EDITOR"],
     ["POST", "/ema-player-registry/", "ADMIN"],
     ["PUT", "/ema-player-registry/:emaId", "ADMIN"],
     ["PUT", "/ema-player-registry/:emaId/photo", "ADMIN"],
@@ -73,7 +77,7 @@ const MATRIX = [
     ["DELETE", "/tournaments/:tournamentId", "ADMIN"],
     ["PUT", "/tournaments/:tournamentId", "ADMIN"],
     ["POST", "/tournaments/:tournamentId/tables/:roundId/:tableId/reset", "ADMIN"],
-    ["GET", "/tournaments/:tournamentId/sync/manifest", "MEMBER"],
+    ["GET", "/tournaments/:tournamentId/sync/manifest", "READER"],
     ["GET", "/tournaments/:tournamentId/id-cards", "MEMBER"],
     ["GET", "/tournaments/:tournamentId/id-list", "MEMBER"],
     ["POST", "/tournaments/:tournamentId/ema-report", "MEMBER"],
@@ -81,15 +85,23 @@ const MATRIX = [
     ["GET", "/tournaments/:tournamentId/members", "MEMBER"],
     ["PUT", "/tournaments/:tournamentId/members/:uid", "MEMBER"],
     ["DELETE", "/tournaments/:tournamentId/members/:uid", "MEMBER"],
-    ["GET", "/tournaments/:tournamentId/players", "MEMBER"],
+    ["GET", "/tournaments/:tournamentId/players", "READER"],
     ["PUT", "/tournaments/:tournamentId/players/:playerId", "MEMBER"],
-    ["GET", "/tournaments/:tournamentId/teams", "MEMBER"],
+    ["GET", "/tournaments/:tournamentId/player-invitations", "MEMBER"],
+    ["POST", "/tournaments/:tournamentId/player-accounts/send", "MEMBER"],
+    ["POST", "/tournaments/:tournamentId/player-accounts/resend", "MEMBER"],
+    ["POST", "/tournaments/:tournamentId/player-accounts/revoke", "MEMBER"],
+    ["PUT", "/tournaments/:tournamentId/player-accounts/emails", "MEMBER"],
+    ["GET", "/tournaments/:tournamentId/teams", "READER"],
     ["PUT", "/tournaments/:tournamentId/teams/:teamId", "MEMBER"],
-    ["GET", "/tournaments/:tournamentId/rounds", "MEMBER"],
-    ["GET", "/tournaments/:tournamentId/tables", "MEMBER"],
-    ["GET", "/tournaments/:tournamentId/tables-with-hands", "MEMBER"],
-    ["GET", "/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", "MEMBER"],
-    ["GET", "/tournaments/:tournamentId/tables/:roundId/:tableId", "MEMBER"],
+    ["GET", "/tournaments/:tournamentId/rounds", "READER"],
+    ["GET", "/tournaments/:tournamentId/tables", "READER"],
+    ["GET", "/tournaments/:tournamentId/tables-with-hands", "READER"],
+    ["GET", "/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", "READER"],
+    ["GET", "/tournaments/:tournamentId/tables/:roundId/:tableId", "READER"],
+    ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/hands/preview", "PLAYER"],
+    ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/hands", "PLAYER"],
+    ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/seats", "PLAYER"],
     ["PUT", "/tournaments/:tournamentId/tables/:roundId/:tableId/state", "MEMBER"],
     ["GET", "/tournaments/:tournamentId", "MEMBER"],
 ];
@@ -100,9 +112,12 @@ function actualGuards() {
         if (layer.route) {
             const handlers = layer.route.stack.map((item) => item.handle);
             const access = handlers.includes(requireAdmin_1.requireAdmin) ? "ADMIN"
-                : handlers.includes(requireTournamentEditor_1.requireTournamentEditor) ? "MEMBER"
-                    : handlers.includes(requireAuth_1.requireAuth) ? "SIGNED_IN"
-                        : "PUBLIC";
+                : handlers.includes(requireRegisteredPlayer_1.requireRegisteredPlayer) ? "PLAYER"
+                    : handlers.includes(requireTournamentReader_1.requireTournamentReader) ? "READER"
+                        : handlers.includes(requireTournamentEditor_1.requireTournamentEditor) ? "MEMBER"
+                            : handlers.includes(requireEditor_1.requireEditor) ? "EDITOR"
+                                : handlers.includes(requireAuth_1.requireAuth) ? "SIGNED_IN"
+                                    : "PUBLIC";
             for (const method of Object.keys(layer.route.methods))
                 result.set(`${method.toUpperCase()} ${prefix}${layer.route.path}`, access);
         }
@@ -122,10 +137,12 @@ const denied = (status) => status === 401 || status === 403;
     let admin;
     let member;
     let outsider;
+    let player;
+    let registeredPlayer;
     const concrete = (path, tournamentId) => path
         .replace(":tournamentId", tournamentId)
         .replace(":roundId", "1").replace(":tableId", "1").replace(":playerId", "1").replace(":teamId", "1")
-        .replace(":uid", "unknown-user").replace(":emaId", "unknown-ema");
+        .replace(":uid", "unknown-user").replace(":invitationId", "unknown-invitation").replace(":submissionId", "unknown-submission").replace(":emaId", "unknown-ema");
     (0, node_test_1.before)(async () => {
         (0, authFixtures_1.requireAuthEmulator)();
         server = await (0, authFixtures_1.startServer)();
@@ -134,6 +151,8 @@ const denied = (status) => status === 401 || status === 403;
         admin = await (0, authFixtures_1.createAccount)({ role: "ADMIN" });
         member = await (0, authFixtures_1.createAccount)({ role: "EDITOR", memberOf: [t1] });
         outsider = await (0, authFixtures_1.createAccount)({ role: "EDITOR" });
+        player = await (0, authFixtures_1.createAccount)({ role: "PLAYER" });
+        registeredPlayer = await (0, authFixtures_1.createAccount)({ role: "PLAYER", playerOf: [t1] });
     });
     (0, node_test_1.after)(async () => { await server.close(); });
     (0, node_test_1.it)("lists every route of the app with its intended access", () => {
@@ -150,11 +169,55 @@ const denied = (status) => status === 401 || status === 403;
                 strict_1.default.equal((await server.request(method, concrete(path, t1), { token: "not-a-token" })).status, 401);
             });
             if (access === "SIGNED_IN") {
+                (0, node_test_1.it)("lets any signed-in account through, also a player", async () => {
+                    for (const account of [player, outsider, member, admin]) {
+                        const { status } = await server.request(method, concrete(path, t1), { token: account.token });
+                        strict_1.default.ok(!denied(status), `${status} for ${account.email}`);
+                    }
+                });
+            }
+            if (access === "EDITOR") {
                 (0, node_test_1.it)("lets any signed-in editor and admin through", async () => {
                     for (const account of [outsider, member, admin]) {
                         const { status } = await server.request(method, concrete(path, t1), { token: account.token });
                         strict_1.default.ok(!denied(status), `${status} for ${account.email}`);
                     }
+                });
+                (0, node_test_1.it)("refuses an account that is only a player", async () => {
+                    strict_1.default.equal((await server.request(method, concrete(path, t1), { token: player.token })).status, 403);
+                });
+            }
+            if (access === "PLAYER") {
+                (0, node_test_1.it)("lets a player who is registered in the tournament pass the guard", async () => {
+                    const { status } = await server.request(method, concrete(path, t1), { token: registeredPlayer.token, body: {} });
+                    strict_1.default.ok(!denied(status), `status ${status}`);
+                });
+                (0, node_test_1.it)("refuses editors, admins and players who are not registered here", async () => {
+                    for (const account of [member, admin, player, outsider]) {
+                        strict_1.default.equal((await server.request(method, concrete(path, t1), { token: account.token, body: {} })).status, 403);
+                    }
+                    strict_1.default.equal((await server.request(method, concrete(path, t2), { token: registeredPlayer.token, body: {} })).status, 403);
+                });
+            }
+            if (access === "READER") {
+                (0, node_test_1.it)("refuses an editor who is not assigned to the tournament", async () => {
+                    strict_1.default.equal((await server.request(method, concrete(path, t1), { token: outsider.token })).status, 403);
+                });
+                (0, node_test_1.it)("lets an assigned editor and a registered player read the tournament", async () => {
+                    for (const account of [member, registeredPlayer]) {
+                        const { status } = await server.request(method, concrete(path, t1), { token: account.token });
+                        strict_1.default.ok(!denied(status), `status ${status} for ${account.email}`);
+                    }
+                });
+                (0, node_test_1.it)("refuses a player who is registered in another tournament", async () => {
+                    strict_1.default.equal((await server.request(method, concrete(path, t2), { token: registeredPlayer.token })).status, 403);
+                });
+                (0, node_test_1.it)("refuses a player who is not registered anywhere", async () => {
+                    strict_1.default.equal((await server.request(method, concrete(path, t1), { token: player.token })).status, 403);
+                });
+                (0, node_test_1.it)("lets an admin into any tournament without an assignment", async () => {
+                    const { status } = await server.request(method, concrete(path, "probe-tournament"), { token: admin.token });
+                    strict_1.default.ok(!denied(status), `status ${status}`);
                 });
             }
             if (access === "MEMBER") {
@@ -165,6 +228,9 @@ const denied = (status) => status === 401 || status === 403;
                     const { status } = await server.request(method, concrete(path, t1), { token: member.token });
                     strict_1.default.ok(!denied(status), `status ${status}`);
                 });
+                (0, node_test_1.it)("refuses an account that is only a player", async () => {
+                    strict_1.default.equal((await server.request(method, concrete(path, t1), { token: player.token })).status, 403);
+                });
                 (0, node_test_1.it)("refuses an assigned editor in another tournament", async () => {
                     strict_1.default.equal((await server.request(method, concrete(path, t2), { token: member.token })).status, 403);
                 });
@@ -174,8 +240,8 @@ const denied = (status) => status === 401 || status === 403;
                 });
             }
             if (access === "ADMIN") {
-                (0, node_test_1.it)("refuses an editor, also an assigned one", async () => {
-                    for (const account of [outsider, member]) {
+                (0, node_test_1.it)("refuses an editor, also an assigned one, and a player", async () => {
+                    for (const account of [player, outsider, member]) {
                         strict_1.default.equal((await server.request(method, concrete(path, t1), { token: account.token })).status, 403);
                     }
                 });
@@ -192,18 +258,21 @@ const denied = (status) => status === 401 || status === 403;
     let admin;
     let editor;
     let otherEditor;
+    let player;
     (0, node_test_1.before)(async () => {
         (0, authFixtures_1.requireAuthEmulator)();
         server = await (0, authFixtures_1.startServer)();
         admin = await (0, authFixtures_1.createAccount)({ role: "ADMIN" });
         editor = await (0, authFixtures_1.createAccount)({ role: "EDITOR" });
         otherEditor = await (0, authFixtures_1.createAccount)({ role: "EDITOR" });
+        player = await (0, authFixtures_1.createAccount)({ role: "PLAYER" });
     });
     (0, node_test_1.after)(async () => { await server.close(); });
     const update = (token, uid, email, role) => server.request("PUT", `/admin/users/${uid}`, { token, body: { email, alias: "x", role, tournamentAssignments: [] } });
     (0, node_test_1.it)("whoami tells the role from the token claim", async () => {
-        strict_1.default.deepEqual((await server.request("GET", "/admin/whoami", { token: admin.token })).body, { uid: admin.uid, role: "ADMIN" });
-        strict_1.default.deepEqual((await server.request("GET", "/admin/whoami", { token: editor.token })).body, { uid: editor.uid, role: "EDITOR" });
+        strict_1.default.deepEqual((await server.request("GET", "/admin/whoami", { token: admin.token })).body, { uid: admin.uid, role: "ADMIN", roles: ["ADMIN"] });
+        strict_1.default.deepEqual((await server.request("GET", "/admin/whoami", { token: editor.token })).body, { uid: editor.uid, role: "EDITOR", roles: ["EDITOR"] });
+        strict_1.default.deepEqual((await server.request("GET", "/admin/whoami", { token: player.token })).body, { uid: player.uid, role: "PLAYER", roles: ["PLAYER"] });
     });
     (0, node_test_1.it)("an editor cannot create an admin account", async () => {
         const { status } = await server.request("POST", "/admin/users", {
@@ -262,7 +331,9 @@ const denied = (status) => status === 401 || status === 403;
             strict_1.default.equal(disableHelper.status, 200, "two enabled admins: one may be disabled");
             await firebase_1.auth.updateUser(admin.uid, { disabled: false });
             await firebase_1.auth.updateUser(helper.uid, { disabled: true });
-            const last = await server.request("PUT", `/admin/users/${admin.uid}/disabled`, { token: admin.token, body: { disabled: true } });
+            // Disabling revoked the old tokens of the admin, so the admin signs in again.
+            const adminToken = await (0, authFixtures_1.signInTestAccount)(admin.email);
+            const last = await server.request("PUT", `/admin/users/${admin.uid}/disabled`, { token: adminToken, body: { disabled: true } });
             strict_1.default.equal(last.status, 400);
         }
         finally {

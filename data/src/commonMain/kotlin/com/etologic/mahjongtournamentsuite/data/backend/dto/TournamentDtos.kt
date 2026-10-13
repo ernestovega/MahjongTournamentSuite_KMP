@@ -142,8 +142,61 @@ data class TournamentPlayerDto(
     val country: String = "",
     val assignedEmaId: String? = null,
     val nonMember: NonMemberPlayerDto? = null,
+    val accountUid: String? = null,
+    val invitationStatus: String = "NONE",
+    val invitedEmail: String? = null,
+    val contactedAt: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
+)
+
+@Serializable
+data class PlayerAccountItemDto(
+    val playerId: Int,
+    val email: String? = null,
+)
+
+@Serializable
+data class PlayerAccountActionRequestDto(
+    val players: List<PlayerAccountItemDto>,
+)
+
+@Serializable
+data class PlayerAccountResultDto(
+    val playerId: Int,
+    val outcome: String,
+    val message: String? = null,
+)
+
+@Serializable
+data class PlayerAccountActionResponseDto(
+    val results: List<PlayerAccountResultDto> = emptyList(),
+)
+
+@Serializable
+data class PlayerInvitationDto(
+    val invitationId: String,
+    val playerId: Int,
+    val email: String,
+    val status: String,
+    val expiresAt: String? = null,
+)
+
+@Serializable
+data class AcceptInvitationRequestDto(
+    val token: String,
+    val password: String? = null,
+)
+
+@Serializable
+data class AcceptInvitationResponseDto(
+    val tournamentId: String = "",
+    val email: String = "",
+)
+
+@Serializable
+data class PlayerInvitationsResponseDto(
+    val invitations: List<PlayerInvitationDto> = emptyList(),
 )
 
 @Serializable
@@ -260,7 +313,7 @@ data class TournamentTableDto(
     val tableId: Int,
     val playerIds: List<Int>,
     val isCompleted: Boolean = false,
-    val useTotalsOnly: Boolean = true,
+    val useTotalsOnly: Boolean = false,
     val usePointsCalculation: Boolean = true,
     val hasProgress: Boolean = false,
     val hasValidManualTotals: Boolean = false,
@@ -302,7 +355,7 @@ data class TableStateDto(
     val manualPlayerWestPoints: String = "",
     val manualPlayerNorthPoints: String = "",
     val isCompleted: Boolean = false,
-    val useTotalsOnly: Boolean = true,
+    val useTotalsOnly: Boolean = false,
     val usePointsCalculation: Boolean = true,
 )
 

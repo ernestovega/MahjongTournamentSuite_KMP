@@ -68,8 +68,8 @@ Rollout on 2026-10-10: the backfill ran on all 6 tournaments of `mahjong-tournam
 |---|---|
 | Backend unit tests | `cd firebase/functions && npm test` |
 | Backend with the Firestore emulator | `cd firebase/functions && npm run test:integration` (needs JDK 21) |
-| App logic and UI tests | `./gradlew :data:jvmTest :composeApp:jvmTest` |
-| Web target | `./gradlew :data:wasmJsTest :composeApp:wasmJsTest` (needs headless Chrome) |
+| App logic and UI tests | `./gradlew :data:jvmTest :adminApp:jvmTest` |
+| Web target | `./gradlew :data:wasmJsTest :adminApp:wasmJsTest` (needs headless Chrome) |
 
 The emulator does not make a blind write wait for a transaction that read the same document. Production Firestore does. So the test for "change a player while the first result is saved" checks consistency only.
 

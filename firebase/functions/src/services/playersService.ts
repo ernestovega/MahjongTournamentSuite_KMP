@@ -23,7 +23,7 @@ function timestampToIso(value: unknown): string | null {
   return value instanceof Timestamp ? value.toDate().toISOString() : null;
 }
 
-function toPlayer(emaId: string, data: FirebaseFirestore.DocumentData): Player {
+export function toPlayer(emaId: string, data: FirebaseFirestore.DocumentData): Player {
   const storedCountry = String(data.country ?? "").trim().toUpperCase();
   return {
     emaId,
@@ -54,6 +54,20 @@ export async function listPlayers(): Promise<Player[]> {
     .sort((left, right) => left.lastName.localeCompare(right.lastName)
       || left.firstName.localeCompare(right.firstName)
       || left.emaId.localeCompare(right.emaId));
+}
+
+/** Registry players who play in the given tournaments. Players see only the people they play with. */
+export async function listPlayersOfTournaments(tournamentIds: string[]): Promise<Player[]> {
+  const slots = await Promise.all(tournamentIds.map((id) => db.collection(`tournaments/${id}/players`).get()));
+  const emaIds = new Set<string>();
+  slots.forEach((snapshot) => snapshot.docs.forEach((doc) => {
+    const emaId = doc.get("assignedEmaId");
+    if (typeof emaId === "string" && emaId.length > 0) emaIds.add(emaId);
+  }));
+  if (emaIds.size === 0) return [];
+  const docs = await db.getAll(...[...emaIds].map((emaId) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId)));
+  return docs.filter((doc) => doc.exists).map((doc) => toPlayer(doc.id, doc.data() ?? {}))
+    .sort((left, right) => left.lastName.localeCompare(right.lastName) || left.emaId.localeCompare(right.emaId));
 }
 
 export async function createPlayer(params: { emaId: string; firstName: string; lastName: string; country: string }): Promise<Player> {

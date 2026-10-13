@@ -1,12 +1,27 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { getGlobalUserRole, hasAdminClaim, parseGlobalUserRole } from "./globalRole";
+import { getGlobalUserRole, getGlobalUserRoles, hasAdminClaim, hasEditorAccess, parseGlobalUserRole } from "./globalRole";
 
-test("treats accounts without the admin claim as editors", () => {
-  assert.equal(getGlobalUserRole({ customClaims: undefined }), "EDITOR");
-  assert.equal(getGlobalUserRole({ customClaims: { admin: false } }), "EDITOR");
+test("gives editor access only to admins and editors", () => {
+  assert.equal(hasEditorAccess(undefined), false);
+  assert.equal(hasEditorAccess({}), false);
+  assert.equal(hasEditorAccess({ admin: true }), true);
+  assert.equal(hasEditorAccess({ editor: true }), true);
+  assert.equal(hasEditorAccess({ player: true }), false);
+  assert.equal(hasEditorAccess({ player: true, editor: true }), true);
+  assert.equal(hasEditorAccess({ player: true, admin: true }), true);
   assert.equal(hasAdminClaim(undefined), false);
+});
+
+test("lists every capability of an account", () => {
+  assert.deepEqual(getGlobalUserRoles({ customClaims: undefined }), []);
+  assert.deepEqual(getGlobalUserRoles({ customClaims: { admin: true } }), ["ADMIN"]);
+  assert.deepEqual(getGlobalUserRoles({ customClaims: { player: true } }), ["PLAYER"]);
+  assert.deepEqual(getGlobalUserRoles({ customClaims: { editor: true, player: true } }), ["EDITOR", "PLAYER"]);
+  assert.deepEqual(getGlobalUserRoles({ customClaims: { admin: true, player: true } }), ["ADMIN", "PLAYER"]);
+  assert.equal(getGlobalUserRole({ customClaims: { player: true } }), "PLAYER");
+  assert.equal(getGlobalUserRole({ customClaims: { editor: true, player: true } }), "EDITOR");
 });
 
 test("recognizes only the new admin claim and role names", () => {

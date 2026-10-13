@@ -43,7 +43,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(projects.composeApp)
+    implementation(projects.adminApp)
     implementation(libs.androidx.activity.compose)
     debugImplementation(libs.compose.uiTooling)
     implementation(libs.compose.uiToolingPreview)

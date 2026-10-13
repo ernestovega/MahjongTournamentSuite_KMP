@@ -62,10 +62,10 @@ The Firebase CLI currently reports that `firebase-functions` is outdated. The cu
 Build the production WebAssembly application from the repository root:
 
 ```bash
-./gradlew :composeApp:wasmJsBrowserDistribution
+./gradlew :adminApp:wasmJsBrowserDistribution
 ```
 
-Firebase Hosting reads the generated files from `composeApp/build/dist/wasmJs/productionExecutable`.
+Firebase Hosting reads the generated files from `adminApp/build/dist/wasmJs/productionExecutable`.
 
 Deploy a temporary channel before the live site:
 
@@ -115,8 +115,26 @@ Confirm these results with an `EDITOR` account:
 
 The `npm run verify:roles` script performs these backend checks with one temporary admin and two temporary editor accounts. It always attempts to remove the temporary accounts, profiles, and assignments.
 
+Run the script from `firebase/functions` on one line. It needs application default credentials (`gcloud auth application-default login`).
+
+```
+MTS_ID_TOOLKIT_API_KEY='<web API key>' npm run verify:roles -- --project mahjong-tournament-suite --admin-email <admin email> --api-base-url https://europe-west1-mahjong-tournament-suite.cloudfunctions.net/api
+```
+
+- `MTS_ID_TOOLKIT_API_KEY` is the Web API Key in Firebase Console, Project settings, General.
+- `--admin-email` is the email of one existing enabled admin account.
+
 ## Direct database security
 
 Firestore and Storage reject every direct client read and write. All application access goes through the authenticated `api` function.
 
 This prevents client code from bypassing backend role checks. Keep these rules closed unless a future client requires direct Firebase SDK access.
+
+## Player roles
+
+The API now has the `PLAYER` capability next to `EDITOR` and `ADMIN`. See `player-client-plan.md` and `backend.md`.
+
+- Management routes need the `admin` or `editor` claim. An account with no claim is refused.
+- Accounts saved before this change have no `editor` claim. Save each of them once in the accounts screen, or recreate them.
+- `npm run verify:roles` now also creates a player-only account and expects `403` on the editor routes.
+- Create the SMTP secret `MTS_SMTP_URI` and the player hosting site before the first invitation.

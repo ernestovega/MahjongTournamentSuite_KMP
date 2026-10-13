@@ -13,6 +13,7 @@ exports.setManagedUserDisabled = setManagedUserDisabled;
 exports.countEnabledAdmins = countEnabledAdmins;
 exports.listEnabledAdmins = listEnabledAdmins;
 exports.assertEmailAvailable = assertEmailAvailable;
+exports.grantPlayerCapability = grantPlayerCapability;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
@@ -26,7 +27,11 @@ async function getUserProfile(uid) {
         uid,
         email: String(snap.get("email") ?? ""),
         alias: String(snap.get("alias") ?? "").trim(),
+        emaId: readEmaId(snap.get("emaId")),
     };
+}
+function readEmaId(value) {
+    return typeof value === "string" && value.length > 0 ? value : null;
 }
 async function createUserProfile(uid, email, alias = "") {
     await firebase_1.db.doc(`users/${uid}`).set({
@@ -52,7 +57,9 @@ async function listManagedUsers(visibleTournamentIds) {
                 uid: user.uid,
                 email: user.email ?? String(profile?.email ?? ""),
                 alias: String(profile?.alias ?? "").trim(),
+                emaId: readEmaId(profile?.emaId),
                 role: (0, globalRole_1.getGlobalUserRole)(user),
+                roles: (0, globalRole_1.getGlobalUserRoles)(user),
                 disabled: user.disabled,
                 tournamentAssignments: assignmentsByUid.get(user.uid) ?? [],
             });
@@ -68,7 +75,9 @@ async function getManagedUser(uid, visibleTournamentIds) {
         uid,
         email: user.email ?? String(profile.get("email") ?? ""),
         alias: String(profile.get("alias") ?? "").trim(),
+        emaId: readEmaId(profile.get("emaId")),
         role: (0, globalRole_1.getGlobalUserRole)(user),
+        roles: (0, globalRole_1.getGlobalUserRoles)(user),
         disabled: user.disabled,
         tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
     };
@@ -77,9 +86,13 @@ async function setGlobalUserRole(uid, role) {
     const user = await firebase_1.auth.getUser(uid);
     const claims = { ...(user.customClaims ?? {}) };
     delete claims.admin;
-    delete claims.superadmin;
+    delete claims.editor;
     if (role === "ADMIN")
         claims.admin = true;
+    else if (role === "EDITOR")
+        claims.editor = true;
+    else
+        claims.player = true;
     await firebase_1.auth.setCustomUserClaims(uid, claims);
 }
 async function updateManagedUser(params) {
@@ -90,7 +103,6 @@ async function updateManagedUser(params) {
         email: params.email,
         alias: params.alias.trim(),
         contactEmail: params.email,
-        emaId: firestore_1.FieldValue.delete(),
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     }, { merge: true });
     await syncUserTournamentAssignments(params.uid, params.role === "ADMIN" ? [] : params.tournamentAssignments, params.role === "ADMIN" ? undefined : params.assignmentScope);
@@ -216,5 +228,10 @@ async function assertEmailAvailable(email, excludedUid) {
         if (code !== "auth/user-not-found")
             throw error;
     }
+}
+/** Adds the player capability to an account and keeps the other claims. */
+async function grantPlayerCapability(uid) {
+    const user = await firebase_1.auth.getUser(uid);
+    await firebase_1.auth.setCustomUserClaims(uid, { ...(user.customClaims ?? {}), player: true });
 }
 //# sourceMappingURL=usersService.js.map

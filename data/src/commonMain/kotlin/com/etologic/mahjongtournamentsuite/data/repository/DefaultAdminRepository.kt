@@ -33,6 +33,9 @@ class DefaultAdminRepository(
             AdminStatus(
                 uid = status.uid,
                 role = GlobalUserRole.valueOf(status.role.name),
+                roles = status.roles.map { GlobalUserRole.valueOf(it.name) }.toSet().ifEmpty {
+                    setOf(GlobalUserRole.valueOf(status.role.name))
+                },
             )
     }
 
@@ -47,6 +50,8 @@ class DefaultAdminRepository(
                 uid = user.uid,
                 email = user.email,
                 alias = user.alias,
+                emaId = user.emaId,
+                roles = user.roles.map { GlobalUserRole.valueOf(it.name) }.toSet(),
             )
         }
     }.fold(
@@ -70,6 +75,7 @@ class DefaultAdminRepository(
         alias: String,
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
+        emaId: String?,
     ): AppResult<ManagedUser> = managedUserRequest("Creating user") { idToken ->
         backendApi.createUser(
             idToken = idToken,
@@ -78,6 +84,7 @@ class DefaultAdminRepository(
                 alias = alias,
                 role = GlobalUserRoleDto.valueOf(role.name),
                 tournamentAssignments = tournamentAssignments.map(TournamentAssignment::toDto),
+                emaId = emaId.orEmpty(),
             ),
         ).toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
     }
@@ -92,6 +99,7 @@ class DefaultAdminRepository(
                     alias = user.alias,
                     role = GlobalUserRoleDto.valueOf(user.role.name),
                     tournamentAssignments = user.tournamentAssignments.map(TournamentAssignment::toDto),
+                    emaId = user.emaId.orEmpty(),
                 ),
             ).toDomain().also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
         }
@@ -151,6 +159,8 @@ private fun ManagedUserDto.toDomain(): ManagedUser = ManagedUser(
     email = email,
     alias = alias,
     role = GlobalUserRole.valueOf(role.name),
+    roles = roles.map { GlobalUserRole.valueOf(it.name) }.toSet().ifEmpty { setOf(GlobalUserRole.valueOf(role.name)) },
+    emaId = emaId,
     disabled = disabled,
         tournamentAssignments = tournamentAssignments.map { assignment ->
             TournamentAssignment(

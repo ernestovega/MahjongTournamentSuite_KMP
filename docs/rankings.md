@@ -135,11 +135,11 @@ The screen needs the saved authentication session to load data. An operating-sys
 
 - Ranking models: `domain/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/domain/model/TournamentRanking.kt`
 - Ranking rules: `domain/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/domain/usecase/CalculateTournamentRankingsUseCase.kt`
-- Data loading: `composeApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/presenter/RankingPresenter.kt`
-- Screen: `composeApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RankingStandaloneScreen.kt`
-- Desktop windows: `composeApp/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/StandaloneWindows.kt`
+- Data loading: `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/presenter/RankingPresenter.kt`
+- Screen: `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RankingStandaloneScreen.kt`
+- Desktop windows: `adminApp/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/StandaloneWindows.kt`
 - Android task: `androidApp/src/main/kotlin/com/etologic/mahjongtournamentsuite/RankingsActivity.kt`
-- Web entry point: `composeApp/src/webMain/kotlin/com/etologic/mahjongtournamentsuite/main.kt`
+- Web entry point: `adminApp/src/webMain/kotlin/com/etologic/mahjongtournamentsuite/main.kt`
 
 ## Tests
 
@@ -156,6 +156,6 @@ Run all domain and data tests with:
 The project has no UI test harness. Validate the screen manually on each target after changing layout behavior. The JVM and Wasm Compose compilation checks are:
 
 ```bash
-./gradlew :composeApp:compileKotlinJvm
-./gradlew :composeApp:compileKotlinWasmJs
+./gradlew :adminApp:compileKotlinJvm
+./gradlew :adminApp:compileKotlinWasmJs
 ```

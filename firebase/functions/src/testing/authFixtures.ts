@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { AddressInfo } from "node:net";
 import http from "node:http";
 
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { buildApp } from "../api/app";
 import { createUserProfile, setGlobalUserRole } from "../services/usersService";
 import { upsertTournamentMember } from "../services/membersService";
@@ -20,16 +20,29 @@ export type TestAccount = { uid: string; email: string; token: string };
 
 /** Creates an account with the real profile, claim and membership documents, and signs it in. */
 export async function createAccount(params: {
-  role: "ADMIN" | "EDITOR";
+  role: "ADMIN" | "EDITOR" | "PLAYER";
   memberOf?: string[];
+  /** Tournaments where a player account is registered, as after an accepted invitation. */
+  playerOf?: string[];
   disabled?: boolean;
 }): Promise<TestAccount> {
   const email = `${randomUUID()}@example.test`;
   const user = await auth.createUser({ email, password: PASSWORD, emailVerified: true });
   await createUserProfile(user.uid, email, "Test");
-  await setGlobalUserRole(user.uid, params.role);
+  if (params.role === "PLAYER") await auth.setCustomUserClaims(user.uid, { player: true });
+  else await setGlobalUserRole(user.uid, params.role);
   for (const tournamentId of params.memberOf ?? []) await upsertTournamentMember({ tournamentId, uid: user.uid });
+  for (const tournamentId of params.playerOf ?? []) {
+    await db.doc(`users/${user.uid}/playerTournaments/${tournamentId}`).set({ playerId: 1, emaId: "00000001", tournamentId });
+  }
   // The token carries the claims, so sign in after they are set.
+  const token = await signInTestAccount(email);
+  if (params.disabled) await auth.updateUser(user.uid, { disabled: true });
+  return { uid: user.uid, email, token };
+}
+
+/** Signs in a test account again, for example after its tokens were revoked. */
+export async function signInTestAccount(email: string): Promise<string> {
   const response = await fetch(
     `http://${process.env.FIREBASE_AUTH_EMULATOR_HOST}/identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=test`,
     {
@@ -40,8 +53,7 @@ export async function createAccount(params: {
   );
   const body = await response.json() as { idToken?: string };
   if (!body.idToken) throw new Error(`Sign-in failed: ${JSON.stringify(body)}`);
-  if (params.disabled) await auth.updateUser(user.uid, { disabled: true });
-  return { uid: user.uid, email, token: body.idToken };
+  return body.idToken;
 }
 
 export type TestServer = {

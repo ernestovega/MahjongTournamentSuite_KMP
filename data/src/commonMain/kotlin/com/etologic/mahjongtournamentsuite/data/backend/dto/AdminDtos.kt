@@ -6,12 +6,14 @@ import kotlinx.serialization.Serializable
 data class WhoAmIResponseDto(
     val uid: String,
     val role: GlobalUserRoleDto,
+    val roles: List<GlobalUserRoleDto> = emptyList(),
 )
 
 @Serializable
 enum class GlobalUserRoleDto {
     EDITOR,
     ADMIN,
+    PLAYER,
 }
 
 @Serializable
@@ -25,7 +27,9 @@ data class ManagedUserDto(
     val uid: String,
     val email: String,
     val alias: String = "",
+    val emaId: String? = null,
     val role: GlobalUserRoleDto,
+    val roles: List<GlobalUserRoleDto> = emptyList(),
     val disabled: Boolean,
     val tournamentAssignments: List<TournamentAssignmentDto> = emptyList(),
 )
@@ -41,6 +45,8 @@ data class SaveManagedUserRequestDto(
     val alias: String = "",
     val role: GlobalUserRoleDto,
     val tournamentAssignments: List<TournamentAssignmentDto>,
+    /** The EMA ID of the account. An empty text clears it. */
+    val emaId: String = "",
 )
 
 @Serializable

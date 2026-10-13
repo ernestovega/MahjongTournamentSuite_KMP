@@ -10,6 +10,7 @@ const errorHandler_1 = require("./middleware/errorHandler");
 const admin_routes_1 = require("./routes/admin.routes");
 const auth_routes_1 = require("./routes/auth.routes");
 const countries_routes_1 = require("./routes/countries.routes");
+const player_routes_1 = require("./routes/player.routes");
 const players_routes_1 = require("./routes/players.routes");
 const tournaments_routes_1 = require("./routes/tournaments.routes");
 const sync_routes_1 = require("./routes/sync.routes");
@@ -47,6 +48,7 @@ function buildApp() {
     app.use("/ema-player-registry", (0, players_routes_1.playersRouter)());
     app.use("/admin", (0, admin_routes_1.adminRouter)());
     app.use("/sync", (0, sync_routes_1.syncRouter)());
+    app.use("/player", (0, player_routes_1.playerRouter)());
     app.use("/tournaments", (0, tournaments_routes_1.tournamentsRouter)());
     app.use(errorHandler_1.errorHandler);
     return app;

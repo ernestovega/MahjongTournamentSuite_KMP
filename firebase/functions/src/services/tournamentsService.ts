@@ -273,7 +273,7 @@ export async function createTournament(params: {
       manualPlayerWestPoints: "",
       manualPlayerNorthPoints: "",
       isCompleted: Boolean(table.isCompleted ?? false),
-      useTotalsOnly: Boolean(table.useTotalsOnly ?? true),
+      useTotalsOnly: Boolean(table.useTotalsOnly ?? false),
       usePointsCalculation: true,
       hasProgress: Boolean(table.isCompleted ?? false),
       hasValidManualTotals: false,
@@ -500,6 +500,14 @@ export async function updateTournamentSettings(params: {
 
 function isDocRef(value: DocumentReference | null): value is DocumentReference {
   return value != null;
+}
+
+/** Tournaments where the player account is registered through an accepted invitation. */
+export async function listTournamentsForPlayer(uid: string): Promise<Tournament[]> {
+  const registrations = await db.collection(`users/${uid}/playerTournaments`).get();
+  if (registrations.empty) return [];
+  const snaps = await db.getAll(...registrations.docs.map((doc) => db.doc(`tournaments/${doc.id}`)));
+  return Promise.all(snaps.filter((snap) => snap.exists).map((snap) => mapTournamentDoc(snap)));
 }
 
 export async function listTournamentsForUser(uid: string): Promise<Tournament[]> {

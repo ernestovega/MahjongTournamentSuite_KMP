@@ -83,6 +83,7 @@ async function main() {
     let testAdmin;
     let editorOne;
     let editorTwo;
+    let playerOne;
     let tournamentId = null;
     try {
         const testAdminPassword = (0, node_crypto_1.randomBytes)(24).toString("base64url");
@@ -102,6 +103,7 @@ async function main() {
             displayName: "Role Test Editor One",
             emailVerified: true,
         });
+        await auth.setCustomUserClaims(editorOne.uid, { editor: true });
         temporaryUsers.push(editorOne);
         editorTwo = await auth.createUser({
             email: `role-test-editor-two-${timestamp}@example.invalid`,
@@ -109,7 +111,17 @@ async function main() {
             displayName: "Role Test Editor Two",
             emailVerified: true,
         });
+        await auth.setCustomUserClaims(editorTwo.uid, { editor: true });
         temporaryUsers.push(editorTwo);
+        const playerOnePassword = (0, node_crypto_1.randomBytes)(24).toString("base64url");
+        playerOne = await auth.createUser({
+            email: `role-test-player-one-${timestamp}@example.invalid`,
+            password: playerOnePassword,
+            displayName: "Role Test Player One",
+            emailVerified: true,
+        });
+        await auth.setCustomUserClaims(playerOne.uid, { player: true });
+        temporaryUsers.push(playerOne);
         for (const user of temporaryUsers) {
             await db.doc(`users/${user.uid}`).set({
                 uid: user.uid,
@@ -121,9 +133,10 @@ async function main() {
                 updatedAt: firestore_1.FieldValue.serverTimestamp(),
             });
         }
-        const [adminToken, editorOneToken] = await Promise.all([
+        const [adminToken, editorOneToken, playerToken] = await Promise.all([
             idTokenFor(testAdmin.email, testAdminPassword, options),
             idTokenFor(editorOne.email, editorOnePassword, options),
+            idTokenFor(playerOne.email, playerOnePassword, options),
         ]);
         const adminWhoAmI = await apiRequest(options, adminToken, "/admin/whoami");
         expectStatus(adminWhoAmI, 200, "ADMIN whoami");
@@ -131,6 +144,26 @@ async function main() {
         const editorWhoAmI = await apiRequest(options, editorOneToken, "/admin/whoami");
         expectStatus(editorWhoAmI, 200, "EDITOR whoami");
         assertCondition(editorWhoAmI.body.role === "EDITOR", "EDITOR whoami returned the wrong role");
+        for (const path of ["/admin/users", "/admin/users/lookup?identifier=a@b.c"]) {
+            expectStatus(await apiRequest(options, playerToken, path), 403, `PLAYER is refused on GET ${path}`);
+        }
+        // Global revisions and countries hold no private data. Any signed-in account may read them.
+        for (const path of ["/sync/manifest", "/countries"]) {
+            expectStatus(await apiRequest(options, playerToken, path), 200, `PLAYER may read GET ${path}`);
+        }
+        // These lists are scoped to the tournaments of the player. A new player has none.
+        const playerTournaments = await apiRequest(options, playerToken, "/tournaments");
+        expectStatus(playerTournaments, 200, "PLAYER lists own tournaments");
+        assertCondition((playerTournaments.body.tournaments ?? []).length === 0, "PLAYER without registrations must see no tournaments");
+        const playerRegistry = await apiRequest(options, playerToken, "/ema-player-registry");
+        expectStatus(playerRegistry, 200, "PLAYER lists own registry scope");
+        assertCondition((playerRegistry.body.players ?? []).length === 0, "PLAYER without registrations must see no registry players");
+        expectStatus(await apiRequest(options, playerToken, "/admin/users", "POST", {
+            email: `forbidden-editor-${timestamp}@example.invalid`,
+            alias: "Forbidden Editor",
+            role: "EDITOR",
+            tournamentAssignments: [],
+        }), 403, "PLAYER cannot create an EDITOR");
         const adminTournaments = await apiRequest(options, adminToken, "/tournaments");
         expectStatus(adminTournaments, 200, "ADMIN lists tournaments");
         const tournaments = adminTournaments.body.tournaments ?? [];

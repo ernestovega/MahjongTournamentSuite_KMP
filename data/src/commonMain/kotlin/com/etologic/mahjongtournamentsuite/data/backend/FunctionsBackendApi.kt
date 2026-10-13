@@ -6,7 +6,15 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestD
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AcceptInvitationRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AcceptInvitationResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerInvitationsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RenameTournamentRequestDto
@@ -341,6 +349,84 @@ class FunctionsBackendApi(
         request: AssignTournamentPlayerRequestDto,
     ): OkResponseDto = put(
         path = "/tournaments/$tournamentId/players/$playerId",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    private fun playerTablePath(tournamentId: String, roundId: Int, tableId: Int) =
+        "/player/tournaments/$tournamentId/tables/$roundId/$tableId"
+
+    suspend fun previewHand(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        request: HandRequestDto,
+    ): HandPreviewDto = post(
+        path = "${playerTablePath(tournamentId, roundId, tableId)}/hands/preview",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun assignSeats(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        request: SeatsRequestDto,
+    ): OkResponseDto = post(
+        path = "${playerTablePath(tournamentId, roundId, tableId)}/seats",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun recordHand(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        request: HandRequestDto,
+    ): HandPreviewDto = post(
+        path = "${playerTablePath(tournamentId, roundId, tableId)}/hands",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun acceptPlayerInvitation(
+        request: AcceptInvitationRequestDto,
+        idToken: String?,
+    ): AcceptInvitationResponseDto = post(
+        path = "/player/invitations/accept",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun listPlayerInvitations(
+        idToken: String,
+        tournamentId: String,
+    ): PlayerInvitationsResponseDto = get(
+        path = "/tournaments/$tournamentId/player-invitations",
+        idToken = idToken,
+    )
+
+    /** [action] is send, resend or revoke. */
+    suspend fun runPlayerAccountAction(
+        idToken: String,
+        tournamentId: String,
+        action: String,
+        request: PlayerAccountActionRequestDto,
+    ): PlayerAccountActionResponseDto = post(
+        path = "/tournaments/$tournamentId/player-accounts/$action",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun savePlayerAccountEmails(
+        idToken: String,
+        tournamentId: String,
+        request: PlayerAccountActionRequestDto,
+    ): OkResponseDto = put(
+        path = "/tournaments/$tournamentId/player-accounts/emails",
         requestBody = request,
         idToken = idToken,
     )

@@ -5,12 +5,21 @@ const express_1 = require("express");
 const httpError_1 = require("../httpError");
 const requireAdmin_1 = require("../middleware/requireAdmin");
 const requireAuth_1 = require("../middleware/requireAuth");
+const playerAccountsService_1 = require("../../services/playerAccountsService");
 const playersService_1 = require("../../services/playersService");
 function playersRouter() {
     const router = (0, express_1.Router)();
     router.get("/", requireAuth_1.requireAuth, async (_req, res, next) => {
         try {
-            res.status(200).json({ players: await (0, playersService_1.listPlayers)() });
+            const decoded = res.locals.auth;
+            if (decoded.admin === true || decoded.editor === true) {
+                res.status(200).json({ players: await (0, playersService_1.listPlayers)() });
+                return;
+            }
+            if (decoded.player !== true)
+                throw (0, httpError_1.forbidden)("Editor or player required");
+            const tournamentIds = await (0, playerAccountsService_1.listPlayerTournamentIds)(decoded.uid);
+            res.status(200).json({ players: await (0, playersService_1.listPlayersOfTournaments)(tournamentIds) });
         }
         catch (error) {
             next(error);

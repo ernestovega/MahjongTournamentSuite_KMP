@@ -36,7 +36,7 @@ async function seedTournament(params) {
             tableId: table.tableId,
             playerIds: [1, 2, 3, 4],
             isCompleted: table.isCompleted ?? false,
-            useTotalsOnly: true,
+            useTotalsOnly: false,
             usePointsCalculation: true,
             version: table.version ?? 0,
         });

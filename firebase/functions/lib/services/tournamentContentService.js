@@ -11,8 +11,16 @@ const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const playersService_1 = require("./playersService");
+const playerAccountsService_1 = require("./playerAccountsService");
 const tournamentContentRules_1 = require("./tournamentContentRules");
 const dataVersionsService_1 = require("./dataVersionsService");
+/** The time of the last email to the player: the invitation, or the registration notice for a linked account. */
+function contactedAtOf(slot) {
+    const value = slot.get("invitationStatus") === "INVITED"
+        ? slot.get("invitedAt")
+        : slot.get("notifiedAt") ?? slot.get("invitedAt");
+    return value && typeof value.toDate === "function" ? value.toDate().toISOString() : null;
+}
 function readNonMember(value) {
     if (value == null || typeof value !== "object")
         return null;
@@ -50,6 +58,11 @@ async function listTournamentPlayers(tournamentId) {
         country: String(d.get("country") ?? ""),
         assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
         nonMember: readNonMember(d.get("nonMember")),
+        accountUid: typeof d.get("accountUid") === "string" ? d.get("accountUid") : null,
+        invitationStatus: (d.get("invitationStatus") === "ACCEPTED" ? "ACCEPTED"
+            : d.get("invitationStatus") === "INVITED" ? "INVITED" : "NONE"),
+        contactedAt: contactedAtOf(d),
+        invitedEmail: typeof d.get("invitedEmail") === "string" ? d.get("invitedEmail") : null,
         createdAt: timestampToIso(d.get("createdAt")),
         updatedAt: timestampToIso(d.get("updatedAt")),
     }))
@@ -264,6 +277,13 @@ async function assignTournamentPlayer(params) {
                 throw (0, httpError_1.conflict)("EMA player is already assigned in this tournament");
             }
         }
+        // A new EMA id on a slot ends its invitation and account link.
+        const accountUid = typeof player.get("accountUid") === "string" ? String(player.get("accountUid")) : null;
+        const hadInvitation = player.get("invitationStatus") === "INVITED" || accountUid != null;
+        const pendingInvitations = previousEmaId !== params.emaId && hadInvitation
+            ? await transaction.get(firebase_1.db.collection(`tournaments/${params.tournamentId}/playerInvitations`)
+                .where("playerId", "==", params.playerId))
+            : null;
         let assignedCountry = params.nonMember?.country ?? "";
         if (params.emaId != null) {
             const registryPlayer = await transaction.get(firebase_1.db.collection(playersService_1.EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId));
@@ -280,11 +300,30 @@ async function assignTournamentPlayer(params) {
                 updatedAt: firestore_1.FieldValue.serverTimestamp(),
             });
         }
+        if (pendingInvitations != null) {
+            pendingInvitations.docs.forEach((doc) => {
+                if (doc.get("status") === "PENDING" || doc.get("status") === "ACCEPTED") {
+                    transaction.update(doc.ref, { status: "REVOKED", updatedAt: firestore_1.FieldValue.serverTimestamp() });
+                }
+            });
+            if (accountUid != null) {
+                transaction.delete(firebase_1.db.doc(`users/${accountUid}/playerTournaments/${params.tournamentId}`));
+            }
+        }
         transaction.update(playerRef, {
             assignedEmaId: params.emaId,
             nonMember: params.nonMember,
             assignedCountry,
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            ...(pendingInvitations != null
+                ? {
+                    invitationStatus: "NONE",
+                    accountUid: firestore_1.FieldValue.delete(),
+                    invitedEmail: firestore_1.FieldValue.delete(),
+                    invitedAt: firestore_1.FieldValue.delete(),
+                    notifiedAt: firestore_1.FieldValue.delete(),
+                }
+                : {}),
         });
         transaction.update(tournamentRef, (0, dataVersionsService_1.tournamentVersionUpdate)("players"));
         transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
@@ -294,6 +333,9 @@ async function assignTournamentPlayer(params) {
         (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "players"),
         (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments"),
     ]);
+    // An account that already owns this EMA id sees the tournament at once. No email is sent here.
+    if (params.emaId != null)
+        await (0, playerAccountsService_1.linkKnownAccountToSlot)(params.tournamentId, params.playerId);
 }
 async function listTournamentRounds(tournamentId) {
     const snap = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("rounds").get();
@@ -326,7 +368,7 @@ async function listTournamentTables(tournamentId, roundId) {
                 tableId: Number(d.get("tableId")),
                 playerIds: (d.get("playerIds") ?? []).map((x) => Number(x)),
                 isCompleted: Boolean(d.get("isCompleted") ?? false),
-                useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? true),
+                useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? false),
                 usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
                 hasProgress: storedHasProgress,
                 hasValidManualTotals: storedHasValidManualTotals,
@@ -377,7 +419,7 @@ async function listTournamentTables(tournamentId, roundId) {
             d.get("manualPlayerWestPoints") || d.get("playerWestPoints"),
             d.get("manualPlayerNorthPoints") || d.get("playerNorthPoints"),
         ]);
-        const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? true);
+        const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? false);
         const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
         const hasValidManualTotals = useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints;
         return {

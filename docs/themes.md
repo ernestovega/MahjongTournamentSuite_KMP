@@ -32,7 +32,7 @@ The Timer and Rankings screens have local light or dark buttons. Each selection 
 
 ## Main source files
 
-- Theme mode and controller: `composeApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreference.kt`
-- Android storage: `composeApp/src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreferenceStorage.android.kt`
-- Desktop storage: `composeApp/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreferenceStorage.jvm.kt`
-- Web storage: `composeApp/src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreferenceStorage.wasm.kt`
+- Theme mode and controller: `adminApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreference.kt`
+- Android storage: `adminApp/src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreferenceStorage.android.kt`
+- Desktop storage: `adminApp/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreferenceStorage.jvm.kt`
+- Web storage: `adminApp/src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreferenceStorage.wasm.kt`

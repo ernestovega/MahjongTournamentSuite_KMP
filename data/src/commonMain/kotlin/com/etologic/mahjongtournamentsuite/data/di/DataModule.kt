@@ -7,6 +7,12 @@ import com.etologic.mahjongtournamentsuite.data.network.createHttpClient
 import com.etologic.mahjongtournamentsuite.data.platform.PlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.platform.providePlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAdminRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerAccountRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerHandRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerInvitationRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerInvitationRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAuthRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
@@ -41,6 +47,9 @@ val dataModule = module {
     single<RepositoryCache> { SessionRepositoryCache(logger = get()) }
     single<AuthRepository> { DefaultAuthRepository(get(), get(), get(), get(), get()) }
     single<AdminRepository> { DefaultAdminRepository(get(), get(), get(), get()) }
+    single<PlayerHandRepository> { DefaultPlayerHandRepository(get(), get(), get(), get()) }
+    single<PlayerAccountRepository> { DefaultPlayerAccountRepository(get(), get(), get()) }
+    single<PlayerInvitationRepository> { DefaultPlayerInvitationRepository(get(), get(), get(), get()) }
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get()) }
     single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get(), get()) }
     single<PlatformNameProvider> { providePlatformNameProvider() }

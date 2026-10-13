@@ -8,6 +8,7 @@ const node_test_1 = __importDefault(require("node:test"));
 const requireAdmin_1 = require("../middleware/requireAdmin");
 const requireAuth_1 = require("../middleware/requireAuth");
 const requireTournamentEditor_1 = require("../middleware/requireTournamentEditor");
+const requireTournamentReader_1 = require("../middleware/requireTournamentReader");
 const tournaments_routes_1 = require("./tournaments.routes");
 function routes() {
     const router = (0, tournaments_routes_1.tournamentsRouter)();
@@ -46,7 +47,7 @@ function find(method, path) {
     ];
     for (const [method, path] of editorRoutes) {
         const route = find(method, path);
-        strict_1.default.ok(route.handlers.includes(requireTournamentEditor_1.requireTournamentEditor), `${method} ${path} checks membership`);
+        strict_1.default.ok(route.handlers.includes(requireTournamentEditor_1.requireTournamentEditor) || route.handlers.includes(requireTournamentReader_1.requireTournamentReader), `${method} ${path} checks membership`);
         strict_1.default.ok(!route.handlers.includes(requireAdmin_1.requireAdmin), `${method} ${path} stays open to editors`);
     }
 });
@@ -55,7 +56,7 @@ function find(method, path) {
     for (const route of routes().filter((item) => item.path.startsWith("/:tournamentId"))) {
         if (adminOnlyOrGlobal(route))
             continue;
-        strict_1.default.ok(route.handlers.includes(requireTournamentEditor_1.requireTournamentEditor), `${route.method} ${route.path} needs requireTournamentEditor or requireAdmin`);
+        strict_1.default.ok(route.handlers.includes(requireTournamentEditor_1.requireTournamentEditor) || route.handlers.includes(requireTournamentReader_1.requireTournamentReader), `${route.method} ${route.path} needs requireTournamentEditor, requireTournamentReader or requireAdmin`);
     }
 });
 (0, node_test_1.default)("tables can be written only through the versioned save", () => {

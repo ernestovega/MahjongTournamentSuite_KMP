@@ -6,11 +6,13 @@ const firebase_1 = require("../../firebase");
 const httpError_1 = require("../httpError");
 const requireAdmin_1 = require("../middleware/requireAdmin");
 const requireAuth_1 = require("../middleware/requireAuth");
+const requireEditor_1 = require("../middleware/requireEditor");
 const globalRole_1 = require("../../models/globalRole");
 const firebaseAuthRest_1 = require("../../services/firebaseAuthRest");
 const usersService_1 = require("../../services/usersService");
 const config_1 = require("../../config");
 const dataVersionsService_1 = require("../../services/dataVersionsService");
+const playerAccountsService_1 = require("../../services/playerAccountsService");
 function requireEmail(value, fieldName) {
     const email = String(value ?? "").trim();
     if (!email || !email.includes("@"))
@@ -62,7 +64,6 @@ function adminRouter() {
                 throw (0, httpError_1.badRequest)("The bootstrap account must have an email address");
             await (0, usersService_1.createUserProfile)(uid, user.email, user.displayName ?? "");
             const claims = { ...(user.customClaims ?? {}), admin: true };
-            delete claims.superadmin;
             await firebase_1.auth.setCustomUserClaims(uid, claims);
             await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
             res.status(200).json({ ok: true });
@@ -74,13 +75,14 @@ function adminRouter() {
     router.get("/whoami", requireAuth_1.requireAuth, async (_req, res, next) => {
         try {
             const actor = res.locals.auth;
-            res.status(200).json({ uid: actor.uid, role: (0, globalRole_1.hasAdminClaim)(actor) ? "ADMIN" : "EDITOR" });
+            const user = await firebase_1.auth.getUser(actor.uid);
+            res.status(200).json({ uid: actor.uid, role: (0, globalRole_1.getGlobalUserRole)(user), roles: (0, globalRole_1.getGlobalUserRoles)(user) });
         }
         catch (error) {
             next(error);
         }
     });
-    router.get("/users", requireAuth_1.requireAuth, async (_req, res, next) => {
+    router.get("/users", requireAuth_1.requireAuth, requireEditor_1.requireEditor, async (_req, res, next) => {
         try {
             const actor = res.locals.auth;
             res.status(200).json({ users: await (0, usersService_1.listManagedUsers)(await assignmentScopeFor(actor)) });
@@ -89,7 +91,7 @@ function adminRouter() {
             next(error);
         }
     });
-    router.post("/users", requireAuth_1.requireAuth, async (req, res, next) => {
+    router.post("/users", requireAuth_1.requireAuth, requireEditor_1.requireEditor, async (req, res, next) => {
         let createdUid = null;
         try {
             const actor = res.locals.auth;
@@ -102,18 +104,28 @@ function adminRouter() {
                 throw (0, httpError_1.forbidden)("Only admins can create admins");
             const assignmentScope = await assignmentScopeFor(actor);
             const tournamentAssignments = role === "ADMIN" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments);
+            // The EMA id links the account to a player. Only an admin sets it. Check it before the account exists.
+            const emaId = String(req.body?.emaId ?? "").trim() || null;
+            if (emaId != null) {
+                if (!(0, globalRole_1.hasAdminClaim)(actor))
+                    throw (0, httpError_1.forbidden)("Only an admin can set the EMA id of an account");
+                await (0, playerAccountsService_1.assertEmaIdAvailable)(emaId);
+            }
             await (0, usersService_1.assertEmailAvailable)(email);
             const user = await firebase_1.auth.createUser({ email, disabled: false });
             createdUid = user.uid;
             await (0, usersService_1.createUserProfile)(user.uid, email, alias);
             await (0, usersService_1.setGlobalUserRole)(user.uid, role);
             await (0, usersService_1.syncUserTournamentAssignments)(user.uid, tournamentAssignments, assignmentScope);
+            if (emaId != null)
+                await (0, playerAccountsService_1.setAccountEmaId)({ uid: user.uid, emaId });
             await (0, firebaseAuthRest_1.sendPasswordResetEmail)(email);
             await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
             res.status(201).json(await (0, usersService_1.getManagedUser)(user.uid, assignmentScope));
         }
         catch (error) {
             if (createdUid) {
+                await (0, playerAccountsService_1.setAccountEmaId)({ uid: createdUid, emaId: null }).catch(() => undefined);
                 await Promise.allSettled([
                     firebase_1.auth.deleteUser(createdUid),
                     firebase_1.db.doc(`users/${createdUid}`).delete(),
@@ -123,11 +135,13 @@ function adminRouter() {
             next(error);
         }
     });
-    router.put("/users/:uid", requireAuth_1.requireAuth, async (req, res, next) => {
+    router.put("/users/:uid", requireAuth_1.requireAuth, requireEditor_1.requireEditor, async (req, res, next) => {
         try {
             const actor = res.locals.auth;
             const current = await (0, usersService_1.getManagedUser)(req.params.uid);
-            const role = (0, globalRole_1.parseGlobalUserRole)(req.body?.role);
+            // A player-only account may keep its role. Management cannot create players or demote editors to players.
+            const role = (0, globalRole_1.parseGlobalUserRole)(req.body?.role)
+                ?? (req.body?.role === "PLAYER" && current.role === "PLAYER" ? "PLAYER" : null);
             if (!role)
                 throw (0, httpError_1.badRequest)("Invalid role");
             if (!(0, globalRole_1.hasAdminClaim)(actor) && (current.role === "ADMIN" || role === "ADMIN")) {
@@ -142,6 +156,15 @@ function adminRouter() {
             const tournamentAssignments = role === "ADMIN" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments);
             await assertAdminRemainsEnabled(current.role, current.disabled, role, current.disabled);
             await (0, usersService_1.assertEmailAvailable)(email, current.uid);
+            // Check the EMA id before any change, so a refusal leaves the account as it was.
+            const nextEmaId = typeof req.body?.emaId === "string" ? req.body.emaId.trim() || null : undefined;
+            const emaIdChanges = nextEmaId !== undefined && nextEmaId !== (current.emaId ?? null);
+            if (emaIdChanges) {
+                if (!(0, globalRole_1.hasAdminClaim)(actor))
+                    throw (0, httpError_1.forbidden)("Only an admin can change the EMA id of an account");
+                if (nextEmaId != null)
+                    await (0, playerAccountsService_1.assertEmaIdAvailable)(nextEmaId, current.uid);
+            }
             await (0, usersService_1.updateManagedUser)({
                 uid: current.uid,
                 email,
@@ -150,6 +173,9 @@ function adminRouter() {
                 tournamentAssignments,
                 assignmentScope,
             });
+            // The EMA id links the account to a player. Only an admin changes it.
+            if (emaIdChanges)
+                await (0, playerAccountsService_1.setAccountEmaId)({ uid: current.uid, emaId: nextEmaId ?? null });
             await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
             res.status(200).json(await (0, usersService_1.getManagedUser)(current.uid, assignmentScope));
         }
@@ -175,7 +201,7 @@ function adminRouter() {
             next(error);
         }
     });
-    router.get("/users/lookup", requireAuth_1.requireAuth, async (req, res, next) => {
+    router.get("/users/lookup", requireAuth_1.requireAuth, requireEditor_1.requireEditor, async (req, res, next) => {
         try {
             const identifier = String(req.query.identifier ?? "").trim();
             if (!identifier)

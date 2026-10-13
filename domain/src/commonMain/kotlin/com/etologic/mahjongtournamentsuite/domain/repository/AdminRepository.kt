@@ -19,6 +19,8 @@ interface AdminRepository {
         alias: String,
         role: GlobalUserRole,
         tournamentAssignments: List<TournamentAssignment>,
+        /** The EMA ID of the new account. Only an admin can set it. */
+        emaId: String? = null,
     ): AppResult<ManagedUser>
 
     suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser>

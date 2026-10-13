@@ -3,7 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { auth, db } from "../firebase";
 import { conflict, forbidden, notFound } from "../api/httpError";
 import { tournamentVersionUpdate } from "./dataVersionsService";
-import { getGlobalUserRole, type GlobalUserRole } from "../models/globalRole";
+import { getGlobalUserRole, getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
 
 export type { GlobalUserRole } from "../models/globalRole";
 
@@ -16,10 +16,12 @@ export type UserProfile = {
   uid: string;
   email: string;
   alias: string;
+  emaId: string | null;
 };
 
 export type ManagedUser = UserProfile & {
   role: GlobalUserRole;
+  roles: GlobalUserRole[];
   disabled: boolean;
   tournamentAssignments: TournamentAssignment[];
 };
@@ -36,7 +38,12 @@ export async function getUserProfile(uid: string): Promise<UserProfile> {
     uid,
     email: String(snap.get("email") ?? ""),
     alias: String(snap.get("alias") ?? "").trim(),
+    emaId: readEmaId(snap.get("emaId")),
   };
+}
+
+function readEmaId(value: unknown): string | null {
+  return typeof value === "string" && value.length > 0 ? value : null;
 }
 
 export async function createUserProfile(uid: string, email: string, alias = ""): Promise<void> {
@@ -70,7 +77,9 @@ export async function listManagedUsers(
         uid: user.uid,
         email: user.email ?? String(profile?.email ?? ""),
         alias: String(profile?.alias ?? "").trim(),
+        emaId: readEmaId(profile?.emaId),
         role: getGlobalUserRole(user),
+        roles: getGlobalUserRoles(user),
         disabled: user.disabled,
         tournamentAssignments: assignmentsByUid.get(user.uid) ?? [],
       });
@@ -91,7 +100,9 @@ export async function getManagedUser(
     uid,
     email: user.email ?? String(profile.get("email") ?? ""),
     alias: String(profile.get("alias") ?? "").trim(),
+    emaId: readEmaId(profile.get("emaId")),
     role: getGlobalUserRole(user),
+    roles: getGlobalUserRoles(user),
     disabled: user.disabled,
     tournamentAssignments: await listUserTournamentAssignments(uid, visibleTournamentIds),
   };
@@ -99,10 +110,12 @@ export async function getManagedUser(
 
 export async function setGlobalUserRole(uid: string, role: GlobalUserRole): Promise<void> {
   const user = await auth.getUser(uid);
-  const claims = { ...(user.customClaims ?? {}) };
+  const claims: Record<string, unknown> = { ...(user.customClaims ?? {}) };
   delete claims.admin;
-  delete claims.superadmin;
+  delete claims.editor;
   if (role === "ADMIN") claims.admin = true;
+  else if (role === "EDITOR") claims.editor = true;
+  else claims.player = true;
   await auth.setCustomUserClaims(uid, claims);
 }
 
@@ -122,7 +135,6 @@ export async function updateManagedUser(params: {
       email: params.email,
       alias: params.alias.trim(),
       contactEmail: params.email,
-      emaId: FieldValue.delete(),
       updatedAt: FieldValue.serverTimestamp(),
     },
     { merge: true },
@@ -268,4 +280,10 @@ export async function assertEmailAvailable(email: string, excludedUid?: string):
     const code = (error as { code?: string }).code;
     if (code !== "auth/user-not-found") throw error;
   }
+}
+
+/** Adds the player capability to an account and keeps the other claims. */
+export async function grantPlayerCapability(uid: string): Promise<void> {
+  const user = await auth.getUser(uid);
+  await auth.setCustomUserClaims(uid, { ...(user.customClaims ?? {}), player: true });
 }

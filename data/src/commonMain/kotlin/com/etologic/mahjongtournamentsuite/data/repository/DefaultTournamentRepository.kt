@@ -27,6 +27,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
+import com.etologic.mahjongtournamentsuite.domain.model.InvitationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
@@ -372,6 +373,11 @@ class DefaultTournamentRepository(
                             country = member.country,
                         )
                     },
+                    accountUid = dto.accountUid,
+                    invitationStatus = InvitationStatus.entries.firstOrNull { it.name == dto.invitationStatus }
+                        ?: InvitationStatus.NONE,
+                    invitedEmail = dto.invitedEmail,
+                    contactedAt = dto.contactedAt,
                     createdAt = dto.createdAt,
                     updatedAt = dto.updatedAt,
                 )

@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.HANDS_PER_TABLE = void 0;
+exports.StaleTableVersion = exports.HANDS_PER_TABLE = void 0;
 exports.tableStateFromData = tableStateFromData;
 exports.handsFromData = handsFromData;
 exports.defaultHand = defaultHand;
@@ -9,6 +9,7 @@ exports.getRoundTablesWithHands = getRoundTablesWithHands;
 exports.getAllTablesWithHands = getAllTablesWithHands;
 exports.calculateTableSummary = calculateTableSummary;
 exports.isTournamentCompleteAfterTableSave = isTournamentCompleteAfterTableSave;
+exports.saveTableStateInTransaction = saveTableStateInTransaction;
 exports.saveTableState = saveTableState;
 exports.resetTable = resetTable;
 const firestore_1 = require("firebase-admin/firestore");
@@ -46,7 +47,7 @@ function tableStateFromData(data) {
         manualPlayerWestPoints: text("manualPlayerWestPoints"),
         manualPlayerNorthPoints: text("manualPlayerNorthPoints"),
         isCompleted: Boolean(data.isCompleted ?? false),
-        useTotalsOnly: Boolean(data.useTotalsOnly ?? true),
+        useTotalsOnly: Boolean(data.useTotalsOnly ?? false),
         usePointsCalculation: Boolean(data.usePointsCalculation ?? true),
         version: Number(data.version ?? 0),
     };
@@ -127,7 +128,7 @@ function calculateTableSummary(table, hands) {
         "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",
     ].some((field) => String(hand[field] ?? "").trim().length > 0)
         || Boolean(hand.isChickenHand) || Boolean(hand.isDone));
-    const useTotalsOnly = Boolean(table.useTotalsOnly ?? true);
+    const useTotalsOnly = Boolean(table.useTotalsOnly ?? false);
     const usePointsCalculation = Boolean(table.usePointsCalculation ?? true);
     const validScores = (0, tournamentContentRules_1.hasFourValidScores)([
         table.manualPlayerEastScore || table.playerEastScore,
@@ -175,100 +176,106 @@ class StaleTableVersion extends Error {
         this.currentVersion = currentVersion;
     }
 }
+exports.StaleTableVersion = StaleTableVersion;
 /** A table counts as started when it has any data. The tournament keeps the number of started tables. */
 function progressDelta(before, after) {
     return Number(after) - Number(before);
 }
-async function saveTableState(params) {
+/**
+ * Runs a save inside a transaction that the caller owns. The caller must finish its own reads before it calls this,
+ * because this function writes. It throws [StaleTableVersion] when the expected version is old.
+ */
+async function saveTableStateInTransaction(transaction, params) {
     const tournamentRef = firebase_1.db.collection("tournaments").doc(params.tournamentId);
     const tableRef = tournamentRef.collection("tables").doc((0, dataVersionsService_1.tableVersionKey)(params.roundId, params.tableId));
-    try {
-        return await firebase_1.db.runTransaction(async (transaction) => {
-            const tableSnapshot = await transaction.get(tableRef);
-            if (!tableSnapshot.exists)
-                throw (0, httpError_1.notFound)("Table not found");
-            const currentVersion = Number(tableSnapshot.get("version") ?? 0);
-            if (params.expectedVersion !== currentVersion) {
-                throw new StaleTableVersion(params.expectedVersion, currentVersion);
-            }
-            // The hands are read by document, not by query. A query locks a whole range, and then editors of
-            // different tables would wait for each other.
-            const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
-            if (handSnapshots.some((snapshot) => !snapshot.exists))
-                throw (0, httpError_1.notFound)("Hands not found");
-            const handsBefore = new Map(handSnapshots.map((snapshot) => [snapshot.id, snapshot.data() ?? {}]));
-            if (params.handPatches.some((item) => !handsBefore.has(String(item.handId)))) {
-                throw (0, httpError_1.notFound)("Hand not found");
-            }
-            const tableBefore = tableSnapshot.data() ?? {};
-            const mergedTable = { ...tableBefore, ...params.tablePatch };
-            const handsAfter = new Map(handsBefore);
-            params.handPatches.forEach((item) => {
-                const key = String(item.handId);
-                handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
-            });
-            const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
-            const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
-            const wasComplete = Boolean(tableBefore.isCompleted);
-            const isComplete = Boolean(mergedTable.isCompleted);
-            // Only a table that becomes complete can finish the tournament. Other saves skip this query,
-            // so editors of different tables do not lock each other.
-            let tournamentIsComplete = false;
-            if (isComplete) {
-                const incompleteTables = await transaction.get(tournamentRef.collection("tables").where("isCompleted", "==", false).limit(2));
-                tournamentIsComplete = isTournamentCompleteAfterTableSave({
-                    currentTablePath: tableRef.path,
-                    currentTableIsComplete: true,
-                    incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
-                });
-            }
-            const nextVersion = currentVersion + 1;
-            const editedBy = params.actor == null
-                ? {}
-                : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: firestore_1.FieldValue.serverTimestamp() };
-            transaction.update(tableRef, {
-                ...params.tablePatch,
-                ...summary,
-                ...editedBy,
-                version: nextVersion,
-                updatedAt: firestore_1.FieldValue.serverTimestamp(),
-            });
-            params.handPatches.forEach((item) => {
-                transaction.update(tableRef.collection("hands").doc(String(item.handId)), {
-                    ...item.patch,
-                    updatedAt: firestore_1.FieldValue.serverTimestamp(),
-                });
-            });
-            const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
-            transaction.update(tournamentRef, {
-                isCompleted: tournamentIsComplete,
-                updatedAt: firestore_1.FieldValue.serverTimestamp(),
-                ...(startedChange === 0 ? {} : { tablesWithProgress: firestore_1.FieldValue.increment(startedChange) }),
-                ...(0, dataVersionsService_1.tableVersionUpdate)(params.roundId, params.tableId, nextVersion),
-            });
-            // The tournament list shows only whether the tournament is complete. That can change only when a table changes.
-            if (wasComplete !== isComplete) {
-                transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
-            }
-            transaction.set(tournamentRef.collection("changes").doc(), {
-                ...(0, changeLog_1.buildSaveChangeEntry)({
-                    roundId: params.roundId,
-                    tableId: params.tableId,
-                    version: nextVersion,
-                    actor: params.actor ?? null,
-                    tableBefore,
-                    tablePatch: params.tablePatch,
-                    handsBefore,
-                    handPatches: params.handPatches,
-                }),
-                at: firestore_1.FieldValue.serverTimestamp(),
-            });
-            // The answer comes from the data that the transaction wrote, so the client needs no second read.
-            return {
-                table: tableStateFromData({ ...mergedTable, ...summary, version: nextVersion }),
-                hands: handsFromData([...handsAfter.values()]),
-            };
+    const tableSnapshot = await transaction.get(tableRef);
+    if (!tableSnapshot.exists)
+        throw (0, httpError_1.notFound)("Table not found");
+    const currentVersion = Number(tableSnapshot.get("version") ?? 0);
+    if (params.expectedVersion !== currentVersion) {
+        throw new StaleTableVersion(params.expectedVersion, currentVersion);
+    }
+    // The hands are read by document, not by query. A query locks a whole range, and then editors of
+    // different tables would wait for each other.
+    const handSnapshots = await transaction.getAll(...handRefsOf(tableRef));
+    if (handSnapshots.some((snapshot) => !snapshot.exists))
+        throw (0, httpError_1.notFound)("Hands not found");
+    const handsBefore = new Map(handSnapshots.map((snapshot) => [snapshot.id, snapshot.data() ?? {}]));
+    if (params.handPatches.some((item) => !handsBefore.has(String(item.handId)))) {
+        throw (0, httpError_1.notFound)("Hand not found");
+    }
+    const tableBefore = tableSnapshot.data() ?? {};
+    const mergedTable = { ...tableBefore, ...params.tablePatch };
+    const handsAfter = new Map(handsBefore);
+    params.handPatches.forEach((item) => {
+        const key = String(item.handId);
+        handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
+    });
+    const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
+    const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
+    const wasComplete = Boolean(tableBefore.isCompleted);
+    const isComplete = Boolean(mergedTable.isCompleted);
+    // Only a table that becomes complete can finish the tournament. Other saves skip this query,
+    // so editors of different tables do not lock each other.
+    let tournamentIsComplete = false;
+    if (isComplete) {
+        const incompleteTables = await transaction.get(tournamentRef.collection("tables").where("isCompleted", "==", false).limit(2));
+        tournamentIsComplete = isTournamentCompleteAfterTableSave({
+            currentTablePath: tableRef.path,
+            currentTableIsComplete: true,
+            incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
         });
+    }
+    const nextVersion = currentVersion + 1;
+    const editedBy = params.actor == null
+        ? {}
+        : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: firestore_1.FieldValue.serverTimestamp() };
+    transaction.update(tableRef, {
+        ...params.tablePatch,
+        ...summary,
+        ...editedBy,
+        version: nextVersion,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    params.handPatches.forEach((item) => {
+        transaction.update(tableRef.collection("hands").doc(String(item.handId)), {
+            ...item.patch,
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        });
+    });
+    const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
+    transaction.update(tournamentRef, {
+        isCompleted: tournamentIsComplete,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        ...(startedChange === 0 ? {} : { tablesWithProgress: firestore_1.FieldValue.increment(startedChange) }),
+        ...(0, dataVersionsService_1.tableVersionUpdate)(params.roundId, params.tableId, nextVersion),
+    });
+    // The tournament list shows only whether the tournament is complete. That can change only when a table changes.
+    if (wasComplete !== isComplete) {
+        transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
+    }
+    transaction.set(tournamentRef.collection("changes").doc(), {
+        ...(0, changeLog_1.buildSaveChangeEntry)({
+            roundId: params.roundId,
+            tableId: params.tableId,
+            version: nextVersion,
+            actor: params.actor ?? null,
+            tableBefore,
+            tablePatch: params.tablePatch,
+            handsBefore,
+            handPatches: params.handPatches,
+        }),
+        at: firestore_1.FieldValue.serverTimestamp(),
+    });
+    // The answer comes from the data that the transaction wrote, so the client needs no second read.
+    return {
+        table: tableStateFromData({ ...mergedTable, ...summary, version: nextVersion }),
+        hands: handsFromData([...handsAfter.values()]),
+    };
+}
+async function saveTableState(params) {
+    try {
+        return await firebase_1.db.runTransaction((transaction) => saveTableStateInTransaction(transaction, params));
     }
     catch (error) {
         if (error instanceof StaleTableVersion) {
@@ -303,7 +310,7 @@ const EMPTY_TABLE_FIELDS = {
     manualPlayerWestPoints: "",
     manualPlayerNorthPoints: "",
     isCompleted: false,
-    useTotalsOnly: true,
+    useTotalsOnly: false,
     usePointsCalculation: true,
     hasProgress: false,
     hasValidManualTotals: false,

@@ -48,6 +48,9 @@ export async function upsertTournamentMember(params: {
   if (getGlobalUserRole(user) === "ADMIN") {
     throw badRequest("Admins already have access to every tournament");
   }
+  if (getGlobalUserRole(user) === "PLAYER") {
+    throw badRequest("A player account cannot be assigned as an editor");
+  }
 
   const ref = db.doc(`tournaments/${params.tournamentId}/members/${params.uid}`);
   await ref.set(
