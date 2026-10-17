@@ -117,7 +117,7 @@ class TableReconcilerTest {
     fun derivedTotalsAreNotListedAsLost() {
         val lost = TableReconciler.lostChangesOf(
             tablePatch = mapOf(
-                "playerEastScore" to "32", "playerSouthPoints" to "4", "playerEastId" to "9",
+                "playerEastScore" to "32", "playerEastId" to "9",
                 "manualPlayerEastScore" to "10", "isCompleted" to true,
             ),
             handPatches = emptyMap(),

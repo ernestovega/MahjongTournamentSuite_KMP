@@ -49,7 +49,6 @@ test("table state reads stored fields with safe defaults", () => {
   assert.equal(table.version, 5);
   assert.equal(table.playerEastId, "");
   assert.equal(table.useTotalsOnly, false);
-  assert.equal(table.usePointsCalculation, true);
   assert.equal(table.isCompleted, false);
 });
 

@@ -38,7 +38,6 @@ internal class FakeTournamentRepository : TournamentRepository {
             playerIds = table.playerIds,
             isCompleted = table.isCompleted,
             useTotalsOnly = table.useTotalsOnly,
-            usePointsCalculation = table.usePointsCalculation,
             hasProgress = hands.any { it.handScore.isNotBlank() },
             version = table.version,
         )
@@ -129,14 +128,6 @@ internal class FakeTournamentRepository : TournamentRepository {
         return AppResult.Success(savedTable to savedHands)
     }
 
-    override suspend fun resetTable(tournamentId: String, roundId: Int, tableId: Int): AppResult<Unit> {
-        val key = TableKey(roundId, tableId)
-        calls += "reset $roundId/$tableId"
-        val (table, _) = tables[key] ?: return AppResult.Failure(AppError.Unexpected("Table not found"))
-        tables[key] = table.copy(version = table.version + 1, playerEastId = "", isCompleted = false) to syncHands()
-        return AppResult.Success(Unit)
-    }
-
     override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> {
         calls += "manifest"
         beforeManifest()
@@ -175,6 +166,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
+        venue: TournamentVenue,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
         associationLogoSourceTournamentId: String?,
@@ -185,7 +177,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         countChickenHands: Boolean?,
     ) = unusedFakeResult<Tournament>()
 
-    override suspend fun generateTournamentIdCards(tournamentId: String) = unusedFakeResult<ByteArray>()
+    override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedFakeResult<ByteArray>()
     override suspend fun generateIdCardProof(request: IdCardProofRequest) = unusedFakeResult<ByteArray>()
     override suspend fun generateTournamentIdList(tournamentId: String) = unusedFakeResult<ByteArray>()
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = unusedFakeResult<ByteArray>()

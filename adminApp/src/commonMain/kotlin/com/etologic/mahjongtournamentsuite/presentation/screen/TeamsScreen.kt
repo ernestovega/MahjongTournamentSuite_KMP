@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -94,7 +98,7 @@ fun TeamsScreen(
     var searchQuery by remember { mutableStateOf("") }
     var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
     var initialFocusApplied by remember { mutableStateOf(false) }
-    val listState = rememberLazyListState()
+    val listState = rememberPersistentLazyListState("teams")
     val searchFocusRequester = remember { FocusRequester() }
     val slotsById = remember(slots) { slots.associateBy { it.id } }
     val basePlayersByEma = remember(basePlayers) { basePlayers.associateBy { it.emaId } }
@@ -239,7 +243,15 @@ fun TeamsScreen(
             )
         },
         isLoading = loading || saving,
+        showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
+        actions = {
+            AppTopBarActions(
+                onStatistics = {
+                    navController.navigate(StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = tournamentId))
+                },
+            )
+        },
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,

@@ -59,6 +59,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
@@ -82,6 +83,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSiz
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.synchronizeRoundScheduleRows
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentVenueFields
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentAgendaItems
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentRoundSchedules
 import com.etologic.mahjongtournamentsuite.presentation.components.tournamentScheduleEditorError
@@ -129,6 +131,7 @@ fun CreateTournamentDialog(
     var hostCountry by remember { mutableStateOf("") }
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
     var hostCity by remember { mutableStateOf("") }
+    var venue by remember { mutableStateOf(TournamentVenue()) }
     var showColorPickerDialog by remember { mutableStateOf(false) }
     var associationLogo by remember { mutableStateOf<SelectedImage?>(null) }
     var logoToCrop by remember { mutableStateOf<SelectedImage?>(null) }
@@ -299,6 +302,7 @@ fun CreateTournamentDialog(
                     eventEndDate = trimmedEndDate,
                     hostCountry = normalizedHostCountry,
                     hostCity = trimmedHostCity,
+                    venue = venue,
                     isTeams = isTeams,
                     countBestHands = countBestHands,
                     countChickenHands = countChickenHands,
@@ -426,6 +430,7 @@ fun CreateTournamentDialog(
                             modifier = Modifier.weight(2f).focusRequester(hostCityFocusRequester),
                         )
                     }
+                    TournamentVenueFields(venue = venue, onVenueChange = { venue = it }, enabled = !isLoading)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),

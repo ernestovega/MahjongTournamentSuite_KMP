@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -111,7 +113,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
         users.associate { it.uid to FocusRequester() }
     }
     val filteredUsers = users.filter { user ->
-        user.email.contains(emailFilter.trim(), ignoreCase = true) &&
+        user.email.matchesSearch(emailFilter) &&
             (selectedRoles.isEmpty() || user.role in selectedRoles) &&
             (selectedTournamentId == null || user.role == GlobalUserRole.ADMIN || user.tournamentAssignments.any {
                 it.tournamentId == selectedTournamentId
@@ -218,6 +220,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
     AppScaffold(
         title = "App users",
         isLoading = loading || saving,
+        showBackgroundLogo = loading && users.isEmpty(),
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
@@ -334,7 +337,7 @@ private fun UsersTable(
     onEdit: (ManagedUser) -> Unit,
 ) {
     LazyColumnWithScrollbar(
-        state = rememberLazyListState(),
+        state = rememberPersistentLazyListState("users"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
     ) {
         item {
@@ -435,7 +438,7 @@ private fun UserFilters(
                 ) {
                     DropdownMenuItem(text = { Text("All tournaments") }, onClick = { onTournamentSelected(null) })
                     tournaments.filter {
-                        tournamentFilterText.isBlank() || it.name.startsWith(tournamentFilterText, ignoreCase = true)
+                        tournamentFilterText.isBlank() || it.name.matchesSearch(tournamentFilterText)
                     }.forEach { tournament ->
                         DropdownMenuItem(text = { Text(tournament.name) }, onClick = { onTournamentSelected(tournament) })
                     }
@@ -736,7 +739,7 @@ private fun TournamentAssignmentsDialog(
     val closeFocus = remember { FocusRequester() }
     val filteredTournaments = tournaments.filter { tournament ->
         (!showSelectedOnly || assignments[tournament.id] == true) &&
-            tournament.name.contains(searchText.trim(), ignoreCase = true)
+            tournament.name.matchesSearch(searchText)
     }
     val selectedCount = tournaments.count { assignments[it.id] == true }
 

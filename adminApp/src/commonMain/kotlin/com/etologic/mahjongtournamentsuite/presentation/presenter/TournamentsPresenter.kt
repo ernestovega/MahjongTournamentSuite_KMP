@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -46,6 +47,7 @@ class TournamentsPresenter(
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
+        venue: TournamentVenue,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
         associationLogoSourceTournamentId: String?,
@@ -63,6 +65,7 @@ class TournamentsPresenter(
         eventEndDate = eventEndDate,
         hostCountry = hostCountry,
         hostCity = hostCity,
+        venue = venue,
         associationLogoContentType = associationLogoContentType,
         associationLogoBytes = associationLogoBytes,
         associationLogoSourceTournamentId = associationLogoSourceTournamentId,

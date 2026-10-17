@@ -52,7 +52,7 @@ No new libraries were added.
 
 Not started. Open points:
 
-- `Tournament` has no time zone. The round schedule has a date and a start time but no end time.
+- `Tournament` has no time zone. The round schedule has a date and a start time but no end time. Agenda events have no end time.
 - The notification channels (FCM on Android, Web Push on the web) need new dependencies.
 
 ## Known gaps

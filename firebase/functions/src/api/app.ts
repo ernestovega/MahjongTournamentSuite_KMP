@@ -4,6 +4,7 @@ import { gzipJson } from "./middleware/gzipJson";
 import { errorHandler } from "./middleware/errorHandler";
 import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
+import { configRouter } from "./routes/config.routes";
 import { countriesRouter } from "./routes/countries.routes";
 import { playerRouter } from "./routes/player.routes";
 import { playersRouter } from "./routes/players.routes";
@@ -44,6 +45,7 @@ export function buildApp(): express.Express {
   });
 
   app.use("/auth", authRouter());
+  app.use("/config", configRouter());
   app.use("/countries", countriesRouter());
   app.use("/ema-player-registry", playersRouter());
   app.use("/admin", adminRouter());

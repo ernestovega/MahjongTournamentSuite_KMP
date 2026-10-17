@@ -6,11 +6,12 @@ import { conflict } from "../api/httpError";
 import {
   calculateTableCompletionStatus,
   hasFourValidScores,
-  hasValidTablePoints,
   calculateHandSummary,
 } from "./tournamentContentRules";
+import { tablePointsOf } from "./handScoring";
 import { globalVersionUpdate, tableVersionKey, tableVersionUpdate } from "./dataVersionsService";
-import { buildResetChangeEntry, buildSaveChangeEntry, type ChangeActor } from "./changeLog";
+import { prepareTableStats } from "./statisticsStore";
+import { buildConflictChangeEntry, buildResetChangeEntry, buildSaveChangeEntry, type ChangeActor } from "./changeLog";
 
 export type TableHand = {
   handId: number;
@@ -46,13 +47,8 @@ export type TableState = {
   manualPlayerSouthScore: string;
   manualPlayerWestScore: string;
   manualPlayerNorthScore: string;
-  manualPlayerEastPoints: string;
-  manualPlayerSouthPoints: string;
-  manualPlayerWestPoints: string;
-  manualPlayerNorthPoints: string;
   isCompleted: boolean;
   useTotalsOnly: boolean;
-  usePointsCalculation: boolean;
 };
 
 type Data = Record<string, unknown>;
@@ -72,21 +68,14 @@ export function tableStateFromData(data: Data): TableState {
     playerSouthScore: text("playerSouthScore"),
     playerWestScore: text("playerWestScore"),
     playerNorthScore: text("playerNorthScore"),
-    playerEastPoints: text("playerEastPoints"),
-    playerSouthPoints: text("playerSouthPoints"),
-    playerWestPoints: text("playerWestPoints"),
-    playerNorthPoints: text("playerNorthPoints"),
+    // The table points come only from the scores. A stored value is never used.
+    ...tablePointsOf(data),
     manualPlayerEastScore: text("manualPlayerEastScore"),
     manualPlayerSouthScore: text("manualPlayerSouthScore"),
     manualPlayerWestScore: text("manualPlayerWestScore"),
     manualPlayerNorthScore: text("manualPlayerNorthScore"),
-    manualPlayerEastPoints: text("manualPlayerEastPoints"),
-    manualPlayerSouthPoints: text("manualPlayerSouthPoints"),
-    manualPlayerWestPoints: text("manualPlayerWestPoints"),
-    manualPlayerNorthPoints: text("manualPlayerNorthPoints"),
     isCompleted: Boolean(data.isCompleted ?? false),
     useTotalsOnly: Boolean(data.useTotalsOnly ?? false),
-    usePointsCalculation: Boolean(data.usePointsCalculation ?? true),
     version: Number(data.version ?? 0),
   };
 }
@@ -191,20 +180,13 @@ export function calculateTableSummary(table: Record<string, unknown>, hands: Arr
   ].some((field) => String(hand[field] ?? "").trim().length > 0)
     || Boolean(hand.isChickenHand) || Boolean(hand.isDone));
   const useTotalsOnly = Boolean(table.useTotalsOnly ?? false);
-  const usePointsCalculation = Boolean(table.usePointsCalculation ?? true);
   const validScores = hasFourValidScores([
     table.manualPlayerEastScore || table.playerEastScore,
     table.manualPlayerSouthScore || table.playerSouthScore,
     table.manualPlayerWestScore || table.playerWestScore,
     table.manualPlayerNorthScore || table.playerNorthScore,
   ]);
-  const validPoints = hasValidTablePoints([
-    table.manualPlayerEastPoints || table.playerEastPoints,
-    table.manualPlayerSouthPoints || table.playerSouthPoints,
-    table.manualPlayerWestPoints || table.playerWestPoints,
-    table.manualPlayerNorthPoints || table.playerNorthPoints,
-  ]);
-  const hasValidManualTotals = useTotalsOnly ? validScores : !usePointsCalculation && validPoints;
+  const hasValidManualTotals = useTotalsOnly && validScores;
   return {
     hasProgress: hasTableProgress || hasHandProgress || Boolean(table.isCompleted),
     hasValidManualTotals,
@@ -297,6 +279,8 @@ export async function saveTableStateInTransaction(
   });
   const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
   const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
+  // The table points are written on every save, from the scores of the merged table.
+  const derivedPoints = tablePointsOf(mergedTable);
   const wasComplete = Boolean(tableBefore.isCompleted);
   const isComplete = Boolean(mergedTable.isCompleted);
 
@@ -314,12 +298,24 @@ export async function saveTableStateInTransaction(
     });
   }
 
+  // The statistics change only for a table that is or was complete. Other saves read nothing more.
+  const statsPlan = wasComplete || isComplete
+    ? await prepareTableStats(transaction, {
+      tournamentId: params.tournamentId,
+      roundId: params.roundId,
+      tableId: params.tableId,
+      table: { ...mergedTable, ...derivedPoints, roundId: params.roundId, tableId: params.tableId },
+      hands: [...handsAfter.values()],
+    })
+    : null;
+
   const nextVersion = currentVersion + 1;
   const editedBy = params.actor == null
     ? {}
     : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: FieldValue.serverTimestamp() };
   transaction.update(tableRef, {
     ...params.tablePatch,
+    ...derivedPoints,
     ...summary,
     ...editedBy,
     version: nextVersion,
@@ -331,6 +327,7 @@ export async function saveTableStateInTransaction(
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
+  statsPlan?.commit(transaction);
   const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
   transaction.update(tournamentRef, {
     isCompleted: tournamentIsComplete,
@@ -358,9 +355,32 @@ export async function saveTableStateInTransaction(
 
   // The answer comes from the data that the transaction wrote, so the client needs no second read.
   return {
-    table: tableStateFromData({ ...mergedTable, ...summary, version: nextVersion }),
+    table: tableStateFromData({ ...mergedTable, ...derivedPoints, ...summary, version: nextVersion }),
     hands: handsFromData([...handsAfter.values()]),
   };
+}
+
+/** Keeps a record of a refused save, so the usage report can count conflicts. A failure here must not hide the conflict. */
+export async function logTableConflict(params: {
+  tournamentId: string;
+  roundId: number;
+  tableId: number;
+  expectedVersion: number;
+  actor: ChangeActor | null;
+}): Promise<void> {
+  try {
+    await db.collection("tournaments").doc(params.tournamentId).collection("changes").add({
+      ...buildConflictChangeEntry({
+        roundId: params.roundId,
+        tableId: params.tableId,
+        version: params.expectedVersion,
+        actor: params.actor,
+      }),
+      at: FieldValue.serverTimestamp(),
+    });
+  } catch {
+    // The usage report is a best-effort record.
+  }
 }
 
 export async function saveTableState(params: SaveTableStateParams): Promise<{ table: TableState; hands: TableHand[] }> {
@@ -368,6 +388,7 @@ export async function saveTableState(params: SaveTableStateParams): Promise<{ ta
     return await db.runTransaction((transaction) => saveTableStateInTransaction(transaction, params));
   } catch (error) {
     if (error instanceof StaleTableVersion) {
+      await logTableConflict({ ...params, expectedVersion: error.expectedVersion, actor: params.actor ?? null });
       throw conflict("Table data changed on the server", {
         expectedVersion: error.expectedVersion,
         currentVersion: error.currentVersion,
@@ -395,13 +416,8 @@ const EMPTY_TABLE_FIELDS = {
   manualPlayerSouthScore: "",
   manualPlayerWestScore: "",
   manualPlayerNorthScore: "",
-  manualPlayerEastPoints: "",
-  manualPlayerSouthPoints: "",
-  manualPlayerWestPoints: "",
-  manualPlayerNorthPoints: "",
   isCompleted: false,
   useTotalsOnly: false,
-  usePointsCalculation: true,
   hasProgress: false,
   hasValidManualTotals: false,
   completionStatus: "empty",
@@ -426,6 +442,16 @@ export async function resetTable(params: {
     const tableBefore = tableSnap.data() ?? {};
     const nextVersion = Number(tableBefore.version ?? 0) + 1;
     const previous = calculateTableSummary(tableBefore, handSnapshots.map((hand) => hand.data() ?? {}));
+    const statsPlan = Boolean(tableBefore.isCompleted)
+      ? await prepareTableStats(transaction, {
+        tournamentId: params.tournamentId,
+        roundId: params.roundId,
+        tableId: params.tableId,
+        table: null,
+        hands: [],
+      })
+      : null;
+    statsPlan?.commit(transaction);
 
     transaction.update(tableRef, {
       ...EMPTY_TABLE_FIELDS,

@@ -78,13 +78,14 @@ class PresenterDelegationTest {
             eventEndDate = "2026-10-01",
             hostCountry = "ES",
             hostCity = "Madrid",
+            venue = TournamentVenue(name = "Club", address = "Calle Mayor 1"),
             isTeams = false,
             countBestHands = false,
             countChickenHands = true,
             numPlayers = 4,
             numRounds = 1,
             roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-01", "09:30")),
-            agendaItems = listOf(TournamentAgendaItem("Registration", "2026-10-01", "08:30", "09:00")),
+            agendaItems = listOf(TournamentAgendaItem("Registration", "2026-10-01", "08:30")),
             computeMode = CreateTournamentPresenter.ComputeMode.LIGHT,
             onProgress = { progress += it.phase },
         )
@@ -97,6 +98,7 @@ class PresenterDelegationTest {
         assertEquals(1, repository.lastCreateRequest?.tables?.size)
         assertEquals("09:30", repository.lastCreateRequest?.roundSchedules?.single()?.startTime)
         assertEquals("Registration", repository.lastCreateRequest?.agendaItems?.single()?.title)
+        assertEquals("Club", repository.lastCreateRequest?.venue?.name)
         assertEquals(
             listOf(CreateTournamentPresenter.Phase.CALCULATING, CreateTournamentPresenter.Phase.CREATING),
             progress.distinct(),
@@ -139,6 +141,7 @@ private class RecordingTournamentRepository(
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
+        venue: TournamentVenue,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
         associationLogoSourceTournamentId: String?,
@@ -149,7 +152,7 @@ private class RecordingTournamentRepository(
         countChickenHands: Boolean?,
     ) = unusedResult<Tournament>()
 
-    override suspend fun generateTournamentIdCards(tournamentId: String) = unusedResult<ByteArray>()
+    override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedResult<ByteArray>()
     override suspend fun generateIdCardProof(request: IdCardProofRequest) = unusedResult<ByteArray>()
     override suspend fun generateTournamentIdList(tournamentId: String) = unusedResult<ByteArray>()
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = unusedResult<ByteArray>()
@@ -210,7 +213,6 @@ private class RecordingTournamentRepository(
         handPatches: Map<Int, Map<String, Any?>>,
     ) = unusedResult<Pair<TableState, List<TableHand>>>()
 
-    override suspend fun resetTable(tournamentId: String, roundId: Int, tableId: Int) = unusedResult<Unit>()
 
     override suspend fun getTournamentManifest(tournamentId: String) = unusedResult<TournamentManifest>()
 }

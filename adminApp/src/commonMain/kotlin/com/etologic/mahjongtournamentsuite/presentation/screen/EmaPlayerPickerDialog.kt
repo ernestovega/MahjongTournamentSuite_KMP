@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -52,7 +53,7 @@ internal fun EmaPlayerPickerDialog(
     val terms = query.trim().split(' ').filter { it.isNotEmpty() }
     val matches = players.filter { player ->
         val haystack = "${player.displayName} ${player.emaId} ${player.country}"
-        terms.all { haystack.contains(it, ignoreCase = true) }
+        terms.all { haystack.matchesSearch(it) }
     }
     AlertDialog(
         onDismissRequest = onDismiss,

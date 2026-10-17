@@ -11,7 +11,6 @@ export type TournamentAgendaItem = {
   title: string;
   date: string | null;
   startTime: string | null;
-  endTime: string | null;
 };
 
 const LOCAL_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
@@ -22,10 +21,16 @@ function optionalString(value: unknown): string | null {
   return normalized.length > 0 ? normalized : null;
 }
 
-function normalizedDate(value: unknown, field: string, startDate: string, endDate: string): string | null {
+function normalizedIsoDate(value: unknown, field: string): string | null {
   const date = optionalString(value);
   if (date == null) return null;
   if (!isValidIsoDate(date)) throw badRequest(`${field} must use yyyy-MM-dd`);
+  return date;
+}
+
+function normalizedDate(value: unknown, field: string, startDate: string, endDate: string): string | null {
+  const date = normalizedIsoDate(value, field);
+  if (date == null) return null;
   if (date < startDate || date > endDate) throw badRequest(`${field} must be inside the tournament date range`);
   return date;
 }
@@ -71,11 +76,8 @@ export function normalizeRoundSchedules(
   });
 }
 
-export function normalizeAgendaItems(
-  value: unknown,
-  eventStartDate: string,
-  eventEndDate: string,
-): TournamentAgendaItem[] {
+/** Agenda items may use any valid date. Events before or after the official games are allowed. */
+export function normalizeAgendaItems(value: unknown): TournamentAgendaItem[] {
   const rows = value == null ? [] : value;
   if (!Array.isArray(rows)) throw badRequest("agendaItems must be an array");
   if (rows.length > 100) throw badRequest("agendaItems must contain at most 100 rows");
@@ -90,15 +92,10 @@ export function normalizeAgendaItems(
     if (title.length > 120) throw badRequest(`agendaItems[${index}].title must contain at most 120 characters`);
 
     const startTime = normalizedTime(row.startTime, `agendaItems[${index}].startTime`);
-    const endTime = normalizedTime(row.endTime, `agendaItems[${index}].endTime`);
-    if (startTime != null && endTime != null && endTime < startTime) {
-      throw badRequest(`agendaItems[${index}].endTime must not be before its start time`);
-    }
     return [{
       title,
-      date: normalizedDate(row.date, `agendaItems[${index}].date`, eventStartDate, eventEndDate),
+      date: normalizedIsoDate(row.date, `agendaItems[${index}].date`),
       startTime,
-      endTime,
     }];
   });
 }
@@ -120,13 +117,9 @@ export function readStoredRoundSchedules(
   }
 }
 
-export function readStoredAgendaItems(
-  value: unknown,
-  eventStartDate: string,
-  eventEndDate: string,
-): TournamentAgendaItem[] {
+export function readStoredAgendaItems(value: unknown): TournamentAgendaItem[] {
   try {
-    return normalizeAgendaItems(value, eventStartDate, eventEndDate);
+    return normalizeAgendaItems(value);
   } catch (_error) {
     return [];
   }

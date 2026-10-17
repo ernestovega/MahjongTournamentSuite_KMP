@@ -21,6 +21,9 @@ class UsersPresenter(
 ) {
     suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.mode())
 
+    suspend fun loadUsageReport(): AppResult<com.etologic.mahjongtournamentsuite.domain.model.UsageReport> =
+        adminRepository.loadUsageReport()
+
     suspend fun loadUsers(force: Boolean = false): AppResult<List<ManagedUser>> = adminRepository.listUsers(force.mode())
 
     suspend fun createUser(

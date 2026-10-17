@@ -8,6 +8,7 @@ exports.listTournamentsForPlayer = listTournamentsForPlayer;
 exports.listTournamentsForUser = listTournamentsForUser;
 exports.deleteTournamentResources = deleteTournamentResources;
 exports.deleteTournament = deleteTournament;
+const statisticsStore_1 = require("./statisticsStore");
 const firestore_1 = require("firebase-admin/firestore");
 const node_crypto_1 = require("node:crypto");
 const firebase_1 = require("../firebase");
@@ -67,6 +68,10 @@ async function mapTournamentDoc(d) {
         associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
         hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
         hostCity: String(d.get("hostCity") ?? "").trim(),
+        venueName: String(d.get("venueName") ?? ""),
+        venueAddress: String(d.get("venueAddress") ?? ""),
+        venueMapUrl: String(d.get("venueMapUrl") ?? ""),
+        contactEmail: String(d.get("contactEmail") ?? ""),
         isTeams: d.get("isTeams") ?? false,
         countBestHands: d.get("countBestHands") !== false,
         countChickenHands: d.get("countChickenHands") !== false,
@@ -75,7 +80,7 @@ async function mapTournamentDoc(d) {
         eventStartDate,
         eventEndDate,
         roundSchedules: (0, tournamentSchedule_1.readStoredRoundSchedules)(d.get("roundSchedules"), numRounds, safeStartDate, safeEndDate),
-        agendaItems: (0, tournamentSchedule_1.readStoredAgendaItems)(d.get("agendaItems"), safeStartDate, safeEndDate),
+        agendaItems: (0, tournamentSchedule_1.readStoredAgendaItems)(d.get("agendaItems")),
         numTries: d.get("numTries") ?? 0,
         isCompleted: d.get("isCompleted") ?? false,
         createdByUid,
@@ -96,7 +101,7 @@ async function createTournament(params) {
         throw (0, httpError_1.badRequest)("Invalid tables payload", { expected: expectedTables, received: params.tables.length });
     }
     const roundSchedules = (0, tournamentSchedule_1.normalizeRoundSchedules)(params.roundSchedules, params.numRounds, params.eventStartDate, params.eventEndDate);
-    const agendaItems = (0, tournamentSchedule_1.normalizeAgendaItems)(params.agendaItems, params.eventStartDate, params.eventEndDate);
+    const agendaItems = (0, tournamentSchedule_1.normalizeAgendaItems)(params.agendaItems);
     const ref = firebase_1.db.collection("tournaments").doc();
     const logo = params.associationLogoContentType && params.associationLogoDataBase64
         ? await saveAssociationLogo(ref.id, params.associationLogoContentType, params.associationLogoDataBase64)
@@ -113,6 +118,10 @@ async function createTournament(params) {
         eventEndDate: params.eventEndDate,
         hostCountry: params.hostCountry.trim().toUpperCase(),
         hostCity: params.hostCity.trim(),
+        venueName: params.venueName ?? "",
+        venueAddress: params.venueAddress ?? "",
+        venueMapUrl: params.venueMapUrl ?? "",
+        contactEmail: params.contactEmail ?? "",
         isTeams: params.isTeams,
         countBestHands: params.countBestHands ?? true,
         countChickenHands: params.countChickenHands ?? true,
@@ -202,13 +211,8 @@ async function createTournament(params) {
             manualPlayerSouthScore: "",
             manualPlayerWestScore: "",
             manualPlayerNorthScore: "",
-            manualPlayerEastPoints: "",
-            manualPlayerSouthPoints: "",
-            manualPlayerWestPoints: "",
-            manualPlayerNorthPoints: "",
             isCompleted: Boolean(table.isCompleted ?? false),
             useTotalsOnly: Boolean(table.useTotalsOnly ?? false),
-            usePointsCalculation: true,
             hasProgress: Boolean(table.isCompleted ?? false),
             hasValidManualTotals: false,
             completionStatus: "empty",
@@ -358,8 +362,8 @@ async function updateTournamentSettings(params) {
         ? (0, tournamentSchedule_1.readStoredRoundSchedules)(before.get("roundSchedules"), numRounds, params.eventStartDate, params.eventEndDate)
         : (0, tournamentSchedule_1.normalizeRoundSchedules)(params.roundSchedules, numRounds, params.eventStartDate, params.eventEndDate);
     const agendaItems = params.agendaItems === undefined
-        ? (0, tournamentSchedule_1.readStoredAgendaItems)(before.get("agendaItems"), params.eventStartDate, params.eventEndDate)
-        : (0, tournamentSchedule_1.normalizeAgendaItems)(params.agendaItems, params.eventStartDate, params.eventEndDate);
+        ? (0, tournamentSchedule_1.readStoredAgendaItems)(before.get("agendaItems"))
+        : (0, tournamentSchedule_1.normalizeAgendaItems)(params.agendaItems);
     const oldLogoPath = String(before.get("associationLogoPath") ?? "").trim();
     let logo;
     if (params.removeAssociationLogo === true) {
@@ -382,6 +386,10 @@ async function updateTournamentSettings(params) {
         eventEndDate: params.eventEndDate,
         hostCountry: params.hostCountry.trim().toUpperCase(),
         hostCity: params.hostCity.trim(),
+        venueName: params.venueName ?? "",
+        venueAddress: params.venueAddress ?? "",
+        venueMapUrl: params.venueMapUrl ?? "",
+        contactEmail: params.contactEmail ?? "",
         roundSchedules,
         agendaItems,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
@@ -445,6 +453,8 @@ async function deleteTournament(tournamentId) {
             await firebase_1.storage.file(logoPath).delete({ ignoreNotFound: true });
         },
         deleteTournamentTree: async () => {
+            // The numbers of the tournament leave the sums before its tables are deleted.
+            await (0, statisticsStore_1.removeTournamentStats)(tournamentId);
             await firebase_1.db.recursiveDelete(ref);
         },
     });

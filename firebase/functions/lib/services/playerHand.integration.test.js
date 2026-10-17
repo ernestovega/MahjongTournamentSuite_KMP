@@ -16,7 +16,6 @@ async function seedTable(options = {}) {
     const tournamentId = await (0, firestoreFixtures_1.seedTournament)({ tables: [{ roundId: 1, tableId: 1 }] });
     await firebase_1.db.doc(`tournaments/${tournamentId}/tables/1_1`).update({
         useTotalsOnly: options.totalsOnly ?? false,
-        usePointsCalculation: true,
         ...(options.seats === false ? {} : { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" }),
     });
     const uid = `u-${tournamentId}-1`;

@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.key
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.domain.model.TablePoints
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.topHandScores
@@ -22,10 +23,10 @@ internal const val MAX_CHICKEN_HAND_SCORE = 12
  * The editor keeps hands and manual scores at the same time. Switching modes only changes which
  * values apply. It never clears values from an inactive mode.
  *
- * - Hands mode applies calculated hand totals and calculated table points.
- * - Manual Scores applies manual scores and calculated table points.
- * Legacy point fields remain readable for migration compatibility. The application never exposes
- * them as an editing mode. Saving writes all changed hand and manual values, including values from
+ * - Hands mode applies calculated hand totals.
+ * - Manual Scores applies manual scores.
+ * Table points are never typed or forced. They always come from the applied scores.
+ * Saving writes all changed hand and manual values, including values from
  * inactive modes. Loading the table again restores those values when the related mode becomes
  * active. Discard restores the values from the last saved table state.
  */
@@ -41,7 +42,6 @@ internal class TableManagerEditorState private constructor(
 
     var isCompleted by mutableStateOf(initialTable.isCompleted)
     var useTotalsOnly by mutableStateOf(initialTable.useTotalsOnly)
-    var usePointsCalculation by mutableStateOf(initialTable.usePointsCalculation)
 
     var playerEastId by mutableStateOf("")
     var playerSouthId by mutableStateOf("")
@@ -54,11 +54,6 @@ internal class TableManagerEditorState private constructor(
     var playerSouthScore by mutableStateOf(initialManualScores().south)
     var playerWestScore by mutableStateOf(initialManualScores().west)
     var playerNorthScore by mutableStateOf(initialManualScores().north)
-
-    var playerEastPoints by mutableStateOf(initialManualPoints().east)
-    var playerSouthPoints by mutableStateOf(initialManualPoints().south)
-    var playerWestPoints by mutableStateOf(initialManualPoints().west)
-    var playerNorthPoints by mutableStateOf(initialManualPoints().north)
 
     /** Sum of the four manual scores, or null until all four are whole numbers. */
     val manualScoreSum: Long?
@@ -88,11 +83,14 @@ internal class TableManagerEditorState private constructor(
      * to nobody, so the scores add up to the total of the penalties.
      */
     val expectedScoreSum: Long
+        get() = seatPenaltyTotals.sum()
+
+    /** The total penalty of each seat (East, South, West, North) over the hands that count. Penalties are negative. */
+    val seatPenaltyTotals: List<Long>
         get() {
-            val seats = currentSeatIds() ?: return 0L
-            return hands
-                .filter { (it.isDone || isCompleted) && calculateHandSeatScores(it, seats) != null }
-                .sumOf { hand -> (0..3).sumOf { seat -> parsePenalty(hand.currentPenalty(seat)).toLong() } }
+            val seats = currentSeatIds() ?: return List(4) { 0L }
+            val counted = hands.filter { (it.isDone || isCompleted) && calculateHandSeatScores(it, seats) != null }
+            return List(4) { seat -> counted.sumOf { hand -> parsePenalty(hand.currentPenalty(seat)).toLong() } }
         }
 
     val hands = mutableStateListOf<HandDraftState>()
@@ -168,10 +166,8 @@ internal class TableManagerEditorState private constructor(
     private val summaryHasData: Boolean
         get() {
             val scores = manualTableScores().let { listOf(it.east, it.south, it.west, it.north) }
-            val points = manualTablePoints().let { listOf(it.east, it.south, it.west, it.north) }
             return listOf(playerEastId, playerSouthId, playerWestId, playerNorthId).any { it.isNotBlank() } ||
                 scores.any { it.isNotBlank() } ||
-                points.any { it.isNotBlank() } ||
                 hands.any { hand ->
                     hand.isDone || hand.isChickenHand || listOf(
                         hand.playerWinnerId, hand.normalizedLoserId, hand.handScore,
@@ -184,11 +180,7 @@ internal class TableManagerEditorState private constructor(
     private val summaryHasValidManualTotals: Boolean
         get() {
             val scores = manualTableScores().let { listOf(it.east, it.south, it.west, it.north) }
-            val points = manualTablePoints().let { listOf(it.east, it.south, it.west, it.north) }
-            val validScores = scores.all { it.matches(Regex("^-?\\d+$")) }
-            val validPoints = points.all { it.matches(Regex("^-?\\d+(?:[,.]\\d+)?$")) } &&
-                kotlin.math.abs(points.sumOf { it.replace(',', '.').toDouble() } - 7.0) < 0.011
-            return if (useTotalsOnly) validScores else !usePointsCalculation && validPoints
+            return useTotalsOnly && scores.all { it.matches(Regex("^-?\\d+$")) }
         }
 
     /** Hands mode needs valid effective scores. It needs no hands, because scores fall back to the manual ones. */
@@ -210,7 +202,6 @@ internal class TableManagerEditorState private constructor(
     fun applyTo(summary: TournamentTable): TournamentTable = summary.copy(
         isCompleted = isCompleted,
         useTotalsOnly = useTotalsOnly,
-        usePointsCalculation = usePointsCalculation,
         hasProgress = summaryHasProgress,
         hasValidManualTotals = summaryHasValidManualTotals,
         completionStatus = when (completionStatus) {
@@ -293,7 +284,6 @@ internal class TableManagerEditorState private constructor(
 
     fun enableManualTotals() {
         useTotalsOnly = true
-        usePointsCalculation = true
         isCompleted = false
     }
 
@@ -310,14 +300,6 @@ internal class TableManagerEditorState private constructor(
 
     fun disableManualTotals() {
         useTotalsOnly = false
-        usePointsCalculation = true
-    }
-
-    /** Returns the patch used by the application. Manual Points is not an application mode. */
-    fun buildApplicationTablePatch(): Map<String, Any?> {
-        val patch = buildTablePatch().toMutableMap()
-        if (!usePointsCalculation) patch["usePointsCalculation"] = true
-        return patch
     }
 
     fun updateCompletedState(value: Boolean) {
@@ -341,7 +323,6 @@ internal class TableManagerEditorState private constructor(
 
         putIfChanged("isCompleted", isCompleted, initialTable.isCompleted)
         putIfChanged("useTotalsOnly", useTotalsOnly, initialTable.useTotalsOnly)
-        putIfChanged("usePointsCalculation", usePointsCalculation, initialTable.usePointsCalculation)
 
         putIfChanged("playerEastId", playerEastId.trim(), initialSeatAssignments.east)
         putIfChanged("playerSouthId", playerSouthId.trim(), initialSeatAssignments.south)
@@ -355,26 +336,13 @@ internal class TableManagerEditorState private constructor(
         putIfChanged("manualPlayerWestScore", manualScores.west, initialManualScores.west)
         putIfChanged("manualPlayerNorthScore", manualScores.north, initialManualScores.north)
 
-        val manualPoints = manualTablePoints()
-        val initialManualPoints = initialManualPoints()
-        putIfChanged("manualPlayerEastPoints", manualPoints.east, initialManualPoints.east)
-        putIfChanged("manualPlayerSouthPoints", manualPoints.south, initialManualPoints.south)
-        putIfChanged("manualPlayerWestPoints", manualPoints.west, initialManualPoints.west)
-        putIfChanged("manualPlayerNorthPoints", manualPoints.north, initialManualPoints.north)
-
         if (shouldPersistEffectiveTotals(handPatches.isNotEmpty())) {
             val effectiveScores = effectiveTableScores()
-            val effectivePoints = effectiveTablePoints()
 
             putIfChanged("playerEastScore", effectiveScores.east, initialTable.playerEastScore)
             putIfChanged("playerSouthScore", effectiveScores.south, initialTable.playerSouthScore)
             putIfChanged("playerWestScore", effectiveScores.west, initialTable.playerWestScore)
             putIfChanged("playerNorthScore", effectiveScores.north, initialTable.playerNorthScore)
-
-            putIfChanged("playerEastPoints", effectivePoints.east, initialTable.playerEastPoints)
-            putIfChanged("playerSouthPoints", effectivePoints.south, initialTable.playerSouthPoints)
-            putIfChanged("playerWestPoints", effectivePoints.west, initialTable.playerWestPoints)
-            putIfChanged("playerNorthPoints", effectivePoints.north, initialTable.playerNorthPoints)
         }
 
         return patch
@@ -390,7 +358,6 @@ internal class TableManagerEditorState private constructor(
     fun discard() {
         isCompleted = initialTable.isCompleted
         useTotalsOnly = initialTable.useTotalsOnly
-        usePointsCalculation = initialTable.usePointsCalculation
         playerEastId = initialSeatAssignments.east
         playerSouthId = initialSeatAssignments.south
         playerWestId = initialSeatAssignments.west
@@ -400,11 +367,6 @@ internal class TableManagerEditorState private constructor(
         playerSouthScore = scores.south
         playerWestScore = scores.west
         playerNorthScore = scores.north
-        val points = initialManualPoints()
-        playerEastPoints = points.east
-        playerSouthPoints = points.south
-        playerWestPoints = points.west
-        playerNorthPoints = points.north
         hands.forEach { it.reset() }
     }
 
@@ -426,19 +388,15 @@ internal class TableManagerEditorState private constructor(
         }
     }
 
-    private fun displayedTableScores(): SeatTextValues {
-        return if (!usePointsCalculation) {
-            manualTableScores()
-        } else {
-            effectiveTableScores()
-        }
-    }
+    private fun displayedTableScores(): SeatTextValues = effectiveTableScores()
 
+    /** The table points come only from the applied scores. They are empty while a score is missing. */
     private fun effectiveTablePoints(): SeatTextValues {
-        return when {
-            !usePointsCalculation -> manualTablePoints()
-            else -> calculatePointsFromScores(effectiveTableScores()).ifEmpty { manualTablePoints() }
-        }
+        val scores = effectiveTableScores()
+        val points = TablePoints.fromScores(
+            listOf(scores.east, scores.south, scores.west, scores.north).map { it.trim().toIntOrNull() },
+        ) ?: return SeatTextValues.EMPTY
+        return SeatTextValues(east = points[0], south = points[1], west = points[2], north = points[3])
     }
 
     private fun manualTableScores(): SeatTextValues = SeatTextValues(
@@ -448,20 +406,10 @@ internal class TableManagerEditorState private constructor(
         north = playerNorthScore.trim(),
     )
 
-    private fun manualTablePoints(): SeatTextValues = SeatTextValues(
-        east = playerEastPoints.trim(),
-        south = playerSouthPoints.trim(),
-        west = playerWestPoints.trim(),
-        north = playerNorthPoints.trim(),
-    )
-
     private fun shouldPersistEffectiveTotals(hasHandChanges: Boolean): Boolean {
         val manualScoresChanged = manualTableScores() != initialManualScores()
-        val manualPointsChanged = manualTablePoints() != initialManualPoints()
-        if (initialTable.usePointsCalculation != usePointsCalculation) return true
         if (initialTable.useTotalsOnly != useTotalsOnly) return true
         if (useTotalsOnly && manualScoresChanged) return true
-        if (!usePointsCalculation && manualPointsChanged) return true
         if (hasHandChanges) return true
         if (playerEastId.trim() != initialSeatAssignments.east) return true
         if (playerSouthId.trim() != initialSeatAssignments.south) return true
@@ -475,21 +423,6 @@ internal class TableManagerEditorState private constructor(
         south = initialTable.manualPlayerSouthScore.ifBlank { initialTable.playerSouthScore.takeIf { initialTable.useTotalsOnly }.orEmpty() },
         west = initialTable.manualPlayerWestScore.ifBlank { initialTable.playerWestScore.takeIf { initialTable.useTotalsOnly }.orEmpty() },
         north = initialTable.manualPlayerNorthScore.ifBlank { initialTable.playerNorthScore.takeIf { initialTable.useTotalsOnly }.orEmpty() },
-    )
-
-    private fun initialManualPoints(): SeatTextValues = SeatTextValues(
-        east = initialTable.manualPlayerEastPoints.ifBlank {
-            initialTable.playerEastPoints.takeIf { !initialTable.usePointsCalculation }.orEmpty()
-        },
-        south = initialTable.manualPlayerSouthPoints.ifBlank {
-            initialTable.playerSouthPoints.takeIf { !initialTable.usePointsCalculation }.orEmpty()
-        },
-        west = initialTable.manualPlayerWestPoints.ifBlank {
-            initialTable.playerWestPoints.takeIf { !initialTable.usePointsCalculation }.orEmpty()
-        },
-        north = initialTable.manualPlayerNorthPoints.ifBlank {
-            initialTable.playerNorthPoints.takeIf { !initialTable.usePointsCalculation }.orEmpty()
-        },
     )
 
     private fun calculateHandScoreTotals(): SeatTextValues {
@@ -583,48 +516,6 @@ internal class TableManagerEditorState private constructor(
             west = base.west + parsePenalty(hand.currentPenalty(2)),
             north = base.north + parsePenalty(hand.currentPenalty(3)),
         )
-    }
-
-    private fun calculatePointsFromScores(scores: SeatTextValues): SeatTextValues {
-        return try {
-            val ranked = listOf(
-                RankedSeat(Seat.EAST, scores.east.toIntOrNull()),
-                RankedSeat(Seat.SOUTH, scores.south.toIntOrNull()),
-                RankedSeat(Seat.WEST, scores.west.toIntOrNull()),
-                RankedSeat(Seat.NORTH, scores.north.toIntOrNull()),
-            )
-            if (ranked.any { it.score == null }) return SeatTextValues.EMPTY
-
-            val sorted = ranked.sortedByDescending { it.score ?: Int.MIN_VALUE }
-            val assigned = when {
-                sorted[0].score == sorted[1].score && sorted[1].score == sorted[2].score && sorted[2].score == sorted[3].score ->
-                    listOf("1,75", "1,75", "1,75", "1,75")
-                sorted[0].score == sorted[1].score && sorted[1].score == sorted[2].score ->
-                    listOf("2,33", "2,33", "2,33", "0")
-                sorted[1].score == sorted[2].score && sorted[2].score == sorted[3].score ->
-                    listOf("4", "1", "1", "1")
-                sorted[0].score == sorted[1].score && sorted[2].score == sorted[3].score ->
-                    listOf("3", "3", "0,5", "0,5")
-                sorted[0].score == sorted[1].score ->
-                    listOf("3", "3", "1", "0")
-                sorted[1].score == sorted[2].score ->
-                    listOf("4", "1,5", "1,5", "0")
-                sorted[2].score == sorted[3].score ->
-                    listOf("4", "2", "0,5", "0,5")
-                else ->
-                    listOf("4", "2", "1", "0")
-            }
-
-            val bySeat = sorted.mapIndexed { index, rankedSeat -> rankedSeat.seat to assigned[index] }.toMap()
-            SeatTextValues(
-                east = bySeat[Seat.EAST].orEmpty(),
-                south = bySeat[Seat.SOUTH].orEmpty(),
-                west = bySeat[Seat.WEST].orEmpty(),
-                north = bySeat[Seat.NORTH].orEmpty(),
-            )
-        } catch (_: Exception) {
-            SeatTextValues.EMPTY
-        }
     }
 
     private fun currentSeatIds(): SeatIds? {

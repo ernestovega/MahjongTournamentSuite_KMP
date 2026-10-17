@@ -692,30 +692,4 @@ class RoundEditorSyncTest {
         assertEquals("24", server.tables.getValue(TableKey(1, 1)).second.first().handScore)
         assertEquals(2L, server.tables.getValue(TableKey(1, 1)).first.version)
     }
-
-    @Test
-    fun theTableOtherUsersResetEndsEmptyForTheEditorThatPolls() = runTest {
-        val server = FakeTournamentRepository().withTables(1)
-        server.otherUserSaves(1, 1, east = "1", handScore = "8")
-        val ben = TestUser(server, "ben").also { it.open(1) }
-        ben.typeHandScore("24")
-
-        server.resetTable("t1", 1, 1)
-        ben.sync.checkForChanges()
-
-        assertEquals("", ben.editor().hands.first().handScore)
-        assertEquals(listOf("24"), ben.sync.updateNotices.single().lostChanges.map { it.value })
-    }
-
-    @Test
-    fun aSaveAfterTheResetIsRejectedBecauseItUsedTheOldVersion() = runTest {
-        val server = FakeTournamentRepository().withTables(1)
-        val ben = TestUser(server, "ben").also { it.open(1) }
-        ben.typeHandScore("24")
-
-        server.resetTable("t1", 1, 1)
-
-        assertFalse(ben.save())
-        assertEquals("", server.tables.getValue(TableKey(1, 1)).second.first().handScore)
-    }
 }

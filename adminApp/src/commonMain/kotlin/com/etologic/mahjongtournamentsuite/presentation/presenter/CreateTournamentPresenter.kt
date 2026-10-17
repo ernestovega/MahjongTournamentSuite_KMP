@@ -9,6 +9,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentScheduleCalcProgress
@@ -51,6 +52,7 @@ class CreateTournamentPresenter(
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
+        venue: TournamentVenue,
         isTeams: Boolean,
         countBestHands: Boolean,
         countChickenHands: Boolean,
@@ -136,6 +138,7 @@ class CreateTournamentPresenter(
                 associationLogoSourceTournamentId = associationLogoSourceTournamentId,
                 hostCountry = hostCountry,
                 hostCity = hostCity,
+                venue = venue,
                 roundSchedules = roundSchedules,
                 agendaItems = agendaItems,
             ),

@@ -332,24 +332,6 @@ class TournamentScreenUiTest {
     }
 
     @Test
-    fun resetButtonIsOnlyForAdmins() = runComposeUiTest {
-        with(ScreenHarness(role = GlobalUserRole.EDITOR)) {
-            loadScreen()
-
-            onAllNodesWithText("Reset table").assertCountEquals(0)
-        }
-    }
-
-    @Test
-    fun adminsSeeTheResetButton() = runComposeUiTest {
-        with(ScreenHarness(role = GlobalUserRole.ADMIN)) {
-            loadScreen()
-
-            onNodeWithText("Reset table").assertExistsOnScreen()
-        }
-    }
-
-    @Test
     fun aSecondUserSavingBetweenTwoChecksIsStillCaughtByTheNextCheck() = runComposeUiTest {
         with(ScreenHarness()) {
             loadScreen()
@@ -359,38 +341,6 @@ class TournamentScreenUiTest {
 
             onNodeWithText("Table updated").assertExistsOnScreen()
             onNodeWithText("Round 1 · Table 2: another user changed this table. It now shows the latest data.").assertExistsOnScreen()
-        }
-    }
-
-    @Test
-    fun resetAsksForConfirmationAndThenResetsTheOpenTable() = runComposeUiTest {
-        with(ScreenHarness(role = GlobalUserRole.ADMIN)) {
-            loadScreen()
-
-            onNodeWithText("Reset table").performClick()
-            waitForIdle()
-            onNodeWithText("Reset Round 1, Table 1?").assertExistsOnScreen()
-            assertTrue(server.calls.none { it.startsWith("reset") }, "nothing happens before the confirmation")
-            onAllNodesWithText("Reset table").onLast().performClick()
-            waitForIdle()
-
-            assertTrue(server.calls.contains("reset 1/1"))
-            assertTrue(server.calls.any { it == "round 1 FORCE" }, "the round loads again after the reset")
-        }
-    }
-
-    @Test
-    fun cancellingTheResetChangesNothing() = runComposeUiTest {
-        with(ScreenHarness(role = GlobalUserRole.ADMIN)) {
-            loadScreen()
-            onNodeWithText("Reset table").performClick()
-            waitForIdle()
-
-            onNodeWithText("Cancel").performClick()
-            waitForIdle()
-
-            assertTrue(server.calls.none { it.startsWith("reset") })
-            onAllNodesWithText("Reset Round 1, Table 1?").assertCountEquals(0)
         }
     }
 

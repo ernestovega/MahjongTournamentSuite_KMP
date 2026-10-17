@@ -44,3 +44,21 @@ data object TimerRoute
 data class RankingsRoute(
     val tournamentId: String,
 )
+
+/**
+ * The statistics screen. [scope] is the name of a `StatisticsScope`. The other values give its context.
+ * [emaId] preselects the person of the "all tournaments" scope.
+ */
+@Serializable
+data class StatisticsRoute(
+    val scope: String,
+    val tournamentId: String? = null,
+    val roundId: Int? = null,
+    val tableId: Int? = null,
+    val slotId: Int? = null,
+    val emaId: String? = null,
+)
+
+/** Usage analytics. Only administrators can open it. */
+@Serializable
+data object UsageRoute

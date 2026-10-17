@@ -124,11 +124,14 @@ function save(tournamentId, tableId, expectedVersion, tablePatch = {}, handPatch
             ["reset", 3, "admin"],
         ]);
     });
-    (0, node_test_1.it)("writes no entry for a rejected save", async () => {
+    (0, node_test_1.it)("writes a conflict entry and no save entry for a rejected save", async () => {
         const id = await (0, firestoreFixtures_1.seedTournament)({ tables: [{ roundId: 1, tableId: 1 }] });
         await save(id, 1, 0, { playerEastId: "1" });
         await strict_1.default.rejects(save(id, 1, 0, { playerEastId: "2" }));
-        strict_1.default.equal((await (0, firestoreFixtures_1.readChanges)(id)).length, 1);
+        const entries = await (0, firestoreFixtures_1.readChanges)(id);
+        strict_1.default.equal(entries.filter((entry) => entry.kind === "save").length, 1);
+        strict_1.default.equal(entries.filter((entry) => entry.kind === "conflict").length, 1);
+        strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(id, 1, 1)).playerEastId, "1");
     });
     (0, node_test_1.it)("skips derived totals and values that did not change", async () => {
         const id = await (0, firestoreFixtures_1.seedTournament)({ tables: [{ roundId: 1, tableId: 1 }] });

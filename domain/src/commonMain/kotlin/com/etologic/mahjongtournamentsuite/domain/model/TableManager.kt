@@ -13,21 +13,12 @@ data class TableState(
     val playerSouthScore: String,
     val playerWestScore: String,
     val playerNorthScore: String,
-    val playerEastPoints: String,
-    val playerSouthPoints: String,
-    val playerWestPoints: String,
-    val playerNorthPoints: String,
     val manualPlayerEastScore: String = "",
     val manualPlayerSouthScore: String = "",
     val manualPlayerWestScore: String = "",
     val manualPlayerNorthScore: String = "",
-    val manualPlayerEastPoints: String = "",
-    val manualPlayerSouthPoints: String = "",
-    val manualPlayerWestPoints: String = "",
-    val manualPlayerNorthPoints: String = "",
     val isCompleted: Boolean,
     val useTotalsOnly: Boolean,
-    val usePointsCalculation: Boolean,
 )
 
 data class TableHand(

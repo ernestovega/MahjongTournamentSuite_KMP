@@ -13,6 +13,7 @@ const usersService_1 = require("../../services/usersService");
 const config_1 = require("../../config");
 const dataVersionsService_1 = require("../../services/dataVersionsService");
 const playerAccountsService_1 = require("../../services/playerAccountsService");
+const usageService_1 = require("../../services/usageService");
 function requireEmail(value, fieldName) {
     const email = String(value ?? "").trim();
     if (!email || !email.includes("@"))
@@ -77,6 +78,15 @@ function adminRouter() {
             const actor = res.locals.auth;
             const user = await firebase_1.auth.getUser(actor.uid);
             res.status(200).json({ uid: actor.uid, role: (0, globalRole_1.getGlobalUserRole)(user), roles: (0, globalRole_1.getGlobalUserRoles)(user) });
+        }
+        catch (error) {
+            next(error);
+        }
+    });
+    /** Usage analytics for administrators: who enters data, from which app, and where problems appear. */
+    router.get("/usage", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (_req, res, next) => {
+        try {
+            res.status(200).json(await (0, usageService_1.loadUsageReport)());
         }
         catch (error) {
             next(error);

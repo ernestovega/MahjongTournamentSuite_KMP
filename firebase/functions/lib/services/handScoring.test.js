@@ -8,7 +8,7 @@ const node_test_1 = __importDefault(require("node:test"));
 const handScoring_1 = require("./handScoring");
 const table = {
     playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",
-    isCompleted: false, usePointsCalculation: true, useTotalsOnly: false,
+    isCompleted: false, useTotalsOnly: false,
 };
 const hand = (patch) => ({
     playerWinnerId: "", playerLooserId: "", handScore: "", isChickenHand: false, isDone: true,

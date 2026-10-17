@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -75,6 +79,7 @@ import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
@@ -221,23 +226,23 @@ fun TournamentsScreen(
         if (!tournamentFocusApplied && !isRefreshing) {
             withFrameNanos { }
             when (lastFocusedControl) {
-                "player-base" -> playerBaseFocusRequester.requestFocus()
+                "player-base" -> playerBaseFocusRequester.requestFocusIfAttached()
                 "users" -> if (adminStatus?.canManageUsers == true) {
-                    usersFocusRequester.requestFocus()
+                    usersFocusRequester.requestFocusIfAttached()
                 } else {
-                    newTournamentFocusRequester.requestFocus()
+                    newTournamentFocusRequester.requestFocusIfAttached()
                 }
                 "new-tournament" -> if (adminStatus?.canCreateTournaments == true) {
-                    newTournamentFocusRequester.requestFocus()
+                    newTournamentFocusRequester.requestFocusIfAttached()
                 } else {
-                    usersFocusRequester.requestFocus()
+                    usersFocusRequester.requestFocusIfAttached()
                 }
                 else -> {
                     if (tournamentFocusRequesters.isNotEmpty()) {
                         val index = tournaments.indexOfFirst { it.id == lastFocusedTournamentId }.coerceAtLeast(0)
                         tournamentFocusRequesters.getOrNull(index)?.requestFocus()
                     } else {
-                        usersFocusRequester.requestFocus()
+                        usersFocusRequester.requestFocusIfAttached()
                     }
                 }
             }
@@ -248,7 +253,7 @@ fun TournamentsScreen(
     LaunchedEffect(showCreateTournamentDialog, restoreNewTournamentFocus) {
         if (!showCreateTournamentDialog && restoreNewTournamentFocus) {
             restoreNewTournamentFocus = false
-            newTournamentFocusRequester.requestFocus()
+            newTournamentFocusRequester.requestFocusIfAttached()
         }
     }
 
@@ -302,6 +307,11 @@ fun TournamentsScreen(
                     null
                 },
                 onTimer = { openTimer(navController) },
+                onUsage = if (adminStatus?.isAdmin == true) {
+                    { navController.navigate(UsageRoute) }
+                } else {
+                    null
+                },
                 usersFocusRequester = usersFocusRequester,
             )
         },
@@ -311,6 +321,7 @@ fun TournamentsScreen(
                     lastFocusedControl = "player-base"
                     navController.navigate(PlayerBaseRoute)
                 },
+                onStatistics = { navController.navigate(StatisticsRoute(StatisticsScope.TOURNAMENT.name)) },
                 onNewTournament = if (adminStatus?.canCreateTournaments == true) {
                     {
                         lastFocusedControl = "new-tournament"
@@ -345,7 +356,7 @@ fun TournamentsScreen(
                         else -> {
                             BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                                 val scrollState = rememberScrollState()
-                                val listState = rememberLazyListState()
+                                val listState = rememberPersistentLazyListState("tournaments")
                                 val cellMinWidth = 56.dp
                                 val numColumns = 10
                                 val actionCellMinWidth = 56.dp
@@ -549,6 +560,7 @@ private fun TournamentTableHeader(
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 HeaderCell(text = "Teams", minWidth = cellMinWidth, weight = TeamsWeight, textAlign = TextAlign.Center)
                 HeaderCell(text = "Best\nhands", minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
@@ -616,7 +628,7 @@ private fun TournamentTableRow(
             minWidth = cellMinWidth,
             weight = 1.8f,
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(
@@ -822,7 +834,7 @@ private const val FeaturesGroupWeight = TeamsWeight + FeatureWeight * 2
 
 private fun featuresGroupMinWidth(cellMinWidth: Dp): Dp = cellMinWidth + (FeatureColumnMinWidth * 2) + 24.dp
 private val ColorColumnWidth = 44.dp
-private val CountryColumnWidth = 56.dp
+private val CountryColumnWidth = 76.dp
 private val ShortNameColumnWidth = 88.dp
 
 private fun UserProfile.toUiName(): String {

@@ -16,6 +16,10 @@ data class TournamentDto(
     val associationLogoUrl: String? = null,
     val hostCountry: String = "",
     val hostCity: String = "",
+    val venueName: String = "",
+    val venueAddress: String = "",
+    val venueMapUrl: String = "",
+    val contactEmail: String = "",
     val eventStartDate: String? = null,
     val eventEndDate: String? = null,
     val roundSchedules: List<TournamentRoundScheduleDto> = emptyList(),
@@ -57,6 +61,10 @@ data class CreateTournamentRequestDto(
     val associationLogoSourceTournamentId: String? = null,
     val hostCountry: String,
     val hostCity: String,
+    val venueName: String = "",
+    val venueAddress: String = "",
+    val venueMapUrl: String = "",
+    val contactEmail: String = "",
     val roundSchedules: List<TournamentRoundScheduleDto>? = null,
     val agendaItems: List<TournamentAgendaItemDto>? = null,
 )
@@ -75,6 +83,10 @@ data class UpdateTournamentSettingsRequestDto(
     val eventEndDate: String,
     val hostCountry: String,
     val hostCity: String,
+    val venueName: String = "",
+    val venueAddress: String = "",
+    val venueMapUrl: String = "",
+    val contactEmail: String = "",
     /** Null keeps the stored value. */
     val countBestHands: Boolean? = null,
     val countChickenHands: Boolean? = null,
@@ -98,7 +110,6 @@ data class TournamentAgendaItemDto(
     val title: String,
     val date: String? = null,
     val startTime: String? = null,
-    val endTime: String? = null,
 )
 
 @Serializable
@@ -314,7 +325,6 @@ data class TournamentTableDto(
     val playerIds: List<Int>,
     val isCompleted: Boolean = false,
     val useTotalsOnly: Boolean = false,
-    val usePointsCalculation: Boolean = true,
     val hasProgress: Boolean = false,
     val hasValidManualTotals: Boolean = false,
     val completionStatus: String = "",
@@ -342,21 +352,12 @@ data class TableStateDto(
     val playerSouthScore: String = "",
     val playerWestScore: String = "",
     val playerNorthScore: String = "",
-    val playerEastPoints: String = "",
-    val playerSouthPoints: String = "",
-    val playerWestPoints: String = "",
-    val playerNorthPoints: String = "",
     val manualPlayerEastScore: String = "",
     val manualPlayerSouthScore: String = "",
     val manualPlayerWestScore: String = "",
     val manualPlayerNorthScore: String = "",
-    val manualPlayerEastPoints: String = "",
-    val manualPlayerSouthPoints: String = "",
-    val manualPlayerWestPoints: String = "",
-    val manualPlayerNorthPoints: String = "",
     val isCompleted: Boolean = false,
     val useTotalsOnly: Boolean = false,
-    val usePointsCalculation: Boolean = true,
 )
 
 @Serializable
@@ -388,7 +389,6 @@ data class RoundTablesWithHandsResponseDto(
 data class TablePatchRequestDto(
     val isCompleted: Boolean? = null,
     val useTotalsOnly: Boolean? = null,
-    val usePointsCalculation: Boolean? = null,
     val playerEastId: String? = null,
     val playerSouthId: String? = null,
     val playerWestId: String? = null,
@@ -397,18 +397,10 @@ data class TablePatchRequestDto(
     val playerSouthScore: String? = null,
     val playerWestScore: String? = null,
     val playerNorthScore: String? = null,
-    val playerEastPoints: String? = null,
-    val playerSouthPoints: String? = null,
-    val playerWestPoints: String? = null,
-    val playerNorthPoints: String? = null,
     val manualPlayerEastScore: String? = null,
     val manualPlayerSouthScore: String? = null,
     val manualPlayerWestScore: String? = null,
     val manualPlayerNorthScore: String? = null,
-    val manualPlayerEastPoints: String? = null,
-    val manualPlayerSouthPoints: String? = null,
-    val manualPlayerWestPoints: String? = null,
-    val manualPlayerNorthPoints: String? = null,
 )
 
 @Serializable

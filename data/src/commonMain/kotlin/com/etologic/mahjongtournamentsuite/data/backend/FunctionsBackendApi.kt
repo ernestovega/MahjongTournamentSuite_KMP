@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.data.backend
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.FeatureFlagsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
@@ -28,6 +29,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsRespo
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
@@ -42,6 +44,10 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.StatisticsOverviewDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UsageReportDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.WhoAmIResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
@@ -57,6 +63,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
+import io.ktor.http.encodeURLPath
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -69,6 +76,8 @@ class FunctionsBackendApi(
     private fun url(path: String): String = apiConfiguration.baseUrl.trimEnd('/') + path
 
     suspend fun version(): BackendVersionDto = get(path = "/version")
+
+    suspend fun featureFlags(): FeatureFlagsDto = get(path = "/config")
 
     suspend fun signIn(request: SignInRequestDto): SignInResponseDto =
         post(path = "/auth/signIn", requestBody = request)
@@ -84,6 +93,26 @@ class FunctionsBackendApi(
 
     suspend fun whoAmI(idToken: String): WhoAmIResponseDto =
         get(path = "/admin/whoami", idToken = idToken)
+
+    suspend fun usageReport(idToken: String): UsageReportDto =
+        get(path = "/admin/usage", idToken = idToken)
+
+    suspend fun statisticsOverview(idToken: String): StatisticsOverviewDto =
+        get(path = "/tournaments/statistics/overview", idToken = idToken)
+
+    /** The results of one player. A null [emaId] means the signed-in account. */
+    suspend fun personStatistics(idToken: String, emaId: String?): PersonStatisticsDto =
+        get(path = "/tournaments/statistics/${statisticsOwner(emaId)}", idToken = idToken)
+
+    suspend fun personStandings(idToken: String, emaId: String?, tournamentIds: List<String>): StandingsResponseDto {
+        val response = httpClient.get(url("/tournaments/statistics/${statisticsOwner(emaId)}/standings")) {
+            header(HttpHeaders.Authorization, "Bearer $idToken")
+            parameter("tournaments", tournamentIds.joinToString(","))
+        }
+        return response.requireSuccessBody()
+    }
+
+    private fun statisticsOwner(emaId: String?): String = if (emaId == null) "me" else "persons/${emaId.encodeURLPath()}"
 
     suspend fun globalDataVersions(idToken: String): DataVersionsManifestDto =
         get(path = "/sync/manifest", idToken = idToken)
@@ -188,8 +217,17 @@ class FunctionsBackendApi(
     suspend fun generateTournamentIdCards(
         idToken: String,
         tournamentId: String,
+        sheet: IdCardSheetLayout? = null,
     ): ByteArray {
         val response = httpClient.get(url("/tournaments/$tournamentId/id-cards")) {
+            sheet?.let {
+                parameter("layout", "sheet")
+                parameter("cardsPerSheet", it.cardsPerSheet)
+                parameter("scalePercent", it.scalePercent)
+                parameter("cutMarks", it.cutMarks)
+                parameter("landscape", it.landscape)
+                parameter("doubleSided", it.doubleSided)
+            }
             header(HttpHeaders.Authorization, "Bearer $idToken")
             header(HttpHeaders.Accept, "application/pdf")
             timeout { requestTimeoutMillis = 180_000 }
@@ -490,18 +528,6 @@ class FunctionsBackendApi(
         requestBody = request,
         idToken = idToken,
     )
-
-    suspend fun resetTable(
-        idToken: String,
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-    ): OkResponseDto {
-        val response = httpClient.post(url("/tournaments/$tournamentId/tables/$roundId/$tableId/reset")) {
-            header(HttpHeaders.Authorization, "Bearer $idToken")
-        }
-        return response.requireSuccessBody()
-    }
 
     private suspend inline fun <reified TResponse> get(
         path: String,

@@ -13,7 +13,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentUsage
+import com.etologic.mahjongtournamentsuite.domain.model.UsageReport
+import com.etologic.mahjongtournamentsuite.domain.model.UsageTotals
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
+import com.etologic.mahjongtournamentsuite.domain.model.UserUsage
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -38,6 +42,58 @@ class DefaultAdminRepository(
                 },
             )
     }
+
+    override suspend fun loadUsageReport(): AppResult<UsageReport> = runCatching {
+        withFreshIdToken { idToken ->
+            val dto = backendApi.usageReport(idToken)
+            UsageReport(
+                generatedAt = dto.generatedAt,
+                totals = UsageTotals(
+                    tournaments = dto.totals.tournaments,
+                    saves = dto.totals.saves,
+                    playerSaves = dto.totals.playerSaves,
+                    editorSaves = dto.totals.editorSaves,
+                    resets = dto.totals.resets,
+                    conflicts = dto.totals.conflicts,
+                    handChanges = dto.totals.handChanges,
+                    playerShare = dto.totals.playerShare,
+                    conflictRate = dto.totals.conflictRate,
+                ),
+                users = dto.users.map { UserUsage(it.uid, it.name, it.source, it.saves, it.handChanges) },
+                tournaments = dto.tournaments.map {
+                    TournamentUsage(
+                        tournamentId = it.tournamentId,
+                        name = it.name,
+                        tables = it.tables,
+                        completedTables = it.completedTables,
+                        handsTables = it.handsTables,
+                        totalsOnlyTables = it.totalsOnlyTables,
+                        manualTotalsTables = it.manualTotalsTables,
+                        saves = it.saves,
+                        playerSaves = it.playerSaves,
+                        editorSaves = it.editorSaves,
+                        resets = it.resets,
+                        conflicts = it.conflicts,
+                        tablesTouched = it.tablesTouched,
+                        savesPerTouchedTable = it.savesPerTouchedTable,
+                        activeHours = it.activeHours,
+                        slots = it.slots,
+                        assignedSlots = it.assignedSlots,
+                        slotsWithAccount = it.slotsWithAccount,
+                        invitationsAccepted = it.invitationsAccepted,
+                        invitationsPending = it.invitationsPending,
+                    )
+                },
+                savesByHour = dto.savesByHour,
+            )
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Loading the usage report failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
 
     override suspend fun lookupUser(identifier: String, tournamentId: String?): AppResult<UserProfile> = runCatching {
         withFreshIdToken { idToken ->

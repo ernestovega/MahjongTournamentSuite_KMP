@@ -34,7 +34,7 @@ class RepositorySupportTest {
                 TournamentRoundScheduleDto(1, " 2026-04-01 ", " 09:30 "),
             ),
             agendaItems = listOf(
-                TournamentAgendaItemDto(" Registration ", " 2026-04-01 ", " 08:30 ", " 09:00 "),
+                TournamentAgendaItemDto(" Registration ", " 2026-04-01 ", " 08:30 "),
             ),
         ).toDomain()
 

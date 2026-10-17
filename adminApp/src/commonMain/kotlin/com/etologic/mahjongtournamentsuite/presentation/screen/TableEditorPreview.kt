@@ -19,13 +19,8 @@ internal fun previewTableManagerEditorState(): TableManagerEditorState {
             playerSouthScore = "32",
             playerWestScore = "-16",
             playerNorthScore = "-64",
-            playerEastPoints = "4",
-            playerSouthPoints = "2",
-            playerWestPoints = "1",
-            playerNorthPoints = "0",
             isCompleted = false,
             useTotalsOnly = true,
-            usePointsCalculation = true,
         ),
         hands = listOf(
             TableHand(

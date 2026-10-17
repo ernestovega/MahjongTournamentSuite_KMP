@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.components.toCountryCodeInput
 import androidx.compose.foundation.BorderStroke
@@ -530,6 +531,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     AppScaffold(
         title = "Players",
         isLoading = loading || saving,
+        showBackgroundLogo = loading && players.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         actions = {
@@ -665,7 +667,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         }
                         DataTableDivider()
                         LazyColumnWithScrollbar(
-                            state = rememberLazyListState(),
+                            state = rememberPersistentLazyListState("players"),
                             modifier = Modifier.weight(1f),
                         ) {
                             itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->

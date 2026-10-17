@@ -3,11 +3,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MISSING_FLAG_SVG = void 0;
+exports.SHEET_MARGIN = exports.MISSING_FLAG_SVG = exports.CARD_HEIGHT = exports.CARD_WIDTH = void 0;
 exports.splitPlayerName = splitPlayerName;
 exports.iso2CountryCode = iso2CountryCode;
 exports.flagSvgFor = flagSvgFor;
 exports.buildIdCardBackRows = buildIdCardBackRows;
+exports.sheetPageSize = sheetPageSize;
+exports.idCardSheetGrid = idCardSheetGrid;
+exports.idCardSheetCardOrigin = idCardSheetCardOrigin;
 exports.buildIdCardsPdf = buildIdCardsPdf;
 exports.buildIdCardProofPdf = buildIdCardProofPdf;
 exports.loadIdCardsDocument = loadIdCardsDocument;
@@ -20,8 +23,8 @@ const firebase_1 = require("../firebase");
 const countriesService_1 = require("./countriesService");
 const playersService_1 = require("./playersService");
 const tournamentSchedule_1 = require("./tournamentSchedule");
-const CARD_WIDTH = 242.88;
-const CARD_HEIGHT = 153;
+exports.CARD_WIDTH = 242.88;
+exports.CARD_HEIGHT = 153;
 const DEFAULT_PRIMARY_COLOR = "#02B16B";
 const BACKGROUND_COLOR = "#FFFDF5";
 const POINTS_PER_MILLIMETER = 72 / 25.4;
@@ -141,10 +144,25 @@ function drawCenteredText(doc, text, width, height, fontSize) {
 }
 function drawCountryFlag(doc, countryCode) {
     const flagWidth = 24;
+    const flagHeight = 18;
+    const flagX = PLAYER_DETAILS_CENTER_X - flagWidth / 2;
+    const flagY = 8;
+    // A soft white glow around the four sides keeps flag colors that are close to the card color visible.
+    // Each layer is a little larger and adds a little white, so the glow fades out from the flag edge.
+    const glowLayers = 6;
+    const glowSpread = 3.5;
     doc.save();
-    svgToPdf(doc, flagSvgFor(countryCode) ?? exports.MISSING_FLAG_SVG, PLAYER_DETAILS_CENTER_X - flagWidth / 2, 8, {
+    doc.fillColor("#FFFFFF");
+    for (let layer = glowLayers; layer >= 1; layer -= 1) {
+        const grow = (glowSpread * layer) / glowLayers;
+        doc.fillOpacity(0.08);
+        doc.roundedRect(flagX - grow, flagY - grow, flagWidth + 2 * grow, flagHeight + 2 * grow, 1 + grow).fill();
+    }
+    doc.restore();
+    doc.save();
+    svgToPdf(doc, flagSvgFor(countryCode) ?? exports.MISSING_FLAG_SVG, flagX, flagY, {
         width: flagWidth,
-        height: 18,
+        height: flagHeight,
         preserveAspectRatio: "xMidYMid meet",
     });
     doc.restore();
@@ -152,8 +170,8 @@ function drawCountryFlag(doc, countryCode) {
 function drawFront(doc, model, player, associationLogo) {
     const primary = normalizeHexColor(model.primaryColor);
     const { givenName, surname } = splitPlayerName(player.name);
-    doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
-    doc.rect(0, 0, CARD_WIDTH, 76).fill(primary);
+    doc.rect(0, 0, exports.CARD_WIDTH, exports.CARD_HEIGHT).fill(BACKGROUND_COLOR);
+    doc.rect(0, 0, exports.CARD_WIDTH, 76).fill(primary);
     doc.circle(LOGO_CENTER_X, LOGO_CENTER_Y, LOGO_OUTER_RADIUS).fill(primary);
     if (associationLogo != null) {
         const logoRadius = 32.5;
@@ -209,7 +227,12 @@ function drawCellText(doc, text, x, y, width, height) {
     });
 }
 function displayCardDate(value) {
-    return `${value.slice(8, 10)}/${value.slice(5, 7)}/${value.slice(0, 4)}`;
+    return `${value.slice(8, 10)}/${value.slice(5, 7)}`;
+}
+function displayStart(row) {
+    if (row.startTime == null)
+        return "-";
+    return row.date == null ? row.startTime : `${displayCardDate(row.date)} - ${row.startTime}`;
 }
 function buildIdCardBackRows(roundCount, roundSchedules, tableNumbers) {
     const scheduleByRound = new Map(roundSchedules.map((schedule) => [schedule.roundId, schedule]));
@@ -219,38 +242,37 @@ function buildIdCardBackRows(roundCount, roundSchedules, tableNumbers) {
         const roundId = index + 1;
         const schedule = scheduleByRound.get(roundId);
         const date = schedule?.date ?? null;
-        if (date != null && date !== currentDate) {
-            rows.push({ kind: "date", date });
-        }
-        currentDate = date;
         rows.push({
-            kind: "round",
             roundId,
+            date,
             startTime: schedule?.startTime ?? null,
             tableNumber: tableNumbers[index] ?? 0,
+            startsNewDay: index > 0 && date != null && currentDate != null && date !== currentDate,
         });
+        if (date != null)
+            currentDate = date;
     }
     return rows;
 }
 function drawBack(doc, model, player) {
     const primary = normalizeHexColor(model.primaryColor);
-    doc.rect(0, 0, CARD_WIDTH, CARD_HEIGHT).fill(BACKGROUND_COLOR);
+    doc.rect(0, 0, exports.CARD_WIDTH, exports.CARD_HEIGHT).fill(BACKGROUND_COLOR);
     doc.save();
     const backgroundNumber = String(player.playerId);
     const backgroundNumberSize = fitText(doc.font("CardApp"), backgroundNumber, 190, 132, 88);
     doc.opacity(0.28).fontSize(backgroundNumberSize).fillColor(primary);
-    drawCenteredText(doc, backgroundNumber, CARD_WIDTH, CARD_HEIGHT, backgroundNumberSize);
+    drawCenteredText(doc, backgroundNumber, exports.CARD_WIDTH, exports.CARD_HEIGHT, backgroundNumberSize);
     doc.restore();
     const x = 14;
     const y = 10;
-    const width = CARD_WIDTH - 28;
+    const width = exports.CARD_WIDTH - 28;
     const headerHeight = 22;
     const roundCount = Math.max(1, model.numberOfRounds ?? player.tableNumbers.length);
     const tableNumbers = Array.from({ length: roundCount }, (_, index) => player.tableNumbers[index] ?? 0);
     const rows = buildIdCardBackRows(roundCount, model.roundSchedules ?? [], tableNumbers);
-    const availableRowsHeight = CARD_HEIGHT - y - 10 - headerHeight;
+    const availableRowsHeight = exports.CARD_HEIGHT - y - 10 - headerHeight;
     const rowHeight = availableRowsHeight / Math.max(1, rows.length);
-    const columns = [30, 36, 38, 62, width - 30 - 36 - 38 - 62];
+    const columns = [28, 56, 32, 58, width - 28 - 56 - 32 - 58];
     const headers = ["Round", "Start", "Table", "Table points", "Score"];
     doc.lineWidth(0.65).strokeColor("#000000").fillColor("#000000").font("CardApp");
     doc.rect(x, y, width, headerHeight + rowHeight * rows.length).stroke();
@@ -262,8 +284,10 @@ function drawBack(doc, model, player) {
     doc.moveTo(x, y + headerHeight).lineTo(x + width, y + headerHeight).stroke();
     for (let index = 1; index < rows.length; index += 1) {
         const rowY = y + headerHeight + rowHeight * index;
+        doc.lineWidth(rows[index].startsNewDay ? 1.6 : 0.65);
         doc.moveTo(x, rowY).lineTo(x + width, rowY).stroke();
     }
+    doc.lineWidth(0.65);
     columnX = x;
     doc.fontSize(5.6);
     headers.forEach((header, index) => {
@@ -274,26 +298,79 @@ function drawBack(doc, model, player) {
     rows.forEach((row, index) => {
         const rowY = y + headerHeight + rowHeight * index;
         doc.fontSize(rowFontSize);
-        if (row.kind === "date") {
-            doc.save();
-            doc.opacity(0.88).rect(x, rowY, width, rowHeight).fill(primary);
-            doc.restore();
-            doc.fillColor("#FFFFFF").fontSize(Math.max(4.5, Math.min(7, rowHeight * 0.52)));
-            drawCellText(doc, displayCardDate(row.date), x, rowY, width, rowHeight);
-            doc.fillColor("#000000");
-            return;
-        }
         let cellX = x;
         columns.slice(0, -1).forEach((columnWidth) => {
             cellX += columnWidth;
             doc.moveTo(cellX, rowY).lineTo(cellX, rowY + rowHeight).stroke();
         });
         drawCellText(doc, String(row.roundId), x, rowY, columns[0], rowHeight);
-        drawCellText(doc, row.startTime ?? "-", x + columns[0], rowY, columns[1], rowHeight);
+        drawCellText(doc, displayStart(row), x + columns[0], rowY, columns[1], rowHeight);
         drawCellText(doc, row.tableNumber > 0 ? String(row.tableNumber) : "-", x + columns[0] + columns[1], rowY, columns[2], rowHeight);
     });
 }
-async function buildIdCardsPdf(model) {
+const A4_WIDTH = 595.28;
+const A4_HEIGHT = 841.89;
+exports.SHEET_MARGIN = 14;
+const CUT_MARK_LENGTH = 8;
+const CUT_MARK_OFFSET = 3;
+function sheetPageSize(landscape) {
+    return landscape ? { width: A4_HEIGHT, height: A4_WIDTH } : { width: A4_WIDTH, height: A4_HEIGHT };
+}
+/** Returns the grid for the options, or null when not even one card fits on the sheet. */
+function idCardSheetGrid(options) {
+    const scale = options.scalePercent / 100;
+    const { width, height } = sheetPageSize(options.landscape);
+    const maxColumns = Math.floor((width - 2 * exports.SHEET_MARGIN) / (exports.CARD_WIDTH * scale));
+    const maxRows = Math.floor((height - 2 * exports.SHEET_MARGIN) / (exports.CARD_HEIGHT * scale));
+    if (maxColumns < 1 || maxRows < 1)
+        return null;
+    const count = Math.max(1, Math.min(options.cardsPerSheet, maxColumns * maxRows));
+    const columns = Math.min(maxColumns, count);
+    const rows = Math.ceil(count / columns);
+    return { columns, rows, scale };
+}
+/**
+ * Returns where the top left corner of a card is on the sheet page, in points.
+ * The sheet turns like a book page, so the columns of the back are mirrored when printing on both sides.
+ */
+function idCardSheetCardOrigin(sheet, grid, index, back) {
+    const page = sheetPageSize(sheet.landscape);
+    const left = (page.width - exports.CARD_WIDTH * grid.scale * grid.columns) / 2;
+    const top = (page.height - exports.CARD_HEIGHT * grid.scale * grid.rows) / 2;
+    const column = index % grid.columns;
+    const row = Math.floor(index / grid.columns);
+    const drawColumn = back && sheet.doubleSided ? grid.columns - 1 - column : column;
+    return { x: left + drawColumn * exports.CARD_WIDTH * grid.scale, y: top + row * exports.CARD_HEIGHT * grid.scale };
+}
+function drawSheetCutMarks(doc, left, top, grid) {
+    const cardWidth = exports.CARD_WIDTH * grid.scale;
+    const cardHeight = exports.CARD_HEIGHT * grid.scale;
+    const right = left + cardWidth * grid.columns;
+    const bottom = top + cardHeight * grid.rows;
+    doc.save().lineWidth(0.4).strokeColor("#000000");
+    for (let column = 0; column <= grid.columns; column += 1) {
+        const x = left + cardWidth * column;
+        doc.moveTo(x, top - CUT_MARK_OFFSET).lineTo(x, top - CUT_MARK_OFFSET - CUT_MARK_LENGTH).stroke();
+        doc.moveTo(x, bottom + CUT_MARK_OFFSET).lineTo(x, bottom + CUT_MARK_OFFSET + CUT_MARK_LENGTH).stroke();
+    }
+    for (let row = 0; row <= grid.rows; row += 1) {
+        const y = top + cardHeight * row;
+        doc.moveTo(left - CUT_MARK_OFFSET, y).lineTo(left - CUT_MARK_OFFSET - CUT_MARK_LENGTH, y).stroke();
+        doc.moveTo(right + CUT_MARK_OFFSET, y).lineTo(right + CUT_MARK_OFFSET + CUT_MARK_LENGTH, y).stroke();
+    }
+    doc.restore();
+}
+function drawCardOnSheet(doc, x, y, scale, draw) {
+    doc.save();
+    doc.translate(x, y).scale(scale);
+    doc.rect(0, 0, exports.CARD_WIDTH, exports.CARD_HEIGHT).clip();
+    draw();
+    doc.restore();
+}
+async function buildIdCardsPdf(model, sheet) {
+    const grid = sheet == null ? null : idCardSheetGrid(sheet);
+    if (sheet != null && grid == null)
+        throw new Error("The card size does not fit on an A4 sheet.");
     return new Promise((resolve, reject) => {
         const doc = new pdfkit_1.default({
             autoFirstPage: false,
@@ -308,12 +385,36 @@ async function buildIdCardsPdf(model) {
         const reusableLogo = model.associationLogo == null
             ? null
             : doc.openImage(model.associationLogo);
-        model.players.forEach((player) => {
-            doc.addPage({ size: [CARD_WIDTH, CARD_HEIGHT], margin: 0 });
-            drawFront(doc, model, player, reusableLogo);
-            doc.addPage({ size: [CARD_WIDTH, CARD_HEIGHT], margin: 0 });
-            drawBack(doc, model, player);
-        });
+        if (sheet != null && grid != null) {
+            const perSheet = grid.columns * grid.rows;
+            const page = sheetPageSize(sheet.landscape);
+            const pageOptions = { size: [page.width, page.height], margin: 0 };
+            const left = (page.width - exports.CARD_WIDTH * grid.scale * grid.columns) / 2;
+            const top = (page.height - exports.CARD_HEIGHT * grid.scale * grid.rows) / 2;
+            for (let start = 0; start < model.players.length; start += perSheet) {
+                const group = model.players.slice(start, start + perSheet);
+                doc.addPage(pageOptions);
+                group.forEach((player, index) => {
+                    const { x, y } = idCardSheetCardOrigin(sheet, grid, index, false);
+                    drawCardOnSheet(doc, x, y, grid.scale, () => drawFront(doc, model, player, reusableLogo));
+                });
+                if (sheet.cutMarks)
+                    drawSheetCutMarks(doc, left, top, grid);
+                doc.addPage(pageOptions);
+                group.forEach((player, index) => {
+                    const { x, y } = idCardSheetCardOrigin(sheet, grid, index, true);
+                    drawCardOnSheet(doc, x, y, grid.scale, () => drawBack(doc, model, player));
+                });
+            }
+        }
+        else {
+            model.players.forEach((player) => {
+                doc.addPage({ size: [exports.CARD_WIDTH, exports.CARD_HEIGHT], margin: 0 });
+                drawFront(doc, model, player, reusableLogo);
+                doc.addPage({ size: [exports.CARD_WIDTH, exports.CARD_HEIGHT], margin: 0 });
+                drawBack(doc, model, player);
+            });
+        }
         doc.end();
     });
 }
@@ -446,8 +547,8 @@ async function loadIdCardsDocument(tournamentId) {
         players,
     };
 }
-async function generateTournamentIdCards(tournamentId) {
-    return buildIdCardsPdf(await loadIdCardsDocument(tournamentId));
+async function generateTournamentIdCards(tournamentId, sheet) {
+    return buildIdCardsPdf(await loadIdCardsDocument(tournamentId), sheet);
 }
 const emaCountryCodeToIso2 = {
     AUT: "AT", BEL: "BE", BLR: "BY", CHE: "CH", CZE: "CZ", DEU: "DE", DEN: "DK", DNK: "DK", EUR: "EU",

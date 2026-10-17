@@ -8,11 +8,9 @@ const tableManagerService_1 = require("../services/tableManagerService");
 const TABLE_STRING_FIELDS = [
     "playerEastId", "playerSouthId", "playerWestId", "playerNorthId",
     "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
-    "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
     "manualPlayerEastScore", "manualPlayerSouthScore", "manualPlayerWestScore", "manualPlayerNorthScore",
-    "manualPlayerEastPoints", "manualPlayerSouthPoints", "manualPlayerWestPoints", "manualPlayerNorthPoints",
 ];
-const TABLE_BOOLEAN_FIELDS = ["isCompleted", "useTotalsOnly", "usePointsCalculation"];
+const TABLE_BOOLEAN_FIELDS = ["isCompleted", "useTotalsOnly"];
 const HAND_STRING_FIELDS = [
     "playerWinnerId", "playerLooserId", "handScore", "playerEastPenalty",
     "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",

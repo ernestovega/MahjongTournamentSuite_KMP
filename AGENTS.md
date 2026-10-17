@@ -181,3 +181,8 @@ Apply these rules to every new or changed dialog:
 - Show `Player <ID>` for an unassigned slot.
 - Show 🌐 when a displayed player has no country.
 - Treat the EMA pseudo-country code `EU` as an empty guest country and show 🌐.
+
+## Statistics
+
+Statistics are described in `docs/statistics.md`.
+One use case in `:domain` computes them for both apps. The usage report for administrators comes from `GET /admin/usage`.

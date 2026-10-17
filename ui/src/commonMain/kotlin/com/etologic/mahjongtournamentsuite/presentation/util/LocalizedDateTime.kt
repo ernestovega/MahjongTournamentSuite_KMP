@@ -16,7 +16,7 @@ fun formatLocalizedDate(isoDate: String, withWeekday: Boolean = false, withYear:
 /** Formats a date range such as `12 Oct 2026 – 14 Oct 2026`. A one-day range shows one date. Returns null when there is no date. */
 fun formatLocalizedDateRange(start: String?, end: String?): String? =
     listOfNotNull(start, end).map(String::trim).filter { it.isNotEmpty() }.distinct()
-        .joinToString(" – ") { formatLocalizedDate(it) }
+        .joinToString(" - ") { formatLocalizedDate(it) }
         .ifBlank { null }
 
 /** Formats a local time (HH:mm) in the style of the device. Returns the input when it is not a time. */

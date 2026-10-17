@@ -7,12 +7,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
+import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionStore
+import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
+import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
+import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
+import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
+import androidx.compose.runtime.produceState
+import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
@@ -45,29 +57,55 @@ data class PlayerTablesRoute(val tournamentId: String, val slotId: Int)
 @Serializable
 data class TableRoute(val tournamentId: String, val roundId: Int, val tableId: Int)
 
+/**
+ * The statistics screen. [scope] is the name of a [StatisticsScope]. The other values give the context of the scope.
+ * A missing [slotId] means the signed-in player.
+ */
+@Serializable
+data class StatisticsRoute(
+    val scope: String,
+    val tournamentId: String? = null,
+    val roundId: Int? = null,
+    val tableId: Int? = null,
+    val slotId: Int? = null,
+)
+
 private val playerModule = module {
     factory { PlayerSessionPresenter(get(), get(), get(), get()) }
     factory { CalculateTournamentRankingsUseCase() }
+    factory { CalculateStatisticsUseCase() }
+    factory { LoadStatisticsUseCase(get(), get(), get()) }
+    factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
     factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
     factory { PlayerTablePresenter(get()) }
+    factory { PlayerStatisticsPresenter(get(), get(), get(), get()) }
 }
 
 /**
  * The player application.
  * [inviteToken] is set when the player opened the link of an invitation email.
  * [openTournamentId] is set when the player opened the link of a registration email.
+ * [sessionStorage] keeps the open screen and the scroll positions through a page refresh.
  */
 @Composable
-fun PlayerApp(inviteToken: String? = null, openTournamentId: String? = null) {
+fun PlayerApp(
+    inviteToken: String? = null,
+    openTournamentId: String? = null,
+    sessionStorage: SessionStateStorage? = null,
+) {
     KoinApplication(configuration = koinConfiguration { modules(dataModule, playerModule) }) {
         val themeController = rememberThemeController()
         CompositionLocalProvider(
             LocalThemeController provides themeController,
+            LocalScrollPositionStore provides remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } },
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
+            LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
+                produceState(FeatureFlags()) { value = repository.load() }.value
+            },
         ) {
             MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                 Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    PlayerNavigation(inviteToken, openTournamentId)
+                    PlayerNavigation(inviteToken, openTournamentId, sessionStorage)
                 }
             }
         }
@@ -75,26 +113,34 @@ fun PlayerApp(inviteToken: String? = null, openTournamentId: String? = null) {
 }
 
 @Composable
-private fun PlayerNavigation(inviteToken: String?, openTournamentId: String?) {
+private fun PlayerNavigation(inviteToken: String?, openTournamentId: String?, sessionStorage: SessionStateStorage?) {
     val navController = rememberNavController()
+    val routePersistence = remember(sessionStorage) { sessionStorage?.let { RoutePersistence(it) } }
+    // The saved routes are read one time, before the first navigation changes them.
+    val restoredRoutes = remember(routePersistence) { routePersistence?.load().orEmpty() }
+    LaunchedEffect(navController, routePersistence) {
+        routePersistence ?: return@LaunchedEffect
+        navController.currentBackStack.collect { routePersistence.save(it) }
+    }
     NavHost(navController = navController, startDestination = SplashRoute) {
-        composable<SplashRoute> { SplashScreen(navController, inviteToken, openTournamentId) }
-        composable<SignInRoute> { entry ->
+        screen<SplashRoute> { SplashScreen(navController, inviteToken, openTournamentId, restoredRoutes) }
+        screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
             SignInScreen(navController, route.inviteToken, route.openTournamentId)
         }
-        composable<InviteRoute> { entry -> InviteScreen(navController, entry.toRoute<InviteRoute>().token) }
-        composable<TournamentsRoute> { TournamentsScreen(navController) }
-        composable<TournamentRoute> { entry ->
+        screen<InviteRoute> { entry -> InviteScreen(navController, entry.toRoute<InviteRoute>().token) }
+        screen<TournamentsRoute> { TournamentsScreen(navController) }
+        screen<TournamentRoute> { entry ->
             TournamentScreen(navController, entry.toRoute<TournamentRoute>().tournamentId)
         }
-        composable<PlayerTablesRoute> { entry ->
+        screen<PlayerTablesRoute> { entry ->
             val route = entry.toRoute<PlayerTablesRoute>()
             PlayerTablesScreen(navController, route.tournamentId, route.slotId)
         }
-        composable<TableRoute> { entry ->
+        screen<TableRoute> { entry ->
             val route = entry.toRoute<TableRoute>()
             TableScreen(navController, route.tournamentId, route.roundId, route.tableId)
         }
+        screen<StatisticsRoute> { entry -> StatisticsScreen(navController, entry.toRoute<StatisticsRoute>()) }
     }
 }

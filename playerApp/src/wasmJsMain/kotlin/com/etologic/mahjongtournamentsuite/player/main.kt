@@ -1,7 +1,9 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
+import com.etologic.mahjongtournamentsuite.presentation.platform.BrowserSessionStorage
 import kotlinx.browser.window
 
 /** Reads the `token` of an invitation link such as `/invite?token=...`. */
@@ -28,6 +30,10 @@ private fun tournamentFromUrl(): String? = window.location.search.removePrefix("
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
     ComposeViewport {
-        PlayerApp(inviteToken = inviteTokenFromUrl(), openTournamentId = tournamentFromUrl())
+        PlayerApp(
+            inviteToken = inviteTokenFromUrl(),
+            openTournamentId = tournamentFromUrl(),
+            sessionStorage = remember { BrowserSessionStorage("playerApp") },
+        )
     }
 }

@@ -50,7 +50,7 @@ internal fun TableHandsCard(
     enabled: Boolean,
     playerNamesById: Map<Int, String>,
 ) {
-    val isHandsActive = !editor.useTotalsOnly && editor.usePointsCalculation
+    val isHandsActive = !editor.useTotalsOnly
     var handsExpanded by remember { mutableStateOf(isHandsActive) }
     LaunchedEffect(isHandsActive) { handsExpanded = isHandsActive }
     val handsEnabled = enabled && isHandsActive
@@ -237,14 +237,16 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
     val bestHands = editor.bestCompletedHands.filter { options.countBestHands && threshold != null && it.first >= threshold }
     val chickenHandCount = if (options.countChickenHands) editor.chickenHandCount else 0
     if (chickenHandCount == 0 && bestHands.isEmpty()) return
+    // Each stat is a group: icon, value and winner. The groups have the same space between them.
     Row(
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (chickenHandCount > 0) {
-            ChickenIcon(contentDescription = "Chicken hands")
-            Text("$chickenHandCount", style = MaterialTheme.typography.titleLarge)
-            if (bestHands.isNotEmpty()) Spacer(Modifier.width(20.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                ChickenIcon(contentDescription = "Chicken hands")
+                Text("$chickenHandCount", style = MaterialTheme.typography.titleLarge)
+            }
         }
         bestHands.forEach { (score, winnerId) ->
             // Tied scores share the place.
@@ -254,17 +256,18 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
                 2 -> TrophyMedal.Silver
                 else -> TrophyMedal.Bronze
             }
-            TrophyIcon(contentDescription = "Tournament best hand $place", medal = medal)
-            Text("$score", style = MaterialTheme.typography.titleLarge)
-            winnerId?.let {
-                Text(
-                    "#$it",
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                TrophyIcon(contentDescription = "Tournament best hand $place", medal = medal)
+                Text("$score", style = MaterialTheme.typography.titleLarge)
+                winnerId?.let {
+                    Text(
+                        "#$it",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
         }
-        Spacer(Modifier.width(8.dp))
         InfoTooltipIcon(
             description = "Calculated from hands. Trophies show the best hands of the tournament that this table holds.",
             contentDescription = "Show how the chicken and best hand values are calculated",

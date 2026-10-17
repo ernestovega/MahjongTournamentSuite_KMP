@@ -10,6 +10,7 @@ exports.isResultSelectionInvalid = isResultSelectionInvalid;
 exports.handSeatScores = handSeatScores;
 exports.handScoreTotals = handScoreTotals;
 exports.pointsFromScores = pointsFromScores;
+exports.tablePointsOf = tablePointsOf;
 exports.tableTotalsPatch = tableTotalsPatch;
 exports.MIN_HAND_SCORE = 8;
 exports.MAX_CHICKEN_HAND_SCORE = 12;
@@ -147,21 +148,37 @@ function pointsFromScores(scores) {
     return result;
 }
 /**
+ * The table points of a table. They come only from the scores of the table: the manual scores when the table
+ * uses manual totals, otherwise the saved totals of the hands. A seat has an empty text while a score is missing.
+ * Nobody types or forces table points.
+ */
+function tablePointsOf(table) {
+    const useTotalsOnly = Boolean(table.useTotalsOnly ?? false);
+    const score = (manual, saved) => (useTotalsOnly ? text(table[manual]) || text(table[saved]) : text(table[saved]));
+    const scores = [
+        score("manualPlayerEastScore", "playerEastScore"),
+        score("manualPlayerSouthScore", "playerSouthScore"),
+        score("manualPlayerWestScore", "playerWestScore"),
+        score("manualPlayerNorthScore", "playerNorthScore"),
+    ];
+    const points = pointsFromScores(scores) ?? ["", "", "", ""];
+    return { playerEastPoints: points[0], playerSouthPoints: points[1], playerWestPoints: points[2], playerNorthPoints: points[3] };
+}
+/**
  * The table fields that the editor app persists after a hand changes in hands mode:
  * the effective scores and the points. Manual values are used when no hand counts.
  */
 function tableTotalsPatch(table, hands) {
     const manualScores = [table.manualPlayerEastScore, table.manualPlayerSouthScore, table.manualPlayerWestScore, table.manualPlayerNorthScore]
         .map(text);
-    const manualPoints = [table.manualPlayerEastPoints, table.manualPlayerSouthPoints, table.manualPlayerWestPoints, table.manualPlayerNorthPoints]
-        .map(text);
     const calculated = handScoreTotals(table, hands);
     const scores = calculated == null ? manualScores : calculated.map(String);
-    const usePointsCalculation = Boolean(table.usePointsCalculation ?? true);
-    const points = usePointsCalculation ? pointsFromScores(scores) ?? manualPoints : manualPoints;
     return {
         playerEastScore: scores[0], playerSouthScore: scores[1], playerWestScore: scores[2], playerNorthScore: scores[3],
-        playerEastPoints: points[0], playerSouthPoints: points[1], playerWestPoints: points[2], playerNorthPoints: points[3],
+        ...tablePointsOf({
+            useTotalsOnly: false,
+            playerEastScore: scores[0], playerSouthScore: scores[1], playerWestScore: scores[2], playerNorthScore: scores[3],
+        }),
     };
 }
 //# sourceMappingURL=handScoring.js.map

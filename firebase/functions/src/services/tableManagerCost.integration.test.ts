@@ -187,12 +187,15 @@ describe("change log", () => {
     ]);
   });
 
-  it("writes no entry for a rejected save", async () => {
+  it("writes a conflict entry and no save entry for a rejected save", async () => {
     const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
     await save(id, 1, 0, { playerEastId: "1" });
     await assert.rejects(save(id, 1, 0, { playerEastId: "2" }));
 
-    assert.equal((await readChanges(id)).length, 1);
+    const entries = await readChanges(id);
+    assert.equal(entries.filter((entry) => entry.kind === "save").length, 1);
+    assert.equal(entries.filter((entry) => entry.kind === "conflict").length, 1);
+    assert.equal((await readTable(id, 1, 1)).playerEastId, "1");
   });
 
   it("skips derived totals and values that did not change", async () => {

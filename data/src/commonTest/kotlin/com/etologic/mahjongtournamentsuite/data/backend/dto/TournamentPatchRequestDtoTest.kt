@@ -16,15 +16,13 @@ class TournamentPatchRequestDtoTest {
         val payload = TablePatchRequestDto(
             useTotalsOnly = true,
             playerEastScore = "32000",
-            playerSouthPoints = "2",
             manualPlayerEastScore = "33000",
-            manualPlayerWestPoints = "1",
         )
 
         val encoded = json.encodeToString(payload)
 
         assertEquals(
-            """{"useTotalsOnly":true,"playerEastScore":"32000","playerSouthPoints":"2","manualPlayerEastScore":"33000","manualPlayerWestPoints":"1"}""",
+            """{"useTotalsOnly":true,"playerEastScore":"32000","manualPlayerEastScore":"33000"}""",
             encoded,
         )
     }
@@ -61,14 +59,14 @@ class TournamentPatchRequestDtoTest {
                 TournamentRoundScheduleDto(2),
             ),
             agendaItems = listOf(
-                TournamentAgendaItemDto("Registration", "2026-10-03", "08:30", "09:00"),
+                TournamentAgendaItemDto("Registration", "2026-10-03", "08:30"),
             ),
         )
 
         val encoded = json.encodeToString(payload)
 
         assertEquals(
-            """{"name":"European Championship","shortName":"EC2026","primaryColor":"#123456","eventStartDate":"2026-10-03","eventEndDate":"2026-10-04","hostCountry":"ESP","hostCity":"Madrid","roundSchedules":[{"roundId":1,"date":"2026-10-03","startTime":"09:30"},{"roundId":2}],"agendaItems":[{"title":"Registration","date":"2026-10-03","startTime":"08:30","endTime":"09:00"}]}""",
+            """{"name":"European Championship","shortName":"EC2026","primaryColor":"#123456","eventStartDate":"2026-10-03","eventEndDate":"2026-10-04","hostCountry":"ESP","hostCity":"Madrid","roundSchedules":[{"roundId":1,"date":"2026-10-03","startTime":"09:30"},{"roundId":2}],"agendaItems":[{"title":"Registration","date":"2026-10-03","startTime":"08:30"}]}""",
             encoded,
         )
     }

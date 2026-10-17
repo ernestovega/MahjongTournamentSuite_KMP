@@ -67,18 +67,6 @@ internal data class SeatTextValues(
     }
 }
 
-internal enum class Seat {
-    EAST,
-    SOUTH,
-    WEST,
-    NORTH,
-}
-
-internal data class RankedSeat(
-    val seat: Seat,
-    val score: Int?,
-)
-
 internal typealias SeatAssignments = NormalizedSeats
 
 internal fun sanitizeSeatAssignments(

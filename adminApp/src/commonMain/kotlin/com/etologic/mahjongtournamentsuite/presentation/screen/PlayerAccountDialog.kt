@@ -29,7 +29,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.contactState
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 
-private val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
+internal val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
 /** The time of a contact as local date and time in the device language. */
 internal fun contactTimeText(isoTime: String?): String? = localizedDateTimeOrNull(isoTime)

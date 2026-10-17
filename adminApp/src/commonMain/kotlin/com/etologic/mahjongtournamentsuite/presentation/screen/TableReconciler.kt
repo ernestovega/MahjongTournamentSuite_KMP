@@ -56,7 +56,7 @@ internal object TableReconciler {
         if (!saveRejected && current != null && serverTable.version <= current.version) return null
         val key = TableKey(serverTable.roundId, serverTable.tableId)
         val lost = if (current?.hasUnsavedChanges == true) {
-            lostChangesOf(current.buildApplicationTablePatch(), current.buildHandPatches().toMap())
+            lostChangesOf(current.buildTablePatch(), current.buildHandPatches().toMap())
         } else {
             emptyList()
         }
@@ -69,7 +69,6 @@ internal object TableReconciler {
     /** The computed totals follow from the hands. The user did not type them, so they stay out of the list. */
     private val derivedFields = setOf(
         "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
-        "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
     )
 
     fun lostChangesOf(

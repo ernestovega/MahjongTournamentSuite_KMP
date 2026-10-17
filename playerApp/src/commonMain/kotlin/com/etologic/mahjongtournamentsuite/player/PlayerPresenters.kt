@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
+import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
@@ -15,6 +16,11 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
+import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 
 class PlayerSessionPresenter(
     private val authRepository: AuthRepository,
@@ -112,4 +118,37 @@ class PlayerTablePresenter(
         proposal: HandProposal,
         expectedVersion: Long,
     ): AppResult<HandPreview> = handRepository.recordHand(tournamentId, roundId, tableId, proposal, expectedVersion)
+}
+
+class PlayerStatisticsPresenter(
+    private val loadStatistics: LoadStatisticsUseCase,
+    private val loadStored: LoadStoredStatisticsUseCase,
+    private val authRepository: AuthRepository,
+    private val playerRepository: PlayerRepository,
+) {
+    suspend fun tournament(
+        tournamentId: String,
+        refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
+    ): AppResult<TournamentStatisticsData> = loadStatistics.tournament(tournamentId, refreshMode)
+
+    /** The statistics of the signed-in player over all tournaments where the player is registered. */
+    suspend fun me(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> {
+        val emaId = when (val result = authRepository.getMe(refreshMode)) {
+            is AppResult.Success -> result.value.emaId
+            is AppResult.Failure -> return result
+        } ?: return AppResult.Failure(AppError.Unexpected("Your account is not linked to a player yet."))
+        return loadStored.person(emaId, own = true, refreshMode = refreshMode)
+    }
+
+    /** The players that the signed-in player plays with, from the tournaments that the account can see. */
+    suspend fun players(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Player>> =
+        playerRepository.listPlayers(refreshMode)
+
+    /** The statistics of another player, in the tournaments that the account can see. */
+    suspend fun person(emaId: String, refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> =
+        loadStored.person(emaId, own = false, refreshMode = refreshMode)
+
+    /** The final places of a player in some tournaments. The list shows them for the tournaments on screen. */
+    suspend fun standings(emaId: String, tournamentIds: List<String>, own: Boolean = true): Map<String, Standing> =
+        (loadStored.standings(emaId, own = own, tournamentIds) as? AppResult.Success)?.value.orEmpty()
 }

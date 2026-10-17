@@ -26,11 +26,6 @@ const tournamentContentRules_1 = require("./tournamentContentRules");
     strict_1.default.equal((0, tournamentContentRules_1.hasFourValidScores)([30000, 10000, -10000]), false);
     strict_1.default.equal((0, tournamentContentRules_1.hasFourValidScores)([30000, 10000, -10000, "1.5"]), false);
 });
-(0, node_test_1.default)("requires four numeric table-point values that total seven", () => {
-    strict_1.default.equal((0, tournamentContentRules_1.hasValidTablePoints)([4, 2, 1, 0]), true);
-    strict_1.default.equal((0, tournamentContentRules_1.hasValidTablePoints)([4, 2, 1, 1]), false);
-    strict_1.default.equal((0, tournamentContentRules_1.hasValidTablePoints)([4, 2, 1]), false);
-});
 (0, node_test_1.default)("detects duplicate EMA assignments and ignores empty slots", () => {
     strict_1.default.equal((0, tournamentContentRules_1.hasDuplicateEmaAssignments)(["12345678", "87654321", null, ""]), false);
     strict_1.default.equal((0, tournamentContentRules_1.hasDuplicateEmaAssignments)(["12345678", "12345678", null]), true);

@@ -26,14 +26,20 @@ import org.koin.compose.koinInject
 @Composable
 fun SplashScreen(
     navController: NavHostController,
+    /** The screens that were open before a page refresh, from the first to the last. */
+    restoredRoutes: List<Any> = emptyList(),
 ) {
     val authPresenter = koinInject<AuthPresenter>()
 
     LaunchedEffect(authPresenter) {
-        val nextRoute = if (authPresenter.hasActiveSession()) TournamentsRoute else SignInRoute
+        val hasSession = authPresenter.hasActiveSession()
+        val nextRoute = if (hasSession) TournamentsRoute else SignInRoute
 
         navController.navigate(nextRoute) {
             popUpTo(SplashRoute) { inclusive = true }
+        }
+        if (hasSession) {
+            restoredRoutes.filterNot { it == TournamentsRoute }.forEach { navController.navigate(it) }
         }
     }
 

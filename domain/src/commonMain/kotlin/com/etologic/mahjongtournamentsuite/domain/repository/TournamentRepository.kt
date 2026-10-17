@@ -14,9 +14,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 
 interface TournamentRepository {
     suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>>
@@ -37,6 +39,7 @@ interface TournamentRepository {
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
+        venue: TournamentVenue = TournamentVenue(),
         associationLogoContentType: String? = null,
         associationLogoBytes: ByteArray? = null,
         associationLogoSourceTournamentId: String? = null,
@@ -48,7 +51,11 @@ interface TournamentRepository {
         countChickenHands: Boolean? = null,
     ): AppResult<Tournament>
 
-    suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray>
+    /** Creates the ID cards PDF. Without a sheet layout, the PDF has one card side on each page. */
+    suspend fun generateTournamentIdCards(
+        tournamentId: String,
+        sheet: IdCardSheetLayout? = null,
+    ): AppResult<ByteArray>
 
     suspend fun generateIdCardProof(request: IdCardProofRequest): AppResult<ByteArray>
 
@@ -151,12 +158,6 @@ interface TournamentRepository {
         tablePatch: Map<String, Any?>,
         handPatches: Map<Int, Map<String, Any?>>,
     ): AppResult<Pair<TableState, List<TableHand>>>
-
-    suspend fun resetTable(
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-    ): AppResult<Unit>
 
     /**
      * Asks the backend for the current table versions. It always makes a request, and it costs one

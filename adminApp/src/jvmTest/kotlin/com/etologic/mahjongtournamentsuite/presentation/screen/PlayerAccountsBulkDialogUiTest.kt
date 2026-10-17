@@ -4,6 +4,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.InvitationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
@@ -53,8 +54,14 @@ class PlayerAccountsBulkDialogUiTest {
         onNodeWithText("P2").assertIsDisplayed()
         onNodeWithText("Select all shown (2)").performClick()
         onNodeWithText("Send (2)").performClick()
+
+        // P1 has no saved email, so the dialog asks for it first. P2 is linked and needs none.
+        onNodeWithText("Emails are missing").assertIsDisplayed()
+        onNodeWithText("1 · P1").performTextInput("p1@example.test")
+        onNodeWithText("Send (1)").performClick()
         assertEquals(PlayerAccountAction.SEND, action)
         assertEquals(listOf(1, 2), items.map { it.playerId })
+        assertEquals("p1@example.test", items.first().email)
 
         // The group "Invited, waiting" lists only the player with a pending invitation.
         onNodeWithText("Invited, waiting (1)").performClick()

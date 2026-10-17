@@ -5,9 +5,13 @@
 
 type Data = Record<string, unknown>;
 
+/** Where a change came from. A change without a source came from an editor app. */
+export type ChangeSource = "player" | "editor";
+
 export type ChangeActor = {
   uid: string;
   name: string | null;
+  source?: ChangeSource;
 };
 
 export type FieldChange = {
@@ -19,15 +23,19 @@ export type FieldChange = {
 export type HandChange = FieldChange & { handId: number };
 
 export type ChangeEntry = {
-  kind: "save" | "reset";
+  /** A conflict is a save that the server refused because the table had changed. */
+  kind: "save" | "reset" | "conflict";
   roundId: number;
   tableId: number;
   /** The table version that this change created. */
   version: number;
   uid: string | null;
   name: string | null;
+  source: ChangeSource | null;
   tableChanges: FieldChange[];
   handChanges: HandChange[];
+  /** Number of hand values that changed. It lets the usage report count them without the lists. */
+  handChangeCount: number;
 };
 
 /** The totals follow from the hands. A person did not type them, so the log leaves them out. */
@@ -38,6 +46,10 @@ const DERIVED_FIELDS = new Set([
 
 function sameValue(a: unknown, b: unknown): boolean {
   return (a ?? "") === (b ?? "");
+}
+
+function sourceOf(actor: ChangeActor | null | undefined): ChangeSource | null {
+  return actor == null ? null : actor.source ?? "editor";
 }
 
 /** Reads the acting user from the verified token. A missing token gives an anonymous entry. */
@@ -75,8 +87,10 @@ export function buildSaveChangeEntry(params: {
     version: params.version,
     uid: params.actor?.uid ?? null,
     name: params.actor?.name ?? null,
+    source: sourceOf(params.actor),
     tableChanges,
     handChanges,
+    handChangeCount: handChanges.length,
   };
 }
 
@@ -93,7 +107,19 @@ export function buildResetChangeEntry(params: {
     version: params.version,
     uid: params.actor?.uid ?? null,
     name: params.actor?.name ?? null,
+    source: sourceOf(params.actor),
     tableChanges: [],
     handChanges: [],
+    handChangeCount: 0,
   };
+}
+
+/** A save that the server refused because the table had changed. [version] is the version that the client expected. */
+export function buildConflictChangeEntry(params: {
+  roundId: number;
+  tableId: number;
+  version: number;
+  actor: ChangeActor | null;
+}): ChangeEntry {
+  return { ...buildResetChangeEntry(params), kind: "conflict" };
 }

@@ -24,13 +24,8 @@ internal fun syncTable(
     playerSouthScore = "",
     playerWestScore = "",
     playerNorthScore = "",
-    playerEastPoints = "",
-    playerSouthPoints = "",
-    playerWestPoints = "",
-    playerNorthPoints = "",
     isCompleted = isCompleted,
     useTotalsOnly = false,
-    usePointsCalculation = true,
 )
 
 internal fun syncHands(score: String = "", count: Int = 16): List<TableHand> = (1..count).map { id ->
@@ -54,7 +49,6 @@ internal fun syncSummary(roundId: Int = 1, tableId: Int = 1, version: Long = 1) 
     playerIds = listOf(1, 2, 3, 4),
     isCompleted = false,
     useTotalsOnly = false,
-    usePointsCalculation = true,
     hasProgress = false,
     version = version,
 )

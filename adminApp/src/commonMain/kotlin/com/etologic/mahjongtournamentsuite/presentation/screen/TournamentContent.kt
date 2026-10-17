@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -23,7 +24,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
@@ -83,7 +83,6 @@ internal fun TournamentContent(
     saveFocusRequester: FocusRequester,
     onSelectRound: (Int) -> Unit,
     onSelectTable: (Int) -> Unit,
-    onRanking: () -> Unit,
     onSave: (Int) -> Unit,
     onSaveAndNext: (Int) -> Unit,
 ) {
@@ -103,7 +102,6 @@ internal fun TournamentContent(
             roundFocusRequester = roundFocusRequester,
             onSelectRound = onSelectRound,
             onSelectTable = onSelectTable,
-            onRanking = onRanking,
         )
         if (selectedEditor != null) {
             Text(
@@ -118,7 +116,7 @@ internal fun TournamentContent(
             if (selectedEditor != null) {
                 val tableId = selectedEditor.tableId
                 val accent = MaterialTheme.colorScheme.tertiary
-                val scrollState = rememberScrollState()
+                val scrollState = rememberPersistentScrollState()
                 val stickyHost = remember(scrollState) { StickyHeaderHost(scrollState) }
                 Column(
                     modifier = Modifier
@@ -179,7 +177,6 @@ private fun TournamentContentPreview() {
                 playerIds = listOf(101, 102, 103, 104),
                 isCompleted = false,
                 useTotalsOnly = false,
-                usePointsCalculation = true,
                 hasProgress = id == editor.tableId,
             )
         }
@@ -197,7 +194,6 @@ private fun TournamentContentPreview() {
                 saveFocusRequester = remember { FocusRequester() },
                 onSelectRound = {},
                 onSelectTable = {},
-                onRanking = {},
                 onSave = {},
                 onSaveAndNext = {},
             )
@@ -228,14 +224,12 @@ private fun RoundTableStrip(
     roundFocusRequester: FocusRequester,
     onSelectRound: (Int) -> Unit,
     onSelectTable: (Int) -> Unit,
-    onRanking: () -> Unit,
 ) {
     val tables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
     val roundIndex = rounds.indexOfFirst { it.roundId == selectedRoundId }
     val chipsState = rememberLazyListState()
     var roundMenuOpen by remember { mutableStateOf(false) }
     val roundStatus = roundCompletionStatus(tables)
-    val roundIsFinished = roundStatus == CompletionStatus.Completed || roundStatus == CompletionStatus.Manual
     Card(modifier = Modifier.fillMaxWidth().appFocusGroup()) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
@@ -306,13 +300,6 @@ private fun RoundTableStrip(
                             modifier = Modifier.testTag("table-chip-${table.tableId}"),
                         )
                     }
-                }
-            }
-            if (roundIsFinished) {
-                FocusedButton(onClick = onRanking, enabled = enabled) {
-                    Icon(Icons.Default.Leaderboard, contentDescription = null)
-                    Spacer(Modifier.width(6.dp))
-                    Text("Ranking")
                 }
             }
         }

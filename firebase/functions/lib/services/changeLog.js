@@ -7,6 +7,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.actorFromToken = actorFromToken;
 exports.buildSaveChangeEntry = buildSaveChangeEntry;
 exports.buildResetChangeEntry = buildResetChangeEntry;
+exports.buildConflictChangeEntry = buildConflictChangeEntry;
 /** The totals follow from the hands. A person did not type them, so the log leaves them out. */
 const DERIVED_FIELDS = new Set([
     "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
@@ -14,6 +15,9 @@ const DERIVED_FIELDS = new Set([
 ]);
 function sameValue(a, b) {
     return (a ?? "") === (b ?? "");
+}
+function sourceOf(actor) {
+    return actor == null ? null : actor.source ?? "editor";
 }
 /** Reads the acting user from the verified token. A missing token gives an anonymous entry. */
 function actorFromToken(token) {
@@ -42,8 +46,10 @@ function buildSaveChangeEntry(params) {
         version: params.version,
         uid: params.actor?.uid ?? null,
         name: params.actor?.name ?? null,
+        source: sourceOf(params.actor),
         tableChanges,
         handChanges,
+        handChangeCount: handChanges.length,
     };
 }
 function buildResetChangeEntry(params) {
@@ -54,8 +60,14 @@ function buildResetChangeEntry(params) {
         version: params.version,
         uid: params.actor?.uid ?? null,
         name: params.actor?.name ?? null,
+        source: sourceOf(params.actor),
         tableChanges: [],
         handChanges: [],
+        handChangeCount: 0,
     };
+}
+/** A save that the server refused because the table had changed. [version] is the version that the client expected. */
+function buildConflictChangeEntry(params) {
+    return { ...buildResetChangeEntry(params), kind: "conflict" };
 }
 //# sourceMappingURL=changeLog.js.map

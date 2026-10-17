@@ -47,6 +47,8 @@ kotlin {
             implementation(compose.materialIconsExtended)
             implementation(libs.compose.ui)
             implementation(libs.compose.components.resources)
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor3)
             implementation(libs.koin.compose)
             implementation(libs.koin.core)
             implementation(libs.kermit)

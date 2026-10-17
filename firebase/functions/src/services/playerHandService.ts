@@ -1,4 +1,4 @@
-import { badRequest, conflict, forbidden, notFound } from "../api/httpError";
+import { HttpError, badRequest, conflict, forbidden, notFound } from "../api/httpError";
 import { db } from "../firebase";
 import type { ChangeActor } from "./changeLog";
 import { handSeatScores, isResultSelectionInvalid, seatIdsOf, tableTotalsPatch } from "./handScoring";
@@ -8,6 +8,7 @@ import {
   handsFromData,
   saveTableStateInTransaction,
   StaleTableVersion,
+  logTableConflict,
 } from "./tableManagerService";
 
 /**
@@ -97,6 +98,12 @@ function buildPatch(table: Data, seats: [string, string, string, string], hands:
   return { next, handPatch, totals: tableTotalsPatch(table, handsAfter), handScores };
 }
 
+/** True when the table changed after the player looked at it. */
+function isVersionConflict(error: unknown): boolean {
+  return error instanceof StaleTableVersion
+    || (error instanceof HttpError && error.status === 409 && error.message.startsWith("The table changed"));
+}
+
 /** Calculates what the table would look like after the hand. It writes nothing. */
 export async function previewHand(params: TableKey & { uid: string; input: HandInput }): Promise<HandPreview> {
   const { table, seats, hands } = await loadFor(
@@ -133,7 +140,7 @@ export async function recordHand(
         throw conflict("The table changed after the review. Check the new totals and confirm again");
       }
       const { next, handPatch, totals, handScores } = buildPatch(table, seats, hands, params.input);
-      const actor: ChangeActor = { uid: params.uid, name: `Player ${registration.emaId}` };
+      const actor: ChangeActor = { uid: params.uid, name: `Player ${registration.emaId}`, source: "player" };
       await saveTableStateInTransaction(transaction, {
         tournamentId: params.tournamentId,
         roundId: params.roundId,
@@ -153,6 +160,9 @@ export async function recordHand(
       } satisfies HandPreview;
     });
   } catch (error) {
+    if (isVersionConflict(error)) {
+      await logTableConflict({ ...params, actor: { uid: params.uid, name: null, source: "player" } });
+    }
     if (error instanceof StaleTableVersion) throw conflict("The table changed. Review the hand again");
     throw error;
   }
@@ -223,11 +233,14 @@ export async function assignSeats(
           playerNorthId: params.seats.north,
         },
         handPatches: [],
-        actor: { uid: params.uid, name: `Player ${registration.emaId}` },
+        actor: { uid: params.uid, name: `Player ${registration.emaId}`, source: "player" },
       });
       return { seats: chosen as [string, string, string, string], tableVersion: version + 1 };
     });
   } catch (error) {
+    if (isVersionConflict(error)) {
+      await logTableConflict({ ...params, actor: { uid: params.uid, name: null, source: "player" } });
+    }
     if (error instanceof StaleTableVersion) throw conflict("The table changed. Check the seats again");
     throw error;
   }

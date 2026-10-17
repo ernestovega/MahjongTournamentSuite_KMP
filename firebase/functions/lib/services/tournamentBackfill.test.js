@@ -40,7 +40,6 @@ const fullHands = Array.from({ length: 16 }, (_, index) => (0, tableManagerServi
     strict_1.default.equal(table.version, 5);
     strict_1.default.equal(table.playerEastId, "");
     strict_1.default.equal(table.useTotalsOnly, false);
-    strict_1.default.equal(table.usePointsCalculation, true);
     strict_1.default.equal(table.isCompleted, false);
 });
 (0, node_test_1.default)("hands are sorted by id", () => {

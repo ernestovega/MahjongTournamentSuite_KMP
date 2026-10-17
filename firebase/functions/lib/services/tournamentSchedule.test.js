@@ -20,16 +20,20 @@ const tournamentSchedule_1 = require("./tournamentSchedule");
 });
 (0, node_test_1.default)("keeps partial agenda items and omits rows without a title", () => {
     const agenda = (0, tournamentSchedule_1.normalizeAgendaItems)([
-        { title: " Registration ", date: "2026-10-02", startTime: "08:30", endTime: "09:00" },
+        { title: " Registration ", date: "2026-10-02", startTime: "08:30" },
         { title: "Awards" },
         { title: "", date: "2026-10-02" },
-    ], "2026-10-02", "2026-10-04");
+    ]);
     strict_1.default.deepEqual(agenda, [
-        { title: "Registration", date: "2026-10-02", startTime: "08:30", endTime: "09:00" },
-        { title: "Awards", date: null, startTime: null, endTime: null },
+        { title: "Registration", date: "2026-10-02", startTime: "08:30" },
+        { title: "Awards", date: null, startTime: null },
     ]);
 });
-(0, node_test_1.default)("rejects agenda items that end before they start", () => {
-    strict_1.default.throws(() => (0, tournamentSchedule_1.normalizeAgendaItems)([{ title: "Lunch", startTime: "14:00", endTime: "13:00" }], "2026-10-02", "2026-10-04"), /must not be before/);
+(0, node_test_1.default)("keeps agenda items dated outside the official game days", () => {
+    const agenda = (0, tournamentSchedule_1.normalizeAgendaItems)([{ title: "Early registration", date: "2026-10-01", startTime: "19:00" }]);
+    strict_1.default.deepEqual(agenda, [{ title: "Early registration", date: "2026-10-01", startTime: "19:00" }]);
+});
+(0, node_test_1.default)("rejects agenda items with an invalid date", () => {
+    strict_1.default.throws(() => (0, tournamentSchedule_1.normalizeAgendaItems)([{ title: "Dinner", date: "2026-13-40" }]), /yyyy-MM-dd/);
 });
 //# sourceMappingURL=tournamentSchedule.test.js.map

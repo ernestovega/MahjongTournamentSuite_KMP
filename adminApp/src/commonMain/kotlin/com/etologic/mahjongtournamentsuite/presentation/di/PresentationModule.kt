@@ -10,11 +10,15 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPr
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import org.koin.dsl.module
 
 val presentationModule = module {
@@ -30,6 +34,10 @@ val presentationModule = module {
     factory { TablesPresenter(get(), get(), get()) }
     factory { TableManagerPresenter(get(), get()) }
     factory { CalculateTournamentRankingsUseCase() }
+    factory { CalculateStatisticsUseCase() }
+    factory { LoadStatisticsUseCase(get(), get(), get()) }
+    factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
+    factory { StatisticsPresenter(get(), get(), get(), get(), get()) }
     factory { RankingPresenter(get(), get(), get(), get()) }
     factory { IdCardProofPresenter(get()) }
     factory { VersionPresenter(get(), get()) }

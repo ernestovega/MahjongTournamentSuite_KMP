@@ -15,6 +15,8 @@ data class Tournament(
     val associationLogoUrl: String? = null,
     val hostCountry: String = "",
     val hostCity: String = "",
+    /** Where the tournament takes place. Every field can be empty. */
+    val venue: TournamentVenue = TournamentVenue(),
     /** First calendar date of the tournament in ISO-8601 format (yyyy-MM-dd). */
     val eventStartDate: String? = null,
     /** Last calendar date of the tournament in ISO-8601 format (yyyy-MM-dd). */
@@ -48,9 +50,21 @@ data class CreateTournamentRequest(
     val associationLogoSourceTournamentId: String? = null,
     val hostCountry: String,
     val hostCity: String,
+    val venue: TournamentVenue = TournamentVenue(),
     val roundSchedules: List<TournamentRoundSchedule> = emptyList(),
     val agendaItems: List<TournamentAgendaItem> = emptyList(),
 )
+
+/** The place of a tournament. The map link points to Google Maps. */
+data class TournamentVenue(
+    val name: String = "",
+    val address: String = "",
+    val mapUrl: String = "",
+    /** Email address that players can use to contact the organizers. */
+    val contactEmail: String = "",
+) {
+    val isEmpty: Boolean get() = name.isBlank() && address.isBlank() && mapUrl.isBlank() && contactEmail.isBlank()
+}
 
 /** Local tournament date and start time for one round. */
 data class TournamentRoundSchedule(
@@ -68,8 +82,6 @@ data class TournamentAgendaItem(
     val date: String? = null,
     /** Local tournament time (HH:mm), or null while it is not configured. */
     val startTime: String? = null,
-    /** Optional local end time (HH:mm). */
-    val endTime: String? = null,
 )
 
 data class TournamentMember(

@@ -7,9 +7,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.FocusRequester
@@ -17,6 +19,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+
+/** False on a narrow screen. [AppScaffold] sets it for its top bar, and the top bar buttons then show only their icons. */
+val LocalTopBarLabels = staticCompositionLocalOf { true }
 
 @Composable
 fun AppTopBarButton(
@@ -27,8 +32,24 @@ fun AppTopBarButton(
     enabled: Boolean = true,
     textColor: Color = Color.White,
     iconContent: (@Composable () -> Unit)? = null,
+    /** When false, the button shows only the icon. The text stays as the description and in the menu. */
+    showLabel: Boolean = true,
 ) {
     val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val menu = LocalTopBarMenu.current
+    val labelVisible = showLabel && LocalTopBarLabels.current
+    if (menu != null) {
+        DropdownMenuItem(
+            text = { Text(text) },
+            leadingIcon = { if (iconContent == null) Icon(imageVector = icon, contentDescription = null) else iconContent() },
+            enabled = buttonEnabled,
+            onClick = {
+                menu.dismiss()
+                onClick()
+            },
+        )
+        return
+    }
     AppTextButton(
         onClick = onClick,
         enabled = enabled,
@@ -42,13 +63,13 @@ fun AppTopBarButton(
             if (iconContent == null) {
                 Icon(
                     imageVector = icon,
-                    contentDescription = null,
+                    contentDescription = if (labelVisible) null else text,
                     tint = textColor,
                 )
             } else {
                 iconContent()
             }
-            Text(text = text, color = textColor)
+            if (labelVisible) Text(text = text, color = textColor)
         }
     }
 }

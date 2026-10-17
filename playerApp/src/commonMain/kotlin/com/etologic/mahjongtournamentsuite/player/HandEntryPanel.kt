@@ -32,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
@@ -119,7 +120,7 @@ fun HandEntryPanel(
     // The winds turn after every hand, so the label follows the hand in play.
     val handInPlay = minOf(table.doneHands + 1, 16)
     fun windOf(slot: Int): String = seats.indexOf(slot).takeIf { it >= 0 }
-        ?.let { windOfChair(chairOf(it, handInPlay), handInPlay).label + " ·" }
+        ?.let { windOfChair(chairOf(it, handInPlay), handInPlay).label + " -" }
         .orEmpty()
     if (table.table.useTotalsOnly) {
         Text("The organizers enter only the final scores of this table. You cannot add hands here.", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -368,11 +369,12 @@ private fun TableChangedDialog(
     onClose: () -> Unit,
 ) {
     val t = table.table
+    val points = t.seatPoints
     val rows = listOf(
-        Triple("East", t.playerEastId, t.playerEastScore to t.playerEastPoints),
-        Triple("South", t.playerSouthId, t.playerSouthScore to t.playerSouthPoints),
-        Triple("West", t.playerWestId, t.playerWestScore to t.playerWestPoints),
-        Triple("North", t.playerNorthId, t.playerNorthScore to t.playerNorthPoints),
+        Triple("East", t.playerEastId, t.playerEastScore to points[0]),
+        Triple("South", t.playerSouthId, t.playerSouthScore to points[1]),
+        Triple("West", t.playerWestId, t.playerWestScore to points[2]),
+        Triple("North", t.playerNorthId, t.playerNorthScore to points[3]),
     )
     val lastHand = table.hands.filter { it.isDone }.maxByOrNull { it.handId }
     androidx.compose.material3.AlertDialog(
@@ -402,7 +404,7 @@ private fun TableChangedDialog(
                     Text(
                         "${view.nameOf(enteredHand.winner)} won with ${enteredHand.score}" +
                             (if (enteredHand.loser != null) " from ${view.nameOf(enteredHand.loser)}" else " (self draw)") +
-                            (if (enteredHand.chicken) " · chicken hand" else ""),
+                            (if (enteredHand.chicken) " - chicken hand" else ""),
                     )
                     Text("If the hand is already in the table, do not enter it again.")
                 }

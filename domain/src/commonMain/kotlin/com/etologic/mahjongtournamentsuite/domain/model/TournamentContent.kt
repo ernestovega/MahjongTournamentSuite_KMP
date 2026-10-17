@@ -103,7 +103,6 @@ data class TournamentTable(
     val playerIds: List<Int>,
     val isCompleted: Boolean,
     val useTotalsOnly: Boolean,
-    val usePointsCalculation: Boolean,
     val hasProgress: Boolean,
     val hasValidManualTotals: Boolean = false,
     /** Server status: `empty`, `incomplete`, `partial` or `completed`. Blank for data from an older server. */

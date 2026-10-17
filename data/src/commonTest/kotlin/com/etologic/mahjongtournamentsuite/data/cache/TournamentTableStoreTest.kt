@@ -16,8 +16,7 @@ private fun table(round: Int, id: Int, version: Long = 1, east: String = "") = T
     version = version, roundId = round, tableId = id, playerIds = listOf(1, 2, 3, 4),
     playerEastId = east, playerSouthId = "", playerWestId = "", playerNorthId = "",
     playerEastScore = "", playerSouthScore = "", playerWestScore = "", playerNorthScore = "",
-    playerEastPoints = "", playerSouthPoints = "", playerWestPoints = "", playerNorthPoints = "",
-    isCompleted = false, useTotalsOnly = true, usePointsCalculation = true,
+    isCompleted = false, useTotalsOnly = true,
 )
 
 private fun hands(score: String = "") = listOf(TableHand(1, "", "", score, false, false, "", "", "", ""))

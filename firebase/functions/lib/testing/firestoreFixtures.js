@@ -37,7 +37,6 @@ async function seedTournament(params) {
             playerIds: [1, 2, 3, 4],
             isCompleted: table.isCompleted ?? false,
             useTotalsOnly: false,
-            usePointsCalculation: true,
             version: table.version ?? 0,
         });
         if (params.withHands === false)

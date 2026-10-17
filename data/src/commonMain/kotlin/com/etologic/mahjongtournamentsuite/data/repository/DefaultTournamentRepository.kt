@@ -31,8 +31,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.InvitationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
@@ -104,6 +106,10 @@ class DefaultTournamentRepository(
                 associationLogoSourceTournamentId = request.associationLogoSourceTournamentId,
                 hostCountry = request.hostCountry,
                 hostCity = request.hostCity,
+                venueName = request.venue.name,
+                venueAddress = request.venue.address,
+                venueMapUrl = request.venue.mapUrl,
+                contactEmail = request.venue.contactEmail,
                 roundSchedules = request.roundSchedules.map(TournamentRoundSchedule::toDto),
                 agendaItems = request.agendaItems.map(TournamentAgendaItem::toDto),
             )
@@ -152,6 +158,7 @@ class DefaultTournamentRepository(
         eventEndDate: String,
         hostCountry: String,
         hostCity: String,
+        venue: TournamentVenue,
         associationLogoContentType: String?,
         associationLogoBytes: ByteArray?,
         associationLogoSourceTournamentId: String?,
@@ -173,6 +180,10 @@ class DefaultTournamentRepository(
                     eventEndDate = eventEndDate.trim(),
                     hostCountry = hostCountry.trim().uppercase(),
                     hostCity = hostCity.trim(),
+                    venueName = venue.name.trim(),
+                    venueAddress = venue.address.trim(),
+                    venueMapUrl = venue.mapUrl.trim(),
+                    contactEmail = venue.contactEmail.trim(),
                     countBestHands = countBestHands,
                     countChickenHands = countChickenHands,
                     associationLogoContentType = associationLogoContentType,
@@ -195,11 +206,14 @@ class DefaultTournamentRepository(
         },
     )
 
-    override suspend fun generateTournamentIdCards(tournamentId: String): AppResult<ByteArray> = cachedGeneratedFile(
+    override suspend fun generateTournamentIdCards(
+        tournamentId: String,
+        sheet: IdCardSheetLayout?,
+    ): AppResult<ByteArray> = cachedGeneratedFile(
         tournamentId = tournamentId,
-        cacheSuffix = "id-cards",
+        cacheSuffix = sheet?.let { "id-cards-sheet-${it.cardsPerSheet}-${it.scalePercent}-${it.cutMarks}-${it.landscape}-${it.doubleSided}" } ?: "id-cards",
         action = "Generating tournament ID cards",
-        load = { token -> backendApi.generateTournamentIdCards(token, tournamentId) },
+        load = { token -> backendApi.generateTournamentIdCards(token, tournamentId, sheet) },
     )
 
     override suspend fun generateTournamentIdList(tournamentId: String): AppResult<ByteArray> = cachedGeneratedFile(
@@ -519,7 +533,6 @@ class DefaultTournamentRepository(
                     playerIds = dto.playerIds,
                     isCompleted = dto.isCompleted,
                     useTotalsOnly = dto.useTotalsOnly,
-                    usePointsCalculation = dto.usePointsCalculation,
                     hasProgress = dto.hasProgress,
                     hasValidManualTotals = dto.hasValidManualTotals,
                     completionStatus = dto.completionStatus,
@@ -635,29 +648,6 @@ class DefaultTournamentRepository(
                 error.currentTable?.let { tableStore.put(tournamentId, it, error.currentHands) }
             }
             AppResult.Failure(error)
-        },
-    )
-
-    override suspend fun resetTable(
-        tournamentId: String,
-        roundId: Int,
-        tableId: Int,
-    ): AppResult<Unit> = runCatching {
-        withFreshIdToken { idToken ->
-            backendApi.resetTable(
-                idToken = idToken,
-                tournamentId = tournamentId,
-                roundId = roundId,
-                tableId = tableId,
-            )
-            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
-            Unit
-        }
-    }.fold(
-        onSuccess = { AppResult.Success(Unit) },
-        onFailure = { throwable ->
-            logger.w(throwable) { "Resetting table failed." }
-            AppResult.Failure(throwable.toAppError())
         },
     )
 
@@ -790,7 +780,6 @@ private fun TournamentAgendaItem.toDto() = TournamentAgendaItemDto(
     title = title,
     date = date,
     startTime = startTime,
-    endTime = endTime,
 )
 
 private val MANIFEST_SHARE_TIME = 2.seconds
@@ -855,21 +844,12 @@ private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHan
         playerSouthScore = table.playerSouthScore,
         playerWestScore = table.playerWestScore,
         playerNorthScore = table.playerNorthScore,
-        playerEastPoints = table.playerEastPoints,
-        playerSouthPoints = table.playerSouthPoints,
-        playerWestPoints = table.playerWestPoints,
-        playerNorthPoints = table.playerNorthPoints,
         manualPlayerEastScore = table.manualPlayerEastScore,
         manualPlayerSouthScore = table.manualPlayerSouthScore,
         manualPlayerWestScore = table.manualPlayerWestScore,
         manualPlayerNorthScore = table.manualPlayerNorthScore,
-        manualPlayerEastPoints = table.manualPlayerEastPoints,
-        manualPlayerSouthPoints = table.manualPlayerSouthPoints,
-        manualPlayerWestPoints = table.manualPlayerWestPoints,
-        manualPlayerNorthPoints = table.manualPlayerNorthPoints,
         isCompleted = table.isCompleted,
         useTotalsOnly = table.useTotalsOnly,
-        usePointsCalculation = table.usePointsCalculation,
     ) to hands.map { hand ->
         TableHand(
             handId = hand.handId,
@@ -931,7 +911,6 @@ private fun Throwable.toAppError(): AppError {
 private fun Map<String, Any?>.toTablePatchRequestDto(): TablePatchRequestDto = TablePatchRequestDto(
     isCompleted = booleanOrNull("isCompleted"),
     useTotalsOnly = booleanOrNull("useTotalsOnly"),
-    usePointsCalculation = booleanOrNull("usePointsCalculation"),
     playerEastId = stringOrNull("playerEastId"),
     playerSouthId = stringOrNull("playerSouthId"),
     playerWestId = stringOrNull("playerWestId"),
@@ -940,18 +919,10 @@ private fun Map<String, Any?>.toTablePatchRequestDto(): TablePatchRequestDto = T
     playerSouthScore = stringOrNull("playerSouthScore"),
     playerWestScore = stringOrNull("playerWestScore"),
     playerNorthScore = stringOrNull("playerNorthScore"),
-    playerEastPoints = stringOrNull("playerEastPoints"),
-    playerSouthPoints = stringOrNull("playerSouthPoints"),
-    playerWestPoints = stringOrNull("playerWestPoints"),
-    playerNorthPoints = stringOrNull("playerNorthPoints"),
     manualPlayerEastScore = stringOrNull("manualPlayerEastScore"),
     manualPlayerSouthScore = stringOrNull("manualPlayerSouthScore"),
     manualPlayerWestScore = stringOrNull("manualPlayerWestScore"),
     manualPlayerNorthScore = stringOrNull("manualPlayerNorthScore"),
-    manualPlayerEastPoints = stringOrNull("manualPlayerEastPoints"),
-    manualPlayerSouthPoints = stringOrNull("manualPlayerSouthPoints"),
-    manualPlayerWestPoints = stringOrNull("manualPlayerWestPoints"),
-    manualPlayerNorthPoints = stringOrNull("manualPlayerNorthPoints"),
 )
 
 private fun Map<String, Any?>.toHandPatchRequestDto(): HandPatchRequestDto = HandPatchRequestDto(

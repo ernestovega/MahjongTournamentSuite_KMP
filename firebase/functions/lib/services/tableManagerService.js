@@ -10,6 +10,7 @@ exports.getAllTablesWithHands = getAllTablesWithHands;
 exports.calculateTableSummary = calculateTableSummary;
 exports.isTournamentCompleteAfterTableSave = isTournamentCompleteAfterTableSave;
 exports.saveTableStateInTransaction = saveTableStateInTransaction;
+exports.logTableConflict = logTableConflict;
 exports.saveTableState = saveTableState;
 exports.resetTable = resetTable;
 const firestore_1 = require("firebase-admin/firestore");
@@ -17,7 +18,9 @@ const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const httpError_2 = require("../api/httpError");
 const tournamentContentRules_1 = require("./tournamentContentRules");
+const handScoring_1 = require("./handScoring");
 const dataVersionsService_1 = require("./dataVersionsService");
+const statisticsStore_1 = require("./statisticsStore");
 const changeLog_1 = require("./changeLog");
 /** Reads a table from its stored fields. The stored document and a merged document in memory use the same code. */
 function tableStateFromData(data) {
@@ -34,21 +37,14 @@ function tableStateFromData(data) {
         playerSouthScore: text("playerSouthScore"),
         playerWestScore: text("playerWestScore"),
         playerNorthScore: text("playerNorthScore"),
-        playerEastPoints: text("playerEastPoints"),
-        playerSouthPoints: text("playerSouthPoints"),
-        playerWestPoints: text("playerWestPoints"),
-        playerNorthPoints: text("playerNorthPoints"),
+        // The table points come only from the scores. A stored value is never used.
+        ...(0, handScoring_1.tablePointsOf)(data),
         manualPlayerEastScore: text("manualPlayerEastScore"),
         manualPlayerSouthScore: text("manualPlayerSouthScore"),
         manualPlayerWestScore: text("manualPlayerWestScore"),
         manualPlayerNorthScore: text("manualPlayerNorthScore"),
-        manualPlayerEastPoints: text("manualPlayerEastPoints"),
-        manualPlayerSouthPoints: text("manualPlayerSouthPoints"),
-        manualPlayerWestPoints: text("manualPlayerWestPoints"),
-        manualPlayerNorthPoints: text("manualPlayerNorthPoints"),
         isCompleted: Boolean(data.isCompleted ?? false),
         useTotalsOnly: Boolean(data.useTotalsOnly ?? false),
-        usePointsCalculation: Boolean(data.usePointsCalculation ?? true),
         version: Number(data.version ?? 0),
     };
 }
@@ -129,20 +125,13 @@ function calculateTableSummary(table, hands) {
     ].some((field) => String(hand[field] ?? "").trim().length > 0)
         || Boolean(hand.isChickenHand) || Boolean(hand.isDone));
     const useTotalsOnly = Boolean(table.useTotalsOnly ?? false);
-    const usePointsCalculation = Boolean(table.usePointsCalculation ?? true);
     const validScores = (0, tournamentContentRules_1.hasFourValidScores)([
         table.manualPlayerEastScore || table.playerEastScore,
         table.manualPlayerSouthScore || table.playerSouthScore,
         table.manualPlayerWestScore || table.playerWestScore,
         table.manualPlayerNorthScore || table.playerNorthScore,
     ]);
-    const validPoints = (0, tournamentContentRules_1.hasValidTablePoints)([
-        table.manualPlayerEastPoints || table.playerEastPoints,
-        table.manualPlayerSouthPoints || table.playerSouthPoints,
-        table.manualPlayerWestPoints || table.playerWestPoints,
-        table.manualPlayerNorthPoints || table.playerNorthPoints,
-    ]);
-    const hasValidManualTotals = useTotalsOnly ? validScores : !usePointsCalculation && validPoints;
+    const hasValidManualTotals = useTotalsOnly && validScores;
     return {
         hasProgress: hasTableProgress || hasHandProgress || Boolean(table.isCompleted),
         hasValidManualTotals,
@@ -213,6 +202,8 @@ async function saveTableStateInTransaction(transaction, params) {
     });
     const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
     const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
+    // The table points are written on every save, from the scores of the merged table.
+    const derivedPoints = (0, handScoring_1.tablePointsOf)(mergedTable);
     const wasComplete = Boolean(tableBefore.isCompleted);
     const isComplete = Boolean(mergedTable.isCompleted);
     // Only a table that becomes complete can finish the tournament. Other saves skip this query,
@@ -226,12 +217,23 @@ async function saveTableStateInTransaction(transaction, params) {
             incompleteTablePaths: incompleteTables.docs.map((document) => document.ref.path),
         });
     }
+    // The statistics change only for a table that is or was complete. Other saves read nothing more.
+    const statsPlan = wasComplete || isComplete
+        ? await (0, statisticsStore_1.prepareTableStats)(transaction, {
+            tournamentId: params.tournamentId,
+            roundId: params.roundId,
+            tableId: params.tableId,
+            table: { ...mergedTable, ...derivedPoints, roundId: params.roundId, tableId: params.tableId },
+            hands: [...handsAfter.values()],
+        })
+        : null;
     const nextVersion = currentVersion + 1;
     const editedBy = params.actor == null
         ? {}
         : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: firestore_1.FieldValue.serverTimestamp() };
     transaction.update(tableRef, {
         ...params.tablePatch,
+        ...derivedPoints,
         ...summary,
         ...editedBy,
         version: nextVersion,
@@ -243,6 +245,7 @@ async function saveTableStateInTransaction(transaction, params) {
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
         });
     });
+    statsPlan?.commit(transaction);
     const startedChange = progressDelta(previousSummary.hasProgress, summary.hasProgress);
     transaction.update(tournamentRef, {
         isCompleted: tournamentIsComplete,
@@ -269,9 +272,26 @@ async function saveTableStateInTransaction(transaction, params) {
     });
     // The answer comes from the data that the transaction wrote, so the client needs no second read.
     return {
-        table: tableStateFromData({ ...mergedTable, ...summary, version: nextVersion }),
+        table: tableStateFromData({ ...mergedTable, ...derivedPoints, ...summary, version: nextVersion }),
         hands: handsFromData([...handsAfter.values()]),
     };
+}
+/** Keeps a record of a refused save, so the usage report can count conflicts. A failure here must not hide the conflict. */
+async function logTableConflict(params) {
+    try {
+        await firebase_1.db.collection("tournaments").doc(params.tournamentId).collection("changes").add({
+            ...(0, changeLog_1.buildConflictChangeEntry)({
+                roundId: params.roundId,
+                tableId: params.tableId,
+                version: params.expectedVersion,
+                actor: params.actor,
+            }),
+            at: firestore_1.FieldValue.serverTimestamp(),
+        });
+    }
+    catch {
+        // The usage report is a best-effort record.
+    }
 }
 async function saveTableState(params) {
     try {
@@ -279,6 +299,7 @@ async function saveTableState(params) {
     }
     catch (error) {
         if (error instanceof StaleTableVersion) {
+            await logTableConflict({ ...params, expectedVersion: error.expectedVersion, actor: params.actor ?? null });
             throw (0, httpError_2.conflict)("Table data changed on the server", {
                 expectedVersion: error.expectedVersion,
                 currentVersion: error.currentVersion,
@@ -305,13 +326,8 @@ const EMPTY_TABLE_FIELDS = {
     manualPlayerSouthScore: "",
     manualPlayerWestScore: "",
     manualPlayerNorthScore: "",
-    manualPlayerEastPoints: "",
-    manualPlayerSouthPoints: "",
-    manualPlayerWestPoints: "",
-    manualPlayerNorthPoints: "",
     isCompleted: false,
     useTotalsOnly: false,
-    usePointsCalculation: true,
     hasProgress: false,
     hasValidManualTotals: false,
     completionStatus: "empty",
@@ -332,6 +348,16 @@ async function resetTable(params) {
         const tableBefore = tableSnap.data() ?? {};
         const nextVersion = Number(tableBefore.version ?? 0) + 1;
         const previous = calculateTableSummary(tableBefore, handSnapshots.map((hand) => hand.data() ?? {}));
+        const statsPlan = Boolean(tableBefore.isCompleted)
+            ? await (0, statisticsStore_1.prepareTableStats)(transaction, {
+                tournamentId: params.tournamentId,
+                roundId: params.roundId,
+                tableId: params.tableId,
+                table: null,
+                hands: [],
+            })
+            : null;
+        statsPlan?.commit(transaction);
         transaction.update(tableRef, {
             ...EMPTY_TABLE_FIELDS,
             version: nextVersion,

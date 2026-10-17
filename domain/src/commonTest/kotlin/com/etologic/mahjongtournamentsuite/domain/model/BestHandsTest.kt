@@ -39,7 +39,6 @@ class BestHandsTest {
         playerIds = emptyList(),
         isCompleted = false,
         useTotalsOnly = false,
-        usePointsCalculation = true,
         hasProgress = true,
         bestHandScores = topHandScores(scores),
     )

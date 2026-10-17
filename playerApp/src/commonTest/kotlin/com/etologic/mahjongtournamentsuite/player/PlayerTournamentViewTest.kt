@@ -27,8 +27,7 @@ class PlayerTournamentViewTest {
         playerEastId = seats[0].toString(), playerSouthId = seats[1].toString(),
         playerWestId = seats[2].toString(), playerNorthId = seats[3].toString(),
         playerEastScore = "", playerSouthScore = "", playerWestScore = "", playerNorthScore = "",
-        playerEastPoints = "", playerSouthPoints = "", playerWestPoints = "", playerNorthPoints = "",
-        isCompleted = false, useTotalsOnly = false, usePointsCalculation = true,
+        isCompleted = false, useTotalsOnly = false,
     )
 
     @Test
@@ -38,7 +37,7 @@ class PlayerTournamentViewTest {
         assertEquals("EVA RUIZ", view.nameOf(1))
         assertEquals("ANN LEE", view.nameOf(2))
         assertEquals("Player 3", view.nameOf(3))
-        assertEquals("—", view.nameOf(null))
+        assertEquals("-", view.nameOf(null))
     }
 
     @Test

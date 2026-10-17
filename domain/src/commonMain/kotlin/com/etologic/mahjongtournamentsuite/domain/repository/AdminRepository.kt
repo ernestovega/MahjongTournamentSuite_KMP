@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.UsageReport
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 
 interface AdminRepository {
@@ -26,4 +27,7 @@ interface AdminRepository {
     suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser>
 
     suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser>
+
+    /** Usage analytics. Only an administrator can load it. The report is never cached. */
+    suspend fun loadUsageReport(): AppResult<UsageReport>
 }

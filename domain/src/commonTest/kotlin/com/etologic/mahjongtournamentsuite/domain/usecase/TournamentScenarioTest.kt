@@ -94,13 +94,8 @@ class TournamentScenarioTest {
                     playerSouthScore = scores[1],
                     playerWestScore = scores[2],
                     playerNorthScore = scores[3],
-                    playerEastPoints = pointWeights[0],
-                    playerSouthPoints = pointWeights[1],
-                    playerWestPoints = pointWeights[2],
-                    playerNorthPoints = pointWeights[3],
                     isCompleted = true,
                     useTotalsOnly = false,
-                    usePointsCalculation = true,
                 )
                 RankingTable(
                     table = table,

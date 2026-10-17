@@ -25,6 +25,7 @@ import {
 import { BOOTSTRAP_KEY } from "../../config";
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
+import { loadUsageReport } from "../../services/usageService";
 
 type Actor = { uid: string; admin?: boolean };
 
@@ -95,6 +96,15 @@ export function adminRouter(): Router {
       const actor = res.locals.auth as Actor;
       const user = await auth.getUser(actor.uid);
       res.status(200).json({ uid: actor.uid, role: getGlobalUserRole(user), roles: getGlobalUserRoles(user) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** Usage analytics for administrators: who enters data, from which app, and where problems appear. */
+  router.get("/usage", requireAuth, requireAdmin, async (_req, res, next) => {
+    try {
+      res.status(200).json(await loadUsageReport());
     } catch (error) {
       next(error);
     }

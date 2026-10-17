@@ -35,7 +35,6 @@ data class AgendaItemEditorRow(
     val title: String = "",
     val date: String = "",
     val startTime: String = "",
-    val endTime: String = "",
 )
 
 private enum class SchedulePickerField {
@@ -43,7 +42,6 @@ private enum class SchedulePickerField {
     ROUND_START_TIME,
     AGENDA_DATE,
     AGENDA_START_TIME,
-    AGENDA_END_TIME,
 }
 
 private data class SchedulePickerRequest(
@@ -190,7 +188,6 @@ fun TournamentScheduleEditor(
         agendaRows.forEachIndexed { index, row ->
             val datePickerFocusRequester = remember(index) { FocusRequester() }
             val startTimePickerFocusRequester = remember(index) { FocusRequester() }
-            val endTimePickerFocusRequester = remember(index) { FocusRequester() }
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -293,39 +290,6 @@ fun TournamentScheduleEditor(
                         isError = row.title.isNotBlank() && row.startTime.isNotBlank() &&
                             row.startTime.toTournamentTimeOrNull() == null,
                     )
-                    OutlinedTextField(
-                        value = row.endTime,
-                        onValueChange = { value ->
-                            onAgendaRowsChange(
-                                agendaRows.replaceAt(index, row.copy(endTime = value.toTimeInput())),
-                            )
-                        },
-                        modifier = Modifier.width(128.dp),
-                        label = { Text("End") },
-                        placeholder = { Text("HH:mm") },
-                        trailingIcon = {
-                            FocusedIconButton(
-                                enabled = enabled,
-                                focusRequester = endTimePickerFocusRequester,
-                                onClick = {
-                                    pickerRequest = SchedulePickerRequest(
-                                        field = SchedulePickerField.AGENDA_END_TIME,
-                                        rowIndex = index,
-                                        returnFocusRequester = endTimePickerFocusRequester,
-                                    )
-                                },
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.AccessTime,
-                                    contentDescription = "Choose activity ${index + 1} end time",
-                                )
-                            }
-                        },
-                        singleLine = true,
-                        enabled = enabled,
-                        isError = row.title.isNotBlank() && row.endTime.isNotBlank() &&
-                            row.endTime.toTournamentTimeOrNull() == null,
-                    )
                 }
             }
         }
@@ -346,8 +310,9 @@ fun TournamentScheduleEditor(
                     SchedulePickerField.ROUND_DATE -> roundRows.getOrNull(request.rowIndex)?.date.orEmpty()
                     else -> agendaRows.getOrNull(request.rowIndex)?.date.orEmpty()
                 },
-                minimumDisplayDate = minimumDisplayDate,
-                maximumDisplayDate = maximumDisplayDate,
+                // Round dates stay inside the tournament. Agenda items may use any day.
+                minimumDisplayDate = minimumDisplayDate.takeIf { request.field == SchedulePickerField.ROUND_DATE },
+                maximumDisplayDate = maximumDisplayDate.takeIf { request.field == SchedulePickerField.ROUND_DATE },
                 onDismiss = { closePicker(request) },
                 onDateSelected = { selectedDate ->
                     when (request.field) {
@@ -368,14 +333,11 @@ fun TournamentScheduleEditor(
 
             SchedulePickerField.ROUND_START_TIME,
             SchedulePickerField.AGENDA_START_TIME,
-            SchedulePickerField.AGENDA_END_TIME,
             -> TournamentTimePickerDialog(
                 selectedTime = when (request.field) {
                     SchedulePickerField.ROUND_START_TIME ->
                         roundRows.getOrNull(request.rowIndex)?.startTime.orEmpty()
-                    SchedulePickerField.AGENDA_START_TIME ->
-                        agendaRows.getOrNull(request.rowIndex)?.startTime.orEmpty()
-                    else -> agendaRows.getOrNull(request.rowIndex)?.endTime.orEmpty()
+                    else -> agendaRows.getOrNull(request.rowIndex)?.startTime.orEmpty()
                 },
                 onDismiss = { closePicker(request) },
                 onTimeSelected = { selectedTime ->
@@ -395,15 +357,6 @@ fun TournamentScheduleEditor(
                                     agendaRows.replaceAt(
                                         request.rowIndex,
                                         row.copy(startTime = selectedTime),
-                                    ),
-                                )
-                            }
-                        SchedulePickerField.AGENDA_END_TIME ->
-                            agendaRows.getOrNull(request.rowIndex)?.let { row ->
-                                onAgendaRowsChange(
-                                    agendaRows.replaceAt(
-                                        request.rowIndex,
-                                        row.copy(endTime = selectedTime),
                                     ),
                                 )
                             }
@@ -434,7 +387,6 @@ fun TournamentAgendaItem.toEditorRow(): AgendaItemEditorRow = AgendaItemEditorRo
     title = title,
     date = date.toDisplayTournamentDate(),
     startTime = startTime.orEmpty(),
-    endTime = endTime.orEmpty(),
 )
 
 fun List<RoundScheduleEditorRow>.toTournamentRoundSchedules(): List<TournamentRoundSchedule> = map { row ->
@@ -451,7 +403,6 @@ fun List<AgendaItemEditorRow>.toTournamentAgendaItems(): List<TournamentAgendaIt
             title = row.title.trim(),
             date = row.date.toIsoTournamentDateOrNull(),
             startTime = row.startTime.toTournamentTimeOrNull(),
-            endTime = row.endTime.toTournamentTimeOrNull(),
         )
     }
 
@@ -478,16 +429,8 @@ fun tournamentScheduleEditorError(
         val date = row.date.trim()
         val isoDate = date.toIsoTournamentDateOrNull()
         if (date.isNotEmpty() && isoDate == null) return "Agenda item ${index + 1} has an invalid date."
-        if (isoDate != null && isoDate !in eventStartDate..eventEndDate) {
-            return "Agenda item ${index + 1} must be inside the tournament date range."
-        }
         val startTime = row.startTime.toTournamentTimeOrNull()
-        val endTime = row.endTime.toTournamentTimeOrNull()
         if (row.startTime.isNotBlank() && startTime == null) return "Agenda item ${index + 1} has an invalid start time."
-        if (row.endTime.isNotBlank() && endTime == null) return "Agenda item ${index + 1} has an invalid end time."
-        if (startTime != null && endTime != null && endTime < startTime) {
-            return "Agenda item ${index + 1} must not end before it starts."
-        }
     }
     return null
 }

@@ -41,6 +41,9 @@ internal class FakeAdminRepository(
         calls += "disable $uid $disabled"
         return AppResult.Success(users.first { it.uid == uid }.copy(disabled = disabled))
     }
+
+    override suspend fun loadUsageReport(): AppResult<com.etologic.mahjongtournamentsuite.domain.model.UsageReport> =
+        AppResult.Failure(com.etologic.mahjongtournamentsuite.domain.model.AppError.Unexpected("No usage report"))
 }
 
 internal class FakeSignedInAuthRepository : AuthRepository {

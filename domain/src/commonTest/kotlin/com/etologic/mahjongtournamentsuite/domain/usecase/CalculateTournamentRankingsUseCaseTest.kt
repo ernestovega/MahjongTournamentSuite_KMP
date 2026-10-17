@@ -30,13 +30,8 @@ class CalculateTournamentRankingsUseCaseTest {
             playerSouthScore = "18000",
             playerWestScore = "9000",
             playerNorthScore = "21000",
-            playerEastPoints = "2",
-            playerSouthPoints = "4",
-            playerWestPoints = "0",
-            playerNorthPoints = "1",
             isCompleted = true,
             useTotalsOnly = false,
-            usePointsCalculation = true,
         )
         val hands = listOf(
             hand(id = 1, winner = "2", score = "8000", chicken = true),
@@ -45,8 +40,8 @@ class CalculateTournamentRankingsUseCaseTest {
 
         val result = calculate(players, listOf(RankingTable(table, hands)), includeTeams = true)
 
-        assertEquals(listOf(2, 1, 4, 3), result.players.map { it.playerId })
-        assertEquals(listOf(1, 2), result.teams.map { it.teamId })
+        assertEquals(listOf(4, 2, 1, 3), result.players.map { it.playerId })
+        assertEquals(listOf(2, 1), result.teams.map { it.teamId })
         assertEquals(2, result.chickenHands.single().playerId)
         assertEquals(1, result.bestHands.first().playerId)
     }
@@ -65,17 +60,12 @@ class CalculateTournamentRankingsUseCaseTest {
             playerSouthId = "2",
             playerWestId = "",
             playerNorthId = "",
-            playerEastPoints = "1",
-            playerSouthPoints = "1",
-            playerWestPoints = "",
-            playerNorthPoints = "",
             playerEastScore = "100",
             playerSouthScore = "100",
             playerWestScore = "",
             playerNorthScore = "",
             isCompleted = false,
             useTotalsOnly = false,
-            usePointsCalculation = true,
         )
         val hands = listOf(
             hand(id = 1, winner = "1", score = "80", chicken = true, isDone = false),

@@ -73,7 +73,14 @@ const actor = { uid: "u1", name: "Ana" };
 (0, node_test_1.default)("reset entry has no field lists", () => {
     const entry = (0, changeLog_1.buildResetChangeEntry)({ roundId: 3, tableId: 4, version: 9, actor });
     strict_1.default.deepEqual(entry, {
-        kind: "reset", roundId: 3, tableId: 4, version: 9, uid: "u1", name: "Ana", tableChanges: [], handChanges: [],
+        kind: "reset", roundId: 3, tableId: 4, version: 9, uid: "u1", name: "Ana", source: "editor",
+        tableChanges: [], handChanges: [], handChangeCount: 0,
     });
+});
+(0, node_test_1.default)("the source follows the actor and conflicts have their own kind", () => {
+    const player = { uid: "p1", name: "Player 10", source: "player" };
+    strict_1.default.equal((0, changeLog_1.buildResetChangeEntry)({ roundId: 1, tableId: 1, version: 1, actor: player }).source, "player");
+    strict_1.default.equal((0, changeLog_1.buildResetChangeEntry)({ roundId: 1, tableId: 1, version: 1, actor: null }).source, null);
+    strict_1.default.equal((0, changeLog_1.buildConflictChangeEntry)({ roundId: 1, tableId: 1, version: 4, actor: player }).kind, "conflict");
 });
 //# sourceMappingURL=changeLog.test.js.map

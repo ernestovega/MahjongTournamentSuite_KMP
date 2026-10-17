@@ -9,6 +9,7 @@ const gzipJson_1 = require("./middleware/gzipJson");
 const errorHandler_1 = require("./middleware/errorHandler");
 const admin_routes_1 = require("./routes/admin.routes");
 const auth_routes_1 = require("./routes/auth.routes");
+const config_routes_1 = require("./routes/config.routes");
 const countries_routes_1 = require("./routes/countries.routes");
 const player_routes_1 = require("./routes/player.routes");
 const players_routes_1 = require("./routes/players.routes");
@@ -44,6 +45,7 @@ function buildApp() {
         });
     });
     app.use("/auth", (0, auth_routes_1.authRouter)());
+    app.use("/config", (0, config_routes_1.configRouter)());
     app.use("/countries", (0, countries_routes_1.countriesRouter)());
     app.use("/ema-player-registry", (0, players_routes_1.playersRouter)());
     app.use("/admin", (0, admin_routes_1.adminRouter)());

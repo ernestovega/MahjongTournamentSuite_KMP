@@ -5,6 +5,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.ChickenHandRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
+import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
+import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRankings
 
@@ -18,10 +20,13 @@ class CalculateTournamentRankingsUseCase {
 
         tables.forEach { rankingTable ->
             val table = rankingTable.table
-            add(totals, table.playerEastId, table.playerEastPoints, table.playerEastScore)
-            add(totals, table.playerSouthId, table.playerSouthPoints, table.playerSouthScore)
-            add(totals, table.playerWestId, table.playerWestPoints, table.playerWestScore)
-            add(totals, table.playerNorthId, table.playerNorthPoints, table.playerNorthScore)
+            // The points of a table come only from its scores.
+            val points = table.seatPoints
+            val scores = table.seatScores
+            add(totals, table.playerEastId, points[0], scores[0])
+            add(totals, table.playerSouthId, points[1], scores[1])
+            add(totals, table.playerWestId, points[2], scores[2])
+            add(totals, table.playerNorthId, points[3], scores[3])
         }
 
         val playerRankings = players

@@ -7,6 +7,7 @@ exports.updateTournamentTeam = updateTournamentTeam;
 exports.assignTournamentPlayer = assignTournamentPlayer;
 exports.listTournamentRounds = listTournamentRounds;
 exports.listTournamentTables = listTournamentTables;
+const statisticsStore_1 = require("./statisticsStore");
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
@@ -246,6 +247,7 @@ async function assignTournamentPlayer(params) {
     const assignmentRefs = firebase_1.db.collection("tournaments").doc(params.tournamentId)
         .collection("emaPlayerAssignments");
     const tournamentRef = firebase_1.db.collection("tournaments").doc(params.tournamentId);
+    let statisticsChanged = false;
     await firebase_1.db.runTransaction(async (transaction) => {
         const tournament = await transaction.get(tournamentRef);
         const tournamentHasProgress = tournamentHasStartedTables(tournament);
@@ -310,6 +312,8 @@ async function assignTournamentPlayer(params) {
                 transaction.delete(firebase_1.db.doc(`users/${accountUid}/playerTournaments/${params.tournamentId}`));
             }
         }
+        // Tables that are complete hold the EMA number of the slot in their statistics.
+        statisticsChanged = previousEmaId !== params.emaId && tournamentHasProgress;
         transaction.update(playerRef, {
             assignedEmaId: params.emaId,
             nonMember: params.nonMember,
@@ -329,6 +333,8 @@ async function assignTournamentPlayer(params) {
         transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
     });
     await refreshAssignmentCountries(params.tournamentId);
+    if (statisticsChanged)
+        await (0, statisticsStore_1.refreshTournamentStats)(params.tournamentId);
     await Promise.all([
         (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "players"),
         (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments"),
@@ -369,7 +375,6 @@ async function listTournamentTables(tournamentId, roundId) {
                 playerIds: (d.get("playerIds") ?? []).map((x) => Number(x)),
                 isCompleted: Boolean(d.get("isCompleted") ?? false),
                 useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? false),
-                usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
                 hasProgress: storedHasProgress,
                 hasValidManualTotals: storedHasValidManualTotals,
                 completionStatus: storedCompletionStatus,
@@ -413,15 +418,8 @@ async function listTournamentTables(tournamentId, roundId) {
             d.get("manualPlayerWestScore") || d.get("playerWestScore"),
             d.get("manualPlayerNorthScore") || d.get("playerNorthScore"),
         ]);
-        const hasValidManualPoints = (0, tournamentContentRules_1.hasValidTablePoints)([
-            d.get("manualPlayerEastPoints") || d.get("playerEastPoints"),
-            d.get("manualPlayerSouthPoints") || d.get("playerSouthPoints"),
-            d.get("manualPlayerWestPoints") || d.get("playerWestPoints"),
-            d.get("manualPlayerNorthPoints") || d.get("playerNorthPoints"),
-        ]);
         const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? false);
-        const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
-        const hasValidManualTotals = useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints;
+        const hasValidManualTotals = useTotalsOnly && hasValidManualScores;
         return {
             version: Number(d.get("version") ?? 0),
             roundId: Number(d.get("roundId")),
@@ -429,7 +427,6 @@ async function listTournamentTables(tournamentId, roundId) {
             playerIds: (d.get("playerIds") ?? []).map((x) => Number(x)),
             isCompleted: Boolean(d.get("isCompleted") ?? false),
             useTotalsOnly,
-            usePointsCalculation,
             hasProgress: hasTableProgress || hasHandProgress || Boolean(d.get("isCompleted") ?? false),
             hasValidManualTotals,
             completionStatus: (0, tournamentContentRules_1.calculateTableCompletionStatus)({

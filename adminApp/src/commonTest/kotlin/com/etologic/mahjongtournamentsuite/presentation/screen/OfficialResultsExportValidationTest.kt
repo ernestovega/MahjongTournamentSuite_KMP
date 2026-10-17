@@ -9,19 +9,18 @@ import kotlin.test.assertNull
 
 class OfficialResultsExportValidationTest {
     @Test
-    fun manualPointsExplainThatFinalScoresAreMissing() {
+    fun missingFinalScoresAreReported() {
         val error = officialResultsExportError(
             listOf(
                 rankingTable(
                     useTotalsOnly = false,
-                    usePointsCalculation = false,
+                    isCompleted = true,
                     scores = listOf("", "", "", ""),
                 ),
             ),
         )
 
         assertContains(error.orEmpty(), "Round 2, Table 3: missing final scores for East, South, West, and North.")
-        assertContains(error.orEmpty(), "Manual Points does not provide the final scores required for official results.")
     }
 
     @Test
@@ -30,7 +29,6 @@ class OfficialResultsExportValidationTest {
             listOf(
                 rankingTable(
                     useTotalsOnly = true,
-                    usePointsCalculation = true,
                     isCompleted = false,
                     scores = listOf("30000", "10000", "-10000", "-35000"),
                 ),
@@ -46,27 +44,12 @@ class OfficialResultsExportValidationTest {
             listOf(
                 rankingTable(
                     useTotalsOnly = false,
-                    usePointsCalculation = true,
                     isCompleted = false,
                 ),
             ),
         )
 
         assertContains(error.orEmpty(), "Round 2, Table 3: the table is not marked Completed.")
-    }
-
-    @Test
-    fun invalidTablePointTotalIsReported() {
-        val error = officialResultsExportError(
-            listOf(
-                rankingTable(
-                    scores = listOf("10", "10", "-5", "-5"),
-                    points = listOf("4", "2", "1", "1"),
-                ),
-            ),
-        )
-
-        assertContains(error.orEmpty(), "table points total 8 instead of 7")
     }
 
     @Test
@@ -80,10 +63,8 @@ class OfficialResultsExportValidationTest {
 
 private fun rankingTable(
     useTotalsOnly: Boolean = true,
-    usePointsCalculation: Boolean = true,
     isCompleted: Boolean = false,
     scores: List<String> = listOf("30000", "10000", "-10000", "-30000"),
-    points: List<String> = listOf("4", "2", "1", "0"),
 ) = RankingTable(
     table = TableState(
         roundId = 2,
@@ -97,13 +78,8 @@ private fun rankingTable(
         playerSouthScore = scores[1],
         playerWestScore = scores[2],
         playerNorthScore = scores[3],
-        playerEastPoints = points[0],
-        playerSouthPoints = points[1],
-        playerWestPoints = points[2],
-        playerNorthPoints = points[3],
         isCompleted = isCompleted,
         useTotalsOnly = useTotalsOnly,
-        usePointsCalculation = usePointsCalculation,
     ),
     hands = emptyList(),
 )

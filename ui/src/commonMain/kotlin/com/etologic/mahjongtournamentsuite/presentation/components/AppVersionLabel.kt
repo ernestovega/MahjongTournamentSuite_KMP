@@ -14,7 +14,7 @@ fun AppVersionLabel(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = "App ${AppVersion.name} · Backend ${backendVersion ?: "…"}",
+        text = "App ${AppVersion.name} - Backend ${backendVersion ?: "…"}",
         modifier = modifier.padding(8.dp),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),

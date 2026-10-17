@@ -64,7 +64,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.AppBackground
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
@@ -176,7 +175,7 @@ private fun RankingStandaloneContent(
     }
 
     Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-        AppBackground {
+        Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
             Column(
                 modifier = Modifier.fillMaxSize().padding(20.dp).appFocusGroup(),

@@ -27,7 +27,7 @@
       "site": "mahjong-tournament-suite",
       "public": "adminApp/build/dist/wasmJs/productionExecutable",
       "predeploy": [
-        "./gradlew :adminApp:wasmJsBrowserProductionWebpack"
+        "./gradlew :adminApp:wasmJsBrowserDistribution"
       ],
       "ignore": [
         "firebase.json",

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -119,8 +120,7 @@ fun EmaCountryDropdown(
             options
         } else {
             options.filter { option ->
-                option.name.contains(query, ignoreCase = true) ||
-                    option.code.contains(query, ignoreCase = true)
+                option.name.matchesSearch(query) || option.code.matchesSearch(query)
             }
         }
     }

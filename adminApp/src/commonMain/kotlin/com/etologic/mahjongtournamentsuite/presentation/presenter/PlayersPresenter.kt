@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
@@ -38,8 +39,8 @@ class PlayersPresenter(
     suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> =
         tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
 
-    suspend fun generateIdCards(tournamentId: String): AppResult<ByteArray> =
-        tournamentRepository.generateTournamentIdCards(tournamentId)
+    suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> =
+        tournamentRepository.generateTournamentIdCards(tournamentId, sheet)
 
     suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> =
         tournamentRepository.generateTournamentIdList(tournamentId)

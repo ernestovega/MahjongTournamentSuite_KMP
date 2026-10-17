@@ -7,13 +7,12 @@ const strict_1 = __importDefault(require("node:assert/strict"));
 const node_test_1 = __importDefault(require("node:test"));
 const tableManagerService_1 = require("./tableManagerService");
 (0, node_test_1.default)("table summary detects hand progress", () => {
-    const summary = (0, tableManagerService_1.calculateTableSummary)({ useTotalsOnly: false, usePointsCalculation: true, isCompleted: false }, [{ handScore: "8", isDone: true }]);
+    const summary = (0, tableManagerService_1.calculateTableSummary)({ useTotalsOnly: false, isCompleted: false }, [{ handScore: "8", isDone: true }]);
     strict_1.default.equal(summary.hasProgress, true);
 });
 (0, node_test_1.default)("table summary validates manual scores", () => {
     const summary = (0, tableManagerService_1.calculateTableSummary)({
         useTotalsOnly: true,
-        usePointsCalculation: true,
         manualPlayerEastScore: "10",
         manualPlayerSouthScore: "-5",
         manualPlayerWestScore: "-3",
@@ -21,31 +20,32 @@ const tableManagerService_1 = require("./tableManagerService");
     }, []);
     strict_1.default.equal(summary.hasValidManualTotals, true);
 });
-(0, node_test_1.default)("table summary validates manual points when calculation is disabled", () => {
+(0, node_test_1.default)("table summary ignores manual scores when the table uses hands", () => {
     const summary = (0, tableManagerService_1.calculateTableSummary)({
         useTotalsOnly: false,
-        usePointsCalculation: false,
-        manualPlayerEastPoints: "4",
-        manualPlayerSouthPoints: "2",
-        manualPlayerWestPoints: "1",
-        manualPlayerNorthPoints: "0",
+        manualPlayerEastScore: "10",
+        manualPlayerSouthScore: "-5",
+        manualPlayerWestScore: "-3",
+        manualPlayerNorthScore: "-2",
     }, []);
-    strict_1.default.equal(summary.hasValidManualTotals, true);
+    strict_1.default.equal(summary.hasValidManualTotals, false);
 });
 (0, node_test_1.default)("table summary treats a completed table as having progress", () => {
     const summary = (0, tableManagerService_1.calculateTableSummary)({ isCompleted: true }, []);
     strict_1.default.equal(summary.hasProgress, true);
 });
-(0, node_test_1.default)("table summary accepts decimal points with a comma separator", () => {
-    const summary = (0, tableManagerService_1.calculateTableSummary)({
-        useTotalsOnly: false,
-        usePointsCalculation: false,
-        manualPlayerEastPoints: "3,5",
-        manualPlayerSouthPoints: "2",
-        manualPlayerWestPoints: "1",
-        manualPlayerNorthPoints: "0,5",
-    }, []);
-    strict_1.default.equal(summary.hasValidManualTotals, true);
+(0, node_test_1.default)("table points come only from the scores and never from stored points", () => {
+    const table = (0, tableManagerService_1.tableStateFromData)({
+        roundId: 1, tableId: 1, useTotalsOnly: true,
+        manualPlayerEastScore: "30", manualPlayerSouthScore: "10", manualPlayerWestScore: "-10", manualPlayerNorthScore: "-30",
+        playerEastPoints: "7", playerSouthPoints: "7", playerWestPoints: "7", playerNorthPoints: "7",
+    });
+    strict_1.default.deepEqual([table.playerEastPoints, table.playerSouthPoints, table.playerWestPoints, table.playerNorthPoints], ["4", "2", "1", "0"]);
+});
+(0, node_test_1.default)("table points are empty while a score is missing", () => {
+    const table = (0, tableManagerService_1.tableStateFromData)({ roundId: 1, tableId: 1, useTotalsOnly: true, manualPlayerEastScore: "30" });
+    strict_1.default.equal(table.playerEastPoints, "");
+    strict_1.default.equal(table.playerNorthPoints, "");
 });
 (0, node_test_1.default)("tournament completes when the current table is the last incomplete table", () => {
     strict_1.default.equal((0, tableManagerService_1.isTournamentCompleteAfterTableSave)({

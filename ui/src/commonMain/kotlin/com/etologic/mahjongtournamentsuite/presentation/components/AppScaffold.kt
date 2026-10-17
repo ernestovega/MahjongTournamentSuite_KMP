@@ -11,9 +11,18 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -23,10 +32,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTooltipState
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
@@ -42,6 +59,9 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 
 private val AppTopBarSidePadding = 8.dp
+
+/** The width in dp under which the top bar buttons show only their icons. */
+private const val TopBarLabelsMinWidthDp = 600
 private val AppLoadingBarHeight = 4.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,19 +69,17 @@ private val AppLoadingBarHeight = 4.dp
 fun AppScaffold(
     title: String,
     subtitle: String? = null,
-    /** Centers the title and the subtitle on each other. */
-    centerTitle: Boolean = false,
     titleAction: @Composable (() -> Unit)? = null,
     isLoading: Boolean = false,
     showProgress: Boolean = isLoading,
     onBack: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
-    leadingActions: @Composable (RowScope.() -> Unit)? = null,
-    actions: @Composable (RowScope.() -> Unit)? = null,
+    leadingActions: @Composable (() -> Unit)? = null,
+    actions: @Composable (() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
     autoFocusFirst: Boolean = true,
-    showBackgroundLogo: Boolean = true,
+    showBackgroundLogo: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
@@ -75,28 +93,35 @@ fun AppScaffold(
         }
     }
 
+    val adaptive = LocalAdaptiveTopBar.current
+    BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+    val compact = adaptive && maxWidth.value < TopBarCompactWidthDp
+    // On a phone the top bar buttons lose their labels and keep the icons.
+    val topBarLabels = maxWidth.value >= TopBarLabelsMinWidthDp
     Scaffold(
         modifier = Modifier.appFocusGroup(),
         topBar = {
+            CompositionLocalProvider(LocalTopBarLabels provides topBarLabels) {
             Column {
                 val titleContent: @Composable () -> Unit = {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box {
+                        Box(modifier = Modifier.weight(1f, fill = false)) {
                             if (subtitle == null) {
-                                Text(title)
+                                EllipsizedTitleText(title)
                             } else {
                                 Column(
                                     verticalArrangement = Arrangement.spacedBy(2.dp),
-                                    horizontalAlignment = if (centerTitle) Alignment.CenterHorizontally else Alignment.Start,
+                                    horizontalAlignment = Alignment.CenterHorizontally,
                                 ) {
-                                    Text(title)
-                                    Text(
+                                    EllipsizedTitleText(title)
+                                    EllipsizedTitleText(
                                         text = subtitle,
                                         style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        // Same color as the title, in the light and the dark theme.
+                                        color = LocalContentColor.current,
                                     )
                                 }
                             }
@@ -134,7 +159,7 @@ fun AppScaffold(
                     }
                 }
 
-                val actionsContent: @Composable RowScope.() -> Unit = {
+                val actionsContent: @Composable () -> Unit = {
                     if (actions != null) {
                         Box(
                             modifier = Modifier.padding(end = AppTopBarSidePadding),
@@ -157,16 +182,47 @@ fun AppScaffold(
                     actionIconContentColor = Color.White.copy(alpha = 0.85f),
                 )
 
-                CenterAlignedTopAppBar(
-                    title = titleContent,
-                    navigationIcon = navigationContent,
-                    actions = actionsContent,
-                    colors = colors,
-                )
+                when {
+                    compact -> {
+                        CenterAlignedTopAppBar(
+                            title = titleContent,
+                            navigationIcon = {
+                                Row(
+                                    modifier = Modifier.padding(start = AppTopBarSidePadding),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    if (onBack != null && navigationIcon == null) {
+                                        // The buttons are collapsed, so the back button drops its label.
+                                        AppBackButton(onClick = onBack, showLabel = false)
+                                    }
+                                    if (navigationIcon != null || leadingActions != null) {
+                                        TopBarOverflowMenu(isLoading) {
+                                            navigationIcon?.invoke()
+                                            leadingActions?.invoke()
+                                        }
+                                    }
+                                }
+                            },
+                            actions = {
+                                if (actions != null) {
+                                    TopBarOverflowMenu(isLoading) { actions() }
+                                }
+                            },
+                            colors = colors,
+                        )
+                    }
+                    else -> CenterAlignedTopAppBar(
+                        title = titleContent,
+                        navigationIcon = navigationContent,
+                        actions = { Row { actionsContent() } },
+                        colors = colors,
+                    )
+                }
 
                 if (showProgress) {
                     SlowLinearLoadingIndicator()
                 }
+            }
             }
         },
         floatingActionButton = {
@@ -189,6 +245,33 @@ fun AppScaffold(
                 contentWithBackground()
             }
         }
+    }
+    }
+}
+
+/** One-line text. It shows the full text in a tooltip when it is ellipsized. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EllipsizedTitleText(
+    text: String,
+    style: TextStyle = LocalTextStyle.current,
+    color: Color = Color.Unspecified,
+) {
+    var isEllipsized by remember(text) { mutableStateOf(false) }
+    TooltipBox(
+        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        tooltip = { PlainTooltip { Text(text) } },
+        state = rememberTooltipState(),
+        enableUserInput = isEllipsized,
+    ) {
+        Text(
+            text = text,
+            style = style,
+            color = color,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { isEllipsized = it.hasVisualOverflow },
+        )
     }
 }
 
@@ -234,7 +317,24 @@ private fun SlowLinearLoadingIndicator(
     }
 }
 
+/** A three-dots button. Its menu shows [content] in a column. */
 @Composable
-private fun AppBackButton(onClick: () -> Unit) {
-    AppTopBarButton(text = "Back", icon = Icons.AutoMirrored.Filled.ArrowBack, onClick = onClick)
+private fun TopBarOverflowMenu(isLoading: Boolean, content: @Composable () -> Unit) {
+    var menuOpen by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { menuOpen = true }) {
+            Icon(Icons.Default.MoreVert, contentDescription = "Menu", tint = Color.White)
+        }
+        DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+            CompositionLocalProvider(
+                LocalAppButtonsEnabled provides !isLoading,
+                LocalTopBarMenu provides TopBarMenuScope { menuOpen = false },
+            ) { content() }
+        }
+    }
+}
+
+@Composable
+private fun AppBackButton(onClick: () -> Unit, showLabel: Boolean = true) {
+    AppTopBarButton(text = "Back", icon = Icons.AutoMirrored.Filled.ArrowBack, onClick = onClick, showLabel = showLabel)
 }

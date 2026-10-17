@@ -109,7 +109,6 @@ class TournamentScreenTest {
         playerIds = listOf(1, 2, 3, 4),
         isCompleted = isCompleted,
         useTotalsOnly = false,
-        usePointsCalculation = true,
         hasProgress = hasProgress,
         hasValidManualTotals = hasValidManualTotals,
     )

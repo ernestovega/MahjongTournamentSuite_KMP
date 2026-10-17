@@ -24,13 +24,21 @@ class TournamentScheduleEditorTest {
             RoundScheduleEditorRow(2),
         )
         val agenda = listOf(
-            AgendaItemEditorRow("Registration", "02/10/2026", "08:30", "09:00"),
+            AgendaItemEditorRow("Registration", "02/10/2026", "08:30"),
             AgendaItemEditorRow(),
         )
 
         assertNull(tournamentScheduleEditorError(rounds, agenda, "2026-10-02", "2026-10-03"))
         assertEquals("2026-10-02", rounds.toTournamentRoundSchedules().first().date)
         assertEquals(1, agenda.toTournamentAgendaItems().size)
+    }
+
+    @Test
+    fun acceptsAgendaItemsOutsideTheTournamentDays() {
+        val agenda = listOf(AgendaItemEditorRow("Early registration", "01/10/2026", "19:00"))
+
+        assertNull(tournamentScheduleEditorError(emptyList(), agenda, "2026-10-02", "2026-10-03"))
+        assertEquals("2026-10-01", agenda.toTournamentAgendaItems().single().date)
     }
 
     @Test

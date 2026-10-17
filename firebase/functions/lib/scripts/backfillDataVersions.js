@@ -56,23 +56,16 @@ async function backfill() {
                 table.get("playerEastPoints"), table.get("playerSouthPoints"), table.get("playerWestPoints"), table.get("playerNorthPoints"),
             ].some(hasText);
             const useTotalsOnly = Boolean(table.get("useTotalsOnly") ?? false);
-            const usePointsCalculation = Boolean(table.get("usePointsCalculation") ?? true);
             const validScores = (0, tournamentContentRules_1.hasFourValidScores)([
                 table.get("manualPlayerEastScore") || table.get("playerEastScore"),
                 table.get("manualPlayerSouthScore") || table.get("playerSouthScore"),
                 table.get("manualPlayerWestScore") || table.get("playerWestScore"),
                 table.get("manualPlayerNorthScore") || table.get("playerNorthScore"),
             ]);
-            const validPoints = (0, tournamentContentRules_1.hasValidTablePoints)([
-                table.get("manualPlayerEastPoints") || table.get("playerEastPoints"),
-                table.get("manualPlayerSouthPoints") || table.get("playerSouthPoints"),
-                table.get("manualPlayerWestPoints") || table.get("playerWestPoints"),
-                table.get("manualPlayerNorthPoints") || table.get("playerNorthPoints"),
-            ]);
             if (applyChanges) {
                 pending.push(table.ref.update({
                     hasProgress: hasTableProgress || hasHandProgress || Boolean(table.get("isCompleted")),
-                    hasValidManualTotals: useTotalsOnly ? validScores : !usePointsCalculation && validPoints,
+                    hasValidManualTotals: useTotalsOnly && validScores,
                     completionStatus: (0, tournamentContentRules_1.calculateTableCompletionStatus)({
                         hasData: hasTableProgress || hasHandProgress,
                         seatIds: [table.get("playerEastId"), table.get("playerSouthId"), table.get("playerWestId"), table.get("playerNorthId")],

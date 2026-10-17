@@ -5,7 +5,7 @@ import { handScoreTotals, handSeatScores, isResultSelectionInvalid, pointsFromSc
 
 const table = {
   playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",
-  isCompleted: false, usePointsCalculation: true, useTotalsOnly: false,
+  isCompleted: false, useTotalsOnly: false,
 };
 const hand = (patch: Record<string, unknown>) => ({
   playerWinnerId: "", playerLooserId: "", handScore: "", isChickenHand: false, isDone: true,

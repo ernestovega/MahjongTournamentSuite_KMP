@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { actorFromToken, buildResetChangeEntry, buildSaveChangeEntry } from "./changeLog";
+import { actorFromToken, buildConflictChangeEntry, buildResetChangeEntry, buildSaveChangeEntry } from "./changeLog";
 
 const actor = { uid: "u1", name: "Ana" };
 
@@ -83,6 +83,14 @@ test("reset entry has no field lists", () => {
   const entry = buildResetChangeEntry({ roundId: 3, tableId: 4, version: 9, actor });
 
   assert.deepEqual(entry, {
-    kind: "reset", roundId: 3, tableId: 4, version: 9, uid: "u1", name: "Ana", tableChanges: [], handChanges: [],
+    kind: "reset", roundId: 3, tableId: 4, version: 9, uid: "u1", name: "Ana", source: "editor",
+    tableChanges: [], handChanges: [], handChangeCount: 0,
   });
+});
+
+test("the source follows the actor and conflicts have their own kind", () => {
+  const player = { uid: "p1", name: "Player 10", source: "player" as const };
+  assert.equal(buildResetChangeEntry({ roundId: 1, tableId: 1, version: 1, actor: player }).source, "player");
+  assert.equal(buildResetChangeEntry({ roundId: 1, tableId: 1, version: 1, actor: null }).source, null);
+  assert.equal(buildConflictChangeEntry({ roundId: 1, tableId: 1, version: 4, actor: player }).kind, "conflict");
 });

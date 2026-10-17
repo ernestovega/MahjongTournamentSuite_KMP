@@ -21,8 +21,35 @@ const tableManagerService_1 = require("../../services/tableManagerService");
 const changeLog_1 = require("../../services/changeLog");
 const usersService_1 = require("../../services/usersService");
 const tournamentDates_1 = require("../../services/tournamentDates");
+const tournamentVenue_1 = require("../../services/tournamentVenue");
 const dataVersionsService_1 = require("../../services/dataVersionsService");
 const tableRequests_1 = require("../tableRequests");
+const statisticsStore_1 = require("../../services/statisticsStore");
+const tournamentIntegrityService_1 = require("../../services/tournamentIntegrityService");
+/** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
+function readIdCardSheetOptions(query) {
+    if (query.layout !== "sheet")
+        return undefined;
+    const cardsPerSheet = Number(query.cardsPerSheet ?? 10);
+    const scalePercent = Number(query.scalePercent ?? 100);
+    const landscape = query.landscape === "true";
+    if (!Number.isInteger(cardsPerSheet) || cardsPerSheet < 1 || cardsPerSheet > 40) {
+        throw (0, httpError_1.badRequest)("Invalid number of cards per sheet", { value: query.cardsPerSheet });
+    }
+    if (!Number.isFinite(scalePercent) || scalePercent < 25 || scalePercent > 400) {
+        throw (0, httpError_1.badRequest)("Invalid card size", { value: query.scalePercent });
+    }
+    const options = {
+        cardsPerSheet,
+        scalePercent,
+        landscape,
+        doubleSided: query.doubleSided !== "false",
+        cutMarks: query.cutMarks !== "false",
+    };
+    if ((0, idCardsService_1.idCardSheetGrid)(options) == null)
+        throw (0, httpError_1.badRequest)("The card size does not fit on an A4 sheet", { scalePercent });
+    return options;
+}
 function tournamentsRouter() {
     const router = (0, express_1.Router)();
     router.get("/:tournamentId/sync/manifest", requireAuth_1.requireAuth, requireTournamentReader_1.requireTournamentReader, async (req, res, next) => {
@@ -56,6 +83,80 @@ function tournamentsRouter() {
             next(e);
         }
     });
+    /**
+     * The statistics of all tournaments together: sums and the leaderboards.
+     * The server keeps them up to date when a table changes. This request reads a fixed number of documents.
+     */
+    router.get("/statistics/overview", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (_req, res, next) => {
+        try {
+            res.status(200).json(await (0, statisticsStore_1.loadOverview)());
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    /**
+     * The ids of the tournaments that the signed-in account can see, or null for an administrator.
+     * It is the same rule as the tournament list above.
+     */
+    const visibleTournamentIds = async (decoded) => {
+        if (decoded.admin === true)
+            return null;
+        const lists = await Promise.all([
+            decoded.editor === true ? (0, tournamentsService_1.listTournamentsForUser)(decoded.uid) : Promise.resolve([]),
+            decoded.player === true ? (0, tournamentsService_1.listTournamentsForPlayer)(decoded.uid) : Promise.resolve([]),
+        ]);
+        return new Set(lists.flat().map((tournament) => tournament.id));
+    };
+    const readEmaParam = (value) => {
+        const emaId = String(value ?? "").trim();
+        if (emaId === "" || emaId.length > 64)
+            throw (0, httpError_1.badRequest)("Invalid EMA id");
+        return emaId;
+    };
+    /** The EMA number of the signed-in account. It is empty when the account is not linked to a player. */
+    const ownEmaId = async (uid) => (await (0, usersService_1.getUserProfile)(uid)).emaId ?? "";
+    const readTournamentIds = (value) => {
+        const ids = String(value ?? "").split(",").map((id) => id.trim()).filter((id) => id !== "");
+        if (ids.length > statisticsStore_1.MAX_STANDINGS_PER_REQUEST)
+            throw (0, httpError_1.badRequest)("Too many tournaments", { max: statisticsStore_1.MAX_STANDINGS_PER_REQUEST });
+        return ids;
+    };
+    /**
+     * The results of one player, in the tournaments that the account can see. The own route reads the player of the account.
+     * The route with an EMA number is open to every signed-in account, so a player can look at the statistics of others.
+     */
+    const personHandler = (own) => async (req, res, next) => {
+        try {
+            const decoded = res.locals.auth;
+            const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(req.params.emaId);
+            if (emaId === "") {
+                res.status(200).json({ emaId, tournaments: [] });
+                return;
+            }
+            res.status(200).json(await (0, statisticsStore_1.loadPersonStatistics)(emaId, await visibleTournamentIds(decoded)));
+        }
+        catch (e) {
+            next(e);
+        }
+    };
+    /** The final places of one player in a few tournaments. The app asks for the tournaments on screen. */
+    const standingsHandler = (own) => async (req, res, next) => {
+        try {
+            const decoded = res.locals.auth;
+            const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(req.params.emaId);
+            const allowed = await visibleTournamentIds(decoded);
+            const ids = readTournamentIds(req.query.tournaments).filter((id) => allowed == null || allowed.has(id));
+            res.status(200).json({ standings: emaId === "" ? [] : await (0, statisticsStore_1.loadStandings)(emaId, ids) });
+        }
+        catch (e) {
+            next(e);
+        }
+    };
+    router.get("/statistics/me", requireAuth_1.requireAuth, personHandler(true));
+    router.get("/statistics/me/standings", requireAuth_1.requireAuth, standingsHandler(true));
+    router.get("/statistics/persons/:emaId", requireAuth_1.requireAuth, personHandler(false));
+    router.get("/statistics/persons/:emaId/standings", requireAuth_1.requireAuth, standingsHandler(false));
     router.post("/", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
             const decoded = res.locals.auth;
@@ -88,6 +189,13 @@ function tournamentsRouter() {
             const players = Array.isArray(body?.players) ? body?.players : null;
             const tables = Array.isArray(body?.tables) ? body?.tables : null;
             const issues = [];
+            let venue = (0, tournamentVenue_1.normalizeVenue)(null);
+            try {
+                venue = (0, tournamentVenue_1.normalizeVenue)(body);
+            }
+            catch (error) {
+                issues.push({ field: "venue", message: error instanceof Error ? error.message : "Invalid venue" });
+            }
             if (!body)
                 issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
             if (!name)
@@ -195,6 +303,7 @@ function tournamentsRouter() {
                 eventEndDate,
                 hostCountry,
                 hostCity,
+                ...venue,
                 isTeams,
                 countBestHands,
                 countChickenHands,
@@ -257,9 +366,19 @@ function tournamentsRouter() {
     router.post("/id-card-proof", requireAuth_1.requireAuth, requireEditor_1.requireEditor, generateIdCardProof);
     // Keep the previous route working for already deployed web bundles.
     router.post("/id-card-preview", requireAuth_1.requireAuth, requireEditor_1.requireEditor, generateIdCardProof);
+    // Reads the whole tournament and reports wrong or odd data. It changes nothing.
+    router.get("/:tournamentId/integrity", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            res.setHeader("Cache-Control", "no-store");
+            res.status(200).json(await (0, tournamentIntegrityService_1.runTournamentIntegrityCheck)(req.params.tournamentId));
+        }
+        catch (e) {
+            next(e);
+        }
+    });
     router.get("/:tournamentId/id-cards", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
         try {
-            const pdf = await (0, idCardsService_1.generateTournamentIdCards)(req.params.tournamentId);
+            const pdf = await (0, idCardsService_1.generateTournamentIdCards)(req.params.tournamentId, readIdCardSheetOptions(req.query));
             res.setHeader("Content-Type", "application/pdf");
             res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-cards.pdf"`);
             res.status(200).send(pdf);
@@ -362,6 +481,7 @@ function tournamentsRouter() {
                 eventEndDate,
                 hostCountry,
                 hostCity,
+                ...(0, tournamentVenue_1.normalizeVenue)(body),
                 associationLogoContentType,
                 associationLogoDataBase64,
                 associationLogoSourceTournamentId,

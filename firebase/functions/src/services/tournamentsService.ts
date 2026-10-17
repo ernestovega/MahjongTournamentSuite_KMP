@@ -1,3 +1,4 @@
+import { removeTournamentStats } from "./statisticsStore";
 import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
 import { randomUUID } from "node:crypto";
 
@@ -24,6 +25,10 @@ export type Tournament = {
   associationLogoUrl: string | null;
   hostCountry: string;
   hostCity: string;
+  venueName: string;
+  venueAddress: string;
+  venueMapUrl: string;
+  contactEmail: string;
   isTeams: boolean;
   /** When false, the app does not count or show the best hands. Old documents count them. */
   countBestHands: boolean;
@@ -96,6 +101,10 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
     hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
     hostCity: String(d.get("hostCity") ?? "").trim(),
+    venueName: String(d.get("venueName") ?? ""),
+    venueAddress: String(d.get("venueAddress") ?? ""),
+    venueMapUrl: String(d.get("venueMapUrl") ?? ""),
+    contactEmail: String(d.get("contactEmail") ?? ""),
     isTeams: (d.get("isTeams") as boolean) ?? false,
     countBestHands: d.get("countBestHands") !== false,
     countChickenHands: d.get("countChickenHands") !== false,
@@ -104,7 +113,7 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     eventStartDate,
     eventEndDate,
     roundSchedules: readStoredRoundSchedules(d.get("roundSchedules"), numRounds, safeStartDate, safeEndDate),
-    agendaItems: readStoredAgendaItems(d.get("agendaItems"), safeStartDate, safeEndDate),
+    agendaItems: readStoredAgendaItems(d.get("agendaItems")),
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
     createdByUid,
@@ -128,6 +137,10 @@ export async function createTournament(params: {
   eventEndDate: string;
   hostCountry: string;
   hostCity: string;
+  venueName?: string;
+  venueAddress?: string;
+  venueMapUrl?: string;
+  contactEmail?: string;
   isTeams: boolean;
   countBestHands?: boolean;
   countChickenHands?: boolean;
@@ -154,7 +167,7 @@ export async function createTournament(params: {
     params.eventStartDate,
     params.eventEndDate,
   );
-  const agendaItems = normalizeAgendaItems(params.agendaItems, params.eventStartDate, params.eventEndDate);
+  const agendaItems = normalizeAgendaItems(params.agendaItems);
 
   const ref = db.collection("tournaments").doc();
 
@@ -174,6 +187,10 @@ export async function createTournament(params: {
     eventEndDate: params.eventEndDate,
     hostCountry: params.hostCountry.trim().toUpperCase(),
     hostCity: params.hostCity.trim(),
+    venueName: params.venueName ?? "",
+    venueAddress: params.venueAddress ?? "",
+    venueMapUrl: params.venueMapUrl ?? "",
+    contactEmail: params.contactEmail ?? "",
     isTeams: params.isTeams,
     countBestHands: params.countBestHands ?? true,
     countChickenHands: params.countChickenHands ?? true,
@@ -268,13 +285,8 @@ export async function createTournament(params: {
       manualPlayerSouthScore: "",
       manualPlayerWestScore: "",
       manualPlayerNorthScore: "",
-      manualPlayerEastPoints: "",
-      manualPlayerSouthPoints: "",
-      manualPlayerWestPoints: "",
-      manualPlayerNorthPoints: "",
       isCompleted: Boolean(table.isCompleted ?? false),
       useTotalsOnly: Boolean(table.useTotalsOnly ?? false),
-      usePointsCalculation: true,
       hasProgress: Boolean(table.isCompleted ?? false),
       hasValidManualTotals: false,
       completionStatus: "empty",
@@ -424,6 +436,10 @@ export async function updateTournamentSettings(params: {
   eventEndDate: string;
   hostCountry: string;
   hostCity: string;
+  venueName?: string;
+  venueAddress?: string;
+  venueMapUrl?: string;
+  contactEmail?: string;
   countBestHands?: boolean;
   countChickenHands?: boolean;
   associationLogoContentType?: string | null;
@@ -448,8 +464,8 @@ export async function updateTournamentSettings(params: {
     ? readStoredRoundSchedules(before.get("roundSchedules"), numRounds, params.eventStartDate, params.eventEndDate)
     : normalizeRoundSchedules(params.roundSchedules, numRounds, params.eventStartDate, params.eventEndDate);
   const agendaItems = params.agendaItems === undefined
-    ? readStoredAgendaItems(before.get("agendaItems"), params.eventStartDate, params.eventEndDate)
-    : normalizeAgendaItems(params.agendaItems, params.eventStartDate, params.eventEndDate);
+    ? readStoredAgendaItems(before.get("agendaItems"))
+    : normalizeAgendaItems(params.agendaItems);
 
   const oldLogoPath = String(before.get("associationLogoPath") ?? "").trim();
   let logo: { path: string; url: string } | null | undefined;
@@ -476,6 +492,10 @@ export async function updateTournamentSettings(params: {
     eventEndDate: params.eventEndDate,
     hostCountry: params.hostCountry.trim().toUpperCase(),
     hostCity: params.hostCity.trim(),
+    venueName: params.venueName ?? "",
+    venueAddress: params.venueAddress ?? "",
+    venueMapUrl: params.venueMapUrl ?? "",
+    contactEmail: params.contactEmail ?? "",
     roundSchedules,
     agendaItems,
     updatedAt: FieldValue.serverTimestamp(),
@@ -549,6 +569,8 @@ export async function deleteTournament(tournamentId: string): Promise<void> {
       await storage.file(logoPath).delete({ ignoreNotFound: true });
     },
     deleteTournamentTree: async () => {
+      // The numbers of the tournament leave the sums before its tables are deleted.
+      await removeTournamentStats(tournamentId);
       await db.recursiveDelete(ref);
     },
   });

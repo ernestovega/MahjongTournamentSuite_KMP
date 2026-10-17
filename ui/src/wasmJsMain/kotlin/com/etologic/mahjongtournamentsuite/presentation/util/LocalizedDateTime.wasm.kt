@@ -10,17 +10,22 @@ internal actual fun platformFormatDate(year: Int, month: Int, day: Int, withWeek
 
 internal actual fun platformFormatTime(hour: Int, minute: Int): String = browserTime(hour, minute)
 
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun browserDate(year: Int, month: Int, day: Int): String =
     js("new Date(year, month - 1, day).toLocaleDateString(undefined, { dateStyle: 'medium' })")
 
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun browserDateNoYear(year: Int, month: Int, day: Int): String =
     js("new Date(year, month - 1, day).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })")
 
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun browserDateWithWeekdayNoYear(year: Int, month: Int, day: Int): String =
     js("new Date(year, month - 1, day).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })")
 
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun browserDateWithWeekday(year: Int, month: Int, day: Int): String =
     js("new Date(year, month - 1, day).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })")
 
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun browserTime(hour: Int, minute: Int): String =
     js("new Date(2000, 0, 1, hour, minute).toLocaleTimeString(undefined, { timeStyle: 'short' })")

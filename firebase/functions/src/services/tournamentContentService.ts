@@ -1,3 +1,4 @@
+import { refreshTournamentStats } from "./statisticsStore";
 import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { conflict, notFound } from "../api/httpError";
@@ -7,7 +8,6 @@ import {
   calculateTableCompletionStatus,
   hasDuplicateEmaAssignments,
   hasFourValidScores,
-  hasValidTablePoints,
   calculateHandSummary,
 } from "./tournamentContentRules";
 import {
@@ -89,7 +89,6 @@ export type TournamentTable = {
   playerIds: number[];
   isCompleted: boolean;
   useTotalsOnly: boolean;
-  usePointsCalculation: boolean;
   hasProgress: boolean;
   hasValidManualTotals: boolean;
   completionStatus: string;
@@ -308,6 +307,7 @@ export async function assignTournamentPlayer(params: {
   const assignmentRefs = db.collection("tournaments").doc(params.tournamentId)
     .collection("emaPlayerAssignments");
   const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
+  let statisticsChanged = false;
   await db.runTransaction(async (transaction) => {
     const tournament = await transaction.get(tournamentRef);
     const tournamentHasProgress = tournamentHasStartedTables(tournament);
@@ -376,6 +376,8 @@ export async function assignTournamentPlayer(params: {
         transaction.delete(db.doc(`users/${accountUid}/playerTournaments/${params.tournamentId}`));
       }
     }
+    // Tables that are complete hold the EMA number of the slot in their statistics.
+    statisticsChanged = previousEmaId !== params.emaId && tournamentHasProgress;
     transaction.update(playerRef, {
       assignedEmaId: params.emaId,
       nonMember: params.nonMember,
@@ -395,6 +397,7 @@ export async function assignTournamentPlayer(params: {
     transaction.set(db.collection("_meta").doc("dataVersions"), globalVersionUpdate("tournaments"), { merge: true });
   });
   await refreshAssignmentCountries(params.tournamentId);
+  if (statisticsChanged) await refreshTournamentStats(params.tournamentId);
   await Promise.all([
     bumpTournamentDataVersion(params.tournamentId, "players"),
     bumpGlobalDataVersion("tournaments"),
@@ -442,7 +445,6 @@ export async function listTournamentTables(
         playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
         isCompleted: Boolean(d.get("isCompleted") ?? false),
         useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? false),
-        usePointsCalculation: Boolean(d.get("usePointsCalculation") ?? true),
         hasProgress: storedHasProgress,
         hasValidManualTotals: storedHasValidManualTotals,
         completionStatus: storedCompletionStatus,
@@ -486,16 +488,9 @@ export async function listTournamentTables(
       d.get("manualPlayerWestScore") || d.get("playerWestScore"),
       d.get("manualPlayerNorthScore") || d.get("playerNorthScore"),
     ]);
-    const hasValidManualPoints = hasValidTablePoints([
-      d.get("manualPlayerEastPoints") || d.get("playerEastPoints"),
-      d.get("manualPlayerSouthPoints") || d.get("playerSouthPoints"),
-      d.get("manualPlayerWestPoints") || d.get("playerWestPoints"),
-      d.get("manualPlayerNorthPoints") || d.get("playerNorthPoints"),
-    ]);
     const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? false);
-    const usePointsCalculation = Boolean(d.get("usePointsCalculation") ?? true);
 
-    const hasValidManualTotals = useTotalsOnly ? hasValidManualScores : !usePointsCalculation && hasValidManualPoints;
+    const hasValidManualTotals = useTotalsOnly && hasValidManualScores;
     return {
       version: Number(d.get("version") ?? 0),
       roundId: Number(d.get("roundId")),
@@ -503,7 +498,6 @@ export async function listTournamentTables(
       playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
       isCompleted: Boolean(d.get("isCompleted") ?? false),
       useTotalsOnly,
-      usePointsCalculation,
       hasProgress: hasTableProgress || hasHandProgress || Boolean(d.get("isCompleted") ?? false),
       hasValidManualTotals,
       completionStatus: calculateTableCompletionStatus({

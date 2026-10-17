@@ -154,6 +154,9 @@ Membership is stored at:
 - `tournaments/{tournamentId}/changes/{changeId}` is the change log. It has one entry for each table save or reset.
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
+A tournament has an optional venue: `venueName`, `venueAddress` and `venueMapUrl`. It also has an optional `contactEmail` for the organizers. An empty text means "not set". `contactEmail` must be a valid email address.
+`venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Round schedules must stay inside the tournament dates. The player app shows the venue, the round times and the agenda on the Info tab.
+
 Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive. Legacy documents with only `eventDate` use that value for both dates. Older documents without dates use their creation date as a fallback.
 
 ## Seed countries

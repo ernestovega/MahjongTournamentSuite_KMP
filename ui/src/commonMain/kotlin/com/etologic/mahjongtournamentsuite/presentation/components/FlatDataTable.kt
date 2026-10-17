@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
@@ -130,10 +132,8 @@ fun RowActionsMenu(
     enabled: Boolean,
     items: List<RowActionMenuItem>,
     modifier: Modifier = Modifier,
-    buttonLabel: String = "⋮",
-    buttonIcon: ImageVector? = null,
+    buttonIcon: ImageVector = Icons.Default.MoreVert,
     buttonIconSize: Dp = 24.dp,
-    buttonTextStyle: TextStyle = MaterialTheme.typography.bodyLarge,
     buttonContentColor: Color? = null,
     focusRequester: FocusRequester? = null,
 ) {
@@ -148,18 +148,11 @@ fun RowActionsMenu(
         focusRequester = focusRequester,
         colors = buttonContentColor?.let { ButtonDefaults.textButtonColors(contentColor = it) } ?: defaultButtonColors,
     ) {
-        if (buttonIcon != null) {
-            Icon(
-                imageVector = buttonIcon,
-                contentDescription = "Actions",
-                modifier = Modifier.size(buttonIconSize),
-            )
-        } else {
-            Text(
-                text = buttonLabel,
-                style = buttonTextStyle,
-            )
-        }
+        Icon(
+            imageVector = buttonIcon,
+            contentDescription = "Actions",
+            modifier = Modifier.size(buttonIconSize),
+        )
     }
 
     DropdownMenu(

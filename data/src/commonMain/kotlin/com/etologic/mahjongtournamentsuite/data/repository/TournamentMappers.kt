@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 
 internal fun TournamentDto.toDomain(): Tournament = Tournament(
     id = id,
@@ -18,6 +19,12 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     associationLogoUrl = associationLogoUrl.normalizedOrNull(),
     hostCountry = hostCountry,
     hostCity = hostCity,
+    venue = TournamentVenue(
+        name = venueName.trim(),
+        address = venueAddress.trim(),
+        mapUrl = venueMapUrl.trim(),
+        contactEmail = contactEmail.trim(),
+    ),
     eventStartDate = eventStartDate.normalizedOrNull(),
     eventEndDate = eventEndDate.normalizedOrNull(),
     roundSchedules = roundSchedules.map { schedule ->
@@ -32,7 +39,6 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
             title = item.title.trim(),
             date = item.date.normalizedOrNull(),
             startTime = item.startTime.normalizedOrNull(),
-            endTime = item.endTime.normalizedOrNull(),
         )
     },
     numTries = numTries,

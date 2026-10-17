@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -10,7 +8,6 @@ import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -24,17 +21,17 @@ fun AppTopBarLeadingActions(
     showThemeToggle: Boolean = false,
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
+    onUsage: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
     timerFocusRequester: FocusRequester? = null,
     rankingFocusRequester: FocusRequester? = null,
+    usageFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
 ) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Start,
-    ) {
+    TopBarButtonsLayout {
         onAppUsers?.let { AppTopBarButton("App Users", Icons.Default.Person, it, usersFocusRequester) }
         if (showThemeToggle) { ThemeModeToggleButton() }
+        onUsage?.let { AppTopBarButton("App usage", StatisticsIcon, it, usageFocusRequester) }
         onTimer?.let { AppTopBarButton("Timer", Icons.Default.AccessTime, it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton("Ranking", Icons.Default.Leaderboard, it, rankingFocusRequester) }
     }

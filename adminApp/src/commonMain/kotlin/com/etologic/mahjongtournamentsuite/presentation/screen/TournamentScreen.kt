@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.filled.Groups
@@ -9,7 +13,6 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.RestartAlt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -42,9 +45,9 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
-import com.etologic.mahjongtournamentsuite.presentation.components.ResetTableDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
@@ -83,6 +86,7 @@ private sealed class RoundEditorAction {
     data object Players : RoundEditorAction()
     data object Teams : RoundEditorAction()
     data object Rankings : RoundEditorAction()
+    data object Statistics : RoundEditorAction()
     data object Timer : RoundEditorAction()
     data object Export : RoundEditorAction()
 }
@@ -106,8 +110,8 @@ fun TournamentScreen(
     val tournaments by store.tournaments.collectAsState()
     val tournament = tournaments.firstOrNull { it.id == tournamentId }
 
-    var selectedRoundId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
-    var selectedTableId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
+    var selectedRoundId by rememberPersistentOptionalInt("round", tournamentId)
+    var selectedTableId by rememberPersistentOptionalInt("table", tournamentId)
     // The tables and the rules that keep them in step with the server live in this object.
     val sync = remember(tournamentId) {
         RoundEditorSync(
@@ -130,16 +134,13 @@ fun TournamentScreen(
     var tableEditors by sync::tableEditors
     var playerNamesById by sync::playerNamesById
     var pendingAction by remember { mutableStateOf<RoundEditorAction?>(null) }
-    var showResetConfirmation by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
-    var restoreResetFocus by remember { mutableStateOf(false) }
     // Set while polling is paused because the user was away. The user ends the pause with the dialog.
     var idlePause by remember { mutableStateOf<CompletableDeferred<Unit>?>(null) }
     var isCheckingAfterIdle by remember { mutableStateOf(false) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
 
     val saveFocusRequester = remember { FocusRequester() }
-    val resetFocusRequester = remember { FocusRequester() }
     val roundFocusRequester = remember { FocusRequester() }
     val scoreFocusRequester = remember { FocusRequester() }
     val selectedRoundTables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
@@ -355,6 +356,17 @@ fun TournamentScreen(
             RoundEditorAction.Players -> navController.navigate(PlayersRoute(tournamentId))
             RoundEditorAction.Teams -> navController.navigate(TeamsRoute(tournamentId))
             RoundEditorAction.Rankings -> openRankings(navController, tournamentId)
+            RoundEditorAction.Statistics -> {
+                val round = selectedRoundId
+                val table = selectedTableId
+                navController.navigate(
+                    if (round != null && table != null) {
+                        StatisticsRoute(StatisticsScope.TABLE.name, tournamentId = tournamentId, roundId = round, tableId = table)
+                    } else {
+                        StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = tournamentId)
+                    },
+                )
+            }
             RoundEditorAction.Timer -> openTimer(navController, allTables.maxOfOrNull { it.roundId }?.plus(1) ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
         }
@@ -386,30 +398,6 @@ fun TournamentScreen(
             onCancel = { pendingAction = null },
         )
     }
-    if (showResetConfirmation && selectedRoundId != null && selectedTableId != null) {
-        ResetTableDialog(
-            roundId = selectedRoundId!!,
-            tableId = selectedTableId!!,
-            isResetting = isLoading,
-            onConfirm = {
-                scope.launch {
-                    isLoading = true
-                    when (val result = tablePresenter.resetTable(tournamentId, selectedRoundId!!, selectedTableId!!)) {
-                        is AppResult.Success -> { showResetConfirmation = false; restoreResetFocus = true; loadRound(selectedRoundId!!, true) }
-                        is AppResult.Failure -> { errorMessage = result.error.toUiMessage(); showResetConfirmation = false }
-                    }
-                    isLoading = false
-                }
-            },
-            onCancel = { showResetConfirmation = false; restoreResetFocus = true },
-        )
-    }
-    LaunchedEffect(showResetConfirmation, restoreResetFocus, isLoading) {
-        if (!showResetConfirmation && restoreResetFocus && !isLoading) {
-            restoreResetFocus = false
-            resetFocusRequester.requestFocus()
-        }
-    }
     LaunchedEffect(restoreSaveFocus, isLoading) {
         if (restoreSaveFocus && !isLoading) {
             restoreSaveFocus = false
@@ -438,6 +426,7 @@ fun TournamentScreen(
             )
         },
         isLoading = isLoading,
+        showBackgroundLogo = isLoading && tournament == null,
         showProgress = isLoading || isLoadingRest,
         onBack = { requestAction(RoundEditorAction.Back) },
         leadingActions = {
@@ -449,7 +438,6 @@ fun TournamentScreen(
             )
         },
         actions = {
-            val showReset = adminStatus?.isAdmin == true && selectedRoundId != null && selectedTableId != null
             if (tournament?.isTeams == true) {
                 AppTopBarButton(
                     text = "Teams",
@@ -463,7 +451,12 @@ fun TournamentScreen(
                 icon = Icons.Default.People,
                 onClick = { requestAction(RoundEditorAction.Players) },
                 enabled = !isLoading,
-                focusRequester = if (showReset) null else resetFocusRequester,
+            )
+            AppTopBarButton(
+                text = "Statistics",
+                icon = StatisticsIcon,
+                onClick = { requestAction(RoundEditorAction.Statistics) },
+                enabled = !isLoading,
             )
             AppTopBarButton(
                 text = "EMA report",
@@ -471,16 +464,6 @@ fun TournamentScreen(
                 onClick = { requestAction(RoundEditorAction.Export) },
                 enabled = !isLoading && !isLoadingRest,
             )
-            if (showReset) {
-                AppTopBarButton(
-                    text = "Reset table",
-                    icon = Icons.Default.RestartAlt,
-                    onClick = { showResetConfirmation = true },
-                    enabled = !isLoading && !isLoadingRest,
-                    focusRequester = resetFocusRequester,
-                    textColor = MaterialTheme.colorScheme.errorContainer,
-                )
-            }
         },
     ) {
         CompositionLocalProvider(
@@ -518,7 +501,6 @@ fun TournamentScreen(
             saveFocusRequester = saveFocusRequester,
             onSelectRound = { requestAction(RoundEditorAction.SelectRound(it)) },
             onSelectTable = { requestAction(RoundEditorAction.SelectTable(it)) },
-            onRanking = { requestAction(RoundEditorAction.Rankings) },
             onSave = { requestSave(tableIds = listOf(it)) },
             onSaveAndNext = { requestSave(RoundEditorAction.NextTable(it), listOf(it)) },
         )

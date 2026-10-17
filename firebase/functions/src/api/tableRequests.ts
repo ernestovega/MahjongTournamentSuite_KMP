@@ -4,11 +4,9 @@ import { HANDS_PER_TABLE } from "../services/tableManagerService";
 const TABLE_STRING_FIELDS = [
   "playerEastId", "playerSouthId", "playerWestId", "playerNorthId",
   "playerEastScore", "playerSouthScore", "playerWestScore", "playerNorthScore",
-  "playerEastPoints", "playerSouthPoints", "playerWestPoints", "playerNorthPoints",
   "manualPlayerEastScore", "manualPlayerSouthScore", "manualPlayerWestScore", "manualPlayerNorthScore",
-  "manualPlayerEastPoints", "manualPlayerSouthPoints", "manualPlayerWestPoints", "manualPlayerNorthPoints",
 ] as const;
-const TABLE_BOOLEAN_FIELDS = ["isCompleted", "useTotalsOnly", "usePointsCalculation"] as const;
+const TABLE_BOOLEAN_FIELDS = ["isCompleted", "useTotalsOnly"] as const;
 const HAND_STRING_FIELDS = [
   "playerWinnerId", "playerLooserId", "handScore", "playerEastPenalty",
   "playerSouthPenalty", "playerWestPenalty", "playerNorthPenalty",

@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.toCountryCodeInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
@@ -131,11 +136,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var accountError by remember { mutableStateOf<String?>(null) }
     var accountResults by remember { mutableStateOf<List<PlayerAccountActionResult>>(emptyList()) }
     var bulkAccountsOpen by remember { mutableStateOf(false) }
+    var idCardsDialogOpen by remember { mutableStateOf(false) }
     var assignmentSearchQuery by remember { mutableStateOf("") }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
     val searchFocusRequester = remember { FocusRequester() }
-    val assignmentsListState = rememberLazyListState()
+    val assignmentsListState = rememberPersistentLazyListState("assignments")
     var initialAssignmentScrollPending by rememberSaveable(tournamentId) { mutableStateOf(true) }
     var assignmentFocusRestoreSlotId by rememberSaveable(tournamentId) { mutableStateOf<Int?>(null) }
 
@@ -246,7 +252,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val playersByEma = basePlayers.associateBy { it.emaId }
     val players = slots[tournamentId].orEmpty()
 
-    fun exportIdCards() = scope.launch {
+    fun exportIdCards(sheet: IdCardSheetLayout?) = scope.launch {
         val unassigned = players.filterNot { it.isAssigned }
         if (unassigned.isNotEmpty()) {
             error = "Assign an EMA player or non-member to every tournament slot before creating ID cards."
@@ -255,7 +261,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
         loading = true
         error = null
-        when (val result = presenter.generateIdCards(tournamentId)) {
+        when (val result = presenter.generateIdCards(tournamentId, sheet)) {
             is AppResult.Success -> {
                 val tournament = tournaments.firstOrNull { it.id == tournamentId }
                 val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
@@ -379,6 +385,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     ?: slot.nonMember?.displayName
                     ?: "Player ${slot.id}"
             },
+            countryOf = { slot ->
+                (slot.assignedEmaId?.let(registry::get)?.country ?: slot.nonMember?.country).orEmpty()
+            },
+            emaIdOf = { slot -> slot.assignedEmaId?.let(registry::get)?.emaId },
+            countryNameOf = { code -> countries.firstOrNull { it.code == code }?.name.orEmpty() },
             results = accountResults,
             busy = accountBusy,
             errorMessage = accountError,
@@ -491,7 +502,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         val playerFocusRequesters = remember(assignmentSlot.id, filteredBasePlayers.map(Player::emaId)) {
             filteredBasePlayers.map { FocusRequester() }
         }
-        val playerListState = rememberLazyListState()
+        val playerListState = rememberPersistentLazyListState("players")
         var focusedPlayerIndex by remember(assignmentSlot.id) { mutableStateOf(0) }
         var searchFieldFocused by remember(assignmentSlot.id) { mutableStateOf(false) }
 
@@ -989,10 +1000,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             )
         },
         isLoading = loading || savingId != null,
+        showBackgroundLogo = loading && players.isEmpty(),
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
-                onIdCards = ::exportIdCards,
+                onStatistics = {
+                    navController.navigate(StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = tournamentId))
+                },
+                onIdCards = { idCardsDialogOpen = true },
                 onIdList = ::exportIdList,
                 onPlayerAccounts = { accountError = null; accountResults = emptyList(); loadInvitations(); bulkAccountsOpen = true },
             )
@@ -1003,6 +1018,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 AppErrorDialog(
                     message = it,
                     onDismiss = { error = null },
+                )
+            }
+            if (idCardsDialogOpen) {
+                IdCardsExportDialog(
+                    onExport = { sheet ->
+                        idCardsDialogOpen = false
+                        exportIdCards(sheet)
+                    },
+                    onDismiss = { idCardsDialogOpen = false },
                 )
             }
             SectionCard {

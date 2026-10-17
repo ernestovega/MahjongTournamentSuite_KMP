@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -75,7 +79,7 @@ fun TablesScreen(
 
     val tablesKey = selectedRoundId?.toString() ?: "all"
     val tables = tablesByTournamentId[tournamentId]?.get(tablesKey) ?: emptyList()
-    val tablesListState = rememberLazyListState()
+    val tablesListState = rememberPersistentLazyListState("tables")
     var tableFocusApplied by remember(tablesKey) { mutableStateOf(false) }
     var lastFocusedTableKey by rememberSaveable(tournamentId) { mutableStateOf<String?>(null) }
     var lastFocusedTableControl by rememberSaveable(tournamentId) { mutableStateOf("row") }
@@ -167,7 +171,15 @@ fun TablesScreen(
             )
         },
         isLoading = isLoading,
+        showBackgroundLogo = isLoading && tables.isEmpty(),
         onBack = { navController.popBackStack() },
+        actions = {
+            AppTopBarActions(
+                onStatistics = {
+                    navController.navigate(StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = tournamentId))
+                },
+            )
+        },
     ) {
         ScreenColumn(
             maxWidth = 1100.dp,

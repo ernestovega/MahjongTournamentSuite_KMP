@@ -7,6 +7,8 @@ import com.etologic.mahjongtournamentsuite.data.network.createHttpClient
 import com.etologic.mahjongtournamentsuite.data.platform.PlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.platform.providePlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAdminRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultStatisticsRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultFeatureFlagsRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerHandRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
@@ -23,7 +25,9 @@ import com.etologic.mahjongtournamentsuite.data.session.PlatformAuthSessionStore
 import com.etologic.mahjongtournamentsuite.data.cache.SessionRepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import io.ktor.client.HttpClient
@@ -45,8 +49,10 @@ val dataModule = module {
     single<HttpClient> { createHttpClient(json = get()) }
     single { FunctionsBackendApi(httpClient = get(), apiConfiguration = get()) }
     single<RepositoryCache> { SessionRepositoryCache(logger = get()) }
+    single<FeatureFlagsRepository> { DefaultFeatureFlagsRepository(get(), get()) }
     single<AuthRepository> { DefaultAuthRepository(get(), get(), get(), get(), get()) }
     single<AdminRepository> { DefaultAdminRepository(get(), get(), get(), get()) }
+    single<StatisticsRepository> { DefaultStatisticsRepository(get(), get(), get()) }
     single<PlayerHandRepository> { DefaultPlayerHandRepository(get(), get(), get(), get()) }
     single<PlayerAccountRepository> { DefaultPlayerAccountRepository(get(), get(), get()) }
     single<PlayerInvitationRepository> { DefaultPlayerInvitationRepository(get(), get(), get(), get()) }

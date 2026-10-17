@@ -116,7 +116,7 @@ internal class RoundEditorSync(
         var allSaved = true
         try {
             for ((tableId, editor) in current) {
-                val tablePatch = editor.buildApplicationTablePatch()
+                val tablePatch = editor.buildTablePatch()
                 val handPatches = editor.buildHandPatches().toMap()
                 if (tablePatch.isEmpty() && handPatches.isEmpty()) continue
                 isLoading = true

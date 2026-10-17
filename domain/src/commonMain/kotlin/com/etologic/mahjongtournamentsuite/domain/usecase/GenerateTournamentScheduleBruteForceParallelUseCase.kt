@@ -323,7 +323,6 @@ private fun generateTables(
                     playerIds = players,
                     isCompleted = false,
                     useTotalsOnly = false,
-                    usePointsCalculation = true,
                     hasProgress = false,
                 ),
             )

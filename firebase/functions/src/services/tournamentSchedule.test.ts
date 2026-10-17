@@ -42,27 +42,24 @@ test("rejects invalid round dates and times", () => {
 test("keeps partial agenda items and omits rows without a title", () => {
   const agenda = normalizeAgendaItems(
     [
-      { title: " Registration ", date: "2026-10-02", startTime: "08:30", endTime: "09:00" },
+      { title: " Registration ", date: "2026-10-02", startTime: "08:30" },
       { title: "Awards" },
       { title: "", date: "2026-10-02" },
     ],
-    "2026-10-02",
-    "2026-10-04",
   );
 
   assert.deepEqual(agenda, [
-    { title: "Registration", date: "2026-10-02", startTime: "08:30", endTime: "09:00" },
-    { title: "Awards", date: null, startTime: null, endTime: null },
+    { title: "Registration", date: "2026-10-02", startTime: "08:30" },
+    { title: "Awards", date: null, startTime: null },
   ]);
 });
 
-test("rejects agenda items that end before they start", () => {
-  assert.throws(
-    () => normalizeAgendaItems(
-      [{ title: "Lunch", startTime: "14:00", endTime: "13:00" }],
-      "2026-10-02",
-      "2026-10-04",
-    ),
-    /must not be before/,
-  );
+test("keeps agenda items dated outside the official game days", () => {
+  const agenda = normalizeAgendaItems([{ title: "Early registration", date: "2026-10-01", startTime: "19:00" }]);
+
+  assert.deepEqual(agenda, [{ title: "Early registration", date: "2026-10-01", startTime: "19:00" }]);
+});
+
+test("rejects agenda items with an invalid date", () => {
+  assert.throws(() => normalizeAgendaItems([{ title: "Dinner", date: "2026-13-40" }]), /yyyy-MM-dd/);
 });

@@ -93,6 +93,7 @@ fun EditTournamentDialog(
     }
     var settingsHostCountry by remember(tournament.id) { mutableStateOf(tournament.hostCountry) }
     var settingsHostCity by remember(tournament.id) { mutableStateOf(tournament.hostCity) }
+    var settingsVenue by remember(tournament.id) { mutableStateOf(tournament.venue) }
     var settingsCountBestHands by remember(tournament.id) { mutableStateOf(tournament.countBestHands) }
     var settingsCountChickenHands by remember(tournament.id) { mutableStateOf(tournament.countChickenHands) }
     var settingsRoundScheduleRows by remember(tournament.id) {
@@ -268,6 +269,13 @@ fun EditTournamentDialog(
                             },
                         )
                     }
+                    TournamentVenueFields(
+                        venue = settingsVenue,
+                        onVenueChange = {
+                            settingsVenue = it
+                            renameError = null
+                        },
+                    )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -649,6 +657,7 @@ fun EditTournamentDialog(
                                 eventEndDate = validEventEndDate,
                                 hostCountry = newHostCountry,
                                 hostCity = newHostCity,
+                                venue = settingsVenue,
                                 associationLogoContentType = settingsLogo?.contentType,
                                 associationLogoBytes = settingsLogo?.bytes,
                                 associationLogoSourceTournamentId = reusedSettingsLogoTournament?.id,

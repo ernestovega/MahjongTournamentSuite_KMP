@@ -6,7 +6,6 @@ import {
   calculateTableCompletionStatus,
   hasDuplicateEmaAssignments,
   hasFourValidScores,
-  hasValidTablePoints,
 } from "./tournamentContentRules";
 
 test("allows an EMA assignment to an empty slot after progress starts", () => {
@@ -33,12 +32,6 @@ test("accepts four whole-number scores with a non-zero total", () => {
 test("rejects missing and non-whole-number scores", () => {
   assert.equal(hasFourValidScores([30000, 10000, -10000]), false);
   assert.equal(hasFourValidScores([30000, 10000, -10000, "1.5"]), false);
-});
-
-test("requires four numeric table-point values that total seven", () => {
-  assert.equal(hasValidTablePoints([4, 2, 1, 0]), true);
-  assert.equal(hasValidTablePoints([4, 2, 1, 1]), false);
-  assert.equal(hasValidTablePoints([4, 2, 1]), false);
 });
 
 test("detects duplicate EMA assignments and ignores empty slots", () => {
