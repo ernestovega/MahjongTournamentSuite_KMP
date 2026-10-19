@@ -19,6 +19,16 @@ class TablePointsTest {
     }
 
     @Test
+    fun aSubstituteWithForcedZeroLeavesFourTwoOneToTheOthers() {
+        assertEquals(listOf("4", "0", "2", "1"), TablePoints.fromScores(listOf(50, 30, 10, -90), forcedZeroSeat = 1))
+        assertEquals(listOf("0", "4", "2", "1"), TablePoints.fromScores(listOf(50, 30, 10, -90), forcedZeroSeat = 0))
+        assertEquals(listOf("3", "3", "1", "0"), TablePoints.fromScores(listOf(20, 20, 0, -40), forcedZeroSeat = 3))
+        assertEquals(listOf("4", "1,5", "1,5", "0"), TablePoints.fromScores(listOf(20, 0, 0, -40), forcedZeroSeat = 3))
+        assertEquals(listOf("2,33", "2,33", "2,33", "0"), TablePoints.fromScores(listOf(5, 5, 5, -15), forcedZeroSeat = 3))
+        assertNull(TablePoints.fromScores(listOf(1, null, 2, 3), forcedZeroSeat = 0))
+    }
+
+    @Test
     fun missingScoreGivesNoPoints() {
         assertNull(TablePoints.fromScores(listOf(30, null, 0, -30)))
     }

@@ -49,6 +49,8 @@ export type TableState = {
   manualPlayerNorthScore: string;
   isCompleted: boolean;
   useTotalsOnly: boolean;
+  /** Slot id of a substitute who left during this session. That seat gets 0 table points. Empty for most tables. */
+  forcedZeroPlayerId: string;
 };
 
 type Data = Record<string, unknown>;
@@ -76,6 +78,7 @@ export function tableStateFromData(data: Data): TableState {
     manualPlayerNorthScore: text("manualPlayerNorthScore"),
     isCompleted: Boolean(data.isCompleted ?? false),
     useTotalsOnly: Boolean(data.useTotalsOnly ?? false),
+    forcedZeroPlayerId: text("forcedZeroPlayerId"),
     version: Number(data.version ?? 0),
   };
 }

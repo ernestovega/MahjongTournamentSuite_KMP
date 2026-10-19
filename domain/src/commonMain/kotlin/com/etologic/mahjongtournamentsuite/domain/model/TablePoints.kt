@@ -9,10 +9,11 @@ object TablePoints {
      * The points of the four seats (East, South, West, North) for four scores.
      * Ties share the points of their places. The result is null while a score is missing.
      */
-    fun fromScores(scores: List<Int?>): List<String>? {
+    fun fromScores(scores: List<Int?>, forcedZeroSeat: Int? = null): List<String>? {
         require(scores.size == 4) { "A table has four seats." }
         if (scores.any { it == null }) return null
         val values = scores.map { it!! }
+        if (forcedZeroSeat != null) return withForcedZero(values, forcedZeroSeat)
         val ranked = values.withIndex().sortedByDescending { it.value }
         val (a, b, c, d) = ranked.map { it.value }
         val assigned = when {
@@ -27,6 +28,22 @@ object TablePoints {
         }
         val bySeat = Array(4) { "" }
         ranked.forEachIndexed { place, entry -> bySeat[entry.index] = assigned[place] }
+        return bySeat.toList()
+    }
+
+    /** A substitute at [forcedZeroSeat] gets 0. The other three seats share 4, 2 and 1 by their scores. */
+    private fun withForcedZero(values: List<Int>, forcedZeroSeat: Int): List<String> {
+        val others = values.withIndex().filter { it.index != forcedZeroSeat }.sortedByDescending { it.value }
+        val (a, b, c) = others.map { it.value }
+        val shared = when {
+            a == b && b == c -> listOf("2,33", "2,33", "2,33")
+            a == b -> listOf("3", "3", "1")
+            b == c -> listOf("4", "1,5", "1,5")
+            else -> listOf("4", "2", "1")
+        }
+        val bySeat = Array(4) { "" }
+        bySeat[forcedZeroSeat] = "0"
+        others.forEachIndexed { place, entry -> bySeat[entry.index] = shared[place] }
         return bySeat.toList()
     }
 }
@@ -46,4 +63,11 @@ val TableState.seatScores: List<String>
 
 /** The table points of the four seats, in the order East, South, West, North. A seat has "" while the scores are not valid. */
 val TableState.seatPoints: List<String>
-    get() = TablePoints.fromScores(seatScores.map { it.trim().toIntOrNull() }) ?: List(4) { "" }
+    get() = TablePoints.fromScores(seatScores.map { it.trim().toIntOrNull() }, forcedZeroSeat)
+        ?: List(4) { "" }
+
+/** The seat of the substitute who gets 0 table points in this table, or null. */
+val TableState.forcedZeroSeat: Int?
+    get() = forcedZeroPlayerId.trim().takeIf { it.isNotEmpty() }
+        ?.let { id -> listOf(playerEastId, playerSouthId, playerWestId, playerNorthId).indexOfFirst { it.trim() == id } }
+        ?.takeIf { it >= 0 }

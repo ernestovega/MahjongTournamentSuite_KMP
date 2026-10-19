@@ -62,6 +62,7 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -71,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
@@ -130,6 +132,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var nonMemberCountry by remember { mutableStateOf("") }
     var nonMemberError by remember { mutableStateOf<String?>(null) }
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
+    var substitutionSlotId by remember { mutableStateOf<Int?>(null) }
     var accountSlotId by remember { mutableStateOf<Int?>(null) }
     var invitations by remember { mutableStateOf<List<PlayerInvitation>>(emptyList()) }
     var accountBusy by remember { mutableStateOf(false) }
@@ -215,6 +218,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         }
         assignmentSlotId = null
         clearAssignmentSlotId = null
+        savingId = null
+    }
+
+    fun saveSubstitution(slotId: Int, substitution: PlayerSubstitution?) = scope.launch {
+        savingId = slotId
+        error = null
+        when (val result = presenter.setSubstitution(tournamentId, slotId, substitution)) {
+            is AppResult.Success -> refresh(force = true)
+            is AppResult.Failure -> error = result.error.toUiMessage()
+        }
+        substitutionSlotId = null
         savingId = null
     }
 
@@ -407,6 +421,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         assignmentFocusRestoreSlotId = slotId
         assignmentSlotId = slotId
     }
+
+    // A substitution matters only after the first table has data.
+    val tournamentStarted = tables.any { it.hasProgress }
+    val tournamentRounds = tables.map { it.roundId }.distinct().sorted()
 
     fun openClearAssignment(slotId: Int) {
         assignmentFocusRestoreSlotId = slotId
@@ -873,6 +891,24 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         )
     }
 
+    val substitutionSlot = substitutionSlotId?.let { id -> players.firstOrNull { it.id == id } }
+    if (substitutionSlot != null) {
+        val assigned = substitutionSlot.assignedEmaId?.let(playersByEma::get)
+        val firstOpenRound = tournamentRounds.firstOrNull { round ->
+            tables.none { it.roundId == round && substitutionSlot.id in it.playerIds && it.isCompleted }
+        } ?: tournamentRounds.lastOrNull() ?: 1
+        PlayerSubstitutionDialog(
+            playerName = assigned?.displayName ?: substitutionSlot.nonMember?.displayName ?: "player ${substitutionSlot.id}",
+            current = substitutionSlot.substitution,
+            rounds = tournamentRounds,
+            defaultRound = firstOpenRound,
+            busy = savingId != null,
+            onSave = { saveSubstitution(substitutionSlot.id, it) },
+            onRemove = { saveSubstitution(substitutionSlot.id, null) },
+            onDismiss = { substitutionSlotId = null },
+        )
+    }
+
     if (clearAssignmentSlot != null) {
         val assigned = clearAssignmentSlot.assignedEmaId?.let(playersByEma::get)
         val assignedName = assigned?.displayName ?: clearAssignmentSlot.nonMember?.displayName
@@ -1102,7 +1138,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         }
                         TournamentPlayerHeader("Tables", Modifier.width(TournamentPlayerTablesColumnWidth))
                         TournamentPlayerHeader("Account", Modifier.width(TournamentPlayerAccountColumnWidth))
-                        Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
+                        Spacer(Modifier.width(if (tournamentStarted) TournamentPlayerSubstituteActionColumnWidth else TournamentPlayerActionColumnWidth))
                     }
                     DataTableDivider()
                     LazyColumnWithScrollbar(
@@ -1151,8 +1187,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
                                 )
                                 Text(
-                                    playerName ?: "Not assigned",
+                                    (playerName ?: "Not assigned") + (slot.substitution?.let { " (${it.label})" } ?: ""),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
                                     modifier = Modifier.weight(1.2f),
                                 )
                                 if (isTeamsTournament) {
@@ -1199,7 +1236,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     }
                                 }
                                 Row(
-                                    modifier = Modifier.width(TournamentPlayerActionColumnWidth),
+                                    modifier = Modifier.width(if (tournamentStarted) TournamentPlayerSubstituteActionColumnWidth else TournamentPlayerActionColumnWidth),
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
@@ -1288,6 +1325,18 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                     },
                                             ) { Text("Clear", maxLines = 1, overflow = TextOverflow.Clip) }
                                         }
+                                        if (tournamentStarted) {
+                                            OutlinedButton(
+                                                enabled = !loading && savingId == null,
+                                                onClick = { substitutionSlotId = slot.id },
+                                            ) {
+                                                Text(
+                                                    if (slot.substitution == null) "Substitute" else "Substitution",
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Clip,
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -1309,6 +1358,7 @@ private val TournamentPlayerTeamColumnWidth = 144.dp
 private val TournamentPlayerTablesColumnWidth = 220.dp
 private val TournamentPlayerAccountColumnWidth = 104.dp
 private val TournamentPlayerActionColumnWidth = 112.dp
+private val TournamentPlayerSubstituteActionColumnWidth = 250.dp
 private val AssignmentPhotoColumnWidth = 48.dp
 private val AssignmentCountryColumnWidth = 64.dp
 private val AssignmentEmaColumnWidth = 96.dp

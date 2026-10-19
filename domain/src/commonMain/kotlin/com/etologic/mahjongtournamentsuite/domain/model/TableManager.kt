@@ -19,6 +19,8 @@ data class TableState(
     val manualPlayerNorthScore: String = "",
     val isCompleted: Boolean,
     val useTotalsOnly: Boolean,
+    /** Slot id of a substitute who left during this session. That seat gets 0 table points. Empty for most tables. */
+    val forcedZeroPlayerId: String = "",
 )
 
 data class TableHand(

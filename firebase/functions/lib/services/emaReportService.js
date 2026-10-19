@@ -4,6 +4,7 @@ exports.EMA_REPORT_HEADERS = void 0;
 exports.buildEmaReport = buildEmaReport;
 exports.generateEmaReport = generateEmaReport;
 const ExcelJS = require("exceljs");
+const playerSubstitution_1 = require("./playerSubstitution");
 const httpError_1 = require("../api/httpError");
 const firebase_1 = require("../firebase");
 const playersService_1 = require("./playersService");
@@ -131,7 +132,18 @@ async function generateEmaReport(params) {
             .filter((value) => typeof value === "string" && value.length > 0))];
     const registry = await Promise.all(emaIds.map((emaId) => firebase_1.db.collection(playersService_1.EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()));
     const playersById = new Map(registry.filter((player) => player.exists).map((player) => [player.id, player]));
-    const reportRows = params.rows.map((ranking) => {
+    // A slot with no person is a filler for a player who left. The report does not include it.
+    // A player that the head referee excluded after an illness is not included either.
+    const hasPerson = (playerId) => {
+        const slot = slotsById.get(playerId);
+        if (slot == null)
+            return true;
+        if ((0, playerSubstitution_1.readSubstitution)(slot.get("substitution"))?.excludedFromEma === true)
+            return false;
+        return typeof slot.get("assignedEmaId") === "string" || slot.get("nonMember") != null;
+    };
+    const reportedRows = params.rows.filter((row) => hasPerson(row.playerId));
+    const reportRows = reportedRows.map((ranking) => {
         const slot = slotsById.get(ranking.playerId);
         if (!slot)
             throw (0, httpError_1.badRequest)("Ranking contains an unknown tournament player", { playerId: ranking.playerId });
@@ -163,7 +175,7 @@ async function generateEmaReport(params) {
     });
     return buildEmaReport({
         tournamentName: String(tournament.get("name") ?? ""),
-        participantCount: Number(tournament.get("numPlayers") ?? params.rows.length),
+        participantCount: Number(tournament.get("numPlayers") ?? reportedRows.length),
         startDate: String(tournament.get("eventStartDate") ?? ""),
         endDate: String(tournament.get("eventEndDate") ?? ""),
         hostCountry: String(tournament.get("hostCountry") ?? ""),

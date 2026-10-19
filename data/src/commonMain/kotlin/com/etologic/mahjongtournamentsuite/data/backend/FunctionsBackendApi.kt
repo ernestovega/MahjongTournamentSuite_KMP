@@ -11,7 +11,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.AcceptInvitationRequ
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AcceptInvitationResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
@@ -25,6 +25,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserReque
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
@@ -391,6 +392,26 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
+    suspend fun setPlayerSubstitution(
+        idToken: String,
+        tournamentId: String,
+        playerId: Int,
+        request: PlayerSubstitutionDto,
+    ): OkResponseDto = put(
+        path = "/tournaments/$tournamentId/players/$playerId/substitution",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun removePlayerSubstitution(
+        idToken: String,
+        tournamentId: String,
+        playerId: Int,
+    ): OkResponseDto = delete(
+        path = "/tournaments/$tournamentId/players/$playerId/substitution",
+        idToken = idToken,
+    )
+
     private fun playerTablePath(tournamentId: String, roundId: Int, tableId: Int) =
         "/player/tournaments/$tournamentId/tables/$roundId/$tableId"
 
@@ -406,14 +427,14 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    suspend fun assignSeats(
+    suspend fun addPenalties(
         idToken: String,
         tournamentId: String,
         roundId: Int,
         tableId: Int,
-        request: SeatsRequestDto,
+        request: PenaltiesRequestDto,
     ): OkResponseDto = post(
-        path = "${playerTablePath(tournamentId, roundId, tableId)}/seats",
+        path = "${playerTablePath(tournamentId, roundId, tableId)}/penalties",
         requestBody = request,
         idToken = idToken,
     )

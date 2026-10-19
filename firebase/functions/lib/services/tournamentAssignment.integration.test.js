@@ -42,11 +42,28 @@ async function startATable(tournamentId) {
         await assign(id, 1, "B");
         strict_1.default.equal((await firebase_1.db.collection("tournaments").doc(id).collection("players").doc("1").get()).get("assignedEmaId"), "B");
     });
-    (0, node_test_1.it)("refuses to replace a player after a table has data", async () => {
+    (0, node_test_1.it)("clears a player after a table has data and keeps the table", async () => {
         const id = await (0, firestoreFixtures_1.seedTournament)({ tables: [{ roundId: 1, tableId: 1 }] });
         await seedPlayers(id);
         await startATable(id);
-        await strict_1.default.rejects(assign(id, 1, "B"), (error) => error instanceof httpError_1.HttpError && error.status === 409);
+        const tournament = firebase_1.db.collection("tournaments").doc(id);
+        await assign(id, 1, null);
+        const slot = await tournament.collection("players").doc("1").get();
+        strict_1.default.equal(slot.get("assignedEmaId"), null);
+        strict_1.default.equal((await tournament.collection("emaPlayerAssignments").doc("A").get()).exists, false);
+        strict_1.default.equal((await tournament.get()).get("tablesWithProgress"), 1);
+        strict_1.default.equal((await tournament.collection("tables").doc("1_1").get()).get("hasProgress"), true);
+    });
+    (0, node_test_1.it)("assigns another person to a slot that has data, and logs each change", async () => {
+        const id = await (0, firestoreFixtures_1.seedTournament)({ tables: [{ roundId: 1, tableId: 1 }] });
+        await seedPlayers(id);
+        await startATable(id);
+        const tournament = firebase_1.db.collection("tournaments").doc(id);
+        await assign(id, 1, null);
+        await assign(id, 1, "C");
+        strict_1.default.equal((await tournament.collection("players").doc("1").get()).get("assignedEmaId"), "C");
+        const log = await tournament.collection("playerLog").get();
+        strict_1.default.deepEqual(log.docs.map((doc) => doc.get("kind")).sort(), ["clear", "replace"]);
     });
     (0, node_test_1.it)("still allows filling an empty slot after a table has data", async () => {
         const id = await (0, firestoreFixtures_1.seedTournament)({ tables: [{ roundId: 1, tableId: 1 }] });

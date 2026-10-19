@@ -125,13 +125,15 @@ export function adminRouter(): Router {
       const actor = res.locals.auth as Actor;
       const email = requireEmail(req.body?.email, "email");
       const alias = String(req.body?.alias ?? "").trim();
-      const role = parseGlobalUserRole(req.body?.role);
+      // A player account always has an EMA id. An editor may set it for a player account only.
+      const role = req.body?.role === "PLAYER" ? "PLAYER" as const : parseGlobalUserRole(req.body?.role);
       if (!role) throw badRequest("Invalid role");
       if (role === "ADMIN" && !hasAdminClaim(actor)) throw forbidden("Only admins can create admins");
       const assignmentScope = await assignmentScopeFor(actor);
-      const tournamentAssignments = role === "ADMIN" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments);
+      const tournamentAssignments = role === "EDITOR" ? parseTournamentAssignments(req.body?.tournamentAssignments) : [];
       // The EMA id links the account to a player. Only an admin sets it. Check it before the account exists.
       const emaId = String(req.body?.emaId ?? "").trim() || null;
+      if (role === "PLAYER" && emaId == null) throw badRequest("A player account needs an EMA id");
       if (emaId != null) {
         if (!hasAdminClaim(actor)) throw forbidden("Only an admin can set the EMA id of an account");
         await assertEmaIdAvailable(emaId);
@@ -186,7 +188,7 @@ export function adminRouter(): Router {
       const nextEmaId = typeof req.body?.emaId === "string" ? req.body.emaId.trim() || null : undefined;
       const emaIdChanges = nextEmaId !== undefined && nextEmaId !== (current.emaId ?? null);
       if (emaIdChanges) {
-        if (!hasAdminClaim(actor)) throw forbidden("Only an admin can change the EMA id of an account");
+        if (role !== "PLAYER" && !hasAdminClaim(actor)) throw forbidden("Only an admin can change the EMA id of an editor account");
         if (nextEmaId != null) await assertEmaIdAvailable(nextEmaId, current.uid);
       }
 
@@ -198,7 +200,6 @@ export function adminRouter(): Router {
         tournamentAssignments,
         assignmentScope,
       });
-      // The EMA id links the account to a player. Only an admin changes it.
       if (emaIdChanges) await setAccountEmaId({ uid: current.uid, emaId: nextEmaId ?? null });
       await bumpGlobalDataVersion("users");
       res.status(200).json(await getManagedUser(current.uid, assignmentScope));

@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { seatIdsOf } from "./handScoring";
+import { readSubstitution, slotResultIgnored, substitutePlays } from "./playerSubstitution";
 import { buildTableDigest, DIGEST_VERSION, type DigestResult, type DigestTable, type TableDigest } from "./statisticsDigest";
 
 /**
@@ -156,16 +157,28 @@ export async function prepareTableStats(
   if (completed && params.table != null) {
     const slotIds = (seatIdsOf(params.table) ?? []).map(intOf);
     const emaBySlot = new Map<number, string>();
+    const uncountedSlots = new Set<number>();
+    const zeroedSlots = new Set<number>();
     if (slotIds.length === 4 && slotIds.every((id) => id != null)) {
       const slotSnapshots = await transaction.getAll(
         ...(slotIds as number[]).map((id) => db.collection("tournaments").doc(params.tournamentId).collection("players").doc(String(id))),
       );
       slotSnapshots.forEach((snapshot, index) => {
         const ema = snapshot.get("assignedEmaId");
-        emaBySlot.set((slotIds as number[])[index], typeof ema === "string" ? ema.trim() : "");
+        const slotId = (slotIds as number[])[index];
+        const substitution = readSubstitution(snapshot.get("substitution"));
+        // A substitute is not recorded. So the person has no personal statistics from the rounds of the substitute.
+        // An excluded player has no personal statistics at all.
+        const recorded = !substitutePlays(substitution, params.roundId) && substitution?.excludedFromEma !== true;
+        emaBySlot.set(slotId, typeof ema === "string" && recorded ? ema.trim() : "");
+        if (slotResultIgnored(substitution, params.roundId)) uncountedSlots.add(slotId);
+        // A disqualified player gets 0 table points and 0 score. These zeros count for the statistics.
+        if (substitution?.reason === "DISQUALIFIED") zeroedSlots.add(slotId);
       });
     }
-    const digest = buildTableDigest({ tournamentId: params.tournamentId, table: params.table, hands: params.hands, emaBySlot });
+    const digest = buildTableDigest({
+      tournamentId: params.tournamentId, table: params.table, hands: params.hands, emaBySlot, uncountedSlots, zeroedSlots,
+    });
     next = digest.results.length === 4 ? digest : null;
   }
   if (old == null && next == null) return null;
@@ -188,6 +201,7 @@ export async function prepareTableStats(
 
   const slotDelta = new Map<number, { points: number; score: number }>();
   const addSlot = (result: DigestResult, sign: 1 | -1) => {
+    if (result.countsForSlot === false) return;
     const entry = slotDelta.get(result.slotId) ?? { points: 0, score: 0 };
     entry.points += sign * result.points;
     entry.score += sign * result.score;

@@ -45,6 +45,7 @@ function tableStateFromData(data) {
         manualPlayerNorthScore: text("manualPlayerNorthScore"),
         isCompleted: Boolean(data.isCompleted ?? false),
         useTotalsOnly: Boolean(data.useTotalsOnly ?? false),
+        forcedZeroPlayerId: text("forcedZeroPlayerId"),
         version: Number(data.version ?? 0),
     };
 }

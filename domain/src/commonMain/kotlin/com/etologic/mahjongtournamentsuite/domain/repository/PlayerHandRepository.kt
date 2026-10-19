@@ -3,18 +3,19 @@ package com.etologic.mahjongtournamentsuite.domain.repository
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
 import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
+import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 
 /** Hand entry by a player who sits at the table. */
 interface PlayerHandRepository {
     /**
-     * A player of the table assigns the four seats. [seatSlotIds] is in the order east, south, west, north.
-     * It works until the first hand is saved. [expectedVersion] is the table version that the app shows.
+     * Adds penalties to the hand in play. The hand does not advance. The penalties count in the table totals
+     * when the hand is saved. [expectedVersion] is the table version that the app shows.
      */
-    suspend fun assignSeats(
+    suspend fun addPenalties(
         tournamentId: String,
         roundId: Int,
         tableId: Int,
-        seatSlotIds: List<Int>,
+        penalties: List<PenaltyEntry>,
         expectedVersion: Long,
     ): AppResult<Unit>
 

@@ -203,6 +203,8 @@ internal class FakeTournamentRepository : TournamentRepository {
         nonMember: NonMemberPlayer?,
     ) = unusedFakeResult<Unit>()
 
+    override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = unusedFakeResult<Unit>()
+
     override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> =
         AppResult.Success(rounds)
 

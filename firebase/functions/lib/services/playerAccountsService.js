@@ -239,9 +239,13 @@ async function setAccountEmaId(params) {
         return;
     await claimEmaId(params.uid, params.emaId);
     await (0, usersService_1.grantPlayerCapability)(params.uid);
+    await linkAccountToAllSlots(params.emaId);
+}
+/** Links every tournament slot that holds the EMA id to the account that owns the id. Sends no email. */
+async function linkAccountToAllSlots(emaId) {
     const tournaments = await firebase_1.db.collection("tournaments").get();
     for (const tournament of tournaments.docs) {
-        const assignment = await firebase_1.db.doc(`tournaments/${tournament.id}/emaPlayerAssignments/${params.emaId}`).get();
+        const assignment = await firebase_1.db.doc(`tournaments/${tournament.id}/emaPlayerAssignments/${emaId}`).get();
         if (assignment.exists)
             await linkKnownAccountToSlot(tournament.id, Number(assignment.get("playerId")));
     }
@@ -465,6 +469,8 @@ async function acceptInvitation(params) {
     }
     await (0, usersService_1.grantPlayerCapability)(uid);
     await (0, dataVersionsService_1.bumpTournamentDataVersion)(parsed.tournamentId, "players");
+    // The account owns the EMA id now, so the player sees every other tournament with this id too.
+    await linkAccountToAllSlots(emaId);
     return { tournamentId: parsed.tournamentId, email };
 }
 async function linkAccountToSlot(params) {

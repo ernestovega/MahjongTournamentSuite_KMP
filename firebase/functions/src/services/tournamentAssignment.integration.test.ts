@@ -46,12 +46,33 @@ describe("changing players after results start", () => {
     assert.equal((await db.collection("tournaments").doc(id).collection("players").doc("1").get()).get("assignedEmaId"), "B");
   });
 
-  it("refuses to replace a player after a table has data", async () => {
+  it("clears a player after a table has data and keeps the table", async () => {
     const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
     await seedPlayers(id);
     await startATable(id);
+    const tournament = db.collection("tournaments").doc(id);
 
-    await assert.rejects(assign(id, 1, "B"), (error: unknown) => error instanceof HttpError && error.status === 409);
+    await assign(id, 1, null);
+
+    const slot = await tournament.collection("players").doc("1").get();
+    assert.equal(slot.get("assignedEmaId"), null);
+    assert.equal((await tournament.collection("emaPlayerAssignments").doc("A").get()).exists, false);
+    assert.equal((await tournament.get()).get("tablesWithProgress"), 1);
+    assert.equal((await tournament.collection("tables").doc("1_1").get()).get("hasProgress"), true);
+  });
+
+  it("assigns another person to a slot that has data, and logs each change", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    await seedPlayers(id);
+    await startATable(id);
+    const tournament = db.collection("tournaments").doc(id);
+
+    await assign(id, 1, null);
+    await assign(id, 1, "C");
+
+    assert.equal((await tournament.collection("players").doc("1").get()).get("assignedEmaId"), "C");
+    const log = await tournament.collection("playerLog").get();
+    assert.deepEqual(log.docs.map((doc) => doc.get("kind")).sort(), ["clear", "replace"]);
   });
 
   it("still allows filling an empty slot after a table has data", async () => {

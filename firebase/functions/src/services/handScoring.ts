@@ -105,10 +105,27 @@ export function handScoreTotals(table: Data, hands: Data[]): SeatValues | null {
   return counted ? totals : null;
 }
 
-/** Table points from the four seat scores. Ties share the points of their places. Null when a score is missing. */
-export function pointsFromScores(scores: SeatTexts): SeatTexts | null {
+/**
+ * Table points from the four seat scores. Ties share the points of their places. Null when a score is missing.
+ * A forced seat is a substitute who gets 0 points. The other three seats share 4, 2 and 1.
+ */
+export function pointsFromScores(scores: SeatTexts, forcedZeroSeat: number | null = null): SeatTexts | null {
   const numbers = scores.map((score) => (/^-?\d+$/.test(score.trim()) ? Number(score.trim()) : null));
   if (numbers.some((value) => value == null)) return null;
+  if (forcedZeroSeat != null) {
+    const others = (numbers as number[]).map((score, seat) => ({ score, seat }))
+      .filter((entry) => entry.seat !== forcedZeroSeat).sort((a, b) => b.score - a.score);
+    const [a, b, c] = others.map((entry) => entry.score);
+    let shared: string[];
+    if (a === b && b === c) shared = ["2,33", "2,33", "2,33"];
+    else if (a === b) shared = ["3", "3", "1"];
+    else if (b === c) shared = ["4", "1,5", "1,5"];
+    else shared = ["4", "2", "1"];
+    const forced: string[] = ["", "", "", ""];
+    forced[forcedZeroSeat] = "0";
+    others.forEach((entry, index) => { forced[entry.seat] = shared[index]; });
+    return forced as SeatTexts;
+  }
   const ranked = (numbers as number[]).map((score, seat) => ({ score, seat })).sort((a, b) => b.score - a.score);
   const [a, b, c, d] = ranked.map((entry) => entry.score);
   let assigned: string[];
@@ -141,7 +158,9 @@ export function tablePointsOf(table: Data): {
     score("manualPlayerWestScore", "playerWestScore"),
     score("manualPlayerNorthScore", "playerNorthScore"),
   ] as SeatTexts;
-  const points = pointsFromScores(scores) ?? ["", "", "", ""];
+  const forcedId = text(table.forcedZeroPlayerId);
+  const forcedSeat = forcedId.length === 0 ? -1 : SEAT_FIELDS.findIndex((field) => text(table[field]) === forcedId);
+  const points = pointsFromScores(scores, forcedSeat >= 0 ? forcedSeat : null) ?? ["", "", "", ""];
   return { playerEastPoints: points[0], playerSouthPoints: points[1], playerWestPoints: points[2], playerNorthPoints: points[3] };
 }
 
@@ -157,6 +176,9 @@ export function tableTotalsPatch(table: Data, hands: Data[]): Record<string, str
   return {
     playerEastScore: scores[0], playerSouthScore: scores[1], playerWestScore: scores[2], playerNorthScore: scores[3],
     ...tablePointsOf({
+      forcedZeroPlayerId: table.forcedZeroPlayerId,
+      playerEastId: table.playerEastId, playerSouthId: table.playerSouthId,
+      playerWestId: table.playerWestId, playerNorthId: table.playerNorthId,
       useTotalsOnly: false,
       playerEastScore: scores[0], playerSouthScore: scores[1], playerWestScore: scores[2], playerNorthScore: scores[3],
     }),

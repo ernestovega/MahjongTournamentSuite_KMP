@@ -5,12 +5,15 @@ exports.listTournamentTeams = listTournamentTeams;
 exports.tournamentHasStartedTables = tournamentHasStartedTables;
 exports.updateTournamentTeam = updateTournamentTeam;
 exports.assignTournamentPlayer = assignTournamentPlayer;
+exports.setPlayerSubstitution = setPlayerSubstitution;
 exports.listTournamentRounds = listTournamentRounds;
 exports.listTournamentTables = listTournamentTables;
 const statisticsStore_1 = require("./statisticsStore");
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
+const handScoring_1 = require("./handScoring");
+const playerSubstitution_1 = require("./playerSubstitution");
 const playersService_1 = require("./playersService");
 const playerAccountsService_1 = require("./playerAccountsService");
 const tournamentContentRules_1 = require("./tournamentContentRules");
@@ -64,6 +67,7 @@ async function listTournamentPlayers(tournamentId) {
             : d.get("invitationStatus") === "INVITED" ? "INVITED" : "NONE"),
         contactedAt: contactedAtOf(d),
         invitedEmail: typeof d.get("invitedEmail") === "string" ? d.get("invitedEmail") : null,
+        substitution: (0, playerSubstitution_1.readSubstitution)(d.get("substitution")),
         createdAt: timestampToIso(d.get("createdAt")),
         updatedAt: timestampToIso(d.get("updatedAt")),
     }))
@@ -106,6 +110,26 @@ async function listTournamentTeams(tournamentId) {
 /** Tables with data are counted on the tournament document by every save and reset. */
 function tournamentHasStartedTables(tournament) {
     return Number(tournament.get("tablesWithProgress") ?? 0) > 0;
+}
+/**
+ * Sets or removes the substitute seat of a table, and stores the table points again.
+ * It raises the version of the table, so an editor who has the table open gets a conflict.
+ * Returns the update for the version list of the tournament document.
+ */
+function changeTable(transaction, table, forcedZeroPlayerId) {
+    const version = Number(table.get("version") ?? 0) + 1;
+    const points = (0, handScoring_1.tablePointsOf)({ ...table.data(), forcedZeroPlayerId: forcedZeroPlayerId ?? "" });
+    transaction.update(table.ref, {
+        forcedZeroPlayerId: forcedZeroPlayerId ?? firestore_1.FieldValue.delete(),
+        ...points,
+        version,
+        updatedAt: firestore_1.FieldValue.serverTimestamp(),
+    });
+    return (0, dataVersionsService_1.tableVersionUpdate)(Number(table.get("roundId")), Number(table.get("tableId")), version);
+}
+/** Appends one entry to the log of player changes. The log is write-only for now. */
+function logPlayerChange(transaction, tournamentRef, entry) {
+    transaction.set(tournamentRef.collection("playerLog").doc(), { ...entry, at: firestore_1.FieldValue.serverTimestamp() });
 }
 /**
  * Updates one team and its fixed schedule slots.
@@ -261,9 +285,8 @@ async function assignTournamentPlayer(params) {
         const previousNonMember = readNonMember(player.get("nonMember"));
         const assignmentChanged = previousEmaId !== params.emaId
             || JSON.stringify(previousNonMember) !== JSON.stringify(params.nonMember);
-        if ((previousEmaId != null || previousNonMember != null) && assignmentChanged && tournamentHasProgress) {
-            throw (0, httpError_1.conflict)("Players cannot change after table results have started");
-        }
+        // A slot with data can change. The tables, hands and team stay on the slot number.
+        // The statistics follow the EMA id of the slot, so a cleared slot adds nothing to any person.
         const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
         const nextAssignment = nextAssignmentRef == null ? null : await transaction.get(nextAssignmentRef);
         const existingAssignments = params.emaId == null
@@ -285,6 +308,11 @@ async function assignTournamentPlayer(params) {
         const pendingInvitations = previousEmaId !== params.emaId && hadInvitation
             ? await transaction.get(firebase_1.db.collection(`tournaments/${params.tournamentId}/playerInvitations`)
                 .where("playerId", "==", params.playerId))
+            : null;
+        // A new person starts without the substitution of the old person.
+        const hadSubstitution = assignmentChanged && player.get("substitution") != null;
+        const forcedTables = hadSubstitution
+            ? await transaction.get(tournamentRef.collection("tables").where("forcedZeroPlayerId", "==", String(params.playerId)))
             : null;
         let assignedCountry = params.nonMember?.country ?? "";
         if (params.emaId != null) {
@@ -314,11 +342,21 @@ async function assignTournamentPlayer(params) {
         }
         // Tables that are complete hold the EMA number of the slot in their statistics.
         statisticsChanged = previousEmaId !== params.emaId && tournamentHasProgress;
+        if (assignmentChanged) {
+            logPlayerChange(transaction, tournamentRef, {
+                kind: params.emaId == null && params.nonMember == null ? "clear" : "replace",
+                slotId: params.playerId,
+                previous: { emaId: previousEmaId, nonMember: previousNonMember },
+                next: { emaId: params.emaId, nonMember: params.nonMember },
+                uid: params.uid ?? null,
+            });
+        }
         transaction.update(playerRef, {
             assignedEmaId: params.emaId,
             nonMember: params.nonMember,
             assignedCountry,
             updatedAt: firestore_1.FieldValue.serverTimestamp(),
+            ...(hadSubstitution ? { substitution: firestore_1.FieldValue.delete() } : {}),
             ...(pendingInvitations != null
                 ? {
                     invitationStatus: "NONE",
@@ -329,8 +367,13 @@ async function assignTournamentPlayer(params) {
                 }
                 : {}),
         });
-        transaction.update(tournamentRef, (0, dataVersionsService_1.tournamentVersionUpdate)("players"));
+        const tableVersions = {};
+        forcedTables?.docs.forEach((table) => {
+            Object.assign(tableVersions, changeTable(transaction, table, null));
+        });
+        transaction.update(tournamentRef, { ...(0, dataVersionsService_1.tournamentVersionUpdate)("players"), ...tableVersions });
         transaction.set(firebase_1.db.collection("_meta").doc("dataVersions"), (0, dataVersionsService_1.globalVersionUpdate)("tournaments"), { merge: true });
+        statisticsChanged = statisticsChanged || hadSubstitution;
     });
     await refreshAssignmentCountries(params.tournamentId);
     if (statisticsChanged)
@@ -342,6 +385,77 @@ async function assignTournamentPlayer(params) {
     // An account that already owns this EMA id sees the tournament at once. No email is sent here.
     if (params.emaId != null)
         await (0, playerAccountsService_1.linkKnownAccountToSlot)(params.tournamentId, params.playerId);
+}
+/**
+ * Sets or removes the substitution of a player who played some rounds. By the EMA rules the player gets no result
+ * for the rounds that the substitute plays. When the substitute leaves the table after the session started
+ * (`duringSession`), the table of `fromRound` gives 0 table points to the seat of the player.
+ * The change is one transaction, so an editor who has the table open gets a conflict and sees the new points.
+ */
+async function setPlayerSubstitution(params) {
+    const tournamentRef = firebase_1.db.collection("tournaments").doc(params.tournamentId);
+    const playerRef = tournamentRef.collection("players").doc(String(params.playerId));
+    const next = params.substitution;
+    if (next != null) {
+        if (!playerSubstitution_1.SUBSTITUTION_REASONS.includes(next.reason))
+            throw (0, httpError_1.badRequest)("Unknown substitution reason");
+        if (next.excludedFromEma && next.reason !== "ILLNESS") {
+            throw (0, httpError_1.badRequest)("Only a player who is ill can be excluded from the EMA ranking");
+        }
+        if (next.duringSession && next.reason === "LATE") {
+            throw (0, httpError_1.badRequest)("A late player has no session in progress");
+        }
+    }
+    await firebase_1.db.runTransaction(async (transaction) => {
+        const [tournament, player, forcedTables] = await Promise.all([
+            transaction.get(tournamentRef),
+            transaction.get(playerRef),
+            transaction.get(tournamentRef.collection("tables").where("forcedZeroPlayerId", "==", String(params.playerId))),
+        ]);
+        if (!tournament.exists)
+            throw (0, httpError_1.notFound)("Tournament not found");
+        if (!player.exists)
+            throw (0, httpError_1.notFound)("Player not found");
+        const assigned = typeof player.get("assignedEmaId") === "string" || readNonMember(player.get("nonMember")) != null;
+        if (!assigned)
+            throw (0, httpError_1.conflict)("Only an assigned player can be substituted");
+        let targetTable = null;
+        if (next != null) {
+            if (!Number.isInteger(next.fromRound) || next.fromRound < 1 || next.fromRound > Number(tournament.get("numRounds") ?? 0)) {
+                throw (0, httpError_1.badRequest)("The round is not part of the tournament");
+            }
+            if (next.duringSession) {
+                const tables = await transaction.get(tournamentRef.collection("tables").where("roundId", "==", next.fromRound));
+                targetTable = tables.docs.find((table) => (table.get("playerIds") ?? [])
+                    .map(Number).includes(params.playerId)) ?? null;
+                if (targetTable == null)
+                    throw (0, httpError_1.conflict)("The player has no table in this round");
+            }
+        }
+        const tableVersions = {};
+        forcedTables.docs.forEach((table) => {
+            if (table.id !== targetTable?.id) {
+                Object.assign(tableVersions, changeTable(transaction, table, null));
+            }
+        });
+        if (targetTable != null) {
+            Object.assign(tableVersions, changeTable(transaction, targetTable, String(params.playerId)));
+        }
+        transaction.update(playerRef, {
+            substitution: next ?? firestore_1.FieldValue.delete(),
+            updatedAt: firestore_1.FieldValue.serverTimestamp(),
+        });
+        logPlayerChange(transaction, tournamentRef, {
+            kind: next == null ? "restore" : "substitute",
+            slotId: params.playerId,
+            previous: (0, playerSubstitution_1.readSubstitution)(player.get("substitution")),
+            next,
+            uid: params.uid,
+        });
+        transaction.update(tournamentRef, { ...(0, dataVersionsService_1.tournamentVersionUpdate)("players"), ...tableVersions });
+    });
+    await (0, statisticsStore_1.refreshTournamentStats)(params.tournamentId);
+    await (0, dataVersionsService_1.bumpTournamentDataVersion)(params.tournamentId, "players");
 }
 async function listTournamentRounds(tournamentId) {
     const snap = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("rounds").get();

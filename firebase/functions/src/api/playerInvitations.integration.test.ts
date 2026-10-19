@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { after, before, describe, it } from "node:test";
 
+import { Timestamp } from "firebase-admin/firestore";
+
 import { auth, db } from "../firebase";
 import { seedTournament } from "../testing/firestoreFixtures";
 import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
@@ -93,6 +95,28 @@ describe("player invitations", () => {
 
     // The token works once.
     assert.equal((await server.request("POST", "/player/invitations/accept", { body: { token, password: "Passw0rd!-new" } })).status, 409);
+  });
+
+  it("links every tournament of the EMA id when the player accepts one invitation", async () => {
+    const ema = `EMA-${randomUUID()}`;
+    const otherTournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    await seedSlot(20, ema);
+    await db.doc(`tournaments/${otherTournamentId}/players/5`).set({
+      id: 5, name: "P5", team: 0, assignedEmaId: null, nonMember: null, assignedCountry: "",
+    });
+    await assignTournamentPlayer({ tournamentId: otherTournamentId, playerId: 5, emaId: ema, nonMember: null });
+    const email = `${randomUUID()}@example.test`;
+    assert.equal((await invite(20, email)).outcome, "INVITED");
+
+    const accepted = await server.request("POST", "/player/invitations/accept", {
+      body: { token: await lastMailTo(email), password: "Passw0rd!-new" },
+    });
+
+    assert.equal(accepted.status, 200);
+    const user = await auth.getUserByEmail(email);
+    assert.equal((await db.doc(`tournaments/${tournamentId}/players/20`).get()).get("accountUid"), user.uid);
+    assert.equal((await db.doc(`tournaments/${otherTournamentId}/players/5`).get()).get("accountUid"), user.uid);
+    assert.ok((await db.doc(`users/${user.uid}/playerTournaments/${otherTournamentId}`).get()).exists);
   });
 
   it("keeps the invitation when the email cannot be sent, so the editor can resend", async () => {
@@ -198,6 +222,14 @@ describe("player invitations", () => {
     const createAccountWith = (token: string, email: string, emaId?: string) =>
       server.request("POST", "/admin/users", { token, body: { email, role: "EDITOR", alias: "x", emaId, tournamentAssignments: [] } });
 
+    it("needs an EMA id for a player account, and lets only an admin set the EMA id of an editor", async () => {
+      const body = { email: `${randomUUID()}@example.test`, role: "PLAYER", alias: "x", emaId: `EMA-${randomUUID()}` };
+
+      assert.equal((await server.request("POST", "/admin/users", { token: editor.token, body: { ...body, emaId: undefined } })).status, 400);
+      assert.equal((await server.request("POST", "/admin/users", { token: editor.token, body: { ...body, role: "EDITOR", tournamentAssignments: [] } })).status, 403);
+      await assert.rejects(auth.getUserByEmail(body.email));
+    });
+
     it("refuses an EMA id and an email that belong to another account", async () => {
       const admin = await createAccount({ role: "ADMIN" });
       const owner = await createAccount({ role: "EDITOR" });
@@ -225,6 +257,23 @@ describe("player invitations", () => {
       assert.equal((await createAccountWith(editor.token, `${randomUUID()}@example.test`, ema)).status, 403);
     });
 
+    it("lets an editor change the EMA id of a player account, but not of an editor account", async () => {
+      const player = await createAccount({ role: "PLAYER" });
+      const other = await createAccount({ role: "EDITOR" });
+      const ema = `EMA-${randomUUID()}`;
+      await seedSlot(22, ema);
+      const put = (account: TestAccount, role: string) => server.request("PUT", `/admin/users/${account.uid}`, {
+        token: editor.token,
+        body: { email: account.email, role, alias: "x", tournamentAssignments: [], emaId: ema },
+      });
+
+      assert.equal((await put(other, "EDITOR")).status, 403);
+      assert.equal((await put(player, "PLAYER")).status, 200);
+
+      assert.equal((await db.doc(`users/${player.uid}`).get()).get("emaId"), ema);
+      assert.equal((await db.doc(`tournaments/${tournamentId}/players/22`).get()).get("accountUid"), player.uid);
+    });
+
     it("lets an admin promote a player-only account to editor and keeps its player access", async () => {
       const admin = await createAccount({ role: "ADMIN" });
       const player = await createAccount({ role: "PLAYER" });
@@ -236,6 +285,117 @@ describe("player invitations", () => {
 
       assert.equal(response.status, 200);
       assert.deepEqual((await auth.getUser(player.uid)).customClaims, { player: true, editor: true });
+    });
+  });
+
+  describe("state table cases (docs/player-accounts-states.md)", () => {
+    const accept = (token: string) =>
+      server.request("POST", "/player/invitations/accept", { body: { token, password: "Passw0rd!-new" } });
+    const slotOf = (id: number) => db.doc(`tournaments/${tournamentId}/players/${id}`).get();
+    const accountWith = async (ema: string) => {
+      const account = await createAccount({ role: "EDITOR" });
+      await db.doc(`emaPlayerRegistry/${ema}`).set({ country: "ES" });
+      await setAccountEmaId({ uid: account.uid, emaId: ema });
+      return account;
+    };
+
+    it("E: assigning an EMA id to a slot links the existing account at once and sends no email", async () => {
+      const ema = `EMA-${randomUUID()}`;
+      const account = await accountWith(ema);
+      const before = sent.length;
+
+      await seedSlot(30, ema);
+
+      assert.equal((await slotOf(30)).get("accountUid"), account.uid);
+      assert.equal(sent.length, before);
+    });
+
+    it("F: assigning an EMA id with no account leaves the slot unlinked and sends no email", async () => {
+      const before = sent.length;
+
+      await seedSlot(31, `EMA-${randomUUID()}`);
+
+      assert.equal((await slotOf(31)).get("accountUid"), undefined);
+      assert.equal(sent.length, before);
+    });
+
+    it("G: resend gives a new link and the old link stops working", async () => {
+      await seedSlot(32, `EMA-${randomUUID()}`);
+      const email = `${randomUUID()}@example.test`;
+      await invite(32, email);
+      const oldToken = await lastMailTo(email);
+
+      assert.equal(outcomeOf(await act("resend", [{ playerId: 32 }]), 32)?.outcome, "INVITED");
+      const newToken = await lastMailTo(email);
+
+      assert.notEqual(newToken, oldToken);
+      assert.equal((await accept(oldToken)).status, 404);
+      assert.equal((await accept(newToken)).status, 200);
+    });
+
+    it("I: a linked slot gets one reminder with send, and resend repeats it", async () => {
+      const ema = `EMA-${randomUUID()}`;
+      const account = await accountWith(ema);
+      await seedSlot(33, ema);
+      const mailsToAccount = () => sent.filter((mail) => mail.to === account.email).length;
+
+      assert.equal(outcomeOf(await act("send", [{ playerId: 33 }]), 33)?.outcome, "NOTIFIED");
+      assert.equal(mailsToAccount(), 1);
+      assert.equal(outcomeOf(await act("send", [{ playerId: 33 }]), 33)?.outcome, "SKIPPED");
+      assert.equal(mailsToAccount(), 1);
+      assert.equal(outcomeOf(await act("resend", [{ playerId: 33 }]), 33)?.outcome, "NOTIFIED");
+      assert.equal(mailsToAccount(), 2);
+    });
+
+    it("K: an expired invitation cannot be accepted and the slot stays unlinked", async () => {
+      await seedSlot(34, `EMA-${randomUUID()}`);
+      const email = `${randomUUID()}@example.test`;
+      await invite(34, email);
+      const pending = await db.collection(`tournaments/${tournamentId}/playerInvitations`)
+        .where("playerId", "==", 34).where("status", "==", "PENDING").get();
+      await pending.docs[0].ref.update({ expiresAt: Timestamp.fromMillis(Date.now() - 1000) });
+
+      assert.equal((await accept(await lastMailTo(email))).status, 409);
+      assert.equal((await slotOf(34)).get("accountUid"), undefined);
+    });
+
+    it("L: revoke unlinks only that tournament, keeps the account and its EMA id, and send links again", async () => {
+      const ema = `EMA-${randomUUID()}`;
+      const account = await accountWith(ema);
+      await seedSlot(35, ema);
+
+      assert.equal(outcomeOf(await act("revoke", [{ playerId: 35 }]), 35)?.outcome, "REVOKED");
+
+      const slot = await slotOf(35);
+      assert.equal(slot.get("accountUid"), undefined);
+      assert.equal(slot.get("invitationStatus"), "NONE");
+      assert.equal((await db.doc(`users/${account.uid}/playerTournaments/${tournamentId}`).get()).exists, false);
+      assert.equal((await db.doc(`users/${account.uid}`).get()).get("emaId"), ema);
+      assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).get("uid"), account.uid);
+
+      assert.equal(outcomeOf(await act("send", [{ playerId: 35 }]), 35)?.outcome, "NOTIFIED");
+      assert.equal((await slotOf(35)).get("accountUid"), account.uid);
+    });
+
+    it("D: changing the EMA id of an account releases the old tournaments and links the new ones", async () => {
+      const first = `EMA-${randomUUID()}`;
+      const second = `EMA-${randomUUID()}`;
+      const account = await accountWith(first);
+      await seedSlot(36, first);
+      await seedSlot(37, second);
+      assert.equal((await slotOf(36)).get("accountUid"), account.uid);
+
+      await setAccountEmaId({ uid: account.uid, emaId: second });
+
+      assert.equal((await slotOf(36)).get("accountUid"), undefined);
+      assert.equal((await slotOf(37)).get("accountUid"), account.uid);
+      assert.equal((await db.doc(`emaIdIndex/${first}`).get()).exists, false);
+    });
+
+    it("C: an account with no EMA id sees no tournament", async () => {
+      const account = await createAccount({ role: "EDITOR" });
+
+      assert.equal((await db.collection(`users/${account.uid}/playerTournaments`).get()).size, 0);
     });
   });
 });

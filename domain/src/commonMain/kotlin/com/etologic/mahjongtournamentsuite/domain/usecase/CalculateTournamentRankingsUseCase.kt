@@ -17,16 +17,19 @@ class CalculateTournamentRankingsUseCase {
         includeTeams: Boolean,
     ): TournamentRankings {
         val totals = players.associate { it.id to MutableTotal() }.toMutableMap()
+        val substitutions = players.mapNotNull { player -> player.substitution?.let { player.id to it } }.toMap()
 
         tables.forEach { rankingTable ->
             val table = rankingTable.table
             // The points of a table come only from its scores.
             val points = table.seatPoints
             val scores = table.seatScores
-            add(totals, table.playerEastId, points[0], scores[0])
-            add(totals, table.playerSouthId, points[1], scores[1])
-            add(totals, table.playerWestId, points[2], scores[2])
-            add(totals, table.playerNorthId, points[3], scores[3])
+            // The result of a slot does not count in a round that a substitute played, or when the player is disqualified.
+            val seatIds = listOf(table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId)
+            seatIds.forEachIndexed { seat, id ->
+                val substitution = id.toIntOrNull()?.let(substitutions::get)
+                if (substitution?.ignoresRound(table.roundId) != true) add(totals, id, points[seat], scores[seat])
+            }
         }
 
         val playerRankings = players
@@ -38,6 +41,7 @@ class CalculateTournamentRankingsUseCase {
                     teamId = player.team,
                     points = total.points,
                     score = total.score,
+                    substitution = player.substitution,
                 )
             }
             .sortedWith(compareByDescending<PlayerRanking> { it.points }.thenByDescending { it.score })
@@ -61,8 +65,15 @@ class CalculateTournamentRankingsUseCase {
             emptyList()
         }
 
-        val chickenRankings = tables
-            .flatMap { it.hands }
+        // A hand won by a substitute does not count for the person that the substitute replaced.
+        val playedHands = tables.flatMap { rankingTable ->
+            rankingTable.hands.filterNot { hand ->
+                val winner = hand.playerWinnerId.toIntOrNull()
+                winner != null && substitutions[winner]?.substitutePlays(rankingTable.table.roundId) == true
+            }
+        }
+
+        val chickenRankings = playedHands
             .filter { it.isDone && it.isChickenHand }
             .mapNotNull { it.playerWinnerId.toIntOrNull() }
             .groupingBy { it }
@@ -85,8 +96,7 @@ class CalculateTournamentRankingsUseCase {
             )
             .mapIndexed { index, ranking -> ranking.copy(position = index + 1) }
 
-        val bestHands = tables
-            .flatMap { it.hands }
+        val bestHands = playedHands
             .filter { it.isDone }
             .mapNotNull { hand ->
                 val playerId = hand.playerWinnerId.toIntOrNull() ?: return@mapNotNull null

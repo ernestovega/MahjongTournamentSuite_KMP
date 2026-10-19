@@ -33,7 +33,7 @@ export function getGlobalUserRole(user: Pick<UserRecord, "customClaims">): Globa
   return getGlobalUserRoles(user)[0] ?? "PLAYER";
 }
 
-/** Roles that management routes may set. Player accounts exist only through invitations. */
+/** Roles that any management route may set. Only an admin creates a player account, and that route checks it. */
 export function parseGlobalUserRole(value: unknown): GlobalUserRole | null {
   return value === "EDITOR" || value === "ADMIN" ? value : null;
 }

@@ -5,7 +5,7 @@ import { badRequest } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRegisteredPlayer } from "../middleware/requireRegisteredPlayer";
 import { acceptInvitation } from "../../services/playerAccountsService";
-import { assignSeats, parseHandInput, parseSeatAssignment, previewHand, recordHand } from "../../services/playerHandService";
+import { addPenalties, parseHandInput, parsePenaltyInput, previewHand, recordHand } from "../../services/playerHandService";
 
 /** Routes for player accounts. The invitation route is public because a new player has no account yet. */
 export function playerRouter(): Router {
@@ -47,14 +47,15 @@ export function playerRouter(): Router {
     }
   });
 
-  router.post(`${tableRoute}/seats`, requireAuth, requireRegisteredPlayer, async (req, res, next) => {
+  // Penalties belong to the hand in play. They do not finish the hand.
+  router.post(`${tableRoute}/penalties`, requireAuth, requireRegisteredPlayer, async (req, res, next) => {
     try {
-      const seats = parseSeatAssignment(req.body);
+      const penalties = parsePenaltyInput(req.body);
       const expectedVersion = req.body?.expectedVersion;
       if (!Number.isInteger(expectedVersion) || expectedVersion < 0) {
         throw badRequest("expectedVersion must be the table version that the app shows");
       }
-      res.status(200).json(await assignSeats({ ...tableParams(req), uid: uidOf(res), seats, expectedVersion }));
+      res.status(200).json(await addPenalties({ ...tableParams(req), uid: uidOf(res), penalties, expectedVersion }));
     } catch (e) {
       next(e);
     }

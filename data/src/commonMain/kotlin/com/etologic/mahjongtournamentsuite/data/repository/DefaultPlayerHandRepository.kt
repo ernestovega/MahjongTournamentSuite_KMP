@@ -4,9 +4,10 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
+import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
@@ -21,24 +22,23 @@ class DefaultPlayerHandRepository(
     private val logger: Logger,
     private val cache: RepositoryCache,
 ) : PlayerHandRepository {
-    override suspend fun assignSeats(
+    override suspend fun addPenalties(
         tournamentId: String,
         roundId: Int,
         tableId: Int,
-        seatSlotIds: List<Int>,
+        penalties: List<PenaltyEntry>,
         expectedVersion: Long,
-    ): AppResult<Unit> = request("Assigning seats") { token ->
-        require(seatSlotIds.size == 4) { "A table has four seats" }
-        backendApi.assignSeats(
+    ): AppResult<Unit> = request("Adding penalties") { token ->
+        backendApi.addPenalties(
             idToken = token,
             tournamentId = tournamentId,
             roundId = roundId,
             tableId = tableId,
-            request = SeatsRequestDto(
-                playerEastId = seatSlotIds[0].toString(),
-                playerSouthId = seatSlotIds[1].toString(),
-                playerWestId = seatSlotIds[2].toString(),
-                playerNorthId = seatSlotIds[3].toString(),
+            request = PenaltiesRequestDto(
+                playerEastPenalty = penalties.penaltyText(0),
+                playerSouthPenalty = penalties.penaltyText(1),
+                playerWestPenalty = penalties.penaltyText(2),
+                playerNorthPenalty = penalties.penaltyText(3),
                 expectedVersion = expectedVersion,
             ),
         )
@@ -80,12 +80,20 @@ class DefaultPlayerHandRepository(
 }
 
 private fun HandProposal.toDto(expectedVersion: Long?) = HandRequestDto(
-    playerWinnerId = winnerSlotId.toString(),
+    playerWinnerId = winnerSlotId?.toString().orEmpty(),
     playerLooserId = loserSlotId?.toString().orEmpty(),
     handScore = score.toString(),
     isChickenHand = isChickenHand,
+    isDraw = winnerSlotId == null,
+    isLastHand = isLastHand,
     expectedVersion = expectedVersion,
 )
+
+/** The penalties of a seat are joined with ";", one part for each penalty. No penalty is an empty text. */
+private fun List<PenaltyEntry>.penaltyText(seat: Int): String {
+    val parts = map { it.seatValues()[seat].takeIf { value -> value != 0 }?.toString().orEmpty() }
+    return if (parts.all { it.isEmpty() }) "" else parts.joinToString(";")
+}
 
 private fun HandPreviewDto.toDomain() = HandPreview(
     handId = handId,

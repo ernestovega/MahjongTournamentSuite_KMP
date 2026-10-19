@@ -85,10 +85,10 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 
 - Assigning a player sends no email. If an account already owns the EMA id, the assignment links the slot to that account at once (`accountUid`, `invitationStatus: ACCEPTED`). The player then sees the tournament, but nobody told the player.
 - An admin can set the EMA id of an existing account (`PUT /admin/users/:uid` with `emaId`, an empty text clears it). `POST /admin/users` also accepts `emaId`. Both routes check the EMA player and the owner first. An EMA id that belongs to another account returns `409`, and nothing changes. Every tournament that has this EMA id in a slot links to the account at once. No email is sent.
-- A send to the email of an existing account links that account at once and sends the registration email. It needs no invitation and no acceptance.
+- A send to the email of an existing account links that account at once and sends the reminder. It needs no invitation and no acceptance.
 - An editor starts every email by hand. The actions work for one player or for many. The body lists the players: `{ players: [{ playerId, email? }] }`. The answer has one result per player (`INVITED`, `NOTIFIED`, `REVOKED`, `SKIPPED`, `FAILED`).
   - `POST /tournaments/:id/player-accounts/send`: invites a new player (uses the given or the saved email), or sends the "you are registered" email with a link to the tournament to a linked player. It skips players that were already contacted.
-  - `POST /tournaments/:id/player-accounts/resend`: creates a new invitation link (the old link stops working), or sends the registration email again.
+  - `POST /tournaments/:id/player-accounts/resend`: creates a new invitation link (the old link stops working), or sends the reminder again.
   - `POST /tournaments/:id/player-accounts/revoke`: cancels a pending invitation, or removes the account link.
   - `PUT /tournaments/:id/player-accounts/emails`: saves the email of players with no account, for a later send.
 - The slot keeps `invitationStatus`, `invitedEmail` and the time of the last email (`contactedAt` in the players list). The editor app uses them to filter "not invited yet", "invited, waiting" and "contacted".
@@ -99,16 +99,50 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 - The email goes out through `nodemailer` and the SMTP mailbox of the project (`mailService.ts`). The secret `MTS_SMTP_URI` holds the SMTP address. `MAIL_FROM` and `PLAYER_APP_URL` are in `firebase/functions/.env`. If the SMTP server fails, the invitation stays. The result of that player is `FAILED` and the editor presses "Resend".
 - A player sees only the tournaments where the account is registered. `GET /tournaments` and `GET /ema-player-registry` return only that scope to a player-only account. The players list of a tournament hides accounts and emails for players.
 
+## Replace, clear or substitute a player during a tournament
+
+A slot (`tournaments/{id}/players/{n}`) is the identity for tables, hands and teams. These stay on the slot number when the person changes. There are two tools.
+
+**Clear or replace the person** (`PUT /tournaments/:id/players/:playerId`). Use it for a correction or a no-show.
+- It works at any time, also when the slot has played.
+- A cleared slot shows as "Player N". It keeps its tables, hands, points and team. A new person assigned later inherits the data of the slot.
+- The statistics follow the EMA id of the slot. The server removes the old person from the table statistics when the EMA id changes.
+- The person who leaves loses the link to the tournament in the player app, and the substitution of the slot ends.
+- The EMA report leaves out slots with no person.
+- `PUT /tournaments/:id/teams/:teamId` still refuses to move people between slots after the first table has data.
+
+**Substitute a player who played some rounds** (`PUT` and `DELETE /tournaments/:id/players/:playerId/substitution`). It follows section 4 of the EMA rules.
+- Body: `{ reason: LATE | ILLNESS | DISQUALIFIED, fromRound, duringSession, excludedFromEma }`. `duringSession` is not allowed with `LATE`. `excludedFromEma` is only allowed with `ILLNESS`.
+- The substitute is never recorded. The slot keeps the person and the rounds before `fromRound`.
+- The slot gets no points and no score from the rounds `>= fromRound`. A disqualified slot gets no points and no score from any round.
+- With `duringSession`, the server writes `forcedZeroPlayerId` on the table of `fromRound`. That seat gets 0 table points and the other three seats share 4, 2 and 1 (`pointsFromScores` in `handScoring.ts` and `TablePoints.kt`). The change raises the version of that table.
+- In the other rounds the substitute plays like a normal player, so the other players get their normal places.
+- Hands won by the substitute do not count for the person. The person has no personal statistics from those rounds (`DigestResult.countsForSlot`, `DIGEST_VERSION` 5). After a deploy, run `npm run backfill:statistics:apply`.
+- The ranking keeps a position for the slot. The EMA report omits a player with `excludedFromEma`. A disqualified player stays in the report with 0.
+- The app shows a text tag in the player list and the rankings. It shows strikethrough for a disqualified and for an excluded player.
+- **Disqualified:** the ranking shows 0 points and 0 score. The EMA report has the row with 0. The person statistics count the tables played with 0 points and 0 score. This is a punishment.
+- **Excluded:** the EMA report omits the player. The person statistics have no table of the player. The ranking keeps the player, struck through. This protects the player.
+
+Each change writes an entry to `tournaments/{id}/playerLog` with `kind` (`replace`, `clear`, `substitute`, `restore`), the slot, the previous and next value, the user and the time. The app does not read this log.
+
 ## Hand entry by a player
 
 One player who sits at the table writes the hands down. There is no start step and no confirmation by the other players.
 The table must be in hands mode, not completed, and all four seats must be assigned. Hands mode is the default for new tables.
 
-**Seats.** A player of the table assigns the four seats: `POST /player/tournaments/:id/tables/:round/:table/seats` with
-`playerEastId`, `playerSouthId`, `playerWestId`, `playerNorthId` and `expectedVersion`. The four ids must be the players of the table.
-It works until the first hand is saved, and not when an editor entered totals.
+**Seats.** A player cannot set or change the seats. An editor sets them in the admin app. Without seats, the server answers `409`.
 
-1. `POST /player/tournaments/:id/tables/:round/:table/hands/preview` with `{ playerWinnerId, playerLooserId, handScore, isChickenHand }`.
+**Hand fields.** The body of preview and record has `playerWinnerId`, `playerLooserId`, `handScore` and `isChickenHand`, and these optional fields:
+- `isDraw: true` records a hand with no winner and no loser. The server stores it with `handScore` `"0"`, so every seat scores zero.
+- `isLastHand: true` records the hand and marks the table completed, like the Completed switch in the admin app. Use it when the time ends before hand 16.
+
+**Penalties.** `POST /player/tournaments/:id/tables/:round/:table/penalties` with `playerEastPenalty`, `playerSouthPenalty`, `playerWestPenalty`, `playerNorthPenalty` and `expectedVersion`.
+It adds penalties to the hand in play and does not finish that hand. The server appends one part to the penalty text of every seat, like the penalty rows of the admin app.
+Each part is empty or a signed whole number. Every penalty needs at least one negative value. The other seats can receive positive values from a shared penalty.
+A hand has at most 5 penalties. The penalties count in the table totals when the hand is saved. A later win or draw keeps them.
+The app shows each penalty as its own item in the list of hands, under the hand that follows it.
+
+1. `POST /player/tournaments/:id/tables/:round/:table/hands/preview` with the hand fields.
    The server picks the next free hand and returns the score change of every seat, the table scores and points after the hand, and `tableVersion`. It writes nothing.
 2. The app shows the winner, the loser, the hand score, the change of each seat and the new table totals, so the player can show them to the table.
 3. `POST /player/tournaments/:id/tables/:round/:table/hands` with the same fields and `expectedVersion` (the `tableVersion` of the preview).

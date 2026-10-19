@@ -2,7 +2,9 @@ package com.etologic.mahjongtournamentsuite.domain.usecase
 
 import com.etologic.mahjongtournamentsuite.domain.model.HandRun
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
+import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.RivalTally
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -41,6 +43,54 @@ class CalculateStatisticsUseCaseTest {
         assertEquals(1, result.drawnHands)
         assertEquals(20, result.highestHand)
         assertEquals(1, result.tablesWithHands)
+    }
+
+    @Test
+    fun theRoundsOfASubstituteAreNotInTheStatisticsOfThePerson() {
+        val substituted = players.map {
+            if (it.id == 1) it.copy(substitution = PlayerSubstitution(SubstitutionReason.ILLNESS, fromRound = 2)) else it
+        }
+        val tables = listOf(
+            RankingTable(table(round = 1, completed = true, scores = listOf("30", "10", "-10", "-30")), emptyList()),
+            RankingTable(table(round = 2, completed = true, scores = listOf("30", "10", "-10", "-30")), emptyList()),
+        )
+
+        val result = calculate(substituted, tables)
+
+        assertEquals(1, result.players.first { it.playerId == 1 }.results.size)
+        assertEquals(2, result.players.first { it.playerId == 2 }.results.size)
+    }
+
+    @Test
+    fun aDisqualifiedPlayerHasZeroPointsAndScoreInTheStatistics() {
+        val disqualified = players.map {
+            if (it.id == 1) it.copy(substitution = PlayerSubstitution(SubstitutionReason.DISQUALIFIED, fromRound = 2)) else it
+        }
+        val tables = listOf(
+            RankingTable(table(round = 1, completed = true, scores = listOf("30", "10", "-10", "-30")), emptyList()),
+            RankingTable(table(round = 2, completed = true, scores = listOf("30", "10", "-10", "-30")), emptyList()),
+        )
+
+        val results = calculate(disqualified, tables).players.first { it.playerId == 1 }.results
+
+        assertEquals(1, results.size)
+        assertEquals(0.0, results.single().points)
+        assertEquals(0, results.single().score)
+    }
+
+    @Test
+    fun anExcludedPlayerHasNoStatistics() {
+        val excluded = players.map {
+            if (it.id == 1) it.copy(substitution = PlayerSubstitution(SubstitutionReason.ILLNESS, fromRound = 2, excludedFromEma = true)) else it
+        }
+        val tables = listOf(
+            RankingTable(table(round = 1, completed = true, scores = listOf("30", "10", "-10", "-30")), emptyList()),
+        )
+
+        val result = calculate(excluded, tables)
+
+        assertEquals(0, result.players.first { it.playerId == 1 }.results.size)
+        assertEquals(1, result.players.first { it.playerId == 2 }.results.size)
     }
 
     @Test

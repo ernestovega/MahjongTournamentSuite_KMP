@@ -27,8 +27,6 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
-import androidx.compose.material.icons.filled.FormatListNumbered
-import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -190,7 +188,7 @@ fun LastPlaceIcon(size: Dp = 28.dp) {
     )
 }
 
-private class PlacedSeat(val seat: SeatDisplay, val chair: Int, val wind: SeatWind)
+private class PlacedSeat(val seat: SeatDisplay, val chair: Int, val wind: SeatWind?)
 
 /**
  * The four players of a table.
@@ -199,6 +197,7 @@ private class PlacedSeat(val seat: SeatDisplay, val chair: Int, val wind: SeatWi
  * [handNumber] is the hand in play (1 to 16). The chairs and the winds follow it.
  * The viewer stays at the bottom. The other players turn around the table.
  * The points of the table show only when [showPoints] is true, that is when the table is complete.
+ * The winds show only when [windsKnown] is true. Before the players set the seats, the order is not a seating.
  */
 @Composable
 fun TableSeatsView(
@@ -206,16 +205,15 @@ fun TableSeatsView(
     handNumber: Int,
     centerLabel: String,
     showPoints: Boolean,
-    initialRanking: Boolean,
     modifier: Modifier = Modifier,
+    windsKnown: Boolean = true,
     onPlayerClick: (Int) -> Unit = {},
 ) {
     require(seats.size == 4) { "A table has four seats." }
-    var byRanking by rememberSaveable(initialRanking) { mutableStateOf(initialRanking) }
     var showDiffs by rememberSaveable { mutableStateOf(false) }
     val placed = seats.mapIndexed { index, seat ->
         val chair = chairOf(index, handNumber)
-        PlacedSeat(seat, chair, windOfChair(chair, handNumber))
+        PlacedSeat(seat, chair, if (windsKnown) windOfChair(chair, handNumber) else null)
     }
     val diffs = calculateTableDiffs(seats.map { it.score.trim().toIntOrNull() ?: 0 })
 
@@ -223,13 +221,8 @@ fun TableSeatsView(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs, onPlayerClick)
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            ViewButton(selected = !byRanking, description = "Seats view", onClick = { byRanking = false }) {
-                Icon(Icons.Default.GridView, contentDescription = null)
-            }
-            ViewButton(selected = byRanking, description = "Ranking view", onClick = { byRanking = true }) {
-                Icon(Icons.Default.FormatListNumbered, contentDescription = null)
-            }
             Box(Modifier.weight(1f))
             Row(
                 Modifier.clickable { showDiffs = !showDiffs },
@@ -243,11 +236,6 @@ fun TableSeatsView(
                 )
             }
             DiffsInfo()
-        }
-        if (byRanking) {
-            SeatsRanking(placed, diffs, showPoints, showDiffs, onPlayerClick)
-        } else {
-            SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs, onPlayerClick)
         }
     }
 }
@@ -297,18 +285,6 @@ private fun DiffsInfo() {
             Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
-}
-
-@Composable
-private fun ViewButton(selected: Boolean, description: String, onClick: () -> Unit, icon: @Composable () -> Unit) {
-    IconButton(
-        onClick = onClick,
-        modifier = Modifier.semantics { contentDescription = description },
-        colors = IconButtonDefaults.iconButtonColors(
-            containerColor = if (selected) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent,
-            contentColor = if (selected) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
-        ),
-    ) { icon() }
 }
 
 @Composable
@@ -390,8 +366,10 @@ private fun SeatCard(
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                WindIcon(item.wind, size = 22.dp)
-                Text(item.wind.label, style = MaterialTheme.typography.labelMedium)
+                item.wind?.let {
+                    WindIcon(it, size = 22.dp)
+                    Text(it.label, style = MaterialTheme.typography.labelMedium)
+                }
             }
             // The place icon of a complete table is at the side of the score.
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -405,10 +383,12 @@ private fun SeatCard(
                 )
             }
             if (showPoints && seat.points.isNotBlank()) {
+                // The table points are the result of a finished table, so they are big and have the color of the place.
                 Text(
                     "${formatPoints(seat.points)} pts",
-                    style = MaterialTheme.typography.labelLarge,
+                    style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
+                    color = place?.let { positionColor(it) } ?: Color.Unspecified,
                 )
             }
             if (seat.penalty != 0) {
@@ -423,7 +403,8 @@ private fun SeatCard(
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (seat.isMine) FontWeight.Bold else null,
                     textAlign = TextAlign.Center,
-                    maxLines = 2,
+                    // A name always takes one row.
+                    maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -462,87 +443,13 @@ private fun DiffsRow(label: String, self: String, him: String, other: String, he
     }
 }
 
-/** The indices of the seats from the first place to the last. The table points come from the scores, so the score decides. */
+/**
+ * The indices of the seats from the first place to the last. The table points come from the scores, so the score
+ * decides. A substitute with forced 0 points has a low score sometimes, so the points come first.
+ */
 @Suppress("UNUSED_PARAMETER")
 private fun rankedSeatIndices(placed: List<PlacedSeat>, showPoints: Boolean): List<Int> =
-    placed.indices.sortedByDescending { placed[it].seat.score.trim().toIntOrNull() ?: 0 }
-
-@Composable
-private fun SeatsRanking(
-    placed: List<PlacedSeat>,
-    diffs: List<SeatDiffs>,
-    showPoints: Boolean,
-    showDiffs: Boolean,
-    onPlayerClick: (Int) -> Unit,
-) {
-    val ranked = rankedSeatIndices(placed, showPoints)
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ranked.forEachIndexed { rank, index ->
-            val item = placed[index]
-            val seat = item.seat
-            Card(
-                modifier = Modifier.fillMaxWidth().then(
-                    if (seat.slotId != null) Modifier.clickable { onPlayerClick(seat.slotId) } else Modifier,
-                ),
-                border = BorderStroke(
-                    if (seat.isMine) 2.dp else 1.dp,
-                    if (seat.isMine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-                ),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
-            ) {
-                Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Box(Modifier.width(32.dp), contentAlignment = Alignment.Center) {
-                            when {
-                                rank < 3 -> PositionTrophy(rank + 1)
-                                showPoints -> LastPlaceIcon()
-                                else -> Text("${rank + 1}")
-                            }
-                        }
-                        // Only the table points have the color of the place. A fixed width keeps the columns aligned.
-                        if (showPoints) {
-                            Text(
-                                if (seat.points.isNotBlank()) formatPoints(seat.points) else "",
-                                Modifier.width(48.dp),
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = positionColor(rank + 1),
-                                textAlign = TextAlign.Center,
-                                maxLines = 1,
-                            )
-                        }
-                        WindIcon(item.wind, size = 24.dp, tint = MaterialTheme.colorScheme.onSurface)
-                        PlayerFlag(seat.country)
-                        SeatLevelMedal(seat, size = 30.dp)
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                seat.name,
-                                fontWeight = if (seat.isMine) FontWeight.Bold else null,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            if (seat.penalty != 0) {
-                                Text(
-                                    "Penalty ${seat.penalty}",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
-                            seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
-                        }
-                        Text(
-                            seat.score.ifBlank { "0" },
-                            Modifier.width(64.dp),
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            textAlign = TextAlign.Center,
-                            maxLines = 1,
-                        )
-                    }
-                    if (showDiffs) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) { DiffsTable(diffs[index]) }
-                }
-            }
-        }
-    }
-}
+    placed.indices.sortedWith(
+        compareByDescending<Int> { placed[it].seat.points.replace(',', '.').trim().toDoubleOrNull() ?: 0.0 }
+            .thenByDescending { placed[it].seat.score.trim().toIntOrNull() ?: 0 },
+    )

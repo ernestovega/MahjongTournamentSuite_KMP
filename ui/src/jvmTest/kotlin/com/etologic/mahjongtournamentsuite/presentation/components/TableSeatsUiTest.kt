@@ -55,7 +55,7 @@ class TableSeatsUiTest {
     }
 
     @Test
-    fun showsSeatsRankingAndDifferences() = runComposeUiTest {
+    fun showsSeatsAndDifferences() = runComposeUiTest {
         var opened: Int? = null
         setContent {
             MtsTheme(useDarkTheme = false) {
@@ -65,7 +65,6 @@ class TableSeatsUiTest {
                         handNumber = 5,
                         centerLabel = "Hand\n5/16",
                         showPoints = false,
-                        initialRanking = false,
                         onPlayerClick = { opened = it },
                     )
                 }
@@ -82,16 +81,11 @@ class TableSeatsUiTest {
         assertEquals(4, opened)
 
         onNodeWithText("Differences").performClick()
-        onNodeWithContentDescription("Seats view").assertIsDisplayed()
         snapshot("seats_diffs", onRoot().captureToImage())
-
-        onNodeWithContentDescription("Ranking view").performClick()
-        onNodeWithText("Ana García").assertIsDisplayed()
-        snapshot("ranking", onRoot().captureToImage())
     }
 
     @Test
-    fun showsTheTablePointsOnTheRightOfTheScoreWhenTheTableIsComplete() = runComposeUiTest {
+    fun showsTheTablePointsBelowTheScoreWhenTheTableIsComplete() = runComposeUiTest {
         setContent {
             MtsTheme(useDarkTheme = true) {
                 Box(Modifier.fillMaxWidth().padding(16.dp)) {
@@ -100,15 +94,14 @@ class TableSeatsUiTest {
                         handNumber = 16,
                         centerLabel = "Done",
                         showPoints = true,
-                        initialRanking = true,
                     )
                 }
             }
         }
         // Whole points show with no decimal part.
-        assertTrue(onAllNodesWithText("4.0").fetchSemanticsNodes().isEmpty())
-        assertTrue(onAllNodesWithText("4").fetchSemanticsNodes().isNotEmpty())
-        snapshot("ranking_complete_dark", onRoot().captureToImage())
+        assertTrue(onAllNodesWithText("4.0 pts").fetchSemanticsNodes().isEmpty())
+        assertTrue(onAllNodesWithText("4 pts").fetchSemanticsNodes().isNotEmpty())
+        snapshot("seats_complete_dark", onRoot().captureToImage())
     }
 
     private fun androidx.compose.ui.test.ComposeUiTest.onAllNodesWithTextCount(text: String): Int =

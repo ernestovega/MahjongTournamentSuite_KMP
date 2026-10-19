@@ -31,8 +31,10 @@ import {
 } from "../../services/idCardsService";
 import { generateTournamentIdList } from "../../services/idListService";
 import { generateEmaReport } from "../../services/emaReportService";
+import { readSubstitution } from "../../services/playerSubstitution";
 import {
   assignTournamentPlayer,
+  setPlayerSubstitution,
   listTournamentPlayers,
   listTournamentRounds,
   listTournamentTables,
@@ -617,6 +619,51 @@ export function tournamentsRouter(): Router {
           playerId,
           emaId,
           nonMember,
+          uid: (res.locals.auth as { uid: string }).uid,
+        });
+        res.status(200).json({ ok: true });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.put(
+    "/:tournamentId/players/:playerId/substitution",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const playerId = Number(req.params.playerId);
+        if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
+        const substitution = readSubstitution(req.body);
+        if (substitution == null) throw badRequest("A substitution needs a reason and a round");
+        await setPlayerSubstitution({
+          tournamentId: req.params.tournamentId,
+          playerId,
+          substitution,
+          uid: (res.locals.auth as { uid: string }).uid,
+        });
+        res.status(200).json({ ok: true });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.delete(
+    "/:tournamentId/players/:playerId/substitution",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const playerId = Number(req.params.playerId);
+        if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
+        await setPlayerSubstitution({
+          tournamentId: req.params.tournamentId,
+          playerId,
+          substitution: null,
+          uid: (res.locals.auth as { uid: string }).uid,
         });
         res.status(200).json({ ok: true });
       } catch (e) {

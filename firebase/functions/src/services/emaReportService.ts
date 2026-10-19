@@ -1,5 +1,6 @@
 import ExcelJS = require("exceljs");
 
+import { readSubstitution } from "./playerSubstitution";
 import { badRequest, notFound } from "../api/httpError";
 import { db } from "../firebase";
 import { EMA_PLAYER_REGISTRY_COLLECTION, validateEmaId } from "./playersService";
@@ -156,7 +157,16 @@ export async function generateEmaReport(params: {
     .filter((value): value is string => typeof value === "string" && value.length > 0))];
   const registry = await Promise.all(emaIds.map((emaId) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()));
   const playersById = new Map(registry.filter((player) => player.exists).map((player) => [player.id, player]));
-  const reportRows: EmaReportRow[] = params.rows.map((ranking) => {
+  // A slot with no person is a filler for a player who left. The report does not include it.
+  // A player that the head referee excluded after an illness is not included either.
+  const hasPerson = (playerId: number) => {
+    const slot = slotsById.get(playerId);
+    if (slot == null) return true;
+    if (readSubstitution(slot.get("substitution"))?.excludedFromEma === true) return false;
+    return typeof slot.get("assignedEmaId") === "string" || slot.get("nonMember") != null;
+  };
+  const reportedRows = params.rows.filter((row) => hasPerson(row.playerId));
+  const reportRows: EmaReportRow[] = reportedRows.map((ranking) => {
     const slot = slotsById.get(ranking.playerId);
     if (!slot) throw badRequest("Ranking contains an unknown tournament player", { playerId: ranking.playerId });
     const emaId = typeof slot.get("assignedEmaId") === "string" ? String(slot.get("assignedEmaId")) : null;
@@ -185,7 +195,7 @@ export async function generateEmaReport(params: {
   });
   return buildEmaReport({
     tournamentName: String(tournament.get("name") ?? ""),
-    participantCount: Number(tournament.get("numPlayers") ?? params.rows.length),
+    participantCount: Number(tournament.get("numPlayers") ?? reportedRows.length),
     startDate: String(tournament.get("eventStartDate") ?? ""),
     endDate: String(tournament.get("eventEndDate") ?? ""),
     hostCountry: String(tournament.get("hostCountry") ?? ""),

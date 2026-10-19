@@ -8,6 +8,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableScoreSwing
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
@@ -32,7 +33,19 @@ class CalculateStatisticsUseCase {
             .map { analyse(it, tournamentId, opponentKey) }
 
         val completed = analyses.filter { it.table.table.isCompleted }
-        val resultsByPlayer = completed.flatMap { it.results }.groupBy { it.first }
+        val substitutions = players.mapNotNull { player -> player.substitution?.let { player.id to it } }.toMap()
+        // A substitute is not recorded, so the person has no statistics from the rounds of the substitute.
+        // An excluded player has no statistics at all. A disqualified player has 0 points and 0 score.
+        val resultsByPlayer = completed.flatMap { it.results }
+            .filterNot { (slotId, result) ->
+                val substitution = substitutions[slotId]
+                substitution?.substitutePlays(result.roundId) == true || substitution?.excludedFromStatistics == true
+            }
+            .map { (slotId, result) ->
+                if (substitutions[slotId]?.reason == SubstitutionReason.DISQUALIFIED) slotId to result.copy(points = 0.0, score = 0)
+                else slotId to result
+            }
+            .groupBy { it.first }
         val playerStatistics = players.map { player ->
             PlayerStatistics(player.id, resultsByPlayer[player.id].orEmpty().map { it.second })
         }

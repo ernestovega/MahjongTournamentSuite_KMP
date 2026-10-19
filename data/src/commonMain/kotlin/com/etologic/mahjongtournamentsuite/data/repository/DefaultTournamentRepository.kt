@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
@@ -29,6 +30,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.InvitationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
@@ -266,7 +269,8 @@ class DefaultTournamentRepository(
                 idToken = idToken,
                 tournamentId = tournamentId,
                 request = EmaReportRequestDto(
-                    rows = rankings.map { ranking ->
+                    // The head referee excluded a player who was ill. The report has no row for that player.
+                    rows = rankings.filterNot { it.substitution?.excludedFromEma == true }.map { ranking ->
                         EmaReportRankingRowDto(
                             playerId = ranking.playerId,
                             place = ranking.position,
@@ -392,6 +396,7 @@ class DefaultTournamentRepository(
                         ?: InvitationStatus.NONE,
                     invitedEmail = dto.invitedEmail,
                     contactedAt = dto.contactedAt,
+                    substitution = dto.substitution?.toDomain(),
                     createdAt = dto.createdAt,
                     updatedAt = dto.updatedAt,
                 )
@@ -491,7 +496,44 @@ class DefaultTournamentRepository(
         onSuccess = { AppResult.Success(Unit) },
         onFailure = { throwable ->
             logger.w(throwable) { "Assigning tournament player failed." }
-            AppResult.Failure(throwable.toAppError())
+            AppResult.Failure(throwable.toPlayerChangeError())
+        },
+    )
+
+    override suspend fun setPlayerSubstitution(
+        tournamentId: String,
+        tournamentPlayerId: Int,
+        substitution: PlayerSubstitution?,
+    ): AppResult<Unit> = runCatching {
+        withFreshIdToken { idToken ->
+            if (substitution == null) {
+                backendApi.removePlayerSubstitution(idToken, tournamentId, tournamentPlayerId)
+            } else {
+                backendApi.setPlayerSubstitution(
+                    idToken = idToken,
+                    tournamentId = tournamentId,
+                    playerId = tournamentPlayerId,
+                    request = PlayerSubstitutionDto(
+                        reason = substitution.reason.name,
+                        fromRound = substitution.fromRound,
+                        duringSession = substitution.duringSession,
+                        excludedFromEma = substitution.excludedFromEma,
+                    ),
+                )
+            }
+            // The change moves table points, so the tables and the players are stale.
+            cache.markStale(
+                "tournament:$tournamentId:players",
+                "tournament:$tournamentId:tables:all",
+                GLOBAL_TOURNAMENTS_CACHE_KEY,
+            )
+            Unit
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(Unit) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Changing the substitution of a player failed." }
+            AppResult.Failure(throwable.toPlayerChangeError())
         },
     )
 
@@ -850,6 +892,7 @@ private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHan
         manualPlayerNorthScore = table.manualPlayerNorthScore,
         isCompleted = table.isCompleted,
         useTotalsOnly = table.useTotalsOnly,
+        forcedZeroPlayerId = table.forcedZeroPlayerId,
     ) to hands.map { hand ->
         TableHand(
             handId = hand.handId,
@@ -871,6 +914,20 @@ internal fun List<Tournament>.sortedRecentFirst(): List<Tournament> =
             .thenBy { it.name.lowercase() }
             .thenBy { it.id },
     )
+
+/** A refused player change shows the reason of the server, because the reason tells the editor what to do. */
+private fun PlayerSubstitutionDto.toDomain(): PlayerSubstitution? {
+    val parsed = SubstitutionReason.entries.firstOrNull { it.name == reason } ?: return null
+    return PlayerSubstitution(parsed, fromRound, duringSession, excludedFromEma)
+}
+
+private fun Throwable.toPlayerChangeError(): AppError {
+    if (this is BackendHttpException && status == HttpStatusCode.Conflict) {
+        val reason = Regex("\"message\"\\s*:\\s*\"([^\"]*)\"").find(responseBody)?.groupValues?.getOrNull(1)
+        if (!reason.isNullOrBlank()) return AppError.Conflict(message = reason)
+    }
+    return toAppError()
+}
 
 private fun Throwable.toAppError(): AppError {
     if (this is BackendHttpException) {

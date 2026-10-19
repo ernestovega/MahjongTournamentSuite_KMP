@@ -95,6 +95,8 @@ const MATRIX = [
     ["DELETE", "/tournaments/:tournamentId/members/:uid", "MEMBER"],
     ["GET", "/tournaments/:tournamentId/players", "READER"],
     ["PUT", "/tournaments/:tournamentId/players/:playerId", "MEMBER"],
+    ["PUT", "/tournaments/:tournamentId/players/:playerId/substitution", "MEMBER"],
+    ["DELETE", "/tournaments/:tournamentId/players/:playerId/substitution", "MEMBER"],
     ["GET", "/tournaments/:tournamentId/player-invitations", "MEMBER"],
     ["POST", "/tournaments/:tournamentId/player-accounts/send", "MEMBER"],
     ["POST", "/tournaments/:tournamentId/player-accounts/resend", "MEMBER"],
@@ -108,8 +110,8 @@ const MATRIX = [
     ["GET", "/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", "READER"],
     ["GET", "/tournaments/:tournamentId/tables/:roundId/:tableId", "READER"],
     ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/hands/preview", "PLAYER"],
+    ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/penalties", "PLAYER"],
     ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/hands", "PLAYER"],
-    ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/seats", "PLAYER"],
     ["PUT", "/tournaments/:tournamentId/tables/:roundId/:tableId/state", "MEMBER"],
     ["GET", "/tournaments/:tournamentId", "MEMBER"],
 ];

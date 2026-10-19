@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
+import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
@@ -100,13 +101,13 @@ class PlayerTournamentPresenter(
 class PlayerTablePresenter(
     private val handRepository: PlayerHandRepository,
 ) {
-    suspend fun assignSeats(
+    suspend fun addPenalties(
         tournamentId: String,
         roundId: Int,
         tableId: Int,
-        seatSlotIds: List<Int>,
+        penalties: List<PenaltyEntry>,
         expectedVersion: Long,
-    ): AppResult<Unit> = handRepository.assignSeats(tournamentId, roundId, tableId, seatSlotIds, expectedVersion)
+    ): AppResult<Unit> = handRepository.addPenalties(tournamentId, roundId, tableId, penalties, expectedVersion)
 
     suspend fun preview(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal): AppResult<HandPreview> =
         handRepository.previewHand(tournamentId, roundId, tableId, proposal)

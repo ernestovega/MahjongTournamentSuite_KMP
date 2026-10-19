@@ -139,6 +139,24 @@ class TableManagerEditorStateTest {
     }
 
     @Test
+    fun aSubstituteWhoLeftDuringTheSessionGetsZeroTablePoints() {
+        val editor = TableManagerEditorState.from(
+            table = sampleTableState(useTotalsOnly = true).copy(forcedZeroPlayerId = "1"),
+            hands = emptyList(),
+        )
+
+        editor.playerEastScore = "33000"
+        editor.playerSouthScore = "27000"
+        editor.playerWestScore = "21000"
+        editor.playerNorthScore = "19000"
+
+        assertEquals("0", editor.displayEastPoints)
+        assertEquals("4", editor.displaySouthPoints)
+        assertEquals("2", editor.displayWestPoints)
+        assertEquals("1", editor.displayNorthPoints)
+    }
+
+    @Test
     fun tablePointsAreEmptyWhileAScoreIsMissing() {
         val editor = TableManagerEditorState.from(
             table = sampleTableState(

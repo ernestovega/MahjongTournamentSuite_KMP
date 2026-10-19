@@ -157,8 +157,17 @@ data class TournamentPlayerDto(
     val invitationStatus: String = "NONE",
     val invitedEmail: String? = null,
     val contactedAt: String? = null,
+    val substitution: PlayerSubstitutionDto? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
+)
+
+@Serializable
+data class PlayerSubstitutionDto(
+    val reason: String,
+    val fromRound: Int,
+    val duringSession: Boolean = false,
+    val excludedFromEma: Boolean = false,
 )
 
 @Serializable
@@ -358,6 +367,7 @@ data class TableStateDto(
     val manualPlayerNorthScore: String = "",
     val isCompleted: Boolean = false,
     val useTotalsOnly: Boolean = false,
+    val forcedZeroPlayerId: String = "",
 )
 
 @Serializable

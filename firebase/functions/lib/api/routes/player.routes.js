@@ -47,14 +47,15 @@ function playerRouter() {
             next(e);
         }
     });
-    router.post(`${tableRoute}/seats`, requireAuth_1.requireAuth, requireRegisteredPlayer_1.requireRegisteredPlayer, async (req, res, next) => {
+    // Penalties belong to the hand in play. They do not finish the hand.
+    router.post(`${tableRoute}/penalties`, requireAuth_1.requireAuth, requireRegisteredPlayer_1.requireRegisteredPlayer, async (req, res, next) => {
         try {
-            const seats = (0, playerHandService_1.parseSeatAssignment)(req.body);
+            const penalties = (0, playerHandService_1.parsePenaltyInput)(req.body);
             const expectedVersion = req.body?.expectedVersion;
             if (!Number.isInteger(expectedVersion) || expectedVersion < 0) {
                 throw (0, httpError_1.badRequest)("expectedVersion must be the table version that the app shows");
             }
-            res.status(200).json(await (0, playerHandService_1.assignSeats)({ ...tableParams(req), uid: uidOf(res), seats, expectedVersion }));
+            res.status(200).json(await (0, playerHandService_1.addPenalties)({ ...tableParams(req), uid: uidOf(res), penalties, expectedVersion }));
         }
         catch (e) {
             next(e);

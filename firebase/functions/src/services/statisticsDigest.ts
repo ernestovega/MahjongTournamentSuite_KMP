@@ -13,6 +13,11 @@ export type DigestResult = {
   position: number;
   score: number;
   points: number;
+  /**
+   * False when the result does not count for the slot: a substitute played the table, or the player is disqualified.
+   * A result stored before this field existed counts.
+   */
+  countsForSlot?: boolean;
   hasHands: boolean;
   handsPlayed: number;
   handsWon: number;
@@ -71,7 +76,7 @@ export type TableDigest = {
 };
 
 /** Change this number when the digest rules change. A stored table digest with another number counts as old. */
-export const DIGEST_VERSION = 4;
+export const DIGEST_VERSION = 5;
 
 const text = (value: unknown): string => String(value ?? "").trim();
 
@@ -124,8 +129,14 @@ export function buildTableDigest(params: {
   table: Data;
   hands: Data[];
   emaBySlot: Map<number, string>;
+  /** Slots whose result does not count for the slot in this table. See [PlayerSubstitution]. */
+  uncountedSlots?: Set<number>;
+  /** Slots whose table points and score are 0 in the statistics: disqualified players. */
+  zeroedSlots?: Set<number>;
 }): TableDigest {
   const { table, hands, emaBySlot } = params;
+  const uncountedSlots = params.uncountedSlots ?? new Set<number>();
+  const zeroedSlots = params.zeroedSlots ?? new Set<number>();
   const roundId = Number(table.roundId);
   const tableId = Number(table.tableId);
   const isCompleted = Boolean(table.isCompleted);
@@ -236,8 +247,9 @@ export function buildTableDigest(params: {
       tableId,
       seat,
       position: 1 + finalScores.filter((score) => score > finalScores[seat]).length,
-      score: finalScores[seat],
-      points: points[seat],
+      score: zeroedSlots.has(ids[seat]) ? 0 : finalScores[seat],
+      points: zeroedSlots.has(ids[seat]) ? 0 : points[seat],
+      countsForSlot: !uncountedSlots.has(ids[seat]),
       hasHands,
       handsPlayed: hasHands ? counted.length : 0,
       handsWon: won[seat],

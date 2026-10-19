@@ -54,6 +54,20 @@ class PlayerTournamentViewTest {
     }
 
     @Test
+    fun myTablesIncludeTablesWithoutSeatsUsingTheDraw() {
+        val unseated = table(3, 1, 6, 7, 8).copy(
+            playerEastId = "", playerSouthId = "", playerWestId = "", playerNorthId = "",
+        )
+        val tables = listOf(unseated to emptyList<TableHand>(), table(4, 5, 6, 7, 8) to emptyList<TableHand>())
+
+        val view = buildPlayerTournamentView(tournament, slots, registry, tables, rankings, myEmaId = "10000001")
+
+        assertEquals(listOf(3), view.myTables.map { it.tableId })
+        assertEquals(false, view.myTables.single().seatsAssigned)
+        assertEquals(listOf(1, 6, 7, 8), view.myTables.single().playerSlots())
+    }
+
+    @Test
     fun withoutEmaIdThereIsNoSlot() {
         val view = buildPlayerTournamentView(tournament, slots, registry, emptyList(), rankings, myEmaId = null)
 

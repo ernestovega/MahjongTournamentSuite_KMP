@@ -8,15 +8,17 @@ data class HandRequestDto(
     val playerLooserId: String,
     val handScore: String,
     val isChickenHand: Boolean,
+    val isDraw: Boolean = false,
+    val isLastHand: Boolean = false,
     val expectedVersion: Long? = null,
 )
 
 @Serializable
-data class SeatsRequestDto(
-    val playerEastId: String,
-    val playerSouthId: String,
-    val playerWestId: String,
-    val playerNorthId: String,
+data class PenaltiesRequestDto(
+    val playerEastPenalty: String,
+    val playerSouthPenalty: String,
+    val playerWestPenalty: String,
+    val playerNorthPenalty: String,
     val expectedVersion: Long,
 )
 

@@ -37,13 +37,13 @@ internal fun contactTimeText(isoTime: String?): String? = localizedDateTimeOrNul
 internal fun PlayerContactState.label(): String = when (this) {
     PlayerContactState.NO_EMA_ID -> "No EMA ID"
     PlayerContactState.NOT_INVITED -> "Not invited"
-    PlayerContactState.LINKED -> "Linked, not notified"
+    PlayerContactState.LINKED -> "Linked, not reminded"
     PlayerContactState.INVITED -> "Invited"
-    PlayerContactState.CONTACTED -> "Contacted"
+    PlayerContactState.CONTACTED -> "Linked, reminded"
 }
 
 /**
- * The account state of one tournament slot. An editor sends, resends or revokes by hand.
+ * The account state of one tournament slot. An editor invites, reminds or revokes by hand.
  * Assigning a player never sends an email.
  */
 @Composable
@@ -88,7 +88,7 @@ fun PlayerAccountDialog(
                     PlayerContactState.LINKED ->
                         Text(
                             "An account with this EMA ID already exists and sees this tournament. " +
-                                "No email was sent. Send the registration email when you are ready.",
+                                "No email was sent. Send a reminder when you are ready.",
                         )
                     PlayerContactState.INVITED -> {
                         Text("Invitation sent to ${invitation?.email ?: slot.invitedEmail ?: "this player"}.")
@@ -99,7 +99,7 @@ fun PlayerAccountDialog(
                         )
                     }
                     PlayerContactState.CONTACTED -> {
-                        Text("This player has an account and an email was sent.")
+                        Text("This player has an account and received an email.")
                         contactTimeText(slot.contactedAt)?.let { Text("Sent on $it.") }
                     }
                 }
@@ -126,7 +126,7 @@ fun PlayerAccountDialog(
                 PlayerContactState.LINKED -> Button(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.SEND, null) },
-                ) { Text("Send registration email") }
+                ) { Text("Send reminder") }
                 PlayerContactState.INVITED -> Button(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.RESEND, null) },
@@ -134,7 +134,7 @@ fun PlayerAccountDialog(
                 PlayerContactState.CONTACTED -> OutlinedButton(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.RESEND, null) },
-                ) { Text("Send again") }
+                ) { Text("Send reminder again") }
             }
         },
         dismissButton = {

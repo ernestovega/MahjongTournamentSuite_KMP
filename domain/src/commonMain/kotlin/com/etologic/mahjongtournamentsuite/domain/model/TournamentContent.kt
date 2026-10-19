@@ -15,9 +15,57 @@ data class TournamentPlayer(
     val invitedEmail: String? = null,
     /** When the last invitation or registration email was sent to the player. Null when none was sent. */
     val contactedAt: String? = null,
+    /** Set when a substitute plays for this person from a round on. The substitute is never recorded. */
+    val substitution: PlayerSubstitution? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
+
+enum class SubstitutionReason {
+    /** The player came late. The round starts when the substitute is at the table. */
+    LATE,
+    /** The player is ill. */
+    ILLNESS,
+    /** The player is disqualified. The player gets 0 table points for the whole tournament. */
+    DISQUALIFIED,
+}
+
+/**
+ * A substitute plays for the player from [fromRound]. By the EMA rules the player gets no result for those rounds.
+ * A disqualified player gets no result in any round, and the result still counts for the EMA ranking.
+ */
+data class PlayerSubstitution(
+    val reason: SubstitutionReason,
+    val fromRound: Int,
+    /** The player leaves after the session has started. The substitute then gets 0 table points in [fromRound]. */
+    val duringSession: Boolean = false,
+    /**
+     * The head referee excluded the player. The EMA report and the statistics leave out the player.
+     * The player stays in the ranking, struck through. This protects the player. Only for [SubstitutionReason.ILLNESS].
+     */
+    val excludedFromEma: Boolean = false,
+) {
+    /** True when the result of the player in [roundId] does not count for the player. */
+    fun ignoresRound(roundId: Int): Boolean = reason == SubstitutionReason.DISQUALIFIED || roundId >= fromRound
+
+    /** True when the substitute plays in [roundId]. The person has no personal statistics from that round. */
+    fun substitutePlays(roundId: Int): Boolean = roundId >= fromRound
+
+    /** True when rankings show the player struck through: a disqualified or an excluded player. */
+    val struckThrough: Boolean get() = reason == SubstitutionReason.DISQUALIFIED || excludedFromEma
+
+    /** True when the player has no personal statistics at all. Only an excluded player. */
+    val excludedFromStatistics: Boolean get() = excludedFromEma
+
+    /** A short text for lists and rankings. */
+    val label: String
+        get() = when (reason) {
+            SubstitutionReason.LATE -> "substituted from round $fromRound"
+            SubstitutionReason.ILLNESS ->
+                "ill, substituted from round $fromRound" + if (excludedFromEma) ", excluded from the EMA ranking" else ""
+            SubstitutionReason.DISQUALIFIED -> "disqualified from round $fromRound"
+        }
+}
 
 enum class InvitationStatus {
     NONE,

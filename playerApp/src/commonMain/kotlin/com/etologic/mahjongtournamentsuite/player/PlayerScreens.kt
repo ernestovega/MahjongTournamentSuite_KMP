@@ -40,6 +40,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,8 +56,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -89,6 +92,9 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.saveable.rememberSaveable
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Switch
+import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.border
@@ -650,15 +656,15 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     val (view, message) = rememberTournamentView(tournamentId)
     // An account that is not linked to a player has no own tables. It starts on All tables.
     // A negative value means that the player did not choose a tab.
-    var chosenTab by rememberPersistentInt("tab", -1)
-    val tab = chosenTab.takeIf { it >= 0 } ?: if (view?.mySlotId == null) 1 else 0
+    var tab by rememberPersistentInt("mainTab", 0)
+    var chosenTablesTab by rememberPersistentInt("tablesTab", -1)
+    val tablesTab = chosenTablesTab.takeIf { it >= 0 } ?: if (view?.mySlotId == null) 1 else 0
     // The statistics tab tells this screen when it loads, so the progress bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
 
     AppScaffold(
         title = view?.tournament?.name ?: "Tournament",
-        subtitle = view?.let(::progressOf),
-        isLoading = (view == null && message == null) || (tab == 3 && statisticsLoading),
+        isLoading = (view == null && message == null) || (tab == 2 && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
         actions = { ThemeAction() },
@@ -674,17 +680,16 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                 containerColor = tabRowColor(), contentColor = TabContentColor,
                 indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
             ) {
-                listOf("My tables", "All tables", "Ranking", "Statistics", "Info").forEachIndexed { index, title ->
+                listOf("Tables", "Ranking", "Statistics", "Info").forEachIndexed { index, title ->
                     CompactTab(
                         selected = tab == index,
-                        onClick = { chosenTab = index },
+                        onClick = { tab = index },
                         title = title,
                         icon = {
                             val icon = when (index) {
-                                0 -> Icons.Default.Person
-                                1 -> Icons.Default.People
-                                2 -> Icons.Default.Leaderboard
-                                3 -> StatisticsIcon
+                                0 -> Icons.Default.People
+                                1 -> Icons.Default.Leaderboard
+                                2 -> StatisticsIcon
                                 else -> Icons.Default.Info
                             }
                             Icon(icon, contentDescription = null, Modifier.size(20.dp))
@@ -692,24 +697,51 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                     )
                 }
             }
-            Column(Modifier.weight(1f).fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f).fillMaxWidth().padding(start = 16.dp, top = if (tab == 0) 0.dp else 12.dp, end = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
                 when (tab) {
-                    0 -> TableList(
-                        view,
-                        view.myTables,
-                        if (view.mySlotId == null) {
-                            "Your account is not linked to a player of this tournament. " +
-                                "Ask the organizers to send you an invitation. All tables are in the next tab."
+                    0 -> {
+                        // This second row of tabs touches the first row, so it goes over the content padding on the sides.
+                        PrimaryTabRow(
+                            selectedTabIndex = tablesTab,
+                            modifier = Modifier.layout { measurable, constraints ->
+                                val extra = 32.dp.roundToPx()
+                                val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
+                                layout(constraints.maxWidth, placeable.height) { placeable.place(-16.dp.roundToPx(), 0) }
+                            },
+                            containerColor = tabRowColor(), contentColor = TabContentColor,
+                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
+                        ) {
+                            listOf("My tables", "All tables").forEachIndexed { index, title ->
+                                CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = index }, title = title)
+                            }
+                        }
+                        if (tablesTab == 0) {
+                            TableList(
+                                view,
+                                view.myTables,
+                                if (view.mySlotId == null) {
+                                    "Your account is not linked to a player of this tournament. " +
+                                        "Ask the organizers to send you an invitation. All tables are in the All tables tab."
+                                } else {
+                                    "You have no table yet."
+                                },
+                                open,
+                            )
                         } else {
-                            "You have no table yet."
-                        },
-                        open,
-                    )
-                    1 -> TableList(view, view.tables, "No tables yet.", open)
-                    2 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
-                    3 -> TournamentStatisticsTab(navController, tournamentId, view.mySlotId) { statisticsLoading = it }
+                            Text(
+                                progressOf(view),
+                                Modifier.fillMaxWidth(),
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
+                            )
+                            TableList(view, view.tables, "No tables yet.", open)
+                        }
+                    }
+                    1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
+                    2 -> TournamentStatisticsTab(tournamentId, view.mySlotId) { statisticsLoading = it }
                     else -> TournamentInfoTab(view.tournament)
                 }
             }
@@ -720,7 +752,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
 private fun datesOf(tournament: Tournament): String? =
     formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)
 
-/** How far the tournament is, for the subtitle of the top bar. Example: "2 of 5 rounds - 8 of 20 tables - 3 ongoing". */
+/** How far the tournament is, for the top of the All tables tab. Example: "2 of 5 rounds - 8 of 20 tables - 3 ongoing". */
 private fun progressOf(view: PlayerTournamentView): String {
     val rounds = view.tournament.numRounds
     val tablesPerRound = view.tournament.numPlayers / 4
@@ -736,7 +768,10 @@ private fun progressOf(view: PlayerTournamentView): String {
     ).joinToString(" - ")
 }
 
-/** The four players of a table in the order of hand 1 (East, South, West, North). */
+/**
+ * The four players of a table in the order of hand 1 (East, South, West, North).
+ * Before the players set the seats, the list has the players of the draw and the order has no meaning.
+ */
 private fun PlayerTable.seatsFor(view: PlayerTournamentView, withLevelChange: Boolean = false): List<SeatDisplay> {
     val t = table
     fun penalty(select: (TableHand) -> String) = hands.sumOf { select(it).trim().toIntOrNull() ?: 0 }
@@ -757,6 +792,9 @@ private fun PlayerTable.seatsFor(view: PlayerTournamentView, withLevelChange: Bo
             levelProvisional = after?.isLevelProvisional ?: view.isLevelProvisional(slot),
             levelChange = if (withLevelChange && table.isCompleted) view.levelChangeAt(slot, roundId) else null,
         )
+    }
+    if (!seatsAssigned) {
+        return (0 until 4).map { seat(t.playerIds.getOrNull(it)?.toString().orEmpty(), "", "", 0) }
     }
     // The table points come only from the scores of the table.
     val scores = t.seatScores
@@ -962,6 +1000,8 @@ private data class RankingRow(
     val playerId: Int? = null,
     /** The players of a team, by score. Not empty only for a team. The row can be folded. */
     val members: List<RankingRow> = emptyList(),
+    /** The player is excluded from the EMA ranking. The name shows with strikethrough. */
+    val excluded: Boolean = false,
 )
 
 /** The ranking tab. A second row of tabs shows the rankings that the tournament has. */
@@ -984,12 +1024,13 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
                 key = "p${row.playerId}",
                 position = row.position,
                 title = view.nameOf(row.playerId),
-                subtitle = null,
+                subtitle = row.substitution?.label,
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
                 chip = formatPoints(row.points),
                 score = "${row.score}",
                 mine = row.playerId == view.mySlotId,
                 playerId = row.playerId,
+                excluded = row.substitution?.struckThrough == true,
             )
         }
         RankingKind.TEAMS -> rankings.teams.map { row ->
@@ -1001,12 +1042,13 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
                         key = "t${row.teamId}_p${member.playerId}",
                         position = member.position,
                         title = view.nameOf(member.playerId),
-                        subtitle = null,
+                        subtitle = member.substitution?.label,
                         country = view.players[member.playerId]?.country?.takeIf { it.isNotBlank() },
                         chip = formatPoints(member.points),
                         score = "${member.score}",
                         mine = member.playerId == view.mySlotId,
                         playerId = member.playerId,
+                        excluded = member.substitution?.struckThrough == true,
                     )
                 }
             RankingRow(
@@ -1201,6 +1243,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
             Text(
                 row.title,
                 fontWeight = if (row.mine) FontWeight.Bold else null,
+                textDecoration = if (row.excluded) TextDecoration.LineThrough else null,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -1252,21 +1295,22 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     var reloadKey by remember { mutableStateOf(0) }
     val (view, message) = rememberTournamentView(tournamentId, reloadKey)
     val table = view?.tables?.firstOrNull { it.roundId == roundId && it.tableId == tableId }
+    var preselectWinner by remember { mutableStateOf<Int?>(null) }
+    // The clock moves on, so a table that starts while the screen is open opens for hands.
+    val now by produceState(currentLocalDateTime()) {
+        while (true) {
+            delay(30_000)
+            value = currentLocalDateTime()
+        }
+    }
 
     AppScaffold(
         title = view?.tournament?.name ?: "Tournament",
-        subtitle = view?.let(::progressOf),
+        subtitle = "Round $roundId - Table $tableId",
         isLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = {
-            StatisticsAction {
-                navController.navigate(
-                    StatisticsRoute(StatisticsScope.TABLE.name, tournamentId = tournamentId, roundId = roundId, tableId = tableId),
-                )
-            }
-            ThemeAction()
-        },
+        actions = { ThemeAction() },
     ) {
         ScreenColumn(
             maxWidth = 720.dp,
@@ -1278,22 +1322,17 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             if (view == null || table == null) return@ScreenColumn
             val complete = table.isComplete
             val handNumber = minOf(table.doneHands + 1, 16)
-            // The round and the table are under the top bar. The top bar keeps the tournament name.
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("Round $roundId - Table $tableId", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(
-                    "${table.doneHands} of ${table.hands.size} hands" + if (complete) " - finished" else "",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
             TableSeatsView(
                 seats = table.seatsFor(view, withLevelChange = true),
                 handNumber = handNumber,
                 centerLabel = if (complete) "Done" else "Hand\n$handNumber/${table.hands.size}",
                 showPoints = complete,
-                initialRanking = complete,
-                onPlayerClick = { navController.navigate(PlayerTablesRoute(tournamentId, it)) },
+                windsKnown = table.seatsAssigned,
+                // On a table that takes hands, a tap on a player starts a hand won by that player.
+                onPlayerClick = { slot ->
+                    if (view.canAddHands(table, now)) preselectWinner = slot
+                    else navController.navigate(PlayerTablesRoute(tournamentId, slot))
+                },
             )
             HandEntryPanel(
                 tournamentId = tournamentId,
@@ -1301,6 +1340,9 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 tableId = tableId,
                 view = view,
                 table = table,
+                now = now,
+                preselectWinner = preselectWinner,
+                onPreselectHandled = { preselectWinner = null },
                 onSaved = { reloadKey++ },
             )
             HandHistory(view, table)
@@ -1310,78 +1352,163 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
 
 @Composable
 private fun HandHistory(view: PlayerTournamentView, table: PlayerTable) {
-    val done = table.hands.filter { it.isDone }.sortedByDescending { it.handId }
-    Text("Hands", style = MaterialTheme.typography.titleMedium)
-    if (done.isEmpty()) {
-        EmptyState("No hand saved yet.")
-        return
-    }
-    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    done.forEach { hand ->
-        val winnerSlot = hand.playerWinnerId.toIntOrNull()
-        val loserSlot = hand.playerLooserId.toIntOrNull()
-        val kind = hand.kind()
-        Card(
-            Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    var details by rememberSaveable { mutableStateOf(false) }
+    // Extra space separates the list from the players and the button above.
+    Box(Modifier.fillMaxWidth().padding(top = 20.dp), contentAlignment = Alignment.Center) {
+        Text(
+            "Hands",
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Row(
+            Modifier.align(Alignment.CenterEnd).clickable { details = !details },
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+            Text("Details", style = MaterialTheme.typography.labelLarge)
+            Switch(checked = details, onCheckedChange = { details = it }, modifier = Modifier.padding(start = 8.dp))
+        }
+    }
+    if (details) {
+        HandDetailsTable(table) { seat -> SeatWind.entries.getOrNull(seat) }
+    } else if (table.hands.none { it.isDone || it.penaltyRows().isNotEmpty() }) {
+        EmptyState("No hand saved yet.")
+    } else {
+        HandList(view, table)
+    }
+}
+
+/**
+ * The newest item is at the top. The penalties of a hand were given before its result, so they come
+ * under the hand when it is done. The penalties of the hand in play come first.
+ */
+@Composable
+private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
+    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    table.hands.sortedByDescending { it.handId }.forEach { hand ->
+        if (hand.isDone) HandCard(view, hand, dark)
+        hand.penaltyRows().asReversed().forEach { values -> PenaltyCard(view, table, hand.handId, values) }
+    }
+}
+
+/** One penalty. The penalized players are red and the players who receive points are green. */
+@Composable
+private fun PenaltyCard(view: PlayerTournamentView, table: PlayerTable, handId: Int, values: List<Int>) {
+    val seatSlots = table.seatIds()
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    "${hand.handId}",
-                    Modifier.width(20.dp),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
-                    textAlign = TextAlign.End,
+                    "$handId",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                HandLabel(hand.handId, Modifier.width(44.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    if (kind != HandKind.DRAW) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            PlayerFlag(view.players[winnerSlot]?.country, width = 24.dp)
-                            Text(
-                                view.nameOf(winnerSlot),
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        WinTypePill(kind, kind.accent(dark, MaterialTheme.colorScheme.error))
-                        if (kind == HandKind.DISCARD) {
-                            PlayerFlag(view.players[loserSlot]?.country, width = 20.dp)
-                            Text(
-                                view.nameOf(loserSlot),
-                                Modifier.weight(1f, fill = false),
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.SemiBold,
-                                color = MaterialTheme.colorScheme.error,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
-                    }
-                }
-                if (hand.isChickenHand) ChickenIcon()
-                if (kind != HandKind.DRAW) {
-                    Surface(
-                        shape = RoundedCornerShape(50),
-                        color = Color.Transparent,
-                        border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurface),
-                    ) {
+                Icon(Icons.Default.Warning, contentDescription = "Penalty", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                values.forEachIndexed { seat, value ->
+                    if (value == 0) return@forEachIndexed
+                    val slot = seatSlots.getOrNull(seat)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        PlayerFlag(view.players[slot]?.country, width = 20.dp)
                         Text(
-                            hand.handScore,
-                            Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                            style = MaterialTheme.typography.titleLarge,
+                            view.nameOf(slot),
+                            Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            if (value > 0) "+$value" else "$value",
+                            style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onSurface,
+                            color = if (value > 0) WinnerColor else MaterialTheme.colorScheme.error,
                         )
                     }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HandCard(view: PlayerTournamentView, hand: TableHand, dark: Boolean) {
+    val winnerSlot = hand.playerWinnerId.toIntOrNull()
+    val loserSlot = hand.playerLooserId.toIntOrNull()
+    val kind = hand.kind()
+    Card(
+        Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            // The hand number has the wind and the place in the round under it, so the row keeps its width.
+            Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(
+                    "${hand.handId}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                HandLabel(hand.handId)
+            }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                if (kind != HandKind.DRAW) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        PlayerFlag(view.players[winnerSlot]?.country, width = 24.dp)
+                        Text(
+                            view.nameOf(winnerSlot),
+                            Modifier.weight(1f, fill = false),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = WinnerColor,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    WinTypePill(kind, kind.accent(dark, MaterialTheme.colorScheme.error))
+                    if (hand.isChickenHand) ChickenIcon()
+                }
+                if (kind == HandKind.DISCARD) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        PlayerFlag(view.players[loserSlot]?.country, width = 20.dp)
+                        Text(
+                            view.nameOf(loserSlot),
+                            Modifier.weight(1f, fill = false),
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.error,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+            }
+            if (kind != HandKind.DRAW) {
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = Color.Transparent,
+                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurface),
+                ) {
+                    Text(
+                        hand.handScore,
+                        Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
                 }
             }
         }
@@ -1430,7 +1557,7 @@ private fun HandKind.icon(): ImageVector = when (this) {
 fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, slotId: Int) {
     val (view, message) = rememberTournamentView(tournamentId)
     val ranking = view?.rankings?.players?.firstOrNull { it.playerId == slotId }
-    val tables = view?.tables.orEmpty().filter { slotId in it.seatIds() }.sortedBy { it.roundId }
+    val tables = view?.tables.orEmpty().filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
 
     AppScaffold(
         title = view?.nameOf(slotId) ?: "Player",
@@ -1467,3 +1594,8 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
         }
     }
 }
+
+private fun currentLocalDateTime() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+/** The color of the winner in the hand list, the counterpart of the red loser. Same green as the gains of the hand review. */
+private val WinnerColor = Color(0xFF00934C)

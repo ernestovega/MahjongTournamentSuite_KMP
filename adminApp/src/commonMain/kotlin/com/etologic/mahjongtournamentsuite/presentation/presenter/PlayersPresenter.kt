@@ -10,6 +10,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
@@ -68,6 +69,12 @@ class PlayersPresenter(
         emaId,
         nonMember,
     )
+
+    suspend fun setSubstitution(
+        tournamentId: String,
+        tournamentPlayerId: Int,
+        substitution: PlayerSubstitution?,
+    ): AppResult<Unit> = tournamentRepository.setPlayerSubstitution(tournamentId, tournamentPlayerId, substitution)
 }
 
 private fun Boolean.mode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED

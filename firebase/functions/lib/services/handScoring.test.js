@@ -51,6 +51,24 @@ const hand = (patch) => ({
     strict_1.default.deepEqual((0, handScoring_1.pointsFromScores)(["10", "10", "10", "10"]), ["1,75", "1,75", "1,75", "1,75"]);
     strict_1.default.equal((0, handScoring_1.pointsFromScores)(["1", "", "2", "3"]), null);
 });
+(0, node_test_1.default)("a substitute with forced 0 points leaves 4, 2 and 1 to the other three seats", () => {
+    strict_1.default.deepEqual((0, handScoring_1.pointsFromScores)(["50", "30", "10", "-90"], 1), ["4", "0", "2", "1"]);
+    strict_1.default.deepEqual((0, handScoring_1.pointsFromScores)(["50", "30", "10", "-90"], 0), ["0", "4", "2", "1"]);
+    strict_1.default.deepEqual((0, handScoring_1.pointsFromScores)(["20", "20", "0", "-40"], 3), ["3", "3", "1", "0"]);
+    strict_1.default.deepEqual((0, handScoring_1.pointsFromScores)(["20", "0", "0", "-40"], 3), ["4", "1,5", "1,5", "0"]);
+    strict_1.default.deepEqual((0, handScoring_1.pointsFromScores)(["5", "5", "5", "-15"], 3), ["2,33", "2,33", "2,33", "0"]);
+    strict_1.default.equal((0, handScoring_1.pointsFromScores)(["1", "", "2", "3"], 0), null);
+});
+(0, node_test_1.default)("the table finds the forced seat by the slot id", () => {
+    const forced = {
+        playerEastId: "5", playerSouthId: "6", playerWestId: "7", playerNorthId: "8", forcedZeroPlayerId: "6",
+        playerEastScore: "30", playerSouthScore: "90", playerWestScore: "-10", playerNorthScore: "-110",
+    };
+    strict_1.default.deepEqual((0, handScoring_1.tablePointsOf)(forced), {
+        playerEastPoints: "4", playerSouthPoints: "0", playerWestPoints: "2", playerNorthPoints: "1",
+    });
+    strict_1.default.equal((0, handScoring_1.tablePointsOf)({ ...forced, forcedZeroPlayerId: "99" }).playerSouthPoints, "4");
+});
 (0, node_test_1.default)("the table patch has scores and points of the counted hands", () => {
     const patch = (0, handScoring_1.tableTotalsPatch)(table, [hand({ playerWinnerId: "1", playerLooserId: "2", handScore: "8" })]);
     strict_1.default.deepEqual(patch, {

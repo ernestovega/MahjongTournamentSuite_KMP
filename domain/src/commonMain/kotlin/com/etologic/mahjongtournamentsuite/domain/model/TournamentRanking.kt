@@ -18,6 +18,8 @@ data class PlayerRanking(
     val teamId: Int,
     val points: Double,
     val score: Int,
+    /** Set when a substitute played for this player. The ranking has the result that counts for the player. */
+    val substitution: PlayerSubstitution? = null,
 )
 
 data class TeamRanking(

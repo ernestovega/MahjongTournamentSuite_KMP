@@ -12,6 +12,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
@@ -112,6 +113,16 @@ interface TournamentRepository {
         tournamentPlayerId: Int,
         emaId: String?,
         nonMember: NonMemberPlayer? = null,
+    ): AppResult<Unit>
+
+    /**
+     * Sets the substitution of a player who played some rounds, or removes it when [substitution] is null.
+     * A substitute plays for the player from a round on. The substitute is never recorded.
+     */
+    suspend fun setPlayerSubstitution(
+        tournamentId: String,
+        tournamentPlayerId: Int,
+        substitution: PlayerSubstitution?,
     ): AppResult<Unit>
 
     suspend fun listTournamentRounds(

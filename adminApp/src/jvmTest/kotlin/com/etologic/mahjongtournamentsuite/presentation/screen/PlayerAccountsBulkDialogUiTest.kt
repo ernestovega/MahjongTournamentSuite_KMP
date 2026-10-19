@@ -53,12 +53,12 @@ class PlayerAccountsBulkDialogUiTest {
         onNodeWithText("P1").assertIsDisplayed()
         onNodeWithText("P2").assertIsDisplayed()
         onNodeWithText("Select all shown (2)").performClick()
-        onNodeWithText("Send (2)").performClick()
+        onNodeWithText("Invite or remind (2)").performClick()
 
         // P1 has no saved email, so the dialog asks for it first. P2 is linked and needs none.
         onNodeWithText("Emails are missing").assertIsDisplayed()
         onNodeWithText("1 · P1").performTextInput("p1@example.test")
-        onNodeWithText("Send (1)").performClick()
+        onNodeWithText("Invite or remind (1)").performClick()
         assertEquals(PlayerAccountAction.SEND, action)
         assertEquals(listOf(1, 2), items.map { it.playerId })
         assertEquals("p1@example.test", items.first().email)

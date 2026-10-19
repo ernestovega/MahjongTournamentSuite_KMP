@@ -27,6 +27,7 @@ async function seedTable(options = {}) {
 const at = (fixture) => ({ tournamentId: fixture.tournamentId, roundId: 1, tableId: 1 });
 const hand = (winner, looser, score = "10") => ({
     playerWinnerId: winner, playerLooserId: looser, handScore: score, isChickenHand: false,
+    isDraw: false, isLastHand: false,
 });
 async function rejects(promise, status) {
     await strict_1.default.rejects(promise, (error) => error instanceof httpError_1.HttpError && error.status === status);
@@ -96,6 +97,65 @@ async function rejects(promise, status) {
         strict_1.default.throws(() => (0, playerHandService_1.parseHandInput)({ playerWinnerId: "1", playerLooserId: "4", handScore: "7" }), httpError_1.HttpError);
         strict_1.default.throws(() => (0, playerHandService_1.parseHandInput)({ playerWinnerId: "1", playerLooserId: "", handScore: "10", isChickenHand: true }), httpError_1.HttpError);
     });
+    (0, node_test_1.it)("marks the table completed when the player flags the last hand", async () => {
+        const fixture = await seedTable();
+        await (0, playerHandService_1.recordHand)({ ...at(fixture), uid: fixture.uid, input: { ...hand("1", "4"), isLastHand: true }, expectedVersion: 0 });
+        const table = await (0, firestoreFixtures_1.readTable)(fixture.tournamentId, 1, 1);
+        strict_1.default.equal(table.isCompleted, true);
+        strict_1.default.equal(table.playerEastScore, "34");
+        await rejects((0, playerHandService_1.previewHand)({ ...at(fixture), uid: fixture.uid, input: hand("2", "3") }), 409);
+    });
+    (0, node_test_1.it)("records a draw as a hand with zero for every seat", async () => {
+        const fixture = await seedTable();
+        const draw = (0, playerHandService_1.parseHandInput)({ isDraw: true });
+        const preview = await (0, playerHandService_1.previewHand)({ ...at(fixture), uid: fixture.uid, input: draw });
+        strict_1.default.deepEqual(preview.handScores, [0, 0, 0, 0]);
+        await (0, playerHandService_1.recordHand)({ ...at(fixture), uid: fixture.uid, input: draw, expectedVersion: 0 });
+        const saved = await (0, firestoreFixtures_1.readHand)(fixture.tournamentId, 1, 1, 1);
+        strict_1.default.equal(saved.isDone, true);
+        strict_1.default.equal(saved.playerWinnerId, "");
+        strict_1.default.equal(saved.handScore, "0");
+        strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(fixture.tournamentId, 1, 1)).playerEastScore, "0");
+    });
+    (0, node_test_1.it)("parses the penalties of a request", () => {
+        const base = { playerSouthPenalty: "-15", playerEastPenalty: "5", playerWestPenalty: "5", playerNorthPenalty: "5" };
+        strict_1.default.throws(() => (0, playerHandService_1.parsePenaltyInput)({}), httpError_1.HttpError);
+        strict_1.default.throws(() => (0, playerHandService_1.parsePenaltyInput)({ playerSouthPenalty: "abc" }), httpError_1.HttpError);
+        // Every penalty needs a negative value.
+        strict_1.default.throws(() => (0, playerHandService_1.parsePenaltyInput)({ playerSouthPenalty: "+5" }), httpError_1.HttpError);
+        strict_1.default.throws(() => (0, playerHandService_1.parsePenaltyInput)({ playerSouthPenalty: "-5;5", playerEastPenalty: ";5" }), httpError_1.HttpError);
+        strict_1.default.deepEqual((0, playerHandService_1.parsePenaltyInput)(base), ["5", "-15", "5", "5"]);
+        // A second penalty in the same request.
+        strict_1.default.deepEqual((0, playerHandService_1.parsePenaltyInput)({ playerSouthPenalty: "-15;5", playerEastPenalty: "+5;-6", playerWestPenalty: "5;2" }), ["5;-6", "-15;5", "5;2", ""]);
+    });
+    (0, node_test_1.it)("adds penalties to the hand in play without finishing the hand", async () => {
+        const fixture = await seedTable();
+        const first = await (0, playerHandService_1.addPenalties)({
+            ...at(fixture), uid: fixture.uid, penalties: ["5", "-15", "5", "5"], expectedVersion: 0,
+        });
+        strict_1.default.equal(first.handId, 1);
+        strict_1.default.equal(first.tableVersion, 1);
+        // A second penalty goes after the first one.
+        await (0, playerHandService_1.addPenalties)({ ...at(fixture), uid: fixture.uid, penalties: ["", "", "-4", ""], expectedVersion: 1 });
+        const pending = await (0, firestoreFixtures_1.readHand)(fixture.tournamentId, 1, 1, 1);
+        strict_1.default.equal(pending.isDone, false);
+        strict_1.default.deepEqual([pending.playerEastPenalty, pending.playerSouthPenalty, pending.playerWestPenalty, pending.playerNorthPenalty], ["5;", "-15;", "5;-4", "5;"]);
+        // The hand in play keeps its penalties when the result is saved, and they count in the totals.
+        const result = await (0, playerHandService_1.recordHand)({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 2 });
+        strict_1.default.deepEqual(result.handScores, [39, -23, -7, -13]);
+        const saved = await (0, firestoreFixtures_1.readHand)(fixture.tournamentId, 1, 1, 1);
+        strict_1.default.equal(saved.playerWestPenalty, "5;-4");
+    });
+    (0, node_test_1.it)("refuses penalties from a player who is not at the table or with an old table version", async () => {
+        const fixture = await seedTable();
+        await rejects((0, playerHandService_1.addPenalties)({ ...at(fixture), uid: fixture.otherUid, penalties: ["", "-5", "", ""], expectedVersion: 0 }), 403);
+        await rejects((0, playerHandService_1.addPenalties)({ ...at(fixture), uid: fixture.uid, penalties: ["", "-5", "", ""], expectedVersion: 7 }), 409);
+    });
+    (0, node_test_1.it)("keeps the table open when the hand is not the last one", async () => {
+        const fixture = await seedTable();
+        await (0, playerHandService_1.recordHand)({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 });
+        strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(fixture.tournamentId, 1, 1)).isCompleted, false);
+    });
     (0, node_test_1.it)("applies one hand when two records race with the same version", async () => {
         const fixture = await seedTable();
         const results = await Promise.allSettled([
@@ -104,47 +164,6 @@ async function rejects(promise, status) {
         ]);
         strict_1.default.equal(results.filter((result) => result.status === "fulfilled").length, 1);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(fixture.tournamentId, 1, 1)).version, 1);
-    });
-});
-(0, node_test_1.describe)("seat assignment by a player", () => {
-    (0, node_test_1.before)(firestoreFixtures_1.requireEmulator);
-    const seats = { east: "3", south: "1", west: "4", north: "2" };
-    (0, node_test_1.it)("lets a player of the table assign the seats and keeps the mode of the table", async () => {
-        const fixture = await seedTable({ seats: false });
-        const result = await (0, playerHandService_1.assignSeats)({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 0 });
-        strict_1.default.deepEqual(result.seats, ["3", "1", "4", "2"]);
-        const table = await (0, firestoreFixtures_1.readTable)(fixture.tournamentId, 1, 1);
-        strict_1.default.equal(table.playerEastId, "3");
-        strict_1.default.equal(table.playerNorthId, "2");
-        strict_1.default.equal(table.useTotalsOnly, false);
-        strict_1.default.equal(table.version, 1);
-        const totalsOnly = await seedTable({ totalsOnly: true, seats: false });
-        await (0, playerHandService_1.assignSeats)({ ...at(totalsOnly), uid: totalsOnly.uid, seats, expectedVersion: 0 });
-        strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(totalsOnly.tournamentId, 1, 1)).useTotalsOnly, true);
-        // The hand entry works right after.
-        const preview = await (0, playerHandService_1.previewHand)({ ...at(fixture), uid: fixture.uid, input: hand("3", "2") });
-        strict_1.default.deepEqual(preview.seats, ["3", "1", "4", "2"]);
-    });
-    (0, node_test_1.it)("refuses a player who does not play at the table", async () => {
-        const fixture = await seedTable({ seats: false });
-        await rejects((0, playerHandService_1.assignSeats)({ ...at(fixture), uid: fixture.otherUid, seats, expectedVersion: 0 }), 403);
-    });
-    (0, node_test_1.it)("refuses seats with a player from another table or a repeated player", async () => {
-        const fixture = await seedTable({ seats: false });
-        await rejects((0, playerHandService_1.assignSeats)({ ...at(fixture), uid: fixture.uid, seats: { ...seats, north: "7" }, expectedVersion: 0 }), 400);
-        strict_1.default.throws(() => (0, playerHandService_1.parseSeatAssignment)({ playerEastId: "1", playerSouthId: "1", playerWestId: "3", playerNorthId: "4" }), httpError_1.HttpError);
-    });
-    (0, node_test_1.it)("refuses to change the seats after a hand is saved", async () => {
-        const fixture = await seedTable();
-        await (0, playerHandService_1.recordHand)({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 });
-        await rejects((0, playerHandService_1.assignSeats)({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 1 }), 409);
-    });
-    (0, node_test_1.it)("refuses when an editor entered totals or the table version changed", async () => {
-        const withTotals = await seedTable({ seats: false });
-        await firebase_1.db.doc(`tournaments/${withTotals.tournamentId}/tables/1_1`).update({ playerEastScore: "10" });
-        await rejects((0, playerHandService_1.assignSeats)({ ...at(withTotals), uid: withTotals.uid, seats, expectedVersion: 0 }), 409);
-        const changed = await seedTable({ seats: false });
-        await rejects((0, playerHandService_1.assignSeats)({ ...at(changed), uid: changed.uid, seats, expectedVersion: 5 }), 409);
     });
 });
 //# sourceMappingURL=playerHand.integration.test.js.map

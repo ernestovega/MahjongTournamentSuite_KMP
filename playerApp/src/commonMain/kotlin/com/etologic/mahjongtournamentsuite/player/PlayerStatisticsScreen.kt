@@ -237,13 +237,19 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     }
 }
 
+/** The tabs inside the statistics tab of a tournament. */
+private enum class TournamentStatisticsKind(val title: String, val icon: ImageVector) {
+    TOURNAMENT("Tournament", Icons.Default.EmojiEvents),
+    PLAYERS("Players", Icons.Default.Group),
+}
+
 /**
- * The statistics tab of the tournament screen. It shows the tournament view of the statistics.
- * A tap on a player opens the statistics of that player.
+ * The statistics tab of the tournament screen. It has two tabs inside:
+ * "Tournament" shows the statistics of the tournament, and "Players" shows the statistics of one player.
+ * "Players" starts with the signed-in player. A tap on a player in "Tournament" opens that player in "Players".
  */
 @Composable
 fun TournamentStatisticsTab(
-    navController: NavHostController,
     tournamentId: String,
     mySlotId: Int?,
     onLoadingChange: (Boolean) -> Unit = {},
@@ -251,6 +257,10 @@ fun TournamentStatisticsTab(
     val presenter = koinInject<PlayerStatisticsPresenter>()
     var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
     var message by remember(tournamentId) { mutableStateOf<String?>(null) }
+    val tabs = TournamentStatisticsKind.entries
+    var tabName by rememberPersistentText("tournament-statistics-tab", TournamentStatisticsKind.TOURNAMENT.name)
+    val tab = tabs.firstOrNull { it.name == tabName } ?: TournamentStatisticsKind.TOURNAMENT
+    var chosenSlotText by rememberPersistentText("tournament-statistics-player", null)
     LaunchedEffect(tournamentId) {
         when (val result = presenter.tournament(tournamentId)) {
             is AppResult.Success -> data = result.value
@@ -258,26 +268,61 @@ fun TournamentStatisticsTab(
         }
     }
     ReportLoading(data == null && message == null, onLoadingChange)
-    Column(
-        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("statistics")),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
-    ) {
-        message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        val loaded = data
-        if (loaded == null) return@Column
-        val openPlayer = { slotId: Int ->
-            navController.navigate(StatisticsRoute(StatisticsScope.PLAYER.name, tournamentId = tournamentId, slotId = slotId))
-        }
-        if (mySlotId != null) {
-            StatSection("Me") {
-                StatRow("My statistics in this tournament", "Open", onClick = { openPlayer(mySlotId) })
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            PrimaryTabRow(
+                selectedTabIndex = tabs.indexOf(tab),
+                containerColor = tabRowColor(), contentColor = TabContentColor,
+                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
+                modifier = Modifier.widthIn(max = StatisticsTabWidth * tabs.size),
+            ) {
+                tabs.forEach { item ->
+                    CompactTab(
+                        selected = item == tab,
+                        onClick = { tabName = item.name },
+                        title = item.title,
+                        icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
+                    )
+                }
             }
         }
-        TournamentStatisticsPanel(
-            statistics = loaded.statistics,
-            names = loaded.names,
-            onOpenPlayer = openPlayer,
-        )
+        Column(
+            Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberPersistentScrollState("statistics-" + tab.name)),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
+        ) {
+            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            val loaded = data ?: return@Column
+            when (tab) {
+                TournamentStatisticsKind.TOURNAMENT -> TournamentStatisticsPanel(
+                    statistics = loaded.statistics,
+                    names = loaded.names,
+                    onOpenPlayer = { slotId ->
+                        chosenSlotText = slotId.toString()
+                        tabName = TournamentStatisticsKind.PLAYERS.name
+                    },
+                )
+                TournamentStatisticsKind.PLAYERS -> {
+                    val slotId = chosenSlotText?.toIntOrNull() ?: mySlotId ?: loaded.slots.firstOrNull()?.id
+                    PlayerDropdownField(
+                        names = loaded.names,
+                        selectedId = slotId,
+                        onChoose = { chosenSlotText = it.toString() },
+                        modifier = Modifier.widthIn(max = 520.dp).fillMaxWidth().align(Alignment.CenterHorizontally),
+                    )
+                    val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
+                    if (stats == null) {
+                        Text("This player has no statistics yet.")
+                    } else {
+                        PlayerStatisticsPanel(
+                            stats,
+                            header = loaded.profiles[slotId]?.let { profile -> { PlayerStatisticsHeader(profile) } },
+                            tournaments = listOf(loaded.tournament),
+                            rivalNames = loaded.rivalNames,
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 

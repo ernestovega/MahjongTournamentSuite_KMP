@@ -496,7 +496,9 @@ private fun ManageUserDialog(
     val emailOwner = accounts.firstOrNull { it.uid != original?.uid && it.email.equals(normalizedEmail, ignoreCase = true) }
     val emaOwner = emaId.trim().takeIf { it.isNotEmpty() }
         ?.let { id -> accounts.firstOrNull { it.uid != original?.uid && it.emaId == id } }
-    val valid = normalizedEmail.contains("@") && emailsMatch && emailOwner == null && emaOwner == null
+    val isPlayerRole = role == GlobalUserRole.PLAYER
+    val valid = normalizedEmail.contains("@") && emailsMatch && emailOwner == null && emaOwner == null &&
+        (!isPlayerRole || emaId.isNotBlank())
     var showEmaPicker by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { emailFocus.requestFocus() }
     LaunchedEffect(showTournamentSelector, restoreTournamentSelectorFocus) {
@@ -546,7 +548,8 @@ private fun ManageUserDialog(
                     enabled = !saving,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                if (canManageRoles) {
+                // An admin sets the EMA ID of any account. An editor sets it only for player accounts.
+                if (canManageRoles || isPlayerRole) {
                     val emaPlayer = emaPlayers.firstOrNull { it.emaId == emaId.trim() }
                     OutlinedTextField(
                         value = emaId,
@@ -557,7 +560,8 @@ private fun ManageUserDialog(
                                 when {
                                     emaOwner != null -> "Another User already uses this EMA ID: ${emaOwner.email}."
                                     emaPlayer != null -> "EMA Player: ${emaPlayer.displayName}"
-                                    else -> "Links this account to an EMA Player."
+                                    isPlayerRole && emaId.isBlank() -> "A player account needs an EMA ID."
+                                    else -> "Links this account to an EMA Player and to all their tournaments."
                                 },
                             )
                         },
@@ -590,12 +594,14 @@ private fun ManageUserDialog(
                 GlobalRoleDropdown(
                     role = role,
                     // A player account may be promoted. An account with no role claim also reads as a player.
-                    options = if (original?.role == GlobalUserRole.PLAYER) {
-                        listOf(GlobalUserRole.PLAYER, GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
-                    } else {
-                        listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
+                    // An editor can only choose the role of a new account, and cannot create admins.
+                    options = when {
+                        original?.role == GlobalUserRole.PLAYER -> listOf(GlobalUserRole.PLAYER, GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
+                        original == null && !canManageRoles -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
+                        original == null -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
+                        else -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
                     },
-                    enabled = canManageRoles && !isSelf && !saving,
+                    enabled = (canManageRoles || original == null) && !isSelf && !saving,
                     onSelect = { role = it },
                 )
                 if (role == GlobalUserRole.EDITOR) {
@@ -638,8 +644,10 @@ private fun ManageUserDialog(
                             )
                         }
                     }
-                } else {
+                } else if (role == GlobalUserRole.ADMIN) {
                     Text("Admins have access to every tournament.")
+                } else {
+                    Text("A player sees the tournaments where this EMA ID plays.")
                 }
                 if (original == null) {
                     Text("Firebase will send a password-reset email after creation.")
@@ -660,7 +668,7 @@ private fun ManageUserDialog(
         confirmButton = {
             FocusedButton(
                 onClick = {
-                    val selectedAssignments = if (role == GlobalUserRole.ADMIN) emptyList() else {
+                    val selectedAssignments = if (role != GlobalUserRole.EDITOR) emptyList() else {
                         tournaments.filter { assignments[it.id] == true }
                             .map { TournamentAssignment(it.id, it.name) }
                     }

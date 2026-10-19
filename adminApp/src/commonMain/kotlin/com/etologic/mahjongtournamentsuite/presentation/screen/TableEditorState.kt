@@ -40,6 +40,9 @@ internal class TableManagerEditorState private constructor(
     val version: Long = initialTable.version
     val playerIds: List<Int> = initialTable.playerIds
 
+    /** Slot id of a substitute who gets 0 table points in this table. Empty for most tables. */
+    val forcedZeroPlayerId: String = initialTable.forcedZeroPlayerId
+
     var isCompleted by mutableStateOf(initialTable.isCompleted)
     var useTotalsOnly by mutableStateOf(initialTable.useTotalsOnly)
 
@@ -393,8 +396,12 @@ internal class TableManagerEditorState private constructor(
     /** The table points come only from the applied scores. They are empty while a score is missing. */
     private fun effectiveTablePoints(): SeatTextValues {
         val scores = effectiveTableScores()
+        val forcedSeat = forcedZeroPlayerId.trim().takeIf { it.isNotEmpty() }
+            ?.let { id -> listOf(playerEastId, playerSouthId, playerWestId, playerNorthId).indexOfFirst { it.trim() == id } }
+            ?.takeIf { it >= 0 }
         val points = TablePoints.fromScores(
             listOf(scores.east, scores.south, scores.west, scores.north).map { it.trim().toIntOrNull() },
+            forcedSeat,
         ) ?: return SeatTextValues.EMPTY
         return SeatTextValues(east = points[0], south = points[1], west = points[2], north = points[3])
     }

@@ -11,6 +11,7 @@ exports.loadStandings = loadStandings;
 const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const handScoring_1 = require("./handScoring");
+const playerSubstitution_1 = require("./playerSubstitution");
 const statisticsDigest_1 = require("./statisticsDigest");
 /** A leaderboard shows a rate only for a player with at least this many hands. Same value as the domain module. */
 exports.MIN_HANDS_FOR_LEADERBOARD = 8;
@@ -99,14 +100,28 @@ async function prepareTableStats(transaction, params) {
     if (completed && params.table != null) {
         const slotIds = ((0, handScoring_1.seatIdsOf)(params.table) ?? []).map(intOf);
         const emaBySlot = new Map();
+        const uncountedSlots = new Set();
+        const zeroedSlots = new Set();
         if (slotIds.length === 4 && slotIds.every((id) => id != null)) {
             const slotSnapshots = await transaction.getAll(...slotIds.map((id) => firebase_1.db.collection("tournaments").doc(params.tournamentId).collection("players").doc(String(id))));
             slotSnapshots.forEach((snapshot, index) => {
                 const ema = snapshot.get("assignedEmaId");
-                emaBySlot.set(slotIds[index], typeof ema === "string" ? ema.trim() : "");
+                const slotId = slotIds[index];
+                const substitution = (0, playerSubstitution_1.readSubstitution)(snapshot.get("substitution"));
+                // A substitute is not recorded. So the person has no personal statistics from the rounds of the substitute.
+                // An excluded player has no personal statistics at all.
+                const recorded = !(0, playerSubstitution_1.substitutePlays)(substitution, params.roundId) && substitution?.excludedFromEma !== true;
+                emaBySlot.set(slotId, typeof ema === "string" && recorded ? ema.trim() : "");
+                if ((0, playerSubstitution_1.slotResultIgnored)(substitution, params.roundId))
+                    uncountedSlots.add(slotId);
+                // A disqualified player gets 0 table points and 0 score. These zeros count for the statistics.
+                if (substitution?.reason === "DISQUALIFIED")
+                    zeroedSlots.add(slotId);
             });
         }
-        const digest = (0, statisticsDigest_1.buildTableDigest)({ tournamentId: params.tournamentId, table: params.table, hands: params.hands, emaBySlot });
+        const digest = (0, statisticsDigest_1.buildTableDigest)({
+            tournamentId: params.tournamentId, table: params.table, hands: params.hands, emaBySlot, uncountedSlots, zeroedSlots,
+        });
         next = digest.results.length === 4 ? digest : null;
     }
     if (old == null && next == null)
@@ -126,6 +141,8 @@ async function prepareTableStats(transaction, params) {
     newResults.filter((result) => result.emaId !== "").forEach((result) => addResult(players.get(result.emaId), result, 1));
     const slotDelta = new Map();
     const addSlot = (result, sign) => {
+        if (result.countsForSlot === false)
+            return;
         const entry = slotDelta.get(result.slotId) ?? { points: 0, score: 0 };
         entry.points += sign * result.points;
         entry.score += sign * result.score;

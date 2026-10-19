@@ -174,6 +174,8 @@ private class RecordingTournamentRepository(
         nonMember: NonMemberPlayer?,
     ) = unusedResult<Unit>()
 
+    override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = unusedResult<Unit>()
+
     override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode) = unusedResult<List<TournamentRound>>()
 
     override suspend fun listTournamentTables(

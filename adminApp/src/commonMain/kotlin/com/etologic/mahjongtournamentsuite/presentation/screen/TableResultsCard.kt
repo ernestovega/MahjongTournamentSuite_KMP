@@ -180,8 +180,15 @@ internal fun TableResultsCard(
             GridRow(height = GridPlayerRowHeight) {
                 GridLabelCell("Table points")
                 points.forEachIndexed { seat, value ->
+                    // A substitute who left during the session gets 0 table points by the EMA rules.
+                    val isSubstituteSeat = editor.forcedZeroPlayerId.isNotBlank() &&
+                        seatIds[seat].trim() == editor.forcedZeroPlayerId.trim()
                     GridCell(modifier = Modifier.weight(1f), last = seat == 3) {
-                        Text(text = value.ifBlank { "-" }, style = bigNumberStyle, maxLines = 1)
+                        Text(
+                            text = value.ifBlank { "-" } + if (isSubstituteSeat) " (substitute)" else "",
+                            style = bigNumberStyle,
+                            maxLines = 1,
+                        )
                     }
                 }
             }

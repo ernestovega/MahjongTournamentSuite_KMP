@@ -15,6 +15,7 @@ const tournamentsService_1 = require("../../services/tournamentsService");
 const idCardsService_1 = require("../../services/idCardsService");
 const idListService_1 = require("../../services/idListService");
 const emaReportService_1 = require("../../services/emaReportService");
+const playerSubstitution_1 = require("../../services/playerSubstitution");
 const tournamentContentService_1 = require("../../services/tournamentContentService");
 const playersService_1 = require("../../services/playersService");
 const tableManagerService_1 = require("../../services/tableManagerService");
@@ -573,6 +574,44 @@ function tournamentsRouter() {
                 playerId,
                 emaId,
                 nonMember,
+                uid: res.locals.auth.uid,
+            });
+            res.status(200).json({ ok: true });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.put("/:tournamentId/players/:playerId/substitution", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const playerId = Number(req.params.playerId);
+            if (!Number.isInteger(playerId) || playerId <= 0)
+                throw (0, httpError_1.badRequest)("playerId must be a positive integer");
+            const substitution = (0, playerSubstitution_1.readSubstitution)(req.body);
+            if (substitution == null)
+                throw (0, httpError_1.badRequest)("A substitution needs a reason and a round");
+            await (0, tournamentContentService_1.setPlayerSubstitution)({
+                tournamentId: req.params.tournamentId,
+                playerId,
+                substitution,
+                uid: res.locals.auth.uid,
+            });
+            res.status(200).json({ ok: true });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.delete("/:tournamentId/players/:playerId/substitution", requireAuth_1.requireAuth, requireTournamentEditor_1.requireTournamentEditor, async (req, res, next) => {
+        try {
+            const playerId = Number(req.params.playerId);
+            if (!Number.isInteger(playerId) || playerId <= 0)
+                throw (0, httpError_1.badRequest)("playerId must be a positive integer");
+            await (0, tournamentContentService_1.setPlayerSubstitution)({
+                tournamentId: req.params.tournamentId,
+                playerId,
+                substitution: null,
+                uid: res.locals.auth.uid,
             });
             res.status(200).json({ ok: true });
         }

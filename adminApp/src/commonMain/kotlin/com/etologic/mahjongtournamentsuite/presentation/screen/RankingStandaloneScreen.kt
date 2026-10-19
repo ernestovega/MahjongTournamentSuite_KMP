@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
@@ -517,6 +518,7 @@ private fun RankingPage(
                                 width = widths.name,
                                 textAlign = TextAlign.Start,
                                 style = textStyle,
+                                strikethrough = row.isExcluded,
                             )
                             if (page.extraHeader != null) {
                                 RankingCell(
@@ -564,6 +566,7 @@ private fun RankingCell(
     width: Dp,
     textAlign: TextAlign,
     style: TextStyle,
+    strikethrough: Boolean = false,
 ) {
     Text(
         text = text,
@@ -571,7 +574,7 @@ private fun RankingCell(
         textAlign = textAlign,
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
-        style = style,
+        style = if (strikethrough) style.copy(textDecoration = TextDecoration.LineThrough) else style,
     )
 }
 
@@ -661,6 +664,8 @@ private data class RankingRow(
     val score: Int,
     val country: String = "",
     val isMasked: Boolean = false,
+    /** The player is excluded from the EMA ranking. The name shows with strikethrough. */
+    val isExcluded: Boolean = false,
 )
 
 private fun RankingSnapshot.toPages(showTopThree: Boolean = true): List<RankingPage> {
@@ -727,11 +732,12 @@ private fun PlayerRanking.toRow(
 ) = RankingRow(
     key = "player-$playerId",
     position = position,
-    name = displayName(playerId, slots, players),
+    name = displayName(playerId, slots, players) + (substitution?.let { " (${it.label})" } ?: ""),
     team = teamNames[teamId] ?: "Team $teamId",
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
+    isExcluded = substitution?.struckThrough == true,
 )
 
 private fun TeamRanking.toRow(teamNames: Map<Int, String>) = RankingRow(

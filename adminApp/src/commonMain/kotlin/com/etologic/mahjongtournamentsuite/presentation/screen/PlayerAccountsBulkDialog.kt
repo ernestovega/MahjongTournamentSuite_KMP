@@ -133,7 +133,7 @@ fun PlayerAccountsBulkDialog(
             players = missingEmail(),
             nameOf = nameOf,
             busy = busy,
-            confirmLabel = if (action == PlayerAccountAction.SEND) "Send" else "Resend",
+            confirmLabel = if (action == PlayerAccountAction.SEND) "Invite or remind" else "Resend",
             onConfirm = { emails ->
                 val skipped = missingEmail().map { it.id }.toSet() - emails.keys
                 val withEmails = chosen.filter { it.id !in skipped }.map { PlayerAccountActionItem(it.id, emails[it.id]) }
@@ -148,7 +148,7 @@ fun PlayerAccountsBulkDialog(
         modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
         properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = onDismiss,
-        title = { Text("Invitations and registration emails") },
+        title = { Text("Invitations and reminders") },
         text = {
             BoxWithConstraints(Modifier.fillMaxSize()) {
             val wide = maxWidth >= 700.dp
@@ -253,8 +253,8 @@ fun PlayerAccountsBulkDialog(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 InfoTooltipIcon(
-                    "Send: invites players that have a saved email, and tells linked players that they are registered. " +
-                        "Resend: new invitation link, or the same registration email again. " +
+                    "Invite or remind: invites players that have a saved email, and reminds linked players that they are registered. " +
+                        "Resend: new invitation link, or the same reminder again. " +
                         "Revoke: cancels the invitation, or removes the account link.",
                 )
                 Spacer(Modifier.weight(1f))
@@ -265,7 +265,7 @@ fun PlayerAccountsBulkDialog(
                 ) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Send (${chosen.size})")
+                    Text("Invite or remind (${chosen.size})")
                 }
                 OutlinedButton(
                     enabled = chosen.isNotEmpty() && !busy,

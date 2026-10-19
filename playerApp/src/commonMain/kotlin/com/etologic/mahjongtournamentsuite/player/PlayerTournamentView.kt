@@ -1,8 +1,13 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.atTime
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
@@ -22,7 +27,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 data class PlayerEntry(
     val slotId: Int,
     val name: String,
+    /** The first name only. The hand entry dialogs show it, so they stay short. */
+    val firstName: String = name,
     val country: String,
+    /** Set when a substitute plays for this person from a round on. Statistics ignore those rounds. */
+    val substitution: PlayerSubstitution? = null,
 )
 
 data class PlayerTable(
@@ -48,6 +57,12 @@ data class PlayerTable(
     fun seatIds(): List<Int?> = listOf(
         table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId,
     ).map { it.toIntOrNull() }
+
+    /** True when the players set the four seats. Before that, the table only has the players of the draw. */
+    val seatsAssigned: Boolean get() = seatIds().none { it == null }
+
+    /** The players of the table: the seats when they are set, otherwise the players of the draw. */
+    fun playerSlots(): List<Int> = if (seatsAssigned) seatIds().filterNotNull() else table.playerIds
 }
 
 /** Everything the player screens show for one tournament. */
@@ -64,7 +79,7 @@ data class PlayerTournamentView(
     /** The statistics of the tournament. They give the level of each player. They are computed once, when first needed. */
     private val statistics: TournamentStatistics by lazy {
         CalculateStatisticsUseCase()(
-            players.values.map { TournamentPlayer(id = it.slotId, name = it.name, team = 0) },
+            players.values.map { TournamentPlayer(id = it.slotId, name = it.name, team = 0, substitution = it.substitution) },
             tables.map { RankingTable(it.table, it.hands) },
         )
     }
@@ -98,9 +113,36 @@ data class PlayerTournamentView(
     }
 
     val myTables: List<PlayerTable>
-        get() = mySlotId?.let { id -> tables.filter { id in it.seatIds() } }.orEmpty()
+        get() = mySlotId?.let { id -> tables.filter { id in it.playerSlots() } }.orEmpty()
 
     fun nameOf(slotId: Int?): String = slotId?.let { players[it]?.name } ?: "-"
+
+    /** The first name of a player, without the surname. */
+    fun firstNameOf(slotId: Int?): String = slotId?.let { players[it]?.firstName } ?: "-"
+
+    /**
+     * True when the round has started at [now]. A round with no date counts as started.
+     * A date with no start time starts at midnight.
+     */
+    fun roundHasStarted(roundId: Int, now: LocalDateTime): Boolean {
+        val schedule = tournament.roundSchedules.firstOrNull { it.roundId == roundId }
+        val date = schedule?.date?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return true
+        val time = schedule.startTime?.trim()?.takeIf { it.isNotEmpty() }
+            ?.let { runCatching { LocalTime.parse(it) }.getOrNull() } ?: LocalTime(0, 0)
+        return now >= date.atTime(time)
+    }
+
+    /** A table is ongoing from the start of its round until it is finished. Players enter hands only then. */
+    fun isOngoing(table: PlayerTable, now: LocalDateTime): Boolean =
+        !table.isComplete && roundHasStarted(table.roundId, now)
+
+    /** True when the signed-in player can add hands to the table now. */
+    fun canAddHands(table: PlayerTable, now: LocalDateTime): Boolean {
+        val mine = mySlotId ?: return false
+        return mine in table.table.playerIds && !table.table.useTotalsOnly &&
+            table.seatsAssigned && isOngoing(table, now)
+    }
 
     /** Date and start time of the round (for example "Mon, 12 Oct 10:00", in the device language), or null when none is configured. */
     fun roundStartOf(roundId: Int): String? =
@@ -132,7 +174,9 @@ fun buildPlayerTournamentView(
         slot.id to PlayerEntry(
             slotId = slot.id,
             name = name,
+            firstName = (registered?.firstName ?: slot.nonMember?.firstName)?.trim()?.takeIf { it.isNotEmpty() }?.uppercase() ?: name,
             country = registered?.country ?: slot.nonMember?.country.orEmpty(),
+            substitution = slot.substitution,
         )
     }
     val mySlot = myEmaId?.let { ema -> slots.firstOrNull { it.assignedEmaId == ema }?.id }

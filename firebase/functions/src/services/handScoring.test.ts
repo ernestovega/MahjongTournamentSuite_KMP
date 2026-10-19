@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { handScoreTotals, handSeatScores, isResultSelectionInvalid, pointsFromScores, seatIdsOf, tableTotalsPatch } from "./handScoring";
+import { handScoreTotals, handSeatScores, isResultSelectionInvalid, pointsFromScores, seatIdsOf, tablePointsOf, tableTotalsPatch } from "./handScoring";
 
 const table = {
   playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",
@@ -64,6 +64,26 @@ test("points follow the place and share places on ties", () => {
   assert.deepEqual(pointsFromScores(["20", "20", "0", "-40"]), ["3", "3", "1", "0"]);
   assert.deepEqual(pointsFromScores(["10", "10", "10", "10"]), ["1,75", "1,75", "1,75", "1,75"]);
   assert.equal(pointsFromScores(["1", "", "2", "3"]), null);
+});
+
+test("a substitute with forced 0 points leaves 4, 2 and 1 to the other three seats", () => {
+  assert.deepEqual(pointsFromScores(["50", "30", "10", "-90"], 1), ["4", "0", "2", "1"]);
+  assert.deepEqual(pointsFromScores(["50", "30", "10", "-90"], 0), ["0", "4", "2", "1"]);
+  assert.deepEqual(pointsFromScores(["20", "20", "0", "-40"], 3), ["3", "3", "1", "0"]);
+  assert.deepEqual(pointsFromScores(["20", "0", "0", "-40"], 3), ["4", "1,5", "1,5", "0"]);
+  assert.deepEqual(pointsFromScores(["5", "5", "5", "-15"], 3), ["2,33", "2,33", "2,33", "0"]);
+  assert.equal(pointsFromScores(["1", "", "2", "3"], 0), null);
+});
+
+test("the table finds the forced seat by the slot id", () => {
+  const forced = {
+    playerEastId: "5", playerSouthId: "6", playerWestId: "7", playerNorthId: "8", forcedZeroPlayerId: "6",
+    playerEastScore: "30", playerSouthScore: "90", playerWestScore: "-10", playerNorthScore: "-110",
+  };
+  assert.deepEqual(tablePointsOf(forced), {
+    playerEastPoints: "4", playerSouthPoints: "0", playerWestPoints: "2", playerNorthPoints: "1",
+  });
+  assert.equal(tablePointsOf({ ...forced, forcedZeroPlayerId: "99" }).playerSouthPoints, "4");
 });
 
 test("the table patch has scores and points of the counted hands", () => {

@@ -5,7 +5,7 @@ exports.handRunOf = handRunOf;
 exports.buildTableDigest = buildTableDigest;
 const handScoring_1 = require("./handScoring");
 /** Change this number when the digest rules change. A stored table digest with another number counts as old. */
-exports.DIGEST_VERSION = 4;
+exports.DIGEST_VERSION = 5;
 const text = (value) => String(value ?? "").trim();
 function penaltyOf(value) {
     return text(value).split(";").reduce((sum, part) => {
@@ -51,6 +51,8 @@ function handRunOf(flags) {
  */
 function buildTableDigest(params) {
     const { table, hands, emaBySlot } = params;
+    const uncountedSlots = params.uncountedSlots ?? new Set();
+    const zeroedSlots = params.zeroedSlots ?? new Set();
     const roundId = Number(table.roundId);
     const tableId = Number(table.tableId);
     const isCompleted = Boolean(table.isCompleted);
@@ -167,8 +169,9 @@ function buildTableDigest(params) {
             tableId,
             seat,
             position: 1 + finalScores.filter((score) => score > finalScores[seat]).length,
-            score: finalScores[seat],
-            points: points[seat],
+            score: zeroedSlots.has(ids[seat]) ? 0 : finalScores[seat],
+            points: zeroedSlots.has(ids[seat]) ? 0 : points[seat],
+            countsForSlot: !uncountedSlots.has(ids[seat]),
             hasHands,
             handsPlayed: hasHands ? counted.length : 0,
             handsWon: won[seat],
