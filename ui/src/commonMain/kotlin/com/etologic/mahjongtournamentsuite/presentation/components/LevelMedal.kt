@@ -241,7 +241,7 @@ fun LevelMedalTag(
         append(if (provisional) ". Provisional, it counts fewer than 100 hands in this tournament." else ".")
     }
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = { AppPlainTooltip { Text(text) } },
         state = rememberTooltipState(),
         modifier = modifier,

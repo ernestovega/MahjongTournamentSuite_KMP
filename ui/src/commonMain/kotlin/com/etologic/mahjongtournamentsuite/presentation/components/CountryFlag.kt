@@ -38,7 +38,7 @@ fun CountryFlag(
         return
     }
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = { AppPlainTooltip { Text(countryName) } },
         state = rememberTooltipState(),
     ) {

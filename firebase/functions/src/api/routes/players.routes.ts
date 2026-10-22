@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { recordActivity } from "../../services/activityLog";
+import { actorFromToken } from "../../services/changeLog";
 
 import { badRequest, forbidden } from "../httpError";
 import { requireAdmin } from "../middleware/requireAdmin";
@@ -32,7 +34,12 @@ export function playersRouter(): Router {
       const country = String(req.body?.country ?? "").trim().toUpperCase();
       if (!firstName || !lastName) throw badRequest("First name and last name are required");
       if (!/^[A-Z]{3}$/.test(country)) throw badRequest("Player country must use a three-letter EMA code");
-      res.status(200).json(await createPlayer({ emaId, firstName, lastName, country }));
+      const created = await createPlayer({ emaId, firstName, lastName, country });
+      await recordActivity({
+        action: "registry.create", actor: actorFromToken(res.locals.auth), target: `EMA ${emaId}`,
+        details: { firstName, lastName, country },
+      });
+      res.status(200).json(created);
     } catch (error) {
       next(error);
     }
@@ -48,6 +55,10 @@ export function playersRouter(): Router {
       if (!firstName || !lastName) throw badRequest("First name and last name are required");
       if (!/^[A-Z]{3}$/.test(country)) throw badRequest("Player country must use a three-letter EMA code");
       await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country });
+      await recordActivity({
+        action: "registry.update", actor: actorFromToken(res.locals.auth), target: `EMA ${emaId}`,
+        details: { emaId: newEmaId, firstName, lastName, country },
+      });
       res.status(200).json({ ok: true });
     } catch (error) {
       next(error);
@@ -60,7 +71,11 @@ export function playersRouter(): Router {
       const contentType = String(req.body?.contentType ?? "").trim().toLowerCase();
       const dataBase64 = String(req.body?.dataBase64 ?? "").trim();
       if (!dataBase64) throw badRequest("Photo data is required");
-      res.status(200).json(await updatePlayerPhoto({ emaId, contentType, dataBase64 }));
+      const updated = await updatePlayerPhoto({ emaId, contentType, dataBase64 });
+      await recordActivity({
+        action: "registry.photo", actor: actorFromToken(res.locals.auth), target: `EMA ${emaId}`, details: { contentType },
+      });
+      res.status(200).json(updated);
     } catch (error) {
       next(error);
     }

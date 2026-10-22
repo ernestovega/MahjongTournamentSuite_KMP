@@ -7,4 +7,4 @@ object BackendUrlOverride {
 }
 
 actual fun functionsBaseUrlPlatform(): String =
-    BackendUrlOverride.functionsBaseUrl ?: "https://europe-west1-mahjong-tournament-suite.cloudfunctions.net/api"
+    BackendUrlOverride.functionsBaseUrl ?: "https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api"

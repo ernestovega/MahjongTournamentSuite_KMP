@@ -15,6 +15,8 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateSto
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
@@ -71,6 +73,8 @@ data class StatisticsRoute(
 )
 
 private val playerModule = module {
+    // In the player app every account is a player, so the list holds only the tournaments where it plays.
+    single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get(), playerScope = true) }
     factory { PlayerSessionPresenter(get(), get(), get(), get()) }
     factory { CalculateTournamentRankingsUseCase() }
     factory { CalculateStatisticsUseCase() }

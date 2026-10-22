@@ -23,8 +23,10 @@ import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.CalendarLocale
@@ -610,6 +612,7 @@ private fun CropSlider(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun TournamentLogoLibraryDialog(
     tournaments: List<Tournament>,
@@ -617,9 +620,10 @@ fun TournamentLogoLibraryDialog(
     onSelect: (Tournament) -> Unit,
 ) {
     val logos = remember(tournaments) {
-        tournaments.filter { !it.associationLogoUrl.isNullOrBlank() }
+        tournaments
+            .filter { !it.associationLogoUrl.isNullOrBlank() }
+            .distinctBy { it.associationLogoHash ?: it.associationLogoUrl }
     }
-    val listState = rememberLazyListState()
     val itemFocusRequesters = remember(logos.map { it.id }) { logos.map { FocusRequester() } }
     val cancelFocusRequester = remember { FocusRequester() }
 
@@ -639,24 +643,21 @@ fun TournamentLogoLibraryDialog(
             if (logos.isEmpty()) {
                 Text("No saved tournament logos are available.")
             } else {
-                LazyColumnWithScrollbar(
-                    state = listState,
+                FlowRow(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 400.dp),
-                    contentPadding = PaddingValues(end = 8.dp),
+                        .heightIn(max = 400.dp)
+                        .verticalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    itemsIndexed(logos, key = { _, tournament -> tournament.id }) { index, tournament ->
+                    logos.forEachIndexed { index, tournament ->
                         val previous = if (index == 0) cancelFocusRequester else itemFocusRequesters[index - 1]
                         val next = if (index == logos.lastIndex) cancelFocusRequester else itemFocusRequesters[index + 1]
                         FocusedButton(
                             onClick = { onSelect(tournament) },
-                            modifier = Modifier.fillMaxWidth(),
                             focusRequester = itemFocusRequesters[index],
-                            buttonModifier = Modifier
-                                .fillMaxWidth()
-                                .focusLoop(previous = previous, next = next),
+                            buttonModifier = Modifier.focusLoop(previous = previous, next = next),
                             colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
                         ) {
                             AsyncImage(
@@ -664,18 +665,9 @@ fun TournamentLogoLibraryDialog(
                                 contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
-                                    .size(48.dp)
+                                    .size(112.dp)
                                     .clip(CircleShape)
                                     .background(Color.White),
-                            )
-
-                            Spacer(Modifier.width(16.dp))
-
-                            Text(
-                                tournament.name,
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Start,
-                                maxLines = 2,
                             )
                         }
                     }

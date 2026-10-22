@@ -18,6 +18,7 @@ const tournamentDraw_1 = require("./tournamentDraw");
 const usersService_1 = require("./usersService");
 const dataVersionsService_1 = require("./dataVersionsService");
 const matchTime_1 = require("./matchTime");
+const matchTimeTaskService_1 = require("./matchTimeTaskService");
 const tableManagerService_1 = require("./tableManagerService");
 const tournamentSchedule_1 = require("./tournamentSchedule");
 function toIsoString(value) {
@@ -68,6 +69,7 @@ async function mapTournamentDoc(d) {
             ? String(d.get("primaryColor")).toUpperCase()
             : "#02B16B",
         associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
+        associationLogoHash: typeof d.get("associationLogoHash") === "string" ? d.get("associationLogoHash") : null,
         hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
         hostCity: String(d.get("hostCity") ?? "").trim(),
         venueName: String(d.get("venueName") ?? ""),
@@ -127,6 +129,7 @@ async function createTournament(params) {
         primaryColor: normalizePrimaryColor(params.primaryColor),
         associationLogoUrl: logo?.url ?? null,
         associationLogoPath: logo?.path ?? null,
+        associationLogoHash: logo?.hash ?? null,
         eventStartDate: params.eventStartDate,
         eventEndDate: params.eventEndDate,
         hostCountry: params.hostCountry.trim().toUpperCase(),
@@ -272,6 +275,7 @@ async function createTournament(params) {
     }
     const snap = await ref.get();
     await (0, dataVersionsService_1.bumpGlobalDataVersion)("tournaments");
+    await (0, matchTimeTaskService_1.scheduleRoundCloses)(ref.id, snap.data() ?? {});
     return mapTournamentDoc(snap);
 }
 async function listAllTournaments() {
@@ -343,6 +347,7 @@ async function saveAssociationLogo(tournamentId, contentType, dataBase64) {
     return {
         path,
         url: `https://firebasestorage.googleapis.com/v0/b/${firebase_1.storage.name}/o/${objectName}?alt=media&token=${token}`,
+        hash: (0, node_crypto_1.createHash)("sha256").update(bytes).digest("hex"),
     };
 }
 async function copyAssociationLogo(sourceTournamentId, targetTournamentId) {
@@ -426,6 +431,7 @@ async function updateTournamentSettings(params) {
     if (logo !== undefined) {
         update.associationLogoPath = logo?.path ?? null;
         update.associationLogoUrl = logo?.url ?? null;
+        update.associationLogoHash = logo?.hash ?? null;
     }
     await ref.update(update);
     await Promise.all([
@@ -435,7 +441,9 @@ async function updateTournamentSettings(params) {
     if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
         await firebase_1.storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);
     }
-    return mapTournamentDoc(await ref.get());
+    const after = await ref.get();
+    await (0, matchTimeTaskService_1.scheduleRoundCloses)(params.tournamentId, after.data() ?? {});
+    return mapTournamentDoc(after);
 }
 function isDocRef(value) {
     return value != null;

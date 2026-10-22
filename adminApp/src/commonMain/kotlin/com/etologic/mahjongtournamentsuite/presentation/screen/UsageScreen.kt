@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.Icons
@@ -95,7 +96,7 @@ fun UsageScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(24.dp),
             scrollable = true,
         ) {
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             val data = report ?: return@ScreenColumn
             KpiTiles(data)
             StaggeredColumns(minColumnWidth = 440.dp, spacing = 24.dp) {

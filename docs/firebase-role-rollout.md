@@ -6,7 +6,7 @@ This rollout replaces the deployed legacy role API with the `EDITOR` and `ADMIN`
 
 - The active project is `mahjong-tournament-suite`.
 - The deployed `api` revision is `api-00029-yar`.
-- The function uses Node.js 22 in `europe-west1`.
+- The function uses Node.js 22 in `europe-southwest1`.
 - The management web application is live at `https://mahjong-tournament-suite.web.app`.
 - Firebase Hosting forwards `/api/**` to the deployed `api` function.
 - Both required secrets exist.
@@ -118,7 +118,7 @@ The `npm run verify:roles` script performs these backend checks with one tempora
 Run the script from `firebase/functions` on one line. It needs application default credentials (`gcloud auth application-default login`).
 
 ```
-MTS_ID_TOOLKIT_API_KEY='<web API key>' npm run verify:roles -- --project mahjong-tournament-suite --admin-email <admin email> --api-base-url https://europe-west1-mahjong-tournament-suite.cloudfunctions.net/api
+MTS_ID_TOOLKIT_API_KEY='<web API key>' npm run verify:roles -- --project mahjong-tournament-suite --admin-email <admin email> --api-base-url https://europe-southwest1-mahjong-tournament-suite.cloudfunctions.net/api
 ```
 
 - `MTS_ID_TOOLKIT_API_KEY` is the Web API Key in Firebase Console, Project settings, General.

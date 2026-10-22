@@ -79,6 +79,9 @@ describe("player invitations", () => {
     const created = await invite(1, email);
     assert.equal(created.outcome, "INVITED");
     const token = await lastMailTo(email);
+    const mail = sent.filter((m) => m.to === email).pop()!;
+    assert.match(mail.text, /This is the player app of the tournament\./);
+    assert.match(mail.html ?? "", /This is the player app of the tournament\./);
 
     assert.equal((await server.request("POST", "/player/invitations/accept", { body: { token, password: "short" } })).status, 400);
     const accepted = await server.request("POST", "/player/invitations/accept", { body: { token, password: "Passw0rd!-new" } });

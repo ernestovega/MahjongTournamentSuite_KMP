@@ -14,6 +14,7 @@ data class TournamentDto(
     val shortName: String = "",
     val primaryColor: String = "#02B16B",
     val associationLogoUrl: String? = null,
+    val associationLogoHash: String? = null,
     val hostCountry: String = "",
     val hostCity: String = "",
     val venueName: String = "",

@@ -52,6 +52,32 @@ class FunctionsBackendApiTest {
     }
 
     @Test
+    fun listTournamentsAsksForAllTournamentsByDefault() = runTest {
+        var request: HttpRequestData? = null
+        val api = mockBackendApi { received ->
+            request = received
+            jsonResponse("{\"tournaments\":[]}")
+        }
+
+        api.listTournaments(idToken = "token-123")
+
+        assertEquals("https://backend.test/functions/tournaments", request?.url.toString())
+    }
+
+    @Test
+    fun listTournamentsWithPlayerScopeSendsTheScopeParameter() = runTest {
+        var request: HttpRequestData? = null
+        val api = mockBackendApi { received ->
+            request = received
+            jsonResponse("{\"tournaments\":[]}")
+        }
+
+        api.listTournaments(idToken = "token-123", playerScope = true)
+
+        assertEquals("player", request?.url?.parameters?.get("scope"))
+    }
+
+    @Test
     fun backendErrorsKeepStatusAndResponseBody() = runTest {
         val api = mockBackendApi {
             respond(

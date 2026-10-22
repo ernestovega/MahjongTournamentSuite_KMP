@@ -68,6 +68,8 @@ class DefaultTournamentRepository(
     private val cache: RepositoryCache,
     private val json: Json,
     private val tableStore: TournamentTableStore = TournamentTableStore(),
+    /** The player app lists only the tournaments where the account is a player, whatever its role. */
+    private val playerScope: Boolean = false,
 ) : TournamentRepository {
     private val lastPolledRevisions = mutableMapOf<String, Map<String, Long>>()
     private var lastPolledGlobalRevisions: Map<String, Long>? = null
@@ -78,7 +80,7 @@ class DefaultTournamentRepository(
         resource = "tournaments",
         refreshMode = refreshMode,
     ) { idToken ->
-            backendApi.listTournaments(idToken).tournaments.map { it.toDomain() }.sortedRecentFirst()
+            backendApi.listTournaments(idToken, playerScope).tournaments.map { it.toDomain() }.sortedRecentFirst()
     }
 
     override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> = runCatching {

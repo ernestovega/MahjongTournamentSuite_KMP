@@ -463,9 +463,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                             .padding(end = PlatformScrollbarThickness),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                    newPlayerError?.let {
-                        Text(it, color = MaterialTheme.colorScheme.error)
-                    }
+                    newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }
                     OutlinedTextField(
                         value = newEmaId,
                         onValueChange = { newEmaId = it.toDigitsInput(8); newPlayerError = null },

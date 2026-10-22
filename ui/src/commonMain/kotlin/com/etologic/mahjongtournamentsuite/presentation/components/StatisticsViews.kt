@@ -292,8 +292,6 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     fillWidth: Boolean = true,
     /** A button at the end of the row, for example to change the player. */
     action: (@Composable () -> Unit)? = null,
-    /** Photo, texts and action go in one centered column. */
-    stacked: Boolean = false,
 ) {
     val photo: @Composable () -> Unit = {
         if (profile.photoUrl.isNullOrBlank()) {
@@ -322,7 +320,7 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     }
     val texts: @Composable (Alignment.Horizontal) -> Unit = { alignment ->
         Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(profile.name, style = MaterialTheme.typography.titleLarge, textAlign = if (stacked) TextAlign.Center else null)
+            Text(profile.name, style = MaterialTheme.typography.titleLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (profile.country.isNotBlank()) {
                     CountryFlag(profile.country, width = 24.dp, contentDescription = "Country ${profile.country}")
@@ -333,21 +331,9 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
             }
         }
     }
-    if (stacked) {
-        Column(
-            (if (fillWidth) modifier.fillMaxWidth() else modifier).padding(vertical = 4.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            photo()
-            texts(Alignment.CenterHorizontally)
-            action?.invoke()
-        }
-    } else {
-        HeaderCard(modifier, fillWidth, action) {
-            photo()
-            texts(Alignment.Start)
-        }
+    HeaderCard(modifier, fillWidth, action) {
+        photo()
+        texts(Alignment.Start)
     }
 }
 

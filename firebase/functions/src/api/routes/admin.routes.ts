@@ -1,4 +1,6 @@
 import { Router } from "express";
+import { recordActivity } from "../../services/activityLog";
+import { actorFromToken } from "../../services/changeLog";
 
 import { auth, db } from "../../firebase";
 import { badRequest, forbidden } from "../httpError";
@@ -148,6 +150,10 @@ export function adminRouter(): Router {
       if (emaId != null) await setAccountEmaId({ uid: user.uid, emaId });
       await sendPasswordResetEmail(email);
       await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: "user.create", actor: actorFromToken(res.locals.auth), target: `user ${user.uid}`,
+        details: { role, emaId, tournamentAssignments },
+      });
 
       res.status(201).json(await getManagedUser(user.uid, assignmentScope));
     } catch (error) {
@@ -202,6 +208,12 @@ export function adminRouter(): Router {
       });
       if (emaIdChanges) await setAccountEmaId({ uid: current.uid, emaId: nextEmaId ?? null });
       await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: "user.update", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
+        details: {
+          roleFrom: current.role, roleTo: role, alias, emaId: emaIdChanges ? nextEmaId : undefined, tournamentAssignments,
+        },
+      });
       res.status(200).json(await getManagedUser(current.uid, assignmentScope));
     } catch (error) {
       next(error);
@@ -219,6 +231,9 @@ export function adminRouter(): Router {
 
       await setManagedUserDisabled(current.uid, disabled);
       await bumpGlobalDataVersion("users");
+      await recordActivity({
+        action: disabled ? "user.disable" : "user.enable", actor: actorFromToken(res.locals.auth), target: `user ${current.uid}`,
+      });
       res.status(200).json(await getManagedUser(current.uid));
     } catch (error) {
       next(error);

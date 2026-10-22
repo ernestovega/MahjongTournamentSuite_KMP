@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.e2e
 
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import org.junit.After
@@ -16,25 +17,30 @@ class EditTournamentTest : AdminE2eTest() {
         c.openTournament(name)
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
-        c.waitForText("Tournament data")
+        c.waitForText("Branding")
     }
 
     @Test
     fun dialogShowsStoredValues() {
         openDialog()
-        listOf("Eskalerria", "test-live@example.com", "Madrid", "#D81B60", "Tournament schedule", "Player agenda")
-            .forEach { c.waitForText(it) }
+        listOf("Eskalerria", "test-live@example.com", "Madrid").forEach { c.waitForText(it) }
+        c.clickButton("Branding")
+        c.waitForText("#D81B60")
+        c.clickButton("Schedule")
+        listOf("Tournament schedule", "Player agenda").forEach { c.waitForText(it) }
     }
 
     @Test
     fun dialogShowsReadOnlyTournamentData() {
         openDialog()
+        c.clickButton("Data")
         listOf("test-live-ongoing", "Created by UID", "Created by name", "Created at", "Updated at", "Tries").forEach { c.waitForText(it) }
     }
 
     @Test
     fun dialogListsOneRowPerRoundAndPerAgendaItem() {
         openDialog()
+        c.clickButton("Schedule")
         c.waitForText("Round 6")
         c.assertNoText("Round 7")
         c.waitForText("Registration and breakfast")
@@ -46,7 +52,7 @@ class EditTournamentTest : AdminE2eTest() {
     fun cancelClosesWithoutSaving() {
         openDialog()
         c.clickButton("Cancel")
-        c.waitForNoText("Tournament data")
+        c.waitForNoText("Branding")
         c.waitForText("Round 4")
     }
 
@@ -55,20 +61,22 @@ class EditTournamentTest : AdminE2eTest() {
         openDialog()
         c.field("Tournament name").performTextReplacementText("Live renamed by a test")
         c.clickButton("Save")
-        c.waitForNoText("Tournament data")
+        c.waitForNoText("Branding")
         c.waitForText("Live renamed by a test")
     }
 
     @Test
     fun tournamentWithoutVenueOrAgendaOpensTheDialog() {
         openDialog("Test - Without best hands, chicken hands, venue or dates")
-        c.waitForText("Tournament data")
+        c.waitForText("Branding")
+        c.clickButton("Schedule")
         c.waitForText("Add activity")
     }
 
     @Test
     fun addActivityAddsAnAgendaRow() {
         openDialog()
+        c.clickButton("Schedule")
         c.clickButton("Add activity")
         c.waitForText("Choose activity 4 date")
     }
@@ -76,6 +84,7 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun removeActivityRemovesAnAgendaRow() {
         openDialog()
+        c.clickButton("Schedule")
         c.clickButton("Remove")
         c.waitForNoText("Choose activity 3 date")
     }
@@ -86,7 +95,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
-        c.waitForText("Tournament data")
+        c.waitForText("Branding")
         c.field("Tournament name").performTextReplacementText("Renamed by an editor")
         c.clickButton("Save")
         c.waitForText("You do not have permission to perform this action.")
@@ -112,7 +121,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.waitForText("Delete tournament")
         c.onAllNodes(hasText("Cancel") and hasClickAction()).onLast().performClick()
         c.waitForNoText("Delete tournament")
-        c.waitForText("Tournament data")
+        c.waitForText("Branding")
     }
 
     @Test
@@ -132,6 +141,7 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun dialogShowsTheMatchTimeSettings() {
         openDialog()
+        c.clickButton("Match")
         // The live tournament has no stored time zone, so the form suggests the zone of the device.
         listOf("Match duration (minutes)", "120", "Time zone", java.util.TimeZone.getDefault().id, "Finish the hand in play")
             .forEach { c.waitForText(it) }
@@ -141,24 +151,33 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun matchDurationZeroIsRefusedOnSave() {
         openDialog()
+        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("0")
         c.clickButton("Save")
         c.waitForText("Match duration must be a whole number of minutes from 1 to 600.")
-        c.waitForText("Tournament data")
+        c.waitForText("Branding")
     }
 
     @Test
     fun timeZoneWithoutARegionIsRefusedOnSave() {
         openDialog()
+        c.clickButton("Match")
         c.field("Time zone").performTextReplacementText("Madrid")
         c.clickButton("Save")
         c.waitForText("Time zone must be a name like Europe/Madrid.")
     }
 
+    /** The Match tab ends with three switches: finish the hand, best hands and chicken hands. The dialog is last in the tree. */
+    private fun toggleFinishTheHand() {
+        val switches = c.onAllNodes(isToggleable())
+        switches[switches.fetchSemanticsNodes().size - 3].performClick()
+    }
+
     @Test
     fun extraTimeZeroIsRefusedWhenTheHandIsFinished() {
         openDialog()
-        c.clickButton("Finish the hand in play")
+        c.clickButton("Match")
+        toggleFinishTheHand()
         c.field("Extra time (minutes)").performTextReplacementText("0")
         c.clickButton("Save")
         c.waitForText("Extra time must be a whole number of minutes from 1 to 120.")
@@ -167,11 +186,12 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun savedMatchTimeSettingsReachTheServer() {
         openDialog()
+        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("95")
-        c.clickButton("Finish the hand in play")
+        toggleFinishTheHand()
         c.field("Extra time (minutes)").performTextReplacementText("20")
         c.clickButton("Save")
-        c.waitForNoText("Tournament data")
+        c.waitForNoText("Branding")
         val tournament = liveTournamentJson()
         check(tournament.getInt("matchDurationMinutes") == 95) { "Duration: ${tournament.opt("matchDurationMinutes")}" }
         check(tournament.getString("matchEndMode") == "FINISH_HAND") { "End mode: ${tournament.opt("matchEndMode")}" }

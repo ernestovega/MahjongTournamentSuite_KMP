@@ -259,7 +259,7 @@ private fun EllipsizedTitleText(
 ) {
     var isEllipsized by remember(text) { mutableStateOf(false) }
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = { AppPlainTooltip { Text(text) } },
         state = rememberTooltipState(),
         enableUserInput = isEllipsized,

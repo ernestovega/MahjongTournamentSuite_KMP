@@ -51,22 +51,26 @@ async function closeTable(tournamentId: string, roundId: number, tableId: number
 }
 
 /**
- * Marks as completed the tables with played hands whose match time is over. A tournament without time zone is
- * skipped, because the server cannot know the local time of its rounds. The job runs every few minutes.
+ * Marks as completed the tables of one round that have played hands, when the match time of the round is over.
+ * A task runs it at the end of the round. It checks the time again, so a task made before an edit of the
+ * schedule does nothing. A tournament without time zone is skipped, because the server cannot know the local
+ * time of its rounds.
  */
-export async function closeExpiredTables(nowMs: number = Date.now()): Promise<CloseExpiredResult> {
-  const tournaments = await db.collection("tournaments").where("isCompleted", "==", false).get();
+export async function closeRoundTables(tournamentId: string, roundId: number, nowMs: number = Date.now()): Promise<CloseExpiredResult> {
   const result: CloseExpiredResult = { tournaments: 0, closed: 0 };
-  for (const tournament of tournaments.docs) {
-    const rounds = overRounds(tournament.data(), nowMs);
-    if (rounds.length === 0) continue;
-    const started = await tournament.ref.collection("tables").where("isCompleted", "==", false).where("hasProgress", "==", true).get();
-    const candidates = started.docs.filter((doc) => rounds.includes(Number(doc.get("roundId"))) && doc.get("matchTimeChecked") !== true);
-    if (candidates.length === 0) continue;
-    result.tournaments += 1;
-    for (const doc of candidates) {
-      if (await closeTable(tournament.id, Number(doc.get("roundId")), Number(doc.get("tableId")))) result.closed += 1;
-    }
+  const tournament = await db.doc(`tournaments/${tournamentId}`).get();
+  if (!tournament.exists || tournament.get("isCompleted") === true) return result;
+  if (!overRounds(tournament.data() ?? {}, nowMs).includes(roundId)) return result;
+  const started = await tournament.ref.collection("tables")
+    .where("roundId", "==", roundId)
+    .where("isCompleted", "==", false)
+    .where("hasProgress", "==", true)
+    .get();
+  const candidates = started.docs.filter((doc) => doc.get("matchTimeChecked") !== true);
+  if (candidates.length === 0) return result;
+  result.tournaments = 1;
+  for (const doc of candidates) {
+    if (await closeTable(tournamentId, roundId, Number(doc.get("tableId")))) result.closed += 1;
   }
   return result;
 }

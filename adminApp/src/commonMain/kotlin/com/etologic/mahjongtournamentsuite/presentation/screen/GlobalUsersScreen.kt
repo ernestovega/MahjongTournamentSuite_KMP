@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import com.etologic.mahjongtournamentsuite.presentation.components.AppSuccessDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -241,7 +242,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     onDismiss = { error = null },
                 )
             }
-            notice?.let { Text(it, color = MaterialTheme.colorScheme.primary) }
+            notice?.let { AppSuccessDialog(it, onDismiss = { notice = null }) }
             UserFilters(
                 emailFilter = emailFilter,
                 onEmailFilterChange = { emailFilter = it },

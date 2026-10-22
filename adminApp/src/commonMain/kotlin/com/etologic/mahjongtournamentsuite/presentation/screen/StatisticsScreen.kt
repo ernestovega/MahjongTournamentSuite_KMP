@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
@@ -351,7 +352,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 }
             }
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             when (scope) {
                 StatisticsScope.TOURNAMENT -> {
                     val specific = tournamentData
@@ -361,7 +362,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                             statistics = specific.statistics,
                             names = specific.names,
                             onOpenPlayer = { slot ->
-                                chosenSlotText = slot?.toString()
+                                chosenSlotText = slot.toString()
                                 val ema = specific.slots.firstOrNull { it.id == slot }?.assignedEmaId?.takeIf { it.isNotBlank() }
                                 if (ema != null) emaId = ema
                                 scope = if (ema != null) StatisticsScope.PERSON else StatisticsScope.PLAYER

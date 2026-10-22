@@ -26,6 +26,20 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 fun AppErrorDialog(
     message: String,
     onDismiss: () -> Unit,
+) = AppMessageDialog(title = "Error", message = message, onDismiss = onDismiss)
+
+/** A confirmation of a finished action. It has the same layout as the error dialog. */
+@Composable
+fun AppSuccessDialog(
+    message: String,
+    onDismiss: () -> Unit,
+) = AppMessageDialog(title = "Done", message = message, onDismiss = onDismiss)
+
+@Composable
+private fun AppMessageDialog(
+    title: String,
+    message: String,
+    onDismiss: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     val dismissFocusRequester = remember { FocusRequester() }
@@ -38,7 +52,7 @@ fun AppErrorDialog(
     AlertDialog(
         modifier = Modifier.appFocusGroup(),
         onDismissRequest = onDismiss,
-        title = { Text("Error") },
+        title = { Text(title) },
         text = {
             Box(
                 modifier = Modifier

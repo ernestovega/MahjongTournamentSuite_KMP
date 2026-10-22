@@ -3,10 +3,17 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
@@ -54,13 +61,12 @@ internal fun PlayerContactState.label(): String = when (this) {
  * The account state of one tournament slot. An editor invites, reminds or revokes by hand.
  * Assigning a player never sends an email.
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PlayerAccountDialog(
     slot: TournamentPlayer,
     invitation: PlayerInvitation?,
-    result: PlayerAccountActionResult?,
     busy: Boolean,
-    errorMessage: String?,
     onAction: (PlayerAccountAction, String?) -> Unit,
     onSaveEmail: (String) -> Unit,
     onDismiss: () -> Unit,
@@ -78,25 +84,24 @@ fun PlayerAccountDialog(
         onDismissRequest = onDismiss,
         title = { Text("Account of player ${slot.id}") },
         text = {
-            Column(Modifier.fillMaxWidth()) {
-                Text(state.label(), style = MaterialTheme.typography.titleSmall)
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(state.label(), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
+                    if (state == PlayerContactState.NOT_INVITED || state == PlayerContactState.INVITED) {
+                        InfoTooltipIcon(INVITATION_INFO)
+                    }
+                }
                 when (state) {
                     PlayerContactState.NO_EMA_ID ->
                         Text("Assign an EMA player to this slot first.")
                     PlayerContactState.NOT_INVITED -> {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                "Send an invitation link to the email of this player. Nothing is sent before you press Send.",
-                                modifier = Modifier.weight(1f),
-                            )
-                            InfoTooltipIcon(INVITATION_INFO)
-                        }
+                        Text("Send an invitation link to the email of this player. Nothing is sent before you press Send.")
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
                             label = { Text("Email") },
                             singleLine = true,
-                            modifier = Modifier.fillMaxWidth().padding(top = 12.dp).focusRequester(emailFocus),
+                            modifier = Modifier.fillMaxWidth().focusRequester(emailFocus),
                         )
                     }
                     PlayerContactState.LINKED ->
@@ -105,36 +110,31 @@ fun PlayerAccountDialog(
                                 "No email was sent. Send a reminder when you are ready.",
                         )
                     PlayerContactState.INVITED -> {
-                        Text("Invitation sent to ${invitation?.email ?: slot.invitedEmail ?: "this player"}.")
-                        contactTimeText(slot.contactedAt)?.let { Text("Sent on $it.") }
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(
-                                "The link works once and expires after 14 days. Resend creates a new link and the old link stops working.",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.weight(1f),
-                            )
-                            InfoTooltipIcon(INVITATION_INFO)
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            DetailRow("Email", invitation?.email ?: slot.invitedEmail ?: "Not known")
+                            contactTimeText(slot.contactedAt)?.let { DetailRow("Sent", it) }
                         }
+                        Text(
+                            "The link works once and expires after 14 days. Resend creates a new link and the old link stops working.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
                     }
                     PlayerContactState.CONTACTED -> {
                         Text("This player has an account and received an email.")
-                        contactTimeText(slot.contactedAt)?.let { Text("Sent on $it.") }
+                        contactTimeText(slot.contactedAt)?.let { DetailRow("Sent", it) }
                     }
-                }
-                result?.let {
-                    Text(
-                        "${it.outcome.name.lowercase().replaceFirstChar(Char::uppercase)}" +
-                            (it.message?.let { message -> ": $message" } ?: ""),
-                        color = if (it.outcome.name == "FAILED") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(top = 8.dp),
-                    )
-                }
-                if (errorMessage != null) {
-                    Text(errorMessage, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 8.dp))
                 }
             }
         },
         confirmButton = {
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                SecondaryActions(state, email, validEmail, busy, onAction, onSaveEmail, onDismiss)
             when (state) {
                 PlayerContactState.NO_EMA_ID -> Unit
                 PlayerContactState.NOT_INVITED -> Button(
@@ -154,20 +154,77 @@ fun PlayerAccountDialog(
                     onClick = { onAction(PlayerAccountAction.RESEND, null) },
                 ) { Text("Send reminder again") }
             }
-        },
-        dismissButton = {
-            Column {
-                if (state == PlayerContactState.NOT_INVITED) {
-                    TextButton(enabled = validEmail && !busy, onClick = { onSaveEmail(email.trim()) }) { Text("Save email only") }
-                }
-                if (state == PlayerContactState.INVITED) {
-                    TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text("Revoke invitation") }
-                }
-                if (state == PlayerContactState.LINKED || state == PlayerContactState.CONTACTED) {
-                    TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text("Remove account link") }
-                }
-                TextButton(onClick = onDismiss) { Text("Close") }
             }
         },
+    )
+}
+
+@Composable
+private fun SecondaryActions(
+    state: PlayerContactState,
+    email: String,
+    validEmail: Boolean,
+    busy: Boolean,
+    onAction: (PlayerAccountAction, String?) -> Unit,
+    onSaveEmail: (String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    if (state == PlayerContactState.NOT_INVITED) {
+        TextButton(enabled = validEmail && !busy, onClick = { onSaveEmail(email.trim()) }) { Text("Save email only") }
+    }
+    if (state == PlayerContactState.INVITED) {
+        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text("Revoke invitation") }
+    }
+    if (state == PlayerContactState.LINKED || state == PlayerContactState.CONTACTED) {
+        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text("Remove account link") }
+    }
+    TextButton(onClick = onDismiss) { Text("Close") }
+}
+
+@Composable
+private fun DetailRow(label: String, value: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(48.dp),
+        )
+        Text(value, modifier = Modifier.weight(1f))
+    }
+}
+
+/** The result of one account action, shown in its own dialog after the account dialog closes. */
+data class AccountOutcome(val message: String, val isError: Boolean)
+
+/** The plain sentence for the result of one account action on one slot. */
+internal fun PlayerAccountActionResult.toOutcome(): AccountOutcome {
+    val detail = message?.let { " $it" }.orEmpty()
+    return when (outcome.name) {
+        "FAILED" -> AccountOutcome("The action failed.$detail", isError = true)
+        "SKIPPED" -> AccountOutcome("Nothing was done.$detail", isError = false)
+        "INVITED" -> AccountOutcome("The invitation was sent.$detail", isError = false)
+        "NOTIFIED" -> AccountOutcome("The reminder was sent.$detail", isError = false)
+        "REVOKED" -> AccountOutcome("The invitation or account link was removed.$detail", isError = false)
+        else -> AccountOutcome(outcome.name.lowercase().replaceFirstChar(Char::uppercase) + "." + detail, isError = false)
+    }
+}
+
+@Composable
+fun AccountOutcomeDialog(outcome: AccountOutcome, onDismiss: () -> Unit) {
+    val color = if (outcome.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    AlertDialog(
+        modifier = Modifier.appFocusGroup(),
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                if (outcome.isError) Icons.Filled.Warning else Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = color,
+            )
+        },
+        title = { Text(if (outcome.isError) "Something went wrong" else "Done", color = color) },
+        text = { Text(outcome.message, style = MaterialTheme.typography.bodyLarge) },
+        confirmButton = { Button(onClick = onDismiss) { Text("OK") } },
     )
 }

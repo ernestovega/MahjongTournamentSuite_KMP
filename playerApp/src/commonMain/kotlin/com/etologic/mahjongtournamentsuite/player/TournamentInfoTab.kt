@@ -56,12 +56,13 @@ fun TournamentInfoTab(tournament: Tournament) {
         Text(
             "The organizers did not add information yet.",
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(vertical = 24.dp),
+            modifier = Modifier.padding(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 24.dp),
         )
         return
     }
     Column(
-        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+        // The padding is inside the scroll, so the content ends at the tabs.
+        Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         // An email alone gives no venue card. It has its own card.

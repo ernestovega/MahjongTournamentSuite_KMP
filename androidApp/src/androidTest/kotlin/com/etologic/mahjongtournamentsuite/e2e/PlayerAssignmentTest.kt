@@ -16,6 +16,12 @@ class PlayerAssignmentTest : AdminE2eTest() {
         c.waitForText("Tournament players")
     }
 
+    /** The Clear and Substitute actions are in the menu of the first assigned player. */
+    private fun chooseFromPlayerMenu(action: String) {
+        c.clickButton("Player actions")
+        c.clickButton(action)
+    }
+
     private fun openTeams() {
         start(E2eAccounts.ADMIN, ready = "Logout")
         c.openTournament("Test - Live ongoing tournament")
@@ -27,7 +33,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
     @Test
     fun clearAsksForConfirmation() {
         openPlayers()
-        c.clickButton("Clear")
+        chooseFromPlayerMenu("Clear")
         c.waitForText("Clear assignment?")
         c.waitForText("Remove LUCIA PEREZ from tournament player 1?")
         c.waitForText("Clear assignment")
@@ -37,7 +43,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
     @Test
     fun cancelKeepsThePlayer() {
         openPlayers()
-        c.clickButton("Clear")
+        chooseFromPlayerMenu("Clear")
         c.waitForText("Clear assignment?")
         c.clickButton("Cancel")
         c.waitForNoText("Clear assignment?")
@@ -47,7 +53,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
     @Test
     fun confirmedClearRemovesThePlayerFromTheSlot() {
         openPlayers()
-        c.clickButton("Clear")
+        chooseFromPlayerMenu("Clear")
         c.waitForText("Clear assignment?")
         c.clickButton("Clear assignment")
         c.waitForNoText("LUCIA PEREZ")
@@ -57,7 +63,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
     @Test
     fun substituteDialogShowsReasonsAndRounds() {
         openPlayers()
-        c.clickButton("Substitute")
+        chooseFromPlayerMenu("Substitute")
         c.waitForText("Substitute LUCIA PEREZ?")
         listOf("The player came late.", "The player is ill.", "The player is disqualified.", "First round of the substitute", "Reason")
             .forEach { c.waitForText(it) }
@@ -67,7 +73,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
     @Test
     fun substituteCancelClosesTheDialog() {
         openPlayers()
-        c.clickButton("Substitute")
+        chooseFromPlayerMenu("Substitute")
         c.waitForText("Substitute LUCIA PEREZ?")
         c.clickButton("Cancel")
         c.waitForNoText("Substitute LUCIA PEREZ?")

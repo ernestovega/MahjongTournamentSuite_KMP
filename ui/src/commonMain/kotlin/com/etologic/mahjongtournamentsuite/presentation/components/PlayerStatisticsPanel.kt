@@ -277,7 +277,7 @@ internal fun BigNumber(label: String, value: String, modifier: Modifier = Modifi
 @OptIn(ExperimentalMaterial3Api::class)
 private fun HoverTip(text: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
         tooltip = { AppPlainTooltip(Modifier.widthIn(max = 340.dp)) { Text(text) } },
         state = rememberTooltipState(),
         modifier = modifier,
@@ -351,7 +351,7 @@ private fun RivalsCard(
                 "• ${RivalWeights.TABLE_BEHIND.toInt()} for each \"Ahead of you\": a table where the rival finished above you.\n" +
                 "• ${RivalWeights.DISCARD_LOSS.toInt()} for each \"Deal-in\": a hand that you discarded and the rival won.\n" +
                 "• ${RivalWeights.SELF_DRAW_LOSS.toInt()} for each \"Self-draw\": a hand that the rival won by self-draw.\n" +
-                "• ${RivalWeights.OTHERS_DISCARD_WIN.toInt()} for each \"Third party deal-in\": a hand that the rival won on the discard of another player, not yours. You lose points in this hand too.\n" +
+                "• ${RivalWeights.OTHERS_DISCARD_WIN.toInt()} for each \"Third party deal-in\": a hand that the rival won on the discard of another player, not yours.\n" +
                 "The sum is divided by the shared tables so a rival is not first only because you met often.",
     ) {
         if (rivals.isEmpty()) {
@@ -789,7 +789,7 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
             }
             skills.forEach { skill ->
                 TooltipBox(
-                    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
                     tooltip = { AppPlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(skill.explanation) } },
                     state = rememberTooltipState(),
                 ) {

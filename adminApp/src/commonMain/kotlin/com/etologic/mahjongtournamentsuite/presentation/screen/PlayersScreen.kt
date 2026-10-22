@@ -34,6 +34,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -138,6 +141,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var substitutionSlotId by remember { mutableStateOf<Int?>(null) }
     var accountSlotId by remember { mutableStateOf<Int?>(null) }
     var invitations by remember { mutableStateOf<List<PlayerInvitation>>(emptyList()) }
+    var accountOutcome by remember { mutableStateOf<AccountOutcome?>(null) }
     var accountBusy by remember { mutableStateOf(false) }
     var accountError by remember { mutableStateOf<String?>(null) }
     var accountResults by remember { mutableStateOf<List<PlayerAccountActionResult>>(emptyList()) }
@@ -187,7 +191,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         }
     }
 
-    fun runAccountAction(action: PlayerAccountAction, items: List<PlayerAccountActionItem>) = scope.launch {
+    fun runAccountAction(
+        action: PlayerAccountAction,
+        items: List<PlayerAccountActionItem>,
+        closeAccountDialog: Boolean = false,
+    ) = scope.launch {
         accountBusy = true
         accountError = null
         accountResults = emptyList()
@@ -196,8 +204,20 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 accountResults = result.value
                 refresh(force = true).join()
                 loadInvitations().join()
+                if (closeAccountDialog) {
+                    accountOutcome = result.value.firstOrNull()?.toOutcome()
+                    accountSlotId = null
+                    accountResults = emptyList()
+                }
             }
-            is AppResult.Failure -> accountError = result.error.toUiMessage()
+            is AppResult.Failure -> {
+                if (closeAccountDialog) {
+                    accountOutcome = AccountOutcome(result.error.toUiMessage(), isError = true)
+                    accountSlotId = null
+                } else {
+                    accountError = result.error.toUiMessage()
+                }
+            }
         }
         accountBusy = false
     }
@@ -206,8 +226,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         accountBusy = true
         accountError = null
         when (val result = presenter.saveAccountEmails(tournamentId, listOf(PlayerAccountActionItem(playerId, email)))) {
-            is AppResult.Success -> refresh(force = true).join()
-            is AppResult.Failure -> accountError = result.error.toUiMessage()
+            is AppResult.Success -> {
+                refresh(force = true).join()
+                accountOutcome = AccountOutcome("The email was saved. Nothing was sent.", isError = false)
+                accountSlotId = null
+            }
+            is AppResult.Failure -> {
+                accountOutcome = AccountOutcome(result.error.toUiMessage(), isError = true)
+                accountSlotId = null
+            }
         }
         accountBusy = false
     }
@@ -385,14 +412,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         PlayerAccountDialog(
             slot = slot,
             invitation = invitation,
-            result = accountResults.firstOrNull { it.playerId == slot.id },
             busy = accountBusy,
-            errorMessage = accountError,
-            onAction = { action, email -> runAccountAction(action, listOf(PlayerAccountActionItem(slot.id, email))) },
+            onAction = { action, email ->
+                runAccountAction(action, listOf(PlayerAccountActionItem(slot.id, email)), closeAccountDialog = true)
+            },
             onSaveEmail = { email -> saveAccountEmail(slot.id, email) },
             onDismiss = { accountSlotId = null; accountResults = emptyList() },
         )
     }
+    accountOutcome?.let { AccountOutcomeDialog(it, onDismiss = { accountOutcome = null }) }
     if (bulkAccountsOpen) {
         val registry = basePlayers.associateBy { it.emaId }
         PlayerAccountsBulkDialog(
@@ -856,7 +884,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             title = { Text("Assign non-member to player $slotId") },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    nonMemberError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    nonMemberError?.let { AppErrorDialog(it, onDismiss = { nonMemberError = null }) }
                     OutlinedTextField(
                         value = nonMemberFirstName,
                         onValueChange = { nonMemberFirstName = it; nonMemberError = null },
@@ -1125,21 +1153,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 }
                 Column(Modifier.fillMaxWidth()) {
                     DataTableHeaderRow {
-                        TournamentPlayerHeader("Photo", Modifier.width(TournamentPlayerPhotoColumnWidth))
-                        TournamentPlayerHeader("Country", Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
-                        TournamentPlayerHeader(
-                            "Player ID",
-                            Modifier.width(TournamentPlayerIdColumnWidth),
-                            TextAlign.Center,
-                        )
+                        TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
                         TournamentPlayerHeader("EMA number", Modifier.width(TournamentPlayerEmaColumnWidth))
+                        TournamentPlayerHeader("Country", Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
+                        TournamentPlayerHeader("Photo", Modifier.width(TournamentPlayerPhotoColumnWidth))
                         TournamentPlayerHeader("Name", Modifier.weight(1.2f))
                         if (isTeamsTournament) {
                             TournamentPlayerHeader("Team", Modifier.width(TournamentPlayerTeamColumnWidth))
                         }
                         TournamentPlayerHeader("Tables", Modifier.width(TournamentPlayerTablesColumnWidth))
-                        TournamentPlayerHeader("Account", Modifier.width(TournamentPlayerAccountColumnWidth))
-                        Spacer(Modifier.width(if (tournamentStarted) TournamentPlayerSubstituteActionColumnWidth else TournamentPlayerActionColumnWidth))
+                        TournamentPlayerHeader("Account", Modifier.width(TournamentPlayerAccountColumnWidth), TextAlign.Center)
+                        Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                     }
                     DataTableDivider()
                     LazyColumnWithScrollbar(
@@ -1156,6 +1180,25 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 clickFocusable = false,
                                 highlighted = focusedAssignRowIndex == index || focusedClearRowIndex == index,
                             ) {
+                                Text(
+                                    text = slot.id.toString(),
+                                    modifier = Modifier.width(TournamentPlayerIdColumnWidth),
+                                    textAlign = TextAlign.Center,
+                                )
+                                Text(
+                                    assigned?.emaId ?: if (slot.nonMember != null) "Non-member" else "—",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
+                                )
+                                Box(
+                                    modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CountryFlag(
+                                        code = playerCountry,
+                                        contentDescription = playerCountry.ifBlank { "No country" },
+                                    )
+                                }
                                 Box(
                                     modifier = Modifier
                                         .width(TournamentPlayerPhotoColumnWidth)
@@ -1168,37 +1211,20 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         columnWidth = TournamentPlayerPhotoColumnWidth,
                                     )
                                 }
-                                Box(
-                                    modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CountryFlag(
-                                        code = playerCountry,
-                                        contentDescription = playerCountry.ifBlank { "No country" },
-                                    )
-                                }
-                                Text(
-                                    text = slot.id.toString(),
-                                    modifier = Modifier.width(TournamentPlayerIdColumnWidth),
-                                    textAlign = TextAlign.Center,
-                                )
-                                Text(
-                                    assigned?.emaId ?: if (slot.nonMember != null) "Non-member" else "—",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
-                                )
                                 Text(
                                     (playerName ?: "Not assigned") + (slot.substitution?.let { " (${it.label})" } ?: ""),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
                                     modifier = Modifier.weight(1.2f),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 if (isTeamsTournament) {
                                     Text(
                                         text = teamNamesById[slot.team] ?: "Team ${slot.team}",
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
-                                        maxLines = 1,
+                                        maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
                                     )
                                 }
@@ -1206,12 +1232,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     text = tableNumbersByPlayerId[slot.id] ?: "—",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.width(TournamentPlayerTablesColumnWidth),
-                                    maxLines = 1,
+                                    maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
                                 Box(
                                     modifier = Modifier.width(TournamentPlayerAccountColumnWidth),
-                                    contentAlignment = Alignment.CenterStart,
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     if (slot.assignedEmaId.isNullOrBlank()) {
                                         Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -1223,6 +1249,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 accountSlotId = slot.id
                                                 loadInvitations()
                                             },
+                                            contentPadding = PaddingValues(horizontal = 4.dp),
                                         ) {
                                             Text(
                                                 when (slot.contactState) {
@@ -1232,14 +1259,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                     PlayerContactState.CONTACTED -> "Contacted"
                                                 },
                                                 maxLines = 1,
+                                                textAlign = TextAlign.Center,
                                             )
                                         }
                                     }
                                 }
-                                Row(
-                                    modifier = Modifier.width(if (tournamentStarted) TournamentPlayerSubstituteActionColumnWidth else TournamentPlayerActionColumnWidth),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                Box(
+                                    modifier = Modifier.width(TournamentPlayerActionColumnWidth),
+                                    contentAlignment = Alignment.CenterEnd,
                                 ) {
                                     if (!slot.isAssigned) Box(
                                         modifier = Modifier
@@ -1266,10 +1293,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                         return@onPreviewKeyEvent false
                                                     }
                                                     when (event.key) {
-                                                        Key.DirectionLeft -> true
-                                                        Key.DirectionRight -> {
-                                                            true
-                                                        }
+                                                        Key.DirectionLeft, Key.DirectionRight -> true
                                                         Key.DirectionUp -> {
                                                             requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
                                                             true
@@ -1284,6 +1308,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         ) { Text("Assign", maxLines = 1, overflow = TextOverflow.Clip) }
                                     }
                                     if (slot.isAssigned) {
+                                        var actionsMenuOpen by remember { mutableStateOf(false) }
                                         Box(
                                             modifier = Modifier
                                                 .clip(MaterialTheme.shapes.small)
@@ -1296,46 +1321,52 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 )
                                                 .padding(3.dp),
                                         ) {
-                                            OutlinedButton(
+                                            IconButton(
                                                 enabled = !loading && savingId == null,
-                                                onClick = { openClearAssignment(slot.id) },
+                                                onClick = { actionsMenuOpen = true },
                                                 modifier = Modifier
                                                     .focusRequester(clearFocusRequesters[filteredPlayerIndexes[index]])
                                                     .onFocusChanged {
                                                         focusedClearRowIndex = if (it.isFocused) index else null
                                                     }
-                                                    .onPreviewKeyEvent { event ->
-                                                        if (event.type != KeyEventType.KeyDown) {
-                                                            return@onPreviewKeyEvent false
+                                                .onPreviewKeyEvent { event ->
+                                                    if (event.type != KeyEventType.KeyDown) {
+                                                        return@onPreviewKeyEvent false
+                                                    }
+                                                    when (event.key) {
+                                                        Key.DirectionLeft, Key.DirectionRight -> true
+                                                        Key.DirectionUp -> {
+                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
+                                                            true
                                                         }
-                                                        when (event.key) {
-                                                            Key.DirectionLeft -> {
-                                                                true
-                                                            }
-                                                            Key.DirectionRight -> true
-                                                            Key.DirectionUp -> {
-                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
-                                                                true
-                                                            }
-                                                            Key.DirectionDown -> {
-                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
-                                                                true
-                                                            }
-                                                            else -> false
+                                                        Key.DirectionDown -> {
+                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
+                                                            true
                                                         }
-                                                    },
-                                            ) { Text("Clear", maxLines = 1, overflow = TextOverflow.Clip) }
-                                        }
-                                        if (tournamentStarted) {
-                                            OutlinedButton(
-                                                enabled = !loading && savingId == null,
-                                                onClick = { substitutionSlotId = slot.id },
+                                                        else -> false
+                                                    }
+                                                },
+                                            ) { Icon(Icons.Default.MoreVert, contentDescription = "Player actions") }
+                                            DropdownMenu(
+                                                expanded = actionsMenuOpen,
+                                                onDismissRequest = { actionsMenuOpen = false },
                                             ) {
-                                                Text(
-                                                    if (slot.substitution == null) "Substitute" else "Substitution",
-                                                    maxLines = 1,
-                                                    overflow = TextOverflow.Clip,
+                                                DropdownMenuItem(
+                                                    text = { Text("Clear") },
+                                                    onClick = {
+                                                        actionsMenuOpen = false
+                                                        openClearAssignment(slot.id)
+                                                    },
                                                 )
+                                                if (tournamentStarted) {
+                                                    DropdownMenuItem(
+                                                        text = { Text(if (slot.substitution == null) "Substitute" else "Substitution") },
+                                                        onClick = {
+                                                            actionsMenuOpen = false
+                                                            substitutionSlotId = slot.id
+                                                        },
+                                                    )
+                                                }
                                             }
                                         }
                                     }
@@ -1353,13 +1384,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 private val TournamentPlayerPhotoSize = 40.dp
 private val TournamentPlayerPhotoColumnWidth = 48.dp
 private val TournamentPlayerCountryColumnWidth = 64.dp
-private val TournamentPlayerIdColumnWidth = 72.dp
+private val TournamentPlayerIdColumnWidth = 48.dp
 private val TournamentPlayerEmaColumnWidth = 104.dp
 private val TournamentPlayerTeamColumnWidth = 144.dp
 private val TournamentPlayerTablesColumnWidth = 220.dp
-private val TournamentPlayerAccountColumnWidth = 104.dp
+private val TournamentPlayerAccountColumnWidth = 140.dp
 private val TournamentPlayerActionColumnWidth = 112.dp
-private val TournamentPlayerSubstituteActionColumnWidth = 250.dp
 private val AssignmentPhotoColumnWidth = 48.dp
 private val AssignmentCountryColumnWidth = 64.dp
 private val AssignmentEmaColumnWidth = 96.dp

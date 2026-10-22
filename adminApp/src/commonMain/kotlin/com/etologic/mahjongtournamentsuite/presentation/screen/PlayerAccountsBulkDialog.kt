@@ -58,6 +58,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerContactState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.contactState
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -242,7 +243,8 @@ fun PlayerAccountsBulkDialog(
                     }
                 }
                 if (shown.isEmpty()) Text("No players in this group.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                errorMessage?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                var errorSeen by remember(errorMessage) { mutableStateOf(false) }
+                errorMessage?.takeUnless { errorSeen }?.let { AppErrorDialog(it, onDismiss = { errorSeen = true }) }
             }
             }
         },

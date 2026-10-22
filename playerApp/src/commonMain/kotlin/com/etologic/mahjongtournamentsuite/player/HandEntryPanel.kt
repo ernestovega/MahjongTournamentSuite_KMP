@@ -53,6 +53,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
 import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
@@ -298,7 +299,7 @@ fun HandEntryPanel(
                     } else if (handInPlay < 16) {
                         CheckRow("Last hand of the table", lastHand) { lastHand = it }
                     }
-                    message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                 }
             },
             confirmButton = {
@@ -335,7 +336,7 @@ fun HandEntryPanel(
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
                     if (saving) SavingRow(waitingForTable = awaitingKey != null, text = "Saving the hand...")
-                    message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                 }
             },
             confirmButton = {
@@ -414,7 +415,7 @@ fun HandEntryPanel(
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     penaltyEntries.forEach { PenaltyLine(it, view, seats, ::windOf) }
                     if (saving) SavingRow(waitingForTable = awaitingKey != null, text = "Saving the penalty...")
-                    message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                 }
             },
             confirmButton = {

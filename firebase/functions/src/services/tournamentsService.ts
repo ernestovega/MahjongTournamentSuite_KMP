@@ -1,6 +1,6 @@
 import { removeTournamentStats } from "./statisticsStore";
 import { FieldValue, Timestamp, type DocumentReference } from "firebase-admin/firestore";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 
 import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
@@ -14,6 +14,7 @@ import {
   readStoredMatchExtraMinutes,
   readStoredTimeZone,
 } from "./matchTime";
+import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { defaultHand, HANDS_PER_TABLE } from "./tableManagerService";
 import {
   normalizeAgendaItems,
@@ -35,6 +36,8 @@ export type Tournament = {
   shortName: string;
   primaryColor: string;
   associationLogoUrl: string | null;
+  /** SHA-256 of the logo file. Tournaments with the same logo share it. */
+  associationLogoHash: string | null;
   hostCountry: string;
   hostCity: string;
   venueName: string;
@@ -119,6 +122,7 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
       ? String(d.get("primaryColor")).toUpperCase()
       : "#02B16B",
     associationLogoUrl: typeof d.get("associationLogoUrl") === "string" ? d.get("associationLogoUrl") : null,
+    associationLogoHash: typeof d.get("associationLogoHash") === "string" ? d.get("associationLogoHash") : null,
     hostCountry: String(d.get("hostCountry") ?? "").trim().toUpperCase(),
     hostCity: String(d.get("hostCity") ?? "").trim(),
     venueName: String(d.get("venueName") ?? ""),
@@ -217,6 +221,7 @@ export async function createTournament(params: {
     primaryColor: normalizePrimaryColor(params.primaryColor),
     associationLogoUrl: logo?.url ?? null,
     associationLogoPath: logo?.path ?? null,
+    associationLogoHash: logo?.hash ?? null,
     eventStartDate: params.eventStartDate,
     eventEndDate: params.eventEndDate,
     hostCountry: params.hostCountry.trim().toUpperCase(),
@@ -367,6 +372,7 @@ export async function createTournament(params: {
 
   const snap = await ref.get();
   await bumpGlobalDataVersion("tournaments");
+  await scheduleRoundCloses(ref.id, snap.data() ?? {});
   return mapTournamentDoc(snap);
 }
 
@@ -420,7 +426,7 @@ async function saveAssociationLogo(
   tournamentId: string,
   contentType: string,
   dataBase64: string,
-): Promise<{ path: string; url: string }> {
+): Promise<{ path: string; url: string; hash: string }> {
   const extension = logoExtensions[contentType];
   if (!extension) throw badRequest("Association logo must be a JPEG or PNG image");
   const bytes = Buffer.from(dataBase64, "base64");
@@ -443,13 +449,14 @@ async function saveAssociationLogo(
   return {
     path,
     url: `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${objectName}?alt=media&token=${token}`,
+    hash: createHash("sha256").update(bytes).digest("hex"),
   };
 }
 
 async function copyAssociationLogo(
   sourceTournamentId: string,
   targetTournamentId: string,
-): Promise<{ path: string; url: string }> {
+): Promise<{ path: string; url: string; hash: string }> {
   const source = await db.collection("tournaments").doc(sourceTournamentId).get();
   if (!source.exists) throw notFound("Source tournament not found");
   const sourcePath = String(source.get("associationLogoPath") ?? "").trim();
@@ -510,7 +517,7 @@ export async function updateTournamentSettings(params: {
     : normalizeAgendaItems(params.agendaItems);
 
   const oldLogoPath = String(before.get("associationLogoPath") ?? "").trim();
-  let logo: { path: string; url: string } | null | undefined;
+  let logo: { path: string; url: string; hash: string } | null | undefined;
   if (params.removeAssociationLogo === true) {
     logo = null;
   } else if (params.associationLogoContentType && params.associationLogoDataBase64) {
@@ -551,6 +558,7 @@ export async function updateTournamentSettings(params: {
   if (logo !== undefined) {
     update.associationLogoPath = logo?.path ?? null;
     update.associationLogoUrl = logo?.url ?? null;
+    update.associationLogoHash = logo?.hash ?? null;
   }
   await ref.update(update);
   await Promise.all([
@@ -561,7 +569,9 @@ export async function updateTournamentSettings(params: {
   if (oldLogoPath.length > 0 && (logo === null || (logo != null && logo.path !== oldLogoPath))) {
     await storage.file(oldLogoPath).delete({ ignoreNotFound: true }).catch(() => undefined);
   }
-  return mapTournamentDoc(await ref.get());
+  const after = await ref.get();
+  await scheduleRoundCloses(params.tournamentId, after.data() ?? {});
+  return mapTournamentDoc(after);
 }
 
 function isDocRef(value: DocumentReference | null): value is DocumentReference {

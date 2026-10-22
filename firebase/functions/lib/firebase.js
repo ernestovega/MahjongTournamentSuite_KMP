@@ -14,6 +14,8 @@ exports.firebaseProjectId = process.env.EMA_FIREBASE_PROJECT?.trim()
 const adminApp = (0, app_1.initializeApp)({
     projectId: exports.firebaseProjectId,
     storageBucket: storageBucketName,
+    // Scripts run outside Google Cloud and need it to enqueue tasks. In Cloud Functions the SDK finds it alone.
+    serviceAccountId: process.env.EMA_FIREBASE_SERVICE_ACCOUNT?.trim() || undefined,
 });
 exports.auth = (0, auth_1.getAuth)(adminApp);
 exports.db = (0, firestore_1.getFirestore)(adminApp);

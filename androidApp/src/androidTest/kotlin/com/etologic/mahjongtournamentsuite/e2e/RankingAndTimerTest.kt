@@ -14,7 +14,7 @@ class RankingAndTimerTest : AdminE2eTest() {
     @Test
     fun rankingShowsPagesAndControls() {
         openRanking()
-        listOf("Start automatic paging", "Previous ranking list", "Next ranking list", "Show fewer rows", "Show more rows", "Use dark theme")
+        listOf("Start automatic paging", "Previous ranking list", "Next ranking list", "Show fewer rows", "Show more rows", "Theme: System")
             .forEach { c.waitForText(it) }
         c.waitForText("1 / ", substring = true)
     }
@@ -22,8 +22,9 @@ class RankingAndTimerTest : AdminE2eTest() {
     @Test
     fun rankingListsPlayersWithTeams() {
         openRanking()
-        c.waitForText("Aces")
-        c.waitForText("Bamboo")
+        // The screen hides the first three rows with "???". The teams below them show.
+        c.waitForText("Jade")
+        c.waitForText("Honors")
     }
 
     @Test

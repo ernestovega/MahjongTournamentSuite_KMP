@@ -53,21 +53,22 @@ const win = () => (0, playerHandService_1.parseHandInput)({ playerWinnerId: "1",
     });
     (0, node_test_1.it)("completes an expired table with played hands, once", async () => {
         const { tournamentId } = await seedTimedTable(200, "STOP", 3);
-        const first = await (0, matchTimeCloseService_1.closeExpiredTables)();
-        strict_1.default.ok(first.closed >= 1);
+        const first = await (0, matchTimeCloseService_1.closeRoundTables)(tournamentId, 1);
+        strict_1.default.equal(first.closed, 1);
         const table = await (0, firestoreFixtures_1.readTable)(tournamentId, 1, 1);
         strict_1.default.equal(table.isCompleted, true);
         const changes = await (0, firestoreFixtures_1.readChanges)(tournamentId);
         strict_1.default.equal(changes[changes.length - 1]?.source, "system");
         // An organizer opens the table again to add the missing data. The server does not close it again.
         await firebase_1.db.doc(`tournaments/${tournamentId}/tables/1_1`).update({ isCompleted: false });
-        await (0, matchTimeCloseService_1.closeExpiredTables)();
+        await (0, matchTimeCloseService_1.closeRoundTables)(tournamentId, 1);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(tournamentId, 1, 1)).isCompleted, false);
     });
     (0, node_test_1.it)("leaves a table without played hands and a table in extra time open", async () => {
         const empty = await seedTimedTable(200, "STOP", 0);
         const extra = await seedTimedTable(125, "FINISH_HAND", 3);
-        await (0, matchTimeCloseService_1.closeExpiredTables)();
+        await (0, matchTimeCloseService_1.closeRoundTables)(empty.tournamentId, 1);
+        await (0, matchTimeCloseService_1.closeRoundTables)(extra.tournamentId, 1);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(empty.tournamentId, 1, 1)).isCompleted, false);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(extra.tournamentId, 1, 1)).isCompleted, false);
     });
@@ -75,19 +76,20 @@ const win = () => (0, playerHandService_1.parseHandInput)({ playerWinnerId: "1",
         // The match lasts 120 minutes and the extra time 15 minutes, so 130 minutes is still extra time and 140 is not.
         const inExtra = await seedTimedTable(130, "FINISH_HAND", 3);
         const afterExtra = await seedTimedTable(140, "FINISH_HAND", 3);
-        await (0, matchTimeCloseService_1.closeExpiredTables)();
+        await (0, matchTimeCloseService_1.closeRoundTables)(inExtra.tournamentId, 1);
+        await (0, matchTimeCloseService_1.closeRoundTables)(afterExtra.tournamentId, 1);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(inExtra.tournamentId, 1, 1)).isCompleted, false);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(afterExtra.tournamentId, 1, 1)).isCompleted, true);
     });
     (0, node_test_1.it)("leaves a table open while its match is still playing", async () => {
         const { tournamentId } = await seedTimedTable(30, "STOP", 3);
-        await (0, matchTimeCloseService_1.closeExpiredTables)();
+        await (0, matchTimeCloseService_1.closeRoundTables)(tournamentId, 1);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(tournamentId, 1, 1)).isCompleted, false);
     });
     (0, node_test_1.it)("skips a tournament without time zone", async () => {
         const { tournamentId } = await seedTimedTable(200, "STOP", 3);
         await firebase_1.db.doc(`tournaments/${tournamentId}`).update({ timeZone: null });
-        await (0, matchTimeCloseService_1.closeExpiredTables)();
+        await (0, matchTimeCloseService_1.closeRoundTables)(tournamentId, 1);
         strict_1.default.equal((await (0, firestoreFixtures_1.readTable)(tournamentId, 1, 1)).isCompleted, false);
     });
 });

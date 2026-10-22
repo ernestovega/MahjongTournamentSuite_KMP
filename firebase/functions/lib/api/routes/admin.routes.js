@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.adminRouter = adminRouter;
 const express_1 = require("express");
+const activityLog_1 = require("../../services/activityLog");
+const changeLog_1 = require("../../services/changeLog");
 const firebase_1 = require("../../firebase");
 const httpError_1 = require("../httpError");
 const requireAdmin_1 = require("../middleware/requireAdmin");
@@ -134,6 +136,10 @@ function adminRouter() {
                 await (0, playerAccountsService_1.setAccountEmaId)({ uid: user.uid, emaId });
             await (0, firebaseAuthRest_1.sendPasswordResetEmail)(email);
             await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
+            await (0, activityLog_1.recordActivity)({
+                action: "user.create", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), target: `user ${user.uid}`,
+                details: { role, emaId, tournamentAssignments },
+            });
             res.status(201).json(await (0, usersService_1.getManagedUser)(user.uid, assignmentScope));
         }
         catch (error) {
@@ -189,6 +195,12 @@ function adminRouter() {
             if (emaIdChanges)
                 await (0, playerAccountsService_1.setAccountEmaId)({ uid: current.uid, emaId: nextEmaId ?? null });
             await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
+            await (0, activityLog_1.recordActivity)({
+                action: "user.update", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), target: `user ${current.uid}`,
+                details: {
+                    roleFrom: current.role, roleTo: role, alias, emaId: emaIdChanges ? nextEmaId : undefined, tournamentAssignments,
+                },
+            });
             res.status(200).json(await (0, usersService_1.getManagedUser)(current.uid, assignmentScope));
         }
         catch (error) {
@@ -207,6 +219,9 @@ function adminRouter() {
             await assertAdminRemainsEnabled(current.role, current.disabled, current.role, disabled);
             await (0, usersService_1.setManagedUserDisabled)(current.uid, disabled);
             await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
+            await (0, activityLog_1.recordActivity)({
+                action: disabled ? "user.disable" : "user.enable", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), target: `user ${current.uid}`,
+            });
             res.status(200).json(await (0, usersService_1.getManagedUser)(current.uid));
         }
         catch (error) {

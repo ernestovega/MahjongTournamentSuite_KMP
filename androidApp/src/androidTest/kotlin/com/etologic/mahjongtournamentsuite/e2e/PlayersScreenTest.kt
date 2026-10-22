@@ -15,7 +15,7 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun listShowsHeadersAndRows() {
         openPlayers()
-        listOf("Photo", "Country", "Player ID", "EMA number", "Name", "Team", "Tables", "Account").forEach { c.waitForText(it) }
+        listOf("ID", "EMA number", "Country", "Photo", "Name", "Team", "Tables", "Account").forEach { c.waitForText(it) }
         c.waitForText("LUCIA PEREZ")
         c.waitForText("10000055")
         c.waitForText("Aces")
@@ -115,6 +115,6 @@ class PlayersScreenTest : AdminE2eTest() {
     fun largeTournamentListsSixtyFourPlayers() {
         openPlayers("Test - Large team tournament")
         c.waitForText("Tournament players")
-        c.waitForText("Player ID")
+        c.waitForText("ID")
     }
 }

@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tournamentsRouter = tournamentsRouter;
 const express_1 = require("express");
+const activityLog_1 = require("../../services/activityLog");
 const firebase_1 = require("../../firebase");
 const requireAuth_1 = require("../middleware/requireAuth");
 const requireEditor_1 = require("../middleware/requireEditor");
@@ -64,11 +65,15 @@ function tournamentsRouter() {
         }
     });
     // Admins see every tournament. Editors see assigned ones. Players see the ones where they are registered.
-    router.get("/", requireAuth_1.requireAuth, async (_req, res, next) => {
+    // The player app sends scope=player. It shows only the tournaments where the account is a player, whatever its role.
+    router.get("/", requireAuth_1.requireAuth, async (req, res, next) => {
         try {
             const decoded = res.locals.auth;
             let tournaments;
-            if (decoded.admin === true) {
+            if (req.query.scope === "player") {
+                tournaments = await (0, tournamentsService_1.listTournamentsForPlayer)(decoded.uid);
+            }
+            else if (decoded.admin === true) {
                 tournaments = await (0, tournamentsService_1.listAllTournaments)();
             }
             else {
@@ -322,6 +327,11 @@ function tournamentsRouter() {
                 timeZone: body?.timeZone,
                 createdByUid: decoded.uid,
             });
+            await (0, activityLog_1.recordActivity)({
+                action: "tournament.create", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: tournament.id,
+                target: tournament.name,
+                details: { shortName, eventStartDate, eventEndDate, hostCountry, hostCity, isTeams, numPlayers, numRounds },
+            });
             res.status(200).json(tournament);
         }
         catch (e) {
@@ -501,6 +511,19 @@ function tournamentsRouter() {
                 matchExtraMinutes: body.matchExtraMinutes,
                 timeZone: body.timeZone,
             });
+            await (0, activityLog_1.recordActivity)({
+                action: "tournament.update", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: name,
+                details: {
+                    shortName, primaryColor, eventStartDate, eventEndDate, hostCountry, hostCity,
+                    countBestHands: body.countBestHands, countChickenHands: body.countChickenHands,
+                    matchDurationMinutes: body.matchDurationMinutes, matchEndMode: body.matchEndMode,
+                    matchExtraMinutes: body.matchExtraMinutes, timeZone: body.timeZone,
+                    logo: body.removeAssociationLogo === true ? "removed"
+                        : associationLogoDataBase64 != null || associationLogoSourceTournamentId ? "changed" : undefined,
+                    roundSchedules: body.roundSchedules, agendaItems: body.agendaItems,
+                },
+            });
             res.status(200).json(tournament);
         }
         catch (e) {
@@ -509,7 +532,12 @@ function tournamentsRouter() {
     });
     router.delete("/:tournamentId", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
+            const removed = await (0, activityLog_1.tournamentNameOf)(req.params.tournamentId);
             await (0, tournamentsService_1.deleteTournament)(req.params.tournamentId);
+            await (0, activityLog_1.recordActivity)({
+                action: "tournament.delete", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: removed,
+            });
             res.status(200).json({ ok: true });
         }
         catch (e) {
@@ -523,6 +551,10 @@ function tournamentsRouter() {
             if (!name)
                 throw (0, httpError_1.badRequest)("Tournament name is required");
             await (0, tournamentsService_1.renameTournament)(req.params.tournamentId, name);
+            await (0, activityLog_1.recordActivity)({
+                action: "tournament.rename", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: name,
+            });
             res.status(200).json({ ok: true });
         }
         catch (e) {
@@ -585,6 +617,11 @@ function tournamentsRouter() {
                 nonMember,
                 uid: res.locals.auth.uid,
             });
+            await (0, activityLog_1.recordActivity)({
+                action: "player.assign", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: `player ${playerId}`,
+                details: { emaId, nonMember: nonMember == null ? undefined : { ...nonMember } },
+            });
             res.status(200).json({ ok: true });
         }
         catch (e) {
@@ -605,6 +642,10 @@ function tournamentsRouter() {
                 substitution,
                 uid: res.locals.auth.uid,
             });
+            await (0, activityLog_1.recordActivity)({
+                action: "player.substitute", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: `player ${playerId}`, details: { substitution: { ...substitution } },
+            });
             res.status(200).json({ ok: true });
         }
         catch (e) {
@@ -622,6 +663,10 @@ function tournamentsRouter() {
                 substitution: null,
                 uid: res.locals.auth.uid,
             });
+            await (0, activityLog_1.recordActivity)({
+                action: "player.clearSubstitution", actor: (0, changeLog_1.actorFromToken)(res.locals.auth),
+                tournamentId: req.params.tournamentId, target: `player ${playerId}`,
+            });
             res.status(200).json({ ok: true });
         }
         catch (e) {
@@ -634,6 +679,10 @@ function tournamentsRouter() {
                 tournamentId: req.params.tournamentId,
                 uid: req.params.uid,
             });
+            await (0, activityLog_1.recordActivity)({
+                action: "member.add", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: `user ${req.params.uid}`,
+            });
             res.status(200).json({ ok: true });
         }
         catch (e) {
@@ -645,6 +694,10 @@ function tournamentsRouter() {
             await (0, membersService_1.removeTournamentMember)({
                 tournamentId: req.params.tournamentId,
                 uid: req.params.uid,
+            });
+            await (0, activityLog_1.recordActivity)({
+                action: "member.remove", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: `user ${req.params.uid}`,
             });
             res.status(200).json({ ok: true });
         }
@@ -720,6 +773,10 @@ function tournamentsRouter() {
                 teamId,
                 name,
                 emaIds,
+            });
+            await (0, activityLog_1.recordActivity)({
+                action: "team.update", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: `team ${teamId}`, details: { name, emaIds },
             });
             res.status(200).json({ ok: true });
         }
@@ -846,6 +903,10 @@ function tournamentsRouter() {
                 const results = await (0, playerAccountsService_1.runAccountAction)({
                     tournamentId: req.params.tournamentId, action, items, invitedBy: actor.uid,
                 });
+                await (0, activityLog_1.recordActivity)({
+                    action: `account.${action}`, actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                    target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
+                });
                 res.status(200).json({ results });
             }
             catch (e) {
@@ -864,6 +925,10 @@ function tournamentsRouter() {
                 return { playerId, email: String(value.email ?? "") };
             });
             await (0, playerAccountsService_1.saveContactEmails)({ tournamentId: req.params.tournamentId, items });
+            await (0, activityLog_1.recordActivity)({
+                action: "account.saveEmails", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), tournamentId: req.params.tournamentId,
+                target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
+            });
             res.status(200).json({ ok: true });
         }
         catch (e) {

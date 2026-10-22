@@ -4,7 +4,7 @@ import { before, describe, it } from "node:test";
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
 import { readChanges, readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
-import { closeExpiredTables } from "./matchTimeCloseService";
+import { closeRoundTables } from "./matchTimeCloseService";
 import { parseHandInput, recordHand } from "./playerHandService";
 
 type Mode = "STOP" | "FINISH_HAND";
@@ -67,8 +67,8 @@ describe("match time", () => {
   it("completes an expired table with played hands, once", async () => {
     const { tournamentId } = await seedTimedTable(200, "STOP", 3);
 
-    const first = await closeExpiredTables();
-    assert.ok(first.closed >= 1);
+    const first = await closeRoundTables(tournamentId, 1);
+    assert.equal(first.closed, 1);
     const table = await readTable(tournamentId, 1, 1);
     assert.equal(table.isCompleted, true);
     const changes = await readChanges(tournamentId);
@@ -76,7 +76,7 @@ describe("match time", () => {
 
     // An organizer opens the table again to add the missing data. The server does not close it again.
     await db.doc(`tournaments/${tournamentId}/tables/1_1`).update({ isCompleted: false });
-    await closeExpiredTables();
+    await closeRoundTables(tournamentId, 1);
     assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, false);
   });
 
@@ -84,7 +84,8 @@ describe("match time", () => {
     const empty = await seedTimedTable(200, "STOP", 0);
     const extra = await seedTimedTable(125, "FINISH_HAND", 3);
 
-    await closeExpiredTables();
+    await closeRoundTables(empty.tournamentId, 1);
+    await closeRoundTables(extra.tournamentId, 1);
 
     assert.equal((await readTable(empty.tournamentId, 1, 1)).isCompleted, false);
     assert.equal((await readTable(extra.tournamentId, 1, 1)).isCompleted, false);
@@ -95,7 +96,8 @@ describe("match time", () => {
     const inExtra = await seedTimedTable(130, "FINISH_HAND", 3);
     const afterExtra = await seedTimedTable(140, "FINISH_HAND", 3);
 
-    await closeExpiredTables();
+    await closeRoundTables(inExtra.tournamentId, 1);
+    await closeRoundTables(afterExtra.tournamentId, 1);
 
     assert.equal((await readTable(inExtra.tournamentId, 1, 1)).isCompleted, false);
     assert.equal((await readTable(afterExtra.tournamentId, 1, 1)).isCompleted, true);
@@ -104,7 +106,7 @@ describe("match time", () => {
   it("leaves a table open while its match is still playing", async () => {
     const { tournamentId } = await seedTimedTable(30, "STOP", 3);
 
-    await closeExpiredTables();
+    await closeRoundTables(tournamentId, 1);
 
     assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, false);
   });
@@ -113,7 +115,7 @@ describe("match time", () => {
     const { tournamentId } = await seedTimedTable(200, "STOP", 3);
     await db.doc(`tournaments/${tournamentId}`).update({ timeZone: null });
 
-    await closeExpiredTables();
+    await closeRoundTables(tournamentId, 1);
 
     assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, false);
   });

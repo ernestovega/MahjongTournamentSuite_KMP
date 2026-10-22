@@ -24,8 +24,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
@@ -75,7 +73,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapshot
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
+import com.etologic.mahjongtournamentsuite.presentation.theme.icon
+import com.etologic.mahjongtournamentsuite.presentation.theme.rememberScreenThemeController
 import com.etologic.mahjongtournamentsuite.presentation.util.dataStatusLabel
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import kotlin.time.Clock
@@ -87,15 +88,13 @@ import org.koin.compose.koinInject
 
 @Composable
 fun RankingStandaloneScreen(tournamentId: String) {
-    val appThemeController = rememberThemeController()
-    var themeOverride by rememberSaveable { mutableStateOf<Boolean?>(null) }
-    val useDarkTheme = themeOverride ?: appThemeController.isDarkTheme
+    val themeController = rememberScreenThemeController()
 
-    MtsTheme(useDarkTheme = useDarkTheme) {
+    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
         RankingStandaloneContent(
             tournamentId = tournamentId,
-            useDarkTheme = useDarkTheme,
-            onToggleTheme = { themeOverride = !useDarkTheme },
+            themePreference = themeController.preference,
+            onToggleTheme = themeController.onTogglePreference,
         )
     }
 }
@@ -103,7 +102,7 @@ fun RankingStandaloneScreen(tournamentId: String) {
 @Composable
 private fun RankingStandaloneContent(
     tournamentId: String,
-    useDarkTheme: Boolean,
+    themePreference: ThemePreference,
     onToggleTheme: () -> Unit,
 ) {
     val presenter = koinInject<RankingPresenter>()
@@ -229,7 +228,7 @@ private fun RankingStandaloneContent(
             }
             RankingControls(
                 playing = playing,
-                useDarkTheme = useDarkTheme,
+                themePreference = themePreference,
                 rowsPerScroll = rowsPerScroll,
                 maxVisibleRows = maxRowsPerScreen,
                 intervalSeconds = intervalSeconds,
@@ -264,7 +263,7 @@ private fun CenteredMessage(message: String, modifier: Modifier = Modifier) {
 @Composable
 private fun RankingControls(
     playing: Boolean,
-    useDarkTheme: Boolean,
+    themePreference: ThemePreference,
     rowsPerScroll: Int,
     maxVisibleRows: Int,
     intervalSeconds: Int,
@@ -408,8 +407,8 @@ private fun RankingControls(
                 buttonModifier = focusLoopFor(themeFocusRequester),
             ) {
                 Icon(
-                    imageVector = if (useDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
-                    contentDescription = if (useDarkTheme) "Use light theme" else "Use dark theme",
+                    imageVector = themePreference.icon,
+                    contentDescription = themePreference.contentDescription,
                 )
             }
         }

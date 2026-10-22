@@ -14,8 +14,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.DarkMode
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -32,7 +30,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,24 +64,25 @@ import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
+import com.etologic.mahjongtournamentsuite.presentation.theme.icon
+import com.etologic.mahjongtournamentsuite.presentation.theme.rememberScreenThemeController
 import kotlinx.coroutines.delay
 
 @Composable
 fun TimerStandaloneScreen(
     initialRound: Int = 1,
 ) {
-    val appThemeController = rememberThemeController()
-    var themeOverride by rememberSaveable { mutableStateOf<Boolean?>(null) }
-    val useDarkTheme = themeOverride ?: appThemeController.isDarkTheme
+    val themeController = rememberScreenThemeController()
 
-    MtsTheme(useDarkTheme = useDarkTheme) {
+    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
         Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
             Box(modifier = Modifier.fillMaxSize()) {
                 TimerContent(
                     initialRound = initialRound,
-                    useDarkTheme = useDarkTheme,
-                    onToggleTheme = { themeOverride = !useDarkTheme },
+                    themePreference = themeController.preference,
+                    onToggleTheme = themeController.onTogglePreference,
                 )
             }
         }
@@ -94,7 +92,7 @@ fun TimerStandaloneScreen(
 @Composable
 private fun TimerContent(
     initialRound: Int,
-    useDarkTheme: Boolean,
+    themePreference: ThemePreference,
     onToggleTheme: () -> Unit,
 ) {
     val roundDownFocusRequester = remember { FocusRequester() }
@@ -463,8 +461,8 @@ private fun TimerContent(
                             ),
                         ) {
                             Icon(
-                                imageVector = if (useDarkTheme) Icons.Default.LightMode else Icons.Default.DarkMode,
-                                contentDescription = if (useDarkTheme) "Use light theme" else "Use dark theme",
+                                imageVector = themePreference.icon,
+                                contentDescription = themePreference.contentDescription,
                             )
                         }
                     }

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.material.icons.filled.Edit
@@ -301,7 +302,7 @@ fun InviteScreen(navController: NavHostController, token: String) {
                 visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
             )
         }
-        message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val passwordsOk = hasSession == true || (password.length >= 8 && password == confirm)
         Button(
             enabled = !busy && hasSession != null && passwordsOk,
@@ -389,6 +390,8 @@ fun TournamentsScreen(navController: NavHostController) {
             onDismiss = { confirmingSignOut = false },
         )
     }
+    // The tab rows hide when the content scrolls down and show when it scrolls up.
+    val hideOnScroll = rememberHideOnScrollState()
     AppScaffold(
         title = "My tournaments",
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
@@ -400,8 +403,10 @@ fun TournamentsScreen(navController: NavHostController) {
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The screen uses the full width. The tab row and the tournament list keep a narrow column. The statistics use all the width.
+        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
         ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
             // The tabs use the color of the top bar.
+            HideOnScrollTabs(tab) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
             PrimaryTabRow(
                 selectedTabIndex = tab,
@@ -425,24 +430,28 @@ fun TournamentsScreen(navController: NavHostController) {
                 }
             }
             }
+            }
             Column(
-                Modifier.weight(1f).align(Alignment.CenterHorizontally)
+                Modifier.weight(1f).align(Alignment.CenterHorizontally).hideOnScroll(hideOnScroll)
                     .then(if (tab == 1) Modifier.fillMaxWidth() else Modifier.widthIn(max = 720.dp).fillMaxWidth())
-                    .then(if (tab == 1) Modifier else Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
+                    ,
             ) {
                 if (tab == 1) {
                     MyStatisticsTab { statisticsLoading = it }
                     return@Column
                 }
-                message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                 val list = items
                 when {
                     list == null -> Unit
-                    list.isEmpty() -> EmptyState(Icons.Default.EmojiEvents, "No tournaments yet", "You are not registered in any tournament yet.")
+                    list.isEmpty() -> Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) {
+                        EmptyState(Icons.Default.EmojiEvents, "No tournaments yet", "You are not registered in any tournament yet.")
+                    }
+                    // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
                     else -> LazyColumn(
                         state = rememberPersistentLazyListState("tournaments"),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
+                        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
                     ) {
                         items(list, key = { it.id }) { tournament ->
                             TournamentCard(tournament, standings[tournament.id]) { navController.navigate(TournamentRoute(tournament.id)) }
@@ -450,6 +459,7 @@ fun TournamentsScreen(navController: NavHostController) {
                     }
                 }
             }
+        }
         }
     }
 }
@@ -725,9 +735,11 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
         actions = { ThemeAction() },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
+        // The provider is outside the column, so all the tab rows use the same state.
+        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
         ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
             if (view == null) {
-                message?.let { Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) }
+                MessageDialog(message)
                 return@ScreenColumn
             }
             HideOnScrollTabs(tab) {
@@ -754,21 +766,14 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                     }
                 }
             }
-            CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
-            Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll).then(if (tab == 2) Modifier else Modifier.padding(start = 16.dp, top = if (tab == 0) 0.dp else 12.dp, end = 16.dp)), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
+                MessageDialog(message)
                 val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
                 when (tab) {
                     0 -> {
-                        // This second row of tabs touches the first row, so it goes over the content padding on the sides.
                         HideOnScrollTabs(tablesTab) {
                             PrimaryTabRow(
                                 selectedTabIndex = tablesTab,
-                                modifier = Modifier.layout { measurable, constraints ->
-                                    val extra = 32.dp.roundToPx()
-                                    val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
-                                    layout(constraints.maxWidth, placeable.height) { placeable.place(-16.dp.roundToPx(), 0) }
-                                },
                                 containerColor = tabRowColor(), contentColor = TabContentColor,
                                 indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
                             ) {
@@ -793,7 +798,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                         } else {
                             Text(
                                 progressOf(view),
-                                Modifier.fillMaxWidth(),
+                                Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp),
                                 style = MaterialTheme.typography.labelLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
@@ -806,7 +811,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                     else -> TournamentInfoTab(view.tournament)
                 }
             }
-            }
+        }
         }
     }
 }
@@ -878,20 +883,15 @@ private fun TableList(
     stickyRounds: Boolean = true,
 ) {
     if (tables.isEmpty()) {
-        EmptyState(Icons.Default.People, "No tables yet", emptyText)
+        Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) { EmptyState(Icons.Default.People, "No tables yet", emptyText) }
         return
     }
     val rounds = tables.sortedBy { it.roundId }.groupBy { it.roundId }
-    // The list goes over the side padding of the screen, so the card shadows do not show beside the sticky header.
+    // The list uses all the width. Its padding is inside, so it ends at the tabs and at the bottom of the screen.
     LazyColumn(
-        modifier = Modifier.layout { measurable, constraints ->
-            val extra = 32.dp.roundToPx()
-            val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
-            layout(constraints.maxWidth, placeable.height) { placeable.place(-16.dp.roundToPx(), 0) }
-        },
         state = rememberPersistentLazyListState("tables-" + emptyText),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
+        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
     ) {
         rounds.forEach { (roundId, roundTables) ->
             // In the sticky case, the title of a round stays at the top while its tables scroll under it.
@@ -1211,8 +1211,10 @@ private fun RankingRows(
     controls: @Composable RowScope.() -> Unit,
 ) {
     if (rows.isEmpty()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), content = controls)
-        EmptyState(Icons.Default.Leaderboard, "No ranking yet", emptyText)
+        Column(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), content = controls)
+            EmptyState(Icons.Default.Leaderboard, "No ranking yet", emptyText)
+        }
         return
     }
     val visible = rows
@@ -1220,9 +1222,9 @@ private fun RankingRows(
     val listState = rememberPersistentLazyListState("ranking")
     val scope = rememberCoroutineScope()
     val myIndex = visible.indexOfFirst { it.mine }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column {
         // One row: the ranking buttons, then "Jump to me", then the small dropdown at the right.
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             controls()
             if (myIndex >= 0) {
                 Column(
@@ -1250,7 +1252,11 @@ private fun RankingRows(
                 compact = true,
             )
         }
-        LazyColumn(state = listState, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        LazyColumn(
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 12.dp),
+        ) {
             items(visible, key = { it.key }) { row ->
                 RankingCard(row, onPlayerClick)
             }
@@ -1403,7 +1409,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             scrollable = true,
             paddingInsideScroll = true,
         ) {
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            MessageDialog(message)
             if (view == null || table == null) return@ScreenColumn
             Text(
                 "Round $roundId - Table $tableId",
@@ -1678,15 +1684,17 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
             ThemeAction()
         },
     ) {
-        ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+        ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+            MessageDialog(message)
             if (view == null) return@ScreenColumn
             if (tables.isEmpty()) {
-                EmptyState(Icons.Default.People, "No tables yet", "This player has no table in this tournament yet.")
+                Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, "No tables yet", "This player has no table in this tournament yet.") }
             } else {
+                // The padding is inside the list, so the list ends at the top bar and at the bottom of the screen.
                 LazyColumn(
                     state = rememberPersistentLazyListState("tables"),
                     verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(16.dp),
                 ) {
                     items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
                         TableSummaryCard(view, table, highlightSlot = slotId) {
@@ -1702,3 +1710,10 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
 
 /** The color of the winner in the hand list, the counterpart of the red loser. Same green as the gains of the hand review. */
 private val WinnerColor = Color(0xFF00934C)
+
+/** Shows a polling message once. The dialog returns only after the message went away and came back. */
+@Composable
+private fun MessageDialog(message: String?) {
+    var seen by remember(message != null) { mutableStateOf(false) }
+    if (message != null && !seen) AppErrorDialog(message, onDismiss = { seen = true })
+}

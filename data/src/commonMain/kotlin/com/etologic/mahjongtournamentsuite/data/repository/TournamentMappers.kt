@@ -20,6 +20,7 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     shortName = shortName,
     primaryColor = primaryColor,
     associationLogoUrl = associationLogoUrl.normalizedOrNull(),
+    associationLogoHash = associationLogoHash.normalizedOrNull(),
     hostCountry = hostCountry,
     hostCity = hostCity,
     venue = TournamentVenue(

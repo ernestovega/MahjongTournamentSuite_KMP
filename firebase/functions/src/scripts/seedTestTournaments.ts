@@ -23,9 +23,13 @@ import { calculateTableSummary, defaultHand, HANDS_PER_TABLE } from "../services
  * writes it again. The script never touches other tournaments.
  *
  * It previews by default. Add --apply to write. Add --only=<id>,<id> to run some tournaments.
+ *
+ * The tester tournaments (flag "testers" in the spec) are not part of the default run, so the emulator seed stays the
+ * same. Add --testers to write only them. They are ongoing for 6 days, with 3 rounds a day between 19:00 and 01:00 (Madrid). The upcoming ones start later and have no hands.
  */
 const applyChanges = process.argv.includes("--apply");
 const only = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1]?.split(",");
+const onlyTesters = process.argv.includes("--testers");
 
 const CREATED_BY_UID = "h0Hgasv0Y1VBOXDVnAoSq1X8RMQ2";
 const TEST_EDITOR_UID = "RH9PioX5AvNDulLDVa2JX45SP7H3";
@@ -36,7 +40,7 @@ type Data = Record<string, unknown>;
 
 type Guest = { firstName: string; lastName: string; country: string };
 /** A player slot. "ema" takes a member of the EMA registry, "open" stays unassigned. */
-type PlayerSpec = "ema" | "open" | Guest;
+type PlayerSpec = "ema" | "open" | Guest | { emaId: string };
 
 type HandStyle =
   | "normal" | "draws" | "allDraws" | "penalties" | "tiePairs" | "tieTop3" | "tieBottom3"
@@ -78,6 +82,10 @@ type TournamentSpec = {
   agenda: Agenda[];
   mode: (round: number, table: number, tablesPerRound: number) => TableMode;
   members?: string[];
+  /** Marks a tournament for the people who test the apps. It runs only with --testers or --only. */
+  testers?: boolean;
+  /** EMA ids that the random fill of "ema" slots must not use. */
+  avoidEmaIds?: string[];
   /** Match time settings. Without it, the tournament uses the defaults (120 minutes, the table stops). */
   match?: { durationMinutes: number; endMode: "STOP" | "FINISH_HAND"; extraMinutes: number; timeZone: string };
 };
@@ -359,10 +367,10 @@ const TOURNAMENTS: TournamentSpec[] = [
     startDate: "2027-03-06", endDate: "2027-03-07",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-upcoming@example.com",
-    isTeams: true, numRounds: 6,
+    isTeams: true, numRounds: 5,
     players: mixedPlayers(24, 6),
     countBestHands: true, countChickenHands: true,
-    schedule: spread(6, "2027-03-06", 4),
+    schedule: spread(5, "2027-03-06", 4),
     agenda: standardAgenda("2027-03-06", "2027-03-07"),
     mode: () => ({ kind: "empty" }),
   },
@@ -379,7 +387,7 @@ const TOURNAMENTS: TournamentSpec[] = [
       venueMapUrl: "https://www.google.com/maps/search/?api=1&query=Santiago%20de%20Compostela",
     },
     contactEmail: "test-extremes@example.com",
-    isTeams: false, numRounds: 8,
+    isTeams: false, numRounds: 7,
     players: mixedPlayers(32, 8),
     countBestHands: true, countChickenHands: true,
     schedule: [
@@ -500,6 +508,151 @@ const TOURNAMENTS: TournamentSpec[] = [
       return { kind: "empty" };
     },
   },
+];
+
+// -- Tester tournaments ----------------------------------------------------------------------
+
+/** The people who test the apps. The first four have an account. The last three have none, to test invitations. */
+const TESTER_ACCOUNTS: Record<string, string> = {
+  "10990026": "takw7aMVudQWwoM4M20iG5argmr1", // Edgar
+  "10990020": "UMpmHUF1kXNHwoQS7hFU2tMrWw63", // Edu
+  "10990018": "4hHTIL9w9bV8slRrA8N1R50YM3N2", // Héctor
+  "10990039": "h0Hgasv0Y1VBOXDVnAoSq1X8RMQ2", // Ernesto
+};
+const TESTER_NO_ACCOUNT = ["10990043", "10990133", "10990051"]; // Raúl Ríos Navarro, Cintia Horcajo Jerez, Marcos San Antonio Serrano
+const TESTER_EMA_IDS = [...Object.keys(TESTER_ACCOUNTS), ...TESTER_NO_ACCOUNT];
+
+const TESTER_START = localSlot(new Date()).date;
+const TESTER_END = addDays(TESTER_START, 5);
+
+/** [mixedPlayers] with the given slots (counted from 1) replaced by the testers. */
+function withTesters(count: number, placement: Record<number, string>): PlayerSpec[] {
+  return mixedPlayers(count, 6).map((entry, index) => {
+    const emaId = placement[index + 1];
+    return emaId ? { emaId } : entry;
+  });
+}
+
+/** Every round has two running tables and one table with seats. The other tables have no hands, so the testers can start them. */
+function testerMode(_round: number, table: number): TableMode {
+  if (table > 3) return { kind: "empty" };
+  return cycle<TableMode>([{ kind: "partial", done: 4 }, { kind: "partial", done: 9 }, { kind: "seats" }], table - 1);
+}
+
+/** Two players cannot meet twice in a tournament, so 24 players allow 5 rounds at most. */
+const TESTER_ROUNDS_PER_PART = 5;
+
+/** The rounds follow the time of the venue (Madrid), so the match time rules apply. */
+const TESTER_BASE = {
+  testers: true,
+  startDate: TESTER_START, endDate: TESTER_END,
+  hostCountry: "ES", hostCity: "Madrid",
+  venue: ESKALERRIA,
+  countBestHands: true, countChickenHands: true,
+  numRounds: TESTER_ROUNDS_PER_PART,
+  schedule: [] as Array<{ date: string; startTime: string }>,
+  match: { durationMinutes: 120, endMode: "FINISH_HAND" as const, extraMinutes: 15, timeZone: "Europe/Madrid" },
+  agenda: standardAgenda(TESTER_START, TESTER_END),
+  mode: (round: number, table: number): TableMode => testerMode(round, table),
+};
+
+/** An ongoing tournament in three parts. */
+const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
+  {
+    ...TESTER_BASE,
+    id: "test-ongoing-individual-in",
+    name: "Test - Ongoing individual, testers play",
+    shortName: "IND-IN",
+    primaryColor: "#2E7D32",
+    contactEmail: "test-ind-in@example.com",
+    isTeams: false,
+    // Slots 1 to 4 have accounts. Slots 5, 6 and 12 have no account yet.
+    players: withTesters(24, { 1: "10990026", 2: "10990020", 3: "10990018", 4: "10990039", 5: "10990043", 6: "10990133", 12: "10990051" }),
+    avoidEmaIds: TESTER_EMA_IDS,
+  },
+  {
+    ...TESTER_BASE,
+    id: "test-ongoing-teams-in",
+    name: "Test - Ongoing teams, testers play",
+    shortName: "TEAMS-IN",
+    primaryColor: "#1565C0",
+    contactEmail: "test-teams-in@example.com",
+    isTeams: true,
+    // Edgar and Edu share team 1. Héctor, Raúl, Ernesto, Marcos and Cintia sit in teams 2 to 4.
+    players: withTesters(24, { 1: "10990026", 2: "10990020", 5: "10990018", 6: "10990043", 9: "10990039", 12: "10990051", 13: "10990133" }),
+    avoidEmaIds: TESTER_EMA_IDS,
+  },
+  {
+    ...TESTER_BASE,
+    id: "test-ongoing-individual-out",
+    name: "Test - Ongoing individual, testers not in it",
+    shortName: "IND-OUT",
+    primaryColor: "#EF6C00",
+    contactEmail: "test-ind-out@example.com",
+    isTeams: false,
+    players: mixedPlayers(24, 6),
+    avoidEmaIds: TESTER_EMA_IDS,
+  },
+  {
+    ...TESTER_BASE,
+    id: "test-ongoing-teams-out",
+    name: "Test - Ongoing teams, testers not in it",
+    shortName: "TEAMS-OUT",
+    primaryColor: "#AD1457",
+    contactEmail: "test-teams-out@example.com",
+    isTeams: true,
+    players: mixedPlayers(24, 6),
+    avoidEmaIds: TESTER_EMA_IDS,
+  },
+];
+
+/**
+ * Each ongoing tournament has 3 parts, one round a day. Part 1 plays at 19:00, part 2 at 21:00 and part 3 at 23:00.
+ * A match lasts 120 minutes, so every part has a round playing in its time window.
+ */
+const TESTER_PARTS = 3;
+const TESTER_TOURNAMENTS: TournamentSpec[] = [
+  ...ONGOING_TESTER_TOURNAMENTS.flatMap((spec) => Array.from({ length: TESTER_PARTS }, (_, part): TournamentSpec => ({
+    ...spec,
+    id: `${spec.id}-${part + 1}`,
+    name: `${spec.name} (${part + 1}/${TESTER_PARTS})`,
+    shortName: `${spec.shortName} ${part + 1}`,
+    contactEmail: spec.contactEmail?.replace("@", `-${part + 1}@`),
+    numRounds: TESTER_ROUNDS_PER_PART,
+    schedule: Array.from({ length: TESTER_ROUNDS_PER_PART }, (_, day) => ({
+      date: addDays(TESTER_START, day),
+      startTime: ["19:00", "21:00", "23:00"][part],
+    })),
+  }))),
+
+  // Upcoming tournaments: no round started, no hands. Some have the testers and some do not.
+  ...[
+    { slug: "individual-in", name: "Test - Upcoming individual, testers play", short: "UP-IND-IN", color: "#00838F", start: "2026-11-14", teams: false, rounds: 5, testers: true },
+    { slug: "teams-in", name: "Test - Upcoming teams, testers play", short: "UP-TEAMS-IN", color: "#6A1B9A", start: "2026-11-28", teams: true, rounds: 5, testers: true },
+    { slug: "individual-out", name: "Test - Upcoming individual, testers not in it", short: "UP-IND-OUT", color: "#827717", start: "2026-12-12", teams: false, rounds: 4, testers: false },
+    { slug: "teams-out", name: "Test - Upcoming teams, testers not in it", short: "UP-TEAMS-OUT", color: "#BF360C", start: "2027-01-16", teams: true, rounds: 5, testers: false },
+  ].map((item): TournamentSpec => ({
+    id: `test-upcoming-${item.slug}`,
+    name: item.name,
+    shortName: item.short,
+    primaryColor: item.color,
+    startDate: item.start, endDate: addDays(item.start, 1),
+    hostCountry: "ES", hostCity: "Madrid",
+    venue: ESKALERRIA, contactEmail: `test-upcoming-${item.slug}@example.com`,
+    isTeams: item.teams, numRounds: item.rounds,
+    players: item.testers
+      ? withTesters(24, item.teams
+        ? { 1: "10990026", 2: "10990020", 5: "10990018", 6: "10990043", 9: "10990039", 12: "10990051", 13: "10990133" }
+        : { 1: "10990026", 2: "10990020", 3: "10990018", 4: "10990039", 5: "10990043", 6: "10990133", 12: "10990051" })
+      : mixedPlayers(24, 6),
+    countBestHands: true, countChickenHands: true,
+    schedule: spread(item.rounds, item.start, 3),
+    agenda: standardAgenda(item.start, addDays(item.start, 1)),
+    mode: () => ({ kind: "empty" }),
+    testers: true,
+    avoidEmaIds: TESTER_EMA_IDS,
+    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
+  })),
 ];
 
 // -- Text helpers ----------------------------------------------------------------------------
@@ -728,49 +881,78 @@ function buildTable(params: {
 
 // -- Seating ---------------------------------------------------------------------------------
 
-/** Builds the schedule. Players avoid repeat opponents, and teammates avoid the same table. */
+/**
+ * Builds the schedule. No two players sit together twice, and teammates never share a table when that is possible.
+ * It throws when the round count is too high for that, so a test tournament never has repeat opponents.
+ */
 function seatingFor(
   numPlayers: number,
   numRounds: number,
   teamOf: (playerId: number) => number | null,
   rng: Rng,
 ): number[][][] {
-  const ids = Array.from({ length: numPlayers }, (_, index) => index + 1);
-  const pairs = new Map<string, number>();
+  for (const separateTeams of [true, false]) {
+    for (let attempt = 0; attempt < 300; attempt += 1) {
+      const rounds = tryNoRepeatSeating(numPlayers, numRounds, separateTeams ? teamOf : () => null, rng);
+      if (rounds != null) return rounds;
+    }
+  }
+  throw new Error(`No schedule without repeat opponents found for ${numPlayers} players and ${numRounds} rounds`);
+}
+
+function tryNoRepeatSeating(
+  numPlayers: number,
+  numRounds: number,
+  teamOf: (playerId: number) => number | null,
+  rng: Rng,
+): number[][][] | null {
+  const met = new Set<string>();
   const key = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
+  const canSit = (a: number, b: number) => {
+    const team = teamOf(a);
+    return !met.has(key(a, b)) && (team == null || team !== teamOf(b));
+  };
   const rounds: number[][][] = [];
   for (let round = 0; round < numRounds; round += 1) {
-    let best: number[][] | null = null;
-    let bestCost = Infinity;
-    for (let attempt = 0; attempt < 400; attempt += 1) {
-      const order = shuffled(ids, rng);
-      const tables = Array.from({ length: numPlayers / 4 }, (_, index) => order.slice(index * 4, index * 4 + 4));
-      let cost = 0;
-      tables.forEach((group) => {
-        for (let a = 0; a < 4; a += 1) {
-          for (let b = a + 1; b < 4; b += 1) {
-            cost += (pairs.get(key(group[a], group[b])) ?? 0) * 10;
-            const teamA = teamOf(group[a]);
-            if (teamA != null && teamA === teamOf(group[b])) cost += 4;
+    let groups: number[][] | null = null;
+    // Depth-first search with a step limit, so a dead end does not run for long.
+    let steps = 0;
+    const search = (left: number[], done: number[][]): number[][] | null => {
+      if (left.length === 0) return done;
+      if ((steps += 1) > 20000) return null;
+      const [first, ...others] = left;
+      const options = shuffled(others.filter((other) => canSit(first, other)), rng);
+      for (let i = 0; i < options.length; i += 1) {
+        for (let j = i + 1; j < options.length; j += 1) {
+          if (!canSit(options[i], options[j])) continue;
+          for (let k = j + 1; k < options.length; k += 1) {
+            if (!canSit(options[i], options[k]) || !canSit(options[j], options[k])) continue;
+            const group = [first, options[i], options[j], options[k]];
+            const rest = left.filter((id) => !group.includes(id));
+            const found = search(rest, [...done, group]);
+            if (found != null) return found;
           }
         }
-      });
-      if (cost < bestCost) {
-        bestCost = cost;
-        best = tables;
       }
-    }
-    best!.forEach((group) => {
+      return null;
+    };
+    groups = search(shuffled(Array.from({ length: numPlayers }, (_, index) => index + 1), rng), []);
+    if (groups == null) return null;
+    groups.forEach((group) => {
       for (let a = 0; a < 4; a += 1) {
-        for (let b = a + 1; b < 4; b += 1) pairs.set(key(group[a], group[b]), (pairs.get(key(group[a], group[b])) ?? 0) + 1);
+        for (let b = a + 1; b < 4; b += 1) met.add(key(group[a], group[b]));
       }
     });
-    rounds.push(best!.map((group) => group.sort((a, b) => a - b)));
+    rounds.push(shuffled(groups, rng).map((group) => group.sort((x, y) => x - y)));
   }
   return rounds;
 }
 
 // -- Build one tournament --------------------------------------------------------------------
+
+function isFixedEma(entry: PlayerSpec): entry is { emaId: string } {
+  return typeof entry === "object" && "emaId" in entry;
+}
 
 type Registry = Array<{ id: string; firstName: string; lastName: string; country: string }>;
 
@@ -790,7 +972,8 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
   const stamp = () => ({ createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() });
   const writes: Write[] = [];
 
-  const pool = shuffled(registry, rng);
+  const avoid = new Set(spec.avoidEmaIds ?? []);
+  const pool = shuffled(registry.filter((member) => !avoid.has(member.id)), rng);
   const strengthKeys = new Map<number, string>();
   let ema = 0;
   let guests = 0;
@@ -799,12 +982,22 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
     const playerId = index + 1;
     const team = Math.ceil(playerId / 4);
     let data: Data;
-    if (entry === "ema") {
-      const member = pool.shift()!;
+    if (entry === "ema" || isFixedEma(entry)) {
+      const member = entry === "ema" ? pool.shift()! : registry.find((candidate) => candidate.id === entry.emaId);
+      if (!member) throw new Error(`${spec.id}: EMA id ${entry === "ema" ? "" : entry.emaId} is not in the registry`);
       ema += 1;
       strengthKeys.set(playerId, member.id);
       const name = `${titleCase(member.firstName)} ${member.lastName}`;
       data = { name, team, country: member.country, assignedEmaId: member.id, assignedCountry: member.country, nonMember: null };
+      const accountUid = TESTER_ACCOUNTS[member.id];
+      if (spec.testers && accountUid) {
+        // Same result as linking a known account: the slot points to the account and the account lists the tournament.
+        data = { ...data, accountUid, invitationStatus: "ACCEPTED" };
+        writes.push({
+          path: `users/${accountUid}/playerTournaments/${spec.id}`,
+          data: { playerId, emaId: member.id, tournamentId: spec.id, createdAt: FieldValue.serverTimestamp() },
+        });
+      }
       writes.push({ path: `${root}/emaPlayerAssignments/${member.id}`, data: { playerId, updatedAt: FieldValue.serverTimestamp() } });
     } else if (entry === "open") {
       open += 1;
@@ -937,7 +1130,8 @@ async function main(): Promise<void> {
   console.log(`${applyChanges ? "Applying" : "Previewing"} test tournaments for ${firebaseProjectId}.`);
   const registry = await loadRegistry();
   console.log(`EMA registry: ${registry.length} players.`);
-  const specs = TOURNAMENTS.filter((spec) => only == null || only.includes(spec.id));
+  const everySpec = [...TOURNAMENTS, ...TESTER_TOURNAMENTS];
+  const specs = everySpec.filter((spec) => (only != null ? only.includes(spec.id) : onlyTesters ? spec.testers : !spec.testers));
   if (specs.some((spec) => !spec.id.startsWith("test-"))) throw new Error("Test tournament ids must start with test-");
   const small = specs.find((spec) => !isValidPlayerCount(spec.players.length));
   if (small) throw new Error(`Test tournament ${small.id} must have at least ${MIN_TOURNAMENT_PLAYERS} players in groups of 4`);

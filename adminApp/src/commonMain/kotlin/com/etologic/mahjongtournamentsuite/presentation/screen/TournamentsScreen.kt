@@ -30,12 +30,14 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -109,7 +111,7 @@ import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 @Composable
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 fun TournamentsScreen(
     navController: NavHostController,
 ) {
@@ -372,17 +374,20 @@ fun TournamentsScreen(
                                 val baseMinWidth = columnsMinWidth + (columnSpacing * (numColumns - 1))
                                 val needsHorizontalScroll = baseMinWidth > maxWidth
 
+                                val headerBackground = CardDefaults.cardColors().containerColor
                                 val tableContent: @Composable (Modifier) -> Unit = { modifier ->
                                     LazyColumn(
                                         state = listState,
                                         modifier = modifier,
                                     ) {
-                                        item {
-                                            TournamentTableHeader(
-                                                cellMinWidth = cellMinWidth,
-                                                actionCellMinWidth = actionCellMinWidth,
-                                            )
-                                            DataTableDivider()
+                                        stickyHeader {
+                                            Column(modifier = Modifier.background(headerBackground)) {
+                                                TournamentTableHeader(
+                                                    cellMinWidth = cellMinWidth,
+                                                    actionCellMinWidth = actionCellMinWidth,
+                                                )
+                                                DataTableDivider()
+                                            }
                                         }
                                         itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
                                             TournamentTableRow(
@@ -553,7 +558,7 @@ private fun TournamentTableHeader(
     DataTableHeaderRow {
         HeaderCell(text = "Color", minWidth = cellMinWidth, weight = 0f, width = ColorColumnWidth, textAlign = TextAlign.Center)
         HeaderCell(text = "Country", minWidth = cellMinWidth, weight = 0f, width = CountryColumnWidth, textAlign = TextAlign.Center)
-        HeaderCell(text = "City", minWidth = cellMinWidth, weight = 1.0f)
+        HeaderCell(text = "City", minWidth = cellMinWidth, weight = 0.7f)
         HeaderCell(text = "Logo", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = "Name", minWidth = cellMinWidth, weight = 2.0f)
         HeaderCell(text = "Short name", minWidth = cellMinWidth, weight = 0f, width = ShortNameColumnWidth)
@@ -615,13 +620,13 @@ private fun TournamentTableRow(
             countryCode = tournament.hostCountry,
             minWidth = cellMinWidth,
         )
-        BodyCell(text = tournament.hostCity.ifBlank { "—" }, minWidth = cellMinWidth, weight = 1.0f)
+        BodyCell(text = tournament.hostCity.ifBlank { "—" }, minWidth = cellMinWidth, weight = 0.7f, maxLines = 2)
         TournamentLogoCell(
             logoUrl = tournament.associationLogoUrl,
             tournamentName = tournament.name,
             minWidth = cellMinWidth,
         )
-        BodyCell(text = tournament.name, minWidth = cellMinWidth, weight = 2.0f)
+        BodyCell(text = tournament.name, minWidth = cellMinWidth, weight = 2.0f, maxLines = 2)
         BodyCell(
             text = tournament.shortName.ifBlank { "—" },
             minWidth = cellMinWidth,
@@ -802,13 +807,14 @@ private fun RowScope.BodyCell(
     textAlign: TextAlign = TextAlign.Start,
     style: TextStyle = MaterialTheme.typography.bodyMedium,
     color: Color = MaterialTheme.colorScheme.onSurface,
+    maxLines: Int = 1,
 ) {
     Text(
         text = text,
         style = style,
         color = color,
         modifier = if (width != null) Modifier.width(width) else Modifier.weight(weight).widthIn(min = minWidth),
-        maxLines = 1,
+        maxLines = maxLines,
         overflow = TextOverflow.Ellipsis,
         textAlign = textAlign,
     )

@@ -3,9 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.Leaderboard
-import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.focus.FocusRequester
@@ -15,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeControll
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import com.etologic.mahjongtournamentsuite.presentation.theme.icon
 
 @Composable
 fun AppTopBarLeadingActions(
@@ -44,7 +43,7 @@ private fun ThemeModeToggleButton() {
 
     AppTopBarButton(
         text = label,
-        icon = if (themeController.isDarkTheme) Icons.Default.DarkMode else Icons.Default.LightMode,
+        icon = themeController.preference.icon,
         onClick = themeController.onTogglePreference,
     )
 }

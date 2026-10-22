@@ -112,11 +112,17 @@ async function createInvitationDoc(params: {
   return { invitationId: invitationRef.id, token: buildToken(params.tournamentId, invitationRef.id, secret), tournamentName };
 }
 
+const APP_DESCRIPTION = "This is the player app of the tournament. "
+  + "After you sign in, you can see where you play in each round, the ranking after every round, "
+  + "and your own results. You can also see upcoming and past tournaments, your statistics, and more.";
+
 async function sendInvitationEmail(email: string, tournamentName: string, token: string): Promise<void> {
   const link = `${playerAppUrl()}/invite?token=${encodeURIComponent(token)}`;
   const subject = `Invitation to ${tournamentName}`;
-  const text = `You are invited to play in ${tournamentName}.\nOpen this link to accept: ${link}\nThe link works once and expires in ${INVITATION_TTL_DAYS} days.`;
+  const text = `You are invited to play in ${tournamentName}.\n\n${APP_DESCRIPTION}\n\n`
+    + `Open this link to accept: ${link}\nThe link works once and expires in ${INVITATION_TTL_DAYS} days.`;
   const html = `<p>You are invited to play in <strong>${escapeHtml(tournamentName)}</strong>.</p>`
+    + `<p>${APP_DESCRIPTION}</p>`
     + `<p><a href="${link}">Accept the invitation</a></p>`
     + `<p>The link works once and expires in ${INVITATION_TTL_DAYS} days.</p>`;
   await sendEmail({ to: email, subject, text, html });
@@ -270,8 +276,9 @@ async function notifyRegistration(params: { tournamentId: string; playerId: numb
   await sendEmail({
     to: account.email,
     subject: `You are registered in ${name}`,
-    text: `You are registered in ${name}.\nOpen the tournament: ${link}`,
-    html: `<p>You are registered in <strong>${escapeHtml(name)}</strong>.</p>`
+    text: `You have been added to the tournament "${name}".\n\n${APP_DESCRIPTION}\n\nOpen the tournament: ${link}`,
+    html: `<p>You have been added to the tournament <strong>${escapeHtml(name)}</strong>.</p>`
+      + `<p>${APP_DESCRIPTION}</p>`
       + `<p><a href="${link}">Open the tournament</a></p>`,
   });
   await db.doc(`tournaments/${params.tournamentId}/players/${params.playerId}`)

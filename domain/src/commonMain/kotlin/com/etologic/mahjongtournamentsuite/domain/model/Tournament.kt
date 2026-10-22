@@ -13,6 +13,8 @@ data class Tournament(
     val shortName: String = "",
     val primaryColor: String = "#02B16B",
     val associationLogoUrl: String? = null,
+    /** Hash of the logo file. Tournaments that share a logo have the same hash. */
+    val associationLogoHash: String? = null,
     val hostCountry: String = "",
     val hostCity: String = "",
     /** Where the tournament takes place. Every field can be empty. */

@@ -62,7 +62,7 @@ internal class RoutePersistence(private val storage: SessionStateStorage) {
             val name = line.substringBefore(' ')
             val value = line.substringAfter(' ', missingDelimiterValue = "")
             val kind = savedKinds.firstOrNull { it.name == name } ?: return@mapNotNull null
-            runCatching { json.decodeFromString(kind.serializer, value) as Any }.getOrNull()
+            runCatching { json.decodeFromString(kind.serializer, value) }.getOrNull()
         }.toList()
     }
 

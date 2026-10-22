@@ -38,6 +38,21 @@ const authFixtures_1 = require("../testing/authFixtures");
         strict_1.default.equal(status, 200);
         strict_1.default.deepEqual(body.tournaments.map((t) => t.id), [t1]);
     });
+    (0, node_test_1.it)("lists only the player tournaments for an admin who sends scope=player", async () => {
+        const admin = await (0, authFixtures_1.createAccount)({ role: "ADMIN" });
+        // The admin list is ordered by updatedAt, so a tournament needs the field to appear in it.
+        for (const id of [t1, t2])
+            await firebase_1.db.doc(`tournaments/${id}`).update({ updatedAt: new Date() });
+        const all = await server.request("GET", "/tournaments", { token: admin.token });
+        const scoped = await server.request("GET", "/tournaments?scope=player", { token: admin.token });
+        strict_1.default.ok(all.body.tournaments.length >= 2);
+        strict_1.default.deepEqual(scoped.body.tournaments, []);
+    });
+    (0, node_test_1.it)("lists only the player tournaments for an editor who sends scope=player", async () => {
+        const both = await (0, authFixtures_1.createAccount)({ role: "EDITOR", memberOf: [t2], playerOf: [t1] });
+        const { body } = await server.request("GET", "/tournaments?scope=player", { token: both.token });
+        strict_1.default.deepEqual(body.tournaments.map((t) => t.id), [t1]);
+    });
     (0, node_test_1.it)("hides accounts and emails of other players", async () => {
         const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: player.token });
         const players = body.players;

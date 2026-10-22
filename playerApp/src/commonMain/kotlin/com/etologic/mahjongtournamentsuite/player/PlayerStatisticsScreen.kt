@@ -38,6 +38,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.IntOffset
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import kotlin.math.roundToInt
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
@@ -185,7 +186,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         ) {
             // Another view or another player starts at the top.
             ResetScrollOnChange(LocalScreenScroll.current?.state, scope to chosenSlotText)
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             if (scopes.size > 1) {
               Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 PrimaryScrollableTabRow(
@@ -319,7 +320,7 @@ fun TournamentStatisticsTab(
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             val loaded = data ?: return@Column
             when (tab) {
                 TournamentStatisticsKind.TOURNAMENT -> TournamentStatisticsPanel(
@@ -427,7 +428,7 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             if (!finished) return@Column
             val data = person
             if (data == null) {
@@ -496,44 +497,11 @@ private fun OthersStatistics(
     val scroll = rememberScrollState()
     // A rival opened from a list starts at the top.
     ResetScrollOnChange(scroll, emaId)
-    val barHeight = with(LocalDensity.current) { OthersBarHeight.roundToPx() }
-    // Position inside the scrolled content. The sticky views use it to show up when the original tabs leave.
-    var tabsTop by remember { mutableIntStateOf(Int.MAX_VALUE) }
-    val sticky = profile != null && !changing && emaId != null
 
-    Box(modifier) {
-    Column(Modifier.fillMaxSize().verticalScroll(scroll).padding(bottom = 12.dp)) {
-        Box(
-            Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
-            if (profile != null && !changing) {
-                // The header has the green of the tabs, so it looks like part of them.
-                CompositionLocalProvider(LocalContentColor provides TabContentColor) {
-                    Box(
-                        Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth().background(tabRowColor()).padding(16.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        PlayerStatisticsHeader(
-                            profile,
-                            fillWidth = false,
-                            stacked = true,
-                            action = {
-                                OutlinedButton(
-                                    onClick = { changing = true },
-                                    colors = ButtonDefaults.outlinedButtonColors(contentColor = TabContentColor),
-                                    border = BorderStroke(1.dp, TabContentColor),
-                                ) {
-                                    Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
-                                    Spacer(Modifier.width(8.dp))
-                                    Text("Change", maxLines = 1, softWrap = false)
-                                }
-                            },
-                        )
-                    }
-                }
-            } else {
-                val options = remember(players) { players.sortedBy { it.displayName }.map { it.emaId to "${it.displayName} (${it.emaId})" } }
+    Column(modifier) {
+        if (profile == null || changing) {
+            val options = remember(players) { players.sortedBy { it.displayName }.map { it.emaId to "${it.displayName} (${it.emaId})" } }
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 Row(
                     Modifier.widthIn(max = 520.dp).fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -548,82 +516,83 @@ private fun OthersStatistics(
                 }
             }
         }
-        message?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(16.dp)) }
-        if (emaId == null) {
-            AppEmptyState(
-                icon = Icons.Default.PersonSearch,
-                title = "Choose a player",
-                message = "Use the field above to search a player by name or EMA number. " +
-                    "You see the results of that player in the tournaments that you can see.",
-            )
-            return@Column
-        }
-        // The tab row has the same width as the header and the two tab rows above it.
-        Box(
-            Modifier.fillMaxWidth().onGloballyPositioned { tabsTop = it.positionInParent().y.roundToInt() },
-            contentAlignment = Alignment.Center,
-        ) {
-            OthersViewTabs(view) { viewName = it.name }
-        }
-        val loaded = data ?: return@Column
-        Column(
-            Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            when (view) {
-                OthersView.BY_TOURNAMENTS -> PlayerTournamentsSection(
-                    loaded.tournaments,
-                    loadStandings = { ids -> presenter.standings(loaded.emaId, ids, own = false) },
-                )
-                OthersView.OVERALL -> PlayerStatisticsPanel(
-                    loaded.overall,
-                    tournaments = loaded.tournaments.map { it.first },
-                    rivalNames = loaded.rivalNames,
-                    onOpenRival = onEmaIdChange,
-                    loadStandings = { ids -> presenter.standings(loaded.emaId, ids, own = false) },
-                )
+        if (emaId != null) {
+            // The bar with the player and the tabs hide and show with the tab rows above them.
+            HideOnScrollTabs(emaId) {
+                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (profile != null && !changing) OthersPlayerBar(profile) { changing = true }
+                    OthersViewTabs(view) { viewName = it.name }
+                }
             }
         }
-    }
-    if (sticky && profile != null) {
-        // The bar stays at the top and fades in while the tabs come near. The tabs stop under it.
-        val tabsY = tabsTop - scroll.value
-        val barAlpha = ((2 * barHeight - tabsY).toFloat() / barHeight).coerceIn(0f, 1f)
-        if (barAlpha > 0f) {
-            Box(
-                Modifier.fillMaxWidth().graphicsLayer { alpha = barAlpha }.background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center,
+        Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(scroll).padding(bottom = 12.dp)) {
+            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+            if (emaId == null) {
+                AppEmptyState(
+                    icon = Icons.Default.PersonSearch,
+                    title = "Choose a player",
+                    message = "Use the field above to search a player by name or EMA number. " +
+                        "You see the results of that player in the tournaments that you can see.",
+                )
+                return@Column
+            }
+            val loaded = data ?: return@Column
+            Column(
+                Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                Row(
-                    Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth().height(OthersBarHeight).background(tabRowColor()).padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    if (profile.country.isNotBlank()) {
-                        CountryFlag(profile.country, width = 24.dp, contentDescription = "Country ${profile.country}")
-                        Spacer(Modifier.width(12.dp))
-                    }
-                    Text(
-                        profile.name, style = MaterialTheme.typography.titleMedium, color = TabContentColor,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis,
+                when (view) {
+                    OthersView.BY_TOURNAMENTS -> PlayerTournamentsSection(
+                        loaded.tournaments,
+                        loadStandings = { ids -> presenter.standings(loaded.emaId, ids, own = false) },
+                    )
+                    OthersView.OVERALL -> PlayerStatisticsPanel(
+                        loaded.overall,
+                        tournaments = loaded.tournaments.map { it.first },
+                        rivalNames = loaded.rivalNames,
+                        onOpenRival = onEmaIdChange,
+                        loadStandings = { ids -> presenter.standings(loaded.emaId, ids, own = false) },
                     )
                 }
             }
         }
-        if (tabsY <= barHeight) {
-            Box(
-                // The strip is as wide as the screen and opaque, so the content ends at the bottom of the tabs on a wide screen too.
-                Modifier.fillMaxWidth().offset { IntOffset(0, barHeight) }.background(MaterialTheme.colorScheme.background),
-                contentAlignment = Alignment.Center,
-            ) {
-                OthersViewTabs(view) { viewName = it.name }
-            }
-        }
-    }
     }
 }
 
-/** The height of the bar with the flag and the name of the player. It shows while the user scrolls. */
+/** The bar with the flag and the name of the player, and the button to choose another player. The name never hides the button. */
+@Composable
+private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
+    Row(
+        Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth().height(OthersBarHeight).background(tabRowColor()).padding(horizontal = 16.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+            if (profile.country.isNotBlank()) {
+                CountryFlag(profile.country, width = 24.dp, contentDescription = "Country ${profile.country}")
+                Spacer(Modifier.width(12.dp))
+            }
+            Text(
+                profile.name, Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.titleMedium, color = TabContentColor,
+                maxLines = 1, overflow = TextOverflow.Ellipsis,
+            )
+        }
+        OutlinedButton(
+            onClick = onChange,
+            modifier = Modifier.height(32.dp),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = TabContentColor),
+            border = BorderStroke(1.dp, TabContentColor),
+        ) {
+            Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text("Change", maxLines = 1, softWrap = false)
+        }
+    }
+}
+
+/** The height of the bar with the flag and the name of the player. */
 private val OthersBarHeight = 44.dp
 
 /** The maximum width of the header and the tab rows of "Others". It is the width of the tab rows above. */

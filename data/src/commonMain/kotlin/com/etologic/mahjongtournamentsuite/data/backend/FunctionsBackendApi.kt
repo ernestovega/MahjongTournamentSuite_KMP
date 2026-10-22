@@ -171,8 +171,8 @@ class FunctionsBackendApi(
         return response.requireSuccessBody()
     }
 
-    suspend fun listTournaments(idToken: String): TournamentsResponseDto =
-        get(path = "/tournaments", idToken = idToken)
+    suspend fun listTournaments(idToken: String, playerScope: Boolean = false): TournamentsResponseDto =
+        get(path = if (playerScope) "/tournaments?scope=player" else "/tournaments", idToken = idToken)
 
     suspend fun createTournament(
         idToken: String,

@@ -39,6 +39,24 @@ describe("what a player can read", () => {
     assert.deepEqual((body as { tournaments: Array<{ id: string }> }).tournaments.map((t) => t.id), [t1]);
   });
 
+  it("lists only the player tournaments for an admin who sends scope=player", async () => {
+    const admin = await createAccount({ role: "ADMIN" });
+    // The admin list is ordered by updatedAt, so a tournament needs the field to appear in it.
+    for (const id of [t1, t2]) await db.doc(`tournaments/${id}`).update({ updatedAt: new Date() });
+    const all = await server.request("GET", "/tournaments", { token: admin.token });
+    const scoped = await server.request("GET", "/tournaments?scope=player", { token: admin.token });
+
+    assert.ok((all.body as { tournaments: unknown[] }).tournaments.length >= 2);
+    assert.deepEqual((scoped.body as { tournaments: unknown[] }).tournaments, []);
+  });
+
+  it("lists only the player tournaments for an editor who sends scope=player", async () => {
+    const both = await createAccount({ role: "EDITOR", memberOf: [t2], playerOf: [t1] });
+    const { body } = await server.request("GET", "/tournaments?scope=player", { token: both.token });
+
+    assert.deepEqual((body as { tournaments: Array<{ id: string }> }).tournaments.map((t) => t.id), [t1]);
+  });
+
   it("hides accounts and emails of other players", async () => {
     const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: player.token });
     const players = (body as { players: Array<Record<string, unknown>> }).players;
