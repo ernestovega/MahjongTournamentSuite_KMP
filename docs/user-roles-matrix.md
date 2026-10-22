@@ -16,7 +16,7 @@ An editor needs a membership document for each tournament. An admin has implicit
 | List tournament accounts | Manage | Manage |
 | Assign or remove tournament editors | Manage | Manage |
 | Create an editor account | Manage | Manage |
-| Edit an editor account | Manage | Manage |
+| Edit an editor account (an editor cannot change the email) | Manage | Manage |
 | Assign an editor to accessible tournaments | Manage | Manage |
 | Create or edit an admin account | — | Manage |
 | Disable or enable an account | — | Manage |

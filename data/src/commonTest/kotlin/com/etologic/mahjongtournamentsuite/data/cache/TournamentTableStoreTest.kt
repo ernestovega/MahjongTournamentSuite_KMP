@@ -27,10 +27,15 @@ private class Server(vararg initial: TableState) {
     var fullLoads = 0
     var fail = false
 
-    suspend fun TournamentTableStore.all(owner: String = "u1", reload: Boolean = false) = all(
+    suspend fun TournamentTableStore.all(
+        owner: String = "u1",
+        reload: Boolean = false,
+        isOutdated: (suspend (Map<TableKey, Long>) -> Boolean)? = null,
+    ) = all(
         ownerUid = owner,
         tournamentId = "t1",
         reload = reload,
+        isOutdated = isOutdated,
         fetchAll = {
             fullLoads++
             if (fail) error("offline")
@@ -50,6 +55,41 @@ class TournamentTableStoreTest {
         val result = with(server) { store.all() }
 
         assertEquals(listOf(TableKey(1, 1), TableKey(1, 2), TableKey(2, 1)), result.map { TableKey(it.first.roundId, it.first.tableId) })
+        assertEquals(1, server.fullLoads)
+    }
+
+    @Test
+    fun reloadsWhenTheCallerSaysATableIsOutdated() = runTest {
+        val server = Server(table(1, 1, version = 1))
+        with(server) { store.all() }
+        server.tables[TableKey(1, 1)] = table(1, 1, version = 4)
+        var seen: Map<TableKey, Long> = emptyMap()
+
+        val result = with(server) { store.all(isOutdated = { known -> seen = known; true }) }
+
+        assertEquals(mapOf(TableKey(1, 1) to 1L), seen)
+        assertEquals(2, server.fullLoads)
+        assertEquals(4L, result.single().first.version)
+    }
+
+    @Test
+    fun keepsTheTablesWhenTheCallerSaysNothingIsOutdated() = runTest {
+        val server = Server(table(1, 1))
+        with(server) { store.all() }
+
+        with(server) { store.all(isOutdated = { false }) }
+
+        assertEquals(1, server.fullLoads)
+    }
+
+    @Test
+    fun doesNotAskIfTheTablesWereNeverLoaded() = runTest {
+        val server = Server(table(1, 1))
+        var asked = false
+
+        with(server) { store.all(isOutdated = { asked = true; true }) }
+
+        assertEquals(false, asked)
         assertEquals(1, server.fullLoads)
     }
 

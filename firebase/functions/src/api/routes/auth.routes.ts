@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { badRequest, forbidden, HttpError, unauthenticated } from "../httpError";
+import { rateLimit } from "../middleware/rateLimit";
 import { requireAuth } from "../middleware/requireAuth";
 import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword } from "../../services/firebaseAuthRest";
 import { auth } from "../../firebase";
@@ -19,8 +20,10 @@ export function signInError(error: unknown): unknown {
 
 export function authRouter(): Router {
   const router = Router();
+  // The sign-in routes are public. Each address may call them 30 times a minute.
+  const publicLimit = rateLimit({ windowMs: 60_000, max: 30 });
 
-  router.post("/signIn", async (req, res, next) => {
+  router.post("/signIn", publicLimit, async (req, res, next) => {
     try {
       const email = String(req.body?.email ?? "").trim();
       const password = String(req.body?.password ?? "");
@@ -41,21 +44,24 @@ export function authRouter(): Router {
     }
   });
 
-  router.post("/passwordReset", async (req, res, next) => {
+  router.post("/passwordReset", publicLimit, async (req, res, next) => {
     try {
       const email = String(req.body?.email ?? "").trim();
       if (!email) {
         throw badRequest("Missing email");
       }
 
-      await sendPasswordResetEmail(email);
+      // The answer is the same for an unknown email, so it does not tell which emails have an account.
+      await sendPasswordResetEmail(email).catch((error: unknown) => {
+        if (!(error instanceof Error) || !error.message.startsWith("EMAIL_NOT_FOUND")) throw error;
+      });
       res.status(200).json({ ok: true });
     } catch (e) {
       next(e);
     }
   });
 
-  router.post("/refresh", async (req, res, next) => {
+  router.post("/refresh", publicLimit, async (req, res, next) => {
     try {
       const refreshToken = String(req.body?.refreshToken ?? "");
       if (!refreshToken) {

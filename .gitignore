@@ -34,3 +34,11 @@ firebase/functions/migration-audits/
 .firebase/
 firebase-debug.log
 firestore-debug.log
+
+# Compiled functions output. The predeploy step builds it.
+firebase/functions/lib/
+
+# Generated proofs, temporary files and local tool links
+/output/
+/tmp/
+/tools/

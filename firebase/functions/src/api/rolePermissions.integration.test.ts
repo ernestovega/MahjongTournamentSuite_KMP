@@ -300,6 +300,14 @@ describe("account rules", () => {
     assert.equal((await update(editor.token, otherEditor.uid, otherEditor.email, "ADMIN")).status, 403);
   });
 
+  it("an editor cannot change the email of another account, an admin can", async () => {
+    assert.equal((await update(editor.token, otherEditor.uid, "taken-over@example.test", "EDITOR")).status, 403);
+    assert.equal((await auth.getUser(otherEditor.uid)).email, otherEditor.email);
+
+    const target = await createAccount({ role: "EDITOR" });
+    assert.equal((await update(admin.token, target.uid, `new-${target.email}`, "EDITOR")).status, 200);
+  });
+
   it("an editor can edit another editor account", async () => {
     assert.equal((await update(editor.token, otherEditor.uid, otherEditor.email, "EDITOR")).status, 200);
   });
@@ -445,5 +453,36 @@ describe("tournament rules for assigned editors", () => {
     });
 
     assert.equal(status, 400);
+  });
+});
+
+describe("input checks on public and path values", () => {
+  let server: TestServer;
+  let admin: TestAccount;
+
+  before(async () => {
+    requireAuthEmulator();
+    server = await startServer();
+    admin = await createAccount({ role: "ADMIN" });
+  });
+  after(async () => { await server.close(); });
+
+  it("refuses a tournament id that contains a slash", async () => {
+    const { status } = await server.request("GET", "/tournaments/a%2Fb/sync/manifest", { token: admin.token });
+
+    assert.equal(status, 400);
+  });
+
+  it("answers the same for a password reset of an unknown email", async () => {
+    process.env.MTS_ID_TOOLKIT_API_KEY ??= "test-key";
+    const { status } = await server.request("POST", "/auth/passwordReset", { body: { email: "nobody-here@example.test" } });
+
+    assert.equal(status, 200);
+  });
+
+  it("hides the deployment details in the version answer", async () => {
+    const { body } = await server.request("GET", "/version");
+
+    assert.deepEqual(body, { ok: true, version: "1.0.0" });
   });
 });

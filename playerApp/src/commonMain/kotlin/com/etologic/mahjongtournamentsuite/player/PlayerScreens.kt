@@ -158,7 +158,10 @@ import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 
@@ -676,8 +679,11 @@ private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pa
     var message by remember(tournamentId) { mutableStateOf<String?>(null) }
     var failures by remember(tournamentId) { mutableIntStateOf(0) }
     var lastUpdate by remember(tournamentId) { mutableStateOf(TimeSource.Monotonic.markNow()) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(tournamentId, reloadKey) {
         while (true) {
+            // A hidden tab or an app in the background does not check the server. The checks go on when it returns.
+            lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.STARTED) }
             when (val result = presenter.load(tournamentId, if (reloadKey > 0) RefreshMode.FORCE else RefreshMode.IF_CHANGED)) {
                 is AppResult.Success -> {
                     view = result.value

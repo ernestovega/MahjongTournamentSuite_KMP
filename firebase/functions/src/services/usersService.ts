@@ -150,18 +150,26 @@ async function listTournamentAssignmentsByUid(
   visibleTournamentIds?: ReadonlySet<string>,
 ): Promise<Map<string, TournamentAssignment[]>> {
   const result = new Map<string, TournamentAssignment[]>();
-  const tournaments = await db.collection("tournaments").get();
-  await Promise.all(tournaments.docs.map(async (tournament) => {
-    if (visibleTournamentIds && !visibleTournamentIds.has(tournament.id)) return;
-    const members = await tournament.ref.collection("members").get();
-    members.docs.forEach((member) => {
-      const assignment: TournamentAssignment = {
-        tournamentId: tournament.id,
-        tournamentName: String(tournament.get("name") ?? ""),
-      };
-      result.set(member.id, [...(result.get(member.id) ?? []), assignment]);
-    });
-  }));
+  // One query reads the members of all tournaments. Then one read gets the name of each tournament that has members.
+  const members = await db.collectionGroup("members").get();
+  const memberships = members.docs.flatMap((member) => {
+    const tournamentRef = member.ref.parent.parent;
+    if (!tournamentRef || (visibleTournamentIds && !visibleTournamentIds.has(tournamentRef.id))) return [];
+    return [{ uid: member.id, tournamentRef }];
+  });
+  const tournamentRefs = [...new Map(memberships.map(({ tournamentRef }) => [tournamentRef.id, tournamentRef])).values()];
+  const tournaments = tournamentRefs.length === 0 ? [] : await db.getAll(...tournamentRefs, { fieldMask: ["name"] });
+  const namesById = new Map(
+    tournaments.filter((tournament) => tournament.exists).map((tournament) => [tournament.id, String(tournament.get("name") ?? "")]),
+  );
+  memberships.forEach(({ uid, tournamentRef }) => {
+    if (!namesById.has(tournamentRef.id)) return;
+    const assignment: TournamentAssignment = {
+      tournamentId: tournamentRef.id,
+      tournamentName: namesById.get(tournamentRef.id) ?? "",
+    };
+    result.set(uid, [...(result.get(uid) ?? []), assignment]);
+  });
   result.forEach((assignments) => assignments.sort(
     (left, right) => left.tournamentName.localeCompare(right.tournamentName),
   ));

@@ -11,7 +11,8 @@ typealias TableWithHands = Pair<TableState, List<TableHand>>
 /**
  * Keeps every table of a tournament, with its hands, in memory. The rankings read all tables.
  *
- * - The first [all] call fetches all tables in one request. After that, [all] makes **no request**.
+ * - The first [all] call fetches all tables in one request. After that, [all] makes **no request**,
+ *   unless the caller says that a table is outdated.
  * - The table editor keeps the store current. Its saves, loads and polling call [put].
  * - A table only moves forward. An older copy never replaces a newer one.
  */
@@ -54,16 +55,21 @@ class TournamentTableStore {
 
     /**
      * Returns all tables of the tournament sorted by round and table.
-     * It calls [fetchAll] only if the store has not loaded all tables yet, or if [reload] is true.
+     * It calls [fetchAll] only if the store has not loaded all tables yet, if [reload] is true, or if [isOutdated]
+     * says so. [isOutdated] gets the version of each table that the store holds. It runs without the lock.
      */
     suspend fun all(
         ownerUid: String,
         tournamentId: String,
         reload: Boolean = false,
+        isOutdated: (suspend (known: Map<TableKey, Long>) -> Boolean)? = null,
         fetchAll: suspend () -> List<TableWithHands>,
     ): List<TableWithHands> {
         selectOwner(ownerUid)
-        val needsLoad = mutex.withLock { reload || entries[tournamentId]?.isComplete != true }
+        val known = mutex.withLock {
+            entries[tournamentId]?.takeIf { it.isComplete }?.tables?.mapValues { it.value.first.version }
+        }
+        val needsLoad = reload || known == null || (isOutdated?.invoke(known) ?: false)
         val loaded = if (needsLoad) fetchAll() else null
         return mutex.withLock {
             val entry = entries.getOrPut(tournamentId) { Entry() }

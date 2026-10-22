@@ -652,6 +652,16 @@ class DefaultTournamentRepository(
             ownerUid = session.uid,
             tournamentId = tournamentId,
             reload = refreshMode == RefreshMode.FORCE,
+            // CACHED never asks the server. IF_CHANGED compares the table versions of the tournament manifest
+            // with the held tables, so a table that someone else saved is loaded again.
+            isOutdated = if (refreshMode == RefreshMode.IF_CHANGED) { known ->
+                withFreshIdToken { token ->
+                    tournamentManifest(token, tournamentId).toDomain().tableVersions
+                        .any { (key, serverVersion) -> serverVersion > (known[key] ?: -1L) }
+                }
+            } else {
+                null
+            },
             fetchAll = {
                 withFreshIdToken { token ->
                     backendApi.getAllTablesWithHands(token, tournamentId).tables.map { it.toDomain() }
