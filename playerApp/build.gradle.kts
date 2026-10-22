@@ -62,6 +62,10 @@ kotlin {
             implementation(libs.kotlin.test)
             implementation(libs.kotlinx.coroutines.test)
         }
+        jvmTest.dependencies {
+            implementation(compose.desktop.currentOs)
+            implementation(libs.compose.ui.test.junit4.desktop)
+        }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
         }

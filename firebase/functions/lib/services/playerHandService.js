@@ -8,6 +8,7 @@ exports.addPenalties = addPenalties;
 const httpError_1 = require("../api/httpError");
 const firebase_1 = require("../firebase");
 const handScoring_1 = require("./handScoring");
+const matchTime_1 = require("./matchTime");
 const playerAccountsService_1 = require("./playerAccountsService");
 const tableManagerService_1 = require("./tableManagerService");
 const MAX_PENALTIES_PER_HAND = 5;
@@ -79,7 +80,8 @@ async function loadFor(key, uid, read, readAll) {
     if (!registration)
         throw (0, httpError_1.forbidden)("You are not registered in this tournament");
     const tableRef = firebase_1.db.doc(`tournaments/${key.tournamentId}/tables/${key.roundId}_${key.tableId}`);
-    const [tableSnap, handSnaps] = await Promise.all([
+    const [tournamentSnap, tableSnap, handSnaps] = await Promise.all([
+        read.get(firebase_1.db.doc(`tournaments/${key.tournamentId}`)),
         read.get(tableRef),
         readAll(Array.from({ length: tableManagerService_1.HANDS_PER_TABLE }, (_, i) => tableRef.collection("hands").doc(String(i + 1)))),
     ]);
@@ -95,8 +97,12 @@ async function loadFor(key, uid, read, readAll) {
         throw (0, httpError_1.conflict)("The seats of this table are not assigned yet");
     if (!seats.includes(String(registration.playerId)))
         throw (0, httpError_1.forbidden)("You do not play at this table");
+    // The players cannot change a table after the time of the match. An organizer enters the missing data.
+    const phase = (0, matchTime_1.tournamentMatchPhase)(tournamentSnap.data() ?? {}, key.roundId, Date.now());
+    if (phase === "OVER")
+        throw (0, httpError_1.conflict)("The time of this match is over. An organizer must enter the missing data");
     const hands = (0, tableManagerService_1.handsFromData)(handSnaps.map((snap) => snap.data() ?? {}));
-    return { registration, table, seats, hands };
+    return { registration, table, seats, hands, phase };
 }
 function buildPatch(table, seats, hands, input) {
     const next = hands.find((hand) => !hand.isDone);
@@ -122,6 +128,10 @@ function buildPatch(table, seats, hands, input) {
     const totals = (0, handScoring_1.tableTotalsPatch)(tableAfter, handsAfter);
     return { next, handPatch, totals, handScores, tablePatch: isLastHand ? { ...totals, isCompleted: true } : totals };
 }
+/** In the extra time after the end of the match, the hand in play is the last hand of the table. */
+function inputForPhase(input, phase) {
+    return phase === "EXTRA_TIME" ? { ...input, isLastHand: true } : input;
+}
 /** True when the table changed after the player looked at it. */
 function isVersionConflict(error) {
     return error instanceof tableManagerService_1.StaleTableVersion
@@ -129,8 +139,8 @@ function isVersionConflict(error) {
 }
 /** Calculates what the table would look like after the hand. It writes nothing. */
 async function previewHand(params) {
-    const { table, seats, hands } = await loadFor(params, params.uid, { get: (ref) => ref.get() }, (refs) => firebase_1.db.getAll(...refs));
-    const { next, totals, handScores } = buildPatch(table, seats, hands, params.input);
+    const { table, seats, hands, phase } = await loadFor(params, params.uid, { get: (ref) => ref.get() }, (refs) => firebase_1.db.getAll(...refs));
+    const { next, totals, handScores } = buildPatch(table, seats, hands, inputForPhase(params.input, phase));
     return {
         handId: next.handId,
         seats,
@@ -144,12 +154,12 @@ async function previewHand(params) {
 async function recordHand(params) {
     try {
         return await firebase_1.db.runTransaction(async (transaction) => {
-            const { registration, table, seats, hands } = await loadFor(params, params.uid, { get: (ref) => transaction.get(ref) }, (refs) => transaction.getAll(...refs));
+            const { registration, table, seats, hands, phase } = await loadFor(params, params.uid, { get: (ref) => transaction.get(ref) }, (refs) => transaction.getAll(...refs));
             const version = Number(table.version ?? 0);
             if (version !== params.expectedVersion) {
                 throw (0, httpError_1.conflict)("The table changed after the review. Check the new totals and confirm again");
             }
-            const { next, handPatch, totals, handScores, tablePatch } = buildPatch(table, seats, hands, params.input);
+            const { next, handPatch, totals, handScores, tablePatch } = buildPatch(table, seats, hands, inputForPhase(params.input, phase));
             const actor = { uid: params.uid, name: `Player ${registration.emaId}`, source: "player" };
             await (0, tableManagerService_1.saveTableStateInTransaction)(transaction, {
                 tournamentId: params.tournamentId,

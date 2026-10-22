@@ -68,6 +68,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
@@ -291,20 +292,22 @@ fun TournamentStatisticsTab(
     ReportLoading(data == null && message == null, onLoadingChange)
     // The scroll starts at the line under the tabs. The padding is inside the scroll, so the content moves under that line.
     Column(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            PrimaryTabRow(
-                selectedTabIndex = tabs.indexOf(tab),
-                containerColor = tabRowColor(), contentColor = TabContentColor,
-                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
-                modifier = Modifier.widthIn(max = StatisticsTabWidth * tabs.size),
-            ) {
-                tabs.forEach { item ->
-                    CompactTab(
-                        selected = item == tab,
-                        onClick = { tabName = item.name },
-                        title = item.title,
-                        icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
-                    )
+        HideOnScrollTabs(tab) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                PrimaryTabRow(
+                    selectedTabIndex = tabs.indexOf(tab),
+                    containerColor = tabRowColor(), contentColor = TabContentColor,
+                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
+                    modifier = Modifier.widthIn(max = StatisticsTabWidth * tabs.size),
+                ) {
+                    tabs.forEach { item ->
+                        CompactTab(
+                            selected = item == tab,
+                            onClick = { tabName = item.name },
+                            title = item.title,
+                            icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
+                        )
+                    }
                 }
             }
         }
@@ -389,21 +392,23 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     // A rival opens in the "Others" tab.
     val openRival: (String) -> Unit = { ema -> otherEma = ema; tabName = MyStatisticsKind.OTHERS.name }
     Column(Modifier.fillMaxSize()) {
-        // The tab row touches the top tab row and has the same width. The content under it has its own padding.
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            PrimaryTabRow(
-                selectedTabIndex = tabs.indexOf(tab),
-                containerColor = tabRowColor(), contentColor = TabContentColor,
-                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
-                modifier = Modifier.widthIn(max = 720.dp),
-            ) {
-                tabs.forEach { item ->
-                    CompactTab(
-                        selected = item == tab,
-                        onClick = { tabName = item.name },
-                        title = item.title,
-                        icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
-                    )
+        HideOnScrollTabs(tab) {
+            // The tab row touches the top tab row and has the same width. The content under it has its own padding.
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                PrimaryTabRow(
+                    selectedTabIndex = tabs.indexOf(tab),
+                    containerColor = tabRowColor(), contentColor = TabContentColor,
+                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
+                    modifier = Modifier.widthIn(max = 720.dp),
+                ) {
+                    tabs.forEach { item ->
+                        CompactTab(
+                            selected = item == tab,
+                            onClick = { tabName = item.name },
+                            title = item.title,
+                            icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
+                        )
+                    }
                 }
             }
         }

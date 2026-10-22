@@ -18,6 +18,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -51,6 +52,8 @@ object E2eAccounts {
     const val STRANGER = "stranger@e2e.test"
     const val PLAYER = "player@e2e.test"
     const val DISABLED = "disabled@e2e.test"
+    const val EXTRA_TIME = "extra@e2e.test"
+    const val TIME_OVER = "over@e2e.test"
 }
 
 /** The Android emulator reaches the computer that runs the backend at 10.0.2.2. */
@@ -263,14 +266,15 @@ fun ComposeTestRule.waitForAnyText(vararg texts: String, timeoutMs: Long = WAIT_
 
 /** Scrolls the lazy list of the screen until a text is composed. */
 @OptIn(ExperimentalTestApi::class)
-fun ComposeTestRule.scrollListTo(text: String) {
+fun ComposeTestRule.scrollListTo(text: String, substring: Boolean = false) {
+    val matcher = hasText(text, substring = substring)
     waitUntil(WAIT_MS) {
-        if (onAllNodes(hasText(text)).fetchSemanticsNodes().isEmpty()) {
+        if (onAllNodes(matcher).fetchSemanticsNodes().isEmpty()) {
             onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
-                runCatching { onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(hasText(text)) }
+                runCatching { onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(matcher) }
             }
         }
-        onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty()
+        onAllNodes(matcher).fetchSemanticsNodes().isNotEmpty()
     }
 }
 
@@ -284,4 +288,9 @@ fun ComposeTestRule.pickSeat(wind: String, which: Int) {
     val nodes = onAllNodes(hasContentDescription(wind), useUnmergedTree = true)
     val count = nodes.fetchSemanticsNodes().size
     nodes[count - 2 + which].performClick()
+}
+
+/** Presses the last button with this text. A dialog is the last one in the tree, so this reaches its button, not the page's. */
+fun ComposeTestRule.clickLastButton(text: String) {
+    onAllNodes((hasText(text) or hasContentDescription(text)) and hasClickAction()).onLast().performClick()
 }

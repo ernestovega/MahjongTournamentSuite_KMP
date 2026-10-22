@@ -16,6 +16,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
@@ -50,6 +51,10 @@ interface TournamentRepository {
         /** Null keeps the stored value. */
         countBestHands: Boolean? = null,
         countChickenHands: Boolean? = null,
+        matchDurationMinutes: Int? = null,
+        matchEndMode: MatchEndMode? = null,
+        matchExtraMinutes: Int? = null,
+        timeZone: String? = null,
     ): AppResult<Tournament>
 
     /** Creates the ID cards PDF. Without a sheet layout, the PDF has one card side on each page. */

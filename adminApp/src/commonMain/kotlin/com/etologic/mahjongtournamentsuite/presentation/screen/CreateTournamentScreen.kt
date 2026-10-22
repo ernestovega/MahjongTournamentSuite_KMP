@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.presentation.components.toDateInput
-import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -31,10 +30,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
@@ -58,10 +53,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
+import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
+import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_DURATION_MINUTES
+import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_EXTRA_MINUTES
+import com.etologic.mahjongtournamentsuite.presentation.components.isTimeZoneIdShape
+import com.etologic.mahjongtournamentsuite.presentation.components.matchExtraMinutesOrNull
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.MatchTimeFields
+import com.etologic.mahjongtournamentsuite.presentation.components.matchDurationOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as AppTextButton
@@ -125,6 +130,7 @@ fun CreateTournamentDialog(
     val eventEndDateFocusRequester = remember { FocusRequester() }
     val playersFocusRequester = remember { FocusRequester() }
     val roundsFocusRequester = remember { FocusRequester() }
+    val matchDurationFocusRequester = remember { FocusRequester() }
 
     var name by remember { mutableStateOf("") }
     var shortName by remember { mutableStateOf("") }
@@ -158,6 +164,10 @@ fun CreateTournamentDialog(
     var isTeams by remember { mutableStateOf(true) }
     var countBestHands by remember { mutableStateOf(true) }
     var countChickenHands by remember { mutableStateOf(true) }
+    var matchDurationText by remember { mutableStateOf(DEFAULT_MATCH_DURATION_MINUTES.toString()) }
+    var finishHandInPlay by remember { mutableStateOf(false) }
+    var matchExtraText by remember { mutableStateOf(DEFAULT_MATCH_EXTRA_MINUTES.toString()) }
+    var timeZoneText by remember { mutableStateOf(TimeZone.currentSystemDefault().id) }
     var computeMode by remember { mutableStateOf(CreateTournamentPresenter.ComputeMode.LIGHT) }
 
     var isLoading by remember { mutableStateOf(false) }
@@ -270,6 +280,21 @@ fun CreateTournamentDialog(
             roundsFocusRequester.requestFocus()
             return
         }
+        val matchDurationMinutes = matchDurationOrNull(matchDurationText)
+        if (matchDurationMinutes == null) {
+            errorMessage = "* Match duration must be a whole number of minutes from 1 to $MAX_MATCH_DURATION_MINUTES."
+            matchDurationFocusRequester.requestFocus()
+            return
+        }
+        if (!isTimeZoneIdShape(timeZoneText)) {
+            errorMessage = "* Time zone must be a name like Europe/Madrid."
+            return
+        }
+        val matchExtraMinutes = matchExtraMinutesOrNull(matchExtraText)
+        if (finishHandInPlay && matchExtraMinutes == null) {
+            errorMessage = "* Extra time must be a whole number of minutes from 1 to $MAX_MATCH_EXTRA_MINUTES."
+            return
+        }
         val scheduleError = tournamentScheduleEditorError(
             roundRows = roundScheduleRows,
             agendaRows = agendaRows,
@@ -311,6 +336,10 @@ fun CreateTournamentDialog(
                     numRounds = numRounds,
                     roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
                     agendaItems = agendaRows.toTournamentAgendaItems(),
+                    matchDurationMinutes = matchDurationMinutes,
+                    matchEndMode = if (finishHandInPlay) MatchEndMode.FINISH_HAND else MatchEndMode.STOP,
+                    matchExtraMinutes = matchExtraMinutes ?: DEFAULT_MATCH_EXTRA_MINUTES,
+                    timeZone = timeZoneText.trim(),
                     computeMode = computeMode,
                     onProgress = progressSink,
                 )) {
@@ -480,6 +509,19 @@ fun CreateTournamentDialog(
                             enabled = !isLoading,
                         )
                     }
+                    MatchTimeFields(
+                        durationText = matchDurationText,
+                        onDurationChange = { matchDurationText = it },
+                        timeZoneText = timeZoneText,
+                        onTimeZoneChange = { timeZoneText = it },
+                        finishHand = finishHandInPlay,
+                        onFinishHandChange = { finishHandInPlay = it },
+                        extraMinutesText = matchExtraText,
+                        onExtraMinutesChange = { matchExtraText = it },
+                        enabled = !isLoading,
+                        durationFocusRequester = matchDurationFocusRequester,
+                    )
+
                     TournamentScheduleEditor(
                         roundRows = roundScheduleRows,
                         onRoundRowsChange = { roundScheduleRows = it },
@@ -595,7 +637,7 @@ fun CreateTournamentDialog(
                                     onValueChange = ::setTeamsChecked,
                                 ),
                             )
-                            SwitchInfoTooltip(
+                            InfoTooltipIcon(
                                 "Group players into teams of four. Team members will not play together.",
                             )
                         }
@@ -643,7 +685,7 @@ fun CreateTournamentDialog(
                                     onValueChange = ::setHeavyCompute,
                                 ),
                             )
-                            SwitchInfoTooltip("Use more CPU to calculate the schedule faster.")
+                            InfoTooltipIcon("Use more CPU to calculate the schedule faster.")
                         }
                     }
 
@@ -754,34 +796,6 @@ fun CreateTournamentDialog(
                 showLogoLibrary = false
             },
         )
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun SwitchInfoTooltip(description: String) {
-    val tooltipState = rememberTooltipState()
-    val coroutineScope = rememberCoroutineScope()
-
-    TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { AppPlainTooltip { Text(description) } },
-        state = tooltipState,
-    ) {
-        IconButton(
-            onClick = {
-                coroutineScope.launch { tooltipState.show() }
-            },
-            modifier = Modifier.semantics {
-                contentDescription = "Show information: $description"
-            },
-        ) {
-            Text(
-                text = "ⓘ",
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
     }
 }
 

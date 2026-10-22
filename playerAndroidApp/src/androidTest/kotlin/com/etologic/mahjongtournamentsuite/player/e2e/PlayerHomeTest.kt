@@ -12,7 +12,8 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("Madrid")
         c.waitForText("In progress")
         c.waitForText("Eskalerria - Calle Cipriano Sancho 36, Madrid")
-        c.waitForText("test-live@example.com")
+        c.waitForText("Directions")
+        c.waitForText("Email")
     }
 
     @Test
@@ -30,10 +31,10 @@ class PlayerHomeTest : PlayerE2eTest() {
     @Test
     fun scheduleCanBeShownAndHidden() {
         home(E2eAccounts.PLAYER)
-        c.clickButton("Show schedule")
+        c.clickButton("Schedule")
         c.waitForText("Hide schedule")
         c.clickButton("Hide schedule")
-        c.waitForText("Show schedule")
+        c.waitForText("Schedule")
     }
 
     @Test

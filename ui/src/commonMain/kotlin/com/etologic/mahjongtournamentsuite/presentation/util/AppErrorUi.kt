@@ -29,6 +29,7 @@ private fun String?.toFriendlyErrorMessage(): String {
             "Enter a valid email address."
         details.contains("too_many_attempts") || details.contains("too many") ->
             "Too many attempts. Wait a moment and try again."
+        details.contains("not linked to a player") -> "Your account is not linked to a player yet. Ask the organizers to link your EMA number."
         details.contains("account is disabled") -> "This account is disabled. Ask an administrator for help."
         details.contains("permission denied") || details.contains("forbidden") ->
             "You do not have permission to perform this action."

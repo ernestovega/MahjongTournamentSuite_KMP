@@ -78,6 +78,8 @@ type TournamentSpec = {
   agenda: Agenda[];
   mode: (round: number, table: number, tablesPerRound: number) => TableMode;
   members?: string[];
+  /** Match time settings. Without it, the tournament uses the defaults (120 minutes, the table stops). */
+  match?: { durationMinutes: number; endMode: "STOP" | "FINISH_HAND"; extraMinutes: number; timeZone: string };
 };
 
 const ESKALERRIA: Venue = {
@@ -94,11 +96,35 @@ function addDays(date: string, days: number): string {
   return value.toISOString().slice(0, 10);
 }
 
+const pad2 = (value: number): string => String(value).padStart(2, "0");
+
+/** The date and the start time of a moment in the time zone of this computer, as the schedule stores them. */
+function localSlot(at: Date): { date: string; startTime: string } {
+  return {
+    date: `${at.getFullYear()}-${pad2(at.getMonth() + 1)}-${pad2(at.getDate())}`,
+    startTime: `${pad2(at.getHours())}:${pad2(at.getMinutes())}`,
+  };
+}
+
 /**
- * The live tournament starts 36 hours before the seed run. Rounds 1 to 4 and the first round of the second day
- * have then started in every time zone, so players can enter their tables.
+ * The live tournament has round 4 running at the time of the seed run: it started 15 minutes ago. The apps allow
+ * hands only while a round plays (120 minutes by default) and treat a table as finished after that. Rounds 1 to 3
+ * start 160 minutes apart before it. Rounds 5 and 6 start two days later. Run the seed again to get a fresh window.
+ * The emulators must use the time zone of this computer.
  */
-const TODAY = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString().slice(0, 10);
+const ROUND4_START = new Date(Date.now() - 15 * 60 * 1000);
+const LIVE_PAST_ROUNDS = [3, 2, 1, 0].map((back) => localSlot(new Date(ROUND4_START.getTime() - back * 160 * 60 * 1000)));
+const TODAY = LIVE_PAST_ROUNDS[0].date;
+
+/** The time zone of this computer. The seed writes round times in it. */
+const LOCAL_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
+ * The match time tournaments. Round 1 started 40 minutes before the seed run and a match lasts 30 minutes, so the
+ * time is over. In the first tournament the players can still finish the hand for 120 minutes (extra time).
+ * In the second tournament the tables stop, so the players cannot change them.
+ */
+const MATCH_OVER_START = localSlot(new Date(Date.now() - 40 * 60 * 1000));
 
 /** Rounds are spread over the days. [perDay] rounds happen on one day. */
 function spread(numRounds: number, startDate: string, perDay = DAY_TIMES.length): Array<{ date: string; startTime: string }> {
@@ -395,6 +421,39 @@ const TOURNAMENTS: TournamentSpec[] = [
     },
   },
   {
+    id: "test-match-extra-time",
+    name: "Test - Match time over, extra time running",
+    shortName: "EXTRA-TIME",
+    primaryColor: "#6A1B9A",
+    startDate: MATCH_OVER_START.date, endDate: MATCH_OVER_START.date,
+    hostCountry: "ES", hostCity: "Madrid",
+    venue: ESKALERRIA, contactEmail: "test-extra@example.com",
+    isTeams: false, numRounds: 1,
+    players: Array.from({ length: 16 }, () => "ema" as const),
+    countBestHands: true, countChickenHands: true,
+    schedule: [MATCH_OVER_START],
+    agenda: [{ title: "Only game", date: MATCH_OVER_START.date, startTime: MATCH_OVER_START.startTime }],
+    // Table 1 has 7 hands, table 2 has seats and no hands, table 3 is empty, table 4 is finished.
+    mode: (_round, table) => cycle<TableMode>([{ kind: "partial", done: 7 }, { kind: "seats" }, { kind: "empty" }, { kind: "full" }], table - 1),
+    match: { durationMinutes: 30, endMode: "FINISH_HAND", extraMinutes: 120, timeZone: LOCAL_ZONE },
+  },
+  {
+    id: "test-match-over",
+    name: "Test - Match time over, tables stopped",
+    shortName: "TIME-OVER",
+    primaryColor: "#B71C1C",
+    startDate: MATCH_OVER_START.date, endDate: MATCH_OVER_START.date,
+    hostCountry: "ES", hostCity: "Madrid",
+    venue: ESKALERRIA, contactEmail: "test-over@example.com",
+    isTeams: false, numRounds: 1,
+    players: Array.from({ length: 16 }, () => "ema" as const),
+    countBestHands: true, countChickenHands: true,
+    schedule: [MATCH_OVER_START],
+    agenda: [{ title: "Only game", date: MATCH_OVER_START.date, startTime: MATCH_OVER_START.startTime }],
+    mode: (_round, table) => cycle<TableMode>([{ kind: "partial", done: 7 }, { kind: "seats" }, { kind: "empty" }, { kind: "full" }], table - 1),
+    match: { durationMinutes: 30, endMode: "STOP", extraMinutes: 15, timeZone: LOCAL_ZONE },
+  },
+  {
     id: "test-last-table",
     name: "Test - One table left, broken logo, chicken hands off",
     shortName: "LASTTABLE",
@@ -416,7 +475,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     name: "Test - Live ongoing tournament",
     shortName: "LIVE",
     primaryColor: "#D81B60",
-    startDate: TODAY, endDate: addDays(TODAY, 3),
+    startDate: TODAY, endDate: addDays(LIVE_PAST_ROUNDS[3].date, 2),
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-live@example.com",
     isTeams: true,
@@ -424,8 +483,8 @@ const TOURNAMENTS: TournamentSpec[] = [
     numRounds: 6,
     players: mixedPlayers(40, 4),
     countBestHands: true, countChickenHands: true,
-    schedule: spread(6, TODAY, 4),
-    agenda: standardAgenda(TODAY, addDays(TODAY, 3)),
+    schedule: [...LIVE_PAST_ROUNDS, ...spread(2, addDays(LIVE_PAST_ROUNDS[3].date, 2), 4)],
+    agenda: standardAgenda(TODAY, addDays(LIVE_PAST_ROUNDS[3].date, 2)),
     members: [TEST_EDITOR_UID],
     mode: (round, table) => {
       if (round === 1) return { kind: "full" };
@@ -830,6 +889,12 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
     isTeams: spec.isTeams,
     countBestHands: spec.countBestHands,
     countChickenHands: spec.countChickenHands,
+    ...(spec.match ? {
+      matchDurationMinutes: spec.match.durationMinutes,
+      matchEndMode: spec.match.endMode,
+      matchExtraMinutes: spec.match.extraMinutes,
+      timeZone: spec.match.timeZone,
+    } : {}),
     numPlayers,
     numRounds: spec.numRounds,
     roundSchedules: spec.schedule.map((entry, index) => ({

@@ -350,6 +350,10 @@ export function tournamentsRouter(): Router {
         tables: parsedTables,
         roundSchedules: body?.roundSchedules,
         agendaItems: body?.agendaItems,
+        matchDurationMinutes: body?.matchDurationMinutes,
+        matchEndMode: body?.matchEndMode,
+        matchExtraMinutes: body?.matchExtraMinutes,
+        timeZone: body?.timeZone,
         createdByUid: decoded.uid,
       });
 
@@ -525,6 +529,10 @@ export function tournamentsRouter(): Router {
         removeAssociationLogo: body.removeAssociationLogo === true,
         roundSchedules: body.roundSchedules,
         agendaItems: body.agendaItems,
+        matchDurationMinutes: body.matchDurationMinutes,
+        matchEndMode: body.matchEndMode,
+        matchExtraMinutes: body.matchExtraMinutes,
+        timeZone: body.timeZone,
       });
       res.status(200).json(tournament);
     } catch (e) {

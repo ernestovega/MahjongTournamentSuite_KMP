@@ -114,6 +114,9 @@ fun HandEntryPanel(
     var score by remember { mutableStateOf("") }
     var chicken by remember { mutableStateOf(false) }
     var lastHand by remember { mutableStateOf(false) }
+    // When the time is over, the players can record the hand in play. That hand is the last hand of the table.
+    val phase = view.matchPhaseOf(table.roundId, now)
+    val extraTime = phase == MatchPhase.EXTRA_TIME
     var preview by remember { mutableStateOf<HandPreview?>(null) }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
@@ -131,13 +134,13 @@ fun HandEntryPanel(
         (selfDraw || (loser != null && loser != winner)) &&
         (!chicken || (!selfDraw && !chickenTooHigh))
     fun proposal() = if (isDraw) {
-        HandProposal(winnerSlotId = null, loserSlotId = null, score = 0, isLastHand = lastHand)
+        HandProposal(winnerSlotId = null, loserSlotId = null, score = 0, isLastHand = lastHand || extraTime)
     } else HandProposal(
         winnerSlotId = winner!!,
         loserSlotId = if (selfDraw) null else loser,
         score = parsed!!,
         isChickenHand = chicken,
-        isLastHand = lastHand,
+        isLastHand = lastHand || extraTime,
     )
 
     fun finishEntry() {
@@ -195,7 +198,20 @@ fun HandEntryPanel(
         Text("This round has not started yet. You can add hands when it starts.", color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
+    if (phase == MatchPhase.OVER) {
+        Text(
+            "The time of this match is over. You cannot add hands now. The organizers enter the missing data.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        return
+    }
     if (!seatsAssigned) return
+    if (extraTime) {
+        Text(
+            "The time is over. You can add the hand in play. After it, the table is completed.",
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
     // The draw is on the left and the penalty on the right. The win is the main action, so it is twice as wide.
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
@@ -277,7 +293,9 @@ fun HandEntryPanel(
                     } else {
                         Text("No player wins this hand. Every seat scores zero.")
                     }
-                    if (handInPlay < 16) {
+                    if (extraTime) {
+                        Text("The time is over. This hand is the last hand of the table.")
+                    } else if (handInPlay < 16) {
                         CheckRow("Last hand of the table", lastHand) { lastHand = it }
                     }
                     message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
@@ -315,7 +333,7 @@ fun HandEntryPanel(
             },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand)
+                    ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
                     if (saving) SavingRow(waitingForTable = awaitingKey != null, text = "Saving the hand...")
                     message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 }

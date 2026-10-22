@@ -1,11 +1,57 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MATCH_END_MODES = exports.DEFAULT_MATCH_DURATION_MINUTES = void 0;
+exports.normalizeMatchDuration = normalizeMatchDuration;
+exports.readStoredMatchDuration = readStoredMatchDuration;
+exports.normalizeMatchEndMode = normalizeMatchEndMode;
+exports.readStoredMatchEndMode = readStoredMatchEndMode;
 exports.normalizeRoundSchedules = normalizeRoundSchedules;
 exports.normalizeAgendaItems = normalizeAgendaItems;
 exports.readStoredRoundSchedules = readStoredRoundSchedules;
 exports.readStoredAgendaItems = readStoredAgendaItems;
 const httpError_1 = require("../api/httpError");
 const tournamentDates_1 = require("./tournamentDates");
+exports.DEFAULT_MATCH_DURATION_MINUTES = 120;
+const MAX_MATCH_DURATION_MINUTES = 600;
+/** What happens when the match time is over: the game stops at once, or the hand in play is finished. */
+exports.MATCH_END_MODES = ["STOP", "FINISH_HAND"];
+/** Validates a match duration in minutes. A missing value gives the default. */
+function normalizeMatchDuration(value) {
+    if (value == null)
+        return exports.DEFAULT_MATCH_DURATION_MINUTES;
+    const minutes = Number(value);
+    if (!Number.isInteger(minutes) || minutes < 1 || minutes > MAX_MATCH_DURATION_MINUTES) {
+        throw (0, httpError_1.badRequest)(`matchDurationMinutes must be a whole number from 1 to ${MAX_MATCH_DURATION_MINUTES}`);
+    }
+    return minutes;
+}
+/** Reads a stored duration. An old or invalid value gives the default. */
+function readStoredMatchDuration(value) {
+    try {
+        return normalizeMatchDuration(value);
+    }
+    catch (_error) {
+        return exports.DEFAULT_MATCH_DURATION_MINUTES;
+    }
+}
+/** Validates the end mode. A missing value gives "STOP". */
+function normalizeMatchEndMode(value) {
+    if (value == null)
+        return "STOP";
+    if (!exports.MATCH_END_MODES.includes(value)) {
+        throw (0, httpError_1.badRequest)("matchEndMode must be STOP or FINISH_HAND");
+    }
+    return value;
+}
+/** Reads a stored end mode. An old or invalid value gives "STOP". */
+function readStoredMatchEndMode(value) {
+    try {
+        return normalizeMatchEndMode(value);
+    }
+    catch (_error) {
+        return "STOP";
+    }
+}
 const LOCAL_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 function optionalString(value) {
     if (value == null)

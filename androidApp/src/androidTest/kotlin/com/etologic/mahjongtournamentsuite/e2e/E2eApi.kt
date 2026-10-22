@@ -48,4 +48,35 @@ object E2eApi {
         val reply = call("POST", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/reset?only=${tournamentIds.joinToString(",")}")
         check(reply.status == 200) { "Reset failed: ${reply.status} ${reply.body}" }
     }
+
+    /** The emails that the local backend "sent". It keeps them in memory because no mail server runs. */
+    fun sentEmails(): List<JSONObject> {
+        val reply = call("GET", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/mail")
+        check(reply.status == 200) { "Reading the mail box failed: ${reply.status} ${reply.body}" }
+        val list = reply.json().getJSONArray("emails")
+        return (0 until list.length()).map { list.getJSONObject(it) }
+    }
+
+    fun clearEmails() {
+        call("DELETE", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/mail")
+    }
+
+    /** Plays another editor: writes hand 16 of round 3, table 6 of test-last-table, as a finished hand. */
+    fun otherEditorFinishesLastHand(winner: String = "17", loser: String = "6", score: String = "8") {
+        val token = signIn(E2eAccounts.ADMIN)
+        val table = call("GET", "/tournaments/test-last-table/tables/3/6", token).json().getJSONObject("table")
+        val body = """{"expectedVersion":${table.getInt("version")},"tablePatch":{},"handPatches":[{"handId":16,"patch":{"playerWinnerId":"$winner","playerLooserId":"$loser","handScore":"$score","isDone":true}}]}"""
+        val reply = call("PUT", "/tournaments/test-last-table/tables/3/6/state", token, body)
+        check(reply.status == 200) { "The other editor could not save: ${reply.status} ${reply.body}" }
+    }
+
+    /** Deletes the tournaments that a test created. The seeded `test-*` tournaments stay. */
+    fun deleteTournamentsNamed(prefix: String) {
+        val token = signIn(E2eAccounts.ADMIN)
+        val list = call("GET", "/tournaments", token).json().getJSONArray("tournaments")
+        for (index in 0 until list.length()) {
+            val item = list.getJSONObject(index)
+            if (item.getString("name").startsWith(prefix)) call("DELETE", "/tournaments/${item.getString("id")}", token)
+        }
+    }
 }

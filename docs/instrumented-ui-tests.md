@@ -40,7 +40,7 @@ A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The er
 
 ## What the tests cover
 
-160 tests: 119 for the admin app and 41 for the player app. All pass on the emulator.
+189 tests: 138 for the admin app and 51 for the player app. All pass on the emulator.
 
 | Class | Tests | Area |
 | --- | ---: | --- |
@@ -51,14 +51,17 @@ A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The er
 | `PlayersScreenTest` | 14 | Columns, filters, searches, guests, open slots, linked accounts, large tournament. |
 | `TeamsScreenTest` | 6 | Team list, searches, unicode team names, open slots. |
 | `PlayerAssignmentTest` | 8 | Clear, substitute and team edit dialogs. |
-| `EditTournamentTest` | 9 | Edit dialog values, cancel, save, agenda rows, editor is refused. |
-| `CreateTournamentTest` | 6 | Form defaults and validation messages. |
+| `EditTournamentTest` | 12 | Edit dialog values, cancel, save, agenda rows, delete with confirmation, editor is refused. |
+| `CreateTournamentTest` | 10 | Form defaults, validation messages, and a valid creation that opens the new tournament. |
+| `TableEditingTest` | 7 | Hand entry in the admin table editor, the Completed switch, an editor save, and conflicts with another editor. |
+| `ToolsDialogsTest` | 5 | ID card and invitation dialogs. |
 | `GlobalScreensTest` | 12 | App users, usage, EMA registry, statistics, theme. |
 | `StatisticsTest` | 6 | Tournament statistics tabs. |
 | `RankingAndTimerTest` | 10 | Ranking board paging and rows, timer round and countdown. |
 | `PlayerSignInTest` | 6 | Player app sign in and errors. |
 | `PlayerHomeTest` | 12 | Tournament card, schedule, roles, theme, sign out. |
 | `PlayerTournamentTest` | 13 | Tabs, my tables, all tables, ranking, info. |
+| `PlayerStatisticsTest` | 10 | Tournament and personal statistics, and the message for an account with no EMA number. |
 | `PlayerHandEntryTest` | 10 | Add draw, add win (discard and self draw), penalty dialog, review, cancel. |
 
 ## Test accounts
@@ -88,6 +91,8 @@ The route `POST /__e2e/reset?only=test-a,test-b` exists only in the local backen
   The app then fails with "must be called on the main thread" or "State must be at least 'CREATED'".
   The same code works on a device. `scripts/run-e2e-tests.sh` starts only those tests again, up to four times. Other errors fail at once.
 - Most tests start with a saved session file, not with the sign-in screen. Only `SignInTest` and `PlayerSignInTest` use the sign-in form.
+- Round 4 of the live tournament starts 15 minutes before the seed run. The apps allow hands only while a round plays (120 minutes by default). Tests that enter hands call `E2eApi.reset("test-live-ongoing")` first. Start the backend again if it ran for a long time.
+- The emulator must use the time zone of the computer, because the seed writes round times in that zone. The run script sets it.
 - A test never closes the activity at its end. The orchestrator ends the process.
 - Dates show in the language of the emulator. Tests do not check dates.
 - The tests do not send real emails. The local backend has no mail server.

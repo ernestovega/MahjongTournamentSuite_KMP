@@ -1,7 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
@@ -17,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -27,7 +30,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerContactState
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.contactState
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+
+private const val INVITATION_INFO =
+    "An invitation link works once and expires after 14 days. After that, the player cannot accept it and the slot stays unlinked. " +
+        "Resend creates a new link and the old link stops working. Revoke cancels the invitation."
 
 internal val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
@@ -76,7 +84,13 @@ fun PlayerAccountDialog(
                     PlayerContactState.NO_EMA_ID ->
                         Text("Assign an EMA player to this slot first.")
                     PlayerContactState.NOT_INVITED -> {
-                        Text("Send an invitation link to the email of this player. Nothing is sent before you press Send.")
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                "Send an invitation link to the email of this player. Nothing is sent before you press Send.",
+                                modifier = Modifier.weight(1f),
+                            )
+                            InfoTooltipIcon(INVITATION_INFO)
+                        }
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
@@ -93,10 +107,14 @@ fun PlayerAccountDialog(
                     PlayerContactState.INVITED -> {
                         Text("Invitation sent to ${invitation?.email ?: slot.invitedEmail ?: "this player"}.")
                         contactTimeText(slot.contactedAt)?.let { Text("Sent on $it.") }
-                        Text(
-                            "The link works once and expires after 14 days. Resend creates a new link and the old link stops working.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                "The link works once and expires after 14 days. Resend creates a new link and the old link stops working.",
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.weight(1f),
+                            )
+                            InfoTooltipIcon(INVITATION_INFO)
+                        }
                     }
                     PlayerContactState.CONTACTED -> {
                         Text("This player has an account and received an email.")

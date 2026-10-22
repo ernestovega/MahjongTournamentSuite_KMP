@@ -37,8 +37,10 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
+import kotlinx.datetime.TimeZone
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
@@ -96,6 +98,13 @@ fun EditTournamentDialog(
     var settingsVenue by remember(tournament.id) { mutableStateOf(tournament.venue) }
     var settingsCountBestHands by remember(tournament.id) { mutableStateOf(tournament.countBestHands) }
     var settingsCountChickenHands by remember(tournament.id) { mutableStateOf(tournament.countChickenHands) }
+    var settingsMatchDurationText by remember(tournament.id) { mutableStateOf(tournament.matchDurationMinutes.toString()) }
+    var settingsMatchExtraText by remember(tournament.id) { mutableStateOf(tournament.matchExtraMinutes.toString()) }
+    // An old tournament has no time zone. The form suggests the zone of this device, so the server can check the time.
+    var settingsTimeZone by remember(tournament.id) {
+        mutableStateOf(tournament.timeZone ?: TimeZone.currentSystemDefault().id)
+    }
+    var settingsFinishHand by remember(tournament.id) { mutableStateOf(tournament.matchEndMode == MatchEndMode.FINISH_HAND) }
     var settingsRoundScheduleRows by remember(tournament.id) {
         mutableStateOf(
             synchronizeRoundScheduleRows(
@@ -348,6 +357,18 @@ fun EditTournamentDialog(
                             },
                         )
                     }
+
+                    MatchTimeFields(
+                        durationText = settingsMatchDurationText,
+                        onDurationChange = { settingsMatchDurationText = it },
+                        timeZoneText = settingsTimeZone,
+                        onTimeZoneChange = { settingsTimeZone = it },
+                        finishHand = settingsFinishHand,
+                        onFinishHandChange = { settingsFinishHand = it },
+                        extraMinutesText = settingsMatchExtraText,
+                        onExtraMinutesChange = { settingsMatchExtraText = it },
+                        enabled = !isLoading,
+                    )
 
                     TournamentScheduleEditor(
                         roundRows = settingsRoundScheduleRows,
@@ -644,6 +665,20 @@ fun EditTournamentDialog(
                             renameError = scheduleError
                             return@Button
                         }
+                        val validMatchDuration = matchDurationOrNull(settingsMatchDurationText)
+                        if (validMatchDuration == null) {
+                            renameError = "Match duration must be a whole number of minutes from 1 to $MAX_MATCH_DURATION_MINUTES."
+                            return@Button
+                        }
+                        if (!isTimeZoneIdShape(settingsTimeZone)) {
+                            renameError = "Time zone must be a name like Europe/Madrid."
+                            return@Button
+                        }
+                        val validMatchExtra = matchExtraMinutesOrNull(settingsMatchExtraText)
+                        if (settingsFinishHand && validMatchExtra == null) {
+                            renameError = "Extra time must be a whole number of minutes from 1 to $MAX_MATCH_EXTRA_MINUTES."
+                            return@Button
+                        }
                         coroutineScope.launch {
                             isLoading = true
                             invalidEditFields = emptySet()
@@ -666,6 +701,10 @@ fun EditTournamentDialog(
                                 agendaItems = settingsAgendaRows.toTournamentAgendaItems(),
                                 countBestHands = settingsCountBestHands,
                                 countChickenHands = settingsCountChickenHands,
+                                matchDurationMinutes = validMatchDuration,
+                                matchEndMode = if (settingsFinishHand) MatchEndMode.FINISH_HAND else MatchEndMode.STOP,
+                                matchExtraMinutes = validMatchExtra ?: tournament.matchExtraMinutes,
+                                timeZone = settingsTimeZone.trim(),
                             )) {
                                 is AppResult.Success -> {
                                     showDateRangePicker = false

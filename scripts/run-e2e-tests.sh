@@ -40,6 +40,8 @@ PY
 
 # The Google password manager shows a "Save password?" window over the app after a sign-in. Switch it off.
 adb shell settings put secure autofill_service null > /dev/null 2>&1 || true
+# The seed writes round times in the time zone of this computer. The emulator must use the same zone.
+adb shell service call alarm 3 s16 "$(readlink /etc/localtime | sed 's#.*/zoneinfo/##')" > /dev/null 2>&1 || true
 
 current="$filter"
 for run in $(seq 1 "$max_runs"); do

@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { normalizeAgendaItems, normalizeRoundSchedules } from "./tournamentSchedule";
+import {
+  normalizeAgendaItems,
+  normalizeMatchDuration,
+  normalizeMatchEndMode,
+  normalizeRoundSchedules,
+  readStoredMatchDuration,
+  readStoredMatchEndMode,
+} from "./tournamentSchedule";
 
 test("normalizes partial round schedules and keeps one row per round", () => {
   const schedules = normalizeRoundSchedules(
@@ -62,4 +69,20 @@ test("keeps agenda items dated outside the official game days", () => {
 
 test("rejects agenda items with an invalid date", () => {
   assert.throws(() => normalizeAgendaItems([{ title: "Dinner", date: "2026-13-40" }]), /yyyy-MM-dd/);
+});
+
+test("match duration defaults to two hours and accepts whole minutes", () => {
+  assert.equal(normalizeMatchDuration(undefined), 120);
+  assert.equal(normalizeMatchDuration(115), 115);
+  assert.throws(() => normalizeMatchDuration(0));
+  assert.throws(() => normalizeMatchDuration(90.5));
+  assert.throws(() => normalizeMatchDuration(601));
+  assert.equal(readStoredMatchDuration("bad"), 120);
+});
+
+test("match end mode defaults to STOP and rejects other values", () => {
+  assert.equal(normalizeMatchEndMode(undefined), "STOP");
+  assert.equal(normalizeMatchEndMode("FINISH_HAND"), "FINISH_HAND");
+  assert.throws(() => normalizeMatchEndMode("later"));
+  assert.equal(readStoredMatchEndMode("later"), "STOP");
 });

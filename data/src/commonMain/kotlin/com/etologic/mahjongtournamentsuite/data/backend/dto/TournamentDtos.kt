@@ -24,6 +24,11 @@ data class TournamentDto(
     val eventEndDate: String? = null,
     val roundSchedules: List<TournamentRoundScheduleDto> = emptyList(),
     val agendaItems: List<TournamentAgendaItemDto> = emptyList(),
+    val matchDurationMinutes: Int = 120,
+    /** "STOP" or "FINISH_HAND". */
+    val matchEndMode: String = "STOP",
+    val matchExtraMinutes: Int = 15,
+    val timeZone: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
     val createdByUid: String? = null,
@@ -67,6 +72,10 @@ data class CreateTournamentRequestDto(
     val contactEmail: String = "",
     val roundSchedules: List<TournamentRoundScheduleDto>? = null,
     val agendaItems: List<TournamentAgendaItemDto>? = null,
+    val matchDurationMinutes: Int = 120,
+    val matchEndMode: String = "STOP",
+    val matchExtraMinutes: Int = 15,
+    val timeZone: String? = null,
 )
 
 @Serializable
@@ -96,6 +105,11 @@ data class UpdateTournamentSettingsRequestDto(
     val removeAssociationLogo: Boolean = false,
     val roundSchedules: List<TournamentRoundScheduleDto>? = null,
     val agendaItems: List<TournamentAgendaItemDto>? = null,
+    /** Null keeps the stored value. */
+    val matchDurationMinutes: Int? = null,
+    val matchEndMode: String? = null,
+    val matchExtraMinutes: Int? = null,
+    val timeZone: String? = null,
 )
 
 @Serializable

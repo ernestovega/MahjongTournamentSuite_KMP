@@ -1,8 +1,31 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performClick
+import org.junit.After
 import org.junit.Test
 
 class CreateTournamentTest : AdminE2eTest() {
+    @After
+    fun deleteCreatedTournaments() = E2eApi.deleteTournamentsNamed("E2E created")
+
+    private fun chooseCountry(name: String) {
+        // The list behind the form also has a "Country" header, so the form field is the last one.
+        c.onAllNodes(hasText("Country")).onLast().performClick()
+        c.onAllNodes(hasText(name) and hasClickAction()).onLast().performClick()
+    }
+
+    private fun fillValidForm(players: String, rounds: String) {
+        c.field("Name").performTextInputText("E2E created")
+        c.field("Short name").performTextInputText("E2E")
+        chooseCountry("Spain")
+        c.field("City").performTextInputText("Madrid")
+        c.field("Players").performTextReplacementText(players)
+        c.field("Rounds").performTextReplacementText(rounds)
+    }
+
     private fun openForm() {
         start(E2eAccounts.ADMIN, ready = "New tournament")
         c.clickButton("New tournament")
@@ -56,5 +79,114 @@ class CreateTournamentTest : AdminE2eTest() {
         start(E2eAccounts.EDITOR)
         c.waitForText("EMA players")
         c.assertNoText("New tournament")
+    }
+
+    @Test
+    fun playerCountMustBeAMultipleOfFour() {
+        openForm()
+        fillValidForm(players = "18", rounds = "2")
+        c.clickButton("Create")
+        c.waitForText("* Must be a multiple of 4 and at least 16.")
+    }
+
+    @Test
+    fun playerCountBelowSixteenIsRejected() {
+        openForm()
+        fillValidForm(players = "12", rounds = "2")
+        c.clickButton("Create")
+        c.waitForText("* Must be a multiple of 4 and at least 16.")
+    }
+
+    @Test
+    fun roundsMustBeAPositiveNumber() {
+        openForm()
+        fillValidForm(players = "16", rounds = "0")
+        c.clickButton("Create")
+        c.waitForText("* Must be a positive integer.")
+    }
+
+    @Test
+    fun validFormCreatesTheTournamentAndOpensItsPlayers() {
+        openForm()
+        fillValidForm(players = "16", rounds = "2")
+        c.clickButton("Create")
+        // The app draws the seating, and then it opens the players of the new tournament.
+        c.waitForText("Tournament players", timeoutMs = 90_000)
+        c.waitForText("Not assigned")
+        val list = E2eApi.call("GET", "/tournaments", E2eApi.signIn(E2eAccounts.ADMIN)).json().getJSONArray("tournaments")
+        check((0 until list.length()).any { list.getJSONObject(it).getString("name") == "E2E created" }) { "The tournament was not created" }
+    }
+
+    private fun tournamentJson(name: String) = E2eApi.call("GET", "/tournaments", E2eApi.signIn(E2eAccounts.ADMIN))
+        .json().getJSONArray("tournaments").let { list -> (0 until list.length()).map { list.getJSONObject(it) }.first { it.getString("name") == name } }
+
+    @Test
+    fun matchTimeFieldsShowTheDefaults() {
+        openForm()
+        listOf("Match duration (minutes)", "120", "Time zone", java.util.TimeZone.getDefault().id, "Finish the hand in play")
+            .forEach { c.waitForText(it) }
+        c.assertNoText("Extra time (minutes)")
+    }
+
+    @Test
+    fun finishTheHandSwitchShowsTheExtraTimeField() {
+        openForm()
+        c.clickButton("Finish the hand in play")
+        c.waitForText("Extra time (minutes)")
+        c.clickButton("Finish the hand in play")
+        c.waitForNoText("Extra time (minutes)")
+    }
+
+    @Test
+    fun matchDurationZeroIsRejected() {
+        openForm()
+        fillValidForm(players = "16", rounds = "2")
+        c.field("Match duration (minutes)").performTextReplacementText("0")
+        c.clickButton("Create")
+        c.waitForText("* Match duration must be a whole number of minutes from 1 to 600.")
+    }
+
+    @Test
+    fun matchDurationAboveSixHundredIsRejected() {
+        openForm()
+        fillValidForm(players = "16", rounds = "2")
+        c.field("Match duration (minutes)").performTextReplacementText("601")
+        c.clickButton("Create")
+        c.waitForText("* Match duration must be a whole number of minutes from 1 to 600.")
+    }
+
+    @Test
+    fun timeZoneWithoutARegionIsRejected() {
+        openForm()
+        fillValidForm(players = "16", rounds = "2")
+        c.field("Time zone").performTextReplacementText("Madrid")
+        c.clickButton("Create")
+        c.waitForText("* Time zone must be a name like Europe/Madrid.")
+    }
+
+    @Test
+    fun extraTimeZeroIsRejectedWhenTheHandIsFinished() {
+        openForm()
+        fillValidForm(players = "16", rounds = "2")
+        c.clickButton("Finish the hand in play")
+        c.field("Extra time (minutes)").performTextReplacementText("0")
+        c.clickButton("Create")
+        c.waitForText("* Extra time must be a whole number of minutes from 1 to 120.")
+    }
+
+    @Test
+    fun matchTimeSettingsAreSavedWithTheNewTournament() {
+        openForm()
+        fillValidForm(players = "16", rounds = "2")
+        c.field("Match duration (minutes)").performTextReplacementText("90")
+        c.clickButton("Finish the hand in play")
+        c.field("Extra time (minutes)").performTextReplacementText("15")
+        c.clickButton("Create")
+        c.waitForText("Tournament players", timeoutMs = 90_000)
+        val tournament = tournamentJson("E2E created")
+        check(tournament.getInt("matchDurationMinutes") == 90) { "Duration: ${tournament.opt("matchDurationMinutes")}" }
+        check(tournament.getString("matchEndMode") == "FINISH_HAND") { "End mode: ${tournament.opt("matchEndMode")}" }
+        check(tournament.getInt("matchExtraMinutes") == 15) { "Extra time: ${tournament.opt("matchExtraMinutes")}" }
+        check(tournament.getString("timeZone") == java.util.TimeZone.getDefault().id) { "Time zone: ${tournament.opt("timeZone")}" }
     }
 }

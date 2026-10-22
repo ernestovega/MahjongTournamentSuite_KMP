@@ -22,6 +22,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
@@ -115,6 +116,10 @@ class DefaultTournamentRepository(
                 contactEmail = request.venue.contactEmail,
                 roundSchedules = request.roundSchedules.map(TournamentRoundSchedule::toDto),
                 agendaItems = request.agendaItems.map(TournamentAgendaItem::toDto),
+                matchDurationMinutes = request.matchDurationMinutes,
+                matchEndMode = request.matchEndMode.name,
+                matchExtraMinutes = request.matchExtraMinutes,
+                timeZone = request.timeZone,
             )
 
             val dto = backendApi.createTournament(
@@ -170,6 +175,10 @@ class DefaultTournamentRepository(
         agendaItems: List<TournamentAgendaItem>,
         countBestHands: Boolean?,
         countChickenHands: Boolean?,
+        matchDurationMinutes: Int?,
+        matchEndMode: MatchEndMode?,
+        matchExtraMinutes: Int?,
+        timeZone: String?,
     ): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
             val dto = backendApi.updateTournamentSettings(
@@ -195,6 +204,10 @@ class DefaultTournamentRepository(
                     removeAssociationLogo = removeAssociationLogo,
                     roundSchedules = roundSchedules.map(TournamentRoundSchedule::toDto),
                     agendaItems = agendaItems.map(TournamentAgendaItem::toDto),
+                    matchDurationMinutes = matchDurationMinutes,
+                    matchEndMode = matchEndMode?.name,
+                    matchExtraMinutes = matchExtraMinutes,
+                    timeZone = timeZone?.trim(),
                 ),
             )
             val tournament = dto.toDomain()

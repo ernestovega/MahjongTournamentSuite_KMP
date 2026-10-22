@@ -31,7 +31,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -42,6 +41,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -137,6 +137,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -544,7 +548,7 @@ private fun TournamentLogo(tournament: Tournament) {
 
 /**
  * A tournament of the list. The text is information only. The links are buttons under a divider, so they are not
- * confused with the card. The button "Open" at the end shows that the card opens the tournament.
+ * confused with the card.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -627,17 +631,10 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                         LinkButton(Icons.Default.Email, "Email") { uriHandler.openUri("mailto:$email") }
                     }
                     if (hasSchedule(tournament)) {
-                        LinkButton(Icons.Default.Schedule, if (expanded) "Hide schedule" else "Show schedule") { expanded = !expanded }
+                        LinkButton(Icons.Default.Schedule, if (expanded) "Hide schedule" else "Schedule") { expanded = !expanded }
                     }
                 }
                 if (expanded) TournamentSchedule(tournament)
-            }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                Button(onClick = onClick) {
-                    Text("Open")
-                    Spacer(Modifier.width(8.dp))
-                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, Modifier.size(18.dp))
-                }
             }
         }
     }
@@ -717,6 +714,8 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     val tablesTab = chosenTablesTab.takeIf { it >= 0 } ?: if (view?.mySlotId == null) 1 else 0
     // The statistics tab tells this screen when it loads, so the progress bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
+    // The tab rows hide when the content scrolls down and show when it scrolls up.
+    val hideOnScroll = rememberHideOnScrollState()
 
     AppScaffold(
         title = view?.tournament?.name ?: "Tournament",
@@ -731,46 +730,51 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                 message?.let { Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) }
                 return@ScreenColumn
             }
-            PrimaryTabRow(
-                selectedTabIndex = tab,
-                containerColor = tabRowColor(), contentColor = TabContentColor,
-                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
-            ) {
-                listOf("Tables", "Ranking", "Statistics", "Info").forEachIndexed { index, title ->
-                    CompactTab(
-                        selected = tab == index,
-                        onClick = { tab = index },
-                        title = title,
-                        icon = {
-                            val icon = when (index) {
-                                0 -> Icons.Default.People
-                                1 -> Icons.Default.Leaderboard
-                                2 -> StatisticsIcon
-                                else -> Icons.Default.Info
-                            }
-                            Icon(icon, contentDescription = null, Modifier.size(20.dp))
-                        },
-                    )
+            HideOnScrollTabs(tab) {
+                PrimaryTabRow(
+                    selectedTabIndex = tab,
+                    containerColor = tabRowColor(), contentColor = TabContentColor,
+                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
+                ) {
+                    listOf("Tables", "Ranking", "Statistics", "Info").forEachIndexed { index, title ->
+                        CompactTab(
+                            selected = tab == index,
+                            onClick = { tab = index },
+                            title = title,
+                            icon = {
+                                val icon = when (index) {
+                                    0 -> Icons.Default.People
+                                    1 -> Icons.Default.Leaderboard
+                                    2 -> StatisticsIcon
+                                    else -> Icons.Default.Info
+                                }
+                                Icon(icon, contentDescription = null, Modifier.size(20.dp))
+                            },
+                        )
+                    }
                 }
             }
-            Column(Modifier.weight(1f).fillMaxWidth().then(if (tab == 2) Modifier else Modifier.padding(start = 16.dp, top = if (tab == 0) 0.dp else 12.dp, end = 16.dp)), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
+            Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll).then(if (tab == 2) Modifier else Modifier.padding(start = 16.dp, top = if (tab == 0) 0.dp else 12.dp, end = 16.dp)), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
                 when (tab) {
                     0 -> {
                         // This second row of tabs touches the first row, so it goes over the content padding on the sides.
-                        PrimaryTabRow(
-                            selectedTabIndex = tablesTab,
-                            modifier = Modifier.layout { measurable, constraints ->
-                                val extra = 32.dp.roundToPx()
-                                val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
-                                layout(constraints.maxWidth, placeable.height) { placeable.place(-16.dp.roundToPx(), 0) }
-                            },
-                            containerColor = tabRowColor(), contentColor = TabContentColor,
-                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
-                        ) {
-                            listOf("My tables", "All tables").forEachIndexed { index, title ->
-                                CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = index }, title = title)
+                        HideOnScrollTabs(tablesTab) {
+                            PrimaryTabRow(
+                                selectedTabIndex = tablesTab,
+                                modifier = Modifier.layout { measurable, constraints ->
+                                    val extra = 32.dp.roundToPx()
+                                    val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
+                                    layout(constraints.maxWidth, placeable.height) { placeable.place(-16.dp.roundToPx(), 0) }
+                                },
+                                containerColor = tabRowColor(), contentColor = TabContentColor,
+                                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
+                            ) {
+                                listOf("My tables", "All tables").forEachIndexed { index, title ->
+                                    CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = index }, title = title)
+                                }
                             }
                         }
                         if (tablesTab == 0) {
@@ -801,6 +805,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                     2 -> TournamentStatisticsTab(tournamentId, view.mySlotId) { statisticsLoading = it }
                     else -> TournamentInfoTab(view.tournament)
                 }
+            }
             }
         }
     }
@@ -1407,7 +1412,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
-            val complete = table.isComplete
+            val complete = view.isFinished(table, now)
             val handNumber = minOf(table.doneHands + 1, 16)
             TableSeatsView(
                 seats = table.seatsFor(view, withLevelChange = true),
@@ -1694,7 +1699,6 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
     }
 }
 
-private fun currentLocalDateTime() = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
 /** The color of the winner in the hand list, the counterpart of the red loser. Same green as the gains of the hand review. */
 private val WinnerColor = Color(0xFF00934C)

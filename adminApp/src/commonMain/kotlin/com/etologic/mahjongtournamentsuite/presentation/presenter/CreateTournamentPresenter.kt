@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.data.platform.platformCpuCount
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
@@ -60,6 +61,10 @@ class CreateTournamentPresenter(
         numRounds: Int,
         roundSchedules: List<TournamentRoundSchedule>,
         agendaItems: List<TournamentAgendaItem>,
+        matchDurationMinutes: Int,
+        matchEndMode: MatchEndMode,
+        matchExtraMinutes: Int,
+        timeZone: String,
         computeMode: ComputeMode,
         onProgress: (Progress) -> Unit,
     ): AppResult<Tournament> {
@@ -141,6 +146,10 @@ class CreateTournamentPresenter(
                 venue = venue,
                 roundSchedules = roundSchedules,
                 agendaItems = agendaItems,
+                matchDurationMinutes = matchDurationMinutes,
+                matchEndMode = matchEndMode,
+                matchExtraMinutes = matchExtraMinutes,
+                timeZone = timeZone,
             ),
         )
 

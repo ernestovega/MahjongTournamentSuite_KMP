@@ -66,6 +66,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
@@ -457,6 +458,11 @@ private fun UserFilters(
     }
 }
 
+private const val PASSWORD_RESET_INFO =
+    "The link in the password-reset email works for about 1 hour. Firebase sets this time and the app cannot change it. " +
+        "If the link expires, the person can ask for a new email with the forgot-password option on the sign-in screen. " +
+        "You can also send a new email from this dialog."
+
 @Composable
 private fun ManageUserDialog(
     original: ManagedUser?,
@@ -650,12 +656,18 @@ private fun ManageUserDialog(
                     Text("A player sees the tournaments where this EMA ID plays.")
                 }
                 if (original == null) {
-                    Text("Firebase will send a password-reset email after creation.")
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Text("Firebase will send a password-reset email after creation.", modifier = Modifier.weight(1f))
+                        InfoTooltipIcon(PASSWORD_RESET_INFO)
+                    }
                 } else if (!isSelf) {
-                    FocusedTextButton(
-                        onClick = { onResetPassword(original.email) },
-                        enabled = !saving,
-                    ) { Text("Send password-reset email") }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        FocusedTextButton(
+                            onClick = { onResetPassword(original.email) },
+                            enabled = !saving,
+                        ) { Text("Send password-reset email") }
+                        InfoTooltipIcon(PASSWORD_RESET_INFO)
+                    }
                     if (canDisable) {
                         FocusedTextButton(
                             onClick = { onChangeDisabled(original) },

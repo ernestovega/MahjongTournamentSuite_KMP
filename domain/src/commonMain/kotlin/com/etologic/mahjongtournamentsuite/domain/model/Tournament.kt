@@ -23,6 +23,14 @@ data class Tournament(
     val eventEndDate: String? = null,
     val roundSchedules: List<TournamentRoundSchedule> = emptyList(),
     val agendaItems: List<TournamentAgendaItem> = emptyList(),
+    /** Minutes that a match lasts. A table ends this long after the start of its round. */
+    val matchDurationMinutes: Int = DEFAULT_MATCH_DURATION_MINUTES,
+    /** What happens when the time of a match is over. */
+    val matchEndMode: MatchEndMode = MatchEndMode.STOP,
+    /** With [MatchEndMode.FINISH_HAND], minutes after the end time in which the players can record the hand in play. */
+    val matchExtraMinutes: Int = DEFAULT_MATCH_EXTRA_MINUTES,
+    /** IANA time zone of the venue, for example "Europe/Madrid". The round times are local times of this zone. */
+    val timeZone: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
     val createdByUid: String? = null,
@@ -53,7 +61,24 @@ data class CreateTournamentRequest(
     val venue: TournamentVenue = TournamentVenue(),
     val roundSchedules: List<TournamentRoundSchedule> = emptyList(),
     val agendaItems: List<TournamentAgendaItem> = emptyList(),
+    val matchDurationMinutes: Int = DEFAULT_MATCH_DURATION_MINUTES,
+    val matchEndMode: MatchEndMode = MatchEndMode.STOP,
+    val matchExtraMinutes: Int = DEFAULT_MATCH_EXTRA_MINUTES,
+    val timeZone: String? = null,
 )
+
+const val DEFAULT_MATCH_DURATION_MINUTES = 120
+
+const val DEFAULT_MATCH_EXTRA_MINUTES = 15
+
+/** What happens to a table when the time of the match is over. */
+enum class MatchEndMode {
+    /** The match ends at the end time. The hand in play does not count. */
+    STOP,
+
+    /** The players finish the hand in play. They can record one more hand during the extra minutes. */
+    FINISH_HAND,
+}
 
 /** The place of a tournament. The map link points to Google Maps. */
 data class TournamentVenue(

@@ -60,6 +60,9 @@ function buildUsageReport(params) {
             item.resets += 1;
             continue;
         }
+        // The server closes tables by itself when the time of the match is over. That is not work of a user.
+        if (change.source === "system")
+            continue;
         item.saves += 1;
         const source = change.source ?? "editor";
         if (source === "player")

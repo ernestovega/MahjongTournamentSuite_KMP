@@ -14,8 +14,10 @@ const node_crypto_1 = require("node:crypto");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const tournamentDates_1 = require("./tournamentDates");
+const tournamentDraw_1 = require("./tournamentDraw");
 const usersService_1 = require("./usersService");
 const dataVersionsService_1 = require("./dataVersionsService");
+const matchTime_1 = require("./matchTime");
 const tableManagerService_1 = require("./tableManagerService");
 const tournamentSchedule_1 = require("./tournamentSchedule");
 function toIsoString(value) {
@@ -81,6 +83,10 @@ async function mapTournamentDoc(d) {
         eventEndDate,
         roundSchedules: (0, tournamentSchedule_1.readStoredRoundSchedules)(d.get("roundSchedules"), numRounds, safeStartDate, safeEndDate),
         agendaItems: (0, tournamentSchedule_1.readStoredAgendaItems)(d.get("agendaItems")),
+        matchDurationMinutes: (0, tournamentSchedule_1.readStoredMatchDuration)(d.get("matchDurationMinutes")),
+        matchEndMode: (0, tournamentSchedule_1.readStoredMatchEndMode)(d.get("matchEndMode")),
+        matchExtraMinutes: (0, matchTime_1.readStoredMatchExtraMinutes)(d.get("matchExtraMinutes")),
+        timeZone: (0, matchTime_1.readStoredTimeZone)(d.get("timeZone")),
         numTries: d.get("numTries") ?? 0,
         isCompleted: d.get("isCompleted") ?? false,
         createdByUid,
@@ -100,8 +106,15 @@ async function createTournament(params) {
     if (params.tables.length !== expectedTables) {
         throw (0, httpError_1.badRequest)("Invalid tables payload", { expected: expectedTables, received: params.tables.length });
     }
+    const problem = (0, tournamentDraw_1.drawProblem)(params.players, params.tables, params.numRounds, numTablesPerRound, params.isTeams);
+    if (problem)
+        throw (0, httpError_1.badRequest)("Invalid draw", { problem });
     const roundSchedules = (0, tournamentSchedule_1.normalizeRoundSchedules)(params.roundSchedules, params.numRounds, params.eventStartDate, params.eventEndDate);
     const agendaItems = (0, tournamentSchedule_1.normalizeAgendaItems)(params.agendaItems);
+    const matchDurationMinutes = (0, tournamentSchedule_1.normalizeMatchDuration)(params.matchDurationMinutes);
+    const matchEndMode = (0, tournamentSchedule_1.normalizeMatchEndMode)(params.matchEndMode);
+    const matchExtraMinutes = (0, matchTime_1.normalizeMatchExtraMinutes)(params.matchExtraMinutes);
+    const timeZone = (0, matchTime_1.normalizeTimeZone)(params.timeZone);
     const ref = firebase_1.db.collection("tournaments").doc();
     const logo = params.associationLogoContentType && params.associationLogoDataBase64
         ? await saveAssociationLogo(ref.id, params.associationLogoContentType, params.associationLogoDataBase64)
@@ -129,6 +142,10 @@ async function createTournament(params) {
         numRounds: params.numRounds,
         roundSchedules,
         agendaItems,
+        matchDurationMinutes,
+        matchEndMode,
+        matchExtraMinutes,
+        timeZone,
         numTries: params.numTries,
         isCompleted: false,
         // The number of tables with data. Saves keep it current. Imported tables can arrive completed.
@@ -394,6 +411,14 @@ async function updateTournamentSettings(params) {
         agendaItems,
         updatedAt: firestore_1.FieldValue.serverTimestamp(),
     };
+    if (params.matchDurationMinutes !== undefined)
+        update.matchDurationMinutes = (0, tournamentSchedule_1.normalizeMatchDuration)(params.matchDurationMinutes);
+    if (params.matchEndMode !== undefined)
+        update.matchEndMode = (0, tournamentSchedule_1.normalizeMatchEndMode)(params.matchEndMode);
+    if (params.matchExtraMinutes !== undefined)
+        update.matchExtraMinutes = (0, matchTime_1.normalizeMatchExtraMinutes)(params.matchExtraMinutes);
+    if (params.timeZone !== undefined)
+        update.timeZone = (0, matchTime_1.normalizeTimeZone)(params.timeZone);
     if (params.countBestHands !== undefined)
         update.countBestHands = params.countBestHands;
     if (params.countChickenHands !== undefined)

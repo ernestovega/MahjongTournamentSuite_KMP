@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 
 import { db } from "../firebase";
+import { validDrawTables } from "../testing/draw";
 import { requireEmulator } from "../testing/firestoreFixtures";
 import { createTournament } from "./tournamentsService";
 
 function request(overrides: { numPlayers?: number; numRounds?: number; lastPlayerName?: string } = {}) {
-  const numPlayers = overrides.numPlayers ?? 8;
+  const numPlayers = overrides.numPlayers ?? 16;
   const numRounds = overrides.numRounds ?? 2;
   const players = Array.from({ length: numPlayers }, (_, index) => ({
     id: index + 1,
@@ -14,11 +15,7 @@ function request(overrides: { numPlayers?: number; numRounds?: number; lastPlaye
     name: index === numPlayers - 1 && overrides.lastPlayerName ? overrides.lastPlayerName : `Player ${index + 1}`,
     country: "ES",
   }));
-  const tables = Array.from({ length: numRounds * (numPlayers / 4) }, (_, index) => ({
-    roundId: Math.floor(index / (numPlayers / 4)) + 1,
-    tableId: (index % (numPlayers / 4)) + 1,
-    playerIds: [1, 2, 3, 4],
-  }));
+  const tables = validDrawTables(numPlayers, numRounds);
   return {
     name: "Test open",
     shortName: "TO",
@@ -54,8 +51,8 @@ describe("tournament creation", () => {
     const tournament = await createTournament(request());
 
     const ref = db.collection("tournaments").doc(tournament.id);
-    assert.equal((await ref.collection("tables").get()).size, 4);
-    assert.equal((await ref.collection("players").get()).size, 8);
+    assert.equal((await ref.collection("tables").get()).size, 8);
+    assert.equal((await ref.collection("players").get()).size, 16);
     for (const table of (await ref.collection("tables").get()).docs) {
       assert.equal((await table.ref.collection("hands").get()).size, 16, table.id);
     }
@@ -106,6 +103,17 @@ describe("tournament creation", () => {
     bad.tables.pop();
 
     await assert.rejects(createTournament(bad));
+
+    assert.deepEqual(await counts(), before);
+  });
+
+  it("refuses a draw where a player sits at two tables of one round", async () => {
+    const before = await counts();
+    const bad = request();
+    const [a, b] = [bad.tables[0].playerIds, bad.tables[1].playerIds];
+    bad.tables[1].playerIds = [a[0], ...b.slice(1)];
+
+    await assert.rejects(createTournament(bad), /Invalid draw/);
 
     assert.deepEqual(await counts(), before);
   });

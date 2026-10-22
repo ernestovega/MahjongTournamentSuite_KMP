@@ -5,14 +5,26 @@ import { randomUUID } from "node:crypto";
 import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
+import { drawProblem } from "./tournamentDraw";
 import { getUserProfile } from "./usersService";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
+import {
+  normalizeMatchExtraMinutes,
+  normalizeTimeZone,
+  readStoredMatchExtraMinutes,
+  readStoredTimeZone,
+} from "./matchTime";
 import { defaultHand, HANDS_PER_TABLE } from "./tableManagerService";
 import {
   normalizeAgendaItems,
+  normalizeMatchDuration,
+  normalizeMatchEndMode,
   normalizeRoundSchedules,
   readStoredAgendaItems,
+  readStoredMatchDuration,
+  readStoredMatchEndMode,
   readStoredRoundSchedules,
+  type MatchEndMode,
   type TournamentAgendaItem,
   type TournamentRoundSchedule,
 } from "./tournamentSchedule";
@@ -40,6 +52,14 @@ export type Tournament = {
   eventEndDate: string | null;
   roundSchedules: TournamentRoundSchedule[];
   agendaItems: TournamentAgendaItem[];
+  /** Minutes that a match lasts. The end of a table is the start of its round plus this time. */
+  matchDurationMinutes: number;
+  /** STOP: the match ends at the end time. FINISH_HAND: the players finish the hand in play. */
+  matchEndMode: MatchEndMode;
+  /** With FINISH_HAND, minutes after the end time in which the players can record the hand in play. */
+  matchExtraMinutes: number;
+  /** IANA time zone of the venue. The round times are local times of this zone. Null while it is not set. */
+  timeZone: string | null;
   numTries: number;
   isCompleted: boolean;
   createdByUid: string | null;
@@ -114,6 +134,10 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     eventEndDate,
     roundSchedules: readStoredRoundSchedules(d.get("roundSchedules"), numRounds, safeStartDate, safeEndDate),
     agendaItems: readStoredAgendaItems(d.get("agendaItems")),
+    matchDurationMinutes: readStoredMatchDuration(d.get("matchDurationMinutes")),
+    matchEndMode: readStoredMatchEndMode(d.get("matchEndMode")),
+    matchExtraMinutes: readStoredMatchExtraMinutes(d.get("matchExtraMinutes")),
+    timeZone: readStoredTimeZone(d.get("timeZone")),
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
     createdByUid,
@@ -151,6 +175,10 @@ export async function createTournament(params: {
   tables: Array<{ roundId: number; tableId: number; playerIds: number[]; isCompleted?: boolean; useTotalsOnly?: boolean }>;
   roundSchedules?: unknown;
   agendaItems?: unknown;
+  matchDurationMinutes?: unknown;
+  matchEndMode?: unknown;
+  matchExtraMinutes?: unknown;
+  timeZone?: unknown;
   createdByUid: string;
 }): Promise<Tournament> {
   const numTablesPerRound = params.numPlayers / 4;
@@ -161,6 +189,8 @@ export async function createTournament(params: {
   if (params.tables.length !== expectedTables) {
     throw badRequest("Invalid tables payload", { expected: expectedTables, received: params.tables.length });
   }
+  const problem = drawProblem(params.players, params.tables, params.numRounds, numTablesPerRound, params.isTeams);
+  if (problem) throw badRequest("Invalid draw", { problem });
   const roundSchedules = normalizeRoundSchedules(
     params.roundSchedules,
     params.numRounds,
@@ -168,6 +198,10 @@ export async function createTournament(params: {
     params.eventEndDate,
   );
   const agendaItems = normalizeAgendaItems(params.agendaItems);
+  const matchDurationMinutes = normalizeMatchDuration(params.matchDurationMinutes);
+  const matchEndMode = normalizeMatchEndMode(params.matchEndMode);
+  const matchExtraMinutes = normalizeMatchExtraMinutes(params.matchExtraMinutes);
+  const timeZone = normalizeTimeZone(params.timeZone);
 
   const ref = db.collection("tournaments").doc();
 
@@ -198,6 +232,10 @@ export async function createTournament(params: {
     numRounds: params.numRounds,
     roundSchedules,
     agendaItems,
+    matchDurationMinutes,
+    matchEndMode,
+    matchExtraMinutes,
+    timeZone,
     numTries: params.numTries,
     isCompleted: false,
     // The number of tables with data. Saves keep it current. Imported tables can arrive completed.
@@ -448,6 +486,10 @@ export async function updateTournamentSettings(params: {
   removeAssociationLogo?: boolean;
   roundSchedules?: unknown;
   agendaItems?: unknown;
+  matchDurationMinutes?: unknown;
+  matchEndMode?: unknown;
+  matchExtraMinutes?: unknown;
+  timeZone?: unknown;
 }): Promise<Tournament> {
   const normalizedName = params.name.trim();
   if (normalizedName.length === 0) throw badRequest("Tournament name is required");
@@ -500,6 +542,10 @@ export async function updateTournamentSettings(params: {
     agendaItems,
     updatedAt: FieldValue.serverTimestamp(),
   };
+  if (params.matchDurationMinutes !== undefined) update.matchDurationMinutes = normalizeMatchDuration(params.matchDurationMinutes);
+  if (params.matchEndMode !== undefined) update.matchEndMode = normalizeMatchEndMode(params.matchEndMode);
+  if (params.matchExtraMinutes !== undefined) update.matchExtraMinutes = normalizeMatchExtraMinutes(params.matchExtraMinutes);
+  if (params.timeZone !== undefined) update.timeZone = normalizeTimeZone(params.timeZone);
   if (params.countBestHands !== undefined) update.countBestHands = params.countBestHands;
   if (params.countChickenHands !== undefined) update.countChickenHands = params.countChickenHands;
   if (logo !== undefined) {

@@ -255,7 +255,8 @@ fun PlayerAccountsBulkDialog(
                 InfoTooltipIcon(
                     "Invite or remind: invites players that have a saved email, and reminds linked players that they are registered. " +
                         "Resend: new invitation link, or the same reminder again. " +
-                        "Revoke: cancels the invitation, or removes the account link.",
+                        "Revoke: cancels the invitation, or removes the account link. " +
+                        "An invitation link works once and expires after 14 days.",
                 )
                 Spacer(Modifier.weight(1f))
                 TextButton(onClick = onDismiss) { Text("Close") }

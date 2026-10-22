@@ -1,10 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
-import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.LocalTime
-import kotlinx.datetime.atTime
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
@@ -120,22 +117,22 @@ data class PlayerTournamentView(
     /** The first name of a player, without the surname. */
     fun firstNameOf(slotId: Int?): String = slotId?.let { players[it]?.firstName } ?: "-"
 
-    /**
-     * True when the round has started at [now]. A round with no date counts as started.
-     * A date with no start time starts at midnight.
-     */
-    fun roundHasStarted(roundId: Int, now: LocalDateTime): Boolean {
-        val schedule = tournament.roundSchedules.firstOrNull { it.roundId == roundId }
-        val date = schedule?.date?.trim()?.takeIf { it.isNotEmpty() }
-            ?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return true
-        val time = schedule.startTime?.trim()?.takeIf { it.isNotEmpty() }
-            ?.let { runCatching { LocalTime.parse(it) }.getOrNull() } ?: LocalTime(0, 0)
-        return now >= date.atTime(time)
-    }
+    /** True when the round has started at [now]. A round with no date counts as started. */
+    fun roundHasStarted(roundId: Int, now: LocalDateTime): Boolean =
+        tournament.matchPhase(roundId, now) != MatchPhase.NOT_STARTED
 
-    /** A table is ongoing from the start of its round until it is finished. Players enter hands only then. */
+    fun matchPhaseOf(roundId: Int, now: LocalDateTime): MatchPhase = tournament.matchPhase(roundId, now)
+
+    /** True when the table is complete, or when its time is over and the players played hands. */
+    fun isFinished(table: PlayerTable, now: LocalDateTime): Boolean =
+        table.isComplete || (table.doneHands > 0 && matchPhaseOf(table.roundId, now) == MatchPhase.OVER)
+
+    /**
+     * A table is ongoing from the start of its round until it is finished or its time is over.
+     * Players enter hands only then.
+     */
     fun isOngoing(table: PlayerTable, now: LocalDateTime): Boolean =
-        !table.isComplete && roundHasStarted(table.roundId, now)
+        !table.isComplete && matchPhaseOf(table.roundId, now).let { it == MatchPhase.PLAYING || it == MatchPhase.EXTRA_TIME }
 
     /** True when the signed-in player can add hands to the table now. */
     fun canAddHands(table: PlayerTable, now: LocalDateTime): Boolean {

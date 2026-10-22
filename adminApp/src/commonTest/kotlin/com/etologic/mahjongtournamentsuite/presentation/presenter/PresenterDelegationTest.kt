@@ -86,6 +86,10 @@ class PresenterDelegationTest {
             numRounds = 1,
             roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-01", "09:30")),
             agendaItems = listOf(TournamentAgendaItem("Registration", "2026-10-01", "08:30")),
+            matchDurationMinutes = 115,
+            matchEndMode = MatchEndMode.FINISH_HAND,
+            matchExtraMinutes = 10,
+            timeZone = "Europe/Madrid",
             computeMode = CreateTournamentPresenter.ComputeMode.LIGHT,
             onProgress = { progress += it.phase },
         )
@@ -99,6 +103,10 @@ class PresenterDelegationTest {
         assertEquals("09:30", repository.lastCreateRequest?.roundSchedules?.single()?.startTime)
         assertEquals("Registration", repository.lastCreateRequest?.agendaItems?.single()?.title)
         assertEquals("Club", repository.lastCreateRequest?.venue?.name)
+        assertEquals(115, repository.lastCreateRequest?.matchDurationMinutes)
+        assertEquals(MatchEndMode.FINISH_HAND, repository.lastCreateRequest?.matchEndMode)
+        assertEquals(10, repository.lastCreateRequest?.matchExtraMinutes)
+        assertEquals("Europe/Madrid", repository.lastCreateRequest?.timeZone)
         assertEquals(
             listOf(CreateTournamentPresenter.Phase.CALCULATING, CreateTournamentPresenter.Phase.CREATING),
             progress.distinct(),
@@ -150,6 +158,10 @@ private class RecordingTournamentRepository(
         agendaItems: List<TournamentAgendaItem>,
         countBestHands: Boolean?,
         countChickenHands: Boolean?,
+        matchDurationMinutes: Int?,
+        matchEndMode: MatchEndMode?,
+        matchExtraMinutes: Int?,
+        timeZone: String?,
     ) = unusedResult<Tournament>()
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedResult<ByteArray>()

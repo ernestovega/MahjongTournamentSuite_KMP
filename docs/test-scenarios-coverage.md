@@ -63,14 +63,14 @@ This page lists each scenario and the tournament that covers it. A scenario with
 | Backend not reachable | Network request failed. | `SignInTest` |
 | Reset password without email | Enter your email address first. | `SignInTest` |
 | Player opens the account list | You do not have permission to perform this action. | `TournamentListTest` |
+| Account with no EMA number opens statistics | Your account is not linked to a player yet. Ask the organizers to link your EMA number. | `PlayerStatisticsTest` |
+| Another editor saved the same table | Table updated, with the lost values | `TableEditingTest` |
 
 ## Gaps
 
 These cases have no emulator test yet.
 
-- Entering a hand in the admin table editor. The player app flow is covered. The admin editor uses keyboard driven drop-downs that need their own test helpers.
-- Two editors change the same table at the same time. The desktop tests cover the dialogs.
-- A successful tournament creation. The form needs the country drop-down. The validation messages are covered.
+- Entering a hand and then switching "Completed" on in the same edit. The switch stays off after a hand was typed. This needs a closer look. Switching "Completed" on without typing works and is tested.
 - Photo upload for EMA players, ID card export and EMA report export. They need a file picker or a share window.
-- Invitations by email. The local backend has no mail server.
-- Player statistics content in the player app. The tab opens without an error. The numbers are not checked.
+- Invitations by email and accepting an invitation. The local backend has no mail server.
+- Warnings that the table editor shows for invalid hands (chicken hand above the limit, loser without winner).

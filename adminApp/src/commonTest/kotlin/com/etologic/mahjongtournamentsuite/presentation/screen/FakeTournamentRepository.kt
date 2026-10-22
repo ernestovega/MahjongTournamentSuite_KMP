@@ -175,6 +175,10 @@ internal class FakeTournamentRepository : TournamentRepository {
         agendaItems: List<TournamentAgendaItem>,
         countBestHands: Boolean?,
         countChickenHands: Boolean?,
+        matchDurationMinutes: Int?,
+        matchEndMode: MatchEndMode?,
+        matchExtraMinutes: Int?,
+        timeZone: String?,
     ) = unusedFakeResult<Tournament>()
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedFakeResult<ByteArray>()

@@ -6,7 +6,7 @@
 type Data = Record<string, unknown>;
 
 /** Where a change came from. A change without a source came from an editor app. */
-export type ChangeSource = "player" | "editor";
+export type ChangeSource = "player" | "editor" | "system";
 
 export type ChangeActor = {
   uid: string;

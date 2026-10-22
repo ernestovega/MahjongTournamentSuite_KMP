@@ -89,12 +89,14 @@ class PlayerTournamentPresenter(
             emptyList()
         }
         val myEmaId = (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.emaId
+        // A table whose time is over counts as completed, even when nobody marked its last hand.
+        val expiredTables = tournament.closeExpiredTables(tables, tournament.currentVenueDateTime())
         val rankings = calculateRankings(
             slots,
-            tables.map { (table, hands) -> RankingTable(table, hands) },
+            expiredTables.map { (table, hands) -> RankingTable(table, hands) },
             tournament.isTeams,
         )
-        return AppResult.Success(buildPlayerTournamentView(tournament, slots, registry, tables, rankings, myEmaId, teams))
+        return AppResult.Success(buildPlayerTournamentView(tournament, slots, registry, expiredTables, rankings, myEmaId, teams))
     }
 }
 

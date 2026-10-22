@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
@@ -56,6 +57,10 @@ class TournamentsPresenter(
         agendaItems: List<TournamentAgendaItem>,
         countBestHands: Boolean? = null,
         countChickenHands: Boolean? = null,
+        matchDurationMinutes: Int? = null,
+        matchEndMode: MatchEndMode? = null,
+        matchExtraMinutes: Int? = null,
+        timeZone: String? = null,
     ): AppResult<Tournament> = tournamentRepository.updateTournamentSettings(
         tournamentId = tournamentId,
         name = name,
@@ -74,6 +79,10 @@ class TournamentsPresenter(
         agendaItems = agendaItems,
         countBestHands = countBestHands,
         countChickenHands = countChickenHands,
+        matchDurationMinutes = matchDurationMinutes,
+        matchEndMode = matchEndMode,
+        matchExtraMinutes = matchExtraMinutes,
+        timeZone = timeZone,
     )
 
     suspend fun signOut() = authRepository.signOut()

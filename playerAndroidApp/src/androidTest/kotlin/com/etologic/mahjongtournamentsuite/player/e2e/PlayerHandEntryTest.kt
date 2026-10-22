@@ -5,10 +5,15 @@ package com.etologic.mahjongtournamentsuite.player.e2e
 
 import androidx.compose.ui.test.performTextInput
 import org.junit.After
+import org.junit.Before
 import org.junit.Test
 
 /** A player writes the hands of the own table. These tests change the live tournament and restore it afterwards. */
 class PlayerHandEntryTest : PlayerE2eTest() {
+    // Round 4 of the live tournament plays for 120 minutes after the seed. A new seed gives a fresh window.
+    @Before
+    fun freshRound() = E2eApi.reset("test-live-ongoing")
+
     @After
     fun restoreData() = E2eApi.reset("test-live-ongoing")
 

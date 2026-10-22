@@ -1124,3 +1124,83 @@ fun TournamentOptionSwitch(
         }
     }
 }
+
+/** Longest match duration that the forms accept, in minutes. */
+const val MAX_MATCH_DURATION_MINUTES = 600
+
+/** The minutes of a match typed in a form, or null when the text is not a whole number from 1 to the maximum. */
+fun matchDurationOrNull(text: String): Int? =
+    text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_DURATION_MINUTES }
+
+/** Longest extra time that the forms accept, in minutes. */
+const val MAX_MATCH_EXTRA_MINUTES = 120
+
+/** The extra minutes typed in a form, or null when the text is not a whole number from 1 to the maximum. */
+fun matchExtraMinutesOrNull(text: String): Int? =
+    text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_EXTRA_MINUTES }
+
+private val TimeZoneIdPattern = Regex("^(UTC|[A-Za-z_]+(/[A-Za-z0-9_+-]+)+)$")
+
+/** True when the text looks like an IANA time zone, for example "Europe/Madrid". The server checks the name. */
+fun isTimeZoneIdShape(text: String): Boolean = TimeZoneIdPattern.matches(text.trim())
+
+/**
+ * The match time fields: duration, time zone, what happens when the time is over and, for the mode
+ * "finish the hand", the extra minutes. The same fields are in the create and edit forms.
+ */
+@Composable
+fun MatchTimeFields(
+    durationText: String,
+    onDurationChange: (String) -> Unit,
+    timeZoneText: String,
+    onTimeZoneChange: (String) -> Unit,
+    finishHand: Boolean,
+    onFinishHandChange: (Boolean) -> Unit,
+    extraMinutesText: String,
+    onExtraMinutesChange: (String) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    durationFocusRequester: FocusRequester? = null,
+) {
+    Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        OutlinedTextField(
+            value = durationText,
+            onValueChange = { onDurationChange(it.toDigitsInput(3)) },
+            label = { Text("Match duration (minutes)") },
+            supportingText = { Text("Normally 90 to 120 minutes. A table ends this long after its round starts.") },
+            modifier = Modifier.fillMaxWidth().let { base ->
+                if (durationFocusRequester != null) base.focusRequester(durationFocusRequester) else base
+            },
+            singleLine = true,
+            enabled = enabled,
+        )
+        OutlinedTextField(
+            value = timeZoneText,
+            onValueChange = { onTimeZoneChange(it.trim()) },
+            label = { Text("Time zone") },
+            supportingText = { Text("Time zone of the venue, for example Europe/Madrid. The round times use it.") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+            enabled = enabled,
+        )
+        TournamentOptionSwitch(
+            label = "Finish the hand in play",
+            description = "When the time is over, the players can record one more hand during the extra time. " +
+                "When this is off, the table ends at the end time and the hand in play does not count.",
+            checked = finishHand,
+            enabled = enabled,
+            onCheckedChange = onFinishHandChange,
+        )
+        if (finishHand) {
+            OutlinedTextField(
+                value = extraMinutesText,
+                onValueChange = { onExtraMinutesChange(it.toDigitsInput(3)) },
+                label = { Text("Extra time (minutes)") },
+                supportingText = { Text("The players can record the hand in play for this long after the end time.") },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+                enabled = enabled,
+            )
+        }
+    }
+}

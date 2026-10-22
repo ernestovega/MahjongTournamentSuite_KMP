@@ -36,4 +36,18 @@ const tournamentSchedule_1 = require("./tournamentSchedule");
 (0, node_test_1.default)("rejects agenda items with an invalid date", () => {
     strict_1.default.throws(() => (0, tournamentSchedule_1.normalizeAgendaItems)([{ title: "Dinner", date: "2026-13-40" }]), /yyyy-MM-dd/);
 });
+(0, node_test_1.default)("match duration defaults to two hours and accepts whole minutes", () => {
+    strict_1.default.equal((0, tournamentSchedule_1.normalizeMatchDuration)(undefined), 120);
+    strict_1.default.equal((0, tournamentSchedule_1.normalizeMatchDuration)(115), 115);
+    strict_1.default.throws(() => (0, tournamentSchedule_1.normalizeMatchDuration)(0));
+    strict_1.default.throws(() => (0, tournamentSchedule_1.normalizeMatchDuration)(90.5));
+    strict_1.default.throws(() => (0, tournamentSchedule_1.normalizeMatchDuration)(601));
+    strict_1.default.equal((0, tournamentSchedule_1.readStoredMatchDuration)("bad"), 120);
+});
+(0, node_test_1.default)("match end mode defaults to STOP and rejects other values", () => {
+    strict_1.default.equal((0, tournamentSchedule_1.normalizeMatchEndMode)(undefined), "STOP");
+    strict_1.default.equal((0, tournamentSchedule_1.normalizeMatchEndMode)("FINISH_HAND"), "FINISH_HAND");
+    strict_1.default.throws(() => (0, tournamentSchedule_1.normalizeMatchEndMode)("later"));
+    strict_1.default.equal((0, tournamentSchedule_1.readStoredMatchEndMode)("later"), "STOP");
+});
 //# sourceMappingURL=tournamentSchedule.test.js.map

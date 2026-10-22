@@ -1,6 +1,9 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
+import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
+import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
+import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
@@ -41,6 +44,10 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
             startTime = item.startTime.normalizedOrNull(),
         )
     },
+    matchDurationMinutes = matchDurationMinutes.takeIf { it > 0 } ?: DEFAULT_MATCH_DURATION_MINUTES,
+    matchEndMode = MatchEndMode.entries.firstOrNull { it.name == matchEndMode } ?: MatchEndMode.STOP,
+    matchExtraMinutes = matchExtraMinutes.takeIf { it > 0 } ?: DEFAULT_MATCH_EXTRA_MINUTES,
+    timeZone = timeZone.normalizedOrNull(),
     numTries = numTries,
     isCompleted = isCompleted,
     createdByUid = createdByUid.normalizedOrNull() ?: createdBy.normalizedOrNull(),

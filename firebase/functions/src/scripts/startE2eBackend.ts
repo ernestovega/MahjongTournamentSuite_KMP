@@ -34,6 +34,10 @@ export const E2E_ACCOUNTS = {
   playerDone: { uid: "e2e-player-done", email: "done@e2e.test" },
   /** Plays in no tournament. */
   playerStranger: { uid: "e2e-player-stranger", email: "stranger@e2e.test" },
+  /** Sits at table 1 of test-match-extra-time. The match time is over and the extra time runs. The table has 7 hands. */
+  playerExtraTime: { uid: "e2e-player-extra", email: "extra@e2e.test" },
+  /** Sits at table 1 of test-match-over. The match time is over and the tables stopped. The table has 7 hands. */
+  playerTimeOver: { uid: "e2e-player-over", email: "over@e2e.test" },
 } as const;
 
 /** The editor account works in these tournaments, next to the live one. */
@@ -52,6 +56,7 @@ async function main(): Promise<void> {
   const { upsertTournamentMember } = await import("../services/membersService");
   const { buildApp } = await import("../api/app");
   const { setAccountEmaId } = await import("../services/playerAccountsService");
+  const { setMailTransportForTests } = await import("../services/mailService");
 
   console.log("Writing the EMA registry.");
   const writer = db.bulkWriter();
@@ -95,14 +100,14 @@ async function main(): Promise<void> {
   await account(E2E_ACCOUNTS.editor, "EDITOR");
   await account(E2E_ACCOUNTS.outsider, "EDITOR");
   await account(E2E_ACCOUNTS.disabled, "EDITOR", true);
-  for (const key of ["playerActive", "playerSeated", "playerWaiting", "playerDone", "playerStranger"] as const) {
+  for (const key of ["playerActive", "playerSeated", "playerWaiting", "playerDone", "playerStranger", "playerExtraTime", "playerTimeOver"] as const) {
     await account(E2E_ACCOUNTS[key], "PLAYER");
   }
   await restoreMemberships(EDITOR_TOURNAMENTS);
 
-  /** The first EMA player who sits at a table of the live tournament. */
-  async function emaPlayerAt(table: string): Promise<string> {
-    const live = db.doc("tournaments/test-live-ongoing");
+  /** The first EMA player who sits at a table of a tournament. The live tournament is the default. */
+  async function emaPlayerAt(table: string, tournamentId = "test-live-ongoing"): Promise<string> {
+    const live = db.doc(`tournaments/${tournamentId}`);
     const data = (await live.collection("tables").doc(table).get()).data() ?? {};
     const seats = [data.playerEastId, data.playerSouthId, data.playerWestId, data.playerNorthId, ...(data.playerIds ?? [])]
       .filter((seat) => seat != null && String(seat) !== "").map(String);
@@ -127,6 +132,8 @@ async function main(): Promise<void> {
   await linkPlayer(E2E_ACCOUNTS.playerSeated, await emaPlayerAt("4_8"));
   await linkPlayer(E2E_ACCOUNTS.playerWaiting, await emaPlayerAt("4_9"));
   await linkPlayer(E2E_ACCOUNTS.playerDone, await emaPlayerAt("4_1"));
+  await linkPlayer(E2E_ACCOUNTS.playerExtraTime, await emaPlayerAt("1_1", "test-match-extra-time"));
+  await linkPlayer(E2E_ACCOUNTS.playerTimeOver, await emaPlayerAt("1_1", "test-match-over"));
 
   /** A reset writes the slots again, so the links to the player accounts are made again. */
   async function relinkPlayers(): Promise<void> {
@@ -136,7 +143,22 @@ async function main(): Promise<void> {
     }
   }
 
+  // No mail server runs here. The backend keeps the emails in memory, so tests can read them.
+  // An address that starts with "fail" makes the send fail, to test the error message.
+  const sentEmails: { to: string; subject: string; text: string; html: string }[] = [];
+  setMailTransportForTests(async (email) => {
+    if (email.to.startsWith("fail")) throw new Error("The test mailbox refuses this address.");
+    sentEmails.push(email);
+  });
+
   const app = buildApp();
+  app.get("/__e2e/mail", (_req, res) => {
+    res.status(200).json({ emails: sentEmails });
+  });
+  app.delete("/__e2e/mail", (_req, res) => {
+    sentEmails.length = 0;
+    res.status(200).json({ ok: true });
+  });
   // Tests call this to get back the original data of some tournaments, for example after they changed a table.
   app.post("/__e2e/reset", async (req, res) => {
     try {

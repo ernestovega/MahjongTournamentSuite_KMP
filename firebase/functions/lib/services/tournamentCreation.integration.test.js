@@ -6,10 +6,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const strict_1 = __importDefault(require("node:assert/strict"));
 const node_test_1 = require("node:test");
 const firebase_1 = require("../firebase");
+const draw_1 = require("../testing/draw");
 const firestoreFixtures_1 = require("../testing/firestoreFixtures");
 const tournamentsService_1 = require("./tournamentsService");
 function request(overrides = {}) {
-    const numPlayers = overrides.numPlayers ?? 8;
+    const numPlayers = overrides.numPlayers ?? 16;
     const numRounds = overrides.numRounds ?? 2;
     const players = Array.from({ length: numPlayers }, (_, index) => ({
         id: index + 1,
@@ -17,11 +18,7 @@ function request(overrides = {}) {
         name: index === numPlayers - 1 && overrides.lastPlayerName ? overrides.lastPlayerName : `Player ${index + 1}`,
         country: "ES",
     }));
-    const tables = Array.from({ length: numRounds * (numPlayers / 4) }, (_, index) => ({
-        roundId: Math.floor(index / (numPlayers / 4)) + 1,
-        tableId: (index % (numPlayers / 4)) + 1,
-        playerIds: [1, 2, 3, 4],
-    }));
+    const tables = (0, draw_1.validDrawTables)(numPlayers, numRounds);
     return {
         name: "Test open",
         shortName: "TO",
@@ -53,8 +50,8 @@ async function counts() {
     (0, node_test_1.it)("creates the tournament with all tables, hands and the progress counter", async () => {
         const tournament = await (0, tournamentsService_1.createTournament)(request());
         const ref = firebase_1.db.collection("tournaments").doc(tournament.id);
-        strict_1.default.equal((await ref.collection("tables").get()).size, 4);
-        strict_1.default.equal((await ref.collection("players").get()).size, 8);
+        strict_1.default.equal((await ref.collection("tables").get()).size, 8);
+        strict_1.default.equal((await ref.collection("players").get()).size, 16);
         for (const table of (await ref.collection("tables").get()).docs) {
             strict_1.default.equal((await table.ref.collection("hands").get()).size, 16, table.id);
         }
@@ -96,6 +93,14 @@ async function counts() {
         const bad = request();
         bad.tables.pop();
         await strict_1.default.rejects((0, tournamentsService_1.createTournament)(bad));
+        strict_1.default.deepEqual(await counts(), before);
+    });
+    (0, node_test_1.it)("refuses a draw where a player sits at two tables of one round", async () => {
+        const before = await counts();
+        const bad = request();
+        const [a, b] = [bad.tables[0].playerIds, bad.tables[1].playerIds];
+        bad.tables[1].playerIds = [a[0], ...b.slice(1)];
+        await strict_1.default.rejects((0, tournamentsService_1.createTournament)(bad), /Invalid draw/);
         strict_1.default.deepEqual(await counts(), before);
     });
 });

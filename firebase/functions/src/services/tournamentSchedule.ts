@@ -13,6 +13,50 @@ export type TournamentAgendaItem = {
   startTime: string | null;
 };
 
+export const DEFAULT_MATCH_DURATION_MINUTES = 120;
+const MAX_MATCH_DURATION_MINUTES = 600;
+
+/** What happens when the match time is over: the game stops at once, or the hand in play is finished. */
+export const MATCH_END_MODES = ["STOP", "FINISH_HAND"] as const;
+export type MatchEndMode = typeof MATCH_END_MODES[number];
+
+/** Validates a match duration in minutes. A missing value gives the default. */
+export function normalizeMatchDuration(value: unknown): number {
+  if (value == null) return DEFAULT_MATCH_DURATION_MINUTES;
+  const minutes = Number(value);
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > MAX_MATCH_DURATION_MINUTES) {
+    throw badRequest(`matchDurationMinutes must be a whole number from 1 to ${MAX_MATCH_DURATION_MINUTES}`);
+  }
+  return minutes;
+}
+
+/** Reads a stored duration. An old or invalid value gives the default. */
+export function readStoredMatchDuration(value: unknown): number {
+  try {
+    return normalizeMatchDuration(value);
+  } catch (_error) {
+    return DEFAULT_MATCH_DURATION_MINUTES;
+  }
+}
+
+/** Validates the end mode. A missing value gives "STOP". */
+export function normalizeMatchEndMode(value: unknown): MatchEndMode {
+  if (value == null) return "STOP";
+  if (!(MATCH_END_MODES as readonly unknown[]).includes(value)) {
+    throw badRequest("matchEndMode must be STOP or FINISH_HAND");
+  }
+  return value as MatchEndMode;
+}
+
+/** Reads a stored end mode. An old or invalid value gives "STOP". */
+export function readStoredMatchEndMode(value: unknown): MatchEndMode {
+  try {
+    return normalizeMatchEndMode(value);
+  } catch (_error) {
+    return "STOP";
+  }
+}
+
 const LOCAL_TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 
 function optionalString(value: unknown): string | null {
