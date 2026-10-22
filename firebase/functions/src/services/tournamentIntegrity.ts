@@ -7,6 +7,7 @@
  * - warning: the data is odd and a person should look at it.
  * - info: a fact that can be normal.
  */
+import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "./tournamentContentRules";
 import { isValidIsoDate, isValidIsoDateRange } from "./tournamentDates";
 import {
   handScoreTotals,
@@ -119,8 +120,8 @@ function checkTournamentInfo(c: Collector, input: IntegrityInput, numPlayers: nu
   const t = input.tournament;
   if (text(t.name) === "") c.add("error", "info.name", "The tournament has no name.");
   if (text(t.shortName) === "") c.add("warning", "info.shortName", "The tournament has no short name.");
-  if (!Number.isInteger(numPlayers) || numPlayers <= 0 || numPlayers % 4 !== 0) {
-    c.add("error", "info.numPlayers", `The number of players (${text(t.numPlayers)}) must be a positive multiple of 4.`);
+  if (!isValidPlayerCount(numPlayers)) {
+    c.add("error", "info.numPlayers", `The number of players (${text(t.numPlayers)}) must be a multiple of 4 and at least ${MIN_TOURNAMENT_PLAYERS}.`);
   }
   if (!Number.isInteger(numRounds) || numRounds <= 0) {
     c.add("error", "info.numRounds", `The number of rounds (${text(t.numRounds)}) must be a positive number.`);

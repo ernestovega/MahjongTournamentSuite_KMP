@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.Icons
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -205,7 +209,7 @@ private fun HourBars(values: List<Int>, peakIndex: Int) {
 @Composable
 private fun UsersSection(users: List<UserUsage>) {
     StatSection("Most active users") {
-        if (users.isEmpty()) Text("No saves yet.", Modifier.padding(vertical = 10.dp))
+        if (users.isEmpty()) AppEmptyState(StatisticsIcon, "No saves yet", "The most active users show here after the first save.", compact = true)
         val top = users.take(TOP_USERS)
         val high = top.maxOfOrNull { it.saves }?.coerceAtLeast(1) ?: 1
         top.forEach { user ->
@@ -254,7 +258,7 @@ private fun TournamentsSection(tournaments: List<TournamentUsage>) {
     val sorted = remember(tournaments) { tournaments.sortedByDescending { it.saves } }
     val shown = if (showAll) sorted else sorted.take(TOP_TOURNAMENTS)
     StatSection("Tournaments by saves") {
-        if (sorted.isEmpty()) Text("No tournaments yet.", Modifier.padding(vertical = 10.dp))
+        if (sorted.isEmpty()) AppEmptyState(Icons.Default.EmojiEvents, "No saves yet", "The tournaments show here after the first save.", compact = true)
         shown.forEach { TournamentRow(it) }
         if (sorted.size > TOP_TOURNAMENTS) {
             Text(

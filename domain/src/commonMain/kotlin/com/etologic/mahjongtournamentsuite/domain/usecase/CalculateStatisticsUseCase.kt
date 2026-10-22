@@ -86,6 +86,7 @@ class CalculateStatisticsUseCase {
             highestHand = winningScores.maxOrNull(),
             chickenHands = handTables.sumOf { it.chickenHands },
             penaltyCount = handTables.sumOf { table -> table.results.sumOf { it.second.penaltyCount } },
+            penaltyPoints = handTables.sumOf { table -> table.results.sumOf { it.second.penaltyPoints } },
             tables = tableStatistics,
         )
     }

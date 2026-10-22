@@ -7,6 +7,11 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.coerceIn
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.foundation.layout.heightIn
@@ -52,6 +57,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -87,22 +93,26 @@ enum class StatisticsScope(val title: String) {
 
 internal const val EMPTY = "-"
 
-/** The page of a statistics screen that has nothing to show yet: a big icon, a title and a hint of what to do. */
+/**
+ * The page or section that has nothing to show yet: a big icon, a title and a hint of what to do.
+ * A [compact] state is smaller, for a part of a screen, for example one card or one table.
+ */
 @Composable
-fun StatisticsEmptyState(icon: ImageVector, title: String, message: String, modifier: Modifier = Modifier) {
+fun AppEmptyState(icon: ImageVector, title: String, message: String, modifier: Modifier = Modifier, compact: Boolean = false) {
     Column(
-        modifier.fillMaxWidth().padding(vertical = 56.dp, horizontal = 16.dp),
+        modifier.fillMaxWidth().padding(vertical = if (compact) 24.dp else 56.dp, horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(if (compact) 8.dp else 12.dp),
     ) {
-        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)) {
+        Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
             Icon(
                 icon, contentDescription = null,
-                modifier = Modifier.padding(28.dp).size(56.dp),
-                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(if (compact) 16.dp else 28.dp).size(if (compact) 32.dp else 56.dp),
+                // A light icon on the green circle, like the tab icons.
+                tint = Color.White.copy(alpha = 0.85f),
             )
         }
-        Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
+        Text(title, style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         Text(
             message,
             Modifier.widthIn(max = 420.dp),
@@ -282,8 +292,10 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     fillWidth: Boolean = true,
     /** A button at the end of the row, for example to change the player. */
     action: (@Composable () -> Unit)? = null,
+    /** Photo, texts and action go in one centered column. */
+    stacked: Boolean = false,
 ) {
-    HeaderCard(modifier, fillWidth, action) {
+    val photo: @Composable () -> Unit = {
         if (profile.photoUrl.isNullOrBlank()) {
             Box(
                 modifier = Modifier
@@ -307,8 +319,10 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
                 modifier = Modifier.size(HeaderImageSize).clip(CircleShape),
             )
         }
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(profile.name, style = MaterialTheme.typography.titleLarge)
+    }
+    val texts: @Composable (Alignment.Horizontal) -> Unit = { alignment ->
+        Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(profile.name, style = MaterialTheme.typography.titleLarge, textAlign = if (stacked) TextAlign.Center else null)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (profile.country.isNotBlank()) {
                     CountryFlag(profile.country, width = 24.dp, contentDescription = "Country ${profile.country}")
@@ -317,6 +331,22 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
                     Text("EMA ${profile.emaId}", style = MaterialTheme.typography.bodyMedium)
                 }
             }
+        }
+    }
+    if (stacked) {
+        Column(
+            (if (fillWidth) modifier.fillMaxWidth() else modifier).padding(vertical = 4.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            photo()
+            texts(Alignment.CenterHorizontally)
+            action?.invoke()
+        }
+    } else {
+        HeaderCard(modifier, fillWidth, action) {
+            photo()
+            texts(Alignment.Start)
         }
     }
 }
@@ -356,19 +386,20 @@ fun TournamentStatisticsHeader(
     }
 }
 
-/** The row of a header. With [fillWidth] false it is as wide as its content. The [action] sits at the end of the row, centered vertically. */
+/**
+ * The row of a header. With [fillWidth] false it is as wide as its content.
+ * The [action] sits at the end of the row. It moves to a new line when the row is too narrow.
+ */
 @Composable
 private fun HeaderCard(modifier: Modifier, fillWidth: Boolean, action: (@Composable () -> Unit)?, content: @Composable () -> Unit) {
-    Row(
+    FlowRow(
         modifier = (if (fillWidth) modifier.fillMaxWidth() else modifier).padding(vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(16.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
     ) {
-        content()
-        if (action != null) {
-            Spacer(Modifier.width(8.dp))
-            action()
-        }
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) { content() }
+        action?.invoke()
     }
 }
 
@@ -388,6 +419,30 @@ fun <K> SearchableDropdownField(
     // Null while the user does not type. Then the field shows the chosen option.
     var query by remember { mutableStateOf<String?>(null) }
     val selectedLabel = options.firstOrNull { it.first == selected }?.second ?: ""
+    // The whole text is selected when the field gets the focus, so it is easy to delete.
+    var selection by remember { mutableStateOf(TextRange.Zero) }
+    var selectAllPending by remember { mutableStateOf(false) }
+    val currentText = query ?: selectedLabel
+    val fieldValue = TextFieldValue(currentText, selection.coerceIn(0, currentText.length))
+    val onFieldChange: (TextFieldValue) -> Unit = { new ->
+        if (selectAllPending && new.text == currentText) {
+            // The tap that gave the focus sets the cursor. Keep the selection of the whole text.
+            selectAllPending = false
+        } else {
+            selectAllPending = false
+            selection = new.selection
+            query = new.text
+            expanded = true
+        }
+    }
+    val onFocus: (FocusState) -> Unit = { state ->
+        if (state.isFocused) {
+            selection = TextRange(0, currentText.length)
+            selectAllPending = true
+        } else {
+            selectAllPending = false
+        }
+    }
     val shown = remember(query, options) {
         val text = query?.trim().orEmpty()
         (if (text.isEmpty()) options else options.filter { it.second.matchesSearch(text) }).take(MAX_DROPDOWN_OPTIONS)
@@ -397,13 +452,13 @@ fun <K> SearchableDropdownField(
             val interactionSource = remember { MutableInteractionSource() }
             val text = query ?: selectedLabel
             BasicTextField(
-                value = text,
-                onValueChange = { query = it; expanded = true },
+                value = fieldValue,
+                onValueChange = onFieldChange,
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
                 cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
                 interactionSource = interactionSource,
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth().heightIn(min = 40.dp),
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth().heightIn(min = 40.dp).onFocusChanged(onFocus),
                 decorationBox = { innerTextField ->
                     OutlinedTextFieldDefaults.DecorationBox(
                         value = text,
@@ -420,12 +475,12 @@ fun <K> SearchableDropdownField(
             )
         } else {
             OutlinedTextField(
-                value = query ?: selectedLabel,
-                onValueChange = { query = it; expanded = true },
+                value = fieldValue,
+                onValueChange = onFieldChange,
                 singleLine = true,
                 label = { Text(label) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth(),
+                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth().onFocusChanged(onFocus),
             )
         }
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false; query = null }) {

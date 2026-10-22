@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
+import androidx.compose.material.icons.filled.EmojiEvents
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
@@ -347,9 +350,11 @@ fun TournamentsScreen(
                 content = {
                     when {
                         !isRefreshing && tournaments.isEmpty() -> {
-                            Text(
-                                text = "No tournaments yet.",
-                                style = MaterialTheme.typography.bodyLarge,
+                            AppEmptyState(
+                                icon = Icons.Default.EmojiEvents,
+                                title = "No tournaments yet",
+                                message = "Create the first tournament to see it here.",
+                                compact = true,
                             )
                         }
 
@@ -518,18 +523,26 @@ private fun LogoutButton(
     presenter: TournamentsPresenter,
     navController: NavHostController
 ) {
+    var confirming by remember { mutableStateOf(false) }
     AppTopBarButton(
         text = "Logout",
         icon = Icons.AutoMirrored.Filled.Logout,
-        onClick = {
-            coroutineScope.launch {
-                presenter.signOut()
-                navController.navigate(SignInRoute) {
-                    popUpTo(TournamentsRoute) { inclusive = true }
-                }
-            }
-        },
+        onClick = { confirming = true },
     )
+    if (confirming) {
+        SignOutConfirmDialog(
+            onConfirm = {
+                confirming = false
+                coroutineScope.launch {
+                    presenter.signOut()
+                    navController.navigate(SignInRoute) {
+                        popUpTo(TournamentsRoute) { inclusive = true }
+                    }
+                }
+            },
+            onDismiss = { confirming = false },
+        )
+    }
 }
 
 @Composable

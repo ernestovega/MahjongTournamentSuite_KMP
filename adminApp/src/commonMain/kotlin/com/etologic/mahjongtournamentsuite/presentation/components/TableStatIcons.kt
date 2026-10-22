@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
@@ -30,7 +29,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy_bronze
 import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy_silver
 import org.jetbrains.compose.resources.painterResource
 
-/** Chicken image from the app resources (`drawable/icon_chicken.svg`, Twemoji). */
+/** Chicken image from the app resources (`drawable/icon_chicken.png`, Twemoji). */
 @Composable
 fun ChickenIcon(
     contentDescription: String? = null,
@@ -56,7 +55,7 @@ val LocalHandStatOptions = compositionLocalOf { HandStatOptions() }
 enum class TrophyMedal { Gold, Silver, Bronze }
 
 /**
- * Trophy image from the app resources (`drawable/icon_trophy*.svg`, Twemoji with changed colors).
+ * Trophy image from the app resources (`drawable/icon_trophy*.png`, Twemoji with changed colors).
  * The [medal] sets the color: gold, silver or bronze.
  */
 @Composable
@@ -93,7 +92,7 @@ fun HintTooltip(
     val coroutineScope = rememberCoroutineScope()
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text(text) } },
+        tooltip = { AppPlainTooltip { Text(text) } },
         state = tooltipState,
         modifier = modifier,
     ) {

@@ -21,6 +21,7 @@ const playersService_1 = require("../../services/playersService");
 const tableManagerService_1 = require("../../services/tableManagerService");
 const changeLog_1 = require("../../services/changeLog");
 const usersService_1 = require("../../services/usersService");
+const tournamentContentRules_1 = require("../../services/tournamentContentRules");
 const tournamentDates_1 = require("../../services/tournamentDates");
 const tournamentVenue_1 = require("../../services/tournamentVenue");
 const dataVersionsService_1 = require("../../services/dataVersionsService");
@@ -227,8 +228,8 @@ function tournamentsRouter() {
             if ((0, tournamentDates_1.isValidIsoDate)(eventStartDate) && (0, tournamentDates_1.isValidIsoDate)(eventEndDate) && !(0, tournamentDates_1.isValidIsoDateRange)(eventStartDate, eventEndDate)) {
                 issues.push({ field: "eventEndDate", message: "Must not be before eventStartDate", value: body?.eventEndDate });
             }
-            if (!Number.isFinite(numPlayers) || !Number.isInteger(numPlayers) || numPlayers <= 0 || numPlayers % 4 !== 0) {
-                issues.push({ field: "numPlayers", message: "Must be a positive integer multiple of 4", value: numPlayersValue });
+            if (!(0, tournamentContentRules_1.isValidPlayerCount)(numPlayers)) {
+                issues.push({ field: "numPlayers", message: `Must be a multiple of 4 and at least ${tournamentContentRules_1.MIN_TOURNAMENT_PLAYERS}`, value: numPlayersValue });
             }
             if (!Number.isFinite(numRounds) || !Number.isInteger(numRounds) || numRounds <= 0) {
                 issues.push({ field: "numRounds", message: "Must be a positive integer", value: numRoundsValue });

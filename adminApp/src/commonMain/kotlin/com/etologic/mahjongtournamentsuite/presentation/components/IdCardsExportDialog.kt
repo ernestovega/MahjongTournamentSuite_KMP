@@ -29,7 +29,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
@@ -78,7 +77,7 @@ private fun ProportionLinkIcon(originalWidthMm: Double, originalHeightMm: Double
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = {
-            PlainTooltip(modifier = Modifier.widthIn(max = 340.dp)) {
+            AppPlainTooltip(modifier = Modifier.widthIn(max = 340.dp)) {
                 Text(
                     "The width and the height are linked, so the card keeps its proportion.\n" +
                         "• The proportion is the relation between the width and the height of the card. " +

@@ -3,6 +3,8 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -40,6 +42,21 @@ class ScreenScroll(val state: ScrollState) {
 /** The [ScreenScroll] of the closest scrolling [ScreenColumn]. Null when the screen does not scroll. */
 val LocalScreenScroll = compositionLocalOf<ScreenScroll?> { null }
 
+/**
+ * Scrolls [state] to the top when [key] changes, for example when the screen shows another player.
+ * The first value does nothing, so a scroll position restored after a page refresh stays.
+ */
+@Composable
+fun ResetScrollOnChange(state: ScrollState?, key: Any?) {
+    var previous by remember { mutableStateOf(key) }
+    LaunchedEffect(key) {
+        if (previous != key) {
+            previous = key
+            state?.scrollTo(0)
+        }
+    }
+}
+
 @Composable
 fun ScreenColumn(
     modifier: Modifier = Modifier,
@@ -48,6 +65,8 @@ fun ScreenColumn(
     verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(8.dp),
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     scrollable: Boolean = false,
+    /** When true, the padding scrolls with the content. The content then goes under the top bar without a gap. */
+    paddingInsideScroll: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     BoxWithConstraints(
@@ -63,8 +82,13 @@ fun ScreenColumn(
                     .fillMaxHeight()
                     .align(Alignment.TopCenter)
                     .onGloballyPositioned { screenScroll.viewportTop = it.positionInRoot().y }
-                    .padding(contentPadding)
-                    .then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier),
+                    .then(
+                        if (scrollable && paddingInsideScroll) {
+                            Modifier.verticalScroll(scrollState).padding(contentPadding)
+                        } else {
+                            Modifier.padding(contentPadding).then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier)
+                        },
+                    ),
                 verticalArrangement = verticalArrangement,
                 horizontalAlignment = horizontalAlignment,
                 content = content,

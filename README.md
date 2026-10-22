@@ -61,6 +61,8 @@ Run from Android Studio using the `androidApp` configuration on an emulator/devi
 ./gradlew :adminApp:wasmJsBrowserDevelopmentRun
 ```
 
+The web apps use the production backend by default. To use a local backend with test data, see [docs/test-environment.md](docs/test-environment.md).
+
 ## Tests
 
 Run current unit and multiplatform tests:

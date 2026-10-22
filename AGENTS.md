@@ -91,6 +91,13 @@ Run web (Wasm):
 ./gradlew :adminApp:wasmJsBrowserDevelopmentRun
 ```
 
+Run web (Wasm) on the local test backend (see `docs/test-environment.md`):
+
+```bash
+(cd firebase/functions && npm run test-env:backend)
+MTS_API_TARGET=http://localhost:5055 ./gradlew :playerApp:wasmJsBrowserDevelopmentRun
+```
+
 Run tests:
 
 ```bash

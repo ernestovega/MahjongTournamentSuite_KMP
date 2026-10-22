@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import androidx.compose.material.icons.filled.Edit
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
@@ -28,6 +31,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -43,6 +50,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableIntStateOf
+import kotlin.time.TimeSource
+import kotlin.time.Duration
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -118,6 +128,7 @@ import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.ui.draw.clip
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.ui.graphics.Color
@@ -361,17 +372,25 @@ fun TournamentsScreen(navController: NavHostController) {
         }
     }
 
+    var confirmingSignOut by remember { mutableStateOf(false) }
+    if (confirmingSignOut) {
+        SignOutConfirmDialog(
+            onConfirm = {
+                confirmingSignOut = false
+                scope.launch {
+                    session.signOut()
+                    navController.navigate(SignInRoute()) { popUpTo(0) }
+                }
+            },
+            onDismiss = { confirmingSignOut = false },
+        )
+    }
     AppScaffold(
         title = "My tournaments",
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
         navigationIcon = {
-            SignOutAction {
-                scope.launch {
-                    session.signOut()
-                    navController.navigate(SignInRoute()) { popUpTo(0) }
-                }
-            }
+            SignOutAction { confirmingSignOut = true }
         },
         actions = { ThemeAction() },
     ) {
@@ -405,7 +424,7 @@ fun TournamentsScreen(navController: NavHostController) {
             Column(
                 Modifier.weight(1f).align(Alignment.CenterHorizontally)
                     .then(if (tab == 1) Modifier.fillMaxWidth() else Modifier.widthIn(max = 720.dp).fillMaxWidth())
-                    .padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                    .then(if (tab == 1) Modifier else Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 if (tab == 1) {
@@ -416,7 +435,7 @@ fun TournamentsScreen(navController: NavHostController) {
                 val list = items
                 when {
                     list == null -> Unit
-                    list.isEmpty() -> EmptyState("You are not registered in any tournament yet.")
+                    list.isEmpty() -> EmptyState(Icons.Default.EmojiEvents, "No tournaments yet", "You are not registered in any tournament yet.")
                     else -> LazyColumn(
                         state = rememberPersistentLazyListState("tournaments"),
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -432,8 +451,8 @@ fun TournamentsScreen(navController: NavHostController) {
 }
 
 @Composable
-private fun EmptyState(text: String) {
-    Text(text, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = 24.dp))
+private fun EmptyState(icon: ImageVector, title: String, message: String) {
+    AppEmptyState(icon, title, message, compact = true)
 }
 
 private enum class TournamentStatus(val label: String) { UPCOMING("Upcoming"), IN_PROGRESS("In progress"), FINISHED("Finished") }
@@ -523,6 +542,11 @@ private fun TournamentLogo(tournament: Tournament) {
     }
 }
 
+/**
+ * A tournament of the list. The text is information only. The links are buttons under a divider, so they are not
+ * confused with the card. The button "Open" at the end shows that the card opens the tournament.
+ */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?, onClick: () -> Unit) {
     var expanded by remember(tournament.id) { mutableStateOf(false) }
@@ -530,125 +554,157 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
     val uriHandler = LocalUriHandler.current
     val venueText = venueSummary(tournament)
     val mapLink = venueMapLink(tournament)
+    val email = tournament.venue.contactEmail
+    val dates = datesOf(tournament)
+    val hasCity = tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()
+    val hasLinks = (venueText.isNotBlank() && mapLink != null) || email.isNotBlank() || hasSchedule(tournament)
     Card(
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
-        Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            TournamentLogo(tournament)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(tournament.name, style = MaterialTheme.typography.titleMedium)
-                val dates = datesOf(tournament)
-                if (dates != null) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.CalendarMonth, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                        Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                TournamentLogo(tournament)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        tournament.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    if (status != null) StatusChip(status)
                 }
-                if (tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                        if (tournament.hostCity.isNotBlank()) {
-                            Text(tournament.hostCity, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                        if (tournament.hostCountry.isNotBlank()) {
-                            CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
+            }
+            if (dates != null || hasCity || venueText.isNotBlank()) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (dates != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.CalendarMonth, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
-                }
-                if (venueText.isNotBlank() && mapLink != null) {
-                    // The venue opens Google Maps in another tab. The icon shows that it is a link.
-                    Row(
-                        Modifier.clickable { uriHandler.openUri(mapLink) },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(
-                            Icons.Default.Directions,
-                            contentDescription = "Open directions in Google Maps",
-                            Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
+                    if (hasCity) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            if (tournament.hostCity.isNotBlank()) {
+                                Text(tournament.hostCity, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (tournament.hostCountry.isNotBlank()) {
+                                CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
+                            }
+                        }
+                    }
+                    // The venue is plain text. The link to the map is a button below.
+                    if (venueText.isNotBlank()) {
                         Text(
                             venueText,
+                            Modifier.padding(start = 26.dp),
                             maxLines = 2,
                             overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }
                 }
-                val email = tournament.venue.contactEmail
-                if (email.isNotBlank()) {
-                    Row(
-                        Modifier.clickable { uriHandler.openUri("mailto:$email") },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(Icons.Default.Email, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                        Text(email, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium)
-                    }
+            }
+            if (standing != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                    StandingTag(standing)
+                    if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = "Won the teams ranking", Modifier.size(22.dp))
+                    if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
+                    if (standing.wonBestHands) PositionTrophy(1, size = 22.dp)
                 }
-                if (hasSchedule(tournament)) {
-                    Row(
-                        Modifier.clickable { expanded = !expanded },
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(Icons.Default.Schedule, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                        Text(
-                            if (expanded) "Hide schedule" else "Show schedule",
-                            color = MaterialTheme.colorScheme.primary,
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                        Icon(
-                            if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = null,
-                            Modifier.size(18.dp),
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
+            }
+            if (hasLinks) {
+                HorizontalDivider()
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (venueText.isNotBlank() && mapLink != null) {
+                        LinkButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") { uriHandler.openUri(mapLink) }
+                    }
+                    if (email.isNotBlank()) {
+                        LinkButton(Icons.Default.Email, "Email") { uriHandler.openUri("mailto:$email") }
+                    }
+                    if (hasSchedule(tournament)) {
+                        LinkButton(Icons.Default.Schedule, if (expanded) "Hide schedule" else "Show schedule") { expanded = !expanded }
                     }
                 }
                 if (expanded) TournamentSchedule(tournament)
             }
-            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (status != null) StatusChip(status)
-                if (standing != null) {
-                    StandingTag(standing)
-                    if (standing.wonTeams || standing.wonChickenHands || standing.wonBestHands) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                            if (standing.wonTeams) {
-                                Icon(Icons.Default.Groups, contentDescription = "Won the teams ranking", Modifier.size(22.dp))
-                            }
-                            if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
-                            if (standing.wonBestHands) PositionTrophy(1, size = 22.dp)
-                        }
-                    }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                Button(onClick = onClick) {
+                    Text("Open")
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, Modifier.size(18.dp))
                 }
             }
         }
     }
 }
 
-/** Loads the tournament and checks for changes at a fixed interval while the screen is open. */
+/** A link of a tournament card. It is an outlined button, so it does not look like the text of the card. */
+@Composable
+private fun LinkButton(icon: ImageVector, label: String, description: String? = null, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = if (description != null) Modifier.semantics { contentDescription = description } else Modifier,
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+    ) {
+        Icon(icon, contentDescription = null, Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/**
+ * Loads the tournament and checks for changes at a fixed interval while the screen is open.
+ * A failed check does not show a message when the tournament is already on screen.
+ * After [STALE_AFTER_FAILURES] failed checks in a row, the message tells how long the data is old.
+ */
 @Composable
 private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pair<PlayerTournamentView?, String?> {
     val presenter = koinInject<PlayerTournamentPresenter>()
     var view by remember(tournamentId) { mutableStateOf<PlayerTournamentView?>(null) }
     var message by remember(tournamentId) { mutableStateOf<String?>(null) }
+    var failures by remember(tournamentId) { mutableIntStateOf(0) }
+    var lastUpdate by remember(tournamentId) { mutableStateOf(TimeSource.Monotonic.markNow()) }
     LaunchedEffect(tournamentId, reloadKey) {
         while (true) {
             when (val result = presenter.load(tournamentId, if (reloadKey > 0) RefreshMode.FORCE else RefreshMode.IF_CHANGED)) {
                 is AppResult.Success -> {
                     view = result.value
                     message = null
+                    failures = 0
+                    lastUpdate = TimeSource.Monotonic.markNow()
                 }
-                is AppResult.Failure -> message = result.error.toUiMessage()
+                is AppResult.Failure -> {
+                    failures++
+                    if (view == null) {
+                        message = result.error.toUiMessage()
+                    } else if (failures >= STALE_AFTER_FAILURES) {
+                        message = "The data has not updated for ${lastUpdate.elapsedNow().toAgeText()}. The app tries again."
+                    }
+                }
             }
             delay(REFRESH_INTERVAL_MS)
         }
     }
     return view to message
+}
+
+/** The number of failed checks in a row after which the screen tells that the data is old. */
+private const val STALE_AFTER_FAILURES = 3
+
+/** The age as plain text, for example "45 seconds", "1 minute" or "2 hours". */
+private fun Duration.toAgeText(): String {
+    val seconds = inWholeSeconds
+    val (value, unit) = when {
+        seconds < 60 -> seconds to "second"
+        seconds < 3600 -> seconds / 60 to "minute"
+        else -> seconds / 3600 to "hour"
+    }
+    return "$value $unit" + if (value == 1L) "" else "s"
 }
 
 @Composable
@@ -697,7 +753,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                     )
                 }
             }
-            Column(Modifier.weight(1f).fillMaxWidth().padding(start = 16.dp, top = if (tab == 0) 0.dp else 12.dp, end = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(Modifier.weight(1f).fillMaxWidth().then(if (tab == 2) Modifier else Modifier.padding(start = 16.dp, top = if (tab == 0) 0.dp else 12.dp, end = 16.dp)), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                 val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
                 when (tab) {
@@ -725,9 +781,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                     "Your account is not linked to a player of this tournament. " +
                                         "Ask the organizers to send you an invitation. All tables are in the All tables tab."
                                 } else {
-                                    "You have no table yet."
+                                    "The tables of the player show here when the organizers draw the round."
                                 },
                                 open,
+                                stickyRounds = false,
                             )
                         } else {
                             Text(
@@ -737,7 +794,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                             )
-                            TableList(view, view.tables, "No tables yet.", open)
+                            TableList(view, view.tables, "The tables show here when the organizers draw the first round.", open)
                         }
                     }
                     1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
@@ -813,20 +870,31 @@ private fun TableList(
     tables: List<PlayerTable>,
     emptyText: String,
     onOpen: (PlayerTable) -> Unit,
+    stickyRounds: Boolean = true,
 ) {
     if (tables.isEmpty()) {
-        EmptyState(emptyText)
+        EmptyState(Icons.Default.People, "No tables yet", emptyText)
         return
     }
     val rounds = tables.sortedBy { it.roundId }.groupBy { it.roundId }
+    // The list goes over the side padding of the screen, so the card shadows do not show beside the sticky header.
     LazyColumn(
+        modifier = Modifier.layout { measurable, constraints ->
+            val extra = 32.dp.roundToPx()
+            val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
+            layout(constraints.maxWidth, placeable.height) { placeable.place(-16.dp.roundToPx(), 0) }
+        },
         state = rememberPersistentLazyListState("tables-" + emptyText),
         verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(bottom = 8.dp),
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 8.dp),
     ) {
         rounds.forEach { (roundId, roundTables) ->
-            // The title of a round stays at the top while its tables scroll under it.
-            stickyHeader(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
+            // In the sticky case, the title of a round stays at the top while its tables scroll under it.
+            if (stickyRounds) {
+                stickyHeader(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
+            } else {
+                item(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
+            }
             items(roundTables, key = { "${it.roundId}_${it.tableId}" }) { table ->
                 TableSummaryCard(view, table, highlightSlot = view.mySlotId, onClick = { onOpen(table) })
             }
@@ -839,7 +907,15 @@ private fun TableList(
 private fun RoundHeader(roundId: Int, start: String?) {
     val colors = MaterialTheme.colorScheme
     Row(
-        Modifier.fillMaxWidth().background(colors.background).padding(vertical = 8.dp),
+        Modifier
+            .layout { measurable, constraints ->
+                // The content padding of the list narrows the header, so it grows back to the full width.
+                val extra = 32.dp.roundToPx()
+                val placeable = measurable.measure(constraints.copy(minWidth = constraints.maxWidth + extra, maxWidth = constraints.maxWidth + extra))
+                layout(constraints.maxWidth, placeable.height) { placeable.place(-16.dp.roundToPx(), 0) }
+            }
+            .background(colors.background)
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -1091,7 +1167,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
 
     RankingRows(
         rows,
-        emptyText = "No results yet.",
+        emptyText = "The ranking shows when the first table is completed.",
         onPlayerClick = onPlayerClick,
         controls = {
             // One low button for each ranking: the icon over its label.
@@ -1131,7 +1207,7 @@ private fun RankingRows(
 ) {
     if (rows.isEmpty()) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), content = controls)
-        EmptyState(emptyText)
+        EmptyState(Icons.Default.Leaderboard, "No ranking yet", emptyText)
         return
     }
     val visible = rows
@@ -1202,6 +1278,7 @@ private fun RankingCard(row: RankingRow, onPlayerClick: (Int) -> Unit) {
                 colors.surfaceContainerHigh
             },
         ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column {
             RankingLine(row, trailing = if (foldable) expanded else null)
@@ -1296,6 +1373,8 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     val (view, message) = rememberTournamentView(tournamentId, reloadKey)
     val table = view?.tables?.firstOrNull { it.roundId == roundId && it.tableId == tableId }
     var preselectWinner by remember { mutableStateOf<Int?>(null) }
+    // The detailed list of hands refers to the players by id, so the seats show the ids while it is on.
+    var details by rememberSaveable { mutableStateOf(false) }
     // The clock moves on, so a table that starts while the screen is open opens for hands.
     val now by produceState(currentLocalDateTime()) {
         while (true) {
@@ -1306,7 +1385,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
 
     AppScaffold(
         title = view?.tournament?.name ?: "Tournament",
-        subtitle = "Round $roundId - Table $tableId",
+        subtitle = view?.roundStartOf(roundId),
         isLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
@@ -1317,9 +1396,17 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
             scrollable = true,
+            paddingInsideScroll = true,
         ) {
             message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (view == null || table == null) return@ScreenColumn
+            Text(
+                "Round $roundId - Table $tableId",
+                Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
             val complete = table.isComplete
             val handNumber = minOf(table.doneHands + 1, 16)
             TableSeatsView(
@@ -1328,6 +1415,9 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 centerLabel = if (complete) "Done" else "Hand\n$handNumber/${table.hands.size}",
                 showPoints = complete,
                 windsKnown = table.seatsAssigned,
+                showIds = details,
+                // The differences make sense only while the table is in play: it has hands and it is not finished.
+                diffsAvailable = !complete && table.doneHands > 0,
                 // On a table that takes hands, a tap on a player starts a hand won by that player.
                 onPlayerClick = { slot ->
                     if (view.canAddHands(table, now)) preselectWinner = slot
@@ -1345,14 +1435,13 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 onPreselectHandled = { preselectWinner = null },
                 onSaved = { reloadKey++ },
             )
-            HandHistory(view, table)
+            HandHistory(view, table, details) { details = it }
         }
     }
 }
 
 @Composable
-private fun HandHistory(view: PlayerTournamentView, table: PlayerTable) {
-    var details by rememberSaveable { mutableStateOf(false) }
+private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details: Boolean, onDetailsChange: (Boolean) -> Unit) {
     // Extra space separates the list from the players and the button above.
     Box(Modifier.fillMaxWidth().padding(top = 20.dp), contentAlignment = Alignment.Center) {
         Text(
@@ -1362,127 +1451,136 @@ private fun HandHistory(view: PlayerTournamentView, table: PlayerTable) {
             textAlign = TextAlign.Center,
         )
         Row(
-            Modifier.align(Alignment.CenterEnd).clickable { details = !details },
+            Modifier.align(Alignment.CenterEnd).clickable { onDetailsChange(!details) },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text("Details", style = MaterialTheme.typography.labelLarge)
-            Switch(checked = details, onCheckedChange = { details = it }, modifier = Modifier.padding(start = 8.dp))
+            Switch(checked = details, onCheckedChange = onDetailsChange, modifier = Modifier.padding(start = 8.dp))
         }
     }
     if (details) {
         HandDetailsTable(table) { seat -> SeatWind.entries.getOrNull(seat) }
     } else if (table.hands.none { it.isDone || it.penaltyRows().isNotEmpty() }) {
-        EmptyState("No hand saved yet.")
+        EmptyState(Icons.Default.Edit, "No hands yet", "The hands show here when the players save them.")
     } else {
         HandList(view, table)
     }
 }
 
 /**
- * The newest item is at the top. The penalties of a hand were given before its result, so they come
- * under the hand when it is done. The penalties of the hand in play come first.
+ * The newest item is at the top. Each hand is one card. The penalties of a hand were given before its result,
+ * so they come under the result, with a divider. A hand that is not done shows only its penalties.
  */
 @Composable
 private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     table.hands.sortedByDescending { it.handId }.forEach { hand ->
-        if (hand.isDone) HandCard(view, hand, dark)
-        hand.penaltyRows().asReversed().forEach { values -> PenaltyCard(view, table, hand.handId, values) }
+        val penalties = hand.penaltyRows().asReversed()
+        if (!hand.isDone && penalties.isEmpty()) return@forEach
+        Card(
+            Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        ) {
+            if (hand.isDone) HandRow(view, hand, dark)
+            penalties.forEachIndexed { index, values ->
+                if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
+                PenaltyRow(view, table.seatIds(), hand.handId, values)
+            }
+        }
     }
 }
 
-/** One penalty. The penalized players are red and the players who receive points are green. */
+/**
+ * One penalty. The text is at the start and the values are at the end, in the same column as the score of a hand.
+ * The penalized players are red and the players who receive points are green.
+ */
 @Composable
-private fun PenaltyCard(view: PlayerTournamentView, table: PlayerTable, handId: Int, values: List<Int>) {
-    val seatSlots = table.seatIds()
-    Card(
-        Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId: Int, values: List<Int>) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    "$handId",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Icon(Icons.Default.Warning, contentDescription = "Penalty", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                values.forEachIndexed { seat, value ->
-                    if (value == 0) return@forEachIndexed
-                    val slot = seatSlots.getOrNull(seat)
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        PlayerFlag(view.players[slot]?.country, width = 20.dp)
-                        Text(
-                            view.nameOf(slot),
-                            Modifier.weight(1f),
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            if (value > 0) "+$value" else "$value",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = if (value > 0) WinnerColor else MaterialTheme.colorScheme.error,
-                        )
-                    }
+        Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                "$handId",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Icon(Icons.Default.Warning, contentDescription = "Penalty", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            values.forEachIndexed { seat, value ->
+                if (value == 0) return@forEachIndexed
+                val slot = seatSlots.getOrNull(seat)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    PlayerFlag(view.players[slot]?.country, width = 24.dp)
+                    Text(
+                        view.nameOf(slot),
+                        Modifier.weight(1f),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        if (value > 0) "+$value" else "$value",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (value > 0) WinnerColor else MaterialTheme.colorScheme.error,
+                    )
                 }
             }
         }
     }
 }
 
+/**
+ * The result of a hand. The winner is on the first line. The way of winning, the player who discarded and the
+ * chicken are on the second line. The score is at the end of the row.
+ */
 @Composable
-private fun HandCard(view: PlayerTournamentView, hand: TableHand, dark: Boolean) {
+private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) {
     val winnerSlot = hand.playerWinnerId.toIntOrNull()
     val loserSlot = hand.playerLooserId.toIntOrNull()
     val kind = hand.kind()
-    Card(
-        Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            // The hand number has the wind and the place in the round under it, so the row keeps its width.
-            Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    "${hand.handId}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                HandLabel(hand.handId)
-            }
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                if (kind != HandKind.DRAW) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        PlayerFlag(view.players[winnerSlot]?.country, width = 24.dp)
-                        Text(
-                            view.nameOf(winnerSlot),
-                            Modifier.weight(1f, fill = false),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = WinnerColor,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                    }
-                }
+        // The hand number has the wind and the place in the round under it, so the row keeps its width.
+        Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                "${hand.handId}",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            HandLabel(hand.handId)
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (kind != HandKind.DRAW) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    WinTypePill(kind, kind.accent(dark, MaterialTheme.colorScheme.error))
-                    if (hand.isChickenHand) ChickenIcon()
+                    PlayerFlag(view.players[winnerSlot]?.country, width = 24.dp)
+                    Text(
+                        view.nameOf(winnerSlot),
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = WinnerColor,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
                 }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                WinTypePill(kind, kind.accent(dark, MaterialTheme.colorScheme.error))
                 if (kind == HandKind.DISCARD) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(
+                        Modifier.weight(1f, fill = false),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
                         PlayerFlag(view.players[loserSlot]?.country, width = 20.dp)
                         Text(
                             view.nameOf(loserSlot),
@@ -1495,21 +1593,22 @@ private fun HandCard(view: PlayerTournamentView, hand: TableHand, dark: Boolean)
                         )
                     }
                 }
+                if (hand.isChickenHand) ChickenIcon()
             }
-            if (kind != HandKind.DRAW) {
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = Color.Transparent,
-                    border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurface),
-                ) {
-                    Text(
-                        hand.handScore,
-                        Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                    )
-                }
+        }
+        if (kind != HandKind.DRAW) {
+            Surface(
+                shape = RoundedCornerShape(50),
+                color = Color.Transparent,
+                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurface),
+            ) {
+                Text(
+                    hand.handScore,
+                    Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
             }
         }
     }
@@ -1578,7 +1677,7 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
             message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             if (view == null) return@ScreenColumn
             if (tables.isEmpty()) {
-                EmptyState("This player has no table yet.")
+                EmptyState(Icons.Default.People, "No tables yet", "This player has no table in this tournament yet.")
             } else {
                 LazyColumn(
                     state = rememberPersistentLazyListState("tables"),

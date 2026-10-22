@@ -6,6 +6,7 @@ import {
   calculateTableCompletionStatus,
   hasDuplicateEmaAssignments,
   hasFourValidScores,
+  isValidPlayerCount,
 } from "./tournamentContentRules";
 
 test("allows an EMA assignment to an empty slot after progress starts", () => {
@@ -73,4 +74,10 @@ test("table status is completed in hands mode with valid totals", () => {
   assert.equal(calculateTableCompletionStatus({
     hasData: true, seatIds: seats, useTotalsOnly: false, hasValidTotals: true,
   }), "completed");
+});
+
+test("a tournament needs at least 16 players in groups of 4", () => {
+  for (const count of [0, 4, 8, 12, 18, 17, -16, 16.5]) assert.equal(isValidPlayerCount(count), false, `${count}`);
+  for (const count of [16, 20, 60, 128]) assert.equal(isValidPlayerCount(count), true, `${count}`);
+  assert.equal(isValidPlayerCount("16"), false);
 });

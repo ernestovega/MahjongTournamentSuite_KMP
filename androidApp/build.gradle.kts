@@ -16,6 +16,9 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = libs.versions.app.versionCode.get().toInt()
         versionName = libs.versions.app.versionName.get()
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // Every test runs in a new process with empty app data, so no session or cache leaks from one test to the next.
+        testInstrumentationRunnerArguments["clearPackageData"] = "true"
     }
 
     packaging {
@@ -28,6 +31,11 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+    }
+
+    testOptions {
+        execution = "ANDROIDX_TEST_ORCHESTRATOR"
+        animationsDisabled = true
     }
 
     compileOptions {
@@ -43,6 +51,14 @@ kotlin {
 }
 
 dependencies {
+    androidTestImplementation(projects.data)
+    androidTestImplementation(libs.androidx.test.runner)
+    androidTestUtil(libs.androidx.test.orchestrator)
+    androidTestImplementation(libs.androidx.test.ext.junit)
+    // Older Espresso versions fail on the newest Android emulator images (InputManager.getInstance).
+    androidTestImplementation(libs.androidx.test.espresso.core)
+    androidTestImplementation(libs.androidx.compose.ui.test.junit4)
+    debugImplementation(libs.androidx.compose.ui.test.manifest)
     implementation(projects.adminApp)
     implementation(libs.androidx.activity.compose)
     debugImplementation(libs.compose.uiTooling)

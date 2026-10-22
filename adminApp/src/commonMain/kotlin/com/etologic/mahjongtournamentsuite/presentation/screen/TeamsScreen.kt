@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Groups
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
@@ -346,9 +349,9 @@ fun TeamsScreen(
             }
             SectionCard {
                 if (teams.isEmpty() && !loading) {
-                    Text("This tournament does not use teams.")
+                    AppEmptyState(Icons.Default.Groups, "No teams", "This tournament does not use teams.", compact = true)
                 } else if (filteredTeams.isEmpty() && !loading) {
-                    Text("No teams match the current filters.")
+                    AppEmptyState(Icons.Default.Search, "No matches", "No teams match the current filters.", compact = true)
                 }
                 Column(Modifier.fillMaxWidth()) {
                     DataTableHeaderRow {

@@ -80,7 +80,7 @@ class TableSeatsUiTest {
         onNodeWithText("David Moreno").performClick()
         assertEquals(4, opened)
 
-        onNodeWithText("Differences").performClick()
+        onNodeWithText("Diffs").performClick()
         snapshot("seats_diffs", onRoot().captureToImage())
     }
 

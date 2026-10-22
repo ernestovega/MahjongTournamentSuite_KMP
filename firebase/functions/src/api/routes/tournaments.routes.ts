@@ -51,6 +51,7 @@ import {
 } from "../../services/tableManagerService";
 import { actorFromToken } from "../../services/changeLog";
 import { getUserProfile } from "../../services/usersService";
+import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../../services/tournamentContentRules";
 import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
 import { normalizeVenue } from "../../services/tournamentVenue";
 import { getTournamentManifest } from "../../services/dataVersionsService";
@@ -266,8 +267,8 @@ export function tournamentsRouter(): Router {
         issues.push({ field: "eventEndDate", message: "Must not be before eventStartDate", value: body?.eventEndDate });
       }
 
-      if (!Number.isFinite(numPlayers) || !Number.isInteger(numPlayers) || numPlayers <= 0 || numPlayers % 4 !== 0) {
-        issues.push({ field: "numPlayers", message: "Must be a positive integer multiple of 4", value: numPlayersValue });
+      if (!isValidPlayerCount(numPlayers)) {
+        issues.push({ field: "numPlayers", message: `Must be a multiple of 4 and at least ${MIN_TOURNAMENT_PLAYERS}`, value: numPlayersValue });
       }
       if (!Number.isFinite(numRounds) || !Number.isInteger(numRounds) || numRounds <= 0) {
         issues.push({ field: "numRounds", message: "Must be a positive integer", value: numRoundsValue });

@@ -12,10 +12,16 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material3.Icon
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
@@ -46,22 +52,28 @@ fun TournamentStatisticsPanel(
             val minimum = MIN_HANDS_FOR_LEADERBOARD
             val points = statistics.players.filter { it.tablesPlayed > 0 }.sortedByDescending { it.totalPoints }
             LeaderboardCard(
-                "Most points", points, names, { "${formatPoints(it.totalPoints)} points" }, onOpenPlayer,
-                "The sum of the table points of each player, from the completed tables.",
+                "Most points", points, names, { formatPoints(it.totalPoints) }, onOpenPlayer,
+                "The sum of the table points of each player, from the completed tables. " +
+                    "The small number shows the completed tables, for example (5).",
+                calculation = { "(${it.tablesPlayed})" },
             )
             LeaderboardCard(
                 "Best win rate", statistics.winRateLeaders, names, { it.winRate.percent() }, onOpenPlayer,
-                "Players with at least $minimum hands. Hands won divided by hands played.",
-                detail = { "${it.handsPlayed} hands" },
+                "Players with at least $minimum hands. The rate is the hands won divided by the hands played. " +
+                    "The small numbers show the hands won and the hands played, for example (8/48).",
+                calculation = { "(${it.handsWon}/${it.handsPlayed})" },
             )
             LeaderboardCard(
                 "Lowest deal-in rate", statistics.lowestDealInLeaders, names, { it.dealInRate.percent() }, onOpenPlayer,
-                "Players with at least $minimum hands. Deal-ins divided by hands played.",
-                detail = { "${it.handsPlayed} hands" },
+                "Players with at least $minimum hands. The rate is the deal-ins divided by the hands played. " +
+                    "The small numbers show the deal-ins and the hands played, for example (8/48).",
+                calculation = { "(${it.dealIns}/${it.handsPlayed})" },
             )
             LeaderboardCard(
                 "Most self-draws", statistics.selfDrawLeaders, names, { it.selfDraws.toString() }, onOpenPlayer,
-                detail = { "${it.handsPlayed} hands" },
+                "The hands that a player won by self-draw. " +
+                    "The small number shows the hands played, for example (48).",
+                calculation = { "(${it.handsPlayed})" },
             )
         }
         if (statistics.tablesWithHands < statistics.tablesCompleted) {
@@ -81,11 +93,7 @@ fun TournamentStatisticsPanel(
 @Composable
 private fun TournamentTotalsCard(statistics: TournamentStatistics, tournamentCount: Int?, playerCount: Int?) {
     StatCard("Totals", Modifier.fillMaxWidth()) {
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+        StatGrid(Modifier.fillMaxWidth()) {
             if (tournamentCount != null) BigNumber("Tournaments", tournamentCount.toString())
             BigNumber(
                 "Tables",
@@ -109,13 +117,11 @@ private fun TournamentHandsCard(statistics: TournamentStatistics) {
     // The totals of the tournament, not the sums of the players, because the players may be only some of them.
     val selfDraws = statistics.selfDraws
     val byDiscard = (statistics.handsPlayed - statistics.drawnHands - selfDraws).coerceAtLeast(0)
-    val chicken = statistics.chickenHands.coerceAtMost(byDiscard)
     val parts = listOf(
-        Triple("Won by discard", byDiscard - chicken, won.copy(alpha = 0.75f)),
-        Triple("Chicken hands", chicken, MaterialTheme.colorScheme.tertiary),
+        Triple("Won by discard", byDiscard, won.copy(alpha = 0.75f)),
         Triple("Won by self-draw", selfDraws, won.copy(alpha = 0.45f)),
         Triple("Drawn", statistics.drawnHands, MaterialTheme.colorScheme.outline),
-    ).filter { it.second > 0 || it.first != "Chicken hands" }
+    )
     StatCard("Hands", Modifier.fillMaxWidth()) {
         FlowRow(
             Modifier.fillMaxWidth(),
@@ -137,15 +143,17 @@ private fun TournamentHandsCard(statistics: TournamentStatistics) {
             }
         }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            maxItemsInEachRow = RECORDS_PER_ROW,
-        ) {
-            BigNumber("Draw rate", statistics.drawRate.percent(), Modifier.weight(1f))
-            BigNumber("Average winning hand", statistics.averageHandScore.decimal(), Modifier.weight(1f))
-            if (statistics.penaltyCount > 0) BigNumber("Penalties", statistics.penaltyCount.toString(), Modifier.weight(1f))
+        StatGrid(Modifier.fillMaxWidth()) {
+            BigNumber("Draw rate", statistics.drawRate.percent())
+            BigNumber("Average winning hand", statistics.averageHandScore.decimal())
+            if (statistics.penaltyCount > 0) {
+                val points = statistics.penaltyPoints
+                BigNumber(
+                    "Penalties",
+                    if (points != null) "${statistics.penaltyCount} ($points)" else statistics.penaltyCount.toString(),
+                    info = "Number of penalties (total points lost)",
+                )
+            }
         }
     }
 }
@@ -160,20 +168,15 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
     val players = statistics.players
     val streaks = players.map { it.streaks }
     StatCard("Records", Modifier.fillMaxWidth()) {
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            maxItemsInEachRow = RECORDS_PER_ROW,
-        ) {
-            BigNumber("Highest hand score", statistics.highestHand.text(), Modifier.weight(1f))
+        StatGrid(Modifier.fillMaxWidth()) {
+            BigNumber("Highest hand score", statistics.highestHand.text())
             if (!playersAreSums) {
-                BigNumber("Highest table score", players.mapNotNull { it.bestTableScore }.maxOrNull().text(), Modifier.weight(1f))
-                BigNumber("Hands won on a table", players.mapNotNull { it.mostHandsWonAtATable }.maxOrNull().text(), Modifier.weight(1f))
-                BigNumber("Highest penalty got", players.mapNotNull { it.highestPenalty }.maxOrNull().text(), Modifier.weight(1f))
-                BigNumber("Tables won in a row", (streaks.maxOfOrNull { it.tableWins } ?: 0).toString(), Modifier.weight(1f))
-                BigNumber("Hands won in a row", streaks.mapNotNull { it.handsWon }.maxOrNull().text(), Modifier.weight(1f))
-                BigNumber("Hands without a deal-in", streaks.mapNotNull { it.handsWithoutDealIn }.maxOrNull().text(), Modifier.weight(1f))
+                BigNumber("Highest table score", players.mapNotNull { it.bestTableScore }.maxOrNull().text())
+                BigNumber("Hands won on a table", players.mapNotNull { it.mostHandsWonAtATable }.maxOrNull().text())
+                BigNumber("Highest penalty got", players.mapNotNull { it.highestPenalty }.maxOrNull().text())
+                BigNumber("Tables won in a row", (streaks.maxOfOrNull { it.tableWins } ?: 0).toString())
+                BigNumber("Hands won in a row", streaks.mapNotNull { it.handsWon }.maxOrNull().text())
+                BigNumber("Hands without a deal-in", streaks.mapNotNull { it.handsWithoutDealIn }.maxOrNull().text())
             }
         }
     }
@@ -188,34 +191,51 @@ private fun LeaderboardCard(
     value: (PlayerStatistics) -> String,
     onOpenPlayer: ((Int) -> Unit)?,
     info: String? = null,
-    /** A small text before the value of each player, for example the hands that the rate comes from. */
-    detail: ((PlayerStatistics) -> String)? = null,
+    /** A small gray text after the value of each player, for example the numbers that the rate comes from. */
+    calculation: ((PlayerStatistics) -> String)? = null,
 ) {
     if (entries.isEmpty()) return
+    val clickable = onOpenPlayer != null
     StatCard(title, Modifier.fillMaxWidth(), info = info) {
         entries.take(5).forEachIndexed { index, player ->
             if (index > 0) HorizontalDivider()
             Row(
                 Modifier.fillMaxWidth()
-                    .then(if (onOpenPlayer != null) Modifier.clickable { onOpenPlayer(player.playerId) } else Modifier)
+                    .then(
+                        if (onOpenPlayer != null) {
+                            Modifier.clickable(onClickLabel = "Open the statistics of the player") { onOpenPlayer(player.playerId) }
+                        } else {
+                            Modifier
+                        },
+                    )
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("${index + 1}.", Modifier.width(32.dp), style = MaterialTheme.typography.titleMedium)
+                Text("${index + 1}.", Modifier.width(36.dp), style = MaterialTheme.typography.titleLarge)
                 Text(
                     names[player.playerId] ?: "Player ${player.playerId}",
                     Modifier.weight(1f).padding(end = 12.dp),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleLarge,
+                    // A name in the color of the links and an arrow show that the player opens.
+                    color = if (clickable) MaterialTheme.colorScheme.primary else Color.Unspecified,
                 )
-                if (detail != null) {
+                Text(value(player), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                if (calculation != null) {
                     Text(
-                        detail(player),
-                        Modifier.padding(end = 12.dp),
+                        calculation(player),
+                        Modifier.padding(start = 8.dp),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
-                Text(value(player), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                if (clickable) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        Modifier.padding(start = 4.dp).size(24.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                }
             }
         }
     }

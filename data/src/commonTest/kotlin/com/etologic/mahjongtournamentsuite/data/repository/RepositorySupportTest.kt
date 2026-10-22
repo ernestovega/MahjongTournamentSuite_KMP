@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundScheduleDto
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
@@ -91,5 +92,18 @@ class RepositorySupportTest {
         override suspend fun signOut() = Unit
 
         override suspend fun getMe(refreshMode: RefreshMode) = error("Not used")
+    }
+
+    private class FakeConnectException(message: String) : Exception(message)
+
+    @Test
+    fun connectionFailuresBecomeNetworkErrors() {
+        assertEquals(AppError.Network, FakeConnectException("Connection refused").toRepositoryAppError())
+        assertEquals(AppError.Network, IllegalStateException("wrapper", FakeConnectException("down")).toRepositoryAppError())
+    }
+
+    @Test
+    fun otherFailuresStayUnexpectedErrors() {
+        assertIs<AppError.Unexpected>(IllegalStateException("broken").toRepositoryAppError())
     }
 }

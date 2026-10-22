@@ -37,7 +37,6 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.TopAppBarDefaults
@@ -102,7 +101,8 @@ fun AppScaffold(
         modifier = Modifier.appFocusGroup(),
         topBar = {
             CompositionLocalProvider(LocalTopBarLabels provides topBarLabels) {
-            Column {
+            // The progress bar covers the bottom edge of the top bar. It takes no height, so the content under it does not move.
+            Box {
                 val titleContent: @Composable () -> Unit = {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -220,7 +220,7 @@ fun AppScaffold(
                 }
 
                 if (showProgress) {
-                    SlowLinearLoadingIndicator()
+                    SlowLinearLoadingIndicator(Modifier.align(Alignment.BottomCenter))
                 }
             }
             }
@@ -260,7 +260,7 @@ private fun EllipsizedTitleText(
     var isEllipsized by remember(text) { mutableStateOf(false) }
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        tooltip = { PlainTooltip { Text(text) } },
+        tooltip = { AppPlainTooltip { Text(text) } },
         state = rememberTooltipState(),
         enableUserInput = isEllipsized,
     ) {

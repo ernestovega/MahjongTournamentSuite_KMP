@@ -1,15 +1,20 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.LaunchedEffect
@@ -52,7 +57,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -118,11 +122,17 @@ fun PlayerStatisticsPanel(
     rivalNames: Map<String, String> = emptyMap(),
     /** Opens the statistics of a rival. The key is the EMA number. Without it the rival names are plain text. */
     onOpenRival: ((String) -> Unit)? = null,
+    /** Gives the final places in some tournaments. With it, the records show the highest rank of the [tournaments]. */
+    loadStandings: (suspend (List<String>) -> Map<String, Standing>)? = null,
 ) {
     if (statistics.tablesPlayed == 0) {
         Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             header?.invoke()
-            Text("No completed tables yet.", style = MaterialTheme.typography.bodyMedium)
+            AppEmptyState(
+                icon = StatisticsIcon,
+                title = "No statistics yet",
+                message = "The statistics show when the first table is completed.",
+            )
         }
         return
     }
@@ -135,7 +145,7 @@ fun PlayerStatisticsPanel(
                     SkillsCard(statistics, Modifier.fillMaxWidth())
                     PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                     OverviewCard(statistics, Modifier.fillMaxWidth())
-                    RecordsCard(statistics, Modifier.fillMaxWidth())
+                    RecordsCard(statistics, tournaments, loadStandings, Modifier.fillMaxWidth())
                     RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
                 }
             } else {
@@ -143,7 +153,7 @@ fun PlayerStatisticsPanel(
                 SkillsCard(statistics, Modifier.fillMaxWidth())
                 PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                 OverviewCard(statistics, Modifier.fillMaxWidth())
-                RecordsCard(statistics, Modifier.fillMaxWidth())
+                RecordsCard(statistics, tournaments, loadStandings, Modifier.fillMaxWidth())
                 RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
             }
             if (statistics.tablesWithHands < statistics.tablesPlayed) {
@@ -175,7 +185,9 @@ internal fun StatCard(
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+        // The color is opaque, so the shadow does not show through the card.
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface),
+        shadowElevation = 2.dp,
     ) {
         Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // A card that does not fold shows its title at the top of the card.
@@ -200,7 +212,12 @@ internal fun StatCard(
 
 /** The title of a card: big, centered, with room below. The optional [info] icon sits on the right of the title. */
 @Composable
-private fun CardTitle(text: String, modifier: Modifier = Modifier, info: String? = null) {
+private fun CardTitle(
+    text: String,
+    modifier: Modifier = Modifier,
+    info: String? = null,
+    style: TextStyle = MaterialTheme.typography.headlineMedium,
+) {
     Row(
         modifier.fillMaxWidth().padding(bottom = 12.dp),
         horizontalArrangement = Arrangement.Center,
@@ -209,7 +226,7 @@ private fun CardTitle(text: String, modifier: Modifier = Modifier, info: String?
         Text(
             text,
             Modifier.weight(1f, fill = false),
-            style = MaterialTheme.typography.headlineMedium,
+            style = style,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
         )
@@ -217,17 +234,41 @@ private fun CardTitle(text: String, modifier: Modifier = Modifier, info: String?
     }
 }
 
+/**
+ * A small card with the label on top and the value under it. Put it in a [StatGrid].
+ * With [info], a small info icon follows the label and shows the text in a tooltip.
+ * The [suffix] follows the value in a smaller size, for example " of 40".
+ */
 @Composable
-internal fun BigNumber(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold)
-        Text(
-            label,
-            Modifier.padding(horizontal = 4.dp),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+internal fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info: String? = null, suffix: String? = null) {
+    Surface(modifier, shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
+        Column(
+            Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    label,
+                    Modifier.weight(1f, fill = false),
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+                if (info != null) InfoTip(info)
+            }
+            Spacer(Modifier.weight(1f))
+            val valueStyle = MaterialTheme.typography.headlineMedium
+            Text(
+                buildAnnotatedString {
+                    append(value)
+                    if (suffix != null) withStyle(SpanStyle(fontSize = MaterialTheme.typography.titleMedium.fontSize)) { append(suffix) }
+                },
+                style = valueStyle,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
@@ -237,7 +278,7 @@ internal fun BigNumber(label: String, value: String, modifier: Modifier = Modifi
 private fun HoverTip(text: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     TooltipBox(
         positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-        tooltip = { PlainTooltip(Modifier.widthIn(max = 340.dp)) { Text(text) } },
+        tooltip = { AppPlainTooltip(Modifier.widthIn(max = 340.dp)) { Text(text) } },
         state = rememberTooltipState(),
         modifier = modifier,
     ) { content() }
@@ -262,31 +303,35 @@ private fun count(value: Int, of: Int): String =
 
 /** The best values of the player: the highest scores, the most hands at one table, the biggest penalty and the longest runs. */
 @Composable
-private fun RecordsCard(statistics: PlayerStatistics, modifier: Modifier) {
+private fun RecordsCard(
+    statistics: PlayerStatistics,
+    tournaments: List<Tournament>,
+    loadStandings: (suspend (List<String>) -> Map<String, Standing>)?,
+    modifier: Modifier,
+) {
     val streaks = statistics.streaks
+    // The highest rank is the best final place of the player in any of the tournaments. It loads after the card shows.
+    val tournamentIds = remember(tournaments) { tournaments.map { it.id }.filter { it.isNotEmpty() }.distinct() }
+    var standings by remember(tournamentIds) { mutableStateOf<Map<String, Standing>?>(null) }
+    LaunchedEffect(tournamentIds) {
+        if (loadStandings != null && tournamentIds.isNotEmpty()) standings = loadStandings(tournamentIds)
+    }
+    val best = standings?.values?.minWithOrNull(compareBy<Standing> { it.rank }.thenByDescending { it.of })
     StatCard("Records", modifier) {
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            maxItemsInEachRow = RECORDS_PER_ROW,
-        ) {
-            BigNumber("Highest table score", statistics.bestTableScore.text(), Modifier.weight(1f))
-            BigNumber("Highest hand score", statistics.bestHand.text(), Modifier.weight(1f))
-            BigNumber("Hands won on a table", statistics.mostHandsWonAtATable.text(), Modifier.weight(1f))
-            BigNumber("Highest penalty got", statistics.highestPenalty.text(), Modifier.weight(1f))
-            BigNumber("Tables won in a row", streaks.tableWins.toString(), Modifier.weight(1f))
-            BigNumber("Hands won in a row", streaks.handsWon.text(), Modifier.weight(1f))
-            BigNumber("Hands without a deal-in", streaks.handsWithoutDealIn.text(), Modifier.weight(1f))
+        StatGrid(Modifier.fillMaxWidth()) {
+            if (loadStandings != null) BigNumber("Highest rank", best?.rank?.toString() ?: EMPTY, suffix = best?.let { " of ${it.of}" })
+            BigNumber("Highest table score", statistics.bestTableScore.text())
+            BigNumber("Highest hand score", statistics.bestHand.text())
+            BigNumber("Hands won on a table", statistics.mostHandsWonAtATable.text())
+            BigNumber("Highest penalty got", statistics.highestPenalty.text())
+            BigNumber("Tables won in a row", streaks.tableWins.toString())
+            BigNumber("Hands won in a row", streaks.handsWon.text())
+            BigNumber("Hands without a deal-in", streaks.handsWithoutDealIn.text())
         }
     }
 }
 
-/** The numbers in a row of a card. Fewer numbers per row leave room for long names. */
-private const val BIG_NUMBERS_PER_ROW = 3
 
-/** The records are short numbers with short labels, so a row holds one more. */
-internal const val RECORDS_PER_ROW = 4
 
 /** The opponents who did the most harm to the player. The rule and the weights are in `RivalWeights`. */
 @Composable
@@ -302,11 +347,11 @@ private fun RivalsCard(
         modifier,
         info = "Rivals are ordered by a score. A higher score means a tougher rival.\n" +
                 "Everything counts only on tables where you played with that rival.\n" +
-                "The score adds points for each way that the rival hurt you:\n" +
-                "• ${RivalWeights.TABLE_BEHIND.toInt()} for each table where the rival finished above you.\n" +
-                "• ${RivalWeights.DISCARD_LOSS.toInt()} for each hand that you discarded and the rival won.\n" +
-                "• ${RivalWeights.SELF_DRAW_LOSS.toInt()} for each hand that the rival won by self-draw.\n" +
-                "• ${RivalWeights.OTHERS_DISCARD_WIN.toInt()} for each hand that the rival won on the discard of another player, not yours.\n" +
+                "The score adds points for each of these numbers:\n" +
+                "• ${RivalWeights.TABLE_BEHIND.toInt()} for each \"Ahead of you\": a table where the rival finished above you.\n" +
+                "• ${RivalWeights.DISCARD_LOSS.toInt()} for each \"Deal-in\": a hand that you discarded and the rival won.\n" +
+                "• ${RivalWeights.SELF_DRAW_LOSS.toInt()} for each \"Self-draw\": a hand that the rival won by self-draw.\n" +
+                "• ${RivalWeights.OTHERS_DISCARD_WIN.toInt()} for each \"Third party deal-in\": a hand that the rival won on the discard of another player, not yours. You lose points in this hand too.\n" +
                 "The sum is divided by the shared tables so a rival is not first only because you met often.",
     ) {
         if (rivals.isEmpty()) {
@@ -321,29 +366,53 @@ private fun RivalsCard(
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 // A rival with an EMA number has a statistics page. A key with a hash has none.
                 val open = onOpenRival?.takeIf { '#' !in rival.opponent }
-                Text(
-                    "${index + 1}. ${rivalName(rival.opponent, names)}",
-                    if (open != null) Modifier.clickable { open(rival.opponent) } else Modifier,
-                    style = MaterialTheme.typography.titleMedium,
-                    color = if (open != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                    textDecoration = if (open != null) TextDecoration.Underline else null,
-                )
-                FlowRow(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    maxItemsInEachRow = BIG_NUMBERS_PER_ROW,
-                ) {
-                    BigNumber("Shared tables", rival.sharedTables.toString(), Modifier.weight(1f))
-                    BigNumber("Finished above you", rival.tablesBehind.toString(), Modifier.weight(1f))
-                    BigNumber("Your discards to him/her", rival.discardLosses.toString(), Modifier.weight(1f))
-                    BigNumber("His/her self-draws", rival.selfDrawLosses.toString(), Modifier.weight(1f))
-                    BigNumber("His/her wins on another discard", rival.othersDiscardWins.toString(), Modifier.weight(1f))
+                RivalHeading(rivalName(rival.opponent, names), heat = FLAMES - index, open = open?.let { { it(rival.opponent) } })
+                StatGrid(Modifier.fillMaxWidth()) {
+                    BigNumber("Shared tables", rival.sharedTables.toString())
+                    BigNumber("Ahead of you", rival.tablesBehind.toString())
+                    BigNumber("Wins against you", (rival.discardLosses + rival.selfDrawLosses + rival.othersDiscardWins).toString())
+                    BigNumber("Deal-ins", rival.discardLosses.toString())
+                    BigNumber("Self-draws", rival.selfDrawLosses.toString())
+                    BigNumber("Third party deal-ins", rival.othersDiscardWins.toString())
                 }
             }
         }
     }
 }
+
+/**
+ * The name of a rival, centered, with a row of flames over it like the heat of a dish.
+ * [heat] flames burn out of [FLAMES] for the toughest rival. The others have fewer.
+ * The name is a link when [open] is set.
+ */
+@Composable
+private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
+    val flame = MaterialTheme.colorScheme.error
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+            repeat(FLAMES) { index ->
+                Icon(
+                    Icons.Default.LocalFireDepartment,
+                    contentDescription = null,
+                    Modifier.size(24.dp),
+                    tint = if (index < heat) flame else MaterialTheme.colorScheme.outlineVariant,
+                )
+            }
+        }
+        Text(
+            name,
+            if (open != null) Modifier.clickable(onClick = open) else Modifier,
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            color = if (open != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
+            textDecoration = if (open != null) TextDecoration.Underline else null,
+        )
+    }
+}
+
+/** The flames in the heat row of a rival. */
+private const val FLAMES = 3
 
 private fun rivalName(key: String, names: Map<String, String>): String = names[key] ?: when {
     '#' in key -> "Player ${key.substringAfter('#')}"
@@ -354,11 +423,7 @@ private fun rivalName(key: String, names: Map<String, String>): String = names[k
 private fun OverviewCard(statistics: PlayerStatistics, modifier: Modifier) {
     val hasHands = statistics.tablesWithHands > 0
     StatCard("Totals", modifier) {
-        FlowRow(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-        ) {
+        StatGrid(Modifier.fillMaxWidth()) {
             BigNumber("Tournaments", statistics.tournamentsPlayed.toString())
             BigNumber("Tables", statistics.tablesPlayed.toString())
             BigNumber("Hands", if (hasHands) statistics.handsPlayed.toString() else EMPTY)
@@ -374,29 +439,28 @@ private fun OverviewCard(statistics: PlayerStatistics, modifier: Modifier) {
 private fun penaltiesText(s: PlayerStatistics): String =
     if (s.tablesWithHands > 0) "${s.penaltyCount} (${s.penaltyPoints})" else EMPTY
 
-/** The hands won, lost and drawn in the inner ring. The way of each win or loss in the outer ring. */
+/** The hands won, lost and neutral (drawn, or won by a third player with a discard) in the inner ring. The way of each win or loss in the outer ring. */
 @Composable
-private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp) {
+private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier = Modifier) {
     val won = MaterialTheme.colorScheme.primary
     val lost = MaterialTheme.colorScheme.error
-    val drawn = MaterialTheme.colorScheme.outline
-    // [inOuter] parts are the sectors of the outer ring. The wins by discard are split in chicken hands and the rest.
+    val neutral = MaterialTheme.colorScheme.outline
+    // [inOuter] parts are the sectors of the outer ring.
     class Part(val label: String, val value: Int, val color: Color, val sub: Boolean, val inOuter: Boolean = sub)
-    val chicken = s.chickenWins
-    val parts = listOfNotNull(
+    val parts = listOf(
         Part("Hands won", s.handsWon, won, false),
-        Part("By discard", s.winsByDiscard - chicken, won.copy(alpha = 0.75f), true),
-        Part("Chicken hands", chicken, MaterialTheme.colorScheme.tertiary, true).takeIf { chicken > 0 },
+        Part("By discard", s.winsByDiscard, won.copy(alpha = 0.75f), true),
         Part("By self-draw", s.selfDraws, won.copy(alpha = 0.45f), true),
-        Part("Hands lost", s.handsLost, lost, false),
+        Part("Hands lost", s.dealIns + s.lostToSelfDraws, lost, false),
         Part("By discard (deal-in)", s.dealIns, lost.copy(alpha = 0.75f), true),
-        Part("By selfdraw", s.lostToSelfDraws, lost.copy(alpha = 0.55f), true),
-        Part("By others discard", s.otherWins, lost.copy(alpha = 0.35f), true),
-        Part("Hands drawn", s.drawnHands, drawn, false, inOuter = true),
+        Part("By selfdraw", s.lostToSelfDraws, lost.copy(alpha = 0.5f), true),
+        Part("Neutral hands", s.otherWins + s.drawnHands, neutral, false),
+        Part("Third player win", s.otherWins, neutral.copy(alpha = 0.75f), true),
+        Part("Hands drawn", s.drawnHands, neutral.copy(alpha = 0.5f), true),
     )
     val inner = parts.filter { !it.sub }.map { Slice(it.value, it.color) }
     val outer = parts.filter { it.inOuter }.map { Slice(it.value, it.color) }
-    BoxWithConstraints(Modifier.fillMaxWidth()) {
+    BoxWithConstraints(modifier.fillMaxWidth()) {
         val legend: @Composable (Modifier) -> Unit = { m ->
             Column(m, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 parts.forEach { part ->
@@ -669,11 +733,12 @@ private fun LevelBadge(statistics: PlayerStatistics) {
 @Composable
 private fun SkillsBlock(statistics: PlayerStatistics, chartHeight: Dp, modifier: Modifier = Modifier, showLevel: Boolean = true) {
     if (statistics.tablesWithHands == 0) {
-        Text(
-            "Skills need tables with entered hands.",
-            modifier,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        AppEmptyState(
+            icon = StatisticsIcon,
+            title = "No skills yet",
+            message = "Skills need tables with entered hands.",
+            modifier = modifier,
+            compact = true,
         )
         return
     }
@@ -725,15 +790,15 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
             skills.forEach { skill ->
                 TooltipBox(
                     positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                    tooltip = { PlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(skill.explanation) } },
+                    tooltip = { AppPlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(skill.explanation) } },
                     state = rememberTooltipState(),
                 ) {
                     Column(
                         Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(skill.label, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+                        // The info icon follows the last word of the name, so a name with a second line keeps the first line short.
+                        val info: @Composable () -> Unit = {
                             Icon(
                                 Icons.Outlined.Info,
                                 contentDescription = "More information",
@@ -741,7 +806,17 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
-                        skill.subLabel?.let { Text(it, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center) }
+                        val rowSpacing = Arrangement.spacedBy(4.dp)
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = rowSpacing) {
+                            Text(skill.label, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+                            if (skill.subLabel == null) info()
+                        }
+                        skill.subLabel?.let {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = rowSpacing) {
+                                Text(it, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+                                info()
+                            }
+                        }
                         Text(skill.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
                     }
                 }
@@ -970,17 +1045,26 @@ fun PlayerTournamentsSection(
                     "Tournament", options, selectedId, { selectedId = it },
                     Modifier.widthIn(min = 240.dp).weight(1f),
                 )
-                DateField("From", from, { from = it }, Modifier.width(190.dp))
-                DateField("To", to, { to = it }, Modifier.width(190.dp))
-                val anyOpen = expanded.values.any { it }
-                HoverTip(if (anyOpen) "Fold all" else "Unfold all") {
-                    IconButton(onClick = { visible.forEach { expanded[it.first.id] = !anyOpen } }) {
-                        Icon(
-                            if (anyOpen) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore,
-                            contentDescription = if (anyOpen) "Fold all" else "Unfold all",
-                        )
-                    }
+                // The two dates stay in one line. On a narrow screen they share the full width.
+                Row(Modifier.widthIn(max = 392.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    DateField("From", from, { from = it }, Modifier.weight(1f))
+                    DateField("To", to, { to = it }, Modifier.weight(1f))
                 }
+                val anyOpen = expanded.values.any { it }
+                TextButton(onClick = { visible.forEach { expanded[it.first.id] = !anyOpen } }) {
+                    Icon(if (anyOpen) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore, contentDescription = null)
+                    Spacer(Modifier.width(8.dp))
+                    Text(if (anyOpen) "Fold all" else "Unfold all", maxLines = 1, softWrap = false)
+                }
+            }
+        }
+        // The same button as the one on top. It is also at the end of the list, so the user does not scroll back up.
+        val foldAllButton: @Composable () -> Unit = {
+            val anyVisibleOpen = visible.any { expanded[it.first.id] == true }
+            OutlinedButton(onClick = { visible.forEach { expanded[it.first.id] = !anyVisibleOpen } }) {
+                Icon(if (anyVisibleOpen) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(if (anyVisibleOpen) "Fold all" else "Unfold all", maxLines = 1, softWrap = false)
             }
         }
         visible.forEach { (tournament, stats) ->
@@ -992,38 +1076,34 @@ fun PlayerTournamentsSection(
                 onToggle = { expanded[tournament.id] = !open },
             ) {
                 val hasHands = stats.tablesWithHands > 0
-                FlowRow(
-                    Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceEvenly,
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically,
-                    maxItemsInEachRow = TOURNAMENT_NUMBERS_PER_ROW,
-                ) {
+                StatGrid(Modifier.fillMaxWidth()) {
                     LevelMedalWithScore(stats)
-                    standings[tournament.id]?.let { BigNumber("Rank", "${it.rank} of ${it.of}") }
+                    standings[tournament.id]?.let { BigNumber("Rank", it.rank.toString(), suffix = " of ${it.of}") }
                     BigNumber("Tables", stats.tablesPlayed.toString())
                     BigNumber("Hands", if (hasHands) stats.handsPlayed.toString() else EMPTY)
                     BigNumber("Best table score", stats.bestTableScore.text())
                     BigNumber("Best hand", stats.bestHand.text())
                     if (tournament.countChickenHands && hasHands) BigNumber("Chicken hands", stats.chickenHands.toString())
-                    BigNumber("Penalties", penaltiesText(stats))
+                    BigNumber("Penalties", penaltiesText(stats), info = "Number of penalties (total points lost)")
                 }
+                // The skills, the places and the hands go in one row when there is room. With less room they move to the next row.
                 BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 28.dp)) {
-                    if (maxWidth >= 560.dp) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                            SkillsBlock(stats, 240.dp, Modifier.weight(1f), showLevel = false)
-                            PlaceSectors(stats, 170.dp, Modifier.weight(1f))
-                        }
-                    } else {
-                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            SkillsBlock(stats, 240.dp, Modifier.fillMaxWidth(), showLevel = false)
-                            PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth())
+                    val blocks = buildList<@Composable (Modifier) -> Unit> {
+                        add { m -> TitledBlock("Skills", m) { SkillsBlock(stats, 240.dp, Modifier.fillMaxWidth(), showLevel = false) } }
+                        add { m -> TitledBlock("Places", m) { PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth()) } }
+                        if (hasHands) add { m -> TitledBlock("Hands", m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }
+                    }
+                    val gap = 24.dp
+                    val columns = ((maxWidth + gap) / (TOURNAMENT_BLOCK_MIN_WIDTH + gap)).toInt().coerceIn(1, blocks.size)
+                    Column(verticalArrangement = Arrangement.spacedBy(gap)) {
+                        blocks.chunked(columns).forEachIndexed { index, row ->
+                            if (index > 0) HorizontalDivider()
+                            Row(horizontalArrangement = Arrangement.spacedBy(gap), verticalAlignment = Alignment.Top) {
+                                // A row with a single block, as the last row, uses the full width.
+                                row.forEach { block -> block(Modifier.weight(1f)) }
+                            }
                         }
                     }
-                }
-                if (hasHands) {
-                    HorizontalDivider()
-                    HandOutcomes(stats, 260.dp)
                 }
             }
         }
@@ -1035,21 +1115,34 @@ fun PlayerTournamentsSection(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
+            if (visible.size > 1) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { foldAllButton() }
         } else ShowMoreTournaments(
             shown = visible.size,
             total = sorted.size,
             onShowMore = { shown = (shown + TOURNAMENTS_STEP).coerceAtMost(sorted.size) },
             onShowAll = { shown = sorted.size },
+            foldAll = if (visible.size > 1) foldAllButton else null,
         )
     }
 }
 
 /** The number of tournaments that show at the start, and the number that one tap of "show more" adds. */
 private const val INITIAL_TOURNAMENTS = 5
-private const val TOURNAMENTS_STEP = 5
 
-/** The totals of a tournament card flow in rows of this size. */
-private const val TOURNAMENT_NUMBERS_PER_ROW = 4
+/** A chart block of a tournament card with its title on top. The titles of a row line up at the top. */
+@Composable
+private fun TitledBlock(title: String, modifier: Modifier, content: @Composable () -> Unit) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // A little smaller than the titles of the cards of "Me".
+        CardTitle(title, style = MaterialTheme.typography.headlineSmall)
+        content()
+    }
+}
+
+/** The least width of a chart block in a tournament card. A narrower space moves the block to the next row. */
+private val TOURNAMENT_BLOCK_MIN_WIDTH = 340.dp
+
+private const val TOURNAMENTS_STEP = 5
 
 /** The way to load more tournaments: by quantity or by date. Nothing shows when all tournaments are visible. */
 @Composable
@@ -1058,14 +1151,18 @@ private fun ShowMoreTournaments(
     total: Int,
     onShowMore: () -> Unit,
     onShowAll: () -> Unit,
+    /** The button that folds or unfolds all the cards. It sits with the buttons that show more tournaments. */
+    foldAll: (@Composable () -> Unit)? = null,
 ) {
-    if (total <= INITIAL_TOURNAMENTS) return
+    if (total <= INITIAL_TOURNAMENTS && foldAll == null) return
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            "Showing $shown of $total tournaments. The newest tournaments come first.",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (total > INITIAL_TOURNAMENTS) {
+            Text(
+                "Showing $shown of $total tournaments. The newest tournaments come first.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1075,6 +1172,7 @@ private fun ShowMoreTournaments(
                 OutlinedButton(onClick = onShowMore) { Text("Show $TOURNAMENTS_STEP more") }
                 OutlinedButton(onClick = onShowAll) { Text("Show all") }
             }
+            foldAll?.invoke()
         }
     }
 }
@@ -1088,10 +1186,18 @@ private fun tableTime(result: TableResult, tournaments: List<Tournament>): Strin
     return "$date\n${schedule?.startTime ?: EMPTY}"
 }
 
+/** The short name of the tournament, the round and the table, for example "EMA Open - Round 2 - Table 5". */
+private fun tableLabel(result: TableResult, tournaments: List<Tournament>): String {
+    val tournament = tournaments.firstOrNull { it.id == result.tournamentId } ?: tournaments.singleOrNull()
+    val name = tournament?.let { it.shortName.ifBlank { it.name } }.orEmpty()
+    return listOf(name, "Round ${result.roundId}", "Table ${result.tableId}").filter { it.isNotBlank() }.joinToString(" - ")
+}
+
 @Composable
 private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournament>) {
     val places = results.map { it.position }
     val times = results.map { tableTime(it, tournaments) }
+    val tips = results.mapIndexed { index, result -> tableLabel(result, tournaments) + "\n" + times[index].replace('\n', ' ') }
     Text("Place in the last ${places.size} tables", Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
     val pointColors = (1..4).map { positionColor(it) }
     val grid = MaterialTheme.colorScheme.outlineVariant
@@ -1135,7 +1241,7 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
             drawText(layout, topLeft = Offset(labelX, size.height - bottom + 10.dp.toPx()))
         }
     }
-    // Each dot has a transparent box over it. The box shows only the date and time of the table in a tooltip.
+    // Each dot has a transparent box over it. The box shows the tournament, round, table, date and time in a tooltip.
     val plotWidth = maxWidth - 36.dp - 24.dp
     val plotHeight = maxHeight - 12.dp - 44.dp
     places.forEachIndexed { step, place ->
@@ -1143,7 +1249,7 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
         val centerY = 12.dp + plotHeight * (place - 1) / 3f
         // The offset sits on a wrapper. The tooltip box must be the 24 dp box itself, or its anchor is not the dot.
         Box(Modifier.offset(centerX - 12.dp, centerY - 12.dp).size(24.dp)) {
-            HoverTip(times[step].replace('\n', ' '), Modifier.size(24.dp)) { Box(Modifier.size(24.dp)) }
+            HoverTip(tips[step], Modifier.size(24.dp)) { Box(Modifier.size(24.dp)) }
         }
     }
     }

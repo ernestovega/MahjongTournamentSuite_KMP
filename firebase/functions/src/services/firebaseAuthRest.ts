@@ -12,6 +12,12 @@ type FirebaseAuthError = {
 
 import { ID_TOOLKIT_API_KEY } from "../config";
 
+/** The Auth emulator serves the same paths over http. Only local test runs set this variable. */
+function googleApi(host: "identitytoolkit" | "securetoken"): string {
+  const emulator = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+  return emulator ? `http://${emulator}/${host}.googleapis.com` : `https://${host}.googleapis.com`;
+}
+
 function apiKey(): string {
   const key = ID_TOOLKIT_API_KEY.value();
   if (!key) {
@@ -40,7 +46,7 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
 }
 
 export async function signInWithEmailPassword(email: string, password: string): Promise<AuthTokens> {
-  const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey()}`;
+  const url = `${googleApi("identitytoolkit")}/v1/accounts:signInWithPassword?key=${apiKey()}`;
   const json = await postJson<{ idToken: string; refreshToken: string; localId: string }>(url, {
     email,
     password,
@@ -55,7 +61,7 @@ export async function signInWithEmailPassword(email: string, password: string): 
 }
 
 export async function sendPasswordResetEmail(email: string): Promise<void> {
-  const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey()}`;
+  const url = `${googleApi("identitytoolkit")}/v1/accounts:sendOobCode?key=${apiKey()}`;
   await postJson(url, {
     requestType: "PASSWORD_RESET",
     email,
@@ -63,7 +69,7 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
 }
 
 export async function refreshIdToken(refreshToken: string): Promise<{ idToken: string; refreshToken: string }> {
-  const url = `https://securetoken.googleapis.com/v1/token?key=${apiKey()}`;
+  const url = `${googleApi("securetoken")}/v1/token?key=${apiKey()}`;
   const body = new URLSearchParams({
     grant_type: "refresh_token",
     refresh_token: refreshToken,

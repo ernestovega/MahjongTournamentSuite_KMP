@@ -4,6 +4,11 @@ exports.signInWithEmailPassword = signInWithEmailPassword;
 exports.sendPasswordResetEmail = sendPasswordResetEmail;
 exports.refreshIdToken = refreshIdToken;
 const config_1 = require("../config");
+/** The Auth emulator serves the same paths over http. Only local test runs set this variable. */
+function googleApi(host) {
+    const emulator = process.env.FIREBASE_AUTH_EMULATOR_HOST;
+    return emulator ? `http://${emulator}/${host}.googleapis.com` : `https://${host}.googleapis.com`;
+}
 function apiKey() {
     const key = config_1.ID_TOOLKIT_API_KEY.value();
     if (!key) {
@@ -27,7 +32,7 @@ async function postJson(url, body) {
     return json;
 }
 async function signInWithEmailPassword(email, password) {
-    const url = `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${apiKey()}`;
+    const url = `${googleApi("identitytoolkit")}/v1/accounts:signInWithPassword?key=${apiKey()}`;
     const json = await postJson(url, {
         email,
         password,
@@ -40,14 +45,14 @@ async function signInWithEmailPassword(email, password) {
     };
 }
 async function sendPasswordResetEmail(email) {
-    const url = `https://identitytoolkit.googleapis.com/v1/accounts:sendOobCode?key=${apiKey()}`;
+    const url = `${googleApi("identitytoolkit")}/v1/accounts:sendOobCode?key=${apiKey()}`;
     await postJson(url, {
         requestType: "PASSWORD_RESET",
         email,
     });
 }
 async function refreshIdToken(refreshToken) {
-    const url = `https://securetoken.googleapis.com/v1/token?key=${apiKey()}`;
+    const url = `${googleApi("securetoken")}/v1/token?key=${apiKey()}`;
     const body = new URLSearchParams({
         grant_type: "refresh_token",
         refresh_token: refreshToken,

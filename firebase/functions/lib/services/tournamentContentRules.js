@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.MAX_BEST_HANDS = void 0;
+exports.MIN_TOURNAMENT_PLAYERS = exports.MAX_BEST_HANDS = void 0;
 exports.blocksAssignmentChangeAfterProgress = blocksAssignmentChangeAfterProgress;
 exports.hasFourValidScores = hasFourValidScores;
 exports.calculateTableCompletionStatus = calculateTableCompletionStatus;
@@ -8,6 +8,7 @@ exports.calculateBestHandScores = calculateBestHandScores;
 exports.countChickenHands = countChickenHands;
 exports.calculateHandSummary = calculateHandSummary;
 exports.hasDuplicateEmaAssignments = hasDuplicateEmaAssignments;
+exports.isValidPlayerCount = isValidPlayerCount;
 function blocksAssignmentChangeAfterProgress(previousEmaId, nextEmaId, tournamentHasProgress) {
     return tournamentHasProgress && previousEmaId != null && previousEmaId !== nextEmaId;
 }
@@ -60,5 +61,10 @@ function hasDuplicateEmaAssignments(values) {
 }
 function hasFourValidNumbers(values) {
     return values.length === 4 && values.every((value) => /^-?\d+$/.test(String(value ?? "").trim()));
+}
+/** A tournament has at least 16 players, always in groups of 4 (one table). */
+exports.MIN_TOURNAMENT_PLAYERS = 16;
+function isValidPlayerCount(value) {
+    return typeof value === "number" && Number.isInteger(value) && value >= exports.MIN_TOURNAMENT_PLAYERS && value % 4 === 0;
 }
 //# sourceMappingURL=tournamentContentRules.js.map

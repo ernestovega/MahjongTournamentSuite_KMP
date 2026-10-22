@@ -35,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -230,7 +231,7 @@ private fun RoundTableStrip(
     val chipsState = rememberLazyListState()
     var roundMenuOpen by remember { mutableStateOf(false) }
     val roundStatus = roundCompletionStatus(tables)
-    Card(modifier = Modifier.fillMaxWidth().appFocusGroup()) {
+    Card(modifier = Modifier.fillMaxWidth().appFocusGroup(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),

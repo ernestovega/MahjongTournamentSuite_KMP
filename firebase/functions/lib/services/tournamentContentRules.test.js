@@ -60,4 +60,11 @@ const seats = ["1", "2", "3", "4"];
         hasData: true, seatIds: seats, useTotalsOnly: false, hasValidTotals: true,
     }), "completed");
 });
+(0, node_test_1.default)("a tournament needs at least 16 players in groups of 4", () => {
+    for (const count of [0, 4, 8, 12, 18, 17, -16, 16.5])
+        strict_1.default.equal((0, tournamentContentRules_1.isValidPlayerCount)(count), false, `${count}`);
+    for (const count of [16, 20, 60, 128])
+        strict_1.default.equal((0, tournamentContentRules_1.isValidPlayerCount)(count), true, `${count}`);
+    strict_1.default.equal((0, tournamentContentRules_1.isValidPlayerCount)("16"), false);
+});
 //# sourceMappingURL=tournamentContentRules.test.js.map

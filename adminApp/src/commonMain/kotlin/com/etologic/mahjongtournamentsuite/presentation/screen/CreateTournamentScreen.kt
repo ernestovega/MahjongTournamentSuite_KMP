@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.presentation.components.toDateInput
+import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -28,7 +29,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -93,6 +93,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePi
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
+import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCountValidator
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -259,8 +260,8 @@ fun CreateTournamentDialog(
             errorMessage = "* Enter valid DD/MM/YYYY dates. The end date must not be before the start date."
             return
         }
-        if (numPlayers == null || numPlayers <= 0 || numPlayers % 4 != 0) {
-            errorMessage = "* Must be a positive multiple of 4."
+        if (numPlayers == null || !TournamentPlayerCountValidator.isValid(numPlayers)) {
+            errorMessage = "* Must be a multiple of 4 and at least ${TournamentPlayerCountValidator.MIN_PLAYERS}."
             playersFocusRequester.requestFocus()
             return
         }
@@ -387,7 +388,7 @@ fun CreateTournamentDialog(
                             value = numPlayersText,
                             onValueChange = { numPlayersText = it.toDigitsInput() },
                             label = { Text("Players") },
-                            placeholder = { Text("Multiple of 4") },
+                            placeholder = { Text("Multiple of 4, minimum ${TournamentPlayerCountValidator.MIN_PLAYERS}") },
                             modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
                             singleLine = true,
                             enabled = !isLoading,
@@ -764,7 +765,7 @@ private fun SwitchInfoTooltip(description: String) {
 
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text(description) } },
+        tooltip = { AppPlainTooltip { Text(description) } },
         state = tooltipState,
     ) {
         IconButton(

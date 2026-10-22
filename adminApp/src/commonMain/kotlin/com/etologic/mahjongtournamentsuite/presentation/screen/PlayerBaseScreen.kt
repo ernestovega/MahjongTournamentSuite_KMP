@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.PersonSearch
+import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.components.toCountryCodeInput
@@ -41,7 +44,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.runtime.Composable
@@ -594,7 +596,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     TooltipAnchorPosition.Above,
                                 ),
                                 tooltip = {
-                                    PlainTooltip {
+                                    AppPlainTooltip {
                                         Text(
                                             "$countryName · $countryPlayerCount " +
                                                 if (countryPlayerCount == 1) "player" else "players",
@@ -720,9 +722,11 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     title = "Player details",
                 ) {
                     if (selected == null) {
-                        Text(
-                            text = "No player selected.",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        AppEmptyState(
+                            icon = Icons.Default.PersonSearch,
+                            title = "No player selected",
+                            message = "Choose a player in the list to see the details.",
+                            compact = true,
                         )
                     } else {
                         val detailsScrollState = rememberScrollState()
@@ -912,7 +916,7 @@ private fun CountryFlagWithTooltip(code: String, countries: List<Country>) {
     val country = countries.firstOrNull { it.code == code }
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { PlainTooltip { Text(country?.name ?: code) } },
+        tooltip = { AppPlainTooltip { Text(country?.name ?: code) } },
         state = rememberTooltipState(),
     ) {
         CountryFlag(code = code, contentDescription = country?.name ?: code)

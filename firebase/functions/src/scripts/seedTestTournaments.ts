@@ -4,6 +4,7 @@ import { db, firebaseProjectId } from "../firebase";
 import { globalVersionUpdate } from "../services/dataVersionsService";
 import { handScoreTotals, tablePointsOf } from "../services/handScoring";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
+import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../services/tournamentContentRules";
 import {
   randomTable,
   seededRng,
@@ -21,10 +22,10 @@ import { calculateTableSummary, defaultHand, HANDS_PER_TABLE } from "../services
  * Every tournament has a fixed id that starts with "test-". A new run deletes the old copy of the same id and
  * writes it again. The script never touches other tournaments.
  *
- * It previews by default. Add --apply to write. Add --only=<tournamentId> to run one tournament.
+ * It previews by default. Add --apply to write. Add --only=<id>,<id> to run some tournaments.
  */
 const applyChanges = process.argv.includes("--apply");
-const only = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1];
+const only = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1]?.split(",");
 
 const CREATED_BY_UID = "h0Hgasv0Y1VBOXDVnAoSq1X8RMQ2";
 const TEST_EDITOR_UID = "RH9PioX5AvNDulLDVa2JX45SP7H3";
@@ -64,6 +65,8 @@ type TournamentSpec = {
   hostCity: string;
   venue: Venue | null;
   contactEmail: string;
+  /** An address that does not load, to check how the screens look without the logo. */
+  logoUrl?: string;
   isTeams: boolean;
   teamNames?: string[];
   numRounds: number;
@@ -90,6 +93,12 @@ function addDays(date: string, days: number): string {
   value.setUTCDate(value.getUTCDate() + days);
   return value.toISOString().slice(0, 10);
 }
+
+/**
+ * The live tournament starts 36 hours before the seed run. Rounds 1 to 4 and the first round of the second day
+ * have then started in every time zone, so players can enter their tables.
+ */
+const TODAY = new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
 /** Rounds are spread over the days. [perDay] rounds happen on one day. */
 function spread(numRounds: number, startDate: string, perDay = DAY_TIMES.length): Array<{ date: string; startTime: string }> {
@@ -152,15 +161,15 @@ function cycle<T>(items: T[], index: number): T {
 
 const TOURNAMENTS: TournamentSpec[] = [
   {
-    id: "test-min-4",
-    name: "Test - Minimum 4 players",
-    shortName: "TEST MIN4",
+    id: "test-min-16",
+    name: "Test - Minimum 16 players",
+    shortName: "TEST MIN16",
     primaryColor: "#02B16B",
     startDate: "2026-06-13", endDate: "2026-06-13",
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-min@example.com",
     isTeams: false, numRounds: 1,
-    players: ["ema", "ema", "ema", "ema"],
+    players: Array.from({ length: 16 }, () => "ema" as const),
     countBestHands: true, countChickenHands: true,
     schedule: [{ date: "2026-06-13", startTime: "10:00" }],
     agenda: [{ title: "Only game", date: "2026-06-13", startTime: "10:00" }],
@@ -191,7 +200,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Sevilla",
     venue: ESKALERRIA, contactEmail: "test-ties@example.com",
     isTeams: false, numRounds: 4,
-    players: mixedPlayers(8, 2),
+    players: mixedPlayers(16, 2),
     countBestHands: true, countChickenHands: true,
     schedule: spread(4, "2026-07-18", 2),
     agenda: standardAgenda("2026-07-18", "2026-07-19"),
@@ -209,7 +218,8 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Valencia",
     venue: ESKALERRIA, contactEmail: "test-guests@example.com",
     isTeams: false, numRounds: 4,
-    players: UNICODE_GUESTS,
+    // The special names fill the first slots. EMA players fill the rest up to the minimum of 16.
+    players: [...UNICODE_GUESTS, ...Array.from({ length: 16 - UNICODE_GUESTS.length }, () => "ema" as const)],
     countBestHands: true, countChickenHands: true,
     schedule: spread(4, "2026-08-01", 2),
     agenda: standardAgenda("2026-08-01", "2026-08-02"),
@@ -366,11 +376,47 @@ const TOURNAMENTS: TournamentSpec[] = [
     }),
   },
   {
+    id: "test-large",
+    name: "Test - Large team tournament",
+    shortName: "LARGE",
+    primaryColor: "#006064",
+    startDate: "2026-10-03", endDate: "2026-10-04",
+    hostCountry: "ES", hostCity: "Madrid",
+    venue: ESKALERRIA, contactEmail: "test-large@example.com",
+    isTeams: true, numRounds: 3,
+    players: mixedPlayers(64, 8),
+    countBestHands: true, countChickenHands: true,
+    schedule: spread(3, "2026-10-03", 2),
+    agenda: standardAgenda("2026-10-03", "2026-10-04"),
+    // Sixteen tables per round. The last round is a mix of finished, running and empty tables.
+    mode: (round, table) => {
+      if (round < 3) return { kind: "full" };
+      return cycle<TableMode>([{ kind: "full" }, { kind: "partial", done: 7 }, { kind: "seats" }, { kind: "empty" }], table - 1);
+    },
+  },
+  {
+    id: "test-last-table",
+    name: "Test - One table left, broken logo, chicken hands off",
+    shortName: "LASTTABLE",
+    primaryColor: "#33691E",
+    startDate: "2026-10-10", endDate: "2026-10-10",
+    hostCountry: "ES", hostCity: "Granada",
+    venue: ESKALERRIA, contactEmail: "test-last@example.com",
+    logoUrl: "https://invalid.example.test/logo.png",
+    isTeams: false, numRounds: 3,
+    players: mixedPlayers(24, 6),
+    countBestHands: true, countChickenHands: false,
+    schedule: spread(3, "2026-10-10"),
+    agenda: standardAgenda("2026-10-10", "2026-10-10"),
+    // Only table 6 of round 3 has one hand left. Writing it completes the tournament.
+    mode: (round, table) => (round === 3 && table === 6 ? { kind: "partial", done: 15 } : { kind: "full" }),
+  },
+  {
     id: "test-live-ongoing",
     name: "Test - Live ongoing tournament",
     shortName: "LIVE",
     primaryColor: "#D81B60",
-    startDate: "2026-10-16", endDate: "2026-10-17",
+    startDate: TODAY, endDate: addDays(TODAY, 3),
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-live@example.com",
     isTeams: true,
@@ -378,8 +424,8 @@ const TOURNAMENTS: TournamentSpec[] = [
     numRounds: 6,
     players: mixedPlayers(40, 4),
     countBestHands: true, countChickenHands: true,
-    schedule: spread(6, "2026-10-16", 4),
-    agenda: standardAgenda("2026-10-16", "2026-10-17"),
+    schedule: spread(6, TODAY, 4),
+    agenda: standardAgenda(TODAY, addDays(TODAY, 3)),
     members: [TEST_EDITOR_UID],
     mode: (round, table) => {
       if (round === 1) return { kind: "full" };
@@ -771,7 +817,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
     name: spec.name,
     shortName: spec.shortName,
     primaryColor: spec.primaryColor,
-    associationLogoUrl: null,
+    associationLogoUrl: spec.logoUrl ?? null,
     associationLogoPath: null,
     eventStartDate: spec.startDate,
     eventEndDate: spec.endDate,
@@ -826,8 +872,10 @@ async function main(): Promise<void> {
   console.log(`${applyChanges ? "Applying" : "Previewing"} test tournaments for ${firebaseProjectId}.`);
   const registry = await loadRegistry();
   console.log(`EMA registry: ${registry.length} players.`);
-  const specs = TOURNAMENTS.filter((spec) => only == null || spec.id === only);
+  const specs = TOURNAMENTS.filter((spec) => only == null || only.includes(spec.id));
   if (specs.some((spec) => !spec.id.startsWith("test-"))) throw new Error("Test tournament ids must start with test-");
+  const small = specs.find((spec) => !isValidPlayerCount(spec.players.length));
+  if (small) throw new Error(`Test tournament ${small.id} must have at least ${MIN_TOURNAMENT_PLAYERS} players in groups of 4`);
   let created = 0;
 
   for (const spec of specs) {

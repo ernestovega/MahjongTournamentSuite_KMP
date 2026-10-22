@@ -1,11 +1,21 @@
 import { Router } from "express";
 
-import { badRequest } from "../httpError";
+import { badRequest, forbidden, HttpError, unauthenticated } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { refreshIdToken, sendPasswordResetEmail, signInWithEmailPassword } from "../../services/firebaseAuthRest";
 import { auth } from "../../firebase";
 import { getGlobalUserRoles } from "../../models/globalRole";
 import { getUserProfile } from "../../services/usersService";
+
+/** Turns the error code of the sign-in service into an answer that the apps can show to the user. */
+export function signInError(error: unknown): unknown {
+  const code = error instanceof Error ? error.message : "";
+  if (["INVALID_LOGIN_CREDENTIALS", "INVALID_PASSWORD", "EMAIL_NOT_FOUND"].includes(code)) return unauthenticated("INVALID_LOGIN_CREDENTIALS");
+  if (code.startsWith("INVALID_EMAIL")) return badRequest("INVALID_EMAIL");
+  if (code === "USER_DISABLED") return forbidden("Forbidden: this account is disabled");
+  if (code.startsWith("TOO_MANY_ATTEMPTS")) return new HttpError(429, "too_many_requests", "Too many attempts");
+  return error;
+}
 
 export function authRouter(): Router {
   const router = Router();
@@ -27,7 +37,7 @@ export function authRouter(): Router {
         uid: tokens.uid,
       });
     } catch (e) {
-      next(e);
+      next(signInError(e));
     }
   });
 

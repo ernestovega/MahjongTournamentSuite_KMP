@@ -1,9 +1,28 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.zIndex
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
@@ -74,7 +93,8 @@ fun TableHand.resultChange(seatIds: List<Int>): List<Int>? {
 
 /** One line of the detail table. */
 private sealed interface DetailRow {
-    data class Result(val hand: TableHand, val change: List<Int>?) : DetailRow
+    /** [winnerSeat] and [loserSeat] are seat positions. A null [loserSeat] with a winner means a win from the wall. */
+    data class Result(val hand: TableHand, val change: List<Int>?, val winnerSeat: Int?, val loserSeat: Int?) : DetailRow
     data class Penalty(val handId: Int, val values: List<Int>, val counted: Boolean) : DetailRow
     data class Subtotal(val totals: List<Int>) : DetailRow
 }
@@ -90,7 +110,9 @@ private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> 
         }
         if (!hand.isDone) return@forEach
         val change = hand.resultChange(seatIds)
-        rows += DetailRow.Result(hand, change)
+        val winnerSeat = seatIds.indexOf(hand.playerWinnerId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
+        val loserSeat = seatIds.indexOf(hand.playerLooserId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
+        rows += DetailRow.Result(hand, change, winnerSeat, loserSeat)
         change?.forEachIndexed { seat, value -> totals[seat] += value }
         rows += DetailRow.Subtotal(totals.toList())
     }
@@ -105,28 +127,58 @@ private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> 
 fun HandDetailsTable(table: PlayerTable, windOf: (Int) -> SeatWind?) {
     val seatIds = table.seatIds().filterNotNull()
     if (seatIds.size != 4) {
-        Text("The seats of this table are not set yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        AppEmptyState(Icons.Default.People, "No seats yet", "The seats of this table are not set yet.", compact = true)
         return
     }
     val rows = detailRows(table, seatIds)
     if (rows.isEmpty()) {
-        Text("No hand saved yet.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        AppEmptyState(Icons.Default.Edit, "No hands yet", "The hands show here when the players save them.", compact = true)
         return
     }
-    Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            HeaderCell("Hand", HAND_WEIGHT)
-            HeaderCell("W", ID_WEIGHT)
-            HeaderCell("L", ID_WEIGHT)
-            HeaderCell("Pts", POINTS_WEIGHT)
-            seatIds.forEachIndexed { seat, id ->
-                Column(Modifier.weight(SEAT_WEIGHT), horizontalAlignment = Alignment.CenterHorizontally) {
-                    windOf(seat)?.let { WindIcon(it, size = 14.dp) }
-                    Text("$id", style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold)
+    val screen = LocalScreenScroll.current
+    var headerTop by remember { mutableStateOf(0f) }
+    var headerHeight by remember { mutableStateOf(0) }
+    var tableHeight by remember { mutableStateOf(0) }
+    var headerInTable by remember { mutableStateOf(0) }
+    Column(Modifier.fillMaxWidth().onSizeChanged { tableHeight = it.height }) {
+        // The header sticks at the top of the screen while the list scrolls. It stops at the end of the table.
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .zIndex(1f)
+                .onGloballyPositioned {
+                    headerTop = it.positionInRoot().y - (screen?.viewportTop ?: 0f) + (screen?.state?.value ?: 0)
+                    headerInTable = it.positionInParent().y.toInt()
+                }
+                .onSizeChanged { headerHeight = it.height }
+                .offset {
+                    val limit = (tableHeight - headerInTable - headerHeight).coerceAtLeast(0)
+                    val pushed = ((screen?.state?.value ?: 0) - headerTop).toInt()
+                    // The offset moves the header, not the position that the next frame measures.
+                    IntOffset(0, pushed.coerceIn(0, limit))
+                }
+                .background(MaterialTheme.colorScheme.surface),
+        ) {
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                HeaderCell("Hand", HAND_WEIGHT)
+                HeaderCell("W", ID_WEIGHT)
+                HeaderCell("L", ID_WEIGHT)
+                HeaderCell("Pts", POINTS_WEIGHT)
+                Spacer(Modifier.weight(CHICKEN_WEIGHT))
+                seatIds.forEachIndexed { seat, id ->
+                    Row(Modifier.weight(SEAT_WEIGHT), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+                        windOf(seat)?.let { WindIcon(it, size = 16.dp) }
+                        Text(
+                            "$id",
+                            Modifier.padding(start = 2.dp),
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
                 }
             }
+            HorizontalDivider()
         }
-        HorizontalDivider()
         rows.forEach { row ->
             when (row) {
                 is DetailRow.Result -> ResultLine(row)
@@ -137,9 +189,10 @@ fun HandDetailsTable(table: PlayerTable, windOf: (Int) -> SeatWind?) {
     }
 }
 
-private const val HAND_WEIGHT = 1.1f
+private const val HAND_WEIGHT = 1.0f
 private const val ID_WEIGHT = 0.6f
 private const val POINTS_WEIGHT = 0.8f
+private const val CHICKEN_WEIGHT = 0.65f
 private const val SEAT_WEIGHT = 1f
 
 @Composable
@@ -147,7 +200,7 @@ private fun androidx.compose.foundation.layout.RowScope.HeaderCell(text: String,
     Text(
         text,
         Modifier.weight(weight),
-        style = MaterialTheme.typography.labelSmall,
+        style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         textAlign = TextAlign.Center,
     )
@@ -156,19 +209,13 @@ private fun androidx.compose.foundation.layout.RowScope.HeaderCell(text: String,
 @Composable
 private fun androidx.compose.foundation.layout.RowScope.NumberCell(
     value: Int?,
+    color: Color,
     bold: Boolean = false,
-    muted: Boolean = false,
 ) {
-    val color = when {
-        value == null || value == 0 -> MaterialTheme.colorScheme.onSurfaceVariant
-        muted -> MaterialTheme.colorScheme.onSurfaceVariant
-        value > 0 -> DetailGain
-        else -> MaterialTheme.colorScheme.error
-    }
     Text(
         if (value == null) "" else if (value > 0) "+$value" else "$value",
         Modifier.weight(SEAT_WEIGHT),
-        style = MaterialTheme.typography.bodySmall,
+        style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (bold) FontWeight.Bold else null,
         color = color,
         textAlign = TextAlign.Center,
@@ -176,22 +223,44 @@ private fun androidx.compose.foundation.layout.RowScope.NumberCell(
     )
 }
 
+/** The color of a penalty: red for the penalized player and green for a player who receives points. */
+@Composable
+private fun penaltyColor(value: Int, muted: Boolean): Color = when {
+    value == 0 || muted -> MaterialTheme.colorScheme.onSurfaceVariant
+    value > 0 -> DetailGain
+    else -> MaterialTheme.colorScheme.error
+}
+
 @Composable
 private fun ResultLine(row: DetailRow.Result) {
     val hand = row.hand
+    val bodyStyle = MaterialTheme.typography.bodyMedium
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
-        Row(Modifier.weight(HAND_WEIGHT), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+        Column(Modifier.weight(HAND_WEIGHT), horizontalAlignment = Alignment.CenterHorizontally) {
             HandLabel(hand.handId)
+            Text("#${hand.handId}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Text(hand.playerWinnerId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-        Text(hand.playerLooserId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-        Row(Modifier.weight(POINTS_WEIGHT), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            Text(hand.handScore.ifBlank { "-" }, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-            if (hand.isChickenHand) ChickenIcon(12.dp)
+        Text(hand.playerWinnerId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
+        Text(hand.playerLooserId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
+        Text(hand.handScore.ifBlank { "-" }, Modifier.weight(POINTS_WEIGHT), style = bodyStyle, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        // The chicken has its own column, so it keeps its size and does not move the score.
+        Box(Modifier.weight(CHICKEN_WEIGHT), contentAlignment = Alignment.Center) {
+            if (hand.isChickenHand) ChickenIcon(CHICKEN_SIZE)
         }
-        repeat(4) { seat -> NumberCell(row.change?.get(seat)) }
+        // Only the winner is green. The loser of a discard is red. After a win from the wall all the others are red.
+        repeat(4) { seat ->
+            val color = when {
+                row.winnerSeat == null -> MaterialTheme.colorScheme.onSurface
+                seat == row.winnerSeat -> DetailGain
+                row.loserSeat == null || seat == row.loserSeat -> MaterialTheme.colorScheme.error
+                else -> MaterialTheme.colorScheme.onSurface
+            }
+            NumberCell(row.change?.get(seat), color)
+        }
     }
 }
+
+private val CHICKEN_SIZE = 20.dp
 
 @Composable
 private fun PenaltyLine(row: DetailRow.Penalty) {
@@ -199,13 +268,13 @@ private fun PenaltyLine(row: DetailRow.Penalty) {
         Text(
             "Pen",
             Modifier.weight(HAND_WEIGHT),
-            style = MaterialTheme.typography.labelSmall,
+            style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.error,
             textAlign = TextAlign.Center,
         )
         // The penalty has no winner, loser or hand score.
-        Text("", Modifier.weight(ID_WEIGHT * 2 + POINTS_WEIGHT))
-        repeat(4) { seat -> NumberCell(row.values[seat], muted = !row.counted) }
+        Text("", Modifier.weight(ID_WEIGHT * 2 + POINTS_WEIGHT + CHICKEN_WEIGHT))
+        repeat(4) { seat -> NumberCell(row.values[seat], penaltyColor(row.values[seat], muted = !row.counted)) }
     }
 }
 
@@ -215,13 +284,7 @@ private fun SubtotalLine(row: DetailRow.Subtotal) {
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(vertical = 3.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(
-            "Total",
-            Modifier.weight(HAND_WEIGHT + ID_WEIGHT * 2 + POINTS_WEIGHT),
-            style = MaterialTheme.typography.labelSmall,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        repeat(4) { seat -> NumberCell(row.totals[seat], bold = true) }
+        Spacer(Modifier.weight(HAND_WEIGHT + ID_WEIGHT * 2 + POINTS_WEIGHT + CHICKEN_WEIGHT))
+        repeat(4) { seat -> NumberCell(row.totals[seat], MaterialTheme.colorScheme.onSurface, bold = true) }
     }
 }

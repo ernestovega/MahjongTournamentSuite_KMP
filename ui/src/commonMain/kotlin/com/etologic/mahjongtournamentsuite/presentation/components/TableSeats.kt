@@ -21,7 +21,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
@@ -133,11 +132,11 @@ fun WindIcon(wind: SeatWind, size: Dp = 24.dp, tint: Color = MaterialTheme.color
 
 /** The chicken hand icon. */
 @Composable
-fun ChickenIcon(size: Dp = 22.dp) {
+fun ChickenIcon(size: Dp = 22.dp, modifier: Modifier = Modifier) {
     Icon(
         painter = painterResource(Res.drawable.icon_chicken),
         contentDescription = "Chicken hand",
-        modifier = Modifier.size(size),
+        modifier = modifier.size(size),
         tint = Color.Unspecified,
     )
 }
@@ -207,6 +206,10 @@ fun TableSeatsView(
     showPoints: Boolean,
     modifier: Modifier = Modifier,
     windsKnown: Boolean = true,
+    /** When true, the id of the tournament player shows before the name, as in the detailed list of hands. */
+    showIds: Boolean = false,
+    /** The Diffs switch needs a table in play. Without it, the switch is hidden and the differences are off. */
+    diffsAvailable: Boolean = true,
     onPlayerClick: (Int) -> Unit = {},
 ) {
     require(seats.size == 4) { "A table has four seats." }
@@ -221,20 +224,20 @@ fun TableSeatsView(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs, onPlayerClick)
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f))
+        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, onPlayerClick)
+        if (diffsAvailable) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Row(
                 Modifier.clickable { showDiffs = !showDiffs },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Differences", style = MaterialTheme.typography.labelLarge)
+                Text("Diffs", style = MaterialTheme.typography.labelLarge)
                 Switch(
                     checked = showDiffs,
                     onCheckedChange = { showDiffs = it },
                     modifier = Modifier.padding(start = 8.dp),
                 )
             }
+            Box(Modifier.weight(1f))
             DiffsInfo()
         }
     }
@@ -275,7 +278,7 @@ private fun DiffsInfo() {
     val scope = rememberCoroutineScope()
     TooltipBox(
         positionProvider = remember { EndAlignedTooltipPosition },
-        tooltip = { PlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(DIFFS_EXPLANATION) } },
+        tooltip = { AppPlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(DIFFS_EXPLANATION) } },
         state = state,
     ) {
         IconButton(
@@ -294,6 +297,7 @@ private fun SeatsCross(
     centerLabel: String,
     showPoints: Boolean,
     showDiffs: Boolean,
+    showIds: Boolean,
     onPlayerClick: (Int) -> Unit,
 ) {
     val viewerChair = placed.firstOrNull { it.seat.isMine }?.chair ?: 0
@@ -308,7 +312,7 @@ private fun SeatsCross(
         val item = at(position)
         val index = placed.indexOf(item)
         val place = if (showPoints) ranked.indexOf(index) + 1 else null
-        SeatCard(item, diffs[index], place, showPoints, showDiffs, modifier, onPlayerClick)
+        SeatCard(item, diffs[index], place, showPoints, showDiffs, showIds, modifier, onPlayerClick)
     }
 
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -346,6 +350,7 @@ private fun SeatCard(
     place: Int?,
     showPoints: Boolean,
     showDiffs: Boolean,
+    showIds: Boolean,
     modifier: Modifier,
     onPlayerClick: (Int) -> Unit,
 ) {
@@ -359,18 +364,14 @@ private fun SeatCard(
             if (seat.isMine) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
         ),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                item.wind?.let {
-                    WindIcon(it, size = 22.dp)
-                    Text(it.label, style = MaterialTheme.typography.labelMedium)
-                }
-            }
+            item.wind?.let { WindIcon(it, size = 22.dp) }
             // The place icon of a complete table is at the side of the score.
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (place != null) {
@@ -398,7 +399,7 @@ private fun SeatCard(
                 SeatLevelMedal(seat)
                 if (seat.country.isNotBlank()) PlayerFlag(seat.country, width = 22.dp)
                 Text(
-                    seat.name,
+                    if (showIds && seat.slotId != null) "${seat.slotId} ${seat.name}" else seat.name,
                     Modifier.weight(1f, fill = false),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (seat.isMine) FontWeight.Bold else null,

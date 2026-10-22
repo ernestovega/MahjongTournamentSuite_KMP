@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.Icons
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
@@ -228,10 +231,11 @@ fun TablesScreen(
                         }
 
                         tables.isEmpty() -> {
-                            Text(
-                                text = "No tables found yet.",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            AppEmptyState(
+                                icon = Icons.Default.People,
+                                title = "No tables yet",
+                                message = "The tables show here when the round is drawn.",
+                                compact = true,
                             )
                         }
 

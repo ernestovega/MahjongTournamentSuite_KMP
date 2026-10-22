@@ -35,11 +35,19 @@ internal fun Throwable.toRepositoryAppError(
     is BackendHttpException -> AppError.Unexpected(
         "Backend error ${status.value}: ${responseBody.limitForUi()}",
     )
-    else -> {
+    else -> if (isConnectionFailure()) AppError.Network else {
         val kind = this::class.simpleName ?: "Error"
         val details = message?.trim()?.takeIf(String::isNotBlank)?.let { ": $it" } ?: ""
         AppError.Unexpected(if (details.isEmpty()) fallbackMessage ?: kind else "$kind$details")
     }
+}
+
+private val connectionFailureNames = listOf("ConnectException", "UnknownHost", "SocketException", "SocketTimeout", "IOException", "NoRouteToHost")
+
+/** True when the request did not reach the server: no network, a refused connection or a failed DNS lookup. */
+internal fun Throwable.isConnectionFailure(): Boolean = generateSequence(this) { it.cause }.take(6).any { error ->
+    val name = error::class.simpleName.orEmpty()
+    connectionFailureNames.any(name::contains) || error.message.orEmpty().contains("Failed to fetch", ignoreCase = true)
 }
 
 internal fun String.limitForUi(limit: Int = MAX_UI_ERROR_LENGTH): String {

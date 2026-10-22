@@ -69,3 +69,10 @@ export function hasDuplicateEmaAssignments(values: Array<string | null | undefin
 function hasFourValidNumbers(values: unknown[]): boolean {
   return values.length === 4 && values.every((value) => /^-?\d+$/.test(String(value ?? "").trim()));
 }
+
+/** A tournament has at least 16 players, always in groups of 4 (one table). */
+export const MIN_TOURNAMENT_PLAYERS = 16;
+
+export function isValidPlayerCount(value: unknown): boolean {
+  return typeof value === "number" && Number.isInteger(value) && value >= MIN_TOURNAMENT_PLAYERS && value % 4 === 0;
+}

@@ -254,11 +254,11 @@ private fun scoreChecks(
         if (penalties[seat] != 0L) {
             ScoreCheck.Penalty(
                 penalties[seat],
-                "The scores add up to ${signed(sum)} rather than 0 but this matches the penalties,"
-                        + "${nameOf(seat)} has a penalty of ${signed(penalties[seat])}. ",
+                "The scores add up to ${signed(sum)} rather than 0, but this matches the penalties. "
+                        + "${nameOf(seat)} has a penalty of ${signed(penalties[seat])}.",
             )
         } else {
-            ScoreCheck.Valid("The scores add up to ${signed(sum)} rather than but this matches the penalties. $who.")
+            ScoreCheck.Valid("The scores add up to ${signed(sum)} rather than 0, but this matches the penalties. $who.")
         }
     }
 }

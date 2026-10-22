@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Search
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
@@ -689,11 +692,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         }
                         DataTableDivider()
                         if (filteredBasePlayers.isEmpty()) {
-                            Text(
-                                text = "No EMA players match this search.",
-                                modifier = Modifier.padding(12.dp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
+                            AppEmptyState(Icons.Default.Search, "No matches", "No EMA players match this search.", compact = true)
                         } else {
                             LazyColumnWithScrollbar(
                                 state = playerListState,
@@ -1118,9 +1117,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         }
                     }
                 }
-                if (players.isEmpty() && !loading) Text("No generated tournament players found.")
+                if (players.isEmpty() && !loading) {
+                    AppEmptyState(Icons.Default.People, "No players yet", "The tournament has no generated players.", compact = true)
+                }
                 if (players.isNotEmpty() && filteredPlayers.isEmpty() && !loading) {
-                    Text("No tournament players match the current filters.")
+                    AppEmptyState(Icons.Default.Search, "No matches", "No tournament players match the current filters.", compact = true)
                 }
                 Column(Modifier.fillMaxWidth()) {
                     DataTableHeaderRow {

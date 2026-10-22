@@ -1,7 +1,8 @@
 package com.etologic.mahjongtournamentsuite.data.network
 
 object BackendConfig {
-    val functionsBaseUrl: String = functionsBaseUrlPlatform()
+    /** Read on every access, so a platform can change the address between app starts (instrumented tests). */
+    val functionsBaseUrl: String get() = functionsBaseUrlPlatform()
 }
 
 expect fun functionsBaseUrlPlatform(): String

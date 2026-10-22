@@ -40,6 +40,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material.icons.filled.SwapHoriz
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.runtime.snapshotFlow
@@ -69,7 +70,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
 import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
@@ -215,6 +216,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             verticalArrangement = Arrangement.spacedBy(0.dp),
             scrollable = true,
         ) {
+            // Another view or another player starts at the top.
+            ResetScrollOnChange(LocalScreenScroll.current?.state, Triple(scope, emaId, chosenSlotText))
             // The tab row is as wide as its tabs, like in the player app, and sits in the middle.
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 PrimaryTabRow(
@@ -462,7 +465,7 @@ private fun TrackScrollOut(
 
 @Composable
 private fun PickPlayerHint() {
-    StatisticsEmptyState(
+    AppEmptyState(
         icon = Icons.Default.PersonSearch,
         title = "Choose a player",
         message = "Use the field above to search a player by name or EMA number and see his/her skills. ",

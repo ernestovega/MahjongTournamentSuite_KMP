@@ -18,31 +18,33 @@ const hands = (overrides = []) => {
     overrides.forEach((item) => { list[Number(item.id) - 1] = item; });
     return list;
 };
+const ids = Array.from({ length: 16 }, (_, index) => index + 1);
+const ema = (id) => String(id).padStart(8, "0");
 function valid() {
     return {
         tournament: {
-            name: "Test", shortName: "T", numPlayers: 4, numRounds: 1, eventStartDate: "2026-10-01", eventEndDate: "2026-10-02",
+            name: "Test", shortName: "T", numPlayers: 16, numRounds: 1, eventStartDate: "2026-10-01", eventEndDate: "2026-10-02",
             hostCity: "Madrid", hostCountry: "ES", venueName: "Hall", venueAddress: "Street 1",
             roundSchedules: [{ roundId: 1, date: "2026-10-01", startTime: "09:00" }], agendaItems: [],
             isTeams: false, isCompleted: false, tablesWithProgress: 0,
             countBestHands: true, countChickenHands: true,
         },
-        players: [1, 2, 3, 4].map((id) => ({ id: String(id), data: { id, name: `P${id}`, team: 1, assignedEmaId: `0000000${id}` } })),
+        players: ids.map((id) => ({ id: String(id), data: { id, name: `P${id}`, team: 1, assignedEmaId: ema(id) } })),
         teams: [],
         rounds: [{ id: "1", data: { roundId: 1 } }],
-        tables: [{
-                id: "1_1",
-                data: {
-                    roundId: 1, tableId: 1, playerIds: [1, 2, 3, 4], version: 0, isCompleted: false, useTotalsOnly: false,
-                    playerEastId: "", playerSouthId: "", playerWestId: "", playerNorthId: "",
-                    playerEastScore: "", playerSouthScore: "", playerWestScore: "", playerNorthScore: "",
-                    playerEastPoints: "", playerSouthPoints: "", playerWestPoints: "", playerNorthPoints: "",
-                    manualPlayerEastScore: "", manualPlayerSouthScore: "", manualPlayerWestScore: "", manualPlayerNorthScore: "",
-                    completionStatus: "empty", hasProgress: false, chickenHandCount: 0, bestHandScores: [],
-                },
-                hands: hands(),
-            }],
-        registry: new Map([1, 2, 3, 4].map((id) => [`0000000${id}`, { country: "ES" }])),
+        tables: [1, 2, 3, 4].map((tableId) => ({
+            id: `1_${tableId}`,
+            data: {
+                roundId: 1, tableId, playerIds: ids.slice((tableId - 1) * 4, tableId * 4), version: 0, isCompleted: false, useTotalsOnly: false,
+                playerEastId: "", playerSouthId: "", playerWestId: "", playerNorthId: "",
+                playerEastScore: "", playerSouthScore: "", playerWestScore: "", playerNorthScore: "",
+                playerEastPoints: "", playerSouthPoints: "", playerWestPoints: "", playerNorthPoints: "",
+                manualPlayerEastScore: "", manualPlayerSouthScore: "", manualPlayerWestScore: "", manualPlayerNorthScore: "",
+                completionStatus: "empty", hasProgress: false, chickenHandCount: 0, bestHandScores: [],
+            },
+            hands: hands(),
+        })),
+        registry: new Map(ids.map((id) => [ema(id), { country: "ES" }])),
     };
 }
 const codes = (input) => (0, tournamentIntegrity_1.checkTournamentIntegrity)("t", input).findings.map((finding) => finding.code);
@@ -79,8 +81,7 @@ const codes = (input) => (0, tournamentIntegrity_1.checkTournamentIntegrity)("t"
 });
 (0, node_test_1.default)("a player at two tables in one round is an error", () => {
     const input = valid();
-    input.tables.push({ ...input.tables[0], id: "1_2", data: { ...input.tables[0].data, tableId: 2 } });
-    input.tournament.numPlayers = 8;
+    input.tables[1].data.playerIds = [1, 6, 7, 8];
     const found = codes(input);
     strict_1.default.ok(found.includes("tables.playerTwice"));
 });
@@ -88,5 +89,20 @@ const codes = (input) => (0, tournamentIntegrity_1.checkTournamentIntegrity)("t"
     const input = valid();
     input.tournament.isCompleted = true;
     strict_1.default.ok(codes(input).includes("counters.isCompleted"));
+});
+(0, node_test_1.default)("a tournament with fewer than 16 players is an error", () => {
+    for (const count of [0, 4, 8, 12]) {
+        const input = valid();
+        input.tournament.numPlayers = count;
+        strict_1.default.ok(codes(input).includes("info.numPlayers"), `${count} players`);
+    }
+});
+(0, node_test_1.default)("a player count that is not a multiple of 4 is an error", () => {
+    const input = valid();
+    input.tournament.numPlayers = 18;
+    strict_1.default.ok(codes(input).includes("info.numPlayers"));
+});
+(0, node_test_1.default)("16 players is the smallest valid tournament", () => {
+    strict_1.default.ok(!codes(valid()).includes("info.numPlayers"));
 });
 //# sourceMappingURL=tournamentIntegrity.test.js.map

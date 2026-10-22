@@ -10,6 +10,7 @@ exports.checkTournamentIntegrity = checkTournamentIntegrity;
  * - warning: the data is odd and a person should look at it.
  * - info: a fact that can be normal.
  */
+const tournamentContentRules_1 = require("./tournamentContentRules");
 const tournamentDates_1 = require("./tournamentDates");
 const handScoring_1 = require("./handScoring");
 const tableManagerService_1 = require("./tableManagerService");
@@ -78,8 +79,8 @@ function checkTournamentInfo(c, input, numPlayers, numRounds) {
         c.add("error", "info.name", "The tournament has no name.");
     if (text(t.shortName) === "")
         c.add("warning", "info.shortName", "The tournament has no short name.");
-    if (!Number.isInteger(numPlayers) || numPlayers <= 0 || numPlayers % 4 !== 0) {
-        c.add("error", "info.numPlayers", `The number of players (${text(t.numPlayers)}) must be a positive multiple of 4.`);
+    if (!(0, tournamentContentRules_1.isValidPlayerCount)(numPlayers)) {
+        c.add("error", "info.numPlayers", `The number of players (${text(t.numPlayers)}) must be a multiple of 4 and at least ${tournamentContentRules_1.MIN_TOURNAMENT_PLAYERS}.`);
     }
     if (!Number.isInteger(numRounds) || numRounds <= 0) {
         c.add("error", "info.numRounds", `The number of rounds (${text(t.numRounds)}) must be a positive number.`);

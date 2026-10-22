@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.signInError = signInError;
 exports.authRouter = authRouter;
 const express_1 = require("express");
 const httpError_1 = require("../httpError");
@@ -8,6 +9,19 @@ const firebaseAuthRest_1 = require("../../services/firebaseAuthRest");
 const firebase_1 = require("../../firebase");
 const globalRole_1 = require("../../models/globalRole");
 const usersService_1 = require("../../services/usersService");
+/** Turns the error code of the sign-in service into an answer that the apps can show to the user. */
+function signInError(error) {
+    const code = error instanceof Error ? error.message : "";
+    if (["INVALID_LOGIN_CREDENTIALS", "INVALID_PASSWORD", "EMAIL_NOT_FOUND"].includes(code))
+        return (0, httpError_1.unauthenticated)("INVALID_LOGIN_CREDENTIALS");
+    if (code.startsWith("INVALID_EMAIL"))
+        return (0, httpError_1.badRequest)("INVALID_EMAIL");
+    if (code === "USER_DISABLED")
+        return (0, httpError_1.forbidden)("Forbidden: this account is disabled");
+    if (code.startsWith("TOO_MANY_ATTEMPTS"))
+        return new httpError_1.HttpError(429, "too_many_requests", "Too many attempts");
+    return error;
+}
 function authRouter() {
     const router = (0, express_1.Router)();
     router.post("/signIn", async (req, res, next) => {
@@ -25,7 +39,7 @@ function authRouter() {
             });
         }
         catch (e) {
-            next(e);
+            next(signInError(e));
         }
     });
     router.post("/passwordReset", async (req, res, next) => {

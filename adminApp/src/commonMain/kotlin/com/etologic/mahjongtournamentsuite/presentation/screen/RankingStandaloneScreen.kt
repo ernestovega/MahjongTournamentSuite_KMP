@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.Leaderboard
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -192,8 +194,10 @@ private fun RankingStandaloneContent(
                         message = "Loading rankings…",
                         modifier = Modifier.weight(1f),
                     )
-                    currentPage == null -> CenteredMessage(
-                        message = "No ranking data is available.",
+                    currentPage == null -> AppEmptyState(
+                        icon = Icons.Default.Leaderboard,
+                        title = "No ranking yet",
+                        message = "The ranking shows when the first table is completed.",
                         modifier = Modifier.weight(1f),
                     )
                     else -> RankingPage(

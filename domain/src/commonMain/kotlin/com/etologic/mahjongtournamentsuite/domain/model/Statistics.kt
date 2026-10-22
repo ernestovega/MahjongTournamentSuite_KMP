@@ -334,6 +334,8 @@ data class TournamentStatistics(
     val highestHand: Int?,
     val chickenHands: Int,
     val penaltyCount: Int,
+    /** The penalty points of all counted hands, as a positive number. Null when the source has only the number of penalties. */
+    val penaltyPoints: Int? = null,
     val tables: List<TableStatistics>,
 ) {
     val drawRate: Double? get() = if (handsPlayed > 0) drawnHands.toDouble() / handsPlayed else null

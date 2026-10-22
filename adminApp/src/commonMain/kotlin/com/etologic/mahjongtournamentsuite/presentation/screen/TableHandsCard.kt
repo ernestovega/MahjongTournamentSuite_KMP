@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.material.icons.filled.Edit
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -113,10 +115,11 @@ internal fun TableHandsCard(
     ) {
         if (!handsExpanded) return@SectionCard
         if (editor.hands.isEmpty()) {
-            Text(
-                text = "No hands found.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            AppEmptyState(
+                icon = Icons.Default.Edit,
+                title = "No hands yet",
+                message = "The hands of this table show here when they are saved.",
+                compact = true,
             )
             return@SectionCard
         }
