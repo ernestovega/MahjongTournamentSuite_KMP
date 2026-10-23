@@ -4,6 +4,7 @@ import { actorFromToken } from "../../services/changeLog";
 
 import { auth, db } from "../../firebase";
 import { badRequest, forbidden } from "../httpError";
+import { readContentType, readPhotoData } from "./auth.routes";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireEditor } from "../middleware/requireEditor";
@@ -11,6 +12,7 @@ import { getGlobalUserRole, getGlobalUserRoles, hasAdminClaim, parseGlobalUserRo
 import { sendPasswordResetEmail } from "../../services/firebaseAuthRest";
 import {
   assertEmailAvailable,
+  clearUserPhoto,
   countEnabledAdmins,
   createUserProfile,
   getManagedUser,
@@ -19,6 +21,7 @@ import {
   listManagedUsers,
   setGlobalUserRole,
   setManagedUserDisabled,
+  setUserPhoto,
   syncUserTournamentAssignments,
   updateManagedUser,
   type GlobalUserRole,
@@ -26,8 +29,8 @@ import {
 } from "../../services/usersService";
 import { BOOTSTRAP_KEY } from "../../config";
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
-import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
-import { loadUsageReport } from "../../services/usageService";
+import { assertEmaIdAvailable, listInvitedPeople, setAccountEmaId } from "../../services/playerAccountsService";
+import { DEFAULT_USAGE_PERIOD, loadUsageReport, USAGE_PERIODS } from "../../services/usageService";
 
 type Actor = { uid: string; admin?: boolean };
 
@@ -103,10 +106,14 @@ export function adminRouter(): Router {
     }
   });
 
-  /** Usage analytics for administrators: who enters data, from which app, and where problems appear. */
-  router.get("/usage", requireAuth, requireAdmin, async (_req, res, next) => {
+  /** Usage analytics for administrators: who uses the apps, what they use, when, and where problems appear. */
+  router.get("/usage", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      res.status(200).json(await loadUsageReport());
+      const days = Number(req.query.days ?? DEFAULT_USAGE_PERIOD);
+      if (!(USAGE_PERIODS as readonly number[]).includes(days)) {
+        throw badRequest("Invalid period", { allowed: USAGE_PERIODS });
+      }
+      res.status(200).json(await loadUsageReport(days));
     } catch (error) {
       next(error);
     }
@@ -116,6 +123,16 @@ export function adminRouter(): Router {
     try {
       const actor = res.locals.auth as Actor;
       res.status(200).json({ users: await listManagedUsers(await assignmentScopeFor(actor)) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** People who got an invitation and did not accept yet. An editor sees only the assigned tournaments. */
+  router.get("/invitations", requireAuth, requireEditor, async (_req, res, next) => {
+    try {
+      const actor = res.locals.auth as Actor;
+      res.status(200).json({ invitations: await listInvitedPeople(await assignmentScopeFor(actor)) });
     } catch (error) {
       next(error);
     }
@@ -215,6 +232,32 @@ export function adminRouter(): Router {
         },
       });
       res.status(200).json(await getManagedUser(current.uid, assignmentScope));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Only admins set the photo of another user. A user sets the own photo with /auth/me/photo.
+  router.put("/users/:uid/photo", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const contentType = readContentType(req.body);
+      await setUserPhoto(req.params.uid, contentType, readPhotoData(req.body));
+      await recordActivity({
+        action: "user.photo", actor: actorFromToken(res.locals.auth), target: req.params.uid, details: { contentType },
+      });
+      res.status(200).json(await getManagedUser(req.params.uid));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.delete("/users/:uid/photo", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      await clearUserPhoto(req.params.uid);
+      await recordActivity({
+        action: "user.photo.remove", actor: actorFromToken(res.locals.auth), target: req.params.uid, details: {},
+      });
+      res.status(200).json(await getManagedUser(req.params.uid));
     } catch (error) {
       next(error);
     }

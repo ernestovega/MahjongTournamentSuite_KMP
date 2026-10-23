@@ -87,6 +87,7 @@ fun EmaCountryDropdown(
     isError: Boolean = false,
     errorMessage: String? = null,
     label: String = "Host country",
+    required: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var hasFocus by remember { mutableStateOf(false) }
@@ -181,7 +182,7 @@ fun EmaCountryDropdown(
                 input = it
                 expanded = enabled
             },
-            label = { Text(label) },
+            label = { if (required) RequiredLabel(label) else Text(label) },
             leadingIcon = selected?.let { option ->
                 { CountryFlag(code = option.flagCode, contentDescription = option.name) }
             },

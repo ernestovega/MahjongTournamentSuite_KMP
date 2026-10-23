@@ -53,9 +53,28 @@ function timestampToIso(value) {
     return value instanceof firestore_1.Timestamp ? value.toDate().toISOString() : null;
 }
 async function listTournamentPlayers(tournamentId) {
-    const snap = await firebase_1.db.collection("tournaments").doc(tournamentId).collection("players").get();
+    const [snap, pending] = await Promise.all([
+        firebase_1.db.collection("tournaments").doc(tournamentId).collection("players").get(),
+        (0, playerAccountsService_1.listPendingInvitations)(),
+    ]);
+    const inviteByEmaId = new Map(pending.map((item) => [item.emaId, item]));
     return snap.docs
-        .map((d) => ({
+        .map((d) => {
+        const player = readPlayer(d);
+        // An invitation belongs to the person. Every slot of this person without an account shows it.
+        const invite = player.accountUid == null && player.assignedEmaId != null
+            ? inviteByEmaId.get(player.assignedEmaId) : undefined;
+        return invite == null || player.invitationStatus === "INVITED" ? player : {
+            ...player,
+            invitationStatus: "INVITED",
+            invitedEmail: invite.email,
+            contactedAt: invite.createdAt,
+        };
+    })
+        .sort((a, b) => a.id - b.id);
+}
+function readPlayer(d) {
+    return {
         id: Number(d.get("id")),
         name: String(d.get("name") ?? ""),
         team: Number(d.get("team") ?? 0),
@@ -70,8 +89,7 @@ async function listTournamentPlayers(tournamentId) {
         substitution: (0, playerSubstitution_1.readSubstitution)(d.get("substitution")),
         createdAt: timestampToIso(d.get("createdAt")),
         updatedAt: timestampToIso(d.get("updatedAt")),
-    }))
-        .sort((a, b) => a.id - b.id);
+    };
 }
 async function listTournamentTeams(tournamentId) {
     const tournament = firebase_1.db.collection("tournaments").doc(tournamentId);

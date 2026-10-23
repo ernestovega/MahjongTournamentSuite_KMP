@@ -25,6 +25,8 @@ class CreateTournamentPresenter(
 ) {
     suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
 
+    suspend fun resolveVenueLink(url: String): AppResult<String> = tournamentRepository.resolveVenueLink(url)
+
     enum class ComputeMode {
         LIGHT,
         HEAVY,

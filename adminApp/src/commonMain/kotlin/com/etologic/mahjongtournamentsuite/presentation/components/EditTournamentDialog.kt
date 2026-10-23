@@ -60,6 +60,8 @@ private enum class TournamentEditField {
     SHORT_NAME,
     HOST_COUNTRY,
     HOST_CITY,
+    VENUE,
+    CONTACT_EMAIL,
     PRIMARY_COLOR,
     START_DATE,
     END_DATE,
@@ -143,6 +145,8 @@ fun EditTournamentDialog(
     val renameShortNameFocusRequester = remember { FocusRequester() }
     val settingsHostCountryFocusRequester = remember { FocusRequester() }
     val settingsHostCityFocusRequester = remember { FocusRequester() }
+    val settingsMapUrlFocusRequester = remember { FocusRequester() }
+    val settingsContactEmailFocusRequester = remember { FocusRequester() }
     val settingsStartDateFocusRequester = remember { FocusRequester() }
     val settingsEndDateFocusRequester = remember { FocusRequester() }
     val settingsColorFocusRequester = remember { FocusRequester() }
@@ -198,6 +202,8 @@ fun EditTournamentDialog(
             TournamentEditField.SHORT_NAME -> renameShortNameFocusRequester.requestFocus()
             TournamentEditField.HOST_COUNTRY -> settingsHostCountryFocusRequester.requestFocus()
             TournamentEditField.HOST_CITY -> settingsHostCityFocusRequester.requestFocus()
+            TournamentEditField.VENUE -> settingsMapUrlFocusRequester.requestFocus()
+            TournamentEditField.CONTACT_EMAIL -> settingsContactEmailFocusRequester.requestFocus()
             TournamentEditField.START_DATE -> settingsStartDateFocusRequester.requestFocus()
             TournamentEditField.END_DATE -> settingsEndDateFocusRequester.requestFocus()
             TournamentEditField.PRIMARY_COLOR -> settingsColorFocusRequester.requestFocus()
@@ -257,7 +263,7 @@ fun EditTournamentDialog(
                                             next = renameShortNameFocusRequester,
                                             value = { renameValue },
                                         ),
-                                    label = { Text("Tournament name") },
+                                    label = { RequiredLabel("Tournament name") },
                                     singleLine = true,
                                     isError = TournamentEditField.NAME in invalidEditFields,
                                     supportingText = if (TournamentEditField.NAME in invalidEditFields) {
@@ -276,7 +282,7 @@ fun EditTournamentDialog(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .focusRequester(renameShortNameFocusRequester),
-                                    label = { Text("Short name") },
+                                    label = { RequiredLabel("Short name") },
                                     placeholder = { Text("Max. 10 characters") },
                                     singleLine = true,
                                     isError = TournamentEditField.SHORT_NAME in invalidEditFields,
@@ -286,53 +292,54 @@ fun EditTournamentDialog(
                                         null
                                     },
                                 )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    EmaCountryDropdown(
-                                        selectedCode = settingsHostCountry,
-                                        countries = countries,
-                                        onCountrySelected = {
-                                            settingsHostCountry = it
-                                            invalidEditFields = invalidEditFields - TournamentEditField.HOST_COUNTRY
-                                            renameError = null
-                                        },
-                                        modifier = Modifier.weight(1f),
-                                        focusRequester = settingsHostCountryFocusRequester,
-                                        isError = TournamentEditField.HOST_COUNTRY in invalidEditFields,
-                                        label = "Country",
-                                        errorMessage = if (TournamentEditField.HOST_COUNTRY in invalidEditFields) {
-                                            "Select a host country."
-                                        } else {
-                                            null
-                                        },
-                                    )
-                                    OutlinedTextField(
-                                        value = settingsHostCity,
-                                        onValueChange = {
-                                            settingsHostCity = it
-                                            invalidEditFields = invalidEditFields - TournamentEditField.HOST_CITY
-                                            renameError = null
-                                        },
-                                        modifier = Modifier.weight(2f).focusRequester(settingsHostCityFocusRequester),
-                                        label = { Text("City") },
-                                        singleLine = true,
-                                        isError = TournamentEditField.HOST_CITY in invalidEditFields,
-                                        supportingText = if (TournamentEditField.HOST_CITY in invalidEditFields) {
-                                            { Text("Host city is required.") }
-                                        } else {
-                                            null
-                                        },
-                                    )
-                            }
-                            TournamentVenueFields(
-                                venue = settingsVenue,
-                                onVenueChange = {
-                                    settingsVenue = it
-                                    renameError = null
-                                },
-                            )
+                                TournamentPlaceFields(
+                                    venue = settingsVenue,
+                                    onVenueChange = {
+                                        settingsVenue = it
+                                        invalidEditFields = invalidEditFields -
+                                            setOf(TournamentEditField.VENUE, TournamentEditField.CONTACT_EMAIL)
+                                        renameError = null
+                                    },
+                                    hostCountry = settingsHostCountry,
+                                    onHostCountryChange = {
+                                        settingsHostCountry = it
+                                        invalidEditFields = invalidEditFields - TournamentEditField.HOST_COUNTRY
+                                        renameError = null
+                                    },
+                                    hostCity = settingsHostCity,
+                                    onHostCityChange = {
+                                        settingsHostCity = it
+                                        invalidEditFields = invalidEditFields - TournamentEditField.HOST_CITY
+                                        renameError = null
+                                    },
+                                    countries = countries,
+                                    resolveLink = presenter::resolveVenueLink,
+                                    enabled = !isLoading,
+                                    countryError = if (TournamentEditField.HOST_COUNTRY in invalidEditFields) {
+                                        "Select a host country."
+                                    } else {
+                                        null
+                                    },
+                                    cityError = if (TournamentEditField.HOST_CITY in invalidEditFields) {
+                                        "Host city is required."
+                                    } else {
+                                        null
+                                    },
+                                    countryFocusRequester = settingsHostCountryFocusRequester,
+                                    cityFocusRequester = settingsHostCityFocusRequester,
+                                    venueError = if (TournamentEditField.VENUE in invalidEditFields) {
+                                        venueRequiredError(settingsVenue)
+                                    } else {
+                                        null
+                                    },
+                                    contactEmailError = if (TournamentEditField.CONTACT_EMAIL in invalidEditFields) {
+                                        contactEmailRequiredError(settingsVenue.contactEmail)
+                                    } else {
+                                        null
+                                    },
+                                    mapUrlFocusRequester = settingsMapUrlFocusRequester,
+                                    contactEmailFocusRequester = settingsContactEmailFocusRequester,
+                                )
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -352,7 +359,7 @@ fun EditTournamentDialog(
                                         renameError = null
                                     },
                                     modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
-                                    label = { Text("From") },
+                                    label = { RequiredLabel("From") },
                                     placeholder = { Text("DD/MM/YYYY") },
                                     trailingIcon = {
                                         IconButton(onClick = { showDateRangePicker = true }) {
@@ -386,7 +393,7 @@ fun EditTournamentDialog(
                                         renameError = null
                                     },
                                     modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
-                                    label = { Text("To") },
+                                    label = { RequiredLabel("To") },
                                     placeholder = { Text("DD/MM/YYYY") },
                                     trailingIcon = {
                                         IconButton(onClick = { showDateRangePicker = true }) {
@@ -676,6 +683,12 @@ fun EditTournamentDialog(
                             }
                             if (newHostCity.isEmpty()) {
                                 add(TournamentEditField.HOST_CITY)
+                            }
+                            if (venueRequiredError(settingsVenue) != null) {
+                                add(TournamentEditField.VENUE)
+                            }
+                            if (contactEmailRequiredError(settingsVenue.contactEmail) != null) {
+                                add(TournamentEditField.CONTACT_EMAIL)
                             }
                             if (!Regex("^#[0-9A-F]{6}$").matches(newPrimaryColor)) {
                                 add(TournamentEditField.PRIMARY_COLOR)

@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
@@ -28,6 +30,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,7 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as AppTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
-import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
+import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
@@ -88,7 +92,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSiz
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.synchronizeRoundScheduleRows
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentVenueFields
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
+import com.etologic.mahjongtournamentsuite.presentation.components.contactEmailRequiredError
+import com.etologic.mahjongtournamentsuite.presentation.components.venueRequiredError
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentAgendaItems
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentRoundSchedules
 import com.etologic.mahjongtournamentsuite.presentation.components.tournamentScheduleEditorError
@@ -111,6 +117,29 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Clock
 import org.koin.compose.koinInject
 
+/** The fields of the form that can be wrong. A wrong field gets a red mark and a short text. */
+private enum class CreateField {
+    NAME, SHORT_NAME, PLAYERS, ROUNDS, COUNTRY, CITY, VENUE, CONTACT_EMAIL, START_DATE, END_DATE, MATCH_DURATION,
+    TIME_ZONE, EXTRA_TIME, COLOR,
+}
+
+private enum class CreateTab(val title: String) {
+    GENERAL("General"),
+    BRANDING("Branding"),
+    MATCH("Match"),
+    SCHEDULE("Schedule"),
+}
+
+/** The tab that holds the field. */
+private fun CreateField.tab(): CreateTab = when (this) {
+    CreateField.NAME, CreateField.SHORT_NAME, CreateField.PLAYERS, CreateField.ROUNDS, CreateField.COUNTRY,
+    CreateField.CITY, CreateField.VENUE, CreateField.CONTACT_EMAIL, CreateField.START_DATE,
+    CreateField.END_DATE,
+    -> CreateTab.GENERAL
+    CreateField.COLOR -> CreateTab.BRANDING
+    CreateField.MATCH_DURATION, CreateField.TIME_ZONE, CreateField.EXTRA_TIME -> CreateTab.MATCH
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateTournamentDialog(
@@ -131,6 +160,11 @@ fun CreateTournamentDialog(
     val playersFocusRequester = remember { FocusRequester() }
     val roundsFocusRequester = remember { FocusRequester() }
     val matchDurationFocusRequester = remember { FocusRequester() }
+    val mapUrlFocusRequester = remember { FocusRequester() }
+    val contactEmailFocusRequester = remember { FocusRequester() }
+    val dialogScrollState = rememberScrollState()
+    var selectedTab by remember { mutableStateOf(CreateTab.GENERAL) }
+    var pendingFocusField by remember { mutableStateOf<CreateField?>(null) }
 
     var name by remember { mutableStateOf("") }
     var shortName by remember { mutableStateOf("") }
@@ -172,6 +206,7 @@ fun CreateTournamentDialog(
 
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
+    var fieldErrors by remember { mutableStateOf<Map<CreateField, String>>(emptyMap()) }
     var progress by remember { mutableStateOf<CreateTournamentPresenter.Progress?>(null) }
     var createJob by remember { mutableStateOf<Job?>(null) }
     var calcStartMark by remember { mutableStateOf<TimeMark?>(null) }
@@ -204,6 +239,10 @@ fun CreateTournamentDialog(
         }
     }
 
+    fun clearError(vararg fields: CreateField) {
+        fieldErrors = fieldErrors - fields.toSet()
+    }
+
     fun cancelCreation() {
         createJob?.cancel()
         createJob = null
@@ -214,6 +253,31 @@ fun CreateTournamentDialog(
 
     DisposableEffect(Unit) {
         onDispose { createJob?.cancel() }
+    }
+
+    LaunchedEffect(selectedTab) {
+        dialogScrollState.scrollTo(0)
+    }
+
+    // A field on another tab is not composed yet. Focus it after the tab changes.
+    LaunchedEffect(pendingFocusField, selectedTab) {
+        val field = pendingFocusField ?: return@LaunchedEffect
+        when (field) {
+            CreateField.NAME -> nameFocusRequester
+            CreateField.SHORT_NAME -> shortNameFocusRequester
+            CreateField.PLAYERS -> playersFocusRequester
+            CreateField.ROUNDS -> roundsFocusRequester
+            CreateField.COUNTRY -> hostCountryFocusRequester
+            CreateField.CITY -> hostCityFocusRequester
+            CreateField.VENUE -> mapUrlFocusRequester
+            CreateField.CONTACT_EMAIL -> contactEmailFocusRequester
+            CreateField.START_DATE -> eventStartDateFocusRequester
+            CreateField.END_DATE -> eventEndDateFocusRequester
+            CreateField.MATCH_DURATION -> matchDurationFocusRequester
+            CreateField.COLOR -> primaryColorFocusRequester
+            CreateField.TIME_ZONE, CreateField.EXTRA_TIME -> null
+        }?.requestFocus()
+        pendingFocusField = null
     }
 
     LaunchedEffect(Unit) {
@@ -237,64 +301,51 @@ fun CreateTournamentDialog(
         val numPlayers = numPlayersText.trim().toIntOrNull()
         val numRounds = numRoundsText.trim().toIntOrNull()
 
-        if (trimmedName.isBlank()) {
-            errorMessage = "* Name is required."
-            nameFocusRequester.requestFocus()
-            return
-        }
+        val matchDurationMinutes = matchDurationOrNull(matchDurationText)
+        val matchExtraMinutes = matchExtraMinutesOrNull(matchExtraText)
+        val errors = linkedMapOf<CreateField, String>()
+        if (trimmedName.isBlank()) errors[CreateField.NAME] = "Name is required."
         if (trimmedShortName.isBlank() || trimmedShortName.length > 10) {
-            errorMessage = "* Short name must contain 1 to 10 characters."
-            shortNameFocusRequester.requestFocus()
-            return
-        }
-        if (!Regex("^#[0-9A-F]{6}$").matches(normalizedPrimaryColor)) {
-            errorMessage = "* Primary color must use #RRGGBB format."
-            primaryColorFocusRequester.requestFocus()
-            return
-        }
-        if (!Regex("^[A-Z]{2,3}$").matches(normalizedHostCountry)) {
-            errorMessage = "* Select a host country."
-            hostCountryFocusRequester.requestFocus()
-            return
-        }
-        if (trimmedHostCity.isBlank()) {
-            errorMessage = "* Host city is required."
-            hostCityFocusRequester.requestFocus()
-            return
-        }
-        if (
-            trimmedStartDate == null ||
-            trimmedEndDate == null ||
-            !TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)
-        ) {
-            errorMessage = "* Enter valid DD/MM/YYYY dates. The end date must not be before the start date."
-            return
+            errors[CreateField.SHORT_NAME] = "Use 1 to 10 characters."
         }
         if (numPlayers == null || !TournamentPlayerCountValidator.isValid(numPlayers)) {
-            errorMessage = "* Must be a multiple of 4 and at least ${TournamentPlayerCountValidator.MIN_PLAYERS}."
-            playersFocusRequester.requestFocus()
-            return
+            errors[CreateField.PLAYERS] =
+                "Must be a multiple of 4 and at least ${TournamentPlayerCountValidator.MIN_PLAYERS}."
         }
-        if (numRounds == null || numRounds <= 0) {
-            errorMessage = "* Must be a positive integer."
-            roundsFocusRequester.requestFocus()
-            return
+        if (numRounds == null || numRounds <= 0) errors[CreateField.ROUNDS] = "Must be a positive whole number."
+        if (!Regex("^[A-Z]{2,3}$").matches(normalizedHostCountry)) errors[CreateField.COUNTRY] = "Select a host country."
+        if (trimmedHostCity.isBlank()) errors[CreateField.CITY] = "City is required."
+        venueRequiredError(venue)?.let { errors[CreateField.VENUE] = it }
+        contactEmailRequiredError(venue.contactEmail)?.let { errors[CreateField.CONTACT_EMAIL] = it }
+        if (trimmedStartDate == null) errors[CreateField.START_DATE] = "Use DD/MM/YYYY."
+        if (trimmedEndDate == null) {
+            errors[CreateField.END_DATE] = "Use DD/MM/YYYY."
+        } else if (trimmedStartDate != null &&
+            !TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)
+        ) {
+            errors[CreateField.END_DATE] = "The end date must not be before the start date."
         }
-        val matchDurationMinutes = matchDurationOrNull(matchDurationText)
         if (matchDurationMinutes == null) {
-            errorMessage = "* Match duration must be a whole number of minutes from 1 to $MAX_MATCH_DURATION_MINUTES."
-            matchDurationFocusRequester.requestFocus()
-            return
+            errors[CreateField.MATCH_DURATION] = "Use a whole number of minutes from 1 to $MAX_MATCH_DURATION_MINUTES."
         }
-        if (!isTimeZoneIdShape(timeZoneText)) {
-            errorMessage = "* Time zone must be a name like Europe/Madrid."
-            return
-        }
-        val matchExtraMinutes = matchExtraMinutesOrNull(matchExtraText)
+        if (!isTimeZoneIdShape(timeZoneText)) errors[CreateField.TIME_ZONE] = "Use a name like Europe/Madrid."
         if (finishHandInPlay && matchExtraMinutes == null) {
-            errorMessage = "* Extra time must be a whole number of minutes from 1 to $MAX_MATCH_EXTRA_MINUTES."
+            errors[CreateField.EXTRA_TIME] = "Use a whole number of minutes from 1 to $MAX_MATCH_EXTRA_MINUTES."
+        }
+        if (!Regex("^#[0-9A-F]{6}$").matches(normalizedPrimaryColor)) errors[CreateField.COLOR] = "Use #RRGGBB format."
+        if (errors.isNotEmpty()) {
+            fieldErrors = errors
+            val firstField = errors.keys.first()
+            selectedTab = firstField.tab()
+            pendingFocusField = firstField
             return
         }
+        if (trimmedStartDate == null || trimmedEndDate == null || numPlayers == null || numRounds == null ||
+            matchDurationMinutes == null
+        ) {
+            return
+        }
+        fieldErrors = emptyMap()
         val scheduleError = tournamentScheduleEditorError(
             roundRows = roundScheduleRows,
             agendaRows = agendaRows,
@@ -373,322 +424,397 @@ fun CreateTournamentDialog(
         },
         title = { Text("New tournament") },
         text = {
-            ScrollableColumnWithScrollbar(
-                state = rememberScrollState(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 560.dp),
-            ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
+            Column(modifier = Modifier.fillMaxWidth()) {
+                PrimaryScrollableTabRow(
+                    selectedTabIndex = selectedTab.ordinal,
+                    edgePadding = 0.dp,
                 ) {
-                    Text(
-                        "Creates rounds, tables, and players automatically.",
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        style = MaterialTheme.typography.bodySmall,
-                    )
-                    OutlinedTextField(
-                        value = name,
-                        onValueChange = { name = it },
-                        label = { Text("Name") },
-                        singleLine = true,
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth().focusRequester(nameFocusRequester),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { shortNameFocusRequester.requestFocus() }),
-                    )
-                    OutlinedTextField(
-                        value = shortName,
-                        onValueChange = { shortName = it.take(10) },
-                        label = { Text("Short name") },
-                        placeholder = { Text("Max. 10 characters") },
-                        singleLine = true,
-                        enabled = !isLoading,
-                        modifier = Modifier.fillMaxWidth().focusRequester(shortNameFocusRequester),
-                        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
-                        keyboardActions = KeyboardActions(onNext = { playersFocusRequester.requestFocus() }),
-                    )
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        OutlinedTextField(
-                            value = numPlayersText,
-                            onValueChange = { numPlayersText = it.toDigitsInput() },
-                            label = { Text("Players") },
-                            placeholder = { Text("Multiple of 4, minimum ${TournamentPlayerCountValidator.MIN_PLAYERS}") },
-                            modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
-                            singleLine = true,
-                            enabled = !isLoading,
-                        )
-                        OutlinedTextField(
-                            value = numRoundsText,
-                            onValueChange = { typed ->
-                                val value = typed.toDigitsInput()
-                                numRoundsText = value
-                                roundScheduleRows = synchronizeRoundScheduleRows(
-                                    rows = roundScheduleRows,
-                                    roundCount = value.trim().toIntOrNull() ?: 0,
-                                )
-                            },
-                            label = { Text("Rounds") },
-                            modifier = Modifier.weight(1f).focusRequester(roundsFocusRequester),
-                            singleLine = true,
-                            enabled = !isLoading,
+                    CreateTab.entries.forEach { tab ->
+                        Tab(
+                            selected = tab == selectedTab,
+                            onClick = { selectedTab = tab },
+                            text = { Text(tab.title) },
                         )
                     }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                }
+                Spacer(Modifier.height(12.dp))
+                ScrollableColumnWithScrollbar(
+                    state = dialogScrollState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(max = 560.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(end = 8.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        EmaCountryDropdown(
-                            selectedCode = hostCountry,
-                            onCountrySelected = { hostCountry = it },
-                            countries = countries,
-                            enabled = !isLoading,
-                            modifier = Modifier.weight(1f),
-                            focusRequester = hostCountryFocusRequester,
-                            label = "Country",
+                        Text(
+                            "Creates rounds, tables, and players automatically.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
                         )
-                        OutlinedTextField(
-                            value = hostCity,
-                            onValueChange = { hostCity = it },
-                            label = { Text("City") },
-                            singleLine = true,
-                            enabled = !isLoading,
-                            modifier = Modifier.weight(2f).focusRequester(hostCityFocusRequester),
+                        Text(
+                            "Fields marked with * are required.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            style = MaterialTheme.typography.bodySmall,
                         )
-                    }
-                    TournamentVenueFields(venue = venue, onVenueChange = { venue = it }, enabled = !isLoading)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        OutlinedTextField(
-                            value = eventStartDate,
-                            onValueChange = {
-                                eventStartDate = it.toDateInput()
-                                eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
-                            },
-                            label = { Text("From") },
-                            placeholder = { Text("DD/MM/YYYY") },
-                            trailingIcon = {
-                                IconButton(onClick = { showDateRangePicker = true }) {
-                                    androidx.compose.material3.Icon(
-                                        Icons.Default.DateRange,
-                                        contentDescription = "Choose start date",
-                                    )
-                                }
-                            },
-                            modifier = Modifier.weight(1f).focusRequester(eventStartDateFocusRequester),
-                            singleLine = true,
-                            enabled = !isLoading,
-                        )
-                        OutlinedTextField(
-                            value = eventEndDate,
-                            onValueChange = {
-                                val newValue = it.toDateInput()
-                                eventEndDate = when {
-                                    newValue.isEmpty() && eventStartDate.toIsoTournamentDateOrNull() != null -> eventStartDate
-                                    else -> adjustedEndDate(eventStartDate, newValue)
-                                }
-                            },
-                            label = { Text("To") },
-                            placeholder = { Text("DD/MM/YYYY") },
-                            trailingIcon = {
-                                IconButton(onClick = { showDateRangePicker = true }) {
-                                    androidx.compose.material3.Icon(
-                                        Icons.Default.DateRange,
-                                        contentDescription = "Choose end date",
-                                    )
-                                }
-                            },
-                            modifier = Modifier.weight(1f).focusRequester(eventEndDateFocusRequester),
-                            singleLine = true,
-                            enabled = !isLoading,
-                        )
-                    }
-                    MatchTimeFields(
-                        durationText = matchDurationText,
-                        onDurationChange = { matchDurationText = it },
-                        timeZoneText = timeZoneText,
-                        onTimeZoneChange = { timeZoneText = it },
-                        finishHand = finishHandInPlay,
-                        onFinishHandChange = { finishHandInPlay = it },
-                        extraMinutesText = matchExtraText,
-                        onExtraMinutesChange = { matchExtraText = it },
-                        enabled = !isLoading,
-                        durationFocusRequester = matchDurationFocusRequester,
-                    )
-
-                    TournamentScheduleEditor(
-                        roundRows = roundScheduleRows,
-                        onRoundRowsChange = { roundScheduleRows = it },
-                        agendaRows = agendaRows,
-                        onAgendaRowsChange = { agendaRows = it },
-                        enabled = !isLoading,
-                        minimumDisplayDate = eventStartDate,
-                        maximumDisplayDate = eventEndDate,
-                    )
-                    TournamentColorField(
-                        value = primaryColor,
-                        enabled = !isLoading,
-                        isError = errorMessage?.contains("color", ignoreCase = true) == true,
-                        onValueChange = { primaryColor = it },
-                        onPreviewClick = {
-                            showDateRangePicker = false
-                            showColorPickerDialog = true
-                        },
-                        fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
-                    )
-
-                    Text("Logo", style = MaterialTheme.typography.titleSmall)
-                    val logoModel = associationLogo?.dataUrl ?: reusedLogoTournament?.associationLogoUrl
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        verticalAlignment = Alignment.Top,
-                    ) {
-                        TournamentLogoPreview(
-                            model = logoModel,
-                            onImageInfo = { logoImageInfo = it },
-                            modifier = Modifier.size(120.dp),
-                        )
-                        Column(
-                            modifier = Modifier.weight(1f),
-                            verticalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Text(
-                                text = when {
-                                    associationLogo != null -> buildString {
-                                        append(associationLogo?.fileName.orEmpty())
-                                        append(" · ")
-                                        append(formatByteSize(associationLogo?.bytes?.size?.toLong() ?: 0L))
-                                        logoImageInfo?.let { append(" · ").append(it) }
-                                    }
-                                    reusedLogoTournament != null -> "Logo from ${reusedLogoTournament?.name}"
-                                    else -> "No logo"
+                        when (selectedTab) {
+                        CreateTab.GENERAL -> {
+                            OutlinedTextField(
+                                value = name,
+                                onValueChange = {
+                                    name = it
+                                    clearError(CreateField.NAME)
                                 },
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodySmall,
+                                label = { RequiredLabel("Name") },
+                                singleLine = true,
+                                enabled = !isLoading,
+                                isError = CreateField.NAME in fieldErrors,
+                                supportingText = fieldErrors[CreateField.NAME]?.let { message -> { Text(message) } },
+                                modifier = Modifier.fillMaxWidth().focusRequester(nameFocusRequester),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(onNext = { shortNameFocusRequester.requestFocus() }),
+                            )
+                            OutlinedTextField(
+                                value = shortName,
+                                onValueChange = {
+                                    shortName = it.take(10)
+                                    clearError(CreateField.SHORT_NAME)
+                                },
+                                label = { RequiredLabel("Short name") },
+                                placeholder = { Text("Max. 10 characters") },
+                                singleLine = true,
+                                enabled = !isLoading,
+                                isError = CreateField.SHORT_NAME in fieldErrors,
+                                supportingText = fieldErrors[CreateField.SHORT_NAME]?.let { message -> { Text(message) } },
+                                modifier = Modifier.fillMaxWidth().focusRequester(shortNameFocusRequester),
+                                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+                                keyboardActions = KeyboardActions(onNext = { playersFocusRequester.requestFocus() }),
                             )
                             Row(
+                                modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Button(enabled = !isLoading, onClick = logoPicker::launch) {
-                                    Text(if (logoModel == null) "Choose logo" else "Upload logo")
-                                }
-                                if (tournaments.any { !it.associationLogoUrl.isNullOrBlank() }) {
-                                    Button(
-                                        enabled = !isLoading,
-                                        onClick = { showLogoLibrary = true },
+                                OutlinedTextField(
+                                    value = numPlayersText,
+                                    onValueChange = {
+                                        numPlayersText = it.toDigitsInput()
+                                        clearError(CreateField.PLAYERS)
+                                    },
+                                    label = { RequiredLabel("Players") },
+                                    placeholder = { Text("Multiple of 4, minimum ${TournamentPlayerCountValidator.MIN_PLAYERS}") },
+                                    modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
+                                    singleLine = true,
+                                    enabled = !isLoading,
+                                    isError = CreateField.PLAYERS in fieldErrors,
+                                    supportingText = fieldErrors[CreateField.PLAYERS]?.let { message -> { Text(message) } },
+                                )
+                                OutlinedTextField(
+                                    value = numRoundsText,
+                                    onValueChange = { typed ->
+                                        val value = typed.toDigitsInput()
+                                        numRoundsText = value
+                                        roundScheduleRows = synchronizeRoundScheduleRows(
+                                            rows = roundScheduleRows,
+                                            roundCount = value.trim().toIntOrNull() ?: 0,
+                                        )
+                                        clearError(CreateField.ROUNDS)
+                                    },
+                                    label = { RequiredLabel("Rounds") },
+                                    modifier = Modifier.weight(1f).focusRequester(roundsFocusRequester),
+                                    singleLine = true,
+                                    enabled = !isLoading,
+                                    isError = CreateField.ROUNDS in fieldErrors,
+                                    supportingText = fieldErrors[CreateField.ROUNDS]?.let { message -> { Text(message) } },
+                                )
+                            }
+                            TournamentPlaceFields(
+                                venue = venue,
+                                onVenueChange = {
+                            venue = it
+                            clearError(CreateField.VENUE, CreateField.CONTACT_EMAIL)
+                        },
+                                hostCountry = hostCountry,
+                                onHostCountryChange = {
+                                    hostCountry = it
+                                    clearError(CreateField.COUNTRY)
+                                },
+                                hostCity = hostCity,
+                                onHostCityChange = {
+                                    hostCity = it
+                                    clearError(CreateField.CITY)
+                                },
+                                countries = countries,
+                                resolveLink = presenter::resolveVenueLink,
+                                enabled = !isLoading,
+                                countryError = fieldErrors[CreateField.COUNTRY],
+                                cityError = fieldErrors[CreateField.CITY],
+                                countryFocusRequester = hostCountryFocusRequester,
+                                cityFocusRequester = hostCityFocusRequester,
+                                venueError = fieldErrors[CreateField.VENUE],
+                                contactEmailError = fieldErrors[CreateField.CONTACT_EMAIL],
+                                mapUrlFocusRequester = mapUrlFocusRequester,
+                                contactEmailFocusRequester = contactEmailFocusRequester,
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                OutlinedTextField(
+                                    value = eventStartDate,
+                                    onValueChange = {
+                                        eventStartDate = it.toDateInput()
+                                        eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
+                                        clearError(CreateField.START_DATE, CreateField.END_DATE)
+                                    },
+                                    label = { RequiredLabel("From") },
+                                    placeholder = { Text("DD/MM/YYYY") },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showDateRangePicker = true }) {
+                                            androidx.compose.material3.Icon(
+                                                Icons.Default.DateRange,
+                                                contentDescription = "Choose start date",
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).focusRequester(eventStartDateFocusRequester),
+                                    singleLine = true,
+                                    enabled = !isLoading,
+                                    isError = CreateField.START_DATE in fieldErrors,
+                                    supportingText = fieldErrors[CreateField.START_DATE]?.let { message -> { Text(message) } },
+                                )
+                                OutlinedTextField(
+                                    value = eventEndDate,
+                                    onValueChange = {
+                                        val newValue = it.toDateInput()
+                                        eventEndDate = when {
+                                            newValue.isEmpty() && eventStartDate.toIsoTournamentDateOrNull() != null -> eventStartDate
+                                            else -> adjustedEndDate(eventStartDate, newValue)
+                                        }
+                                        clearError(CreateField.START_DATE, CreateField.END_DATE)
+                                    },
+                                    label = { RequiredLabel("To") },
+                                    placeholder = { Text("DD/MM/YYYY") },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showDateRangePicker = true }) {
+                                            androidx.compose.material3.Icon(
+                                                Icons.Default.DateRange,
+                                                contentDescription = "Choose end date",
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).focusRequester(eventEndDateFocusRequester),
+                                    singleLine = true,
+                                    enabled = !isLoading,
+                                    isError = CreateField.END_DATE in fieldErrors,
+                                    supportingText = fieldErrors[CreateField.END_DATE]?.let { message -> { Text(message) } },
+                                )
+                            }
+                        }
+                        CreateTab.BRANDING -> {
+                            TournamentColorField(
+                                value = primaryColor,
+                                enabled = !isLoading,
+                                isError = CreateField.COLOR in fieldErrors,
+                                errorMessage = fieldErrors[CreateField.COLOR],
+                                onValueChange = {
+                                    primaryColor = it
+                                    clearError(CreateField.COLOR)
+                                },
+                                onPreviewClick = {
+                                    showDateRangePicker = false
+                                    showColorPickerDialog = true
+                                },
+                                fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
+                            )
+
+                            Text("Logo", style = MaterialTheme.typography.titleSmall)
+                            val logoModel = associationLogo?.dataUrl ?: reusedLogoTournament?.associationLogoUrl
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.Top,
+                            ) {
+                                TournamentLogoPreview(
+                                    model = logoModel,
+                                    onImageInfo = { logoImageInfo = it },
+                                    modifier = Modifier.size(120.dp),
+                                )
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    Text(
+                                        text = when {
+                                            associationLogo != null -> buildString {
+                                                append(associationLogo?.fileName.orEmpty())
+                                                append(" · ")
+                                                append(formatByteSize(associationLogo?.bytes?.size?.toLong() ?: 0L))
+                                                logoImageInfo?.let { append(" · ").append(it) }
+                                            }
+                                            reusedLogoTournament != null -> "Logo from ${reusedLogoTournament?.name}"
+                                            else -> "No logo"
+                                        },
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodySmall,
+                                    )
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
-                                        Text("Reuse existing")
+                                        Button(enabled = !isLoading, onClick = logoPicker::launch) {
+                                            Text(if (logoModel == null) "Choose logo" else "Upload logo")
+                                        }
+                                        if (tournaments.any { !it.associationLogoUrl.isNullOrBlank() }) {
+                                            Button(
+                                                enabled = !isLoading,
+                                                onClick = { showLogoLibrary = true },
+                                            ) {
+                                                Text("Reuse existing")
+                                            }
+                                        }
+                                        if (logoModel != null) {
+                                            AppTextButton(
+                                                enabled = !isLoading,
+                                                onClick = {
+                                                    associationLogo = null
+                                                    reusedLogoTournament = null
+                                                    logoImageInfo = null
+                                                },
+                                            ) { Text("Remove") }
+                                        }
                                     }
                                 }
-                                if (logoModel != null) {
-                                    AppTextButton(
+                            }
+                            TournamentIdCardPreviewButton(
+                                shortName = shortName,
+                                primaryColor = primaryColor,
+                                year = eventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
+                                associationLogoContentType = associationLogo?.contentType,
+                                associationLogoBytes = associationLogo?.bytes,
+                                associationLogoUrl = reusedLogoTournament?.associationLogoUrl,
+                                roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
+                                onError = { errorMessage = it },
+                            )
+                        }
+                        CreateTab.MATCH -> {
+                            MatchTimeFields(
+                                durationText = matchDurationText,
+                                onDurationChange = {
+                                    matchDurationText = it
+                                    clearError(CreateField.MATCH_DURATION)
+                                },
+                                timeZoneText = timeZoneText,
+                                onTimeZoneChange = {
+                                    timeZoneText = it
+                                    clearError(CreateField.TIME_ZONE)
+                                },
+                                finishHand = finishHandInPlay,
+                                onFinishHandChange = {
+                                    finishHandInPlay = it
+                                    clearError(CreateField.EXTRA_TIME)
+                                },
+                                extraMinutesText = matchExtraText,
+                                onExtraMinutesChange = {
+                                    matchExtraText = it
+                                    clearError(CreateField.EXTRA_TIME)
+                                },
+                                enabled = !isLoading,
+                                durationFocusRequester = matchDurationFocusRequester,
+                                durationError = fieldErrors[CreateField.MATCH_DURATION],
+                                timeZoneError = fieldErrors[CreateField.TIME_ZONE],
+                                extraMinutesError = fieldErrors[CreateField.EXTRA_TIME],
+                            )
+
+                            FocusHighlightContainer(
+                                modifier = Modifier.fillMaxWidth(),
+                                interactionSource = teamsToggleInteractionSource,
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Switch(
+                                        checked = isTeams,
+                                        onCheckedChange = ::setTeamsChecked,
                                         enabled = !isLoading,
-                                        onClick = {
-                                            associationLogo = null
-                                            reusedLogoTournament = null
-                                            logoImageInfo = null
-                                        },
-                                    ) { Text("Remove") }
+                                        interactionSource = teamsToggleInteractionSource,
+                                    )
+                                    Text(
+                                        text = "Teams",
+                                        modifier = Modifier.toggleable(
+                                            value = isTeams,
+                                            enabled = !isLoading,
+                                            role = Role.Switch,
+                                            interactionSource = teamsToggleInteractionSource,
+                                            indication = null,
+                                            onValueChange = ::setTeamsChecked,
+                                        ),
+                                    )
+                                    InfoTooltipIcon(
+                                        "Group players into teams of four. Team members will not play together.",
+                                    )
+                                }
+                            }
+
+                            TournamentOptionSwitch(
+                                label = "Best hands",
+                                description = "Count the best hands and show them in the ranking and the tournament screens.",
+                                checked = countBestHands,
+                                enabled = !isLoading,
+                                onCheckedChange = { countBestHands = it },
+                            )
+
+                            TournamentOptionSwitch(
+                                label = "Chicken hands",
+                                description = "Count the chicken hands and show them in the ranking and the tournament screens.",
+                                checked = countChickenHands,
+                                enabled = !isLoading,
+                                onCheckedChange = { countChickenHands = it },
+                            )
+
+                            FocusHighlightContainer(
+                                modifier = Modifier.fillMaxWidth(),
+                                interactionSource = computeToggleInteractionSource,
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
+                                    Switch(
+                                        checked = isHeavy,
+                                        onCheckedChange = ::setHeavyCompute,
+                                        enabled = !isLoading,
+                                        interactionSource = computeToggleInteractionSource,
+                                    )
+                                    Text(
+                                        text = "Heavy computing",
+                                        modifier = Modifier.toggleable(
+                                            value = isHeavy,
+                                            enabled = !isLoading,
+                                            role = Role.Switch,
+                                            interactionSource = computeToggleInteractionSource,
+                                            indication = null,
+                                            onValueChange = ::setHeavyCompute,
+                                        ),
+                                    )
+                                    InfoTooltipIcon("Use more CPU to calculate the schedule faster.")
                                 }
                             }
                         }
-                    }
-                    TournamentIdCardPreviewButton(
-                        shortName = shortName,
-                        primaryColor = primaryColor,
-                        year = eventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
-                        associationLogoContentType = associationLogo?.contentType,
-                        associationLogoBytes = associationLogo?.bytes,
-                        associationLogoUrl = reusedLogoTournament?.associationLogoUrl,
-                        roundSchedules = roundScheduleRows.toTournamentRoundSchedules(),
-                        onError = { errorMessage = it },
-                    )
-
-                    FocusHighlightContainer(
-                        modifier = Modifier.fillMaxWidth(),
-                        interactionSource = teamsToggleInteractionSource,
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Switch(
-                                checked = isTeams,
-                                onCheckedChange = ::setTeamsChecked,
+                        CreateTab.SCHEDULE -> {
+                            TournamentScheduleEditor(
+                                roundRows = roundScheduleRows,
+                                onRoundRowsChange = { roundScheduleRows = it },
+                                agendaRows = agendaRows,
+                                onAgendaRowsChange = { agendaRows = it },
                                 enabled = !isLoading,
-                                interactionSource = teamsToggleInteractionSource,
-                            )
-                            Text(
-                                text = "Teams",
-                                modifier = Modifier.toggleable(
-                                    value = isTeams,
-                                    enabled = !isLoading,
-                                    role = Role.Switch,
-                                    interactionSource = teamsToggleInteractionSource,
-                                    indication = null,
-                                    onValueChange = ::setTeamsChecked,
-                                ),
-                            )
-                            InfoTooltipIcon(
-                                "Group players into teams of four. Team members will not play together.",
+                                minimumDisplayDate = eventStartDate,
+                                maximumDisplayDate = eventEndDate,
                             )
                         }
-                    }
-
-                    TournamentOptionSwitch(
-                        label = "Best hands",
-                        description = "Count the best hands and show them in the ranking and the tournament screens.",
-                        checked = countBestHands,
-                        enabled = !isLoading,
-                        onCheckedChange = { countBestHands = it },
-                    )
-
-                    TournamentOptionSwitch(
-                        label = "Chicken hands",
-                        description = "Count the chicken hands and show them in the ranking and the tournament screens.",
-                        checked = countChickenHands,
-                        enabled = !isLoading,
-                        onCheckedChange = { countChickenHands = it },
-                    )
-
-                    FocusHighlightContainer(
-                        modifier = Modifier.fillMaxWidth(),
-                        interactionSource = computeToggleInteractionSource,
-                    ) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
-                            Switch(
-                                checked = isHeavy,
-                                onCheckedChange = ::setHeavyCompute,
-                                enabled = !isLoading,
-                                interactionSource = computeToggleInteractionSource,
-                            )
-                            Text(
-                                text = "Heavy computing",
-                                modifier = Modifier.toggleable(
-                                    value = isHeavy,
-                                    enabled = !isLoading,
-                                    role = Role.Switch,
-                                    interactionSource = computeToggleInteractionSource,
-                                    indication = null,
-                                    onValueChange = ::setHeavyCompute,
-                                ),
-                            )
-                            InfoTooltipIcon("Use more CPU to calculate the schedule faster.")
                         }
-                    }
-
                     errorMessage?.let {
                         AppErrorDialog(
                             message = it,
@@ -720,6 +846,7 @@ fun CreateTournamentDialog(
                         }
                     }
                 }
+            }
             }
         },
         confirmButton = {

@@ -5,7 +5,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainToolt
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
-import com.etologic.mahjongtournamentsuite.presentation.components.toCountryCodeInput
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -15,8 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -83,6 +80,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnt
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
@@ -104,7 +102,7 @@ import coil3.compose.AsyncImage
 
 /** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 fun PlayerBaseScreen(navController: NavHostController) {
     val presenter = koinInject<PlayerBasePresenter>()
     val store = koinInject<AppMemoryStore>()
@@ -485,12 +483,10 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    OutlinedTextField(
-                        value = newCountry,
-                        onValueChange = { newCountry = it.toCountryCodeInput(); newPlayerError = null },
-                        label = { Text("Country") },
-                        placeholder = { Text("Three-letter EMA code") },
-                        singleLine = true,
+                    EmaCountryDropdown(
+                        selectedCode = newCountry,
+                        onCountrySelected = { newCountry = it; newPlayerError = null },
+                        label = "Country",
                         modifier = Modifier.fillMaxWidth(),
                     )
                     PlayerPhotoPreview(
@@ -575,10 +571,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    FlowRow(
+                    FullBleedRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         existingPlayerCountryCodes.forEach { code ->
                             val countryName = countries

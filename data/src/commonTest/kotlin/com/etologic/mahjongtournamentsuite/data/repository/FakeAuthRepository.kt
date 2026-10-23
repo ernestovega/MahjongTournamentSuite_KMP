@@ -31,4 +31,13 @@ internal class FakeAuthRepository : AuthRepository {
 
     override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> =
         error("Not used in this test")
+
+    override suspend fun updateAlias(alias: String): AppResult<UserProfile> =
+        error("Not used in this test")
+
+    override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> =
+        error("Not used in this test")
+
+    override suspend fun removePhoto(): AppResult<UserProfile> =
+        error("Not used in this test")
 }

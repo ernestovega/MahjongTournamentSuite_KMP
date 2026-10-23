@@ -1,6 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.MAX_ALIAS_LENGTH = void 0;
 exports.getUserProfile = getUserProfile;
+exports.getOwnProfile = getOwnProfile;
+exports.setUserPhoto = setUserPhoto;
+exports.clearUserPhoto = clearUserPhoto;
+exports.updateOwnAlias = updateOwnAlias;
 exports.createUserProfile = createUserProfile;
 exports.listManagedUsers = listManagedUsers;
 exports.getManagedUser = getManagedUser;
@@ -18,7 +23,9 @@ const firestore_1 = require("firebase-admin/firestore");
 const firebase_1 = require("../firebase");
 const httpError_1 = require("../api/httpError");
 const dataVersionsService_1 = require("./dataVersionsService");
+const playersService_1 = require("./playersService");
 const globalRole_1 = require("../models/globalRole");
+exports.MAX_ALIAS_LENGTH = 60;
 async function getUserProfile(uid) {
     const snap = await firebase_1.db.doc(`users/${uid}`).get();
     if (!snap.exists)
@@ -29,6 +36,42 @@ async function getUserProfile(uid) {
         alias: String(snap.get("alias") ?? "").trim(),
         emaId: readEmaId(snap.get("emaId")),
     };
+}
+async function getOwnProfile(uid) {
+    const [profile, userSnap] = await Promise.all([getUserProfile(uid), firebase_1.db.doc(`users/${uid}`).get()]);
+    return { ...profile, ...(await resolvePhoto(userSnap.get("photoUrl"), profile.emaId)) };
+}
+/** The own photo of the user wins. The photo of the EMA player is the fallback. */
+async function resolvePhoto(ownPhoto, emaId) {
+    if (typeof ownPhoto === "string" && ownPhoto.length > 0)
+        return { photoUrl: ownPhoto, hasOwnPhoto: true };
+    if (emaId == null)
+        return { photoUrl: null, hasOwnPhoto: false };
+    const player = await firebase_1.db.doc(`${playersService_1.EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`).get();
+    return { photoUrl: player.exists ? (0, playersService_1.toPlayer)(emaId, player.data() ?? {}).photoUrl : null, hasOwnPhoto: false };
+}
+/** Saves the own photo of a user. A user has one photo only. A new photo replaces the old one. */
+async function setUserPhoto(uid, contentType, dataBase64) {
+    await getUserProfile(uid);
+    const photoUrl = await (0, playersService_1.storePhotoFile)({ folder: "userPhotos", id: uid, contentType, dataBase64 });
+    await firebase_1.db.doc(`users/${uid}`).set({ photoUrl, updatedAt: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
+}
+/** Removes the own photo of a user. The photo of the EMA player is the photo of the user again. */
+async function clearUserPhoto(uid) {
+    await getUserProfile(uid);
+    await firebase_1.storage.deleteFiles({ prefix: `userPhotos/${uid}.` });
+    await firebase_1.db.doc(`users/${uid}`).set({ photoUrl: firestore_1.FieldValue.delete(), updatedAt: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
+}
+/** Sets the alias that the user chose. The alias is the name that the apps show for the account. */
+async function updateOwnAlias(uid, rawAlias) {
+    const alias = typeof rawAlias === "string" ? rawAlias.trim().replace(/\s+/g, " ") : "";
+    if (alias.length === 0 || alias.length > exports.MAX_ALIAS_LENGTH) {
+        throw (0, httpError_1.badRequest)(`The alias needs 1 to ${exports.MAX_ALIAS_LENGTH} characters`);
+    }
+    await firebase_1.db.doc(`users/${uid}`).set({ alias, updatedAt: firestore_1.FieldValue.serverTimestamp() }, { merge: true });
+    await (0, dataVersionsService_1.bumpGlobalDataVersion)("users");
 }
 function readEmaId(value) {
     return typeof value === "string" && value.length > 0 ? value : null;
@@ -47,6 +90,7 @@ async function listManagedUsers(visibleTournamentIds) {
     const profiles = await firebase_1.db.collection("users").get();
     const profilesByUid = new Map(profiles.docs.map((doc) => [doc.id, doc.data()]));
     const assignmentsByUid = await listTournamentAssignmentsByUid(visibleTournamentIds);
+    const emaPhotos = await loadEmaPhotos(profiles.docs.map((doc) => readEmaId(doc.get("emaId"))));
     const users = [];
     let pageToken;
     do {
@@ -54,6 +98,7 @@ async function listManagedUsers(visibleTournamentIds) {
         page.users.forEach((user) => {
             const profile = profilesByUid.get(user.uid);
             users.push({
+                ...photoOf(profile?.photoUrl, readEmaId(profile?.emaId), emaPhotos),
                 uid: user.uid,
                 email: user.email ?? String(profile?.email ?? ""),
                 alias: String(profile?.alias ?? "").trim(),
@@ -68,6 +113,21 @@ async function listManagedUsers(visibleTournamentIds) {
     } while (pageToken);
     return users.sort((left, right) => left.email.localeCompare(right.email));
 }
+/** The photos of the EMA players of some accounts, by EMA ID. */
+async function loadEmaPhotos(emaIds) {
+    const ids = [...new Set(emaIds.filter((id) => id != null))];
+    const photos = new Map();
+    if (ids.length === 0)
+        return photos;
+    const snaps = await firebase_1.db.getAll(...ids.map((id) => firebase_1.db.doc(`${playersService_1.EMA_PLAYER_REGISTRY_COLLECTION}/${id}`)));
+    snaps.forEach((snap, index) => photos.set(ids[index], snap.exists ? (0, playersService_1.toPlayer)(ids[index], snap.data() ?? {}).photoUrl : null));
+    return photos;
+}
+function photoOf(ownPhoto, emaId, emaPhotos) {
+    if (typeof ownPhoto === "string" && ownPhoto.length > 0)
+        return { photoUrl: ownPhoto, hasOwnPhoto: true };
+    return { photoUrl: emaId == null ? null : emaPhotos.get(emaId) ?? null, hasOwnPhoto: false };
+}
 async function getManagedUser(uid, visibleTournamentIds) {
     const user = await firebase_1.auth.getUser(uid);
     const profile = await firebase_1.db.doc(`users/${uid}`).get();
@@ -76,6 +136,7 @@ async function getManagedUser(uid, visibleTournamentIds) {
         email: user.email ?? String(profile.get("email") ?? ""),
         alias: String(profile.get("alias") ?? "").trim(),
         emaId: readEmaId(profile.get("emaId")),
+        ...(await resolvePhoto(profile.get("photoUrl"), readEmaId(profile.get("emaId")))),
         role: (0, globalRole_1.getGlobalUserRole)(user),
         roles: (0, globalRole_1.getGlobalUserRoles)(user),
         disabled: user.disabled,

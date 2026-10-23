@@ -37,4 +37,12 @@ const tournamentVenue_1 = require("./tournamentVenue");
 (0, node_test_1.test)("rejects a contact email that is not valid", () => {
     strict_1.default.throws(() => (0, tournamentVenue_1.normalizeVenue)({ contactEmail: "not an email" }), /valid email/);
 });
+(0, node_test_1.test)("a venue needs a link or a name with an address, and a contact email", () => {
+    const complete = { venueName: "Club", venueAddress: "Calle 1", venueMapUrl: "", contactEmail: "a@b.es" };
+    strict_1.default.deepEqual((0, tournamentVenue_1.venueRequiredProblems)(complete), []);
+    strict_1.default.deepEqual((0, tournamentVenue_1.venueRequiredProblems)({ ...complete, venueName: "", venueMapUrl: "https://maps.app.goo.gl/x" }), []);
+    strict_1.default.equal((0, tournamentVenue_1.venueRequiredProblems)({ ...complete, venueAddress: "" }).length, 1);
+    strict_1.default.deepEqual((0, tournamentVenue_1.venueRequiredProblems)({ ...complete, contactEmail: "" }), ["Required"]);
+    strict_1.default.equal((0, tournamentVenue_1.venueRequiredProblems)({ venueName: "", venueAddress: "", venueMapUrl: "", contactEmail: "" }).length, 2);
+});
 //# sourceMappingURL=tournamentVenue.test.js.map

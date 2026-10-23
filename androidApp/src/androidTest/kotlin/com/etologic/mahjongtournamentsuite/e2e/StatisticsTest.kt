@@ -46,7 +46,7 @@ class StatisticsTest : AdminE2eTest() {
 
     @Test
     fun tournamentWithoutBestHandsOpensStatistics() {
-        openStatistics("Test - Without best hands, chicken hands, venue or dates")
+        openStatistics("Test - Without best hands, chicken hands or dates")
         c.waitForText("Tournaments")
     }
 }

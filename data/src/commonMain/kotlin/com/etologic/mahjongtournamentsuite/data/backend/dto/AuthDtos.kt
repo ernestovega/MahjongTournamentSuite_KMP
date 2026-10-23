@@ -37,5 +37,12 @@ data class UserProfileDto(
     val email: String,
     val alias: String = "",
     val emaId: String? = null,
+    val photoUrl: String? = null,
+    val hasOwnPhoto: Boolean = false,
     val roles: List<GlobalUserRoleDto> = emptyList(),
+)
+
+@Serializable
+data class UpdateOwnAliasRequestDto(
+    val alias: String,
 )

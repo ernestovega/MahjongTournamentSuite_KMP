@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequ
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.FeatureFlagsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.InvitedPeopleResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
@@ -19,6 +20,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerInvitationsRes
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RenameTournamentRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
@@ -44,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequest
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingsResponseDto
@@ -92,11 +96,26 @@ class FunctionsBackendApi(
     suspend fun me(idToken: String): UserProfileDto =
         get(path = "/auth/me", idToken = idToken)
 
+    suspend fun updateOwnAlias(idToken: String, request: UpdateOwnAliasRequestDto): UserProfileDto =
+        put(path = "/auth/me", requestBody = request, idToken = idToken)
+
+    suspend fun updateOwnPhoto(idToken: String, request: UpdatePlayerPhotoRequestDto): UserProfileDto =
+        put(path = "/auth/me/photo", requestBody = request, idToken = idToken)
+
+    suspend fun removeOwnPhoto(idToken: String): UserProfileDto =
+        delete(path = "/auth/me/photo", idToken = idToken)
+
+    suspend fun updateUserPhoto(idToken: String, uid: String, request: UpdatePlayerPhotoRequestDto): ManagedUserDto =
+        put(path = "/admin/users/$uid/photo", requestBody = request, idToken = idToken)
+
+    suspend fun removeUserPhoto(idToken: String, uid: String): ManagedUserDto =
+        delete(path = "/admin/users/$uid/photo", idToken = idToken)
+
     suspend fun whoAmI(idToken: String): WhoAmIResponseDto =
         get(path = "/admin/whoami", idToken = idToken)
 
-    suspend fun usageReport(idToken: String): UsageReportDto =
-        get(path = "/admin/usage", idToken = idToken)
+    suspend fun usageReport(idToken: String, days: Int): UsageReportDto =
+        get(path = "/admin/usage?days=$days", idToken = idToken)
 
     suspend fun statisticsOverview(idToken: String): StatisticsOverviewDto =
         get(path = "/tournaments/statistics/overview", idToken = idToken)
@@ -376,6 +395,12 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
+    suspend fun resolveVenueLink(idToken: String, url: String): ResolveVenueLinkResponseDto = post(
+        path = "/venues/resolve-link",
+        requestBody = ResolveVenueLinkRequestDto(url),
+        idToken = idToken,
+    )
+
     suspend fun listCountries(idToken: String): CountriesResponseDto = get(
         path = "/countries",
         idToken = idToken,
@@ -465,6 +490,11 @@ class FunctionsBackendApi(
         tournamentId: String,
     ): PlayerInvitationsResponseDto = get(
         path = "/tournaments/$tournamentId/player-invitations",
+        idToken = idToken,
+    )
+
+    suspend fun listInvitedPeople(idToken: String): InvitedPeopleResponseDto = get(
+        path = "/admin/invitations",
         idToken = idToken,
     )
 

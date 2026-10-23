@@ -155,23 +155,24 @@ function hasValidImageSignature(bytes: Buffer, contentType: string): boolean {
   return false;
 }
 
-export async function updatePlayerPhoto(params: {
-  emaId: string;
+/** Checks a photo and saves it in the storage bucket as `<folder>/<id>.<extension>`. Returns the download URL. */
+export async function storePhotoFile(params: {
+  folder: string;
+  id: string;
   contentType: string;
   dataBase64: string;
-}): Promise<Player> {
+}): Promise<string> {
   const extension = photoExtensions[params.contentType];
   if (!extension) throw badRequest("Photo must be a JPEG, PNG, WebP, or GIF image");
-
-  const ref = db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId);
-  if (!(await ref.get()).exists) throw notFound("Player not found");
 
   const bytes = Buffer.from(params.dataBase64, "base64");
   if (bytes.length === 0) throw badRequest("Photo is empty");
   if (bytes.length > 5 * 1024 * 1024) throw badRequest("Photo must be 5 MB or smaller");
   if (!hasValidImageSignature(bytes, params.contentType)) throw badRequest("Photo data does not match its image type");
 
-  const file = storage.file(`playerPhotos/${params.emaId}.${extension}`);
+  // A new photo can have another extension than the old one. Delete the old files, so no orphan stays.
+  await storage.deleteFiles({ prefix: `${params.folder}/${params.id}.` });
+  const file = storage.file(`${params.folder}/${params.id}.${extension}`);
   const token = randomUUID();
   await file.save(bytes, {
     contentType: params.contentType,
@@ -181,7 +182,20 @@ export async function updatePlayerPhoto(params: {
     },
   });
   const objectName = encodeURIComponent(file.name);
-  const photoUrl = `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${objectName}?alt=media&token=${token}`;
+  return `https://firebasestorage.googleapis.com/v0/b/${storage.name}/o/${objectName}?alt=media&token=${token}`;
+}
+
+export async function updatePlayerPhoto(params: {
+  emaId: string;
+  contentType: string;
+  dataBase64: string;
+}): Promise<Player> {
+  const ref = db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId);
+  if (!(await ref.get()).exists) throw notFound("Player not found");
+
+  const photoUrl = await storePhotoFile({
+    folder: "playerPhotos", id: params.emaId, contentType: params.contentType, dataBase64: params.dataBase64,
+  });
   await ref.update({ photoUrl, updatedAt: FieldValue.serverTimestamp() });
   const updated = await ref.get();
   await bumpGlobalDataVersion("emaPlayers");

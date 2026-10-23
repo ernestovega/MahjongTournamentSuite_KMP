@@ -50,6 +50,7 @@ kotlin {
         androidMain.dependencies {
             // The theme choice is stored with the Android platform context of the data module.
             implementation(projects.data)
+            implementation(libs.androidx.activity.compose)
         }
         jvmMain.dependencies {
             implementation(compose.desktop.currentOs)

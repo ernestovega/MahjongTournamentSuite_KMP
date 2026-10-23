@@ -24,4 +24,13 @@ interface AuthRepository {
     suspend fun signOut()
 
     suspend fun getMe(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<UserProfile>
+
+    /** Changes the alias of the signed-in account. Returns the profile with the new alias. */
+    suspend fun updateAlias(alias: String): AppResult<UserProfile>
+
+    /** Sets the own photo of the signed-in account. Returns the profile with the new photo. */
+    suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile>
+
+    /** Removes the own photo. The photo of the EMA player of the account is the photo again. */
+    suspend fun removePhoto(): AppResult<UserProfile>
 }

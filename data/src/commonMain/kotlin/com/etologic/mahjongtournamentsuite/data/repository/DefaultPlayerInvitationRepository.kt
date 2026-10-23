@@ -7,6 +7,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountItemDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.InvitationStatus
+import com.etologic.mahjongtournamentsuite.domain.model.InvitedPerson
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
@@ -30,6 +31,23 @@ class DefaultPlayerInvitationRepository(
                     email = dto.email,
                     status = InvitationStatus.entries.firstOrNull { it.name == dto.status } ?: InvitationStatus.INVITED,
                     expiresAt = dto.expiresAt,
+                )
+            }
+        }
+
+    override suspend fun listInvitedPeople(): AppResult<List<InvitedPerson>> =
+        request("Listing invited people") { idToken ->
+            backendApi.listInvitedPeople(idToken).invitations.map { dto ->
+                InvitedPerson(
+                    invitationId = dto.invitationId,
+                    tournamentId = dto.tournamentId,
+                    tournamentName = dto.tournamentName,
+                    playerId = dto.playerId,
+                    emaId = dto.emaId,
+                    playerName = dto.playerName,
+                    email = dto.email,
+                    expiresAt = dto.expiresAt,
+                    expired = dto.expired,
                 )
             }
         }

@@ -218,6 +218,24 @@ data class PlayerInvitationDto(
 )
 
 @Serializable
+data class InvitedPersonDto(
+    val invitationId: String,
+    val tournamentId: String,
+    val tournamentName: String = "",
+    val playerId: Int,
+    val emaId: String,
+    val playerName: String = "",
+    val email: String,
+    val expiresAt: String? = null,
+    val expired: Boolean = false,
+)
+
+@Serializable
+data class InvitedPeopleResponseDto(
+    val invitations: List<InvitedPersonDto> = emptyList(),
+)
+
+@Serializable
 data class AcceptInvitationRequestDto(
     val token: String,
     val password: String? = null,
@@ -325,6 +343,16 @@ data class UpdateTournamentTeamRequestDto(
 data class CountryDto(
     val code: String,
     val name: String,
+)
+
+@Serializable
+data class ResolveVenueLinkRequestDto(
+    val url: String,
+)
+
+@Serializable
+data class ResolveVenueLinkResponseDto(
+    val url: String,
 )
 
 @Serializable

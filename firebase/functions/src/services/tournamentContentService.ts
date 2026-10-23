@@ -5,7 +5,7 @@ import { badRequest, conflict, notFound } from "../api/httpError";
 import { tablePointsOf } from "./handScoring";
 import { readSubstitution, SUBSTITUTION_REASONS, type PlayerSubstitution } from "./playerSubstitution";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
-import { linkKnownAccountToSlot } from "./playerAccountsService";
+import { linkKnownAccountToSlot, listPendingInvitations } from "./playerAccountsService";
 import {
   calculateTableCompletionStatus,
   hasDuplicateEmaAssignments,
@@ -102,25 +102,44 @@ export type TournamentTable = {
 };
 
 export async function listTournamentPlayers(tournamentId: string): Promise<TournamentPlayer[]> {
-  const snap = await db.collection("tournaments").doc(tournamentId).collection("players").get();
+  const [snap, pending] = await Promise.all([
+    db.collection("tournaments").doc(tournamentId).collection("players").get(),
+    listPendingInvitations(),
+  ]);
+  const inviteByEmaId = new Map(pending.map((item) => [item.emaId, item]));
   return snap.docs
-    .map((d) => ({
-      id: Number(d.get("id")),
-      name: String(d.get("name") ?? ""),
-      team: Number(d.get("team") ?? 0),
-      country: String(d.get("country") ?? ""),
-      assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
-      nonMember: readNonMember(d.get("nonMember")),
-      accountUid: typeof d.get("accountUid") === "string" ? d.get("accountUid") : null,
-      invitationStatus: (d.get("invitationStatus") === "ACCEPTED" ? "ACCEPTED"
-        : d.get("invitationStatus") === "INVITED" ? "INVITED" : "NONE") as TournamentPlayer["invitationStatus"],
-      contactedAt: contactedAtOf(d),
-      invitedEmail: typeof d.get("invitedEmail") === "string" ? d.get("invitedEmail") : null,
-      substitution: readSubstitution(d.get("substitution")),
-      createdAt: timestampToIso(d.get("createdAt")),
-      updatedAt: timestampToIso(d.get("updatedAt")),
-    }))
+    .map((d) => {
+      const player = readPlayer(d);
+      // An invitation belongs to the person. Every slot of this person without an account shows it.
+      const invite = player.accountUid == null && player.assignedEmaId != null
+        ? inviteByEmaId.get(player.assignedEmaId) : undefined;
+      return invite == null || player.invitationStatus === "INVITED" ? player : {
+        ...player,
+        invitationStatus: "INVITED" as const,
+        invitedEmail: invite.email,
+        contactedAt: invite.createdAt,
+      };
+    })
     .sort((a, b) => a.id - b.id);
+}
+
+function readPlayer(d: FirebaseFirestore.DocumentSnapshot): TournamentPlayer {
+  return {
+    id: Number(d.get("id")),
+    name: String(d.get("name") ?? ""),
+    team: Number(d.get("team") ?? 0),
+    country: String(d.get("country") ?? ""),
+    assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
+    nonMember: readNonMember(d.get("nonMember")),
+    accountUid: typeof d.get("accountUid") === "string" ? d.get("accountUid") : null,
+    invitationStatus: (d.get("invitationStatus") === "ACCEPTED" ? "ACCEPTED"
+      : d.get("invitationStatus") === "INVITED" ? "INVITED" : "NONE") as TournamentPlayer["invitationStatus"],
+    contactedAt: contactedAtOf(d),
+    invitedEmail: typeof d.get("invitedEmail") === "string" ? d.get("invitedEmail") : null,
+    substitution: readSubstitution(d.get("substitution")),
+    createdAt: timestampToIso(d.get("createdAt")),
+    updatedAt: timestampToIso(d.get("updatedAt")),
+  };
 }
 
 export async function listTournamentTeams(tournamentId: string): Promise<TournamentTeam[]> {

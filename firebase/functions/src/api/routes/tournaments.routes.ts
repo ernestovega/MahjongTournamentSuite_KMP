@@ -54,7 +54,7 @@ import { actorFromToken } from "../../services/changeLog";
 import { getUserProfile } from "../../services/usersService";
 import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../../services/tournamentContentRules";
 import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
-import { normalizeVenue } from "../../services/tournamentVenue";
+import { normalizeVenue, venueRequiredProblems } from "../../services/tournamentVenue";
 import { getTournamentManifest } from "../../services/dataVersionsService";
 import { parseSaveTableRequest } from "../tableRequests";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
@@ -242,6 +242,11 @@ export function tournamentsRouter(): Router {
         venue = normalizeVenue(body);
       } catch (error) {
         issues.push({ field: "venue", message: error instanceof Error ? error.message : "Invalid venue" });
+      }
+      if (issues.length === 0) {
+        for (const message of venueRequiredProblems(venue)) {
+          issues.push({ field: message === "Required" ? "contactEmail" : "venue", message });
+        }
       }
       if (!body) issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
       if (!name) issues.push({ field: "name", message: "Required", value: body?.name });
@@ -514,6 +519,9 @@ export function tournamentsRouter(): Router {
         throw badRequest("Host country must use a two-letter country code or legacy three-letter EMA code");
       }
       if (!hostCity) throw badRequest("Host city is required");
+      const venue = normalizeVenue(body);
+      const venueProblems = venueRequiredProblems(venue);
+      if (venueProblems.length > 0) throw badRequest(venueProblems.join(". "));
       if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
         throw badRequest("Association logo content type and image data must be supplied together");
       }
@@ -529,7 +537,7 @@ export function tournamentsRouter(): Router {
         eventEndDate,
         hostCountry,
         hostCity,
-        ...normalizeVenue(body),
+        ...venue,
         associationLogoContentType,
         associationLogoDataBase64,
         associationLogoSourceTournamentId,

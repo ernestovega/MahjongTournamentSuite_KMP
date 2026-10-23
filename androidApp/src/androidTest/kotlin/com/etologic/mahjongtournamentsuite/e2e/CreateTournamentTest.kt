@@ -22,6 +22,9 @@ class CreateTournamentTest : AdminE2eTest() {
         c.field("Short name").performTextInputText("E2E")
         chooseCountry("Spain")
         c.field("City").performTextInputText("Madrid")
+        c.field("Venue name").performTextInputText("E2E club")
+        c.field("Address").performTextInputText("Calle Mayor 1, Madrid")
+        c.field("Contact email").performTextInputText("e2e@example.com")
         c.field("Players").performTextReplacementText(players)
         c.field("Rounds").performTextReplacementText(rounds)
     }
@@ -37,6 +40,7 @@ class CreateTournamentTest : AdminE2eTest() {
         openForm()
         c.waitForText("60")
         c.waitForText("7")
+        c.clickButton("Schedule")
         c.waitForText("Tournament schedule")
         c.waitForText("Round 7")
     }
@@ -45,7 +49,7 @@ class CreateTournamentTest : AdminE2eTest() {
     fun emptyNameIsRejected() {
         openForm()
         c.clickButton("Create")
-        c.waitForText("* Name is required.")
+        c.waitForText("Name is required.")
     }
 
     @Test
@@ -62,16 +66,38 @@ class CreateTournamentTest : AdminE2eTest() {
         c.field("Name").performTextInputText("Created by a test")
         c.field("Short name").performTextInputText("E2E")
         c.clickButton("Create")
-        c.waitForText("* Select a host country.")
+        c.waitForText("Select a host country.")
     }
 
     @Test
-    fun errorDialogClosesWithOk() {
+    fun venueIsRequired() {
         openForm()
         c.clickButton("Create")
-        c.waitForText("* Name is required.")
-        c.clickButton("OK")
-        c.waitForNoText("* Name is required.")
+        c.waitForText("Add a Google Maps link, or type the venue name and the address.")
+    }
+
+    @Test
+    fun contactEmailIsRequired() {
+        openForm()
+        c.clickButton("Create")
+        c.waitForText("Contact email is required.")
+    }
+
+    @Test
+    fun contactEmailMustBeValid() {
+        openForm()
+        c.field("Contact email").performTextInputText("not an email")
+        c.clickButton("Create")
+        c.waitForText("Use a valid email address.")
+    }
+
+    @Test
+    fun fieldErrorGoesAwayWhenTheFieldChanges() {
+        openForm()
+        c.clickButton("Create")
+        c.waitForText("Name is required.")
+        c.field("Name").performTextInputText("E2E created")
+        c.waitForNoText("Name is required.")
     }
 
     @Test
@@ -86,7 +112,7 @@ class CreateTournamentTest : AdminE2eTest() {
         openForm()
         fillValidForm(players = "18", rounds = "2")
         c.clickButton("Create")
-        c.waitForText("* Must be a multiple of 4 and at least 16.")
+        c.waitForText("Must be a multiple of 4 and at least 16.")
     }
 
     @Test
@@ -94,7 +120,7 @@ class CreateTournamentTest : AdminE2eTest() {
         openForm()
         fillValidForm(players = "12", rounds = "2")
         c.clickButton("Create")
-        c.waitForText("* Must be a multiple of 4 and at least 16.")
+        c.waitForText("Must be a multiple of 4 and at least 16.")
     }
 
     @Test
@@ -102,7 +128,7 @@ class CreateTournamentTest : AdminE2eTest() {
         openForm()
         fillValidForm(players = "16", rounds = "0")
         c.clickButton("Create")
-        c.waitForText("* Must be a positive integer.")
+        c.waitForText("Must be a positive whole number.")
     }
 
     @Test
@@ -123,6 +149,7 @@ class CreateTournamentTest : AdminE2eTest() {
     @Test
     fun matchTimeFieldsShowTheDefaults() {
         openForm()
+        c.clickButton("Match")
         listOf("Match duration (minutes)", "120", "Time zone", java.util.TimeZone.getDefault().id, "Finish the hand in play")
             .forEach { c.waitForText(it) }
         c.assertNoText("Extra time (minutes)")
@@ -131,6 +158,7 @@ class CreateTournamentTest : AdminE2eTest() {
     @Test
     fun finishTheHandSwitchShowsTheExtraTimeField() {
         openForm()
+        c.clickButton("Match")
         c.clickButton("Finish the hand in play")
         c.waitForText("Extra time (minutes)")
         c.clickButton("Finish the hand in play")
@@ -141,43 +169,48 @@ class CreateTournamentTest : AdminE2eTest() {
     fun matchDurationZeroIsRejected() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
+        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("0")
         c.clickButton("Create")
-        c.waitForText("* Match duration must be a whole number of minutes from 1 to 600.")
+        c.waitForText("Use a whole number of minutes from 1 to 600.")
     }
 
     @Test
     fun matchDurationAboveSixHundredIsRejected() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
+        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("601")
         c.clickButton("Create")
-        c.waitForText("* Match duration must be a whole number of minutes from 1 to 600.")
+        c.waitForText("Use a whole number of minutes from 1 to 600.")
     }
 
     @Test
     fun timeZoneWithoutARegionIsRejected() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
+        c.clickButton("Match")
         c.field("Time zone").performTextReplacementText("Madrid")
         c.clickButton("Create")
-        c.waitForText("* Time zone must be a name like Europe/Madrid.")
+        c.waitForText("Use a name like Europe/Madrid.")
     }
 
     @Test
     fun extraTimeZeroIsRejectedWhenTheHandIsFinished() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
+        c.clickButton("Match")
         c.clickButton("Finish the hand in play")
         c.field("Extra time (minutes)").performTextReplacementText("0")
         c.clickButton("Create")
-        c.waitForText("* Extra time must be a whole number of minutes from 1 to 120.")
+        c.waitForText("Use a whole number of minutes from 1 to 120.")
     }
 
     @Test
     fun matchTimeSettingsAreSavedWithTheNewTournament() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
+        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("90")
         c.clickButton("Finish the hand in play")
         c.field("Extra time (minutes)").performTextReplacementText("15")

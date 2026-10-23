@@ -76,10 +76,26 @@ npm run backfill:statistics:apply    # write
 It also deletes the old `tournaments/{id}/cache/statistics` documents.
 
 ## App usage (administrators only)
-`GET /admin/usage` builds a report from the change log (`tournaments/{id}/changes`), the tables and the player slots.
-Each change entry has `source` (`player` or `editor`), `at` and `handChangeCount`.
-A refused save writes an entry of kind `conflict`. The Usage screen in the admin app shows the report.
-Entries written before this feature have no source. The report counts them as editor saves.
+`GET /admin/usage?days=7|30|90` builds the report. The admin app has one chip for each period.
+Every number comes in two periods: the current one and the one of the same length before it. The screen shows the change.
+
+Sources:
+- The change log (`tournaments/{id}/changes`): table saves, resets and refused saves (`conflict`). Entries have `source` (`player` or `editor`), `uid`, `at` and `handChangeCount`. Entries of the server (`system`) do not count as work. Entries without a source count as editor saves.
+- The activity log (`activity`): setup work like settings, players, teams, invitations and accounts.
+- Firebase Authentication: role, creation date and last sign-in of each account.
+- The tournaments, tables and player slots: settings, data entry modes and invitation status.
+
+Sections of the screen:
+- **KPIs**: active users, table saves, tournaments with activity, player share, setup work and conflict rate.
+- **What stands out**: facts from the data, like a fall of saves, accounts that never signed in, invitation acceptance and unused features. The rules are in `UsageInsights.kt`.
+- **Table saves by day** and **When tables are saved**: a heatmap of weekday and hour. The hour is local to the time zone of each tournament.
+- **Who uses the apps**: the status of each account and a filter. Active did work in the period. Signed in only has a sign-in and no work. Dormant signed in before the period. Never signed in has no sign-in.
+- **What is used and what is not**: features with uses, users, adoption and last use. A feature with no use shows in red. Uses of actions count the period. Setup features and data entry modes count all time.
+- **How far tournaments go**: tournaments created, with players, with invitations, with player accounts, with match data and completed.
+- **Where tournaments are**: tournaments, players and saves for each country.
+- **Tournaments**: status, completion, last activity and details. A tournament that started and has no saves shows "No match data".
+
+The last sign-in is the last token refresh when it exists. It is the best estimate of when a person used the apps.
 
 ## Player level
 

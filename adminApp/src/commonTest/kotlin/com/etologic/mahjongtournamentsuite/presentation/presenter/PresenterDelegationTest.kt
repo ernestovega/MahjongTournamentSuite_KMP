@@ -178,6 +178,7 @@ private class RecordingTournamentRepository(
     override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode) = unusedResult<List<TournamentTeam>>()
     override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = unusedResult<Unit>()
     override suspend fun listCountries(refreshMode: RefreshMode) = unusedResult<List<Country>>()
+    override suspend fun resolveVenueLink(url: String) = unusedResult<String>()
 
     override suspend fun assignTournamentPlayer(
         tournamentId: String,
@@ -256,6 +257,9 @@ private class RecordingAuthRepository(
     override suspend fun refreshSession() = unusedResult<AuthSession>()
     override suspend fun signOut() = Unit
     override suspend fun getMe(refreshMode: RefreshMode) = unusedResult<UserProfile>()
+    override suspend fun updateAlias(alias: String) = unusedResult<UserProfile>()
+    override suspend fun updatePhoto(contentType: String, bytes: ByteArray) = unusedResult<UserProfile>()
+    override suspend fun removePhoto() = unusedResult<UserProfile>()
 }
 
 private fun <T> unusedResult(): AppResult<T> =

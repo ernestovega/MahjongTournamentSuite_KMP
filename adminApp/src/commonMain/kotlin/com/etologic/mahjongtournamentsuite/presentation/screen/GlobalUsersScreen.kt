@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppSuccessDia
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -61,15 +63,20 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.InvitedPerson
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
@@ -97,6 +104,8 @@ fun GlobalUsersScreen(navController: NavHostController) {
     var users by remember { mutableStateOf<List<ManagedUser>>(emptyList()) }
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var emaPlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
+    var invited by remember { mutableStateOf<List<InvitedPerson>>(emptyList()) }
+    var showInvited by rememberSaveable { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<String?>(null) }
@@ -122,6 +131,12 @@ fun GlobalUsersScreen(navController: NavHostController) {
             })
     }
 
+    val filteredInvited = invited.filter { person ->
+        (person.email.matchesSearch(emailFilter) || person.playerName.matchesSearch(emailFilter) ||
+            person.emaId.contains(emailFilter.trim())) &&
+            (selectedTournamentId == null || person.tournamentId == selectedTournamentId)
+    }
+
     fun refresh(force: Boolean = false) {
         scope.launch {
             loading = true
@@ -142,7 +157,39 @@ fun GlobalUsersScreen(navController: NavHostController) {
                 is AppResult.Success -> emaPlayers = result.value
                 is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
             }
+            when (val result = presenter.loadInvitedPeople()) {
+                is AppResult.Success -> invited = result.value
+                is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+            }
             loading = false
+        }
+    }
+
+    fun runInvitationAction(person: InvitedPerson, action: PlayerAccountAction) {
+        scope.launch {
+            saving = true
+            error = null
+            notice = null
+            when (val result = presenter.runInvitationAction(person, action)) {
+                is AppResult.Success -> {
+                    val done = result.value
+                    if (done.outcome == PlayerAccountOutcome.FAILED || done.outcome == PlayerAccountOutcome.SKIPPED) {
+                        error = done.message ?: "The action did not run."
+                    } else {
+                        notice = if (action == PlayerAccountAction.REVOKE) {
+                            "The invitation for ${person.playerName} is revoked."
+                        } else {
+                            "A new invitation was sent to ${person.email}."
+                        }
+                    }
+                    when (val list = presenter.loadInvitedPeople()) {
+                        is AppResult.Success -> invited = list.value
+                        is AppResult.Failure -> if (error == null) error = list.error.toUiMessage()
+                    }
+                }
+                is AppResult.Failure -> error = result.error.toUiMessage()
+            }
+            saving = false
         }
     }
 
@@ -246,6 +293,9 @@ fun GlobalUsersScreen(navController: NavHostController) {
             UserFilters(
                 emailFilter = emailFilter,
                 onEmailFilterChange = { emailFilter = it },
+                showInvited = showInvited,
+                invitedCount = invited.size,
+                onShowInvitedChange = { showInvited = it },
                 selectedRoles = selectedRoles,
                 onRoleToggle = { role ->
                     selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
@@ -265,12 +315,23 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     tournamentFilterExpanded = false
                 },
             )
-            SectionCard(
+            if (showInvited) SectionCard(
+                title = "Invited",
+                subtitle = if (loading) "Loading…" else "${filteredInvited.size} of ${invited.size} people did not accept yet",
+            ) {
+                InvitedTable(
+                    people = filteredInvited,
+                    enabled = !loading && !saving,
+                    onResend = { runInvitationAction(it, PlayerAccountAction.RESEND) },
+                    onRevoke = { runInvitationAction(it, PlayerAccountAction.REVOKE) },
+                )
+            } else SectionCard(
                 title = "Accounts",
                 subtitle = if (loading) "Loading…" else "${filteredUsers.size} of ${users.size} accounts",
             ) {
                 UsersTable(
                     users = filteredUsers,
+                    countryByEmaId = emaPlayers.associate { it.emaId to it.country },
                     enabled = !loading && !saving,
                     canEditAdmins = access?.isAdmin == true,
                     rowFocusRequesters = rowFocusRequesters,
@@ -293,10 +354,21 @@ fun GlobalUsersScreen(navController: NavHostController) {
             isSelf = original?.uid == access?.uid,
             canManageRoles = access?.isAdmin == true,
             canDisable = access?.canDisableUsers == true,
+            canEditPhoto = access?.isAdmin == true && original != null,
             saving = saving,
             onDismiss = {
                 showCreateDialog = false
                 editingUser = null
+            },
+            onUploadPhoto = { target, contentType, bytes ->
+                presenter.updateUserPhoto(target.uid, contentType, bytes).also { result ->
+                    if (result is AppResult.Success) users = users.map { if (it.uid == target.uid) result.value else it }
+                }
+            },
+            onRemovePhoto = { target ->
+                presenter.removeUserPhoto(target.uid).also { result ->
+                    if (result is AppResult.Success) users = users.map { if (it.uid == target.uid) result.value else it }
+                }
             },
             onSave = { email, alias, role, assignments, emaId -> saveUser(original, email, alias, role, assignments, emaId) },
             onResetPassword = { email ->
@@ -330,9 +402,12 @@ fun GlobalUsersScreen(navController: NavHostController) {
     }
 }
 
+private val UserCountryColumnWidth = 64.dp
+
 @Composable
 private fun UsersTable(
     users: List<ManagedUser>,
+    countryByEmaId: Map<String, String>,
     enabled: Boolean,
     canEditAdmins: Boolean,
     rowFocusRequesters: Map<String, FocusRequester>,
@@ -344,6 +419,12 @@ private fun UsersTable(
     ) {
         item {
             DataTableHeaderRow {
+                Text(
+                    "Country",
+                    modifier = Modifier.width(UserCountryColumnWidth),
+                    style = MaterialTheme.typography.labelLarge,
+                    textAlign = TextAlign.Center,
+                )
                 Text("Alias", modifier = Modifier.weight(0.25f), style = MaterialTheme.typography.labelLarge)
                 Text("Email", modifier = Modifier.weight(0.3f), style = MaterialTheme.typography.labelLarge)
                 Text("Role", modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
@@ -359,6 +440,14 @@ private fun UsersTable(
                 onClick = { if (canEdit) onEdit(user) },
                 clickFocusable = canEdit,
             ) {
+                val country = user.emaId?.let(countryByEmaId::get).orEmpty()
+                Box(modifier = Modifier.width(UserCountryColumnWidth), contentAlignment = Alignment.Center) {
+                    if (country.isBlank()) {
+                        Text("—")
+                    } else {
+                        CountryFlag(code = country, contentDescription = "Country $country")
+                    }
+                }
                 Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.25f), maxLines = 1)
                 Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
@@ -379,6 +468,9 @@ private fun UsersTable(
 private fun UserFilters(
     emailFilter: String,
     onEmailFilterChange: (String) -> Unit,
+    showInvited: Boolean,
+    invitedCount: Int,
+    onShowInvitedChange: (Boolean) -> Unit,
     selectedRoles: Set<GlobalUserRole>,
     onRoleToggle: (GlobalUserRole) -> Unit,
     tournaments: List<Tournament>,
@@ -448,13 +540,65 @@ private fun UserFilters(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GlobalUserRole.entries.forEach { role ->
+            FilterChip(selected = !showInvited, onClick = { onShowInvitedChange(false) }, label = { Text("Accounts") })
+            FilterChip(
+                selected = showInvited,
+                onClick = { onShowInvitedChange(true) },
+                label = { Text("Invited ($invitedCount)") },
+            )
+            if (!showInvited) GlobalUserRole.entries.forEach { role ->
                 FilterChip(
                     selected = role in selectedRoles,
                     onClick = { onRoleToggle(role) },
                     label = { Text(role.label()) },
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun InvitedTable(
+    people: List<InvitedPerson>,
+    enabled: Boolean,
+    onResend: (InvitedPerson) -> Unit,
+    onRevoke: (InvitedPerson) -> Unit,
+) {
+    if (people.isEmpty()) {
+        Text("No invitation is waiting for an answer.", modifier = Modifier.padding(12.dp))
+        return
+    }
+    LazyColumnWithScrollbar(
+        state = rememberPersistentLazyListState("invited"),
+        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+    ) {
+        item {
+            DataTableHeaderRow {
+                Text("Player", modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
+                Text("EMA ID", modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.labelLarge)
+                Text("Email", modifier = Modifier.weight(0.24f), style = MaterialTheme.typography.labelLarge)
+                Text("Invited in", modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
+                Text("Expires", modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
+                Text("", modifier = Modifier.weight(0.24f))
+            }
+            DataTableDivider()
+        }
+        itemsIndexed(people, key = { _, person -> person.invitationId }) { _, person ->
+            DataTableRow {
+                Text(person.playerName, modifier = Modifier.weight(0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(person.emaId, modifier = Modifier.weight(0.1f), maxLines = 1)
+                Text(person.email, modifier = Modifier.weight(0.24f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(person.tournamentName, modifier = Modifier.weight(0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    person.expiresAt?.take(10)?.let { if (person.expired) "$it (expired)" else it } ?: "—",
+                    modifier = Modifier.weight(0.12f),
+                )
+                Row(modifier = Modifier.weight(0.24f), horizontalArrangement = Arrangement.End) {
+                    FocusedTextButton(onClick = { onResend(person) }, enabled = enabled) { Text("Resend") }
+                    FocusedTextButton(onClick = { onRevoke(person) }, enabled = enabled) { Text("Revoke") }
+                }
+            }
+            DataTableDivider()
         }
     }
 }
@@ -473,8 +617,11 @@ private fun ManageUserDialog(
     isSelf: Boolean,
     canManageRoles: Boolean,
     canDisable: Boolean,
+    canEditPhoto: Boolean,
     saving: Boolean,
     onDismiss: () -> Unit,
+    onUploadPhoto: suspend (ManagedUser, String, ByteArray) -> AppResult<ManagedUser>,
+    onRemovePhoto: suspend (ManagedUser) -> AppResult<ManagedUser>,
     onSave: (String, String, GlobalUserRole, List<TournamentAssignment>, String?) -> Unit,
     onResetPassword: (String) -> Unit,
     onChangeDisabled: (ManagedUser) -> Unit,
@@ -491,6 +638,8 @@ private fun ManageUserDialog(
             }
         }
     }
+    // The photo saves at once, apart from the other fields. This state shows the saved photo.
+    var photoUser by remember(original) { mutableStateOf(original) }
     var showTournamentSelector by remember { mutableStateOf(false) }
     var restoreTournamentSelectorFocus by remember { mutableStateOf(false) }
     val emailFocus = remember { FocusRequester() }
@@ -535,6 +684,27 @@ private fun ManageUserDialog(
                 modifier = Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
+                // Only admins set the photo of another account. Editors do not see this part.
+                photoUser?.takeIf { canEditPhoto }?.let { target ->
+                    PhotoEditor(
+                        photoUrl = target.photoUrl,
+                        hasOwnPhoto = target.hasOwnPhoto,
+                        name = target.alias.ifBlank { target.email },
+                        onUpload = { contentType, bytes ->
+                            when (val result = onUploadPhoto(target, contentType, bytes)) {
+                                is AppResult.Success -> { photoUser = result.value; null }
+                                is AppResult.Failure -> result.error.toUiMessage()
+                            }
+                        },
+                        onRemove = {
+                            when (val result = onRemovePhoto(target)) {
+                                is AppResult.Success -> { photoUser = result.value; null }
+                                is AppResult.Failure -> result.error.toUiMessage()
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },

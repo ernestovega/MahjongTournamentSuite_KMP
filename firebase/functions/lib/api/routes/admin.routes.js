@@ -6,6 +6,7 @@ const activityLog_1 = require("../../services/activityLog");
 const changeLog_1 = require("../../services/changeLog");
 const firebase_1 = require("../../firebase");
 const httpError_1 = require("../httpError");
+const auth_routes_1 = require("./auth.routes");
 const requireAdmin_1 = require("../middleware/requireAdmin");
 const requireAuth_1 = require("../middleware/requireAuth");
 const requireEditor_1 = require("../middleware/requireEditor");
@@ -85,10 +86,14 @@ function adminRouter() {
             next(error);
         }
     });
-    /** Usage analytics for administrators: who enters data, from which app, and where problems appear. */
-    router.get("/usage", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (_req, res, next) => {
+    /** Usage analytics for administrators: who uses the apps, what they use, when, and where problems appear. */
+    router.get("/usage", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
         try {
-            res.status(200).json(await (0, usageService_1.loadUsageReport)());
+            const days = Number(req.query.days ?? usageService_1.DEFAULT_USAGE_PERIOD);
+            if (!usageService_1.USAGE_PERIODS.includes(days)) {
+                throw (0, httpError_1.badRequest)("Invalid period", { allowed: usageService_1.USAGE_PERIODS });
+            }
+            res.status(200).json(await (0, usageService_1.loadUsageReport)(days));
         }
         catch (error) {
             next(error);
@@ -98,6 +103,16 @@ function adminRouter() {
         try {
             const actor = res.locals.auth;
             res.status(200).json({ users: await (0, usersService_1.listManagedUsers)(await assignmentScopeFor(actor)) });
+        }
+        catch (error) {
+            next(error);
+        }
+    });
+    /** People who got an invitation and did not accept yet. An editor sees only the assigned tournaments. */
+    router.get("/invitations", requireAuth_1.requireAuth, requireEditor_1.requireEditor, async (_req, res, next) => {
+        try {
+            const actor = res.locals.auth;
+            res.status(200).json({ invitations: await (0, playerAccountsService_1.listInvitedPeople)(await assignmentScopeFor(actor)) });
         }
         catch (error) {
             next(error);
@@ -202,6 +217,32 @@ function adminRouter() {
                 },
             });
             res.status(200).json(await (0, usersService_1.getManagedUser)(current.uid, assignmentScope));
+        }
+        catch (error) {
+            next(error);
+        }
+    });
+    // Only admins set the photo of another user. A user sets the own photo with /auth/me/photo.
+    router.put("/users/:uid/photo", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
+        try {
+            const contentType = (0, auth_routes_1.readContentType)(req.body);
+            await (0, usersService_1.setUserPhoto)(req.params.uid, contentType, (0, auth_routes_1.readPhotoData)(req.body));
+            await (0, activityLog_1.recordActivity)({
+                action: "user.photo", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), target: req.params.uid, details: { contentType },
+            });
+            res.status(200).json(await (0, usersService_1.getManagedUser)(req.params.uid));
+        }
+        catch (error) {
+            next(error);
+        }
+    });
+    router.delete("/users/:uid/photo", requireAuth_1.requireAuth, requireAdmin_1.requireAdmin, async (req, res, next) => {
+        try {
+            await (0, usersService_1.clearUserPhoto)(req.params.uid);
+            await (0, activityLog_1.recordActivity)({
+                action: "user.photo.remove", actor: (0, changeLog_1.actorFromToken)(res.locals.auth), target: req.params.uid, details: {},
+            });
+            res.status(200).json(await (0, usersService_1.getManagedUser)(req.params.uid));
         }
         catch (error) {
             next(error);

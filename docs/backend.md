@@ -80,6 +80,8 @@ Only admins can create, delete, rename, or configure tournaments. Disabling an a
 Management routes use `requireEditor`. It accepts the `admin` and `editor` claims and refuses player-only accounts.
 Read routes of a tournament use `requireTournamentReader`. It accepts admins, assigned editors and players who are registered in the tournament.
 `GET /admin/whoami` and `GET /auth/me` return `roles`. `whoami` also returns `role`, the highest capability.
+`GET /auth/me` also returns `emaId` and `photoUrl` (the photo of the EMA player of the account). `PUT /auth/me` with `{ alias }` lets every signed-in user change the own alias (1 to 60 characters). The user cannot change the EMA id or the photo.
+`POST /venues/resolve-link` with `{ url }` (editors and admins) follows a short Google Maps link and returns `{ url }` with the full link. It follows only Google hosts and at most 5 redirects. The tournament form reads the venue name, the address, the country and the city from the full link.
 
 ## Player accounts
 
@@ -95,6 +97,7 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 - The email has one link. The token is `{tournamentId}.{invitationId}.{secret}`. Only a hash of the secret is stored. The link works once and expires after 14 days.
 - `POST /player/invitations/accept` is public. A new account sends `{ token, password }` and the server creates the account. An existing account signs in and sends `{ token }`.
 - Accepting links the slot (`accountUid`, `invitationStatus`), registers the tournament for the account and reserves the EMA id (`emaIdIndex/{emaId}`). One account owns one EMA id.
+- A new account from an invitation gets the full EMA name of the player (first name and last name) as its alias. An existing account with an empty alias gets the same name at its first link. The user can change the alias later with `PUT /auth/me`.
 - Changing the EMA id of a slot ends its invitation and account link.
 - The email goes out through `nodemailer` and the SMTP mailbox of the project (`mailService.ts`). The secret `MTS_SMTP_URI` holds the SMTP address. `MAIL_FROM` and `PLAYER_APP_URL` are in `firebase/functions/.env`. If the SMTP server fails, the invitation stays. The result of that player is `FAILED` and the editor presses "Resend".
 - A player sees only the tournaments where the account is registered. `GET /tournaments` and `GET /ema-player-registry` return only that scope to a player-only account. The players list of a tournament hides accounts and emails for players.
@@ -188,7 +191,7 @@ Membership is stored at:
 - `tournaments/{tournamentId}/changes/{changeId}` is the change log. It has one entry for each table save or reset.
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
-A tournament has an optional venue: `venueName`, `venueAddress` and `venueMapUrl`. It also has an optional `contactEmail` for the organizers. An empty text means "not set". `contactEmail` must be a valid email address.
+A tournament has a required venue and a required `contactEmail` for the organizers. The venue is a `venueMapUrl`, or a `venueName` together with a `venueAddress`. `POST /tournaments` and `PATCH /tournaments/:id` return 400 when the venue or the email is missing. `contactEmail` must be a valid email address. Run `npm run backfill:venue` to fix old tournaments. It sets a Google Maps search link for the host city and the email of the creator. Add `:apply` to write.
 `venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Round schedules must stay inside the tournament dates. The player app shows the venue, the round times and the agenda on the Info tab.
 
 Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive. Legacy documents with only `eventDate` use that value for both dates. Older documents without dates use their creation date as a fallback.

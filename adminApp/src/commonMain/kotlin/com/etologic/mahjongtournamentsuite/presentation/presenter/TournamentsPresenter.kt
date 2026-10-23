@@ -22,6 +22,15 @@ class TournamentsPresenter(
 ) {
     suspend fun loadProfile(force: Boolean = false): AppResult<UserProfile> = authRepository.getMe(force.toRefreshMode())
 
+    suspend fun resolveVenueLink(url: String): AppResult<String> = tournamentRepository.resolveVenueLink(url)
+
+    suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias)
+
+    suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> =
+        authRepository.updatePhoto(contentType, bytes)
+
+    suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
+
     suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.toRefreshMode())
 
     suspend fun loadTournaments(force: Boolean = false): AppResult<List<Tournament>> = tournamentRepository.listTournaments(force.toRefreshMode())

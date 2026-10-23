@@ -6,6 +6,9 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
+import kotlin.io.encoding.Base64
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
@@ -139,6 +142,47 @@ class DefaultAuthRepository(
         },
     )
 
+    override suspend fun updateAlias(alias: String): AppResult<UserProfile> = runCatching {
+        ensureLoadedFromStore()
+        check(session != null) { "No active session" }
+        withFreshToken { idToken ->
+            backendApi.updateOwnAlias(idToken, UpdateOwnAliasRequestDto(alias = alias)).toDomain()
+        }.also { cache.markStale("global:profile", "global:users", "global:whoAmI") }
+    }.fold(
+        onSuccess = { profile -> AppResult.Success(profile) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Changing the alias failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> =
+        profilePhotoRequest("Changing the photo") { idToken ->
+            backendApi.updateOwnPhoto(
+                idToken,
+                UpdatePlayerPhotoRequestDto(contentType = contentType, dataBase64 = Base64.Default.encode(bytes)),
+            )
+        }
+
+    override suspend fun removePhoto(): AppResult<UserProfile> =
+        profilePhotoRequest("Removing the photo") { idToken -> backendApi.removeOwnPhoto(idToken) }
+
+    private suspend fun profilePhotoRequest(
+        action: String,
+        call: suspend (String) -> UserProfileDto,
+    ): AppResult<UserProfile> = runCatching {
+        ensureLoadedFromStore()
+        check(session != null) { "No active session" }
+        withFreshToken { idToken -> call(idToken).toDomain() }
+            .also { cache.markStale("global:profile", "global:users", "global:whoAmI") }
+    }.fold(
+        onSuccess = { profile -> AppResult.Success(profile) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "$action failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
     private suspend fun <T> withFreshToken(
         block: suspend (String) -> T,
     ): T = this@DefaultAuthRepository.withFreshIdToken(block)
@@ -152,6 +196,8 @@ internal fun UserProfileDto.toDomain(): UserProfile = UserProfile(
     email = email,
     alias = alias,
     emaId = emaId?.ifBlank { null },
+    photoUrl = photoUrl?.ifBlank { null },
+    hasOwnPhoto = hasOwnPhoto,
     roles = roles.map { GlobalUserRole.valueOf(it.name) }.toSet(),
 )
 

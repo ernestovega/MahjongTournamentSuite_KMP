@@ -28,6 +28,12 @@ interface AdminRepository {
 
     suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser>
 
-    /** Usage analytics. Only an administrator can load it. The report is never cached. */
-    suspend fun loadUsageReport(): AppResult<UsageReport>
+    /** Sets the own photo of another account. Only admins can do this. */
+    suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser>
+
+    /** Removes the own photo of another account. Only admins can do this. */
+    suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser>
+
+    /** Usage analytics for the last [days] days (7, 30 or 90). Only an administrator can load it. Never cached. */
+    suspend fun loadUsageReport(days: Int): AppResult<UsageReport>
 }

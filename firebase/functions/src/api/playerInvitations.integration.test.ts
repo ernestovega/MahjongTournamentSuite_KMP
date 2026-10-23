@@ -6,9 +6,9 @@ import { Timestamp } from "firebase-admin/firestore";
 
 import { auth, db } from "../firebase";
 import { seedTournament } from "../testing/firestoreFixtures";
-import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
-import { assignTournamentPlayer } from "../services/tournamentContentService";
-import { setAccountEmaId } from "../services/playerAccountsService";
+import { createAccount, requireAuthEmulator, signInTestAccount, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
+import { assignTournamentPlayer, listTournamentPlayers } from "../services/tournamentContentService";
+import { listInvitedPeople, setAccountEmaId } from "../services/playerAccountsService";
 import { setMailTransportForTests, type OutgoingEmail } from "../services/mailService";
 
 type ActionBody = { results: Array<{ playerId: number; outcome: string; message?: string }> };
@@ -98,6 +98,37 @@ describe("player invitations", () => {
 
     // The token works once.
     assert.equal((await server.request("POST", "/player/invitations/accept", { body: { token, password: "Passw0rd!-new" } })).status, 409);
+  });
+
+  it("gives a new account the full EMA name as alias and lets the user change it", async () => {
+    const ema = `EMA-${randomUUID()}`;
+    await db.doc(`emaPlayerRegistry/${ema}`).set({
+      firstName: "Ana", lastName: "Pérez", country: "ESP", photoUrl: "https://example.test/ana.jpg",
+    });
+    await db.doc(`tournaments/${tournamentId}/players/30`).set({
+      id: 30, name: "P30", team: 0, assignedEmaId: null, nonMember: null, assignedCountry: "",
+    });
+    await assignTournamentPlayer({ tournamentId, playerId: 30, emaId: ema, nonMember: null });
+    const email = `${randomUUID()}@example.test`;
+    assert.equal((await invite(30, email)).outcome, "INVITED");
+    const accepted = await server.request("POST", "/player/invitations/accept", {
+      body: { token: await lastMailTo(email), password: "Passw0rd!-test" },
+    });
+    assert.equal(accepted.status, 200);
+
+    const token = await signInTestAccount(email);
+    const profile = await server.request("GET", "/auth/me", { token });
+    assert.equal(profile.status, 200);
+    assert.equal((profile.body as { alias: string }).alias, "Ana Pérez");
+    assert.equal((profile.body as { emaId: string }).emaId, ema);
+    assert.equal((profile.body as { photoUrl: string }).photoUrl, "https://example.test/ana.jpg");
+
+    const changed = await server.request("PUT", "/auth/me", { token, body: { alias: "  Anita  " } });
+    assert.equal(changed.status, 200);
+    assert.equal((changed.body as { alias: string }).alias, "Anita");
+    assert.equal((changed.body as { emaId: string }).emaId, ema);
+    assert.equal((await server.request("PUT", "/auth/me", { token, body: { alias: "   " } })).status, 400);
+    assert.equal((await server.request("PUT", "/auth/me", { token, body: { alias: "x".repeat(61) } })).status, 400);
   });
 
   it("links every tournament of the EMA id when the player accepts one invitation", async () => {
@@ -399,6 +430,45 @@ describe("player invitations", () => {
       const account = await createAccount({ role: "EDITOR" });
 
       assert.equal((await db.collection(`users/${account.uid}/playerTournaments`).get()).size, 0);
+    });
+
+    it("P: an invitation marks every tournament of the person, and revoke or resend works from any of them", async () => {
+      const ema = `EMA-${randomUUID()}`;
+      const otherTournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+      await seedSlot(40, ema);
+      await db.doc(`tournaments/${otherTournamentId}/players/6`).set({
+        id: 6, name: "P6", team: 0, assignedEmaId: null, nonMember: null, assignedCountry: "",
+      });
+      await assignTournamentPlayer({ tournamentId: otherTournamentId, playerId: 6, emaId: ema, nonMember: null });
+      const email = `${randomUUID()}@example.test`;
+      const statusIn = async (id: string, playerId: number) =>
+        (await listTournamentPlayers(id)).find((player) => player.id === playerId)?.invitationStatus;
+
+      await invite(40, email);
+
+      assert.equal(await statusIn(tournamentId, 40), "INVITED");
+      assert.equal(await statusIn(otherTournamentId, 6), "INVITED");
+      const listed = (await listInvitedPeople()).filter((item) => item.emaId === ema);
+      assert.deepEqual(listed.map((item) => [item.tournamentId, item.email]), [[tournamentId, email]]);
+      assert.equal(listed[0].expired, false);
+      assert.deepEqual(
+        (await listInvitedPeople(new Set([otherTournamentId]))).filter((item) => item.emaId === ema), [],
+      );
+
+      const sentBefore = sent.length;
+      const blocked = await server.request("POST", `/tournaments/${otherTournamentId}/player-accounts/send`, {
+        token: (await createAccount({ role: "ADMIN" })).token, body: { players: [{ playerId: 6, email }] },
+      });
+      assert.equal((blocked.body as ActionBody).results[0].outcome, "SKIPPED");
+      assert.equal(sent.length, sentBefore);
+
+      const revoked = await server.request("POST", `/tournaments/${otherTournamentId}/player-accounts/revoke`, {
+        token: (await createAccount({ role: "ADMIN" })).token, body: { players: [{ playerId: 6 }] },
+      });
+      assert.equal((revoked.body as ActionBody).results[0].outcome, "REVOKED");
+      assert.equal(await statusIn(tournamentId, 40), "NONE");
+      assert.equal(await statusIn(otherTournamentId, 6), "NONE");
+      assert.deepEqual((await listInvitedPeople()).filter((item) => item.emaId === ema), []);
     });
   });
 });

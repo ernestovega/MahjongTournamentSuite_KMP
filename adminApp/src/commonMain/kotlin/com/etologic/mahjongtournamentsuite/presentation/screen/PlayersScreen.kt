@@ -8,7 +8,7 @@ import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import com.etologic.mahjongtournamentsuite.presentation.components.toCountryCodeInput
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,8 +20,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -117,7 +117,6 @@ import coil3.compose.AsyncImage
 
 /** Links generated tournament slots to players in the shared base. */
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
 fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val presenter = koinInject<PlayersPresenter>()
     val store = koinInject<AppMemoryStore>()
@@ -899,12 +898,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                    OutlinedTextField(
-                        value = nonMemberCountry,
-                        onValueChange = { nonMemberCountry = it.toCountryCodeInput(); nonMemberError = null },
-                        label = { Text("Country") },
-                        placeholder = { Text("Three-letter EMA code") },
-                        singleLine = true,
+                    EmaCountryDropdown(
+                        selectedCode = nonMemberCountry,
+                        onCountrySelected = { nonMemberCountry = it; nonMemberError = null },
+                        label = "Country",
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
@@ -1112,9 +1109,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     if (tournamentCountryCodes.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                             Text("Filter by country", style = MaterialTheme.typography.labelMedium)
-                            FlowRow(
+                            Row(
+                                modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
                                 tournamentCountryCodes.forEach { code ->
                                     val isSelected = code in selectedCountryCodes

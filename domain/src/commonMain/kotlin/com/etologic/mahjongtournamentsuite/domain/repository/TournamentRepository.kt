@@ -112,6 +112,9 @@ interface TournamentRepository {
 
     suspend fun listCountries(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Country>>
 
+    /** Turns a short Google Maps link into the full link, which holds the name and the address of the place. */
+    suspend fun resolveVenueLink(url: String): AppResult<String>
+
     /** Assigns an EMA player or a tournament-only non-member. Pass both null to clear it. */
     suspend fun assignTournamentPlayer(
         tournamentId: String,

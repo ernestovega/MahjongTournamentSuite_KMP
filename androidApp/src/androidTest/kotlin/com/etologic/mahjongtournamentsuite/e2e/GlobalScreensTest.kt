@@ -53,8 +53,8 @@ class GlobalScreensTest : AdminE2eTest() {
     fun usageScreenCountsTournamentsAndShowsEmptyActivity() {
         start(E2eAccounts.ADMIN)
         c.clickButton("App usage")
-        c.waitForText("In 13 tournaments.")
-        c.waitForText("No saves yet.")
+        c.waitForText("Active users")
+        c.waitForText("No saves in the last 30 days.")
         c.waitForText("Conflict rate")
         c.waitForText("Show all 13 tournaments")
     }
@@ -63,8 +63,8 @@ class GlobalScreensTest : AdminE2eTest() {
     fun usageScreenShowsCompletionOfTournaments() {
         start(E2eAccounts.ADMIN)
         c.clickButton("App usage")
-        c.waitForText("4 of 4 tables completed. 16 of 16 players assigned. 0 conflicts.")
-        c.waitForText("17 of 18 tables completed. 24 of 24 players assigned. 0 conflicts.")
+        c.waitForText("4 of 4 tables completed. 16 of 16 players assigned.", substring = true)
+        c.waitForText("17 of 18 tables completed. 24 of 24 players assigned.", substring = true)
     }
 
     @Test

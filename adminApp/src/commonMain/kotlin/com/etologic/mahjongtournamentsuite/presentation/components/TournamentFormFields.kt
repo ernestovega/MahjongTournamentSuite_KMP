@@ -150,7 +150,7 @@ fun TournamentColorField(
             value = value,
             onValueChange = { onValueChange(it.toHexColorInput()) },
             modifier = fieldModifier.weight(1f),
-            label = { Text("Tournament color") },
+            label = { RequiredLabel("Tournament color") },
             placeholder = { Text("#RRGGBB") },
             enabled = enabled,
             singleLine = true,
@@ -425,191 +425,14 @@ fun TournamentLogoCropDialog(
     onCropped: (SelectedImage) -> Unit,
     onError: (String) -> Unit,
 ) {
-    var zoom by remember(image) { mutableFloatStateOf(1f) }
-    var horizontalPosition by remember(image) { mutableFloatStateOf(0f) }
-    var verticalPosition by remember(image) { mutableFloatStateOf(0f) }
-    var imageSize by remember(image) { mutableStateOf(IntSize.Zero) }
-    var isCropping by remember(image) { mutableStateOf(false) }
-    val zoomFocusRequester = remember { FocusRequester() }
-
-    LaunchedEffect(image) {
-        zoomFocusRequester.requestFocus()
-    }
-
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = { if (!isCropping) onDismiss() },
-        title = { Text("Crop tournament logo") },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    "Drag the image or use the controls. The circle shows the ID card logo area.",
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                CircularLogoCropPreview(
-                    model = image.dataUrl,
-                    imageSize = imageSize,
-                    zoom = zoom,
-                    horizontalPosition = horizontalPosition,
-                    verticalPosition = verticalPosition,
-                    onImageSize = { imageSize = it },
-                    onPositionChange = { horizontal, vertical ->
-                        horizontalPosition = horizontal
-                        verticalPosition = vertical
-                    },
-                )
-                CropSlider(
-                    label = "Zoom",
-                    value = zoom,
-                    valueRange = 1f..3f,
-                    onValueChange = { zoom = it },
-                    modifier = Modifier.focusRequester(zoomFocusRequester),
-                )
-                CropSlider(
-                    label = "Left / right",
-                    value = horizontalPosition,
-                    valueRange = -1f..1f,
-                    onValueChange = { horizontalPosition = it },
-                )
-                CropSlider(
-                    label = "Up / down",
-                    value = verticalPosition,
-                    valueRange = -1f..1f,
-                    onValueChange = { verticalPosition = it },
-                )
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                enabled = !isCropping && imageSize != IntSize.Zero,
-                onClick = {
-                    isCropping = true
-                    cropSelectedImage(
-                        image = image,
-                        crop = SquareImageCrop(zoom, horizontalPosition, verticalPosition),
-                        onCropped = onCropped,
-                        onError = {
-                            isCropping = false
-                            onError(it)
-                        },
-                    )
-                },
-            ) {
-                if (isCropping) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text("Use crop")
-                }
-            }
-        },
-        dismissButton = {
-            FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
-                Text("Cancel")
-            }
-        },
+    ImageCropDialog(
+        image = image,
+        title = "Crop tournament logo",
+        hint = "Drag the image or use the controls. The circle shows the ID card logo area.",
+        onDismiss = onDismiss,
+        onCropped = onCropped,
+        onError = onError,
     )
-}
-
-@Composable
-private fun CircularLogoCropPreview(
-    model: Any,
-    imageSize: IntSize,
-    zoom: Float,
-    horizontalPosition: Float,
-    verticalPosition: Float,
-    onImageSize: (IntSize) -> Unit,
-    onPositionChange: (horizontal: Float, vertical: Float) -> Unit,
-) {
-    val viewport = 240.dp
-    val minimumDimension = min(imageSize.width, imageSize.height).coerceAtLeast(1)
-    val renderedWidth = viewport * imageSize.width.coerceAtLeast(1) / minimumDimension
-    val renderedHeight = viewport * imageSize.height.coerceAtLeast(1) / minimumDimension
-    val viewportPixels = with(androidx.compose.ui.platform.LocalDensity.current) { viewport.toPx() }
-    val baseScale = viewportPixels / minimumDimension
-    val sourceCropSize = minimumDimension / zoom
-    val translationX = -horizontalPosition * (imageSize.width - sourceCropSize) / 2f * baseScale * zoom
-    val translationY = -verticalPosition * (imageSize.height - sourceCropSize) / 2f * baseScale * zoom
-    val maximumTranslationX = (imageSize.width - sourceCropSize) / 2f * baseScale * zoom
-    val maximumTranslationY = (imageSize.height - sourceCropSize) / 2f * baseScale * zoom
-    val currentHorizontalPosition by rememberUpdatedState(horizontalPosition)
-    val currentVerticalPosition by rememberUpdatedState(verticalPosition)
-
-    Box(
-        modifier = Modifier
-            .size(viewport)
-            .clip(CircleShape)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
-            .pointerInput(maximumTranslationX, maximumTranslationY) {
-                var dragHorizontal = currentHorizontalPosition
-                var dragVertical = currentVerticalPosition
-                detectDragGestures(
-                    onDragStart = {
-                        dragHorizontal = currentHorizontalPosition
-                        dragVertical = currentVerticalPosition
-                    },
-                    onDrag = { change, dragAmount ->
-                        change.consume()
-                        if (maximumTranslationX > 0f) {
-                            dragHorizontal = (dragHorizontal - dragAmount.x / maximumTranslationX)
-                                .coerceIn(-1f, 1f)
-                        }
-                        if (maximumTranslationY > 0f) {
-                            dragVertical = (dragVertical - dragAmount.y / maximumTranslationY)
-                                .coerceIn(-1f, 1f)
-                        }
-                        onPositionChange(dragHorizontal, dragVertical)
-                    },
-                )
-            },
-        contentAlignment = Alignment.Center,
-    ) {
-        AsyncImage(
-            model = model,
-            contentDescription = "Logo crop preview",
-            contentScale = ContentScale.FillBounds,
-            modifier = Modifier
-                .requiredSize(renderedWidth, renderedHeight)
-                .graphicsLayer {
-                    scaleX = zoom
-                    scaleY = zoom
-                    this.translationX = translationX
-                    this.translationY = translationY
-                },
-            onSuccess = { state ->
-                val loadedImage = state.result.image
-                if (loadedImage.width > 0 && loadedImage.height > 0) {
-                    onImageSize(IntSize(loadedImage.width, loadedImage.height))
-                }
-            },
-        )
-    }
-}
-
-@Composable
-private fun CropSlider(
-    label: String,
-    value: Float,
-    valueRange: ClosedFloatingPointRange<Float>,
-    onValueChange: (Float) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.bodySmall)
-        Slider(
-            value = value,
-            onValueChange = onValueChange,
-            valueRange = valueRange,
-            modifier = modifier
-                .fillMaxWidth()
-                .semantics { contentDescription = label },
-        )
-    }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -691,6 +514,14 @@ fun TournamentLogoLibraryDialog(
     )
 }
 
+/** Today has an outline. Only a selected day has a filled background. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun tournamentDatePickerColors() = DatePickerDefaults.colors(
+    todayContentColor = MaterialTheme.colorScheme.primary,
+    todayDateBorderColor = MaterialTheme.colorScheme.primary,
+)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TournamentDatePickerDialog(
@@ -716,12 +547,15 @@ fun TournamentDatePickerDialog(
     // Counts day clicks, including clicks on the day that is already selected.
     var dayClickCount by remember { mutableIntStateOf(0) }
     val state = remember(initialMillis, minimumMillis, maximumMillis) {
+        // Without a date, no day is selected. The calendar opens at the earliest allowed month,
+        // and today keeps its outline instead of a filled selection.
         val delegate = DatePickerState(
             locale = locale,
-            initialSelectedDateMillis = (initialMillis ?: minimumMillis)?.coerceIn(
+            initialSelectedDateMillis = initialMillis?.coerceIn(
                 minimumValue = minimumMillis ?: Long.MIN_VALUE,
                 maximumValue = maximumMillis ?: Long.MAX_VALUE,
             ),
+            initialDisplayedMonthMillis = initialMillis ?: minimumMillis,
             selectableDates = selectableDates,
         )
         DayClickDatePickerState(delegate) { dayClickCount++ }
@@ -755,7 +589,7 @@ fun TournamentDatePickerDialog(
             }
         },
     ) {
-        DatePicker(state = state)
+        DatePicker(state = state, colors = tournamentDatePickerColors())
     }
 }
 
@@ -880,7 +714,7 @@ fun TournamentDateRangePickerDialog(
     val initialStartMillis = displayDateToEpochMillis(selectedStartDisplayDate)
     val initialEndMillis = displayDateToEpochMillis(selectedEndDisplayDate)
     val locale = remember { mondayFirstCalendarLocale() }
-    val pickerColors = DatePickerDefaults.colors()
+    val pickerColors = tournamentDatePickerColors()
     val dateFormatter = remember { DatePickerDefaults.dateFormatter() }
     val state = remember(initialStartMillis, initialEndMillis) {
         DateRangePickerState(
@@ -1136,9 +970,19 @@ private val TimeZoneIdPattern = Regex("^(UTC|[A-Za-z_]+(/[A-Za-z0-9_+-]+)+)$")
 /** True when the text looks like an IANA time zone, for example "Europe/Madrid". The server checks the name. */
 fun isTimeZoneIdShape(text: String): Boolean = TimeZoneIdPattern.matches(text.trim())
 
+/** The label of a required field. The red star after the text marks the field as required. */
+@Composable
+fun RequiredLabel(text: String) {
+    Row {
+        Text(text)
+        Text(" *", color = MaterialTheme.colorScheme.error)
+    }
+}
+
 /**
  * The match time fields: duration, time zone, what happens when the time is over and, for the mode
  * "finish the hand", the extra minutes. The same fields are in the create and edit forms.
+ * An error text marks its field as wrong.
  */
 @Composable
 fun MatchTimeFields(
@@ -1153,26 +997,31 @@ fun MatchTimeFields(
     enabled: Boolean,
     modifier: Modifier = Modifier,
     durationFocusRequester: FocusRequester? = null,
+    durationError: String? = null,
+    timeZoneError: String? = null,
+    extraMinutesError: String? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
             value = durationText,
             onValueChange = { onDurationChange(it.toDigitsInput(3)) },
-            label = { Text("Match duration (minutes)") },
-            supportingText = { Text("Normally 90 to 120 minutes. A table ends this long after its round starts.") },
+            label = { RequiredLabel("Match duration (minutes)") },
+            isError = durationError != null,
+            supportingText = {
+                Text(durationError ?: "Normally 90 to 120 minutes. A table ends this long after its round starts.")
+            },
             modifier = Modifier.fillMaxWidth().let { base ->
                 if (durationFocusRequester != null) base.focusRequester(durationFocusRequester) else base
             },
             singleLine = true,
             enabled = enabled,
         )
-        OutlinedTextField(
+        TimeZoneDropdown(
             value = timeZoneText,
-            onValueChange = { onTimeZoneChange(it.trim()) },
-            label = { Text("Time zone") },
-            supportingText = { Text("Time zone of the venue, for example Europe/Madrid. The round times use it.") },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
+            onValueChange = onTimeZoneChange,
+            required = true,
+            isError = timeZoneError != null,
+            supportingText = timeZoneError ?: "Time zone of the venue, for example Europe/Madrid. The round times use it.",
             enabled = enabled,
         )
         TournamentOptionSwitch(
@@ -1187,8 +1036,11 @@ fun MatchTimeFields(
             OutlinedTextField(
                 value = extraMinutesText,
                 onValueChange = { onExtraMinutesChange(it.toDigitsInput(3)) },
-                label = { Text("Extra time (minutes)") },
-                supportingText = { Text("The players can record the hand in play for this long after the end time.") },
+                label = { RequiredLabel("Extra time (minutes)") },
+                isError = extraMinutesError != null,
+                supportingText = {
+                    Text(extraMinutesError ?: "The players can record the hand in play for this long after the end time.")
+                },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
                 enabled = enabled,

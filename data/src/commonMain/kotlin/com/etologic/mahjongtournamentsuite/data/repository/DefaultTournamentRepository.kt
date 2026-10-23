@@ -482,6 +482,16 @@ class DefaultTournamentRepository(
             }
     }
 
+    override suspend fun resolveVenueLink(url: String): AppResult<String> = runCatching {
+        withFreshIdToken { idToken -> backendApi.resolveVenueLink(idToken, url.trim()).url }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Resolving the venue link failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
     override suspend fun assignTournamentPlayer(
         tournamentId: String,
         tournamentPlayerId: Int,

@@ -6,6 +6,7 @@ import { auth, db } from "../firebase";
 import { badRequest, conflict, forbidden, notFound } from "../api/httpError";
 import { bumpTournamentDataVersion } from "./dataVersionsService";
 import { sendEmail } from "./mailService";
+import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer } from "./playersService";
 import { grantPlayerCapability } from "./usersService";
 
 export type InvitationStatus = "NONE" | "INVITED" | "ACCEPTED";
@@ -38,6 +39,88 @@ function invitationsOf(tournamentId: string) {
 
 function playerTournamentRef(uid: string, tournamentId: string) {
   return db.doc(`users/${uid}/playerTournaments/${tournamentId}`);
+}
+
+export type PendingInvitation = {
+  tournamentId: string;
+  invitationId: string;
+  playerId: number;
+  emaId: string;
+  email: string;
+  createdAt: string | null;
+  expiresAt: string | null;
+};
+
+function isoOf(value: unknown): string | null {
+  return value instanceof Timestamp ? value.toDate().toISOString() : null;
+}
+
+/**
+ * Lists every invitation that waits for an answer, in all tournaments.
+ * An invitation belongs to the person (EMA id), so each tournament slot of this person counts as invited.
+ */
+export async function listPendingInvitations(): Promise<PendingInvitation[]> {
+  const snapshot = await db.collectionGroup("playerInvitations").where("status", "==", "PENDING").get();
+  return snapshot.docs.flatMap((doc) => {
+    const tournamentId = doc.ref.parent.parent?.id;
+    if (!tournamentId) return [];
+    return [{
+      tournamentId,
+      invitationId: doc.id,
+      playerId: Number(doc.get("playerId")),
+      emaId: String(doc.get("emaId") ?? ""),
+      email: String(doc.get("email") ?? ""),
+      createdAt: isoOf(doc.get("createdAt")),
+      expiresAt: isoOf(doc.get("expiresAt")),
+    }];
+  });
+}
+
+export type InvitedPerson = PendingInvitation & { tournamentName: string; playerName: string; expired: boolean };
+
+/** Lists the people who got an invitation and did not accept yet. [scope] limits the tournaments for an editor. */
+export async function listInvitedPeople(scope?: ReadonlySet<string>): Promise<InvitedPerson[]> {
+  const pending = (await listPendingInvitations()).filter((item) => scope == null || scope.has(item.tournamentId));
+  const now = Date.now();
+  const rows = await Promise.all(pending.map(async (item) => {
+    const [tournament, person] = await Promise.all([
+      db.doc(`tournaments/${item.tournamentId}`).get(),
+      db.doc(`emaPlayerRegistry/${item.emaId}`).get(),
+    ]);
+    const playerName = [person.get("firstName"), person.get("lastName")]
+      .filter((part) => typeof part === "string" && part.length > 0).join(" ");
+    return {
+      ...item,
+      tournamentName: String(tournament.get("name") ?? ""),
+      playerName: playerName || item.emaId,
+      expired: item.expiresAt != null && Date.parse(item.expiresAt) < now,
+    };
+  }));
+  return rows.sort((a, b) => a.playerName.localeCompare(b.playerName));
+}
+
+/** Marks the invitations of an EMA id as revoked and clears the invited mark on the slots that hold them. */
+async function revokePendingForEma(emaId: string, keepInvitationId?: string): Promise<void> {
+  const pending = (await listPendingInvitations())
+    .filter((item) => item.emaId === emaId && item.invitationId !== keepInvitationId);
+  for (const item of pending) {
+    const slotRef = db.doc(`tournaments/${item.tournamentId}/players/${item.playerId}`);
+    await db.runTransaction(async (transaction) => {
+      const slot = await transaction.get(slotRef);
+      transaction.update(invitationsOf(item.tournamentId).doc(item.invitationId), {
+        status: "REVOKED", updatedAt: FieldValue.serverTimestamp(),
+      });
+      if (slot.exists && slot.get("invitationStatus") === "INVITED" && typeof slot.get("accountUid") !== "string") {
+        transaction.update(slotRef, {
+          invitationStatus: "NONE",
+          invitedEmail: FieldValue.delete(),
+          invitedAt: FieldValue.delete(),
+          updatedAt: FieldValue.serverTimestamp(),
+        });
+      }
+    });
+    await bumpTournamentDataVersion(item.tournamentId, "players");
+  }
 }
 
 /** Returns the slot of the player account in a tournament, or null when the account is not registered there. */
@@ -315,7 +398,12 @@ async function runOne(
   if (action === "revoke") {
     const accountUid = typeof slot.get("accountUid") === "string" ? String(slot.get("accountUid")) : null;
     const status = String(slot.get("invitationStatus") ?? "NONE");
-    if (accountUid == null && status !== "INVITED") return { playerId, outcome: "SKIPPED", message: "Nothing to revoke" };
+    // The invitation may belong to another tournament of the same person.
+    const inviteOfPerson = hasEma && (await listPendingInvitations()).some((item) => item.emaId === emaId);
+    if (accountUid == null && status !== "INVITED" && !inviteOfPerson) {
+      return { playerId, outcome: "SKIPPED", message: "Nothing to revoke" };
+    }
+    if (inviteOfPerson && accountUid == null) await revokePendingForEma(String(emaId));
     const related = await invitationsOf(tournamentId).where("playerId", "==", playerId).get();
     await db.runTransaction(async (transaction) => {
       related.docs.forEach((doc) => {
@@ -350,7 +438,8 @@ async function runOne(
       await notifyRegistration({ tournamentId, playerId, uid: accountUid });
       return { playerId, outcome: "NOTIFIED" };
     }
-    const status = String(slot.get("invitationStatus") ?? "NONE");
+    const personInvites = (await listPendingInvitations()).filter((item) => item.emaId === emaId);
+    const status = slot.get("invitationStatus") === "INVITED" || personInvites.length > 0 ? "INVITED" : "NONE";
     if (action === "send") {
       if (status === "INVITED") return { playerId, outcome: "SKIPPED", message: "Already invited" };
       const target = email || String(slot.get("invitedEmail") ?? "");
@@ -371,12 +460,12 @@ async function runOne(
     }
     // Resend: a new link replaces the old one.
     if (status !== "INVITED") return { playerId, outcome: "SKIPPED", message: "Nothing to resend" };
-    const pending = await invitationsOf(tournamentId)
-      .where("playerId", "==", playerId).where("status", "==", "PENDING").get();
-    const current = pending.docs[0];
-    const target = email || String(current?.get("email") ?? slot.get("invitedEmail") ?? "");
+    const target = email || personInvites[0]?.email || String(slot.get("invitedEmail") ?? "");
     if (!target) return { playerId, outcome: "FAILED", message: "No email for this player" };
-    await sendInvitation({ tournamentId, playerId, email: target, invitedBy, replaceInvitationId: current?.id });
+    // A new link replaces the invitation of this slot. Invitations of the same person in other slots end.
+    const own = personInvites.find((item) => item.tournamentId === tournamentId && item.playerId === playerId);
+    await revokePendingForEma(String(emaId), own?.invitationId);
+    await sendInvitation({ tournamentId, playerId, email: target, invitedBy, replaceInvitationId: own?.invitationId });
     return { playerId, outcome: "INVITED" };
   } catch (error) {
     if ((error as { code?: string }).code === "email_failed") {
@@ -442,6 +531,14 @@ export async function saveContactEmails(params: {
 
 export type AcceptResult = { tournamentId: string; email: string };
 
+/** The full EMA name of a player. A new account uses it as its first alias. Returns "" when the player is unknown. */
+async function emaFullName(emaId: string): Promise<string> {
+  const snap = await db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`).get();
+  if (!snap.exists) return "";
+  const player = toPlayer(emaId, snap.data() ?? {});
+  return `${player.firstName} ${player.lastName}`.trim();
+}
+
 /**
  * Accepts an invitation.
  * A new account is created here and gets its password. An existing account must be signed in as the invited email.
@@ -481,7 +578,8 @@ export async function acceptInvitation(params: {
       throw error;
     }
     await db.doc(`users/${uid}`).set({
-      uid, email, alias: "", contactEmail: email, createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
+      uid, email, alias: await emaFullName(emaId), contactEmail: email,
+      createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp(),
     }, { merge: true });
   }
 
@@ -523,7 +621,13 @@ async function linkAccountToSlot(params: {
     }
     if (emaIndex.exists && emaIndex.get("uid") !== uid) throw conflict("This EMA id belongs to another account");
     transaction.set(emaIndexRef, { uid, updatedAt: FieldValue.serverTimestamp() });
-    transaction.set(db.doc(`users/${uid}`), { emaId, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    // An account without an alias gets the EMA name. An alias that the user chose stays.
+    const alias = String(profile.get("alias") ?? "").trim() === "" ? await emaFullName(emaId) : null;
+    transaction.set(
+      db.doc(`users/${uid}`),
+      { emaId, ...(alias ? { alias } : {}), updatedAt: FieldValue.serverTimestamp() },
+      { merge: true },
+    );
     transaction.set(playerTournamentRef(uid, tournamentId), {
       playerId, emaId, tournamentId, createdAt: FieldValue.serverTimestamp(),
     });

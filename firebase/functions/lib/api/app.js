@@ -15,6 +15,7 @@ const player_routes_1 = require("./routes/player.routes");
 const players_routes_1 = require("./routes/players.routes");
 const tournaments_routes_1 = require("./routes/tournaments.routes");
 const sync_routes_1 = require("./routes/sync.routes");
+const venues_routes_1 = require("./routes/venues.routes");
 function buildApp() {
     const app = (0, express_1.default)();
     app.use(gzipJson_1.gzipJson);
@@ -52,6 +53,7 @@ function buildApp() {
     app.use("/sync", (0, sync_routes_1.syncRouter)());
     app.use("/player", (0, player_routes_1.playerRouter)());
     app.use("/tournaments", (0, tournaments_routes_1.tournamentsRouter)());
+    app.use("/venues", (0, venues_routes_1.venuesRouter)());
     app.use(errorHandler_1.errorHandler);
     return app;
 }

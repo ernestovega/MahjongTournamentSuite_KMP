@@ -13,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
@@ -40,6 +41,15 @@ class PlayerSessionPresenter(
             is AppResult.Success -> AppResult.Success(Unit)
             is AppResult.Failure -> result
         }
+
+    suspend fun loadProfile(): AppResult<UserProfile> = authRepository.getMe(RefreshMode.FORCE)
+
+    suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias)
+
+    suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> =
+        authRepository.updatePhoto(contentType, bytes)
+
+    suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
 
     suspend fun resetPassword(email: String): AppResult<Unit> = authRepository.requestPasswordReset(email.trim())
 

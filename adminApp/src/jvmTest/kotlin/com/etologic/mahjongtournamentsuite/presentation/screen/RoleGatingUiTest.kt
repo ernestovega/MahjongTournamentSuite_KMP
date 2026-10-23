@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
@@ -20,11 +21,13 @@ import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.InvitedPerson
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerInvitationRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
@@ -41,6 +44,7 @@ import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /** What each role sees and can do on the screens. The server enforces the same rules, see `rolePermissions.integration.test.ts`. */
@@ -55,6 +59,7 @@ class RoleGatingUiTest {
             tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1))
         }
         val store = AppMemoryStore()
+        val invited = FakePlayerInvitationRepository()
     }
 
     private fun ComposeUiTest.show(world: World, players: List<Player> = emptyList(), content: @Composable () -> Unit) {
@@ -69,12 +74,13 @@ class RoleGatingUiTest {
                             single<AdminRepository> { world.admin }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
                             single<PlayerRepository> { FakePlayerRepository(players) }
+                            single<PlayerInvitationRepository> { world.invited }
                             single { world.store }
                             // The version call fails at once and the screen ignores it.
                             single { FunctionsBackendApi(HttpClient(), ApiConfiguration("http://127.0.0.1:1/")) }
                             factory { TournamentsPresenter(get(), get(), get()) }
                             factory { VersionPresenter(get(), get()) }
-                            factory { UsersPresenter(get(), get(), get(), get()) }
+                            factory { UsersPresenter(get(), get(), get(), get(), get()) }
                             factory { PlayerBasePresenter(get(), get()) }
                         },
                     )
@@ -102,6 +108,7 @@ class RoleGatingUiTest {
 
         onNodeWithText("New tournament").assertExists()
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(1)
+        onAllNodesWithContentDescription("Open Open").assertCountEquals(1)
         onNodeWithText("App Users").assertExists()
         onNodeWithText("EMA players").assertExists()
         onAllNodesWithText("Admin", substring = true).assertCountEquals(1)
@@ -113,9 +120,30 @@ class RoleGatingUiTest {
 
         onAllNodesWithText("New tournament").assertCountEquals(0)
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(0)
+        onAllNodesWithContentDescription("Open Open").assertCountEquals(1)
         onNodeWithText("App Users").assertExists()
         onNodeWithText("EMA players").assertExists()
         onAllNodesWithText("Editor", substring = true).assertCountEquals(1)
+    }
+
+    @Test
+    fun theProfileOpensFromTheAliasAndSavesANewAlias() = runComposeUiTest {
+        val world = World(GlobalUserRole.ADMIN, emptyList())
+        show(world) { TournamentsScreen(rememberNavController()) }
+        awaitText("Me")
+
+        onNodeWithText("Me").performClick()
+        waitForIdle()
+        onNodeWithText("Profile").assertExists()
+        onNodeWithText("me@example.test").assertExists()
+        onNodeWithText("Save").assertIsNotEnabled()
+        onNodeWithText("Alias").performTextReplacement("Mei")
+        onNodeWithText("Save").assertIsEnabled()
+        onNodeWithText("Save").performClick()
+        waitUntil(timeoutMillis = 5_000) { world.store.profile.value?.alias == "Mei" }
+
+        assertEquals("Mei", world.store.profile.value?.alias)
+        onAllNodesWithText("Profile").assertCountEquals(0)
     }
 
     @Test
@@ -171,6 +199,22 @@ class RoleGatingUiTest {
         onNodeWithText("boss@example.test").performClick()
         waitForIdle()
         onNodeWithText("Save").assertExists()
+    }
+
+    @Test
+    fun theAccountListShowsTheCountryOfAPlayerAccount() = runComposeUiTest {
+        val playerAccount = ManagedUser(
+            "p1", "ada@example.test", "Ada", GlobalUserRole.PLAYER, false, emptyList(), emaId = "10001",
+        )
+        show(World(GlobalUserRole.ADMIN, listOf(boss, playerAccount)), listOf(player)) {
+            GlobalUsersScreen(rememberNavController())
+        }
+
+        awaitText("ada@example.test")
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodesWithContentDescription("Country GB").fetchSemanticsNodes().isNotEmpty()
+        }
+        onAllNodesWithContentDescription("Country GB").assertCountEquals(1)
     }
 
     @Test
@@ -235,5 +279,23 @@ class RoleGatingUiTest {
         waitForIdle()
 
         onNodeWithText("Global role").assertIsNotEnabled()
+    }
+
+    @Test
+    fun anEditorSeesInvitedPeopleAndCanRevokeAnInvitation() = runComposeUiTest {
+        val world = World(GlobalUserRole.EDITOR, listOf(ed))
+        world.invited.invited = listOf(
+            InvitedPerson("i1", "t1", "Open", 4, "10001", "Ada Lovelace", "ada@example.test", "2026-11-01T10:00:00.000Z"),
+        )
+        show(world) { GlobalUsersScreen(rememberNavController()) }
+        awaitText("Invited (1)")
+
+        onNodeWithText("Invited (1)").performClick()
+        awaitText("ada@example.test")
+        onNodeWithText("Open").assertExists()
+        onNodeWithText("Revoke").performClick()
+        awaitText("Invited (0)")
+
+        assertTrue(world.invited.actions == listOf("REVOKE t1 4"))
     }
 }

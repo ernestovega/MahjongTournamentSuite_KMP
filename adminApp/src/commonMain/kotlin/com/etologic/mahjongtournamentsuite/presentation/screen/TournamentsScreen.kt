@@ -56,6 +56,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.clickable
+import androidx.compose.ui.semantics.Role
+import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
@@ -109,6 +112,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -366,7 +370,7 @@ fun TournamentsScreen(
                                 val listState = rememberPersistentLazyListState("tournaments")
                                 val cellMinWidth = 56.dp
                                 val numColumns = 10
-                                val actionCellMinWidth = 56.dp
+                                val actionCellMinWidth = 144.dp
                                 val flexibleColumns = 5
                                 val columnsMinWidth = (cellMinWidth * flexibleColumns) + featuresGroupMinWidth(cellMinWidth) +
                                     ColorColumnWidth + CountryColumnWidth + ShortNameColumnWidth + actionCellMinWidth
@@ -490,15 +494,21 @@ fun TournamentsScreen(
     }
 }
 
+/** The alias and role of the signed-in user. A click opens the profile, where the user can change the alias. */
 @Composable
 fun ProfileInfo(
     profile: UserProfile?,
     roleLabel: String?
 ) {
+    var showProfile by remember { mutableStateOf(false) }
     profile?.let { user ->
         Spacer(modifier = Modifier.width(16.dp))
         Column(
-            modifier = Modifier.padding(end = 8.dp),
+            modifier = Modifier
+                .padding(end = 8.dp)
+                .clip(MaterialTheme.shapes.small)
+                .clickable(role = Role.Button, onClickLabel = "Open profile") { showProfile = true }
+                .padding(horizontal = 8.dp, vertical = 2.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
@@ -518,6 +528,19 @@ fun ProfileInfo(
                     textAlign = TextAlign.Center,
                 )
             }
+        }
+        // The presenter and the store load only when the dialog opens.
+        if (showProfile) {
+            val presenter = koinInject<TournamentsPresenter>()
+            val store = koinInject<AppMemoryStore>()
+            ProfileDialog(
+                profile = user,
+                onSaveAlias = presenter::updateAlias,
+                onSavePhoto = presenter::updatePhoto,
+                onRemovePhoto = presenter::removePhoto,
+                onSaved = { store.profile.value = it },
+                onDismiss = { showProfile = false },
+            )
         }
     }
 }
@@ -676,10 +699,18 @@ private fun TournamentTableRow(
                 weight = FeatureWeight,
             )
         }
-        Box(
+        Row(
             modifier = Modifier.width(actionCellMinWidth),
-            contentAlignment = Alignment.CenterEnd,
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
+            TextButton(
+                enabled = enabled,
+                onClick = onClick,
+                buttonModifier = Modifier.semantics { contentDescription = "Open ${tournament.name}" },
+            ) {
+                Text("Open")
+            }
             if (showEdit) {
                 IconButton(
                     enabled = enabled,

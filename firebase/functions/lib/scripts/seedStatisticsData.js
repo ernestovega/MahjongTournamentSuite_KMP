@@ -290,6 +290,7 @@ function planTournamentInfo(snapshot) {
     const end = addDays(start, days - 1);
     return {
         ...VENUE,
+        contactEmail: "test-statistics@example.com",
         hostCountry: "ES",
         hostCity: "Madrid",
         eventStartDate: start,

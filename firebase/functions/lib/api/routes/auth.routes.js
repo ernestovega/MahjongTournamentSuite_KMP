@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.signInError = signInError;
 exports.authRouter = authRouter;
+exports.readContentType = readContentType;
+exports.readPhotoData = readPhotoData;
 const express_1 = require("express");
 const httpError_1 = require("../httpError");
 const requireAuth_1 = require("../middleware/requireAuth");
@@ -71,7 +73,41 @@ function authRouter() {
     router.get("/me", requireAuth_1.requireAuth, async (_req, res, next) => {
         try {
             const decoded = res.locals.auth;
-            const [profile, user] = await Promise.all([(0, usersService_1.getUserProfile)(decoded.uid), firebase_1.auth.getUser(decoded.uid)]);
+            const [profile, user] = await Promise.all([(0, usersService_1.getOwnProfile)(decoded.uid), firebase_1.auth.getUser(decoded.uid)]);
+            res.status(200).json({ ...profile, roles: (0, globalRole_1.getGlobalUserRoles)(user) });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    // Every signed-in user can change the own alias and the own photo. The EMA id stays as the admins set it.
+    router.put("/me", requireAuth_1.requireAuth, async (req, res, next) => {
+        try {
+            const decoded = res.locals.auth;
+            await (0, usersService_1.updateOwnAlias)(decoded.uid, req.body?.alias);
+            const [profile, user] = await Promise.all([(0, usersService_1.getOwnProfile)(decoded.uid), firebase_1.auth.getUser(decoded.uid)]);
+            res.status(200).json({ ...profile, roles: (0, globalRole_1.getGlobalUserRoles)(user) });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.put("/me/photo", requireAuth_1.requireAuth, async (req, res, next) => {
+        try {
+            const decoded = res.locals.auth;
+            await (0, usersService_1.setUserPhoto)(decoded.uid, readContentType(req.body), readPhotoData(req.body));
+            const [profile, user] = await Promise.all([(0, usersService_1.getOwnProfile)(decoded.uid), firebase_1.auth.getUser(decoded.uid)]);
+            res.status(200).json({ ...profile, roles: (0, globalRole_1.getGlobalUserRoles)(user) });
+        }
+        catch (e) {
+            next(e);
+        }
+    });
+    router.delete("/me/photo", requireAuth_1.requireAuth, async (_req, res, next) => {
+        try {
+            const decoded = res.locals.auth;
+            await (0, usersService_1.clearUserPhoto)(decoded.uid);
+            const [profile, user] = await Promise.all([(0, usersService_1.getOwnProfile)(decoded.uid), firebase_1.auth.getUser(decoded.uid)]);
             res.status(200).json({ ...profile, roles: (0, globalRole_1.getGlobalUserRoles)(user) });
         }
         catch (e) {
@@ -79,5 +115,14 @@ function authRouter() {
         }
     });
     return router;
+}
+function readContentType(body) {
+    return String(body?.contentType ?? "").trim().toLowerCase();
+}
+function readPhotoData(body) {
+    const data = String(body?.dataBase64 ?? "").trim();
+    if (!data)
+        throw (0, httpError_1.badRequest)("Photo data is required");
+    return data;
 }
 //# sourceMappingURL=auth.routes.js.map

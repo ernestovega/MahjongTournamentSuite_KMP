@@ -10,6 +10,7 @@ import { playerRouter } from "./routes/player.routes";
 import { playersRouter } from "./routes/players.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
 import { syncRouter } from "./routes/sync.routes";
+import { venuesRouter } from "./routes/venues.routes";
 
 export function buildApp(): express.Express {
   const app = express();
@@ -52,6 +53,7 @@ export function buildApp(): express.Express {
   app.use("/sync", syncRouter());
   app.use("/player", playerRouter());
   app.use("/tournaments", tournamentsRouter());
+  app.use("/venues", venuesRouter());
 
   app.use(errorHandler);
 

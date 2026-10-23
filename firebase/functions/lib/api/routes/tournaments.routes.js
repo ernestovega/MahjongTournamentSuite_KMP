@@ -203,6 +203,11 @@ function tournamentsRouter() {
             catch (error) {
                 issues.push({ field: "venue", message: error instanceof Error ? error.message : "Invalid venue" });
             }
+            if (issues.length === 0) {
+                for (const message of (0, tournamentVenue_1.venueRequiredProblems)(venue)) {
+                    issues.push({ field: message === "Required" ? "contactEmail" : "venue", message });
+                }
+            }
             if (!body)
                 issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
             if (!name)
@@ -482,6 +487,10 @@ function tournamentsRouter() {
             }
             if (!hostCity)
                 throw (0, httpError_1.badRequest)("Host city is required");
+            const venue = (0, tournamentVenue_1.normalizeVenue)(body);
+            const venueProblems = (0, tournamentVenue_1.venueRequiredProblems)(venue);
+            if (venueProblems.length > 0)
+                throw (0, httpError_1.badRequest)(venueProblems.join(". "));
             if ((associationLogoContentType == null) !== (associationLogoDataBase64 == null)) {
                 throw (0, httpError_1.badRequest)("Association logo content type and image data must be supplied together");
             }
@@ -497,7 +506,7 @@ function tournamentsRouter() {
                 eventEndDate,
                 hostCountry,
                 hostCity,
-                ...(0, tournamentVenue_1.normalizeVenue)(body),
+                ...venue,
                 associationLogoContentType,
                 associationLogoDataBase64,
                 associationLogoSourceTournamentId,

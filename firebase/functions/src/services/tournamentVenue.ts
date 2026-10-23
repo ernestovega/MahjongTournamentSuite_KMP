@@ -20,7 +20,7 @@ function text(value: unknown, field: string, maxLength: number): string {
   return normalized;
 }
 
-function isGoogleMapsHost(hostname: string): boolean {
+export function isGoogleMapsHost(hostname: string): boolean {
   const host = hostname.toLowerCase();
   return MAP_HOSTS.some((allowed) => host === allowed || host.endsWith(`.${allowed}`));
 }
@@ -51,6 +51,19 @@ export function normalizeContactEmail(value: unknown): string {
   const raw = text(value, "contactEmail", MAX_EMAIL_LENGTH);
   if (raw.length > 0 && !EMAIL_PATTERN.test(raw)) throw badRequest("contactEmail must be a valid email address");
   return raw;
+}
+
+/**
+ * A tournament needs a venue and a contact email. The venue is a Google Maps link, or a name and an address.
+ * Returns one message for each missing part. The list is empty when the venue is complete.
+ */
+export function venueRequiredProblems(venue: TournamentVenue): string[] {
+  const problems: string[] = [];
+  if (venue.venueMapUrl === "" && (venue.venueName === "" || venue.venueAddress === "")) {
+    problems.push("Required: a Google Maps link (venueMapUrl), or a venue name and an address");
+  }
+  if (venue.contactEmail === "") problems.push("Required");
+  return problems;
 }
 
 /** The venue of the tournament. Every field is optional, so a missing field becomes an empty text. */

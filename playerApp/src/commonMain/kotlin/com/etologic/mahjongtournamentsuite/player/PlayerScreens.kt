@@ -120,6 +120,7 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.PanTool
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.People
@@ -399,7 +400,10 @@ fun TournamentsScreen(navController: NavHostController) {
         navigationIcon = {
             SignOutAction { confirmingSignOut = true }
         },
-        actions = { ThemeAction() },
+        actions = {
+            ProfileAction(session)
+            ThemeAction()
+        },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The screen uses the full width. The tab row and the tournament list keep a narrow column. The statistics use all the width.
@@ -591,44 +595,57 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                     if (status != null) StatusChip(status)
                 }
             }
-            if (dates != null || hasCity || venueText.isNotBlank()) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (dates != null) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.CalendarMonth, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                            Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    if (hasCity) {
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                            if (tournament.hostCity.isNotBlank()) {
-                                Text(tournament.hostCity, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                            if (tournament.hostCountry.isNotBlank()) {
-                                CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
+            if (dates != null || hasCity || venueText.isNotBlank() || standing != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        if (dates != null) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.CalendarMonth, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                                Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
+                        if (hasCity) {
+                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                                if (tournament.hostCity.isNotBlank()) {
+                                    Text(tournament.hostCity, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                if (tournament.hostCountry.isNotBlank()) {
+                                    CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
+                                }
+                            }
+                        }
+                        // The venue is plain text. The link to the map is a button below.
+                        if (venueText.isNotBlank()) {
+                            Text(
+                                venueText,
+                                Modifier.padding(start = 26.dp),
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
                     }
-                    // The venue is plain text. The link to the map is a button below.
-                    if (venueText.isNotBlank()) {
-                        Text(
-                            venueText,
-                            Modifier.padding(start = 26.dp),
-                            maxLines = 2,
-                            overflow = TextOverflow.Ellipsis,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
+                    // The place and the prizes are at the right, so they do not use a row of the card.
+                    if (standing != null) {
+                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            StandingTag(standing)
+                            if (standing.wonTeams || standing.wonChickenHands || standing.wonBestHands) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = "Won the teams ranking", Modifier.size(22.dp))
+                                    if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
+                                    if (standing.wonBestHands) {
+                                        // The hand tells this trophy apart from the trophy of the place.
+                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                            Icon(Icons.Default.PanTool, contentDescription = "Won the best hands ranking", Modifier.size(16.dp))
+                                            PositionTrophy(1, size = 22.dp)
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
-                }
-            }
-            if (standing != null) {
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
-                    StandingTag(standing)
-                    if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = "Won the teams ranking", Modifier.size(22.dp))
-                    if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
-                    if (standing.wonBestHands) PositionTrophy(1, size = 22.dp)
                 }
             }
             if (hasLinks) {
