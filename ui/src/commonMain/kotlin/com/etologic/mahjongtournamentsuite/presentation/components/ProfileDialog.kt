@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -20,8 +21,19 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.action_close
+import mahjongtournamentsuite.ui.generated.resources.action_save
+import mahjongtournamentsuite.ui.generated.resources.field_email
+import mahjongtournamentsuite.ui.generated.resources.profile_alias
+import mahjongtournamentsuite.ui.generated.resources.profile_alias_hint
+import mahjongtournamentsuite.ui.generated.resources.profile_ema_number
+import mahjongtournamentsuite.ui.generated.resources.profile_title
+import org.jetbrains.compose.resources.stringResource
 
 /** Longest alias that the server accepts. */
 const val MAX_ALIAS_LENGTH = 60
@@ -45,7 +57,7 @@ fun ProfileDialog(
     var alias by remember(profile.uid) { mutableStateOf(profile.alias) }
     var photoProfile by remember(profile.uid) { mutableStateOf(profile) }
     var saving by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
     val aliasFocusRequester = remember { FocusRequester() }
     val trimmedAlias = alias.trim()
     val canSave = !saving && trimmedAlias.isNotEmpty() && trimmedAlias != profile.alias.trim()
@@ -65,26 +77,26 @@ fun ProfileDialog(
                     onDismiss()
                 }
 
-                is AppResult.Failure -> error = result.error.toUiMessage()
+                is AppResult.Failure -> error = result.error.toUiText()
             }
             saving = false
         }
     }
 
-    suspend fun savePhoto(call: suspend () -> AppResult<UserProfile>): String? = when (val result = call()) {
+    suspend fun savePhoto(call: suspend () -> AppResult<UserProfile>): UiText? = when (val result = call()) {
         is AppResult.Success -> {
             photoProfile = result.value
             onSaved(result.value)
             null
         }
 
-        is AppResult.Failure -> result.error.toUiMessage()
+        is AppResult.Failure -> result.error.toUiText()
     }
 
     AlertDialog(
         modifier = Modifier.appFocusGroup(),
         onDismissRequest = { if (!saving) onDismiss() },
-        title = { Text("Profile") },
+        title = { Text(stringResource(Res.string.profile_title)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -104,8 +116,8 @@ fun ProfileDialog(
                         alias = it.take(MAX_ALIAS_LENGTH)
                         error = null
                     },
-                    label = { Text("Alias") },
-                    supportingText = { Text(error ?: "The name that the apps show for your account.") },
+                    label = { Text(stringResource(Res.string.profile_alias)) },
+                    supportingText = { Text(error?.asString() ?: stringResource(Res.string.profile_alias_hint)) },
                     isError = error != null,
                     singleLine = true,
                     enabled = !saving,
@@ -114,16 +126,17 @@ fun ProfileDialog(
                 OutlinedTextField(
                     value = profile.email,
                     onValueChange = {},
-                    label = { Text("Email") },
+                    label = { Text(stringResource(Res.string.field_email)) },
                     readOnly = true,
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
+                LanguageSelector()
                 profile.emaId?.let { emaId ->
                     OutlinedTextField(
                         value = emaId,
                         onValueChange = {},
-                        label = { Text("EMA number") },
+                        label = { Text(stringResource(Res.string.profile_ema_number)) },
                         readOnly = true,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
@@ -132,10 +145,10 @@ fun ProfileDialog(
             }
         },
         confirmButton = {
-            FocusedButton(enabled = canSave, onClick = { save() }) { Text("Save") }
+            FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
         },
         dismissButton = {
-            FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text("Close") }
+            FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
         },
     )
 }

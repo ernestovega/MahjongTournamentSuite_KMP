@@ -1,36 +1,28 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.coerceIn
-import androidx.compose.ui.focus.FocusState
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Person
@@ -40,30 +32,38 @@ import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.Constraints
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusState
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.coerceIn
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
@@ -74,22 +74,64 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import kotlin.math.roundToInt
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.chart_no_data
+import mahjongtournamentsuite.ui.generated.resources.column_deal_ins
+import mahjongtournamentsuite.ui.generated.resources.column_place
+import mahjongtournamentsuite.ui.generated.resources.column_player
+import mahjongtournamentsuite.ui.generated.resources.column_points
+import mahjongtournamentsuite.ui.generated.resources.column_score
+import mahjongtournamentsuite.ui.generated.resources.column_wins
+import mahjongtournamentsuite.ui.generated.resources.country_n
+import mahjongtournamentsuite.ui.generated.resources.dropdown_no_match
+import mahjongtournamentsuite.ui.generated.resources.photo_of
+import mahjongtournamentsuite.ui.generated.resources.player_photo_none
+import mahjongtournamentsuite.ui.generated.resources.rival_ema
+import mahjongtournamentsuite.ui.generated.resources.rival_player
+import mahjongtournamentsuite.ui.generated.resources.rival_self_draws
+import mahjongtournamentsuite.ui.generated.resources.scope_me
+import mahjongtournamentsuite.ui.generated.resources.scope_my_tournaments
+import mahjongtournamentsuite.ui.generated.resources.scope_player
+import mahjongtournamentsuite.ui.generated.resources.scope_table
+import mahjongtournamentsuite.ui.generated.resources.scope_tournament
+import mahjongtournamentsuite.ui.generated.resources.stat_best_hand
+import mahjongtournamentsuite.ui.generated.resources.stat_chicken_hands
+import mahjongtournamentsuite.ui.generated.resources.stat_draws
+import mahjongtournamentsuite.ui.generated.resources.stat_hands
+import mahjongtournamentsuite.ui.generated.resources.stat_hands_played
+import mahjongtournamentsuite.ui.generated.resources.table_no_hands
+import mahjongtournamentsuite.ui.generated.resources.table_not_completed
+import mahjongtournamentsuite.ui.generated.resources.table_result
+import mahjongtournamentsuite.ui.generated.resources.table_score_after_hand
+import org.jetbrains.compose.resources.stringResource
 
 /** The icon of every statistics button and tab in both apps. Rankings keep their own icon. */
 val StatisticsIcon: ImageVector get() = Icons.Default.Insights
 
 /** Which part of the data a statistics screen shows. Both apps use the same scopes. */
-enum class StatisticsScope(val title: String) {
+enum class StatisticsScope {
     /** One player over all tournaments: the cards of the whole history. */
-    PERSON("Me"),
+    PERSON,
 
     /** The same player, one card for each tournament. */
-    PERSON_TOURNAMENTS("My tournaments"),
-    TOURNAMENT("Tournament"),
-    TABLE("Table"),
-    PLAYER("Player"),
+    PERSON_TOURNAMENTS,
+    TOURNAMENT,
+    TABLE,
+    PLAYER,
 }
+
+@Composable
+fun StatisticsScope.title(): String = stringResource(
+    when (this) {
+        StatisticsScope.PERSON -> Res.string.scope_me
+        StatisticsScope.PERSON_TOURNAMENTS -> Res.string.scope_my_tournaments
+        StatisticsScope.TOURNAMENT -> Res.string.scope_tournament
+        StatisticsScope.TABLE -> Res.string.scope_table
+        StatisticsScope.PLAYER -> Res.string.scope_player
+    },
+)
 
 internal const val EMPTY = "-"
 
@@ -171,7 +213,7 @@ fun LineChart(series: List<Pair<String, List<Int>>>, modifier: Modifier = Modifi
     val axis = MaterialTheme.colorScheme.outlineVariant
     val steps = series.maxOfOrNull { it.second.size } ?: 0
     if (steps < 2) {
-        Text("Not enough data for a chart.", style = MaterialTheme.typography.bodyMedium)
+        Text(stringResource(Res.string.chart_no_data), style = MaterialTheme.typography.bodyMedium)
         return
     }
     val all = series.flatMap { it.second } + 0
@@ -210,19 +252,21 @@ fun TableStatisticsPanel(
     names: Map<Int, String>,
     modifier: Modifier = Modifier,
 ) {
+    @Suppress("NAME_SHADOWING")
+    val names = remember(names, PlaceholderNames.playerTemplate) { PlaceholderNames.localizeAll(names) }
     StaggeredColumns(modifier.fillMaxWidth(), minColumnWidth = 380.dp, spacing = 20.dp) {
         if (!statistics.isCompleted) {
-            Text("This table is not completed yet.", style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(Res.string.table_not_completed), style = MaterialTheme.typography.bodyMedium)
             return@StaggeredColumns
         }
-        StatSection("Result") {
+        StatSection(stringResource(Res.string.table_result)) {
             TableHeaderRow()
             statistics.players
                 .mapNotNull { player -> player.results.firstOrNull()?.let { player to it } }
                 .sortedBy { it.second.position }
                 .forEach { (player, result) ->
                     TableValuesRow(
-                        name = names[player.playerId] ?: "Player ${player.playerId}",
+                        name = names[player.playerId] ?: stringResource(Res.string.rival_player, player.playerId.toString()),
                         cells = listOf(
                             result.position.toString(),
                             result.score.toString(),
@@ -235,33 +279,36 @@ fun TableStatisticsPanel(
         }
         if (!statistics.hasHands) {
             Text(
-                "This table has no entered hands, so it has no hand statistics.",
+                stringResource(Res.string.table_no_hands),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             return@StaggeredColumns
         }
-        StatSection("Hands") {
-            StatRow("Hands played", statistics.handsPlayed.toString())
-            StatRow("Draws", statistics.drawnHands.toString())
-            StatRow("Self-draws", statistics.selfDraws.toString())
-            StatRow("Best hand", statistics.bestHand.text())
-            if (statistics.chickenHands > 0) StatRow("Chicken hands", statistics.chickenHands.toString())
+        StatSection(stringResource(Res.string.stat_hands)) {
+            StatRow(stringResource(Res.string.stat_hands_played), statistics.handsPlayed.toString())
+            StatRow(stringResource(Res.string.stat_draws), statistics.drawnHands.toString())
+            StatRow(stringResource(Res.string.rival_self_draws), statistics.selfDraws.toString())
+            StatRow(stringResource(Res.string.stat_best_hand), statistics.bestHand.text())
+            if (statistics.chickenHands > 0) StatRow(stringResource(Res.string.stat_chicken_hands), statistics.chickenHands.toString())
         }
-        StatSection("Score after each hand") {
+        StatSection(stringResource(Res.string.table_score_after_hand)) {
             Spacer(Modifier.height(12.dp))
-            LineChart(statistics.swing.map { (names[it.playerId] ?: "Player ${it.playerId}") to listOf(0) + it.scoreAfterHand })
+            LineChart(statistics.swing.map { (names[it.playerId] ?: stringResource(Res.string.rival_player, it.playerId.toString())) to listOf(0) + it.scoreAfterHand })
         }
     }
 }
 
-private val TableColumns = listOf("Place", "Score", "Points", "Wins", "Deal-ins")
+@Composable
+private fun tableColumns(): List<String> = listOf(
+    stringResource(Res.string.column_place), stringResource(Res.string.column_score), stringResource(Res.string.column_points), stringResource(Res.string.column_wins), stringResource(Res.string.column_deal_ins),
+)
 
 @Composable
 private fun TableHeaderRow() {
     Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-        Text("Player", style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(2.2f))
-        TableColumns.forEach {
+        Text(stringResource(Res.string.column_player), style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(2.2f))
+        tableColumns().forEach {
             Text(
                 it,
                 style = MaterialTheme.typography.labelLarge,
@@ -304,7 +351,7 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "No player photo",
+                    contentDescription = stringResource(Res.string.player_photo_none),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(HeaderImageSize * 0.62f),
                 )
@@ -312,7 +359,7 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
         } else {
             AsyncImage(
                 model = profile.photoUrl,
-                contentDescription = "Photo of ${profile.name}",
+                contentDescription = stringResource(Res.string.photo_of, profile.name),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(HeaderImageSize).clip(CircleShape),
             )
@@ -323,10 +370,10 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
             Text(profile.name, style = MaterialTheme.typography.titleLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (profile.country.isNotBlank()) {
-                    CountryFlag(profile.country, width = 24.dp, contentDescription = "Country ${profile.country}")
+                    CountryFlag(profile.country, width = 24.dp, contentDescription = stringResource(Res.string.country_n, profile.country))
                 }
                 if (profile.emaId.isNotBlank()) {
-                    Text("EMA ${profile.emaId}", style = MaterialTheme.typography.bodyMedium)
+                    Text(stringResource(Res.string.rival_ema, profile.emaId), style = MaterialTheme.typography.bodyMedium)
                 }
             }
         }
@@ -470,7 +517,7 @@ fun <K> SearchableDropdownField(
             )
         }
         ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false; query = null }) {
-            if (shown.isEmpty()) DropdownMenuItem(text = { Text("No match") }, onClick = {}, enabled = false)
+            if (shown.isEmpty()) DropdownMenuItem(text = { Text(stringResource(Res.string.dropdown_no_match)) }, onClick = {}, enabled = false)
             shown.forEach { (key, name) ->
                 DropdownMenuItem(text = { Text(name) }, onClick = { expanded = false; query = null; onChoose(key) })
             }

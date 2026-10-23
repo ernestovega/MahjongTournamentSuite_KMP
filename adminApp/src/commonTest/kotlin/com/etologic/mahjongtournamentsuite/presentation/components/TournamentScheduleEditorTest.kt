@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.util.render
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -42,7 +44,7 @@ class TournamentScheduleEditorTest {
     }
 
     @Test
-    fun rejectsTimesOutsideTheExpectedFormat() {
+    fun rejectsTimesOutsideTheExpectedFormat() = runTest {
         val error = tournamentScheduleEditorError(
             roundRows = listOf(RoundScheduleEditorRow(1, "02/10/2026", "9:30")),
             agendaRows = emptyList(),
@@ -50,6 +52,6 @@ class TournamentScheduleEditorTest {
             eventEndDate = "2026-10-02",
         )
 
-        assertEquals("Round 1 has an invalid start time.", error)
+        assertEquals("Round 1 has an invalid start time.", error.render())
     }
 }

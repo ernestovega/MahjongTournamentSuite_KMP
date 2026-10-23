@@ -1,50 +1,62 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.Directions
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Place
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
-import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.info_contact
+import mahjongtournamentsuite.playerapp.generated.resources.info_directions
+import mahjongtournamentsuite.playerapp.generated.resources.info_google_maps
+import mahjongtournamentsuite.playerapp.generated.resources.info_no_date
+import mahjongtournamentsuite.playerapp.generated.resources.info_none
+import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
+import mahjongtournamentsuite.playerapp.generated.resources.info_open_venue
+import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
+import mahjongtournamentsuite.playerapp.generated.resources.info_venue
+import mahjongtournamentsuite.playerapp.generated.resources.round_n
+import org.jetbrains.compose.resources.stringResource
 
 /** One day of the agenda. A null [date] holds the items that have no date yet. */
 data class AgendaDay(val date: String?, val items: List<TournamentAgendaItem>)
@@ -62,7 +74,7 @@ fun TournamentInfoTab(tournament: Tournament) {
     val hasPlace = tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()
     if (venue.isEmpty && !hasPlace && !hasSchedule(tournament)) {
         Text(
-            "The organizers did not add information yet.",
+            stringResource(Res.string.info_none),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 24.dp),
         )
@@ -77,7 +89,7 @@ fun TournamentInfoTab(tournament: Tournament) {
         if (hasPlace || venue.name.isNotBlank() || venue.address.isNotBlank()) VenueCard(tournament)
         if (venue.contactEmail.isNotBlank()) ContactCard(venue.contactEmail)
         if (hasSchedule(tournament)) {
-            InfoCard("Schedule") { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
+            InfoCard(stringResource(Res.string.info_schedule)) { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
         }
     }
 }
@@ -88,7 +100,7 @@ private fun VenueCard(tournament: Tournament) {
     val venue = tournament.venue
     val uriHandler = LocalUriHandler.current
     val mapLink = venueMapLink(tournament)
-    InfoCard("Venue") {
+    InfoCard(stringResource(Res.string.info_venue)) {
         if (tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (tournament.hostCountry.isNotBlank()) {
@@ -117,12 +129,12 @@ private fun VenueCard(tournament: Tournament) {
             // The buttons are side by side. The second one moves under the first when the row is full.
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (venue.mapUrl.isNotBlank()) {
-                    VenueButton(Icons.Default.Map, "Google Maps", "Open the venue in Google Maps") {
+                    VenueButton(Icons.Default.Map, stringResource(Res.string.info_google_maps), stringResource(Res.string.info_open_venue)) {
                         uriHandler.openUri(venue.mapUrl)
                     }
                 }
                 if (mapLink != null) {
-                    VenueButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") {
+                    VenueButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
                         uriHandler.openUri(venueDirectionsLink(tournament) ?: mapLink)
                     }
                 }
@@ -148,7 +160,7 @@ private fun VenueButton(icon: ImageVector, label: String, description: String, o
 @Composable
 private fun ContactCard(email: String) {
     val uriHandler = LocalUriHandler.current
-    InfoCard("Contact") {
+    InfoCard(stringResource(Res.string.info_contact)) {
         TextButton(onClick = { uriHandler.openUri("mailto:$email") }) {
             Icon(Icons.Default.Email, contentDescription = null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
@@ -172,13 +184,13 @@ private fun InfoCard(title: String, content: @Composable () -> Unit) {
 }
 
 /** One line of the schedule: a round start or an agenda event. */
-private data class ScheduleEntry(val date: String?, val time: String?, val title: String)
+private data class ScheduleEntry(val date: String?, val time: String?, val title: String?, val roundId: Int? = null)
 
 /** The rounds and the agenda events in one list, sorted by date and then by start time. Entries without a date come last. */
 private fun scheduleByDay(tournament: Tournament): List<Pair<String?, List<ScheduleEntry>>> {
     val rounds = tournament.roundSchedules
         .filter { it.date != null || it.startTime != null }
-        .map { ScheduleEntry(it.date, it.startTime, "Round ${it.roundId}") }
+        .map { ScheduleEntry(it.date, it.startTime, null, it.roundId) }
     val events = tournament.agendaItems.map { ScheduleEntry(it.date, it.startTime, it.title) }
     return (rounds + events)
         .sortedWith(compareBy<ScheduleEntry> { it.date == null }.thenBy { it.date.orEmpty() }.thenBy { it.time ?: "99:99" })
@@ -232,7 +244,7 @@ fun TournamentSchedule(tournament: Tournament, modifier: Modifier = Modifier) {
         scheduleByDay(tournament).forEach { (date, entries) ->
             Column(Modifier.fillMaxWidth()) {
                 Text(
-                    date?.let { formatLocalizedDate(it, withWeekday = true) } ?: "No date yet",
+                    date?.let { formatLocalizedDate(it, withWeekday = true) } ?: stringResource(Res.string.info_no_date),
                     Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .background(colors.primary.copy(alpha = 0.14f))
@@ -250,7 +262,7 @@ fun TournamentSchedule(tournament: Tournament, modifier: Modifier = Modifier) {
                     ) {
                         val textStyle = MaterialTheme.typography.bodyMedium
                         Text(
-                            entry.title,
+                            entry.title ?: stringResource(Res.string.round_n, entry.roundId ?: 0),
                             Modifier.weight(1f),
                             style = textStyle,
                         )

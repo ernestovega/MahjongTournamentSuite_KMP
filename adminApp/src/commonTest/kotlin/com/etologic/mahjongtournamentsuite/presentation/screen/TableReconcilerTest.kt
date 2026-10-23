@@ -1,6 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.render
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -69,14 +72,14 @@ class TableReconcilerTest {
     }
 
     @Test
-    fun typedValuesAreListedAsLost() {
+    fun typedValuesAreListedAsLost() = runTest {
         val current = editor(version = 3)
         current.hands.first { it.handId == 3 }.handScore = "24"
         current.hands.first { it.handId == 3 }.playerWinnerId = "2"
 
         val update = assertNotNull(TableReconciler.reconcile(current, syncTable(version = 4), syncHands()))
 
-        val lost = update.notice.lostChanges.associate { it.label to it.value }
+        val lost = update.notice.lostChanges.associate { it.label.render() to it.value.render() }
         assertEquals("24", lost["Hand 3 · Hand score"])
         assertEquals("2", lost["Hand 3 · Player winner id"])
     }
@@ -100,7 +103,7 @@ class TableReconcilerTest {
     }
 
     @Test
-    fun aRejectedSaveReplacesTheEditorEvenWhenTheVersionLooksOlder() {
+    fun aRejectedSaveReplacesTheEditorEvenWhenTheVersionLooksOlder() = runTest {
         val current = editor(version = 5)
         current.hands.first().handScore = "16"
 
@@ -108,13 +111,13 @@ class TableReconcilerTest {
 
         assertEquals(2L, update.editor.version)
         assertTrue(update.notice.saveRejected)
-        assertEquals(listOf("Hand 1 · Hand score"), update.notice.lostChanges.map { it.label })
+        assertEquals(listOf("Hand 1 · Hand score"), update.notice.lostChanges.map { it.label.render() })
     }
 
     // ---- lost changes
 
     @Test
-    fun derivedTotalsAreNotListedAsLost() {
+    fun derivedTotalsAreNotListedAsLost() = runTest {
         val lost = TableReconciler.lostChangesOf(
             tablePatch = mapOf(
                 "playerEastScore" to "32", "playerEastId" to "9",
@@ -125,12 +128,12 @@ class TableReconcilerTest {
 
         assertEquals(
             listOf("Player east id" to "9", "Manual player east score" to "10", "Is completed" to "Yes"),
-            lost.map { it.label to it.value },
+            lost.map { it.label.render() to it.value.render() },
         )
     }
 
     @Test
-    fun handChangesAreListedInHandOrder() {
+    fun handChangesAreListedInHandOrder() = runTest {
         val lost = TableReconciler.lostChangesOf(
             tablePatch = emptyMap(),
             handPatches = mapOf(5 to mapOf("handScore" to "8"), 2 to mapOf("isDone" to false, "handScore" to "")),
@@ -142,7 +145,7 @@ class TableReconcilerTest {
                 "Hand 2 · Hand score" to "empty",
                 "Hand 5 · Hand score" to "8",
             ),
-            lost.map { it.label to it.value },
+            lost.map { it.label.render() to it.value.render() },
         )
     }
 
@@ -152,39 +155,39 @@ class TableReconcilerTest {
     }
 
     @Test
-    fun valuesAreShownInPlainWords() {
-        assertEquals("empty", null.toDisplayValue())
-        assertEquals("empty", "  ".toDisplayValue())
-        assertEquals("Yes", true.toDisplayValue())
-        assertEquals("No", false.toDisplayValue())
-        assertEquals("12", 12.toDisplayValue())
-        assertEquals("8", "8".toDisplayValue())
+    fun valuesAreShownInPlainWords() = runTest {
+        assertEquals("empty", null.toDisplayValue().render())
+        assertEquals("empty", "  ".toDisplayValue().render())
+        assertEquals("Yes", true.toDisplayValue().render())
+        assertEquals("No", false.toDisplayValue().render())
+        assertEquals("12", 12.toDisplayValue().render())
+        assertEquals("8", "8".toDisplayValue().render())
     }
 
     @Test
-    fun fieldNamesBecomeLabels() {
-        assertEquals("Player east id", "playerEastId".toFieldLabel())
-        assertEquals("Hand score", "handScore".toFieldLabel())
-        assertEquals("Is done", "isDone".toFieldLabel())
+    fun fieldNamesBecomeLabels() = runTest {
+        assertEquals("Player east id", "playerEastId".toFieldLabel().render())
+        assertEquals("Hand score", "handScore".toFieldLabel().render())
+        assertEquals("Is done", "isDone".toFieldLabel().render())
     }
 
     // ---- notice wording
 
     @Test
-    fun noticeWordingTellsWhatHappenedToTheTypedValues() {
+    fun noticeWordingTellsWhatHappenedToTheTypedValues() = runTest {
         val key = TableKey(2, 5)
 
         assertEquals(
             "Round 2 · Table 5: another user changed this table. It now shows the latest data.",
-            TableUpdateNotice(key, emptyList()).headline(),
+            TableUpdateNotice(key, emptyList()).headline().render(),
         )
         assertEquals(
             "Round 2 · Table 5: another user changed this table. Your unsaved changes were replaced.",
-            TableUpdateNotice(key, listOf(LostChange("Hand 1 · Hand score", "8"))).headline(),
+            TableUpdateNotice(key, listOf(LostChange(UiText.Plain("Hand 1 · Hand score"), UiText.Plain("8")))).headline().render(),
         )
         assertEquals(
             "Round 2 · Table 5: someone else saved this table first. Your changes were not saved.",
-            TableUpdateNotice(key, listOf(LostChange("Hand 1 · Hand score", "8")), saveRejected = true).headline(),
+            TableUpdateNotice(key, listOf(LostChange(UiText.Plain("Hand 1 · Hand score"), UiText.Plain("8"))), saveRejected = true).headline().render(),
         )
     }
 }

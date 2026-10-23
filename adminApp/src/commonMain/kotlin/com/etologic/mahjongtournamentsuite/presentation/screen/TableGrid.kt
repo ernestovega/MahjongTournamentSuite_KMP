@@ -1,38 +1,29 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.foundation.layout.Arrangement
-import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_east
-import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_north
-import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_south
-import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_west
-import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.painterResource
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.background
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.foundation.ScrollState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -42,12 +33,27 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_east
+import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_north
+import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_south
+import mahjongtournamentsuite.adminapp.generated.resources.icon_wind_west
+import mahjongtournamentsuite.adminapp.generated.resources.player_n
+import mahjongtournamentsuite.adminapp.generated.resources.wind_east
+import mahjongtournamentsuite.adminapp.generated.resources.wind_north
+import mahjongtournamentsuite.adminapp.generated.resources.wind_south
+import mahjongtournamentsuite.adminapp.generated.resources.wind_west
+import org.jetbrains.compose.resources.DrawableResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 internal val GridHeaderHeight = 52.dp
 
@@ -73,9 +79,18 @@ internal const val HandsPlayerColumnWeight = 1.6f
 
 internal const val HandsSeatColumnWeight = 1f
 
-internal val SeatLabels = listOf("East", "South", "West", "North")
+@Composable
+internal fun seatLabels(): List<String> = listOf(
+    stringResource(Res.string.wind_east), stringResource(Res.string.wind_south),
+    stringResource(Res.string.wind_west), stringResource(Res.string.wind_north),
+)
 
-/** Wind characters drawn as SVG paths, so they do not depend on a font. Same order as [SeatLabels]. */
+/** The seat names as texts, for code that is not a composable. */
+internal val SeatLabelTexts: List<UiText> = listOf(
+    UiText.of(Res.string.wind_east), UiText.of(Res.string.wind_south), UiText.of(Res.string.wind_west), UiText.of(Res.string.wind_north),
+)
+
+/** Wind characters drawn as SVG paths, so they do not depend on a font. Same order as [seatLabels]. */
 internal val SeatWindIcons = listOf(
     Res.drawable.icon_wind_east,
     Res.drawable.icon_wind_south,
@@ -217,9 +232,9 @@ internal fun RowScope.GridLabelCell(text: String, last: Boolean = false) {
     }
 }
 
-internal fun playerNameOrNull(id: String, playerNamesById: Map<Int, String>): String? {
+internal fun playerNameOrNull(id: String, playerNamesById: Map<Int, String>): UiText? {
     val number = id.trim().toIntOrNull() ?: return null
-    return playerNamesById[number] ?: "Player $number"
+    return playerNamesById[number]?.let { UiText.Plain(it) } ?: UiText.of(Res.string.player_n, number)
 }
 
 /** Seat marks (E, S, W, N) shown next to a player in the seat selectors. */

@@ -19,6 +19,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.action_cancel
+import mahjongtournamentsuite.ui.generated.resources.action_ok
+import mahjongtournamentsuite.ui.generated.resources.date_field_clear
+import mahjongtournamentsuite.ui.generated.resources.date_field_pick
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * A read-only field for a date in the form YYYY-MM-DD. The calendar button opens a date picker.
@@ -37,9 +43,9 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, modifier
         trailingIcon = {
             Row {
                 if (value.isNotEmpty()) {
-                    IconButton(onClick = { onChange("") }) { Icon(Icons.Default.Clear, contentDescription = "Clear $label") }
+                    IconButton(onClick = { onChange("") }) { Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.date_field_clear, label)) }
                 }
-                IconButton(onClick = { open = true }) { Icon(Icons.Default.CalendarMonth, contentDescription = "Pick $label") }
+                IconButton(onClick = { open = true }) { Icon(Icons.Default.CalendarMonth, contentDescription = stringResource(Res.string.date_field_pick, label)) }
             }
         },
         modifier = modifier,
@@ -55,9 +61,9 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, modifier
                         state.selectedDateMillis?.let { onChange(epochMillisToIsoDate(it)) }
                         open = false
                     },
-                ) { Text("OK") }
+                ) { Text(stringResource(Res.string.action_ok)) }
             },
-            dismissButton = { TextButton(onClick = { open = false }) { Text("Cancel") } },
+            dismissButton = { TextButton(onClick = { open = false }) { Text(stringResource(Res.string.action_cancel)) } },
         ) { DatePicker(state = state) }
     }
 }

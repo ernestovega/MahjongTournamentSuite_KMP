@@ -6,7 +6,7 @@ import android.os.Build
 import android.provider.MediaStore
 import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
 
-actual fun saveTextFile(fileName: String, content: String): Boolean {
+actual fun saveTextFile(fileName: String, content: String, dialogTitle: String): Boolean {
     val context = AndroidPlatformContext.requireContext()
     val values = ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
@@ -30,7 +30,7 @@ actual fun saveTextFile(fileName: String, content: String): Boolean {
     }
 }
 
-actual fun saveBinaryFile(fileName: String, content: ByteArray, mimeType: String): Boolean {
+actual fun saveBinaryFile(fileName: String, content: ByteArray, mimeType: String, dialogTitle: String): Boolean {
     val context = AndroidPlatformContext.requireContext()
     val values = ContentValues().apply {
         put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)

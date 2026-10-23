@@ -1,14 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
-import androidx.compose.material.icons.filled.EmojiEvents
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -30,11 +25,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.CardDefaults
@@ -56,15 +51,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.clickable
-import androidx.compose.ui.semantics.Role
-import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -82,12 +75,14 @@ import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
@@ -97,22 +92,63 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivi
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.best_hands_header
+import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_header
+import mahjongtournamentsuite.adminapp.generated.resources.city
+import mahjongtournamentsuite.adminapp.generated.resources.color
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.create_the_first_tournament_to_see
+import mahjongtournamentsuite.adminapp.generated.resources.edit_tournament_named
+import mahjongtournamentsuite.adminapp.generated.resources.feature_best_off
+import mahjongtournamentsuite.adminapp.generated.resources.feature_best_on
+import mahjongtournamentsuite.adminapp.generated.resources.feature_chicken_off
+import mahjongtournamentsuite.adminapp.generated.resources.feature_chicken_on
+import mahjongtournamentsuite.adminapp.generated.resources.feature_individual
+import mahjongtournamentsuite.adminapp.generated.resources.feature_team
+import mahjongtournamentsuite.adminapp.generated.resources.features
+import mahjongtournamentsuite.adminapp.generated.resources.from_to
+import mahjongtournamentsuite.adminapp.generated.resources.logo
+import mahjongtournamentsuite.adminapp.generated.resources.logo_for
+import mahjongtournamentsuite.adminapp.generated.resources.logout
+import mahjongtournamentsuite.adminapp.generated.resources.name
+import mahjongtournamentsuite.adminapp.generated.resources.no_host_country
+import mahjongtournamentsuite.adminapp.generated.resources.no_logo_for
+import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_yet
+import mahjongtournamentsuite.adminapp.generated.resources.open
+import mahjongtournamentsuite.adminapp.generated.resources.open_profile
+import mahjongtournamentsuite.adminapp.generated.resources.open_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.role_admin
+import mahjongtournamentsuite.adminapp.generated.resources.role_editor
+import mahjongtournamentsuite.adminapp.generated.resources.role_player
+import mahjongtournamentsuite.adminapp.generated.resources.short_name
+import mahjongtournamentsuite.adminapp.generated.resources.teams
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_color_value
+import mahjongtournamentsuite.adminapp.generated.resources.tournaments
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -131,7 +167,7 @@ fun TournamentsScreen(
 
     var isRefreshing by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<UiText?>(null) }
     var backendVersion by remember { mutableStateOf<String?>(null) }
     var editDialogTournament by remember { mutableStateOf<Tournament?>(null) }
     var showCreateTournamentDialog by remember { mutableStateOf(false) }
@@ -150,13 +186,13 @@ fun TournamentsScreen(
 
             when (val profileResult = presenter.loadProfile(force)) {
                 is AppResult.Success -> store.profile.value = profileResult.value
-                is AppResult.Failure -> errorMessage = profileResult.error.toUiMessage()
+                is AppResult.Failure -> errorMessage = profileResult.error.toUiText()
             }
 
             when (val adminResult = presenter.loadAdminStatus(force)) {
                 is AppResult.Success -> store.adminStatus.value = adminResult.value
                 is AppResult.Failure -> if (errorMessage == null) errorMessage =
-                    adminResult.error.toUiMessage()
+                    adminResult.error.toUiText()
             }
 
             when (val tournamentsResult = presenter.loadTournaments(force)) {
@@ -165,13 +201,13 @@ fun TournamentsScreen(
                 }
 
                 is AppResult.Failure -> if (errorMessage == null) errorMessage =
-                    tournamentsResult.error.toUiMessage()
+                    tournamentsResult.error.toUiText()
             }
 
             when (val countriesResult = presenter.loadCountries(force)) {
                 is AppResult.Success -> countries = countriesResult.value
                 is AppResult.Failure -> if (errorMessage == null) errorMessage =
-                    countriesResult.error.toUiMessage()
+                    countriesResult.error.toUiText()
             }
 
             isRefreshing = false
@@ -202,7 +238,7 @@ fun TournamentsScreen(
                     }
                 }
 
-                is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+                is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
 
             isLoading = false
@@ -219,9 +255,9 @@ fun TournamentsScreen(
 
     val roleLabel = adminStatus?.let {
         when (it.role) {
-            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.ADMIN -> "Admin"
-            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.EDITOR -> "Editor"
-            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.PLAYER -> "Player"
+            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.ADMIN -> stringResource(Res.string.role_admin)
+            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.EDITOR -> stringResource(Res.string.role_editor)
+            com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole.PLAYER -> stringResource(Res.string.role_player)
         }
     }
     val canConfigureTournaments = adminStatus?.canConfigureTournaments == true
@@ -293,7 +329,7 @@ fun TournamentsScreen(
 
 
     AppScaffold(
-        title = "Tournaments",
+        title = stringResource(Res.string.tournaments),
         isLoading = isRefreshing || isLoading,
         showBackgroundLogo = false,
         navigationIcon = {
@@ -358,8 +394,8 @@ fun TournamentsScreen(
                         !isRefreshing && tournaments.isEmpty() -> {
                             AppEmptyState(
                                 icon = Icons.Default.EmojiEvents,
-                                title = "No tournaments yet",
-                                message = "Create the first tournament to see it here.",
+                                title = stringResource(Res.string.no_tournaments_yet),
+                                message = stringResource(Res.string.create_the_first_tournament_to_see),
                                 compact = true,
                             )
                         }
@@ -507,7 +543,7 @@ fun ProfileInfo(
             modifier = Modifier
                 .padding(end = 8.dp)
                 .clip(MaterialTheme.shapes.small)
-                .clickable(role = Role.Button, onClickLabel = "Open profile") { showProfile = true }
+                .clickable(role = Role.Button, onClickLabel = stringResource(Res.string.open_profile)) { showProfile = true }
                 .padding(horizontal = 8.dp, vertical = 2.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -553,7 +589,7 @@ private fun LogoutButton(
 ) {
     var confirming by remember { mutableStateOf(false) }
     AppTopBarButton(
-        text = "Logout",
+        text = stringResource(Res.string.logout),
         icon = Icons.AutoMirrored.Filled.Logout,
         onClick = { confirming = true },
     )
@@ -579,20 +615,20 @@ private fun TournamentTableHeader(
     actionCellMinWidth: Dp,
 ) {
     DataTableHeaderRow {
-        HeaderCell(text = "Color", minWidth = cellMinWidth, weight = 0f, width = ColorColumnWidth, textAlign = TextAlign.Center)
-        HeaderCell(text = "Country", minWidth = cellMinWidth, weight = 0f, width = CountryColumnWidth, textAlign = TextAlign.Center)
-        HeaderCell(text = "City", minWidth = cellMinWidth, weight = 0.7f)
-        HeaderCell(text = "Logo", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = "Name", minWidth = cellMinWidth, weight = 2.0f)
-        HeaderCell(text = "Short name", minWidth = cellMinWidth, weight = 0f, width = ShortNameColumnWidth)
-        HeaderCell(text = "Players", minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = "From-to", minWidth = cellMinWidth, weight = 1.8f, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.color), minWidth = cellMinWidth, weight = 0f, width = ColorColumnWidth, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.country), minWidth = cellMinWidth, weight = 0f, width = CountryColumnWidth, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.city), minWidth = cellMinWidth, weight = 0.7f)
+        HeaderCell(text = stringResource(Res.string.logo), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.name), minWidth = cellMinWidth, weight = 2.0f)
+        HeaderCell(text = stringResource(Res.string.short_name), minWidth = cellMinWidth, weight = 0f, width = ShortNameColumnWidth)
+        HeaderCell(text = stringResource(Res.string.players), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.from_to), minWidth = cellMinWidth, weight = 1.8f, textAlign = TextAlign.Center)
         Column(
             modifier = Modifier.weight(FeaturesGroupWeight).widthIn(min = featuresGroupMinWidth(cellMinWidth)),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = "Features",
+                text = stringResource(Res.string.features),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1,
@@ -603,9 +639,9 @@ private fun TournamentTableHeader(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                HeaderCell(text = "Teams", minWidth = cellMinWidth, weight = TeamsWeight, textAlign = TextAlign.Center)
-                HeaderCell(text = "Best\nhands", minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
-                HeaderCell(text = "Chicken\nhands", minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
+                HeaderCell(text = stringResource(Res.string.teams), minWidth = cellMinWidth, weight = TeamsWeight, textAlign = TextAlign.Center)
+                HeaderCell(text = stringResource(Res.string.best_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
+                HeaderCell(text = stringResource(Res.string.chicken_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
             }
         }
         Text(
@@ -631,6 +667,8 @@ private fun TournamentTableRow(
     onClick: () -> Unit,
     onEdit: () -> Unit,
 ) {
+    val openDescription = stringResource(Res.string.open_tournament, tournament.name)
+    val editDescription = stringResource(Res.string.edit_tournament_named, tournament.name)
     DataTableRow(
         modifier = modifier,
         onClick = if (enabled) onClick else null,
@@ -679,22 +717,22 @@ private fun TournamentTableRow(
         ) {
             FeatureStateCell(
                 enabled = tournament.isTeams,
-                enabledDescription = "Team tournament",
-                disabledDescription = "Individual tournament",
+                enabledDescription = stringResource(Res.string.feature_team),
+                disabledDescription = stringResource(Res.string.feature_individual),
                 minWidth = cellMinWidth,
                 weight = TeamsWeight,
             )
             FeatureStateCell(
                 enabled = tournament.countBestHands,
-                enabledDescription = "Best hands counted",
-                disabledDescription = "Best hands not counted",
+                enabledDescription = stringResource(Res.string.feature_best_on),
+                disabledDescription = stringResource(Res.string.feature_best_off),
                 minWidth = FeatureColumnMinWidth,
                 weight = FeatureWeight,
             )
             FeatureStateCell(
                 enabled = tournament.countChickenHands,
-                enabledDescription = "Chicken hands counted",
-                disabledDescription = "Chicken hands not counted",
+                enabledDescription = stringResource(Res.string.feature_chicken_on),
+                disabledDescription = stringResource(Res.string.feature_chicken_off),
                 minWidth = FeatureColumnMinWidth,
                 weight = FeatureWeight,
             )
@@ -707,9 +745,9 @@ private fun TournamentTableRow(
             TextButton(
                 enabled = enabled,
                 onClick = onClick,
-                buttonModifier = Modifier.semantics { contentDescription = "Open ${tournament.name}" },
+                buttonModifier = Modifier.semantics { contentDescription = openDescription },
             ) {
-                Text("Open")
+                Text(stringResource(Res.string.open))
             }
             if (showEdit) {
                 IconButton(
@@ -718,7 +756,7 @@ private fun TournamentTableRow(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Edit,
-                        contentDescription = "Edit ${tournament.name}",
+                        contentDescription = editDescription,
                     )
                 }
             }
@@ -740,7 +778,7 @@ private fun RowScope.TournamentCountryCell(
     ) {
         CountryFlag(
             code = emaCountryFlagCode(countryCode).orEmpty(),
-            contentDescription = countryCode.ifBlank { "No host country" },
+            contentDescription = countryCode.ifBlank { stringResource(Res.string.no_host_country) },
         )
     }
 }
@@ -751,6 +789,7 @@ private fun RowScope.TournamentLogoCell(
     tournamentName: String,
     minWidth: Dp,
 ) {
+    val noLogoDescription = stringResource(Res.string.no_logo_for, tournamentName)
     Box(
         modifier = Modifier
             .weight(.5f)
@@ -765,12 +804,12 @@ private fun RowScope.TournamentLogoCell(
                     .size(32.dp)
                     .background(MaterialTheme.colorScheme.surfaceVariant, shape)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-                    .semantics { contentDescription = "No logo for $tournamentName" },
+                    .semantics { contentDescription = noLogoDescription },
             )
         } else {
             AsyncImage(
                 model = logoUrl,
-                contentDescription = "Logo for $tournamentName",
+                contentDescription = stringResource(Res.string.logo_for, tournamentName),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier
                     .size(32.dp)
@@ -785,6 +824,7 @@ private fun RowScope.TournamentColorCell(
     colorValue: String,
     minWidth: Dp,
 ) {
+    val colorDescription = stringResource(Res.string.tournament_color_value, colorValue)
     Box(
         modifier = Modifier
             .width(ColorColumnWidth)
@@ -804,7 +844,7 @@ private fun RowScope.TournamentColorCell(
                     color = MaterialTheme.colorScheme.outline,
                     shape = MaterialTheme.shapes.small,
                 )
-                .semantics { contentDescription = "Tournament color $colorValue" },
+                .semantics { contentDescription = colorDescription },
         )
     }
 }

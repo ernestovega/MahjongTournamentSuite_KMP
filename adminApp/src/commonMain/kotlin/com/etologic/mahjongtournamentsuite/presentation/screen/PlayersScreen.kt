@@ -1,27 +1,16 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Search
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -31,14 +20,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -49,8 +42,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -72,52 +65,121 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
+import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
-import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
-import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerContactState
-import com.etologic.mahjongtournamentsuite.domain.model.contactState
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation
-import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
+import com.etologic.mahjongtournamentsuite.domain.model.contactState
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
-import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
-import kotlin.time.Clock
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
+import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.time.Clock
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.account
+import mahjongtournamentsuite.adminapp.generated.resources.account_email_saved
+import mahjongtournamentsuite.adminapp.generated.resources.assign
+import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_cards
+import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_list
+import mahjongtournamentsuite.adminapp.generated.resources.assign_ema_player_to_player
+import mahjongtournamentsuite.adminapp.generated.resources.assign_non_member_to_player
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.clear
+import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment
+import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment_2
+import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment_message
+import mahjongtournamentsuite.adminapp.generated.resources.clear_search
+import mahjongtournamentsuite.adminapp.generated.resources.contact_contacted
+import mahjongtournamentsuite.adminapp.generated.resources.contact_invite
+import mahjongtournamentsuite.adminapp.generated.resources.contact_invited
+import mahjongtournamentsuite.adminapp.generated.resources.contact_linked
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.country_n
+import mahjongtournamentsuite.adminapp.generated.resources.ema_number
+import mahjongtournamentsuite.adminapp.generated.resources.enter_non_member
+import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
+import mahjongtournamentsuite.adminapp.generated.resources.filter_by_country
+import mahjongtournamentsuite.adminapp.generated.resources.first_name
+import mahjongtournamentsuite.adminapp.generated.resources.last_name
+import mahjongtournamentsuite.adminapp.generated.resources.name
+import mahjongtournamentsuite.adminapp.generated.resources.no_country
+import mahjongtournamentsuite.adminapp.generated.resources.no_ema_players_match
+import mahjongtournamentsuite.adminapp.generated.resources.no_generated_players
+import mahjongtournamentsuite.adminapp.generated.resources.no_matches
+import mahjongtournamentsuite.adminapp.generated.resources.no_player_photo
+import mahjongtournamentsuite.adminapp.generated.resources.no_players_yet
+import mahjongtournamentsuite.adminapp.generated.resources.no_tournament_players_match
+import mahjongtournamentsuite.adminapp.generated.resources.non_member
+import mahjongtournamentsuite.adminapp.generated.resources.not_assigned
+import mahjongtournamentsuite.adminapp.generated.resources.photo
+import mahjongtournamentsuite.adminapp.generated.resources.photo_of
+import mahjongtournamentsuite.adminapp.generated.resources.player_actions
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_country
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_first_name
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_last_name
+import mahjongtournamentsuite.adminapp.generated.resources.player_n
+import mahjongtournamentsuite.adminapp.generated.resources.save_id_cards
+import mahjongtournamentsuite.adminapp.generated.resources.save_id_list
+import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_country_or_ema
+import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_ema_number_player
+import mahjongtournamentsuite.adminapp.generated.resources.substitute
+import mahjongtournamentsuite.adminapp.generated.resources.substitution
+import mahjongtournamentsuite.adminapp.generated.resources.tables
+import mahjongtournamentsuite.adminapp.generated.resources.team
+import mahjongtournamentsuite.adminapp.generated.resources.team_n
+import mahjongtournamentsuite.adminapp.generated.resources.this_assignment
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_players
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import coil3.compose.AsyncImage
 
 /** Links generated tournament slots to players in the shared base. */
 @Composable
 fun PlayersScreen(navController: NavHostController, tournamentId: String) {
+    val playerLabel = rememberTemplate(Res.string.player_n)
+    val saveIdCardsTitle = stringResource(Res.string.save_id_cards)
+    val saveIdListTitle = stringResource(Res.string.save_id_list)
+    val teamLabel = rememberTemplate(Res.string.team_n)
     val presenter = koinInject<PlayersPresenter>()
     val store = koinInject<AppMemoryStore>()
     val scope = rememberCoroutineScope()
@@ -126,7 +188,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val tournaments by store.tournaments.collectAsState()
     var loading by remember { mutableStateOf(false) }
     var savingId by remember { mutableStateOf<Int?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
     var teams by remember { mutableStateOf<List<TournamentTeam>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
@@ -135,14 +197,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var nonMemberFirstName by remember { mutableStateOf("") }
     var nonMemberLastName by remember { mutableStateOf("") }
     var nonMemberCountry by remember { mutableStateOf("") }
-    var nonMemberError by remember { mutableStateOf<String?>(null) }
+    var nonMemberError by remember { mutableStateOf<UiText?>(null) }
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var substitutionSlotId by remember { mutableStateOf<Int?>(null) }
     var accountSlotId by remember { mutableStateOf<Int?>(null) }
     var invitations by remember { mutableStateOf<List<PlayerInvitation>>(emptyList()) }
     var accountOutcome by remember { mutableStateOf<AccountOutcome?>(null) }
     var accountBusy by remember { mutableStateOf(false) }
-    var accountError by remember { mutableStateOf<String?>(null) }
+    var accountError by remember { mutableStateOf<UiText?>(null) }
     var accountResults by remember { mutableStateOf<List<PlayerAccountActionResult>>(emptyList()) }
     var bulkAccountsOpen by remember { mutableStateOf(false) }
     var idCardsDialogOpen by remember { mutableStateOf(false) }
@@ -159,26 +221,26 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         error = null
         when (val result = presenter.loadPlayers(tournamentId, force)) {
             is AppResult.Success -> store.upsertPlayers(tournamentId, result.value)
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         when (val result = presenter.loadBasePlayers(force)) {
             is AppResult.Success -> store.upsertBasePlayers(result.value)
-            is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+            is AppResult.Failure -> if (error == null) error = result.error.toUiText()
         }
         when (val result = presenter.loadCountries(force)) {
             is AppResult.Success -> countries = result.value
-            is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+            is AppResult.Failure -> if (error == null) error = result.error.toUiText()
         }
         when (val result = presenter.loadTeams(tournamentId, force)) {
             is AppResult.Success -> teams = result.value
-            is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+            is AppResult.Failure -> if (error == null) error = result.error.toUiText()
         }
         when (val result = presenter.loadTables(tournamentId, force)) {
             is AppResult.Success -> {
                 tables = result.value
                 store.upsertTables(tournamentId, roundId = null, tables = result.value)
             }
-            is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+            is AppResult.Failure -> if (error == null) error = result.error.toUiText()
         }
         loading = false
     }
@@ -186,7 +248,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     fun loadInvitations() = scope.launch {
         when (val result = presenter.loadInvitations(tournamentId)) {
             is AppResult.Success -> invitations = result.value
-            is AppResult.Failure -> accountError = result.error.toUiMessage()
+            is AppResult.Failure -> accountError = result.error.toUiText()
         }
     }
 
@@ -211,10 +273,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             }
             is AppResult.Failure -> {
                 if (closeAccountDialog) {
-                    accountOutcome = AccountOutcome(result.error.toUiMessage(), isError = true)
+                    accountOutcome = AccountOutcome(result.error.toUiText(), isError = true)
                     accountSlotId = null
                 } else {
-                    accountError = result.error.toUiMessage()
+                    accountError = result.error.toUiText()
                 }
             }
         }
@@ -227,11 +289,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         when (val result = presenter.saveAccountEmails(tournamentId, listOf(PlayerAccountActionItem(playerId, email)))) {
             is AppResult.Success -> {
                 refresh(force = true).join()
-                accountOutcome = AccountOutcome("The email was saved. Nothing was sent.", isError = false)
+                accountOutcome = AccountOutcome(UiText.of(Res.string.account_email_saved), isError = false)
                 accountSlotId = null
             }
             is AppResult.Failure -> {
-                accountOutcome = AccountOutcome(result.error.toUiMessage(), isError = true)
+                accountOutcome = AccountOutcome(result.error.toUiText(), isError = true)
                 accountSlotId = null
             }
         }
@@ -243,7 +305,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         error = null
         when (val result = presenter.assignPlayer(tournamentId, slotId, player?.emaId)) {
             is AppResult.Success -> refresh(force = true)
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         assignmentSlotId = null
         clearAssignmentSlotId = null
@@ -255,7 +317,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         error = null
         when (val result = presenter.setSubstitution(tournamentId, slotId, substitution)) {
             is AppResult.Success -> refresh(force = true)
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         substitutionSlotId = null
         savingId = null
@@ -266,9 +328,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         val lastName = nonMemberLastName.trim()
         val country = nonMemberCountry.trim().uppercase()
         nonMemberError = when {
-            firstName.isEmpty() -> "First name is required."
-            lastName.isEmpty() -> "Last name is required."
-            !country.matches(Regex("^[A-Z]{3}$")) -> "Country must use a three-letter EMA code."
+            firstName.isEmpty() -> UiText.of(Res.string.player_error_first_name)
+            lastName.isEmpty() -> UiText.of(Res.string.player_error_last_name)
+            !country.matches(Regex("^[A-Z]{3}$")) -> UiText.of(Res.string.player_error_country)
             else -> null
         }
         if (nonMemberError != null) return@launch
@@ -285,7 +347,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             }
             is AppResult.Failure -> {
                 nonMemberSlotId = null
-                error = result.error.toUiMessage()
+                error = result.error.toUiText()
             }
         }
         savingId = null
@@ -298,7 +360,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     fun exportIdCards(sheet: IdCardSheetLayout?) = scope.launch {
         val unassigned = players.filterNot { it.isAssigned }
         if (unassigned.isNotEmpty()) {
-            error = "Assign an EMA player or non-member to every tournament slot before creating ID cards."
+            error = UiText.of(Res.string.assign_all_before_id_cards)
             return@launch
         }
 
@@ -310,9 +372,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
                 val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
                 val fileName = generatedFileName(baseName, "id-cards", "pdf", Clock.System.now(), year = year)
-                saveBinaryFile(fileName, result.value, "application/pdf")
+                saveBinaryFile(fileName, result.value, "application/pdf", saveIdCardsTitle)
             }
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         loading = false
     }
@@ -320,7 +382,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     fun exportIdList() = scope.launch {
         val unassigned = players.filterNot { it.isAssigned }
         if (unassigned.isNotEmpty()) {
-            error = "Assign an EMA player or non-member to every tournament slot before creating the ID list."
+            error = UiText.of(Res.string.assign_all_before_id_list)
             return@launch
         }
 
@@ -336,9 +398,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     fileName,
                     result.value,
                     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    saveIdListTitle,
                 )
             }
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         loading = false
     }
@@ -370,7 +433,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             val assigned = slot.assignedEmaId?.let(playersByEma::get)
             val name = assigned?.displayName ?: slot.nonMember?.displayName.orEmpty()
             val country = assigned?.country ?: slot.nonMember?.country.orEmpty()
-            val team = teamNamesById[slot.team] ?: "Team ${slot.team}"
+            val team = teamNamesById[slot.team] ?: teamLabel(slot.team)
             val tablesForPlayer = tableNumbersByPlayerId[slot.id].orEmpty()
             val matchesSearch = query.isEmpty() || listOf(
                 name, assigned?.emaId.orEmpty(), slot.id.toString(), team, tablesForPlayer,
@@ -427,7 +490,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             nameOf = { slot ->
                 slot.assignedEmaId?.let(registry::get)?.displayName
                     ?: slot.nonMember?.displayName
-                    ?: "Player ${slot.id}"
+                    ?: playerLabel(slot.id)
             },
             countryOf = { slot ->
                 (slot.assignedEmaId?.let(registry::get)?.country ?: slot.nonMember?.country).orEmpty()
@@ -574,7 +637,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         AlertDialog(
             onDismissRequest = { assignmentSlotId = null },
             modifier = Modifier.appFocusGroup(),
-            title = { Text("ASSIGN EMA PLAYER TO PLAYER ${assignmentSlot.id}") },
+            title = { Text(stringResource(Res.string.assign_ema_player_to_player, assignmentSlot.id)) },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth().heightIn(max = 600.dp),
@@ -583,7 +646,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     OutlinedTextField(
                         value = assignmentSearchQuery,
                         onValueChange = { assignmentSearchQuery = it },
-                        label = { Text("Search by name, country, or EMA number") },
+                        label = { Text(stringResource(Res.string.search_by_name_country_or_ema)) },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()
@@ -692,7 +755,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             }
                                         },
                                 ) {
-                                    Icon(Icons.Default.Close, contentDescription = "Clear search")
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
                                 }
                             }
                         } else {
@@ -709,17 +772,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             nonMemberSlotId = assignmentSlot.id
                             assignmentSlotId = null
                         },
-                    ) { Text("Enter non-member") }
+                    ) { Text(stringResource(Res.string.enter_non_member)) }
                     Column(Modifier.fillMaxWidth()) {
                         DataTableHeaderRow {
-                            TournamentPlayerHeader("Photo", Modifier.width(AssignmentPhotoColumnWidth), TextAlign.Center)
-                            TournamentPlayerHeader("Country", Modifier.width(AssignmentCountryColumnWidth), TextAlign.Center)
-                            TournamentPlayerHeader("EMA number", Modifier.width(AssignmentEmaColumnWidth))
-                            TournamentPlayerHeader("Name", Modifier.weight(1f))
+                            TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(AssignmentPhotoColumnWidth), TextAlign.Center)
+                            TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(AssignmentCountryColumnWidth), TextAlign.Center)
+                            TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(AssignmentEmaColumnWidth))
+                            TournamentPlayerHeader(stringResource(Res.string.name), Modifier.weight(1f))
                         }
                         DataTableDivider()
                         if (filteredBasePlayers.isEmpty()) {
-                            AppEmptyState(Icons.Default.Search, "No matches", "No EMA players match this search.", compact = true)
+                            AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_ema_players_match), compact = true)
                         } else {
                             LazyColumnWithScrollbar(
                                 state = playerListState,
@@ -791,7 +854,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         ) {
                                             CountryFlag(
                                                 code = player.country,
-                                                contentDescription = "Country ${player.country}",
+                                                contentDescription = stringResource(Res.string.country_n, player.country),
                                             )
                                         }
                                         Text(
@@ -869,7 +932,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 else -> false
                             }
                         },
-                ) { Text("Cancel") }
+                ) { Text(stringResource(Res.string.cancel)) }
             },
         )
     }
@@ -880,37 +943,37 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (savingId == null) nonMemberSlotId = null },
-            title = { Text("Assign non-member to player $slotId") },
+            title = { Text(stringResource(Res.string.assign_non_member_to_player, slotId)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     nonMemberError?.let { AppErrorDialog(it, onDismiss = { nonMemberError = null }) }
                     OutlinedTextField(
                         value = nonMemberFirstName,
                         onValueChange = { nonMemberFirstName = it; nonMemberError = null },
-                        label = { Text("First name") },
+                        label = { Text(stringResource(Res.string.first_name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().focusRequester(firstNameFocusRequester),
                     )
                     OutlinedTextField(
                         value = nonMemberLastName,
                         onValueChange = { nonMemberLastName = it; nonMemberError = null },
-                        label = { Text("Last name") },
+                        label = { Text(stringResource(Res.string.last_name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     EmaCountryDropdown(
                         selectedCode = nonMemberCountry,
                         onCountrySelected = { nonMemberCountry = it; nonMemberError = null },
-                        label = "Country",
+                        label = stringResource(Res.string.country),
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
             },
             confirmButton = {
-                Button(enabled = savingId == null, onClick = { assignNonMember(slotId) }) { Text("Assign") }
+                Button(enabled = savingId == null, onClick = { assignNonMember(slotId) }) { Text(stringResource(Res.string.assign)) }
             },
             dismissButton = {
-                TextButton(enabled = savingId == null, onClick = { nonMemberSlotId = null }) { Text("Cancel") }
+                TextButton(enabled = savingId == null, onClick = { nonMemberSlotId = null }) { Text(stringResource(Res.string.cancel)) }
             },
         )
     }
@@ -922,7 +985,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             tables.none { it.roundId == round && substitutionSlot.id in it.playerIds && it.isCompleted }
         } ?: tournamentRounds.lastOrNull() ?: 1
         PlayerSubstitutionDialog(
-            playerName = assigned?.displayName ?: substitutionSlot.nonMember?.displayName ?: "player ${substitutionSlot.id}",
+            playerName = assigned?.displayName ?: substitutionSlot.nonMember?.displayName ?: playerLabel(substitutionSlot.id).lowercase(),
             current = substitutionSlot.substitution,
             rounds = tournamentRounds,
             defaultRound = firstOpenRound,
@@ -952,11 +1015,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { clearAssignmentSlotId = null },
-            title = { Text("Clear assignment?") },
+            title = { Text(stringResource(Res.string.clear_assignment)) },
             text = {
                 Text(
-                    "Remove ${assignedName ?: "this assignment"} " +
-                        "from tournament player ${clearAssignmentSlot.id}?",
+                    stringResource(
+                        Res.string.clear_assignment_message,
+                        assignedName ?: stringResource(Res.string.this_assignment),
+                        clearAssignmentSlot.id,
+                    ),
                 )
             },
             confirmButton = {
@@ -999,7 +1065,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     else -> false
                                 }
                             },
-                    ) { Text("Clear assignment") }
+                    ) { Text(stringResource(Res.string.clear_assignment_2)) }
                 }
             },
             dismissButton = {
@@ -1041,14 +1107,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     else -> false
                                 }
                             },
-                    ) { Text("Cancel") }
+                    ) { Text(stringResource(Res.string.cancel)) }
                 }
             },
         )
     }
 
     AppScaffold(
-        title = "Tournament players",
+        title = stringResource(Res.string.tournament_players),
         titleAction = {
             TournamentEditTitleAction(
                 tournamentId = tournamentId,
@@ -1094,21 +1160,21 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        label = { Text("Search by name, EMA number, player ID, team, or table") },
+                        label = { Text(stringResource(Res.string.search_by_name_ema_number_player)) },
                         singleLine = true,
                         trailingIcon = if (searchQuery.isNotEmpty()) {
                             {
                                 IconButton(onClick = {
                                     searchQuery = ""
                                     searchFocusRequester.requestFocus()
-                                }) { Icon(Icons.Default.Close, contentDescription = "Clear search") }
+                                }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
                             }
                         } else null,
                         modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                     )
                     if (tournamentCountryCodes.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text("Filter by country", style = MaterialTheme.typography.labelMedium)
+                            Text(stringResource(Res.string.filter_by_country), style = MaterialTheme.typography.labelMedium)
                             Row(
                                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1133,7 +1199,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         ),
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
                                     ) {
-                                        CountryFlag(code = code, contentDescription = "Filter by $code")
+                                        CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
                                         Spacer(Modifier.width(4.dp))
                                         Text("$code ($count)")
                                     }
@@ -1143,23 +1209,23 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     }
                 }
                 if (players.isEmpty() && !loading) {
-                    AppEmptyState(Icons.Default.People, "No players yet", "The tournament has no generated players.", compact = true)
+                    AppEmptyState(Icons.Default.People, stringResource(Res.string.no_players_yet), stringResource(Res.string.no_generated_players), compact = true)
                 }
                 if (players.isNotEmpty() && filteredPlayers.isEmpty() && !loading) {
-                    AppEmptyState(Icons.Default.Search, "No matches", "No tournament players match the current filters.", compact = true)
+                    AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_tournament_players_match), compact = true)
                 }
                 Column(Modifier.fillMaxWidth()) {
                     DataTableHeaderRow {
                         TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
-                        TournamentPlayerHeader("EMA number", Modifier.width(TournamentPlayerEmaColumnWidth))
-                        TournamentPlayerHeader("Country", Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
-                        TournamentPlayerHeader("Photo", Modifier.width(TournamentPlayerPhotoColumnWidth))
-                        TournamentPlayerHeader("Name", Modifier.weight(1.2f))
+                        TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
+                        TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
+                        TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(TournamentPlayerPhotoColumnWidth))
+                        TournamentPlayerHeader(stringResource(Res.string.name), Modifier.weight(1.2f))
                         if (isTeamsTournament) {
-                            TournamentPlayerHeader("Team", Modifier.width(TournamentPlayerTeamColumnWidth))
+                            TournamentPlayerHeader(stringResource(Res.string.team), Modifier.width(TournamentPlayerTeamColumnWidth))
                         }
-                        TournamentPlayerHeader("Tables", Modifier.width(TournamentPlayerTablesColumnWidth))
-                        TournamentPlayerHeader("Account", Modifier.width(TournamentPlayerAccountColumnWidth), TextAlign.Center)
+                        TournamentPlayerHeader(stringResource(Res.string.tables), Modifier.width(TournamentPlayerTablesColumnWidth))
+                        TournamentPlayerHeader(stringResource(Res.string.account), Modifier.width(TournamentPlayerAccountColumnWidth), TextAlign.Center)
                         Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                     }
                     DataTableDivider()
@@ -1183,7 +1249,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     textAlign = TextAlign.Center,
                                 )
                                 Text(
-                                    assigned?.emaId ?: if (slot.nonMember != null) "Non-member" else "—",
+                                    assigned?.emaId ?: if (slot.nonMember != null) stringResource(Res.string.non_member) else "—",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
                                 )
@@ -1193,7 +1259,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 ) {
                                     CountryFlag(
                                         code = playerCountry,
-                                        contentDescription = playerCountry.ifBlank { "No country" },
+                                        contentDescription = playerCountry.ifBlank { stringResource(Res.string.no_country) },
                                     )
                                 }
                                 Box(
@@ -1209,7 +1275,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     )
                                 }
                                 Text(
-                                    (playerName ?: "Not assigned") + (slot.substitution?.let { " (${it.label})" } ?: ""),
+                                    (playerName ?: stringResource(Res.string.not_assigned)) + (slot.substitution?.let { " (${it.label()})" } ?: ""),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
                                     modifier = Modifier.weight(1.2f),
@@ -1218,7 +1284,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 )
                                 if (isTeamsTournament) {
                                     Text(
-                                        text = teamNamesById[slot.team] ?: "Team ${slot.team}",
+                                        text = teamNamesById[slot.team] ?: teamLabel(slot.team),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
                                         maxLines = 2,
@@ -1250,10 +1316,10 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         ) {
                                             Text(
                                                 when (slot.contactState) {
-                                                    PlayerContactState.NO_EMA_ID, PlayerContactState.NOT_INVITED -> "Invite"
-                                                    PlayerContactState.LINKED -> "Linked"
-                                                    PlayerContactState.INVITED -> "Invited"
-                                                    PlayerContactState.CONTACTED -> "Contacted"
+                                                    PlayerContactState.NO_EMA_ID, PlayerContactState.NOT_INVITED -> stringResource(Res.string.contact_invite)
+                                                    PlayerContactState.LINKED -> stringResource(Res.string.contact_linked)
+                                                    PlayerContactState.INVITED -> stringResource(Res.string.contact_invited)
+                                                    PlayerContactState.CONTACTED -> stringResource(Res.string.contact_contacted)
                                                 },
                                                 maxLines = 1,
                                                 textAlign = TextAlign.Center,
@@ -1302,7 +1368,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                         else -> false
                                                     }
                                                 },
-                                        ) { Text("Assign", maxLines = 1, overflow = TextOverflow.Clip) }
+                                        ) { Text(stringResource(Res.string.assign), maxLines = 1, overflow = TextOverflow.Clip) }
                                     }
                                     if (slot.isAssigned) {
                                         var actionsMenuOpen by remember { mutableStateOf(false) }
@@ -1343,13 +1409,13 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                         else -> false
                                                     }
                                                 },
-                                            ) { Icon(Icons.Default.MoreVert, contentDescription = "Player actions") }
+                                            ) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.player_actions)) }
                                             DropdownMenu(
                                                 expanded = actionsMenuOpen,
                                                 onDismissRequest = { actionsMenuOpen = false },
                                             ) {
                                                 DropdownMenuItem(
-                                                    text = { Text("Clear") },
+                                                    text = { Text(stringResource(Res.string.clear)) },
                                                     onClick = {
                                                         actionsMenuOpen = false
                                                         openClearAssignment(slot.id)
@@ -1357,7 +1423,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 )
                                                 if (tournamentStarted) {
                                                     DropdownMenuItem(
-                                                        text = { Text(if (slot.substitution == null) "Substitute" else "Substitution") },
+                                                        text = { Text(stringResource(if (slot.substitution == null) Res.string.substitute else Res.string.substitution)) },
                                                         onClick = {
                                                             actionsMenuOpen = false
                                                             substitutionSlotId = slot.id
@@ -1426,7 +1492,7 @@ private fun TournamentPlayerPhoto(
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
-                    contentDescription = "No player photo",
+                    contentDescription = stringResource(Res.string.no_player_photo),
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(TournamentPlayerPhotoSize * 0.62f),
                 )
@@ -1434,7 +1500,7 @@ private fun TournamentPlayerPhoto(
         } else {
             AsyncImage(
                 model = photoUrl,
-                contentDescription = "Photo of $playerName",
+                contentDescription = stringResource(Res.string.photo_of, playerName),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(TournamentPlayerPhotoSize),
             )

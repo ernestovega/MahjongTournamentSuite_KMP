@@ -1,52 +1,46 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonSearch
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material3.Icon
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material.icons.filled.SwapHoriz
-import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
-import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -56,29 +50,53 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.OverviewStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
-import com.etologic.mahjongtournamentsuite.presentation.components.TabContentColor
-import com.etologic.mahjongtournamentsuite.presentation.components.tabRowColor
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
+import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
 import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TabContentColor
 import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
+import com.etologic.mahjongtournamentsuite.presentation.components.tabRowColor
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.all_tournaments
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.change
+import mahjongtournamentsuite.adminapp.generated.resources.choose_a_player
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.scope_by_tournaments
+import mahjongtournamentsuite.adminapp.generated.resources.scope_overall
+import mahjongtournamentsuite.adminapp.generated.resources.statistics
+import mahjongtournamentsuite.adminapp.generated.resources.stats_admin_only
+import mahjongtournamentsuite.adminapp.generated.resources.stats_player_field
+import mahjongtournamentsuite.adminapp.generated.resources.table
+import mahjongtournamentsuite.adminapp.generated.resources.this_table_has_no_statistics_yet
+import mahjongtournamentsuite.adminapp.generated.resources.tournament
+import mahjongtournamentsuite.adminapp.generated.resources.tournaments
+import mahjongtournamentsuite.adminapp.generated.resources.use_the_field_above_to_search
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 /** The width of one tab on a wide screen. */
@@ -91,12 +109,15 @@ private fun StatisticsScope.adminIcon(): ImageVector = when (this) {
 }
 
 /** The names of the scopes on this screen. The player app uses other words for some of them. */
-private fun StatisticsScope.adminTitle(): String = when (this) {
-    StatisticsScope.TOURNAMENT -> "Tournaments"
-    StatisticsScope.TABLE -> "Table"
-    StatisticsScope.PLAYER, StatisticsScope.PERSON -> "Players"
-    StatisticsScope.PERSON_TOURNAMENTS -> "By tournaments"
-}
+@Composable
+private fun StatisticsScope.adminTitle(): String = stringResource(
+    when (this) {
+        StatisticsScope.TOURNAMENT -> Res.string.tournaments
+        StatisticsScope.TABLE -> Res.string.table
+        StatisticsScope.PLAYER, StatisticsScope.PERSON -> Res.string.players
+        StatisticsScope.PERSON_TOURNAMENTS -> Res.string.scope_by_tournaments
+    },
+)
 
 /**
  * Statistics for editors. The route gives the first scope and its context.
@@ -138,7 +159,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     var emaId by rememberPersistentText("person", route.emaId)
     var chosenSlotText by rememberPersistentText("slot", route.slotId?.toString())
     val chosenSlotId = chosenSlotText?.toIntOrNull()
-    var message by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<UiText?>(null) }
     var isLoading by remember { mutableStateOf(true) }
 
     LaunchedEffect(tournamentId) {
@@ -151,7 +172,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             overview = null
             when (val result = presenter.tournament(id)) {
                 is AppResult.Success -> tournamentData = result.value
-                is AppResult.Failure -> message = result.error.toUiMessage()
+                is AppResult.Failure -> message = result.error.toUiText()
             }
         } else {
             tournamentData = null
@@ -159,7 +180,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             if (overviewAllowed) {
                 when (val result = presenter.overview()) {
                     is AppResult.Success -> overview = result.value
-                    is AppResult.Failure -> message = result.error.toUiMessage()
+                    is AppResult.Failure -> message = result.error.toUiText()
                 }
             }
         }
@@ -174,7 +195,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         val id = personEma ?: return@LaunchedEffect
         when (val result = presenter.person(id)) {
             is AppResult.Success -> person = result.value
-            is AppResult.Failure -> message = result.error.toUiMessage()
+            is AppResult.Failure -> message = result.error.toUiText()
         }
     }
     // A scope that is not available any more gives way to the first one.
@@ -200,7 +221,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     }
 
     AppScaffold(
-        title = "Statistics",
+        title = stringResource(Res.string.statistics),
         subtitle = playerName.takeIf { nameScrolledOut },
         isLoading = isLoading,
         showBackgroundLogo = isLoading && tournamentData == null && overview == null,
@@ -265,13 +286,14 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                         OutlinedButton(onClick = { changingTournament = true }) {
                                             Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
                                             Spacer(Modifier.width(8.dp))
-                                            Text("Change")
+                                            Text(stringResource(Res.string.change))
                                         }
                                     },
                                 )
                             } else {
-                                val options = remember(tournaments) {
-                                    listOf<Pair<String?, String>>(null to "All tournaments") + tournaments.map { it.id to it.name }
+                                val allTournamentsLabel = stringResource(Res.string.all_tournaments)
+                                val options = remember(tournaments, allTournamentsLabel) {
+                                    listOf<Pair<String?, String>>(null to allTournamentsLabel) + tournaments.map { it.id to it.name }
                                 }
                                 Row(
                                     Modifier.widthIn(max = 520.dp).fillMaxWidth(),
@@ -279,11 +301,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     SearchableDropdownField(
-                                        "Tournament", options, tournamentId,
+                                        stringResource(Res.string.tournament), options, tournamentId,
                                         { tournamentId = it; changingTournament = false },
                                         Modifier.weight(1f),
                                     )
-                                    if (chosenTournament != null) TextButton(onClick = { changingTournament = false }) { Text("Cancel") }
+                                    if (chosenTournament != null) TextButton(onClick = { changingTournament = false }) { Text(stringResource(Res.string.cancel)) }
                                 }
                             }
                         }
@@ -303,7 +325,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                         OutlinedButton(onClick = { changingPlayer = true }) {
                                             Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
                                             Spacer(Modifier.width(8.dp))
-                                            Text("Change")
+                                            Text(stringResource(Res.string.change))
                                         }
                                     },
                                 )
@@ -317,11 +339,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     SearchableDropdownField(
-                                        "Player (name or EMA number)", options, personEma,
+                                        stringResource(Res.string.stats_player_field), options, personEma,
                                         { emaId = it; changingPlayer = false },
                                         Modifier.weight(1f),
                                     )
-                                    if (personProfile != null) TextButton(onClick = { changingPlayer = false }) { Text("Cancel") }
+                                    if (personProfile != null) TextButton(onClick = { changingPlayer = false }) { Text(stringResource(Res.string.cancel)) }
                                 }
                             }
                         }
@@ -330,8 +352,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             }
             if (scope == StatisticsScope.PERSON || scope == StatisticsScope.PERSON_TOURNAMENTS) {
                 val subTabs = listOf(
-                    Triple(StatisticsScope.PERSON, "Overall", StatisticsIcon),
-                    Triple(StatisticsScope.PERSON_TOURNAMENTS, "By tournaments", Icons.Default.EmojiEvents),
+                    Triple(StatisticsScope.PERSON, stringResource(Res.string.scope_overall), StatisticsIcon),
+                    Triple(StatisticsScope.PERSON_TOURNAMENTS, stringResource(Res.string.scope_by_tournaments), Icons.Default.EmojiEvents),
                 )
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     PrimaryTabRow(
@@ -370,7 +392,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                         )
                     } else if (tournamentId == null && !overviewAllowed) {
                         Text(
-                            "The statistics of all tournaments are for administrators. Search a tournament to see its statistics.",
+                            stringResource(Res.string.stats_admin_only),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -391,7 +413,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 StatisticsScope.TABLE -> tournamentData?.statistics?.tables
                     ?.firstOrNull { it.roundId == route.roundId && it.tableId == route.tableId }
                     ?.let { TableStatisticsPanel(it, tournamentData!!.names) }
-                    ?: Text("This table has no statistics yet.")
+                    ?: Text(stringResource(Res.string.this_table_has_no_statistics_yet))
 
                 StatisticsScope.PLAYER -> tournamentData?.let { data ->
                     val slotId = effectiveSlot ?: data.slots.firstOrNull()?.id
@@ -468,7 +490,7 @@ private fun TrackScrollOut(
 private fun PickPlayerHint() {
     AppEmptyState(
         icon = Icons.Default.PersonSearch,
-        title = "Choose a player",
-        message = "Use the field above to search a player by name or EMA number and see his/her skills. ",
+        title = stringResource(Res.string.choose_a_player),
+        message = stringResource(Res.string.use_the_field_above_to_search),
     )
 }

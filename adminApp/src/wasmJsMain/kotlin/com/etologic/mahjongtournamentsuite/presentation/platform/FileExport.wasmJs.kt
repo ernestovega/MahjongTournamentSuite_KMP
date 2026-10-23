@@ -16,7 +16,7 @@ import kotlin.io.encoding.Base64
 )
 private external fun downloadTextFile(fileName: String, content: String)
 
-actual fun saveTextFile(fileName: String, content: String): Boolean {
+actual fun saveTextFile(fileName: String, content: String, dialogTitle: String): Boolean {
     downloadTextFile(fileName, content)
     return true
 }
@@ -38,7 +38,7 @@ actual fun saveTextFile(fileName: String, content: String): Boolean {
 )
 private external fun downloadBase64File(fileName: String, base64: String, mimeType: String)
 
-actual fun saveBinaryFile(fileName: String, content: ByteArray, mimeType: String): Boolean {
+actual fun saveBinaryFile(fileName: String, content: ByteArray, mimeType: String, dialogTitle: String): Boolean {
     downloadBase64File(fileName, Base64.Default.encode(content), mimeType)
     return true
 }

@@ -1,15 +1,13 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.material.icons.filled.Leaderboard
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -24,11 +22,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,19 +39,19 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -60,16 +59,19 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.BestHandRanking
 import com.etologic.mahjongtournamentsuite.domain.model.ChickenHandRanking
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberSubstitutionLabel
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingSnapshot
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -77,13 +79,45 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberScreenThemeController
-import com.etologic.mahjongtournamentsuite.presentation.util.dataStatusLabel
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import com.etologic.mahjongtournamentsuite.presentation.util.dataStatus
+import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlin.time.Clock
 import kotlin.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.best_hands
+import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.hand_score
+import mahjongtournamentsuite.adminapp.generated.resources.loading_rankings
+import mahjongtournamentsuite.adminapp.generated.resources.next_ranking_list
+import mahjongtournamentsuite.adminapp.generated.resources.no_country
+import mahjongtournamentsuite.adminapp.generated.resources.no_ranking_yet
+import mahjongtournamentsuite.adminapp.generated.resources.paging_pause
+import mahjongtournamentsuite.adminapp.generated.resources.paging_start
+import mahjongtournamentsuite.adminapp.generated.resources.player
+import mahjongtournamentsuite.adminapp.generated.resources.player_n
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.points
+import mahjongtournamentsuite.adminapp.generated.resources.previous_ranking_list
+import mahjongtournamentsuite.adminapp.generated.resources.rows_count
+import mahjongtournamentsuite.adminapp.generated.resources.score
+import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
+import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
+import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
+import mahjongtournamentsuite.adminapp.generated.resources.show_more_rows
+import mahjongtournamentsuite.adminapp.generated.resources.team
+import mahjongtournamentsuite.adminapp.generated.resources.team_n
+import mahjongtournamentsuite.adminapp.generated.resources.teams
+import mahjongtournamentsuite.adminapp.generated.resources.the_ranking_shows_when_the_first
+import mahjongtournamentsuite.adminapp.generated.resources.use_a_longer_page_interval
+import mahjongtournamentsuite.adminapp.generated.resources.use_a_shorter_page_interval
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -108,7 +142,7 @@ private fun RankingStandaloneContent(
     val presenter = koinInject<RankingPresenter>()
     val scope = rememberCoroutineScope()
     var snapshot by remember { mutableStateOf<RankingSnapshot?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
     var loadedAt by remember { mutableStateOf<Instant?>(null) }
     var loading by remember { mutableStateOf(false) }
     var rowsPerScroll by remember { mutableIntStateOf(DEFAULT_ROWS_PER_SCROLL) }
@@ -130,14 +164,15 @@ private fun RankingStandaloneContent(
                 pageIndex = 0
                 remainingSeconds = intervalSeconds
             }
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         loading = false
     }
 
     LaunchedEffect(tournamentId) { refresh() }
-    val pages = remember(snapshot, showTopThree) {
-        snapshot?.toPages(showTopThree).orEmpty()
+    val labels = rememberRankingLabels()
+    val pages = remember(snapshot, showTopThree, labels) {
+        snapshot?.toPages(showTopThree, labels).orEmpty()
     }
     LaunchedEffect(pages.size) {
         if (pages.isNotEmpty()) pageIndex = pageIndex.coerceIn(0, pages.lastIndex)
@@ -190,13 +225,13 @@ private fun RankingStandaloneContent(
                 }
                 when {
                     loading && snapshot == null -> CenteredMessage(
-                        message = "Loading rankings…",
+                        message = stringResource(Res.string.loading_rankings),
                         modifier = Modifier.weight(1f),
                     )
                     currentPage == null -> AppEmptyState(
                         icon = Icons.Default.Leaderboard,
-                        title = "No ranking yet",
-                        message = "The ranking shows when the first table is completed.",
+                        title = stringResource(Res.string.no_ranking_yet),
+                        message = stringResource(Res.string.the_ranking_shows_when_the_first),
                         modifier = Modifier.weight(1f),
                     )
                     else -> RankingPage(
@@ -211,7 +246,7 @@ private fun RankingStandaloneContent(
             snapshot?.let { held ->
                 // Which data this screen shows. The screen stays still, so it also says when it loaded.
                 Text(
-                    text = dataStatusLabel(held.dataRevision, loadedAt, verb = "loaded"),
+                    text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
@@ -329,14 +364,14 @@ private fun RankingControls(
         ) {
             Icon(
                 imageVector = if (playing) Icons.Default.Pause else Icons.Default.PlayArrow,
-                contentDescription = if (playing) "Pause automatic paging" else "Start automatic paging",
+                contentDescription = stringResource(if (playing) Res.string.paging_pause else Res.string.paging_start),
                 modifier = Modifier.size(34.dp),
             )
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = showTopThree, onCheckedChange = onShowTopThreeChanged)
-            Text("Show first 3", style = MaterialTheme.typography.labelSmall)
+            Text(stringResource(Res.string.show_first_3), style = MaterialTheme.typography.labelSmall)
         }
 
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -346,7 +381,7 @@ private fun RankingControls(
                 focusRequester = previousFocusRequester,
                 buttonModifier = focusLoopFor(previousFocusRequester),
             ) {
-                Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = "Previous ranking list")
+                Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = stringResource(Res.string.previous_ranking_list))
             }
             Text("${if (pageCount == 0) 0 else pageIndex + 1} / $pageCount")
             FocusedIconButton(
@@ -355,7 +390,7 @@ private fun RankingControls(
                 focusRequester = nextFocusRequester,
                 buttonModifier = focusLoopFor(nextFocusRequester),
             ) {
-                Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = "Next ranking list")
+                Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_ranking_list))
             }
         }
 
@@ -366,9 +401,9 @@ private fun RankingControls(
                 focusRequester = fewerRowsFocusRequester,
                 buttonModifier = focusLoopFor(fewerRowsFocusRequester),
             ) {
-                Icon(Icons.Default.Remove, contentDescription = "Show fewer rows")
+                Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.show_fewer_rows))
             }
-            Text("$rowsPerScroll rows")
+            Text(stringResource(Res.string.rows_count, rowsPerScroll))
             FocusedIconButton(
                 onClick = {
                     onRowsChanged((rowsPerScroll + 1).coerceAtMost(minOf(MAX_ROWS_PER_SCROLL, maxVisibleRows)))
@@ -377,7 +412,7 @@ private fun RankingControls(
                 focusRequester = moreRowsFocusRequester,
                 buttonModifier = focusLoopFor(moreRowsFocusRequester),
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Show more rows")
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.show_more_rows))
             }
         }
 
@@ -388,15 +423,15 @@ private fun RankingControls(
                 focusRequester = shorterIntervalFocusRequester,
                 buttonModifier = focusLoopFor(shorterIntervalFocusRequester),
             ) {
-                Icon(Icons.Default.Remove, contentDescription = "Use a shorter page interval")
+                Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.use_a_shorter_page_interval))
             }
-            Text("$intervalSeconds s")
+            Text(stringResource(Res.string.seconds_short, intervalSeconds))
             FocusedIconButton(
                 onClick = { onIntervalChanged(intervalSeconds + 1) },
                 focusRequester = longerIntervalFocusRequester,
                 buttonModifier = focusLoopFor(longerIntervalFocusRequester),
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Use a longer page interval")
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.use_a_longer_page_interval))
             }
         }
 
@@ -472,13 +507,13 @@ private fun RankingPage(
                     ),
                 ) {
                     RankingCell("#", widths.position, TextAlign.Center, headerStyle)
-                    if (page.showCountry) RankingCell("Country", widths.country, TextAlign.Center, headerStyle)
+                    if (page.showCountry) RankingCell(stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
                     RankingCell(page.nameHeader, widths.name, TextAlign.Start, headerStyle)
                     if (page.extraHeader != null) {
                         RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
                     }
-                    if (page.showPoints) RankingCell("Points", widths.points, TextAlign.Center, headerStyle)
-                    if (page.showScore) RankingCell("Score", widths.score, TextAlign.Center, headerStyle)
+                    if (page.showPoints) RankingCell(stringResource(Res.string.points), widths.points, TextAlign.Center, headerStyle)
+                    if (page.showScore) RankingCell(stringResource(Res.string.score), widths.score, TextAlign.Center, headerStyle)
                     if (page.teamHeader != null) RankingCell(page.teamHeader, widths.team, TextAlign.Center, headerStyle)
                 }
                 LazyColumn(
@@ -596,7 +631,7 @@ private fun RankingCountryCell(
         CountryFlag(
             code = countryCode,
             width = flagWidth,
-            contentDescription = countryCode.ifBlank { "No country" },
+            contentDescription = countryCode.ifBlank { stringResource(Res.string.no_country) },
         )
     }
 }
@@ -622,7 +657,10 @@ private fun rememberRankingColumnWidths(
 ): RankingColumnWidths {
     val textMeasurer = rememberTextMeasurer()
     val density = androidx.compose.ui.platform.LocalDensity.current
-    return remember(page, textStyle) {
+    val countryHeader = stringResource(Res.string.country)
+    val pointsHeader = stringResource(Res.string.points)
+    val scoreHeader = stringResource(Res.string.score)
+    return remember(page, textStyle, countryHeader, pointsHeader, scoreHeader) {
         fun widthFor(values: List<String>, minimum: Dp = 0.dp): Dp {
             val widest = values.ifEmpty { listOf("") }
                 .maxOf { textMeasurer.measure(it, textStyle).size.width }
@@ -631,11 +669,11 @@ private fun rememberRankingColumnWidths(
 
         RankingColumnWidths(
             position = widthFor(listOf("#") + page.rows.map { it.position.toString() }, 34.dp),
-            country = widthFor(listOf("Country") + page.rows.map { it.country }, 34.dp),
+            country = widthFor(listOf(countryHeader) + page.rows.map { it.country }, 34.dp),
             name = widthFor(listOf(page.nameHeader) + page.rows.map { it.name }, 80.dp),
             extra = widthFor(listOfNotNull(page.extraHeader) + page.rows.mapNotNull { it.extra }, 34.dp),
-            points = widthFor(listOf("Points") + page.rows.map { formatPoints(it.points) }, 50.dp),
-            score = widthFor(listOf("Score") + page.rows.map { it.score.toString() }, 50.dp),
+            points = widthFor(listOf(pointsHeader) + page.rows.map { formatPoints(it.points) }, 50.dp),
+            score = widthFor(listOf(scoreHeader) + page.rows.map { it.score.toString() }, 50.dp),
             team = widthFor(listOfNotNull(page.teamHeader) + page.rows.mapNotNull { it.team }, 50.dp),
             showCountry = page.showCountry,
             showExtra = page.extraHeader != null,
@@ -671,7 +709,38 @@ private data class RankingRow(
     val isExcluded: Boolean = false,
 )
 
-private fun RankingSnapshot.toPages(showTopThree: Boolean = true): List<RankingPage> {
+/** The texts of the ranking pages, resolved while the screen draws so the page builder needs no composable. */
+private data class RankingLabels(
+    val players: String,
+    val teams: String,
+    val chickenHands: String,
+    val bestHands: String,
+    val player: String,
+    val team: String,
+    val handScore: String,
+    val playerN: (Any) -> String,
+    val teamN: (Any) -> String,
+    val substitution: (PlayerSubstitution) -> String,
+)
+
+@Composable
+private fun rememberRankingLabels(): RankingLabels {
+    val players = stringResource(Res.string.players)
+    val teams = stringResource(Res.string.teams)
+    val chickenHands = stringResource(Res.string.chicken_hands)
+    val bestHands = stringResource(Res.string.best_hands)
+    val player = stringResource(Res.string.player)
+    val team = stringResource(Res.string.team)
+    val handScore = stringResource(Res.string.hand_score)
+    val playerN = rememberTemplate(Res.string.player_n)
+    val teamN = rememberTemplate(Res.string.team_n)
+    val substitution = rememberSubstitutionLabel()
+    return remember(players, teams, chickenHands, bestHands, player, team, handScore, playerN, teamN, substitution) {
+        RankingLabels(players, teams, chickenHands, bestHands, player, team, handScore, playerN, teamN, substitution)
+    }
+}
+
+private fun RankingSnapshot.toPages(showTopThree: Boolean, labels: RankingLabels): List<RankingPage> {
     val slotsById = tournamentPlayers.associateBy { it.id }
     val playersByEma = basePlayers.associateBy { it.emaId }
     val teamNamesById = tournamentTeams.associate { it.id to it.name }
@@ -680,44 +749,44 @@ private fun RankingSnapshot.toPages(showTopThree: Boolean = true): List<RankingP
     if (rankings.players.isNotEmpty()) {
         pages += RankingPage(
             key = "players",
-            title = "Players",
-            nameHeader = "Player",
-            teamHeader = "Team",
+            title = labels.players,
+            nameHeader = labels.player,
+            teamHeader = labels.team,
             rows = rankings.players.map {
-                it.toRow(slotsById, playersByEma, teamNamesById)
+                it.toRow(slotsById, playersByEma, teamNamesById, labels)
             }.maskTopThree(!showTopThree),
         )
     }
     if (isTeams && rankings.teams.isNotEmpty()) {
         pages += RankingPage(
             key = "teams",
-            title = "Teams",
-            nameHeader = "Team",
+            title = labels.teams,
+            nameHeader = labels.team,
             showCountry = false,
-            rows = rankings.teams.map { it.toRow(teamNamesById) }.maskTopThree(!showTopThree),
+            rows = rankings.teams.map { it.toRow(teamNamesById, labels) }.maskTopThree(!showTopThree),
         )
     }
     if (tournament.countChickenHands && rankings.chickenHands.isNotEmpty()) {
         pages += RankingPage(
             key = "chicken-hands",
-            title = "Chicken hands",
-            nameHeader = "Player",
-            extraHeader = "Chicken hands",
+            title = labels.chickenHands,
+            nameHeader = labels.player,
+            extraHeader = labels.chickenHands,
             rows = rankings.chickenHands.map {
-                it.toRow(slotsById, playersByEma)
+                it.toRow(slotsById, playersByEma, labels)
             }.maskTopThree(!showTopThree),
         )
     }
     if (tournament.countBestHands && rankings.bestHands.isNotEmpty()) {
         pages += RankingPage(
             key = "best-hands",
-            title = "Best hands",
-            nameHeader = "Player",
-            extraHeader = "Hand score",
+            title = labels.bestHands,
+            nameHeader = labels.player,
+            extraHeader = labels.handScore,
             showPoints = false,
             showScore = false,
             rows = rankings.bestHands.map {
-                it.toRow(slotsById, playersByEma)
+                it.toRow(slotsById, playersByEma, labels)
             }.maskTopThree(!showTopThree),
         )
     }
@@ -732,49 +801,50 @@ private fun PlayerRanking.toRow(
     slots: Map<Int, TournamentPlayer>,
     players: Map<String, Player>,
     teamNames: Map<Int, String>,
+    labels: RankingLabels,
 ) = RankingRow(
     key = "player-$playerId",
     position = position,
-    name = displayName(playerId, slots, players) + (substitution?.let { " (${it.label})" } ?: ""),
-    team = teamNames[teamId] ?: "Team $teamId",
+    name = displayName(playerId, slots, players, labels) + (substitution?.let { " (${labels.substitution(it)})" } ?: ""),
+    team = teamNames[teamId] ?: labels.teamN(teamId),
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
     isExcluded = substitution?.struckThrough == true,
 )
 
-private fun TeamRanking.toRow(teamNames: Map<Int, String>) = RankingRow(
+private fun TeamRanking.toRow(teamNames: Map<Int, String>, labels: RankingLabels) = RankingRow(
     key = "team-$teamId",
     position = position,
-    name = teamNames[teamId] ?: "Team $teamId",
+    name = teamNames[teamId] ?: labels.teamN(teamId),
     points = points,
     score = score,
 )
 
-private fun ChickenHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Map<String, Player>) = RankingRow(
+private fun ChickenHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels) = RankingRow(
     key = "chicken-$playerId",
     position = position,
-    name = displayName(playerId, slots, players),
+    name = displayName(playerId, slots, players, labels),
     extra = chickenHands.toString(),
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
 )
 
-private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Map<String, Player>) = RankingRow(
+private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels) = RankingRow(
     key = "best-$position-$playerId",
     position = position,
-    name = displayName(playerId, slots, players),
+    name = displayName(playerId, slots, players, labels),
     extra = handScore.toString(),
     points = points,
     score = score,
     country = displayCountry(playerId, slots, players),
 )
 
-private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String =
+private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels): String =
     (slots[playerId]?.assignedEmaId?.let(players::get)?.displayName ?: slots[playerId]?.nonMember?.displayName)
         ?.takeIf { it.isNotBlank() }
-        ?: "PLAYER $playerId"
+        ?: labels.playerN(playerId).uppercase()
 
 private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String {
     return slots[playerId]?.assignedEmaId?.let(players::get)?.country

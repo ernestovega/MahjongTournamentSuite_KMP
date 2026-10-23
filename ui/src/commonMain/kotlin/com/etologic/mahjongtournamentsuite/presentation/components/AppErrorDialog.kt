@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -21,19 +23,36 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.action_ok
+import mahjongtournamentsuite.ui.generated.resources.dialog_done_title
+import mahjongtournamentsuite.ui.generated.resources.dialog_error_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AppErrorDialog(
     message: String,
     onDismiss: () -> Unit,
-) = AppMessageDialog(title = "Error", message = message, onDismiss = onDismiss)
+) = AppMessageDialog(title = stringResource(Res.string.dialog_error_title), message = message, onDismiss = onDismiss)
+
+@Composable
+fun AppErrorDialog(
+    message: UiText,
+    onDismiss: () -> Unit,
+) = AppErrorDialog(message = message.asString(), onDismiss = onDismiss)
 
 /** A confirmation of a finished action. It has the same layout as the error dialog. */
 @Composable
 fun AppSuccessDialog(
     message: String,
     onDismiss: () -> Unit,
-) = AppMessageDialog(title = "Done", message = message, onDismiss = onDismiss)
+) = AppMessageDialog(title = stringResource(Res.string.dialog_done_title), message = message, onDismiss = onDismiss)
+
+@Composable
+fun AppSuccessDialog(
+    message: UiText,
+    onDismiss: () -> Unit,
+) = AppSuccessDialog(message = message.asString(), onDismiss = onDismiss)
 
 @Composable
 private fun AppMessageDialog(
@@ -97,7 +116,7 @@ private fun AppMessageDialog(
                     next = dismissFocusRequester,
                 ),
             ) {
-                Text("OK")
+                Text(stringResource(Res.string.action_ok))
             }
         },
     )

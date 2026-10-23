@@ -41,7 +41,16 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
 import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import kotlin.math.min
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.action_cancel
+import mahjongtournamentsuite.ui.generated.resources.crop_left_right
+import mahjongtournamentsuite.ui.generated.resources.crop_preview
+import mahjongtournamentsuite.ui.generated.resources.crop_up_down
+import mahjongtournamentsuite.ui.generated.resources.crop_use
+import mahjongtournamentsuite.ui.generated.resources.crop_zoom
+import org.jetbrains.compose.resources.stringResource
 
 /** Dialog that crops an image to a square. The circle in the preview shows the area that the app uses. */
 @Composable
@@ -51,7 +60,7 @@ fun ImageCropDialog(
     hint: String,
     onDismiss: () -> Unit,
     onCropped: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 ) {
     var zoom by remember(image) { mutableFloatStateOf(1f) }
     var horizontalPosition by remember(image) { mutableFloatStateOf(0f) }
@@ -92,20 +101,20 @@ fun ImageCropDialog(
                     },
                 )
                 CropSlider(
-                    label = "Zoom",
+                    label = stringResource(Res.string.crop_zoom),
                     value = zoom,
                     valueRange = 1f..3f,
                     onValueChange = { zoom = it },
                     modifier = Modifier.focusRequester(zoomFocusRequester),
                 )
                 CropSlider(
-                    label = "Left / right",
+                    label = stringResource(Res.string.crop_left_right),
                     value = horizontalPosition,
                     valueRange = -1f..1f,
                     onValueChange = { horizontalPosition = it },
                 )
                 CropSlider(
-                    label = "Up / down",
+                    label = stringResource(Res.string.crop_up_down),
                     value = verticalPosition,
                     valueRange = -1f..1f,
                     onValueChange = { verticalPosition = it },
@@ -131,13 +140,13 @@ fun ImageCropDialog(
                 if (isCropping) {
                     CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
                 } else {
-                    Text("Use crop")
+                    Text(stringResource(Res.string.crop_use))
                 }
             }
         },
         dismissButton = {
             FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.action_cancel))
             }
         },
     )
@@ -199,7 +208,7 @@ private fun CircularCropPreview(
     ) {
         AsyncImage(
             model = model,
-            contentDescription = "Crop preview",
+            contentDescription = stringResource(Res.string.crop_preview),
             contentScale = ContentScale.FillBounds,
             modifier = Modifier
                 .requiredSize(renderedWidth, renderedHeight)

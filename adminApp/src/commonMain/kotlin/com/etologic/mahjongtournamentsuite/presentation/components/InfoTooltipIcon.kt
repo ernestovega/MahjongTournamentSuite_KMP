@@ -18,12 +18,15 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.show_information
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun InfoTooltipIcon(
     description: String,
-    contentDescription: String = "Show information",
+    contentDescription: String = stringResource(Res.string.show_information),
 ) {
     val tooltipState = rememberTooltipState()
     val coroutineScope = rememberCoroutineScope()

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite
 
+import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -63,17 +64,21 @@ import org.koin.dsl.koinConfiguration
 @Preview
 fun App(sessionStorage: SessionStateStorage? = null) {
     AppWithModules {
-        MahjongTournamentSuiteApp(sessionStorage)
+        ProvideAppLanguage {
+            MahjongTournamentSuiteApp(sessionStorage)
+        }
     }
 }
 
 @Composable
 fun RankingApp(tournamentId: String) {
     AppWithModules {
-        val themeController = rememberThemeController()
-        CompositionLocalProvider(LocalThemeController provides themeController) {
-            MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-                RankingStandaloneScreen(tournamentId)
+        ProvideAppLanguage {
+            val themeController = rememberThemeController()
+            CompositionLocalProvider(LocalThemeController provides themeController) {
+                MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+                    RankingStandaloneScreen(tournamentId)
+                }
             }
         }
     }

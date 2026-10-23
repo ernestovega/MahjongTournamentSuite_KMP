@@ -43,6 +43,10 @@ adb shell settings put secure autofill_service null > /dev/null 2>&1 || true
 # The seed writes round times in the time zone of this computer. The emulator must use the same zone.
 adb shell service call alarm 3 s16 "$(readlink /etc/localtime | sed 's#.*/zoneinfo/##')" > /dev/null 2>&1 || true
 
+# The tests look for English texts. The apps follow the device language, so they get an English locale.
+adb shell cmd locale set-app-locales com.etologic.mahjongtournamentsuite --locales en-US > /dev/null 2>&1 || true
+adb shell cmd locale set-app-locales com.etologic.mahjongtournamentsuite.player --locales en-US > /dev/null 2>&1 || true
+
 current="$filter"
 for run in $(seq 1 "$max_runs"); do
   run_gradle "$current"

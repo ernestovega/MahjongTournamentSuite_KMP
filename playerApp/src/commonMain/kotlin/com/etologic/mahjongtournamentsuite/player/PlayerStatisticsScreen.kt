@@ -1,94 +1,120 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import mahjongtournamentsuite.playerapp.generated.resources.scope_players
+import mahjongtournamentsuite.playerapp.generated.resources.scope_me
+import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
+import mahjongtournamentsuite.playerapp.generated.resources.scope_others
+import mahjongtournamentsuite.playerapp.generated.resources.scope_overall
+import mahjongtournamentsuite.playerapp.generated.resources.scope_by_tournaments
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.ui.Alignment
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Group
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonSearch
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.unit.IntOffset
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import kotlin.math.roundToInt
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
-import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
-import com.etologic.mahjongtournamentsuite.domain.model.Player
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Icon
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.PersonSearch
-import androidx.compose.material.icons.Icons
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.EmojiEvents
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
+import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
 import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
-import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
+import com.etologic.mahjongtournamentsuite.presentation.components.title
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.math.roundToInt
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.action_cancel
+import mahjongtournamentsuite.playerapp.generated.resources.action_change
+import mahjongtournamentsuite.playerapp.generated.resources.country_n
+import mahjongtournamentsuite.playerapp.generated.resources.scope_player
+import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
+import mahjongtournamentsuite.playerapp.generated.resources.stats_choose_player_message
+import mahjongtournamentsuite.playerapp.generated.resources.stats_choose_player_title
+import mahjongtournamentsuite.playerapp.generated.resources.stats_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.stats_my_statistics
+import mahjongtournamentsuite.playerapp.generated.resources.stats_player_empty_message
+import mahjongtournamentsuite.playerapp.generated.resources.stats_player_field
+import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
+import mahjongtournamentsuite.playerapp.generated.resources.stats_table_none
+import mahjongtournamentsuite.playerapp.generated.resources.stats_title
+import mahjongtournamentsuite.playerapp.generated.resources.stats_unavailable
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 /**
@@ -128,7 +154,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     var mySlotId by remember { mutableStateOf<Int?>(null) }
     var chosenSlotText by rememberPersistentText("slot", route.slotId?.toString())
     val chosenSlotId = chosenSlotText?.toIntOrNull()
-    var message by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<UiText?>(null) }
     var tournamentFinished by remember { mutableStateOf(false) }
     var personFinished by remember { mutableStateOf(false) }
     val finished = when {
@@ -144,7 +170,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             route.tournamentId?.let { id ->
                 when (val result = presenter.tournament(id)) {
                     is AppResult.Success -> tournament = result.value
-                    is AppResult.Failure -> message = result.error.toUiMessage()
+                    is AppResult.Failure -> message = result.error.toUiText()
                 }
                 tournamentFinished = true
             }
@@ -154,7 +180,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     mySlotId = tournament?.slots.orEmpty().firstOrNull { it.assignedEmaId == result.value.emaId }?.id
                 }
                 is AppResult.Failure -> if (scope == StatisticsScope.PERSON || scope == StatisticsScope.PERSON_TOURNAMENTS || route.tournamentId == null) {
-                    message = result.error.toUiMessage()
+                    message = result.error.toUiText()
                 }
             }
             personFinished = true
@@ -163,15 +189,15 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
 
     val shown = tournament
     val title = when (scope) {
-        StatisticsScope.PERSON, StatisticsScope.PERSON_TOURNAMENTS -> "My statistics"
-        StatisticsScope.TOURNAMENT -> shown?.tournament?.name ?: "Tournament"
-        StatisticsScope.TABLE -> "Round ${route.roundId} - Table ${route.tableId}"
-        StatisticsScope.PLAYER -> shown?.names?.get(chosenSlotId ?: mySlotId) ?: "Player"
+        StatisticsScope.PERSON, StatisticsScope.PERSON_TOURNAMENTS -> stringResource(Res.string.stats_my_statistics)
+        StatisticsScope.TOURNAMENT -> shown?.tournament?.name ?: stringResource(Res.string.scope_tournament)
+        StatisticsScope.TABLE -> stringResource(Res.string.stats_round_table, route.roundId ?: 0, route.tableId ?: 0)
+        StatisticsScope.PLAYER -> shown?.names?.get(chosenSlotId ?: mySlotId) ?: stringResource(Res.string.scope_player)
     }
 
     AppScaffold(
         title = title,
-        subtitle = "Statistics",
+        subtitle = stringResource(Res.string.stats_title),
         isLoading = !finished && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
@@ -197,7 +223,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(scopes.indexOf(scope)), color = TabContentColor) },
                 ) {
                     scopes.forEach { item ->
-                        CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title)
+                        CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title())
                     }
                 }
                 val pickerData = shown
@@ -220,11 +246,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                         rivalNames = data.rivalNames,
                         loadStandings = { ids -> presenter.standings(data.emaId, ids) },
                     )
-                } ?: Text("Your statistics are not available yet.")
+                } ?: Text(stringResource(Res.string.stats_unavailable))
 
                 StatisticsScope.PERSON_TOURNAMENTS -> person?.let { data ->
                     PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) })
-                } ?: Text("Your statistics are not available yet.")
+                } ?: Text(stringResource(Res.string.stats_unavailable))
 
                 StatisticsScope.TOURNAMENT -> shown?.let {
                     TournamentStatisticsHeader(it.tournament)
@@ -241,7 +267,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 StatisticsScope.TABLE -> shown?.statistics?.tables
                     ?.firstOrNull { it.roundId == route.roundId && it.tableId == route.tableId }
                     ?.let { TableStatisticsPanel(it, shown.names) }
-                    ?: Text("This table has no statistics yet.")
+                    ?: Text(stringResource(Res.string.stats_table_none))
 
                 StatisticsScope.PLAYER -> shown?.let { data ->
                     val slotId = chosenSlotId ?: mySlotId ?: data.slots.firstOrNull()?.id
@@ -261,9 +287,9 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
 }
 
 /** The tabs inside the statistics tab of a tournament. */
-private enum class TournamentStatisticsKind(val title: String, val icon: ImageVector) {
-    TOURNAMENT("Tournament", Icons.Default.EmojiEvents),
-    PLAYERS("Players", Icons.Default.Group),
+private enum class TournamentStatisticsKind(val title: StringResource, val icon: ImageVector) {
+    TOURNAMENT(Res.string.scope_tournament, Icons.Default.EmojiEvents),
+    PLAYERS(Res.string.scope_players, Icons.Default.Group),
 }
 
 /**
@@ -279,7 +305,7 @@ fun TournamentStatisticsTab(
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
-    var message by remember(tournamentId) { mutableStateOf<String?>(null) }
+    var message by remember(tournamentId) { mutableStateOf<UiText?>(null) }
     val tabs = TournamentStatisticsKind.entries
     var tabName by rememberPersistentText("tournament-statistics-tab", TournamentStatisticsKind.TOURNAMENT.name)
     val tab = tabs.firstOrNull { it.name == tabName } ?: TournamentStatisticsKind.TOURNAMENT
@@ -287,7 +313,7 @@ fun TournamentStatisticsTab(
     LaunchedEffect(tournamentId) {
         when (val result = presenter.tournament(tournamentId)) {
             is AppResult.Success -> data = result.value
-            is AppResult.Failure -> message = result.error.toUiMessage()
+            is AppResult.Failure -> message = result.error.toUiText()
         }
     }
     ReportLoading(data == null && message == null, onLoadingChange)
@@ -305,7 +331,7 @@ fun TournamentStatisticsTab(
                         CompactTab(
                             selected = item == tab,
                             onClick = { tabName = item.name },
-                            title = item.title,
+                            title = stringResource(item.title),
                             icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
                         )
                     }
@@ -341,7 +367,7 @@ fun TournamentStatisticsTab(
                     )
                     val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
                     if (stats == null) {
-                        AppEmptyState(StatisticsIcon, "No statistics yet", "This player has no statistics in this tournament yet.")
+                        AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
                     } else {
                         PlayerStatisticsPanel(
                             stats,
@@ -357,10 +383,10 @@ fun TournamentStatisticsTab(
 }
 
 /** The tabs inside the statistics tab of the tournaments screen. */
-private enum class MyStatisticsKind(val title: String, val icon: ImageVector) {
-    ME("Me", Icons.Default.Person),
-    MY_TOURNAMENTS("My tournaments", Icons.Default.EmojiEvents),
-    OTHERS("Others", Icons.Default.Group),
+private enum class MyStatisticsKind(val title: StringResource, val icon: ImageVector) {
+    ME(Res.string.scope_me, Icons.Default.Person),
+    MY_TOURNAMENTS(Res.string.scope_my_tournaments, Icons.Default.EmojiEvents),
+    OTHERS(Res.string.scope_others, Icons.Default.Group),
 }
 
 /** The width of one tab on a wide screen. */
@@ -375,7 +401,7 @@ private val StatisticsTabWidth = 260.dp
 fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     var person by remember { mutableStateOf<PersonStatisticsData?>(null) }
-    var message by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<UiText?>(null) }
     var finished by remember { mutableStateOf(false) }
     var othersLoading by remember { mutableStateOf(false) }
     val tabs = MyStatisticsKind.entries
@@ -385,7 +411,7 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     LaunchedEffect(Unit) {
         when (val result = presenter.me()) {
             is AppResult.Success -> person = result.value
-            is AppResult.Failure -> message = result.error.toUiMessage()
+            is AppResult.Failure -> message = result.error.toUiText()
         }
         finished = true
     }
@@ -406,7 +432,7 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
                         CompactTab(
                             selected = item == tab,
                             onClick = { tabName = item.name },
-                            title = item.title,
+                            title = stringResource(item.title),
                             icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
                         )
                     }
@@ -432,7 +458,7 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
             if (!finished) return@Column
             val data = person
             if (data == null) {
-                if (message == null) Text("Your statistics are not available yet.")
+                if (message == null) Text(stringResource(Res.string.stats_unavailable))
                 return@Column
             }
             when (tab) {
@@ -451,9 +477,9 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
 }
 
 /** The inside tabs of "Others". */
-private enum class OthersView(val title: String, val icon: ImageVector) {
-    OVERALL("Overall", StatisticsIcon),
-    BY_TOURNAMENTS("By tournaments", Icons.Default.EmojiEvents),
+private enum class OthersView(val title: StringResource, val icon: ImageVector) {
+    OVERALL(Res.string.scope_overall, StatisticsIcon),
+    BY_TOURNAMENTS(Res.string.scope_by_tournaments, Icons.Default.EmojiEvents),
 }
 
 /**
@@ -471,14 +497,14 @@ private fun OthersStatistics(
 ) {
     var players by remember { mutableStateOf<List<Player>>(emptyList()) }
     var data by remember(emaId) { mutableStateOf<PersonStatisticsData?>(null) }
-    var message by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<UiText?>(null) }
     var changing by remember { mutableStateOf(false) }
     var viewName by rememberPersistentText("others-view", OthersView.OVERALL.name)
     val view = OthersView.entries.firstOrNull { it.name == viewName } ?: OthersView.OVERALL
     LaunchedEffect(Unit) {
         when (val result = presenter.players()) {
             is AppResult.Success -> players = result.value
-            is AppResult.Failure -> message = result.error.toUiMessage()
+            is AppResult.Failure -> message = result.error.toUiText()
         }
     }
     LaunchedEffect(emaId) {
@@ -486,7 +512,7 @@ private fun OthersStatistics(
         onLoadingChange(true)
         when (val result = presenter.person(id)) {
             is AppResult.Success -> { data = result.value; message = null }
-            is AppResult.Failure -> message = result.error.toUiMessage()
+            is AppResult.Failure -> message = result.error.toUiText()
         }
         onLoadingChange(false)
     }
@@ -508,11 +534,11 @@ private fun OthersStatistics(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SearchableDropdownField(
-                        "Player (name or EMA number)", options, emaId,
+                        stringResource(Res.string.stats_player_field), options, emaId,
                         { onEmaIdChange(it); changing = false },
                         Modifier.weight(1f),
                     )
-                    if (profile != null) TextButton(onClick = { changing = false }) { Text("Cancel") }
+                    if (profile != null) TextButton(onClick = { changing = false }) { Text(stringResource(Res.string.action_cancel)) }
                 }
             }
         }
@@ -530,9 +556,8 @@ private fun OthersStatistics(
             if (emaId == null) {
                 AppEmptyState(
                     icon = Icons.Default.PersonSearch,
-                    title = "Choose a player",
-                    message = "Use the field above to search a player by name or EMA number. " +
-                        "You see the results of that player in the tournaments that you can see.",
+                    title = stringResource(Res.string.stats_choose_player_title),
+                    message = stringResource(Res.string.stats_choose_player_message),
                 )
                 return@Column
             }
@@ -569,7 +594,7 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
     ) {
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
             if (profile.country.isNotBlank()) {
-                CountryFlag(profile.country, width = 24.dp, contentDescription = "Country ${profile.country}")
+                CountryFlag(profile.country, width = 24.dp, contentDescription = stringResource(Res.string.country_n, profile.country))
                 Spacer(Modifier.width(12.dp))
             }
             Text(
@@ -587,7 +612,7 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
         ) {
             Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text("Change", maxLines = 1, softWrap = false)
+            Text(stringResource(Res.string.action_change), maxLines = 1, softWrap = false)
         }
     }
 }
@@ -612,7 +637,7 @@ private fun OthersViewTabs(view: OthersView, onChoose: (OthersView) -> Unit) {
             CompactTab(
                 selected = item == view,
                 onClick = { onChoose(item) },
-                title = item.title,
+                title = stringResource(item.title),
                 icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
             )
         }

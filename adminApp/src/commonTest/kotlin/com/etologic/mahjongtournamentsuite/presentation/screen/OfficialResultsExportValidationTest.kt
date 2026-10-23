@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.presentation.util.render
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertContains
 import kotlin.test.assertEquals
@@ -9,7 +11,7 @@ import kotlin.test.assertNull
 
 class OfficialResultsExportValidationTest {
     @Test
-    fun missingFinalScoresAreReported() {
+    fun missingFinalScoresAreReported() = runTest {
         val error = officialResultsExportError(
             listOf(
                 rankingTable(
@@ -20,7 +22,7 @@ class OfficialResultsExportValidationTest {
             ),
         )
 
-        assertContains(error.orEmpty(), "Round 2, Table 3: missing final scores for East, South, West, and North.")
+        assertContains(error.render(), "Round 2, Table 3: missing final scores for East, South, West, and North.")
     }
 
     @Test
@@ -39,7 +41,7 @@ class OfficialResultsExportValidationTest {
     }
 
     @Test
-    fun handsTableMustBeMarkedCompleted() {
+    fun handsTableMustBeMarkedCompleted() = runTest {
         val error = officialResultsExportError(
             listOf(
                 rankingTable(
@@ -49,14 +51,14 @@ class OfficialResultsExportValidationTest {
             ),
         )
 
-        assertContains(error.orEmpty(), "Round 2, Table 3: the table is not marked Completed.")
+        assertContains(error.render(), "Round 2, Table 3: the table is not marked Completed.")
     }
 
     @Test
-    fun tournamentWithoutTablesHasSpecificMessage() {
+    fun tournamentWithoutTablesHasSpecificMessage() = runTest {
         assertEquals(
             "Official results cannot be exported because the tournament has no tables.",
-            officialResultsExportError(emptyList()),
+            officialResultsExportError(emptyList()).render(),
         )
     }
 }

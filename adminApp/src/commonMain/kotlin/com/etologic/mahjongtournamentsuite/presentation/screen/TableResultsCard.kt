@@ -1,20 +1,20 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
-import androidx.compose.ui.graphics.Color
-import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,14 +24,35 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
+import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.edit_seats
+import mahjongtournamentsuite.adminapp.generated.resources.manual_scores
+import mahjongtournamentsuite.adminapp.generated.resources.player
+import mahjongtournamentsuite.adminapp.generated.resources.players_results
+import mahjongtournamentsuite.adminapp.generated.resources.score_has_penalty
+import mahjongtournamentsuite.adminapp.generated.resources.score_matches_penalties
+import mahjongtournamentsuite.adminapp.generated.resources.score_matches_penalty
+import mahjongtournamentsuite.adminapp.generated.resources.score_sum_manual
+import mahjongtournamentsuite.adminapp.generated.resources.score_sum_mismatch
+import mahjongtournamentsuite.adminapp.generated.resources.score_sum_zero
+import mahjongtournamentsuite.adminapp.generated.resources.score_target_penalties
+import mahjongtournamentsuite.adminapp.generated.resources.score_target_zero
+import mahjongtournamentsuite.adminapp.generated.resources.seat_positions_first
+import mahjongtournamentsuite.adminapp.generated.resources.table_done
+import mahjongtournamentsuite.adminapp.generated.resources.table_points
+import mahjongtournamentsuite.adminapp.generated.resources.total_scores
+import mahjongtournamentsuite.adminapp.generated.resources.when_on_enter_each_player_s
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun TableResultsCard(
@@ -65,9 +86,9 @@ internal fun TableResultsCard(
     val bigNumberStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
 
     SectionCard(
-        title = "Players & results",
+        title = stringResource(Res.string.players_results),
         titleStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
-        subtitle = if (!editor.hasCompleteSeatPositions) "Select all four seat positions first" else null,
+        subtitle = if (!editor.hasCompleteSeatPositions) stringResource(Res.string.seat_positions_first) else null,
         verticalSpacing = 20.dp,
         centerTitle = true,
         titleActionAtStart = true,
@@ -76,12 +97,12 @@ internal fun TableResultsCard(
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (editor.hasCompleteSeatPositions) {
                     FocusedTextButton(onClick = { editingSeats = !editingSeats }, enabled = enabled) {
-                        Text(if (editingSeats) "Done" else "Edit seats")
+                        Text(stringResource(if (editingSeats) Res.string.table_done else Res.string.edit_seats))
                     }
                 }
                 LabeledSwitch(
-                    label = "Manual scores",
-                    description = "When on, enter each player's final score yourself. The hands do not count (except for counting chicken and best hands).",
+                    label = stringResource(Res.string.manual_scores),
+                    description = stringResource(Res.string.when_on_enter_each_player_s),
                     checked = editor.useTotalsOnly,
                     enabled = dependentEnabled,
                     onCheckedChange = { manual ->
@@ -94,12 +115,12 @@ internal fun TableResultsCard(
         GridTable {
             GridRow(height = GridHeaderHeight, topDivider = false) {
                 GridHeaderCell(text = "", modifier = Modifier.width(GridLabelColumnWidth))
-                SeatLabels.forEachIndexed { seat, label ->
+                seatLabels().forEachIndexed { seat, label ->
                     GridHeaderCell(text = label, modifier = Modifier.weight(1f), icon = SeatWindIcons[seat], last = seat == 3)
                 }
             }
             GridRow(height = GridPlayerRowHeight) {
-                GridLabelCell("Player")
+                GridLabelCell(stringResource(Res.string.player))
                 seatIds.forEachIndexed { seat, id ->
                     GridCell(modifier = Modifier.weight(1f), last = seat == 3) {
                         if (showSeatSelectors) {
@@ -122,7 +143,7 @@ internal fun TableResultsCard(
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
-                                    text = playerNameOrNull(id, playerNamesById) ?: "-",
+                                    text = playerNameOrNull(id, playerNamesById)?.asString() ?: "-",
                                     style = bigNumberStyle,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
@@ -146,7 +167,7 @@ internal fun TableResultsCard(
                 return runCatching { target.requestFocus(); true }.getOrDefault(false)
             }
             GridRow(height = GridPlayerRowHeight) {
-                GridLabelCell("Total Scores")
+                GridLabelCell(stringResource(Res.string.total_scores))
                 scores.forEachIndexed { seat, value ->
                     GridCell(modifier = Modifier.weight(1f), last = seat == 3) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -178,7 +199,7 @@ internal fun TableResultsCard(
                 }
             }
             GridRow(height = GridPlayerRowHeight) {
-                GridLabelCell("Table points")
+                GridLabelCell(stringResource(Res.string.table_points))
                 points.forEachIndexed { seat, value ->
                     // A substitute who left during the session gets 0 table points by the EMA rules.
                     val isSubstituteSeat = editor.forcedZeroPlayerId.isNotBlank() &&
@@ -201,13 +222,13 @@ private val ScoreCheckSlotWidth = 44.dp
 /** What the check next to one total score shows. */
 private sealed interface ScoreCheck {
     /** The scores add up as expected. */
-    data class Valid(val hint: String) : ScoreCheck
+    data class Valid(val hint: UiText) : ScoreCheck
 
     /** The seat has a penalty and the sum of the scores matches the penalties. */
-    data class Penalty(val amount: Long, val hint: String) : ScoreCheck
+    data class Penalty(val amount: Long, val hint: UiText) : ScoreCheck
 
     /** The scores do not add up as expected. [accepted] is true for manual scores, which any sum may have. */
-    data class Mismatch(val hint: String, val accepted: Boolean) : ScoreCheck
+    data class Mismatch(val hint: UiText, val accepted: Boolean) : ScoreCheck
 
     data object None : ScoreCheck
 }
@@ -225,11 +246,11 @@ private fun scoreChecks(
     if (editor.useTotalsOnly) {
         // Manual totals already include the penalties, so any sum is accepted.
         return if (sum == 0L) {
-            List(4) { ScoreCheck.Valid("The four scores add up to 0.") }
+            List(4) { ScoreCheck.Valid(UiText.of(Res.string.score_sum_zero)) }
         } else {
             List(4) {
                 ScoreCheck.Mismatch(
-                    "The four scores add up to ${signed(sum)} rather than 0. The manual scores are accepted as they are.",
+                    UiText.of(Res.string.score_sum_manual, signed(sum)),
                     accepted = true,
                 )
             }
@@ -238,27 +259,26 @@ private fun scoreChecks(
     val penalties = editor.seatPenaltyTotals
     val expected = penalties.sum()
     if (sum != expected) {
-        val target = if (expected == 0L) "0" else "${signed(expected)}, the sum of the penalties"
+        val target = if (expected == 0L) UiText.of(Res.string.score_target_zero) else UiText.of(Res.string.score_target_penalties, signed(expected))
         return List(4) {
             ScoreCheck.Mismatch(
-                "The four scores add up to ${signed(sum)} rather than $target.",
+                UiText.of(Res.string.score_sum_mismatch, signed(sum), target),
                 accepted = false,
             )
         }
     }
-    if (expected == 0L) return List(4) { ScoreCheck.Valid("The four scores add up to 0.") }
-    fun nameOf(seat: Int) = playerNameOrNull(seatIds[seat], playerNamesById) ?: SeatLabels[seat]
+    if (expected == 0L) return List(4) { ScoreCheck.Valid(UiText.of(Res.string.score_sum_zero)) }
+    fun nameOf(seat: Int): UiText = playerNameOrNull(seatIds[seat], playerNamesById) ?: SeatLabelTexts[seat]
     val penalized = (0..3).filter { penalties[it] != 0L }
-    val who = penalized.joinToString(", ", transform = { "${nameOf(it)} has a penalty of ${signed(penalties[it])}" })
+    val who = UiText.Joined(penalized.map { UiText.of(Res.string.score_has_penalty, nameOf(it), signed(penalties[it])) }, separator = ", ")
     return List(4) { seat ->
         if (penalties[seat] != 0L) {
             ScoreCheck.Penalty(
                 penalties[seat],
-                "The scores add up to ${signed(sum)} rather than 0, but this matches the penalties. "
-                        + "${nameOf(seat)} has a penalty of ${signed(penalties[seat])}.",
+                UiText.of(Res.string.score_matches_penalty, signed(sum), nameOf(seat), signed(penalties[seat])),
             )
         } else {
-            ScoreCheck.Valid("The scores add up to ${signed(sum)} rather than 0, but this matches the penalties. $who.")
+            ScoreCheck.Valid(UiText.of(Res.string.score_matches_penalties, signed(sum), who))
         }
     }
 }
@@ -268,15 +288,15 @@ private fun scoreChecks(
 private fun ScoreCheckMark(check: ScoreCheck) {
     when (check) {
         ScoreCheck.None -> Unit
-        is ScoreCheck.Valid -> HintTooltip(check.hint) {
+        is ScoreCheck.Valid -> HintTooltip(check.hint.asString()) {
             Icon(
                 Icons.Default.Check,
-                contentDescription = check.hint,
+                contentDescription = check.hint.asString(),
                 tint = ScoreOkColor,
                 modifier = Modifier.size(22.dp),
             )
         }
-        is ScoreCheck.Penalty -> HintTooltip(check.hint) {
+        is ScoreCheck.Penalty -> HintTooltip(check.hint.asString()) {
             Text(
                 signed(check.amount),
                 style = MaterialTheme.typography.bodyMedium,
@@ -285,10 +305,10 @@ private fun ScoreCheckMark(check: ScoreCheck) {
                 maxLines = 1,
             )
         }
-        is ScoreCheck.Mismatch -> HintTooltip(check.hint) {
+        is ScoreCheck.Mismatch -> HintTooltip(check.hint.asString()) {
             Icon(
                 Icons.Default.Warning,
-                contentDescription = check.hint,
+                contentDescription = check.hint.asString(),
                 tint = if (check.accepted) ScoreWarningColor else MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(22.dp),
             )

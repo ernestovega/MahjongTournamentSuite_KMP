@@ -1,45 +1,56 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.zIndex
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.details_col_hand
+import mahjongtournamentsuite.playerapp.generated.resources.details_col_loser
+import mahjongtournamentsuite.playerapp.generated.resources.details_col_points
+import mahjongtournamentsuite.playerapp.generated.resources.details_col_winner
+import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_message
+import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_title
+import mahjongtournamentsuite.playerapp.generated.resources.details_no_seats_message
+import mahjongtournamentsuite.playerapp.generated.resources.details_no_seats_title
+import mahjongtournamentsuite.playerapp.generated.resources.details_penalty_short
+import org.jetbrains.compose.resources.stringResource
 
 private const val MIN_HAND_SCORE = 8
 private const val LOSER_COUNT = 3
@@ -127,12 +138,12 @@ private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> 
 fun HandDetailsTable(table: PlayerTable, windOf: (Int) -> SeatWind?) {
     val seatIds = table.seatIds().filterNotNull()
     if (seatIds.size != 4) {
-        AppEmptyState(Icons.Default.People, "No seats yet", "The seats of this table are not set yet.", compact = true)
+        AppEmptyState(Icons.Default.People, stringResource(Res.string.details_no_seats_title), stringResource(Res.string.details_no_seats_message), compact = true)
         return
     }
     val rows = detailRows(table, seatIds)
     if (rows.isEmpty()) {
-        AppEmptyState(Icons.Default.Edit, "No hands yet", "The hands show here when the players save them.", compact = true)
+        AppEmptyState(Icons.Default.Edit, stringResource(Res.string.details_no_hands_title), stringResource(Res.string.details_no_hands_message), compact = true)
         return
     }
     val screen = LocalScreenScroll.current
@@ -160,10 +171,10 @@ fun HandDetailsTable(table: PlayerTable, windOf: (Int) -> SeatWind?) {
                 .background(MaterialTheme.colorScheme.surface),
         ) {
             Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                HeaderCell("Hand", HAND_WEIGHT)
-                HeaderCell("W", ID_WEIGHT)
-                HeaderCell("L", ID_WEIGHT)
-                HeaderCell("Pts", POINTS_WEIGHT)
+                HeaderCell(stringResource(Res.string.details_col_hand), HAND_WEIGHT)
+                HeaderCell(stringResource(Res.string.details_col_winner), ID_WEIGHT)
+                HeaderCell(stringResource(Res.string.details_col_loser), ID_WEIGHT)
+                HeaderCell(stringResource(Res.string.details_col_points), POINTS_WEIGHT)
                 Spacer(Modifier.weight(CHICKEN_WEIGHT))
                 seatIds.forEachIndexed { seat, id ->
                     Row(Modifier.weight(SEAT_WEIGHT), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
@@ -266,7 +277,7 @@ private val CHICKEN_SIZE = 20.dp
 private fun PenaltyLine(row: DetailRow.Penalty) {
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(
-            "Pen",
+            stringResource(Res.string.details_penalty_short),
             Modifier.weight(HAND_WEIGHT),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.error,

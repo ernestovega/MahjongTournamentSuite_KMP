@@ -4,8 +4,8 @@ import java.awt.FileDialog
 import java.awt.Frame
 import java.io.File
 
-actual fun saveTextFile(fileName: String, content: String): Boolean {
-    val dialog = FileDialog(null as Frame?, "Save EMA results", FileDialog.SAVE)
+actual fun saveTextFile(fileName: String, content: String, dialogTitle: String): Boolean {
+    val dialog = FileDialog(null as Frame?, dialogTitle.ifBlank { "Save file" }, FileDialog.SAVE)
     dialog.file = fileName
     dialog.isVisible = true
     val selectedDirectory = dialog.directory ?: return false
@@ -14,8 +14,8 @@ actual fun saveTextFile(fileName: String, content: String): Boolean {
     return true
 }
 
-actual fun saveBinaryFile(fileName: String, content: ByteArray, mimeType: String): Boolean {
-    val dialog = FileDialog(null as Frame?, "Save ID cards", FileDialog.SAVE)
+actual fun saveBinaryFile(fileName: String, content: ByteArray, mimeType: String, dialogTitle: String): Boolean {
+    val dialog = FileDialog(null as Frame?, dialogTitle.ifBlank { "Save file" }, FileDialog.SAVE)
     dialog.file = fileName
     dialog.isVisible = true
     val selectedDirectory = dialog.directory ?: return false

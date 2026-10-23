@@ -3,10 +3,11 @@ package com.etologic.mahjongtournamentsuite.presentation.platform
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 @Composable
 actual fun rememberImagePicker(
     onImageSelected: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 ): ImagePicker {
     val currentOnImageSelected = rememberUpdatedState(onImageSelected)
     val currentOnError = rememberUpdatedState(onError)
@@ -16,9 +17,9 @@ actual fun rememberImagePicker(
                 onSelected = { fileName, contentType, base64Data ->
                     runCatching { selectedImageFromBase64(fileName, contentType, base64Data) }
                         .onSuccess(currentOnImageSelected.value)
-                        .onFailure { currentOnError.value(it.message ?: "The photo could not be read.") }
+                        .onFailure { currentOnError.value(it.toImageUiText(ImageReadError)) }
                 },
-                onError = { currentOnError.value(it) },
+                onError = { currentOnError.value(imageErrorFromCode(it)) },
             )
         }
     }
@@ -29,7 +30,7 @@ actual fun cropSelectedImage(
     image: SelectedImage,
     crop: SquareImageCrop,
     onCropped: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 ) {
     cropBrowserImage(
         dataUrl = image.dataUrl,
@@ -43,9 +44,9 @@ actual fun cropSelectedImage(
                     contentType = "image/png",
                     base64Data = base64Data,
                 )
-            }.onSuccess(onCropped).onFailure { onError(it.message ?: "The logo could not be cropped.") }
+            }.onSuccess(onCropped).onFailure { onError(it.toImageUiText(ImageCropError)) }
         },
-        onError = onError,
+        onError = { onError(imageErrorFromCode(it)) },
     )
 }
 
@@ -53,7 +54,7 @@ actual fun cropSelectedImage(
 @JsFun(
     """(dataUrl, zoom, horizontalPosition, verticalPosition, onCropped, onError) => {
         const image = new Image();
-        image.onerror = () => onError('The selected logo could not be decoded.');
+        image.onerror = () => onError('decode');
         image.onload = () => {
             try {
                 const cropSize = Math.min(image.naturalWidth, image.naturalHeight) / zoom;
@@ -69,7 +70,7 @@ actual fun cropSelectedImage(
                 context.drawImage(image, left, top, cropSize, cropSize, 0, 0, outputSize, outputSize);
                 onCropped(canvas.toDataURL('image/png').split(',')[1]);
             } catch (error) {
-                onError(error && error.message ? error.message : 'The logo could not be cropped.');
+                onError('crop');
             }
         };
         image.src = dataUrl;
@@ -94,12 +95,12 @@ private external fun cropBrowserImage(
             const file = input.files && input.files[0];
             if (!file) return;
             const reader = new FileReader();
-            reader.onerror = () => onError('The photo could not be read.');
+            reader.onerror = () => onError('read');
             reader.onload = () => {
                 const result = String(reader.result || '');
                 const separator = result.indexOf(',');
                 if (separator < 0) {
-                    onError('The selected file is not a valid image.');
+                    onError('invalid');
                     return;
                 }
                 onSelected(file.name, file.type || 'image/jpeg', result.substring(separator + 1));

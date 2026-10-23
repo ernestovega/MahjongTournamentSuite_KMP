@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -107,9 +108,11 @@ fun PlayerApp(
                 produceState(FeatureFlags()) { value = repository.load() }.value
             },
         ) {
-            MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-                Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    PlayerNavigation(inviteToken, openTournamentId, sessionStorage)
+            ProvideAppLanguage {
+                MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        PlayerNavigation(inviteToken, openTournamentId, sessionStorage)
+                    }
                 }
             }
         }

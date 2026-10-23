@@ -1,9 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.toDateInput
-import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
-import androidx.compose.foundation.background
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -11,33 +9,34 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.Switch
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,17 +44,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
@@ -63,60 +61,120 @@ import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINU
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
+import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
+import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCountValidator
+import com.etologic.mahjongtournamentsuite.presentation.components.AgendaItemEditorRow
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
-import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_DURATION_MINUTES
-import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_EXTRA_MINUTES
-import com.etologic.mahjongtournamentsuite.presentation.components.isTimeZoneIdShape
-import com.etologic.mahjongtournamentsuite.presentation.components.matchExtraMinutesOrNull
-import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.MatchTimeFields
-import com.etologic.mahjongtournamentsuite.presentation.components.VenueTimeZoneField
-import com.etologic.mahjongtournamentsuite.presentation.components.matchDurationOrNull
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as AppTextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_DURATION_MINUTES
+import com.etologic.mahjongtournamentsuite.presentation.components.MAX_MATCH_EXTRA_MINUTES
+import com.etologic.mahjongtournamentsuite.presentation.components.MatchTimeFields
 import com.etologic.mahjongtournamentsuite.presentation.components.RequiredLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentColorPickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDateRangePickerDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentIdCardPreviewButton
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoCropDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoLibraryDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.AgendaItemEditorRow
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLogoPreview
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentScheduleEditor
+import com.etologic.mahjongtournamentsuite.presentation.components.VenueTimeZoneField
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.contactEmailRequiredError
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
+import com.etologic.mahjongtournamentsuite.presentation.components.isTimeZoneIdShape
+import com.etologic.mahjongtournamentsuite.presentation.components.matchDurationOrNull
+import com.etologic.mahjongtournamentsuite.presentation.components.matchExtraMinutesOrNull
+import com.etologic.mahjongtournamentsuite.presentation.components.synchronizeRoundScheduleRows
+import com.etologic.mahjongtournamentsuite.presentation.components.toDateInput
+import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
-import com.etologic.mahjongtournamentsuite.presentation.components.synchronizeRoundScheduleRows
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
-import com.etologic.mahjongtournamentsuite.presentation.components.contactEmailRequiredError
-import com.etologic.mahjongtournamentsuite.presentation.components.venueRequiredError
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentAgendaItems
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentRoundSchedules
 import com.etologic.mahjongtournamentsuite.presentation.components.tournamentScheduleEditorError
-import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
+import com.etologic.mahjongtournamentsuite.presentation.components.venueRequiredError
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
+import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
-import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
-import com.etologic.mahjongtournamentsuite.domain.validation.TournamentPlayerCountValidator
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.math.abs
+import kotlin.math.roundToLong
+import kotlin.time.Clock
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlin.math.abs
-import kotlin.math.roundToLong
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Clock
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.best_hands
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
+import mahjongtournamentsuite.adminapp.generated.resources.choose_end_date
+import mahjongtournamentsuite.adminapp.generated.resources.choose_start_date
+import mahjongtournamentsuite.adminapp.generated.resources.count_the_best_hands_and_show
+import mahjongtournamentsuite.adminapp.generated.resources.count_the_chicken_hands_and_show
+import mahjongtournamentsuite.adminapp.generated.resources.create
+import mahjongtournamentsuite.adminapp.generated.resources.create_calculating
+import mahjongtournamentsuite.adminapp.generated.resources.create_cancel_calculation
+import mahjongtournamentsuite.adminapp.generated.resources.create_heavy_info
+import mahjongtournamentsuite.adminapp.generated.resources.create_intro
+import mahjongtournamentsuite.adminapp.generated.resources.create_players_placeholder
+import mahjongtournamentsuite.adminapp.generated.resources.create_required_note
+import mahjongtournamentsuite.adminapp.generated.resources.create_saving
+import mahjongtournamentsuite.adminapp.generated.resources.create_teams_info
+import mahjongtournamentsuite.adminapp.generated.resources.create_tried
+import mahjongtournamentsuite.adminapp.generated.resources.date_to
+import mahjongtournamentsuite.adminapp.generated.resources.dd_mm_yyyy
+import mahjongtournamentsuite.adminapp.generated.resources.error_star_prefix
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_city
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_color
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_country
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_date
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_end_before_start
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_minutes
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_name_required
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_players
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_rounds
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_short_name
+import mahjongtournamentsuite.adminapp.generated.resources.field_error_time_zone
+import mahjongtournamentsuite.adminapp.generated.resources.from
+import mahjongtournamentsuite.adminapp.generated.resources.heavy_computing
+import mahjongtournamentsuite.adminapp.generated.resources.logo
+import mahjongtournamentsuite.adminapp.generated.resources.logo_choose
+import mahjongtournamentsuite.adminapp.generated.resources.logo_from
+import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_2mb
+import mahjongtournamentsuite.adminapp.generated.resources.logo_must_be_jpeg_png
+import mahjongtournamentsuite.adminapp.generated.resources.logo_none
+import mahjongtournamentsuite.adminapp.generated.resources.logo_upload
+import mahjongtournamentsuite.adminapp.generated.resources.max_10_characters
+import mahjongtournamentsuite.adminapp.generated.resources.name
+import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.remove
+import mahjongtournamentsuite.adminapp.generated.resources.reuse_existing
+import mahjongtournamentsuite.adminapp.generated.resources.rounds
+import mahjongtournamentsuite.adminapp.generated.resources.short_name
+import mahjongtournamentsuite.adminapp.generated.resources.tab_branding
+import mahjongtournamentsuite.adminapp.generated.resources.tab_general
+import mahjongtournamentsuite.adminapp.generated.resources.tab_schedule
+import mahjongtournamentsuite.adminapp.generated.resources.tab_venue
+import mahjongtournamentsuite.adminapp.generated.resources.teams
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 /** The fields of the form that can be wrong. A wrong field gets a red mark and a short text. */
@@ -125,11 +183,11 @@ private enum class CreateField {
     TIME_ZONE, EXTRA_TIME, COLOR,
 }
 
-private enum class CreateTab(val title: String) {
-    GENERAL("General"),
-    VENUE("Venue"),
-    BRANDING("Branding"),
-    SCHEDULE("Schedule"),
+private enum class CreateTab(val title: StringResource) {
+    GENERAL(Res.string.tab_general),
+    VENUE(Res.string.tab_venue),
+    BRANDING(Res.string.tab_branding),
+    SCHEDULE(Res.string.tab_schedule),
 }
 
 /** The tab that holds the field. */
@@ -209,22 +267,23 @@ fun CreateTournamentDialog(
     var computeMode by remember { mutableStateOf(CreateTournamentPresenter.ComputeMode.LIGHT) }
 
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var fieldErrors by remember { mutableStateOf<Map<CreateField, String>>(emptyMap()) }
+    var errorMessage by remember { mutableStateOf<UiText?>(null) }
+    var fieldErrorTexts by remember { mutableStateOf<Map<CreateField, UiText>>(emptyMap()) }
+    val fieldErrors = fieldErrorTexts.mapValues { it.value.asString() }
     var progress by remember { mutableStateOf<CreateTournamentPresenter.Progress?>(null) }
     var createJob by remember { mutableStateOf<Job?>(null) }
     var calcStartMark by remember { mutableStateOf<TimeMark?>(null) }
     val logoPicker = rememberImagePicker(
         onImageSelected = { image ->
             if (image.contentType !in setOf("image/jpeg", "image/png")) {
-                errorMessage = "* Logo must be a JPEG or PNG image."
+                errorMessage = UiText.of(Res.string.error_star_prefix, UiText.of(Res.string.logo_must_be_jpeg_png))
             } else if (image.bytes.size > 2 * 1024 * 1024) {
-                errorMessage = "* Logo must be 2 MB or smaller."
+                errorMessage = UiText.of(Res.string.error_star_prefix, UiText.of(Res.string.logo_must_be_2mb))
             } else {
                 logoToCrop = image
             }
         },
-        onError = { message -> errorMessage = "* $message" },
+        onError = { message -> errorMessage = UiText.of(Res.string.error_star_prefix, message) },
     )
     val teamsToggleInteractionSource = remember { MutableInteractionSource() }
     val computeToggleInteractionSource = remember { MutableInteractionSource() }
@@ -244,7 +303,7 @@ fun CreateTournamentDialog(
     }
 
     fun clearError(vararg fields: CreateField) {
-        fieldErrors = fieldErrors - fields.toSet()
+        fieldErrorTexts = fieldErrorTexts - fields.toSet()
     }
 
     fun cancelCreation() {
@@ -288,7 +347,7 @@ fun CreateTournamentDialog(
         nameFocusRequester.requestFocus()
         when (val result = presenter.loadCountries()) {
             is AppResult.Success -> countries = result.value
-            is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+            is AppResult.Failure -> errorMessage = result.error.toUiText()
         }
     }
 
@@ -307,38 +366,38 @@ fun CreateTournamentDialog(
 
         val matchDurationMinutes = matchDurationOrNull(matchDurationText)
         val matchExtraMinutes = matchExtraMinutesOrNull(matchExtraText)
-        val errors = linkedMapOf<CreateField, String>()
-        if (trimmedName.isBlank()) errors[CreateField.NAME] = "Name is required."
+        val errors = linkedMapOf<CreateField, UiText>()
+        if (trimmedName.isBlank()) errors[CreateField.NAME] = UiText.of(Res.string.field_error_name_required)
         if (trimmedShortName.isBlank() || trimmedShortName.length > 10) {
-            errors[CreateField.SHORT_NAME] = "Use 1 to 10 characters."
+            errors[CreateField.SHORT_NAME] = UiText.of(Res.string.field_error_short_name)
         }
         if (numPlayers == null || !TournamentPlayerCountValidator.isValid(numPlayers)) {
             errors[CreateField.PLAYERS] =
-                "Must be a multiple of 4 and at least ${TournamentPlayerCountValidator.MIN_PLAYERS}."
+                UiText.of(Res.string.field_error_players, TournamentPlayerCountValidator.MIN_PLAYERS)
         }
-        if (numRounds == null || numRounds <= 0) errors[CreateField.ROUNDS] = "Must be a positive whole number."
-        if (!Regex("^[A-Z]{2,3}$").matches(normalizedHostCountry)) errors[CreateField.COUNTRY] = "Select a host country."
-        if (trimmedHostCity.isBlank()) errors[CreateField.CITY] = "City is required."
+        if (numRounds == null || numRounds <= 0) errors[CreateField.ROUNDS] = UiText.of(Res.string.field_error_rounds)
+        if (!Regex("^[A-Z]{2,3}$").matches(normalizedHostCountry)) errors[CreateField.COUNTRY] = UiText.of(Res.string.field_error_country)
+        if (trimmedHostCity.isBlank()) errors[CreateField.CITY] = UiText.of(Res.string.field_error_city)
         venueRequiredError(venue)?.let { errors[CreateField.VENUE] = it }
         contactEmailRequiredError(venue.contactEmail)?.let { errors[CreateField.CONTACT_EMAIL] = it }
-        if (trimmedStartDate == null) errors[CreateField.START_DATE] = "Use DD/MM/YYYY."
+        if (trimmedStartDate == null) errors[CreateField.START_DATE] = UiText.of(Res.string.field_error_date)
         if (trimmedEndDate == null) {
-            errors[CreateField.END_DATE] = "Use DD/MM/YYYY."
+            errors[CreateField.END_DATE] = UiText.of(Res.string.field_error_date)
         } else if (trimmedStartDate != null &&
             !TournamentDateRangeValidator.isValidRange(trimmedStartDate, trimmedEndDate)
         ) {
-            errors[CreateField.END_DATE] = "The end date must not be before the start date."
+            errors[CreateField.END_DATE] = UiText.of(Res.string.field_error_end_before_start)
         }
         if (matchDurationMinutes == null) {
-            errors[CreateField.MATCH_DURATION] = "Use a whole number of minutes from 1 to $MAX_MATCH_DURATION_MINUTES."
+            errors[CreateField.MATCH_DURATION] = UiText.of(Res.string.field_error_minutes, MAX_MATCH_DURATION_MINUTES)
         }
-        if (!isTimeZoneIdShape(timeZoneText)) errors[CreateField.TIME_ZONE] = "Use a name like Europe/Madrid."
+        if (!isTimeZoneIdShape(timeZoneText)) errors[CreateField.TIME_ZONE] = UiText.of(Res.string.field_error_time_zone)
         if (finishHandInPlay && matchExtraMinutes == null) {
-            errors[CreateField.EXTRA_TIME] = "Use a whole number of minutes from 1 to $MAX_MATCH_EXTRA_MINUTES."
+            errors[CreateField.EXTRA_TIME] = UiText.of(Res.string.field_error_minutes, MAX_MATCH_EXTRA_MINUTES)
         }
-        if (!Regex("^#[0-9A-F]{6}$").matches(normalizedPrimaryColor)) errors[CreateField.COLOR] = "Use #RRGGBB format."
+        if (!Regex("^#[0-9A-F]{6}$").matches(normalizedPrimaryColor)) errors[CreateField.COLOR] = UiText.of(Res.string.field_error_color)
         if (errors.isNotEmpty()) {
-            fieldErrors = errors
+            fieldErrorTexts = errors
             val firstField = errors.keys.first()
             selectedTab = firstField.tab()
             pendingFocusField = firstField
@@ -349,7 +408,7 @@ fun CreateTournamentDialog(
         ) {
             return
         }
-        fieldErrors = emptyMap()
+        fieldErrorTexts = emptyMap()
         val scheduleError = tournamentScheduleEditorError(
             roundRows = roundScheduleRows,
             agendaRows = agendaRows,
@@ -357,7 +416,7 @@ fun CreateTournamentDialog(
             eventEndDate = trimmedEndDate,
         )
         if (scheduleError != null) {
-            errorMessage = "* $scheduleError"
+            errorMessage = UiText.of(Res.string.error_star_prefix, scheduleError)
             return
         }
 
@@ -404,7 +463,7 @@ fun CreateTournamentDialog(
                     }
 
                     is AppResult.Failure -> {
-                        errorMessage = result.error.toUiMessage()
+                        errorMessage = result.error.toUiText()
                     }
                 }
             } catch (_: CancellationException) {
@@ -427,7 +486,7 @@ fun CreateTournamentDialog(
                 onDismiss()
             }
         },
-        title = { Text("New tournament") },
+        title = { Text(stringResource(Res.string.new_tournament)) },
         text = {
             Column(modifier = Modifier.fillMaxWidth()) {
                 PrimaryScrollableTabRow(
@@ -438,7 +497,7 @@ fun CreateTournamentDialog(
                         Tab(
                             selected = tab == selectedTab,
                             onClick = { selectedTab = tab },
-                            text = { Text(tab.title) },
+                            text = { Text(stringResource(tab.title)) },
                         )
                     }
                 }
@@ -454,12 +513,12 @@ fun CreateTournamentDialog(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Text(
-                            "Creates rounds, tables, and players automatically.",
+                            stringResource(Res.string.create_intro),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                         )
                         Text(
-                            "Fields marked with * are required.",
+                            stringResource(Res.string.create_required_note),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             style = MaterialTheme.typography.bodySmall,
                         )
@@ -471,7 +530,7 @@ fun CreateTournamentDialog(
                                     name = it
                                     clearError(CreateField.NAME)
                                 },
-                                label = { RequiredLabel("Name") },
+                                label = { RequiredLabel(stringResource(Res.string.name)) },
                                 singleLine = true,
                                 enabled = !isLoading,
                                 isError = CreateField.NAME in fieldErrors,
@@ -486,8 +545,8 @@ fun CreateTournamentDialog(
                                     shortName = it.take(10)
                                     clearError(CreateField.SHORT_NAME)
                                 },
-                                label = { RequiredLabel("Short name") },
-                                placeholder = { Text("Max. 10 characters") },
+                                label = { RequiredLabel(stringResource(Res.string.short_name)) },
+                                placeholder = { Text(stringResource(Res.string.max_10_characters)) },
                                 singleLine = true,
                                 enabled = !isLoading,
                                 isError = CreateField.SHORT_NAME in fieldErrors,
@@ -506,8 +565,8 @@ fun CreateTournamentDialog(
                                         numPlayersText = it.toDigitsInput()
                                         clearError(CreateField.PLAYERS)
                                     },
-                                    label = { RequiredLabel("Players") },
-                                    placeholder = { Text("Multiple of 4, minimum ${TournamentPlayerCountValidator.MIN_PLAYERS}") },
+                                    label = { RequiredLabel(stringResource(Res.string.players)) },
+                                    placeholder = { Text(stringResource(Res.string.create_players_placeholder, TournamentPlayerCountValidator.MIN_PLAYERS)) },
                                     modifier = Modifier.weight(1f).focusRequester(playersFocusRequester),
                                     singleLine = true,
                                     enabled = !isLoading,
@@ -525,7 +584,7 @@ fun CreateTournamentDialog(
                                         )
                                         clearError(CreateField.ROUNDS)
                                     },
-                                    label = { RequiredLabel("Rounds") },
+                                    label = { RequiredLabel(stringResource(Res.string.rounds)) },
                                     modifier = Modifier.weight(1f).focusRequester(roundsFocusRequester),
                                     singleLine = true,
                                     enabled = !isLoading,
@@ -571,7 +630,7 @@ fun CreateTournamentDialog(
                                         interactionSource = teamsToggleInteractionSource,
                                     )
                                     Text(
-                                        text = "Teams",
+                                        text = stringResource(Res.string.teams),
                                         modifier = Modifier.toggleable(
                                             value = isTeams,
                                             enabled = !isLoading,
@@ -582,22 +641,22 @@ fun CreateTournamentDialog(
                                         ),
                                     )
                                     InfoTooltipIcon(
-                                        "Group players into teams of four. Team members will not play together.",
+                                        stringResource(Res.string.create_teams_info),
                                     )
                                 }
                             }
 
                             TournamentOptionSwitch(
-                                label = "Best hands",
-                                description = "Count the best hands and show them in the ranking and the tournament screens.",
+                                label = stringResource(Res.string.best_hands),
+                                description = stringResource(Res.string.count_the_best_hands_and_show),
                                 checked = countBestHands,
                                 enabled = !isLoading,
                                 onCheckedChange = { countBestHands = it },
                             )
 
                             TournamentOptionSwitch(
-                                label = "Chicken hands",
-                                description = "Count the chicken hands and show them in the ranking and the tournament screens.",
+                                label = stringResource(Res.string.chicken_hands),
+                                description = stringResource(Res.string.count_the_chicken_hands_and_show),
                                 checked = countChickenHands,
                                 enabled = !isLoading,
                                 onCheckedChange = { countChickenHands = it },
@@ -619,7 +678,7 @@ fun CreateTournamentDialog(
                                         interactionSource = computeToggleInteractionSource,
                                     )
                                     Text(
-                                        text = "Heavy computing",
+                                        text = stringResource(Res.string.heavy_computing),
                                         modifier = Modifier.toggleable(
                                             value = isHeavy,
                                             enabled = !isLoading,
@@ -629,7 +688,7 @@ fun CreateTournamentDialog(
                                             onValueChange = ::setHeavyCompute,
                                         ),
                                     )
-                                    InfoTooltipIcon("Use more CPU to calculate the schedule faster.")
+                                    InfoTooltipIcon(stringResource(Res.string.create_heavy_info))
                                 }
                             }
                         }
@@ -689,7 +748,7 @@ fun CreateTournamentDialog(
                                 fieldModifier = Modifier.focusRequester(primaryColorFocusRequester),
                             )
 
-                            Text("Logo", style = MaterialTheme.typography.titleSmall)
+                            Text(stringResource(Res.string.logo), style = MaterialTheme.typography.titleSmall)
                             val logoModel = associationLogo?.dataUrl ?: reusedLogoTournament?.associationLogoUrl
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
@@ -713,8 +772,8 @@ fun CreateTournamentDialog(
                                                 append(formatByteSize(associationLogo?.bytes?.size?.toLong() ?: 0L))
                                                 logoImageInfo?.let { append(" · ").append(it) }
                                             }
-                                            reusedLogoTournament != null -> "Logo from ${reusedLogoTournament?.name}"
-                                            else -> "No logo"
+                                            reusedLogoTournament != null -> stringResource(Res.string.logo_from, reusedLogoTournament?.name.orEmpty())
+                                            else -> stringResource(Res.string.logo_none)
                                         },
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         style = MaterialTheme.typography.bodySmall,
@@ -724,14 +783,14 @@ fun CreateTournamentDialog(
                                         verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Button(enabled = !isLoading, onClick = logoPicker::launch) {
-                                            Text(if (logoModel == null) "Choose logo" else "Upload logo")
+                                            Text(stringResource(if (logoModel == null) Res.string.logo_choose else Res.string.logo_upload))
                                         }
                                         if (tournaments.any { !it.associationLogoUrl.isNullOrBlank() }) {
                                             Button(
                                                 enabled = !isLoading,
                                                 onClick = { showLogoLibrary = true },
                                             ) {
-                                                Text("Reuse existing")
+                                                Text(stringResource(Res.string.reuse_existing))
                                             }
                                         }
                                         if (logoModel != null) {
@@ -742,7 +801,7 @@ fun CreateTournamentDialog(
                                                     reusedLogoTournament = null
                                                     logoImageInfo = null
                                                 },
-                                            ) { Text("Remove") }
+                                            ) { Text(stringResource(Res.string.remove)) }
                                         }
                                     }
                                 }
@@ -770,13 +829,13 @@ fun CreateTournamentDialog(
                                         eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
                                         clearError(CreateField.START_DATE, CreateField.END_DATE)
                                     },
-                                    label = { RequiredLabel("From") },
-                                    placeholder = { Text("DD/MM/YYYY") },
+                                    label = { RequiredLabel(stringResource(Res.string.from)) },
+                                    placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                     trailingIcon = {
                                         IconButton(onClick = { showDateRangePicker = true }) {
                                             androidx.compose.material3.Icon(
                                                 Icons.Default.DateRange,
-                                                contentDescription = "Choose start date",
+                                                contentDescription = stringResource(Res.string.choose_start_date),
                                             )
                                         }
                                     },
@@ -796,13 +855,13 @@ fun CreateTournamentDialog(
                                         }
                                         clearError(CreateField.START_DATE, CreateField.END_DATE)
                                     },
-                                    label = { RequiredLabel("To") },
-                                    placeholder = { Text("DD/MM/YYYY") },
+                                    label = { RequiredLabel(stringResource(Res.string.date_to)) },
+                                    placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                     trailingIcon = {
                                         IconButton(onClick = { showDateRangePicker = true }) {
                                             androidx.compose.material3.Icon(
                                                 Icons.Default.DateRange,
-                                                contentDescription = "Choose end date",
+                                                contentDescription = stringResource(Res.string.choose_end_date),
                                             )
                                         }
                                     },
@@ -839,14 +898,14 @@ fun CreateTournamentDialog(
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
                             Text(
                                 when (progress?.phase) {
-                                    CreateTournamentPresenter.Phase.CREATING -> "Saving tournament…"
-                                    else -> "Calculating schedule…"
+                                    CreateTournamentPresenter.Phase.CREATING -> stringResource(Res.string.create_saving)
+                                    else -> stringResource(Res.string.create_calculating)
                                 },
                             )
                         }
                         progress?.let { currentProgress ->
                             if (currentProgress.phase == CreateTournamentPresenter.Phase.CALCULATING) {
-                                Text("Tried: ${formatWithDots(currentProgress.tried)}")
+                                Text(stringResource(Res.string.create_tried, formatWithDots(currentProgress.tried)))
                                 RunningTriesSlots(
                                     runningTries = currentProgress.runningTries,
                                     maxConcurrency = currentProgress.maxConcurrency,
@@ -862,7 +921,7 @@ fun CreateTournamentDialog(
             Button(
                 onClick = if (isLoading) ::cancelCreation else ::startCreate,
             ) {
-                Text(if (isLoading) "Cancel calculation" else "Create")
+                Text(stringResource(if (isLoading) Res.string.create_cancel_calculation else Res.string.create))
             }
         },
         dismissButton = if (isLoading) {
@@ -875,7 +934,7 @@ fun CreateTournamentDialog(
                         onDismiss()
                     },
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             }
         },
@@ -916,7 +975,7 @@ fun CreateTournamentDialog(
                 errorMessage = null
                 logoToCrop = null
             },
-            onError = { message -> errorMessage = "* $message" },
+            onError = { message -> errorMessage = UiText.of(Res.string.error_star_prefix, message) },
         )
     }
 

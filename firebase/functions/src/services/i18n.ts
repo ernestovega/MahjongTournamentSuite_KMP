@@ -1,0 +1,114 @@
+/** The languages of the emails. English is the base and the fallback. */
+export const LANGUAGES = ["en", "es"] as const;
+export type Language = typeof LANGUAGES[number];
+export const DEFAULT_LANGUAGE: Language = "en";
+
+/**
+ * Picks the best supported language of an `Accept-Language` header.
+ * The languages are tried by their quality value. An unknown or missing header gives English.
+ */
+export function parseAcceptLanguage(header: string | string[] | undefined | null): Language {
+  const value = Array.isArray(header) ? header.join(",") : header;
+  if (!value) return DEFAULT_LANGUAGE;
+  const candidates = value.split(",").map((part, index) => {
+    const [tag, ...params] = part.trim().split(";");
+    const q = params.map((param) => param.trim()).find((param) => param.startsWith("q="));
+    const quality = q ? Number(q.slice(2)) : 1;
+    return { tag: tag.trim().toLowerCase(), quality: Number.isFinite(quality) ? quality : 0, index };
+  }).filter((candidate) => candidate.tag.length > 0 && candidate.quality > 0)
+    .sort((a, b) => b.quality - a.quality || a.index - b.index);
+  for (const candidate of candidates) {
+    const primary = candidate.tag.split("-")[0];
+    const match = LANGUAGES.find((language) => language === primary);
+    if (match) return match;
+  }
+  return DEFAULT_LANGUAGE;
+}
+
+export type EmailTexts = {
+  appDescription: string;
+  invitationSubject: (tournamentName: string) => string;
+  invitationIntro: (tournamentName: string) => string;
+  invitationAction: string;
+  invitationOpen: (link: string) => string;
+  invitationExpiry: (days: number) => string;
+  registrationSubject: (tournamentName: string) => string;
+  registrationIntro: (tournamentName: string) => string;
+  registrationAction: string;
+  registrationOpen: (link: string) => string;
+};
+
+const english: EmailTexts = {
+  appDescription: "This is the player app of the tournament. "
+    + "After you sign in, you can see where you play in each round, the ranking after every round, "
+    + "and your own results. You can also see upcoming and past tournaments, your statistics, and more.",
+  invitationSubject: (name) => `Invitation to ${name}`,
+  invitationIntro: (name) => `You are invited to play in ${name}.`,
+  invitationAction: "Accept the invitation",
+  invitationOpen: (link) => `Open this link to accept: ${link}`,
+  invitationExpiry: (days) => `The link works once and expires in ${days} days.`,
+  registrationSubject: (name) => `You are registered in ${name}`,
+  registrationIntro: (name) => `You have been added to the tournament "${name}".`,
+  registrationAction: "Open the tournament",
+  registrationOpen: (link) => `Open the tournament: ${link}`,
+};
+
+const spanish: EmailTexts = {
+  appDescription: "Esta es la app del jugador del torneo. "
+    + "Después de iniciar sesión, puedes ver dónde juegas en cada ronda, la clasificación tras cada ronda "
+    + "y tus propios resultados. También puedes ver los torneos próximos y pasados, tus estadísticas y más.",
+  invitationSubject: (name) => `Invitación a ${name}`,
+  invitationIntro: (name) => `Te invitamos a jugar en ${name}.`,
+  invitationAction: "Aceptar la invitación",
+  invitationOpen: (link) => `Abre este enlace para aceptar: ${link}`,
+  invitationExpiry: (days) => `El enlace funciona una vez y caduca en ${days} días.`,
+  registrationSubject: (name) => `Estás inscrito en ${name}`,
+  registrationIntro: (name) => `Te han añadido al torneo «${name}».`,
+  registrationAction: "Abrir el torneo",
+  registrationOpen: (link) => `Abrir el torneo: ${link}`,
+};
+
+const TEXTS: Record<Language, EmailTexts> = { en: english, es: spanish };
+
+export function emailTexts(language: Language): EmailTexts {
+  return TEXTS[language];
+}
+
+function escapeHtml(value: string): string {
+  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+export type BuiltEmail = { subject: string; text: string; html: string };
+
+export function buildInvitationEmail(
+  language: Language,
+  params: { tournamentName: string; link: string; days: number },
+): BuiltEmail {
+  const t = emailTexts(language);
+  return {
+    subject: t.invitationSubject(params.tournamentName),
+    text: `${t.invitationIntro(params.tournamentName)}\n\n${t.appDescription}\n\n`
+      + `${t.invitationOpen(params.link)}\n${t.invitationExpiry(params.days)}`,
+    html: `<p>${escapeHtml(t.invitationIntro(params.tournamentName)).replace(
+      escapeHtml(params.tournamentName), `<strong>${escapeHtml(params.tournamentName)}</strong>`)}</p>`
+      + `<p>${t.appDescription}</p>`
+      + `<p><a href="${params.link}">${t.invitationAction}</a></p>`
+      + `<p>${t.invitationExpiry(params.days)}</p>`,
+  };
+}
+
+export function buildRegistrationEmail(
+  language: Language,
+  params: { tournamentName: string; link: string },
+): BuiltEmail {
+  const t = emailTexts(language);
+  return {
+    subject: t.registrationSubject(params.tournamentName),
+    text: `${t.registrationIntro(params.tournamentName)}\n\n${t.appDescription}\n\n${t.registrationOpen(params.link)}`,
+    html: `<p>${escapeHtml(t.registrationIntro(params.tournamentName)).replace(
+      escapeHtml(`"${params.tournamentName}"`), `<strong>${escapeHtml(params.tournamentName)}</strong>`)
+      .replace(escapeHtml(`«${params.tournamentName}»`), `<strong>${escapeHtml(params.tournamentName)}</strong>`)}</p>`
+      + `<p>${t.appDescription}</p>`
+      + `<p><a href="${params.link}">${t.registrationAction}</a></p>`,
+  };
+}

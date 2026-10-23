@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -14,9 +15,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.sync.TableChangeDetector
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlin.time.Clock
 import kotlin.time.Instant
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The tables of one tournament that a user edits, and the rules that keep them in step with the server.
@@ -38,7 +41,7 @@ internal class RoundEditorSync(
     var isLoading by mutableStateOf(true)
     /** True while the tables of the round load in the background. */
     var isLoadingRest by mutableStateOf(false)
-    var errorMessage by mutableStateOf<String?>(null)
+    var errorMessage by mutableStateOf<UiText?>(null)
     var allTables by mutableStateOf<List<TournamentTable>>(emptyList())
     var tableEditors by mutableStateOf<Map<Int, TableManagerEditorState>>(emptyMap())
     var playerNamesById by mutableStateOf<Map<Int, String>>(emptyMap())
@@ -58,21 +61,22 @@ internal class RoundEditorSync(
     val hasUnsavedChanges: Boolean get() = tableEditors.values.any { it.hasUnsavedChanges }
 
     /** Loads the names of the tournament players. Returns an error message, or null. */
-    suspend fun loadPlayerNames(force: Boolean): String? {
+    suspend fun loadPlayerNames(force: Boolean): UiText? {
         val basePlayers = when (val result = tablesPresenter.loadBasePlayers(force)) {
             is AppResult.Success -> result.value.associateBy { it.emaId }
             is AppResult.Failure -> emptyMap()
         }
         return when (val result = tablesPresenter.loadPlayers(tournamentId, force)) {
             is AppResult.Success -> {
-                playerNamesById = result.value.associate { slot ->
+                // A slot without a person has no entry. The screens show the number of the player then.
+                playerNamesById = result.value.mapNotNull { slot ->
                     val name = slot.assignedEmaId?.let(basePlayers::get)?.displayName ?: slot.nonMember?.displayName
-                    slot.id to (name ?: "Player ${slot.id}")
-                }
+                    name?.let { slot.id to it }
+                }.toMap()
                 null
             }
 
-            is AppResult.Failure -> result.error.toUiMessage()
+            is AppResult.Failure -> result.error.toUiText()
         }
     }
 
@@ -99,7 +103,7 @@ internal class RoundEditorSync(
         return when (val result = tablePresenter.loadTableWithHands(tournamentId, editor.roundId, editor.tableId, true)) {
             is AppResult.Success -> replaceWithServer(result.value.first, result.value.second, saveRejected = true)
             is AppResult.Failure -> {
-                errorMessage = result.error.toUiMessage()
+                errorMessage = result.error.toUiText()
                 null
             }
         }
@@ -140,7 +144,7 @@ internal class RoundEditorSync(
                         allSaved = false
                         val conflict = result.error as? AppError.Conflict
                         if (conflict == null) {
-                            errorMessage = result.error.toUiMessage()
+                            errorMessage = result.error.toUiText()
                             break
                         }
                         handleRejectedSave(editor, conflict)?.let(notices::add)

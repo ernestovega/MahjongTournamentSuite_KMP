@@ -58,6 +58,13 @@ kotlin {
         jvmTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(libs.compose.ui.test.junit4.desktop)
+            implementation(libs.kotlinx.coroutines.test)
         }
     }
+}
+
+// The UI tests look for English texts, so they run in English on every machine.
+tasks.withType<Test>().configureEach {
+    systemProperty("user.language", "en")
+    systemProperty("user.country", "US")
 }

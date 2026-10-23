@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.util
 
 import kotlinx.datetime.TimeZone
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -53,16 +54,16 @@ class DataRevisionTest {
     }
 
     @Test
-    fun theStatusLabelShowsTheRevisionAndTheTime() {
-        assertEquals("Results r42 · checked 15:30:12", dataStatusLabel(42, moment, zone = utc))
-        assertEquals("Results r42 · loaded 15:30:12", dataStatusLabel(42, moment, verb = "loaded", zone = utc))
+    fun theStatusLabelShowsTheRevisionAndTheTime() = runTest {
+        assertEquals("Results r42 · checked 15:30:12", dataStatus(42, moment, zone = utc).render())
+        assertEquals("Results r42 · loaded 15:30:12", dataStatus(42, moment, loaded = true, zone = utc).render())
     }
 
     @Test
-    fun theStatusLabelSkipsWhatIsUnknown() {
-        assertEquals("Results r42", dataStatusLabel(42, null, zone = utc))
-        assertEquals("checked 15:30:12", dataStatusLabel(null, moment, zone = utc))
-        assertEquals("", dataStatusLabel(null, null, zone = utc))
+    fun theStatusLabelSkipsWhatIsUnknown() = runTest {
+        assertEquals("Results r42", dataStatus(42, null, zone = utc).render())
+        assertEquals("checked 15:30:12", dataStatus(null, moment, zone = utc).render())
+        assertEquals("", dataStatus(null, null, zone = utc).render())
     }
 
     @Test

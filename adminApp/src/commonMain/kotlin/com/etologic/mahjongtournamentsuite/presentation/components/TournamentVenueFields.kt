@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +22,33 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import kotlinx.coroutines.delay
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.address
+import mahjongtournamentsuite.adminapp.generated.resources.city
+import mahjongtournamentsuite.adminapp.generated.resources.contact_email
+import mahjongtournamentsuite.adminapp.generated.resources.contact_email_invalid
+import mahjongtournamentsuite.adminapp.generated.resources.contact_email_required
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.google_maps_link
+import mahjongtournamentsuite.adminapp.generated.resources.https_maps_app_goo_gl
+import mahjongtournamentsuite.adminapp.generated.resources.link_all_found
+import mahjongtournamentsuite.adminapp.generated.resources.link_error_no_place
+import mahjongtournamentsuite.adminapp.generated.resources.link_error_not_maps
+import mahjongtournamentsuite.adminapp.generated.resources.link_error_not_opened
+import mahjongtournamentsuite.adminapp.generated.resources.link_hint
+import mahjongtournamentsuite.adminapp.generated.resources.link_missing_many
+import mahjongtournamentsuite.adminapp.generated.resources.link_missing_one
+import mahjongtournamentsuite.adminapp.generated.resources.link_reading
+import mahjongtournamentsuite.adminapp.generated.resources.organizers_example_com
+import mahjongtournamentsuite.adminapp.generated.resources.place_field_address
+import mahjongtournamentsuite.adminapp.generated.resources.place_field_city
+import mahjongtournamentsuite.adminapp.generated.resources.place_field_country
+import mahjongtournamentsuite.adminapp.generated.resources.place_field_name
+import mahjongtournamentsuite.adminapp.generated.resources.venue_error_required
+import mahjongtournamentsuite.adminapp.generated.resources.venue_name
+import org.jetbrains.compose.resources.stringResource
 
 /** The fields that a Google Maps link can fill. A field that the link filled is locked. */
 private enum class PlaceField { NAME, ADDRESS, COUNTRY, CITY }
@@ -29,8 +56,8 @@ private enum class PlaceField { NAME, ADDRESS, COUNTRY, CITY }
 private sealed interface LinkStatus {
     data object Idle : LinkStatus
     data object Reading : LinkStatus
-    data class Read(val message: String) : LinkStatus
-    data class Failed(val message: String) : LinkStatus
+    data class Read(val message: UiText) : LinkStatus
+    data class Failed(val message: UiText) : LinkStatus
 }
 
 /** Time after the last key press before the form reads the link. */
@@ -96,7 +123,7 @@ fun TournamentPlaceFields(
             return@LaunchedEffect
         }
         if (!isGoogleMapsLink(link)) {
-            status = LinkStatus.Failed("Use an https link from Google Maps. Or clear the link and type the place.")
+            status = LinkStatus.Failed(UiText.of(Res.string.link_error_not_maps))
             return@LaunchedEffect
         }
         status = LinkStatus.Reading
@@ -105,7 +132,7 @@ fun TournamentPlaceFields(
             is AppResult.Failure -> {
                 // A full link holds the place text, so the form can still read it without the server.
                 if (isShortMapLink(link)) {
-                    status = LinkStatus.Failed("The link could not be opened. Check it or type the place.")
+                    status = LinkStatus.Failed(UiText.of(Res.string.link_error_not_opened))
                     return@LaunchedEffect
                 }
                 ResolvedVenueLink(url = link, place = null)
@@ -122,7 +149,7 @@ fun TournamentPlaceFields(
             )
         } ?: parseMapLink(resolved.url, currentCountries)
         if (place == null) {
-            status = LinkStatus.Failed("The link has no place data. Use the link of a place, or type the place.")
+            status = LinkStatus.Failed(UiText.of(Res.string.link_error_no_place))
             return@LaunchedEffect
         }
 
@@ -136,10 +163,12 @@ fun TournamentPlaceFields(
         val missing = PlaceField.entries.filter { it !in found }
         status = LinkStatus.Read(
             if (missing.isEmpty()) {
-                "The venue name, the address, the country and the city come from the link."
+                UiText.of(Res.string.link_all_found)
             } else {
-                "The link has no " + missing.joinToString(", ") { it.label() } + ". Type " +
-                    (if (missing.size == 1) "it." else "them.")
+                UiText.of(
+                    if (missing.size == 1) Res.string.link_missing_one else Res.string.link_missing_many,
+                    UiText.Joined(missing.map { it.label() }, separator = ", "),
+                )
             },
         )
     }
@@ -148,16 +177,15 @@ fun TournamentPlaceFields(
         OutlinedTextField(
             value = venue.mapUrl,
             onValueChange = { onVenueChange(venue.copy(mapUrl = it.take(VENUE_MAP_URL_MAX_LENGTH))) },
-            label = { RequiredLabel("Google Maps link") },
-            placeholder = { Text("https://maps.app.goo.gl/...") },
+            label = { RequiredLabel(stringResource(Res.string.google_maps_link)) },
+            placeholder = { Text(stringResource(Res.string.https_maps_app_goo_gl)) },
             supportingText = {
                 Text(
                     when (val current = status) {
-                        LinkStatus.Idle -> venueError
-                            ?: "Add a link, or type the venue name and the address. The form reads the place from the link."
-                        LinkStatus.Reading -> "Reading the link…"
-                        is LinkStatus.Read -> current.message
-                        is LinkStatus.Failed -> current.message
+                        LinkStatus.Idle -> venueError ?: stringResource(Res.string.link_hint)
+                        LinkStatus.Reading -> stringResource(Res.string.link_reading)
+                        is LinkStatus.Read -> current.message.asString()
+                        is LinkStatus.Failed -> current.message.asString()
                     },
                 )
             },
@@ -169,7 +197,7 @@ fun TournamentPlaceFields(
         OutlinedTextField(
             value = venue.name,
             onValueChange = { onVenueChange(venue.copy(name = it.take(VENUE_NAME_MAX_LENGTH))) },
-            label = { Text("Venue name") },
+            label = { Text(stringResource(Res.string.venue_name)) },
             isError = venueError != null,
             singleLine = true,
             enabled = enabled && PlaceField.NAME !in locked,
@@ -178,7 +206,7 @@ fun TournamentPlaceFields(
         OutlinedTextField(
             value = venue.address,
             onValueChange = { onVenueChange(venue.copy(address = it.take(VENUE_ADDRESS_MAX_LENGTH))) },
-            label = { Text("Address") },
+            label = { Text(stringResource(Res.string.address)) },
             isError = venueError != null,
             enabled = enabled && PlaceField.ADDRESS !in locked,
             modifier = Modifier.fillMaxWidth(),
@@ -196,13 +224,13 @@ fun TournamentPlaceFields(
                 focusRequester = countryFocusRequester,
                 isError = countryError != null,
                 errorMessage = countryError,
-                label = "Country",
+                label = stringResource(Res.string.country),
                 required = true,
             )
             OutlinedTextField(
                 value = hostCity,
                 onValueChange = onHostCityChange,
-                label = { RequiredLabel("City") },
+                label = { RequiredLabel(stringResource(Res.string.city)) },
                 singleLine = true,
                 isError = cityError != null,
                 supportingText = cityError?.let { message -> { Text(message) } },
@@ -215,8 +243,8 @@ fun TournamentPlaceFields(
         OutlinedTextField(
             value = venue.contactEmail,
             onValueChange = { onVenueChange(venue.copy(contactEmail = it.take(CONTACT_EMAIL_MAX_LENGTH))) },
-            label = { RequiredLabel("Contact email") },
-            placeholder = { Text("organizers@example.com") },
+            label = { RequiredLabel(stringResource(Res.string.contact_email)) },
+            placeholder = { Text(stringResource(Res.string.organizers_example_com)) },
             isError = contactEmailError != null,
             supportingText = contactEmailError?.let { message -> { Text(message) } },
             singleLine = true,
@@ -230,26 +258,28 @@ private fun Modifier.optionalFocusRequester(focusRequester: FocusRequester?): Mo
     if (focusRequester != null) focusRequester(focusRequester) else this
 
 /** A venue needs a Google Maps link, or a name and an address that the user types. Returns null when it is valid. */
-fun venueRequiredError(venue: TournamentVenue): String? =
+fun venueRequiredError(venue: TournamentVenue): UiText? =
     if (venue.mapUrl.isBlank() && (venue.name.isBlank() || venue.address.isBlank())) {
-        "Add a Google Maps link, or type the venue name and the address."
+        UiText.of(Res.string.venue_error_required)
     } else {
         null
     }
 
 /** The contact email is required and must look like an email address. Returns null when it is valid. */
-fun contactEmailRequiredError(email: String): String? = when {
-    email.isBlank() -> "Contact email is required."
-    !Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$").matches(email.trim()) -> "Use a valid email address."
+fun contactEmailRequiredError(email: String): UiText? = when {
+    email.isBlank() -> UiText.of(Res.string.contact_email_required)
+    !Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$").matches(email.trim()) -> UiText.of(Res.string.contact_email_invalid)
     else -> null
 }
 
-private fun PlaceField.label(): String = when (this) {
-    PlaceField.NAME -> "venue name"
-    PlaceField.ADDRESS -> "address"
-    PlaceField.COUNTRY -> "country"
-    PlaceField.CITY -> "city"
-}
+private fun PlaceField.label(): UiText = UiText.of(
+    when (this) {
+        PlaceField.NAME -> Res.string.place_field_name
+        PlaceField.ADDRESS -> Res.string.place_field_address
+        PlaceField.COUNTRY -> Res.string.place_field_country
+        PlaceField.CITY -> Res.string.place_field_city
+    },
+)
 
 private const val VENUE_NAME_MAX_LENGTH = 120
 private const val VENUE_ADDRESS_MAX_LENGTH = 250

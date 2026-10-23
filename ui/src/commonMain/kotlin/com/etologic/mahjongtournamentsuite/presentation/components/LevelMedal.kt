@@ -48,6 +48,14 @@ import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.level_description
+import mahjongtournamentsuite.ui.generated.resources.level_end
+import mahjongtournamentsuite.ui.generated.resources.level_provisional_suffix
+import mahjongtournamentsuite.ui.generated.resources.level_skill_score_suffix
+import mahjongtournamentsuite.ui.generated.resources.skill_score_down
+import mahjongtournamentsuite.ui.generated.resources.skill_score_up
+import org.jetbrains.compose.resources.stringResource
 
 /** The colors of a level. [content] is the color of the icon and the text on the level color. */
 internal class LevelColors(val main: Color, val dark: Color, val content: Color)
@@ -187,6 +195,7 @@ private fun DrawScope.drawMedal(level: PlayerLevel, colors: LevelColors, laurel:
 /** The medal with a ribbon under it that has the name of the level. Use it where there is room. */
 @Composable
 fun LevelRibbonBadge(level: PlayerLevel, modifier: Modifier = Modifier, medalSize: Dp = 96.dp) {
+    val levelDescription = stringResource(Res.string.level_description, level.label())
     val colors = level.colors()
     val tapeHeight = 28.dp
     val overlap = 14.dp
@@ -203,7 +212,7 @@ fun LevelRibbonBadge(level: PlayerLevel, modifier: Modifier = Modifier, medalSiz
         }
     }
     Box(
-        modifier.semantics { contentDescription = "Level ${level.label}" },
+        modifier.semantics { contentDescription = levelDescription },
         contentAlignment = Alignment.TopCenter,
     ) {
         Box(
@@ -214,7 +223,7 @@ fun LevelRibbonBadge(level: PlayerLevel, modifier: Modifier = Modifier, medalSiz
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                level.label.uppercase(),
+                level.label().uppercase(),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 1.6.sp,
@@ -236,18 +245,17 @@ fun LevelMedalTag(
     modifier: Modifier = Modifier,
     size: Dp = 26.dp,
 ) {
-    val text = buildString {
-        append("Level ${level.label}")
-        if (skillScore != null) append(", skill score ${skillScore.roundToInt()}")
-        append(if (provisional) ". Provisional, it counts fewer than 100 hands in this tournament." else ".")
-    }
+    val levelDescription = stringResource(Res.string.level_description, level.label())
+    val skillScoreText = skillScore?.let { stringResource(Res.string.level_skill_score_suffix, it.roundToInt()) }.orEmpty()
+    val endText = stringResource(if (provisional) Res.string.level_provisional_suffix else Res.string.level_end)
+    val text = levelDescription + skillScoreText + endText
     TooltipBox(
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = { AppPlainTooltip { Text(text) } },
         state = rememberTooltipState(),
         modifier = modifier,
     ) {
-        LevelMedal(level, size, Modifier.semantics { contentDescription = "Level ${level.label}" })
+        LevelMedal(level, size, Modifier.semantics { contentDescription = levelDescription })
     }
 }
 
@@ -267,7 +275,7 @@ fun LevelChangeTag(change: Double, modifier: Modifier = Modifier) {
         if (!flat) {
             Icon(
                 if (change > 0) Icons.Default.ArrowDropUp else Icons.Default.ArrowDropDown,
-                contentDescription = if (change > 0) "Skill score up" else "Skill score down",
+                contentDescription = stringResource(if (change > 0) Res.string.skill_score_up else Res.string.skill_score_down),
                 modifier = Modifier.size(20.dp),
                 tint = color,
             )

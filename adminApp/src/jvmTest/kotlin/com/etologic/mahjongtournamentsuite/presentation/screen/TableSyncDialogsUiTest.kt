@@ -8,12 +8,13 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
 @OptIn(ExperimentalTestApi::class)
 class TableSyncDialogsUiTest {
-    private val lost = listOf(LostChange("Hand 3 · Hand score", "24"), LostChange("Hand 3 · Player winner id", "2"))
+    private val lost = listOf(LostChange(UiText.Plain("Hand 3 · Hand score"), UiText.Plain("24")), LostChange(UiText.Plain("Hand 3 · Player winner id"), UiText.Plain("2")))
 
     @Test
     fun updateDialogNamesTheTableAndListsEveryLostValue() = runComposeUiTest {

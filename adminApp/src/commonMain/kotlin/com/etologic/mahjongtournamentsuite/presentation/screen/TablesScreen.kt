@@ -1,12 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.Icons
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +7,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
@@ -32,30 +27,56 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionMenuItem
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.all_rounds
+import mahjongtournamentsuite.adminapp.generated.resources.delete_coming_soon
+import mahjongtournamentsuite.adminapp.generated.resources.done
+import mahjongtournamentsuite.adminapp.generated.resources.edit_coming_soon
+import mahjongtournamentsuite.adminapp.generated.resources.filter
+import mahjongtournamentsuite.adminapp.generated.resources.loading
+import mahjongtournamentsuite.adminapp.generated.resources.manual_results
+import mahjongtournamentsuite.adminapp.generated.resources.no
+import mahjongtournamentsuite.adminapp.generated.resources.no_tables_yet
+import mahjongtournamentsuite.adminapp.generated.resources.open
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.preview_tournament_2
+import mahjongtournamentsuite.adminapp.generated.resources.round
+import mahjongtournamentsuite.adminapp.generated.resources.round_n
+import mahjongtournamentsuite.adminapp.generated.resources.table
+import mahjongtournamentsuite.adminapp.generated.resources.tables
+import mahjongtournamentsuite.adminapp.generated.resources.the_tables_show_here_when_the
+import mahjongtournamentsuite.adminapp.generated.resources.yes
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -75,7 +96,7 @@ fun TablesScreen(
     val rounds = roundsByTournamentId[tournamentId].orEmpty()
 
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<UiText?>(null) }
 
     var selectedRoundId by remember { mutableStateOf<Int?>(null) }
     var isRoundMenuOpen by remember { mutableStateOf(false) }
@@ -115,7 +136,7 @@ fun TablesScreen(
             when (val playersResult = presenter.loadPlayers(tournamentId, force)) {
                 is AppResult.Success -> store.upsertPlayers(tournamentId, playersResult.value)
                 is AppResult.Failure -> {
-                    errorMessage = playersResult.error.toUiMessage()
+                    errorMessage = playersResult.error.toUiText()
                     isLoading = false
                     return@launch
                 }
@@ -124,7 +145,7 @@ fun TablesScreen(
             when (val roundsResult = presenter.loadRounds(tournamentId, force)) {
                 is AppResult.Success -> store.upsertRounds(tournamentId, roundsResult.value)
                 is AppResult.Failure -> {
-                    errorMessage = roundsResult.error.toUiMessage()
+                    errorMessage = roundsResult.error.toUiText()
                     isLoading = false
                     return@launch
                 }
@@ -141,7 +162,7 @@ fun TablesScreen(
 
             when (val tablesResult = presenter.loadTables(tournamentId, roundId, force)) {
                 is AppResult.Success -> store.upsertTables(tournamentId, roundId, tablesResult.value)
-                is AppResult.Failure -> errorMessage = tablesResult.error.toUiMessage()
+                is AppResult.Failure -> errorMessage = tablesResult.error.toUiText()
             }
 
             isLoading = false
@@ -161,7 +182,7 @@ fun TablesScreen(
     }
 
     AppScaffold(
-        title = "Tables",
+        title = stringResource(Res.string.tables),
         subtitle = tournamentId,
         titleAction = {
             TournamentEditTitleAction(
@@ -190,14 +211,14 @@ fun TablesScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             SectionCard(
-                title = "Tables",
-                subtitle = if (selectedRoundId == null) "All rounds" else "Round $selectedRoundId",
+                title = stringResource(Res.string.tables),
+                subtitle = if (selectedRoundId == null) stringResource(Res.string.all_rounds) else stringResource(Res.string.round_n, selectedRoundId ?: 0),
                 actions = {
                     AppTextButton(
                         enabled = !isLoading,
                         onClick = { isRoundMenuOpen = true },
                     ) {
-                        Text("Filter")
+                        Text(stringResource(Res.string.filter))
                     }
                 },
                 content = {
@@ -206,7 +227,7 @@ fun TablesScreen(
                         onDismissRequest = { isRoundMenuOpen = false },
                     ) {
                         DropdownMenuItem(
-                            text = { Text("All rounds") },
+                            text = { Text(stringResource(Res.string.all_rounds)) },
                             onClick = {
                                 selectedRoundId = null
                                 isRoundMenuOpen = false
@@ -215,7 +236,7 @@ fun TablesScreen(
                         )
                         rounds.forEach { round ->
                             DropdownMenuItem(
-                                text = { Text("Round ${round.roundId}") },
+                                text = { Text(stringResource(Res.string.round_n, round.roundId)) },
                                 onClick = {
                                     selectedRoundId = round.roundId
                                     isRoundMenuOpen = false
@@ -227,14 +248,14 @@ fun TablesScreen(
 
                     when {
                         isLoading -> {
-                            Text("Loading…")
+                            Text(stringResource(Res.string.loading))
                         }
 
                         tables.isEmpty() -> {
                             AppEmptyState(
                                 icon = Icons.Default.People,
-                                title = "No tables yet",
-                                message = "The tables show here when the round is drawn.",
+                                title = stringResource(Res.string.no_tables_yet),
+                                message = stringResource(Res.string.the_tables_show_here_when_the),
                                 compact = true,
                             )
                         }
@@ -247,31 +268,31 @@ fun TablesScreen(
                                 item {
                                     DataTableHeaderRow {
                                         Text(
-                                            text = "Round",
+                                            text = stringResource(Res.string.round),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.weight(0.7f),
                                         )
                                         Text(
-                                            text = "Table",
+                                            text = stringResource(Res.string.table),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.weight(0.7f),
                                         )
                                         Text(
-                                            text = "Players",
+                                            text = stringResource(Res.string.players),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.weight(2.8f),
                                         )
                                         Text(
-                                            text = "Done",
+                                            text = stringResource(Res.string.done),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.weight(0.9f),
                                         )
                                         Text(
-                                            text = "Manual Results",
+                                            text = stringResource(Res.string.manual_results),
                                             style = MaterialTheme.typography.labelLarge,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.weight(0.9f),
@@ -334,13 +355,13 @@ fun TablesScreen(
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                         Text(
-                                            text = if (table.isCompleted) "Yes" else "No",
+                                            text = stringResource(if (table.isCompleted) Res.string.yes else Res.string.no),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.weight(0.9f),
                                         )
                                         Text(
-                                            text = if (table.useTotalsOnly) "Yes" else "No",
+                                            text = stringResource(if (table.useTotalsOnly) Res.string.yes else Res.string.no),
                                             style = MaterialTheme.typography.bodyMedium,
                                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             modifier = Modifier.weight(0.9f),
@@ -349,7 +370,7 @@ fun TablesScreen(
                                             enabled = !isLoading,
                                             items = listOf(
                                                 RowActionMenuItem(
-                                                    label = "Open",
+                                                    label = stringResource(Res.string.open),
                                                     onClick = {
                                                         lastFocusedTableKey = "${table.roundId}_${table.tableId}"
                                                         lastFocusedTableControl = "menu"
@@ -358,8 +379,8 @@ fun TablesScreen(
                                                         )
                                                     },
                                                 ),
-                                                RowActionMenuItem(label = "Edit (coming soon)", enabled = false, onClick = {}),
-                                                RowActionMenuItem(label = "Delete (coming soon)", enabled = false, onClick = {}),
+                                                RowActionMenuItem(label = stringResource(Res.string.edit_coming_soon), enabled = false, onClick = {}),
+                                                RowActionMenuItem(label = stringResource(Res.string.delete_coming_soon), enabled = false, onClick = {}),
                                             ),
                                             modifier = Modifier.width(44.dp),
                                             focusRequester = tableActionFocusRequesters[index],
@@ -381,8 +402,8 @@ fun TablesScreen(
 private fun TablesScreenPreview() {
     MtsTheme(useDarkTheme = false) {
         AppScaffold(
-            title = "Tables",
-            subtitle = "preview-tournament",
+            title = stringResource(Res.string.tables),
+            subtitle = stringResource(Res.string.preview_tournament_2),
             isLoading = false,
         ) {
             ScreenColumn(
@@ -391,11 +412,11 @@ private fun TablesScreenPreview() {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 SectionCard(
-                    title = "Tables",
-                    subtitle = "All rounds",
+                    title = stringResource(Res.string.tables),
+                    subtitle = stringResource(Res.string.all_rounds),
                     actions = {
                         AppTextButton(enabled = true, onClick = {}) {
-                            Text("Filter")
+                            Text(stringResource(Res.string.filter))
                         }
                     },
                     content = {
@@ -406,31 +427,31 @@ private fun TablesScreenPreview() {
                             item {
                                 DataTableHeaderRow {
                                     Text(
-                                        text = "Round",
+                                        text = stringResource(Res.string.round),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(0.7f),
                                     )
                                     Text(
-                                        text = "Table",
+                                        text = stringResource(Res.string.table),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(0.7f),
                                     )
                                     Text(
-                                        text = "Players",
+                                        text = stringResource(Res.string.players),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(2.8f),
                                     )
                                     Text(
-                                        text = "Done",
+                                        text = stringResource(Res.string.done),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(0.9f),
                                     )
                                     Text(
-                                        text = "Manual Results",
+                                        text = stringResource(Res.string.manual_results),
                                         style = MaterialTheme.typography.labelLarge,
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.weight(0.9f),
@@ -504,13 +525,13 @@ private fun PreviewTableRow(
             overflow = TextOverflow.Ellipsis,
         )
         Text(
-            text = if (done) "Yes" else "No",
+            text = stringResource(if (done) Res.string.yes else Res.string.no),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(0.9f),
         )
         Text(
-            text = if (manualResults) "Yes" else "No",
+            text = stringResource(if (manualResults) Res.string.yes else Res.string.no),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(0.9f),
@@ -518,9 +539,9 @@ private fun PreviewTableRow(
         RowActionsMenu(
             enabled = true,
             items = listOf(
-                RowActionMenuItem(label = "Open", onClick = {}),
-                RowActionMenuItem(label = "Edit (coming soon)", enabled = false, onClick = {}),
-                RowActionMenuItem(label = "Delete (coming soon)", enabled = false, onClick = {}),
+                RowActionMenuItem(label = stringResource(Res.string.open), onClick = {}),
+                RowActionMenuItem(label = stringResource(Res.string.edit_coming_soon), enabled = false, onClick = {}),
+                RowActionMenuItem(label = stringResource(Res.string.delete_coming_soon), enabled = false, onClick = {}),
             ),
             modifier = Modifier.width(44.dp),
         )

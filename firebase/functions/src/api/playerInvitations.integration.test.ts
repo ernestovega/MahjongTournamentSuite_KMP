@@ -70,6 +70,36 @@ describe("player invitations", () => {
     return { status: response.status, outcome: outcomeOf(response, playerId)?.outcome, message: outcomeOf(response, playerId)?.message };
   };
 
+  describe("language of the emails", () => {
+    before(async () => {
+      for (const id of [11, 12, 13]) await seedSlot(id, `EMA-${randomUUID()}`);
+    });
+
+    const inviteWith = async (playerId: number, email: string, acceptLanguage?: string) => {
+      const response = await server.request("POST", `/tournaments/${tournamentId}/player-accounts/send`, {
+        token: editor.token,
+        body: { players: [{ playerId, email }] },
+        headers: acceptLanguage ? { "accept-language": acceptLanguage } : undefined,
+      });
+      assert.equal(response.status, 200);
+      return sent.filter((mail) => mail.to === email).pop()!;
+    };
+
+    it("writes the invitation in Spanish when the app asks for Spanish", async () => {
+      const mail = await inviteWith(11, `${randomUUID()}@example.test`, "es-ES,es;q=0.9,en;q=0.5");
+      assert.match(mail.subject, /^Invitación a /);
+      assert.match(mail.text, /Abre este enlace para aceptar/);
+      assert.match(mail.html, /Aceptar la invitación/);
+    });
+
+    it("writes the invitation in English without a header or for another language", async () => {
+      const withoutHeader = await inviteWith(12, `${randomUUID()}@example.test`);
+      assert.match(withoutHeader.subject, /^Invitation to /);
+      const french = await inviteWith(13, `${randomUUID()}@example.test`, "fr-FR");
+      assert.match(french.subject, /^Invitation to /);
+    });
+  });
+
   it("refuses a slot without an EMA id", async () => {
     assert.equal((await invite(3, `${randomUUID()}@example.test`)).outcome, "FAILED");
   });

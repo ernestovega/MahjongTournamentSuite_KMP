@@ -11,6 +11,9 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.mahjongtournamentsuite
+import org.jetbrains.compose.resources.stringResource
 
 fun main() = application {
     var isMainWindowOpen by remember { mutableStateOf(true) }
@@ -24,7 +27,7 @@ fun main() = application {
     if (isMainWindowOpen) {
         Window(
             onCloseRequest = { isMainWindowOpen = false },
-            title = "MahjongTournamentSuite",
+            title = stringResource(Res.string.mahjongtournamentsuite),
             state = state,
         ) {
             DisposableEffect(Unit) {

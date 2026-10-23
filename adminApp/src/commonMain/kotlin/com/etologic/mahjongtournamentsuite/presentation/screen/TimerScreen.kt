@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -53,15 +52,16 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
@@ -69,6 +69,20 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberScreenThemeController
 import kotlinx.coroutines.delay
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.decrease_round
+import mahjongtournamentsuite.adminapp.generated.resources.enter_remaining_time_in_minutes
+import mahjongtournamentsuite.adminapp.generated.resources.increase_round
+import mahjongtournamentsuite.adminapp.generated.resources.remaining_time
+import mahjongtournamentsuite.adminapp.generated.resources.reset_timer
+import mahjongtournamentsuite.adminapp.generated.resources.round_n
+import mahjongtournamentsuite.adminapp.generated.resources.set
+import mahjongtournamentsuite.adminapp.generated.resources.set_time
+import mahjongtournamentsuite.adminapp.generated.resources.time_is_up
+import mahjongtournamentsuite.adminapp.generated.resources.timer_pause
+import mahjongtournamentsuite.adminapp.generated.resources.timer_start
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun TimerStandaloneScreen(
@@ -180,7 +194,7 @@ private fun TimerContent(
                     ),
                     onClick = { applyRemainingTime() },
                 ) {
-                    Text("Set")
+                    Text(stringResource(Res.string.set))
                 }
             },
             dismissButton = {
@@ -192,13 +206,13 @@ private fun TimerContent(
                         next = timeFieldFocusRequester,
                     ),
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             },
-            title = { Text("Remaining time") },
+            title = { Text(stringResource(Res.string.remaining_time)) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("Enter remaining time in minutes:")
+                    Text(stringResource(Res.string.enter_remaining_time_in_minutes))
                     OutlinedTextField(
                         value = minutesValue,
                         onValueChange = { typed ->
@@ -283,14 +297,14 @@ private fun TimerContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Remove,
-                        contentDescription = "Decrease round",
+                        contentDescription = stringResource(Res.string.decrease_round),
                         modifier = Modifier.size(18.dp),
                     )
                 }
             }
             if (roundNum > 0) {
                 Text(
-                    text = "Round $roundNum",
+                    text = stringResource(Res.string.round_n, roundNum),
                     style = MaterialTheme.typography.headlineLarge.copy(fontSize = 64.sp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
@@ -310,7 +324,7 @@ private fun TimerContent(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Increase round",
+                        contentDescription = stringResource(Res.string.increase_round),
                         modifier = Modifier.size(18.dp),
                     )
                 }
@@ -377,7 +391,7 @@ private fun TimerContent(
         ) {
             if (hasFinished) {
                 Text(
-                    text = "Time is up.",
+                    text = stringResource(Res.string.time_is_up),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
                 )
@@ -405,7 +419,7 @@ private fun TimerContent(
                 ) {
                     Icon(
                         imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = if (isRunning) "Pause timer" else "Start timer",
+                        contentDescription = stringResource(if (isRunning) Res.string.timer_pause else Res.string.timer_start),
                         modifier = Modifier.size(34.dp),
                     )
                 }
@@ -429,7 +443,7 @@ private fun TimerContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
-                                contentDescription = "Reset timer",
+                                contentDescription = stringResource(Res.string.reset_timer),
                             )
                         }
                         FocusedIconButton(
@@ -449,7 +463,7 @@ private fun TimerContent(
                         ) {
                             Icon(
                                 imageVector = Icons.Default.AccessTime,
-                                contentDescription = "Set time",
+                                contentDescription = stringResource(Res.string.set_time),
                             )
                         }
                         FocusedIconButton(

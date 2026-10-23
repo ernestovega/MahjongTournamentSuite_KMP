@@ -1,5 +1,12 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.hand_chicken_maximum
+import mahjongtournamentsuite.adminapp.generated.resources.hand_invalid
+import mahjongtournamentsuite.adminapp.generated.resources.hand_loser_without_winner
+import mahjongtournamentsuite.adminapp.generated.resources.hand_missing_fields
+import mahjongtournamentsuite.adminapp.generated.resources.hand_score_minimum
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
@@ -425,8 +432,8 @@ class TableManagerEditorStateTest {
 
         assertTrue(hand.showValidationError)
         assertTrue(hand.isResultSelectionInvalid)
-        assertEquals("This hand is invalid and cannot be marked as done or completed.", hand.validationErrorMessage)
-        assertEquals(listOf("The minimum score to win a hand is 8."), hand.validationDetailMessages)
+        assertEquals(UiText.of(Res.string.hand_invalid), hand.validationErrorMessage)
+        assertEquals(listOf(UiText.of(Res.string.hand_score_minimum)), hand.validationDetailMessages)
     }
 
     @Test
@@ -437,8 +444,8 @@ class TableManagerEditorStateTest {
 
         assertTrue(hand.showValidationError)
         assertTrue(hand.isResultSelectionInvalid)
-        assertEquals("This hand is invalid and cannot be marked as done or completed.", hand.validationErrorMessage)
-        assertEquals(listOf("A chicken hand cannot score more than 12 points."), hand.validationDetailMessages)
+        assertEquals(UiText.of(Res.string.hand_invalid), hand.validationErrorMessage)
+        assertEquals(listOf(UiText.of(Res.string.hand_chicken_maximum)), hand.validationDetailMessages)
     }
 
     @Test
@@ -450,8 +457,8 @@ class TableManagerEditorStateTest {
 
         assertTrue(hand.showValidationError)
         assertTrue(hand.isResultSelectionInvalid)
-        assertEquals("This hand is invalid and cannot be marked as done or completed.", hand.validationErrorMessage)
-        assertEquals(listOf("A chicken hand cannot score more than 12 points."), hand.validationDetailMessages)
+        assertEquals(UiText.of(Res.string.hand_invalid), hand.validationErrorMessage)
+        assertEquals(listOf(UiText.of(Res.string.hand_chicken_maximum)), hand.validationDetailMessages)
     }
 
     @Test
@@ -461,8 +468,8 @@ class TableManagerEditorStateTest {
         assertTrue(hand.isResultSelectionInvalid)
         assertEquals(
             listOf(
-                "There are missing fields.",
-                "A loser cannot be selected without a winner.",
+                UiText.of(Res.string.hand_missing_fields),
+                UiText.of(Res.string.hand_loser_without_winner),
             ),
             hand.validationDetailMessages,
         )

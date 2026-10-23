@@ -1,48 +1,47 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.material.icons.filled.PersonSearch
-import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
+import org.jetbrains.compose.resources.pluralStringResource
+import mahjongtournamentsuite.adminapp.generated.resources.country_players_count
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
-import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -65,45 +64,91 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
-import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
-import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
-import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformScrollbarThickness
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformScrollbarThickness
-import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
+import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.add_player
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.choose_a_player_in_the_list
+import mahjongtournamentsuite.adminapp.generated.resources.clear_search
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.ema_number
+import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
+import mahjongtournamentsuite.adminapp.generated.resources.filter_by_country
+import mahjongtournamentsuite.adminapp.generated.resources.first_name
+import mahjongtournamentsuite.adminapp.generated.resources.last_name
+import mahjongtournamentsuite.adminapp.generated.resources.name
+import mahjongtournamentsuite.adminapp.generated.resources.new_player
+import mahjongtournamentsuite.adminapp.generated.resources.no_player_photo
+import mahjongtournamentsuite.adminapp.generated.resources.no_player_selected
+import mahjongtournamentsuite.adminapp.generated.resources.only_admins_can_edit_the_player
+import mahjongtournamentsuite.adminapp.generated.resources.photo
+import mahjongtournamentsuite.adminapp.generated.resources.photo_choose
+import mahjongtournamentsuite.adminapp.generated.resources.photo_choose_new
+import mahjongtournamentsuite.adminapp.generated.resources.photo_error_size
+import mahjongtournamentsuite.adminapp.generated.resources.photo_error_type
+import mahjongtournamentsuite.adminapp.generated.resources.photo_of
+import mahjongtournamentsuite.adminapp.generated.resources.player_base
+import mahjongtournamentsuite.adminapp.generated.resources.player_base_summary
+import mahjongtournamentsuite.adminapp.generated.resources.player_details
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_country
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_ema_digits
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_ema_exists
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_ema_required
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_first_name
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_last_name
+import mahjongtournamentsuite.adminapp.generated.resources.player_error_required_fields
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.remove_country_filter
+import mahjongtournamentsuite.adminapp.generated.resources.save
+import mahjongtournamentsuite.adminapp.generated.resources.save_changes_to
+import mahjongtournamentsuite.adminapp.generated.resources.save_player_changes
+import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_or_ema_number
+import mahjongtournamentsuite.adminapp.generated.resources.this_player
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import coil3.compose.AsyncImage
 
 /** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun PlayerBaseScreen(navController: NavHostController) {
+    val countryNameOf = rememberCountryNames()
     val presenter = koinInject<PlayerBasePresenter>()
     val store = koinInject<AppMemoryStore>()
     val scope = rememberCoroutineScope()
@@ -126,14 +171,14 @@ fun PlayerBaseScreen(navController: NavHostController) {
     var newLastName by remember { mutableStateOf("") }
     var newCountry by remember { mutableStateOf("") }
     var newPhoto by remember { mutableStateOf<SelectedImage?>(null) }
-    var newPlayerError by remember { mutableStateOf<String?>(null) }
+    var newPlayerError by remember { mutableStateOf<UiText?>(null) }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
     val searchFocusRequester = remember { FocusRequester() }
     val saveFocusRequester = remember { FocusRequester() }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
     val selected = players.firstOrNull { it.emaId == selectedEmaId }
     val hasPlayerChanges = selected?.let { player ->
         emaId.trim() != player.emaId ||
@@ -230,24 +275,24 @@ fun PlayerBaseScreen(navController: NavHostController) {
         loading = true
         when (val result = presenter.loadPlayers(force)) {
             is AppResult.Success -> store.upsertBasePlayers(result.value)
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         loading = false
     }
     fun save() = scope.launch {
         val currentPlayer = selected ?: return@launch
         if (firstName.isBlank() || lastName.isBlank() || !country.trim().matches(Regex("^[A-Za-z]{3}$"))) {
-            error = "First name, last name, and a three-letter EMA country code are required."
+            error = UiText.of(Res.string.player_error_required_fields)
             return@launch
         }
         val rawEmaId = emaId.trim()
         if (!rawEmaId.matches(Regex("\\d{1,8}"))) {
-            error = "EMA number must contain 1 to 8 digits."
+            error = UiText.of(Res.string.player_error_ema_digits)
             return@launch
         }
         val normalizedEmaId = rawEmaId.padStart(8, '0')
         if (players.any { it.emaId == normalizedEmaId && it.emaId != currentPlayer.emaId }) {
-            error = "This EMA number already exists."
+            error = UiText.of(Res.string.player_error_ema_exists)
             return@launch
         }
         saving = true
@@ -262,7 +307,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         val savedPlayer = when (val result = presenter.updatePlayer(currentPlayer.emaId, player)) {
             is AppResult.Success -> player
             is AppResult.Failure -> {
-                error = result.error.toUiMessage()
+                error = result.error.toUiText()
                 saving = false
                 return@launch
             }
@@ -274,7 +319,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     upsertPlayerLocally(currentPlayer.emaId, savedPlayer)
                     select(savedPlayer)
                     pendingPhoto = photo
-                    error = result.error.toUiMessage()
+                    error = result.error.toUiText()
                     saving = false
                     return@launch
                 }
@@ -285,7 +330,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         select(finalPlayer)
         when (val result = presenter.loadPlayers(force = true)) {
             is AppResult.Success -> store.upsertBasePlayers(result.value)
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
         saving = false
     }
@@ -296,12 +341,12 @@ fun PlayerBaseScreen(navController: NavHostController) {
         val normalizedLastName = newLastName.trim()
         val normalizedCountry = newCountry.trim().uppercase()
         newPlayerError = when {
-            rawEmaId.isEmpty() -> "EMA number is required."
-            !rawEmaId.matches(Regex("\\d{1,8}")) -> "EMA number must contain 1 to 8 digits."
-            players.any { it.emaId == normalizedEmaId } -> "This EMA number already exists."
-            normalizedFirstName.isEmpty() -> "First name is required."
-            normalizedLastName.isEmpty() -> "Last name is required."
-            !normalizedCountry.matches(Regex("^[A-Za-z]{3}$")) -> "Country must use a three-letter EMA code."
+            rawEmaId.isEmpty() -> UiText.of(Res.string.player_error_ema_required)
+            !rawEmaId.matches(Regex("\\d{1,8}")) -> UiText.of(Res.string.player_error_ema_digits)
+            players.any { it.emaId == normalizedEmaId } -> UiText.of(Res.string.player_error_ema_exists)
+            normalizedFirstName.isEmpty() -> UiText.of(Res.string.player_error_first_name)
+            normalizedLastName.isEmpty() -> UiText.of(Res.string.player_error_last_name)
+            !normalizedCountry.matches(Regex("^[A-Za-z]{3}$")) -> UiText.of(Res.string.player_error_country)
             else -> null
         }
         if (newPlayerError != null) return@launch
@@ -319,7 +364,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         ) {
             is AppResult.Success -> result.value
             is AppResult.Failure -> {
-                newPlayerError = result.error.toUiMessage()
+                newPlayerError = result.error.toUiText()
                 saving = false
                 return@launch
             }
@@ -332,7 +377,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     showNewPlayerDialog = false
                     select(createdPlayer)
                     pendingPhoto = photo
-                    error = result.error.toUiMessage()
+                    error = result.error.toUiText()
                     saving = false
                     return@launch
                 }
@@ -369,7 +414,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     LaunchedEffect(Unit) {
         when (val result = presenter.loadCountries()) {
             is AppResult.Success -> countries = result.value
-            is AppResult.Failure -> error = result.error.toUiMessage()
+            is AppResult.Failure -> error = result.error.toUiText()
         }
     }
     LaunchedEffect(showSaveConfirmation, restoreSaveFocus) {
@@ -396,9 +441,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     restoreSaveFocus = true
                 }
             },
-            title = { Text("Save player changes") },
+            title = { Text(stringResource(Res.string.save_player_changes)) },
             text = {
-                Text("Save the changes to ${selected?.displayName ?: "this player"}?")
+                Text(stringResource(Res.string.save_changes_to, selected?.displayName ?: stringResource(Res.string.this_player)))
             },
             confirmButton = {
                 Button(
@@ -417,7 +462,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         contentColor = MaterialTheme.colorScheme.onTertiary,
                     ),
                 ) {
-                    Text("Save")
+                    Text(stringResource(Res.string.save))
                 }
             },
             dismissButton = {
@@ -433,7 +478,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         next = confirmFocusRequester,
                     ),
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
             },
         )
@@ -450,7 +495,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!saving) showNewPlayerDialog = false },
-            title = { Text("New player") },
+            title = { Text(stringResource(Res.string.new_player)) },
             text = {
                 val newPlayerScrollState = rememberScrollState()
                 Box(modifier = Modifier.heightIn(max = 620.dp)) {
@@ -465,28 +510,28 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     OutlinedTextField(
                         value = newEmaId,
                         onValueChange = { newEmaId = it.toDigitsInput(8); newPlayerError = null },
-                        label = { Text("EMA number") },
+                        label = { Text(stringResource(Res.string.ema_number)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().focusRequester(newEmaFocusRequester),
                     )
                     OutlinedTextField(
                         value = newFirstName,
                         onValueChange = { newFirstName = it; newPlayerError = null },
-                        label = { Text("First name") },
+                        label = { Text(stringResource(Res.string.first_name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     OutlinedTextField(
                         value = newLastName,
                         onValueChange = { newLastName = it; newPlayerError = null },
-                        label = { Text("Last name") },
+                        label = { Text(stringResource(Res.string.last_name)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
                     EmaCountryDropdown(
                         selectedCode = newCountry,
                         onCountrySelected = { newCountry = it; newPlayerError = null },
-                        label = "Country",
+                        label = stringResource(Res.string.country),
                         modifier = Modifier.fillMaxWidth(),
                     )
                     PlayerPhotoPreview(
@@ -496,7 +541,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         maxHeight = 220.dp,
                     )
                     Button(enabled = !saving, onClick = newPlayerImagePicker::launch) {
-                        Text(if (newPhoto == null) "Choose photo" else "Choose new photo")
+                        Text(stringResource(if (newPhoto == null) Res.string.photo_choose else Res.string.photo_choose_new))
                     }
                     newPhoto?.let {
                         Text(
@@ -516,16 +561,16 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 }
             },
             confirmButton = {
-                Button(enabled = !saving, onClick = ::createPlayer) { Text("Add player") }
+                Button(enabled = !saving, onClick = ::createPlayer) { Text(stringResource(Res.string.add_player)) }
             },
             dismissButton = {
-                TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { Text("Cancel") }
+                TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { Text(stringResource(Res.string.cancel)) }
             },
         )
     }
 
     AppScaffold(
-        title = "Players",
+        title = stringResource(Res.string.players),
         isLoading = loading || saving,
         showBackgroundLogo = loading && players.isEmpty(),
         autoFocusFirst = false,
@@ -546,7 +591,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text("Search by name or EMA number") },
+                label = { Text(stringResource(Res.string.search_by_name_or_ema_number)) },
                 singleLine = true,
                 trailingIcon = if (searchQuery.isNotEmpty()) {
                     {
@@ -556,7 +601,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 searchFocusRequester.requestFocus()
                             },
                         ) {
-                            Icon(Icons.Default.Close, contentDescription = "Clear search")
+                            Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search))
                         }
                     }
                 } else {
@@ -567,7 +612,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             if (existingPlayerCountryCodes.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = "Filter by country",
+                        text = stringResource(Res.string.filter_by_country),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -576,24 +621,25 @@ fun PlayerBaseScreen(navController: NavHostController) {
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         existingPlayerCountryCodes.forEach { code ->
-                            val countryName = countries
-                                .firstOrNull { it.code.equals(code, ignoreCase = true) }
-                                ?.name
-                                ?: code
+                            val countryName = countryNameOf(
+                                code,
+                                countries.firstOrNull { it.code.equals(code, ignoreCase = true) }?.name ?: code,
+                            )
                             val countryPlayerCount = players.count {
                                 it.country.trim().equals(code, ignoreCase = true)
                             }
                             val isSelected = code in selectedCountryCodes
+                            val filterDescription = stringResource(
+                                if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
+                                countryName,
+                            )
                             TooltipBox(
                                 positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
                                     TooltipAnchorPosition.Above,
                                 ),
                                 tooltip = {
                                     AppPlainTooltip {
-                                        Text(
-                                            "$countryName · $countryPlayerCount " +
-                                                if (countryPlayerCount == 1) "player" else "players",
-                                        )
+                                        Text(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount))
                                     }
                                 },
                                 state = rememberTooltipState(),
@@ -607,11 +653,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         }
                                     },
                                     buttonModifier = Modifier.semantics {
-                                        contentDescription = if (isSelected) {
-                                            "Remove $countryName country filter"
-                                        } else {
-                                            "Filter by $countryName"
-                                        }
+                                        contentDescription = filterDescription
                                     },
                                     shape = CircleShape,
                                     colors = if (isSelected) {
@@ -650,15 +692,15 @@ fun PlayerBaseScreen(navController: NavHostController) {
             ) {
                 SectionCard(
                     modifier = Modifier.weight(1.7f).fillMaxHeight(),
-                    title = "Player base",
-                    subtitle = "${filteredPlayers.size} players · $filteredCountryCount countries",
+                    title = stringResource(Res.string.player_base),
+                    subtitle = stringResource(Res.string.player_base_summary, filteredPlayers.size, filteredCountryCount),
                 ) {
                     Column(Modifier.fillMaxWidth().weight(1f)) {
                         DataTableHeaderRow {
-                            PlayerTableHeader("Photo", Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
-                            PlayerTableHeader("Country", Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
-                            PlayerTableHeader("Name", Modifier.weight(1f))
-                            PlayerTableHeader("EMA number", Modifier.width(PlayerEmaColumnWidth))
+                            PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
+                            PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
+                            PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
+                            PlayerTableHeader(stringResource(Res.string.ema_number), Modifier.width(PlayerEmaColumnWidth))
                         }
                         DataTableDivider()
                         LazyColumnWithScrollbar(
@@ -686,7 +728,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         } else {
                                             AsyncImage(
                                                 model = player.photoUrl,
-                                                contentDescription = "Photo of ${player.displayName}",
+                                                contentDescription = stringResource(Res.string.photo_of, player.displayName),
                                                 contentScale = ContentScale.Crop,
                                                 modifier = Modifier.width(PlayerPhotoSize).height(PlayerPhotoSize),
                                             )
@@ -712,13 +754,13 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 }
                 SectionCard(
                     modifier = Modifier.weight(0.8f).fillMaxHeight(),
-                    title = "Player details",
+                    title = stringResource(Res.string.player_details),
                 ) {
                     if (selected == null) {
                         AppEmptyState(
                             icon = Icons.Default.PersonSearch,
-                            title = "No player selected",
-                            message = "Choose a player in the list to see the details.",
+                            title = stringResource(Res.string.no_player_selected),
+                            message = stringResource(Res.string.choose_a_player_in_the_list),
                             compact = true,
                         )
                     } else {
@@ -734,17 +776,17 @@ fun PlayerBaseScreen(navController: NavHostController) {
                             OutlinedTextField(
                                 value = emaId,
                                 onValueChange = { emaId = it.toDigitsInput(8) },
-                                label = { Text("EMA number") },
+                                label = { Text(stringResource(Res.string.ema_number)) },
                                 enabled = canEditEmaNumber && !saving,
                                 modifier = Modifier.fillMaxWidth(),
                             )
-                            OutlinedTextField(firstName, { firstName = it }, label = { Text("First name") }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                            OutlinedTextField(lastName, { lastName = it }, label = { Text("Last name") }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                            OutlinedTextField(firstName, { firstName = it }, label = { Text(stringResource(Res.string.first_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                            OutlinedTextField(lastName, { lastName = it }, label = { Text(stringResource(Res.string.last_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
                             EmaCountryDropdown(
                                 selectedCode = country,
                                 onCountrySelected = { country = it },
                                 enabled = canEdit,
-                                label = "Country",
+                                label = stringResource(Res.string.country),
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
@@ -779,11 +821,11 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                             contentColor = MaterialTheme.colorScheme.onTertiary,
                                         ),
                                     ) {
-                                        Text("Save")
+                                        Text(stringResource(Res.string.save))
                                     }
                                 }
                             } else if (!canEdit) {
-                                Text("Only admins can edit the player base.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             }
                             PlatformVerticalScrollbar(
@@ -834,7 +876,7 @@ private fun PlayerPhotoPlaceholder(size: androidx.compose.ui.unit.Dp) {
     ) {
         Icon(
             imageVector = Icons.Default.Person,
-            contentDescription = "No player photo",
+            contentDescription = stringResource(Res.string.no_player_photo),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(size * 0.62f),
         )
@@ -857,7 +899,7 @@ private fun PlayerPhotoPreview(
         } else {
             AsyncImage(
                 model = model,
-                contentDescription = "Photo of $playerName",
+                contentDescription = stringResource(Res.string.photo_of, playerName),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.sizeIn(
                     minWidth = 120.dp,
@@ -897,9 +939,9 @@ private fun PlayerPhotoPreview(
     }
 }
 
-private fun validatePlayerPhoto(image: SelectedImage): String? = when {
-    image.contentType !in SupportedPlayerPhotoTypes -> "Choose a JPEG, PNG, WebP, or GIF image."
-    image.bytes.size > MaxPlayerPhotoBytes -> "Choose a photo that is 5 MB or smaller."
+private fun validatePlayerPhoto(image: SelectedImage): UiText? = when {
+    image.contentType !in SupportedPlayerPhotoTypes -> UiText.of(Res.string.photo_error_type)
+    image.bytes.size > MaxPlayerPhotoBytes -> UiText.of(Res.string.photo_error_size)
     else -> null
 }
 

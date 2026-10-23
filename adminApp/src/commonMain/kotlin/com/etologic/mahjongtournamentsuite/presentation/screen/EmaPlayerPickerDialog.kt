@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -30,6 +29,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.name_ema_id_or_country
+import mahjongtournamentsuite.adminapp.generated.resources.no_player_found
+import mahjongtournamentsuite.adminapp.generated.resources.select_ema_player
+import mahjongtournamentsuite.adminapp.generated.resources.showing_first_of
+import mahjongtournamentsuite.adminapp.generated.resources.used_by
+import org.jetbrains.compose.resources.stringResource
 
 private const val MAX_RESULTS = 100
 
@@ -57,18 +65,18 @@ internal fun EmaPlayerPickerDialog(
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Select EMA player") },
+        title = { Text(stringResource(Res.string.select_ema_player)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(
                     value = query,
                     onValueChange = { query = it },
-                    label = { Text("Name, EMA ID or country") },
+                    label = { Text(stringResource(Res.string.name_ema_id_or_country)) },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth().focusRequester(focus),
                 )
                 if (matches.isEmpty()) {
-                    Text("No player found.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(Res.string.no_player_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     LazyColumn(Modifier.heightIn(max = 360.dp)) {
                         items(matches.take(MAX_RESULTS), key = { it.emaId }) { player ->
@@ -94,7 +102,7 @@ internal fun EmaPlayerPickerDialog(
                                 }
                                 if (owner != null) {
                                     Text(
-                                        "Used by $owner",
+                                        stringResource(Res.string.used_by, owner),
                                         style = MaterialTheme.typography.labelMedium,
                                         color = MaterialTheme.colorScheme.error,
                                     )
@@ -105,7 +113,7 @@ internal fun EmaPlayerPickerDialog(
                     }
                     if (matches.size > MAX_RESULTS) {
                         Text(
-                            "Showing the first $MAX_RESULTS of ${matches.size}. Type more to narrow the list.",
+                            stringResource(Res.string.showing_first_of, MAX_RESULTS, matches.size),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -114,6 +122,6 @@ internal fun EmaPlayerPickerDialog(
             }
         },
         confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
     )
 }

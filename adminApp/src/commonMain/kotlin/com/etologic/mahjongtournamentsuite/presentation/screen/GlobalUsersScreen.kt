@@ -1,8 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
-import com.etologic.mahjongtournamentsuite.presentation.components.AppSuccessDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,18 +17,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -68,32 +65,113 @@ import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
+import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
-import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppSuccessDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.a_player_sees_the_tournaments_where
+import mahjongtournamentsuite.adminapp.generated.resources.account_created_reset_sent
+import mahjongtournamentsuite.adminapp.generated.resources.accounts
+import mahjongtournamentsuite.adminapp.generated.resources.accounts_count_summary
+import mahjongtournamentsuite.adminapp.generated.resources.action_did_not_run
+import mahjongtournamentsuite.adminapp.generated.resources.add_account
+import mahjongtournamentsuite.adminapp.generated.resources.admins_have_access_to_every_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.alias
+import mahjongtournamentsuite.adminapp.generated.resources.all_tournaments
+import mahjongtournamentsuite.adminapp.generated.resources.another_account_already_uses_this_email
+import mahjongtournamentsuite.adminapp.generated.resources.app_users
+import mahjongtournamentsuite.adminapp.generated.resources.assign_tournaments
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.change
+import mahjongtournamentsuite.adminapp.generated.resources.clear_all
+import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.confirm_email
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.country_n
+import mahjongtournamentsuite.adminapp.generated.resources.date_expired
+import mahjongtournamentsuite.adminapp.generated.resources.disable
+import mahjongtournamentsuite.adminapp.generated.resources.disable_account
+import mahjongtournamentsuite.adminapp.generated.resources.disable_account_action
+import mahjongtournamentsuite.adminapp.generated.resources.disable_user_message
+import mahjongtournamentsuite.adminapp.generated.resources.edit_account
+import mahjongtournamentsuite.adminapp.generated.resources.ema_id
+import mahjongtournamentsuite.adminapp.generated.resources.ema_links_account
+import mahjongtournamentsuite.adminapp.generated.resources.ema_needed_for_player
+import mahjongtournamentsuite.adminapp.generated.resources.ema_owner_other
+import mahjongtournamentsuite.adminapp.generated.resources.ema_player_n
+import mahjongtournamentsuite.adminapp.generated.resources.email
+import mahjongtournamentsuite.adminapp.generated.resources.enable_account
+import mahjongtournamentsuite.adminapp.generated.resources.expires
+import mahjongtournamentsuite.adminapp.generated.resources.firebase_will_send_a_password_reset
+import mahjongtournamentsuite.adminapp.generated.resources.global_role
+import mahjongtournamentsuite.adminapp.generated.resources.invitation_revoked_for
+import mahjongtournamentsuite.adminapp.generated.resources.invited
+import mahjongtournamentsuite.adminapp.generated.resources.invited_chip
+import mahjongtournamentsuite.adminapp.generated.resources.invited_count_summary
+import mahjongtournamentsuite.adminapp.generated.resources.invited_in
+import mahjongtournamentsuite.adminapp.generated.resources.loading
+import mahjongtournamentsuite.adminapp.generated.resources.new_invitation_sent_to
+import mahjongtournamentsuite.adminapp.generated.resources.no_invitation_is_waiting_for_an
+import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_are_available
+import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_assigned
+import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_match
+import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_selected
+import mahjongtournamentsuite.adminapp.generated.resources.optional_display_name
+import mahjongtournamentsuite.adminapp.generated.resources.password_reset_info
+import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_to
+import mahjongtournamentsuite.adminapp.generated.resources.player
+import mahjongtournamentsuite.adminapp.generated.resources.plus_more
+import mahjongtournamentsuite.adminapp.generated.resources.resend
+import mahjongtournamentsuite.adminapp.generated.resources.revoke
+import mahjongtournamentsuite.adminapp.generated.resources.role
+import mahjongtournamentsuite.adminapp.generated.resources.role_admin
+import mahjongtournamentsuite.adminapp.generated.resources.role_editor
+import mahjongtournamentsuite.adminapp.generated.resources.role_player
+import mahjongtournamentsuite.adminapp.generated.resources.save
+import mahjongtournamentsuite.adminapp.generated.resources.search_by_email
+import mahjongtournamentsuite.adminapp.generated.resources.search_by_name
+import mahjongtournamentsuite.adminapp.generated.resources.search_ema_players
+import mahjongtournamentsuite.adminapp.generated.resources.select_results
+import mahjongtournamentsuite.adminapp.generated.resources.selected_count
+import mahjongtournamentsuite.adminapp.generated.resources.selected_only
+import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_email
+import mahjongtournamentsuite.adminapp.generated.resources.status
+import mahjongtournamentsuite.adminapp.generated.resources.the_email_addresses_do_not_match
+import mahjongtournamentsuite.adminapp.generated.resources.tournament
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_assignments
+import mahjongtournamentsuite.adminapp.generated.resources.tournaments_selected
+import mahjongtournamentsuite.adminapp.generated.resources.user_disabled
+import mahjongtournamentsuite.adminapp.generated.resources.user_enabled
+import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
+import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -108,8 +186,8 @@ fun GlobalUsersScreen(navController: NavHostController) {
     var showInvited by rememberSaveable { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var notice by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
+    var notice by remember { mutableStateOf<UiText?>(null) }
     var editingUser by remember { mutableStateOf<ManagedUser?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var pendingDisabledUser by remember { mutableStateOf<ManagedUser?>(null) }
@@ -143,23 +221,23 @@ fun GlobalUsersScreen(navController: NavHostController) {
             error = null
             when (val status = presenter.loadAdminStatus(force)) {
                 is AppResult.Success -> access = status.value
-                is AppResult.Failure -> error = status.error.toUiMessage()
+                is AppResult.Failure -> error = status.error.toUiText()
             }
             when (val result = presenter.loadUsers(force)) {
                 is AppResult.Success -> users = result.value
-                is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+                is AppResult.Failure -> if (error == null) error = result.error.toUiText()
             }
             when (val result = presenter.loadTournaments(force)) {
                 is AppResult.Success -> tournaments = result.value
-                is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+                is AppResult.Failure -> if (error == null) error = result.error.toUiText()
             }
             when (val result = presenter.loadEmaPlayers(force)) {
                 is AppResult.Success -> emaPlayers = result.value
-                is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+                is AppResult.Failure -> if (error == null) error = result.error.toUiText()
             }
             when (val result = presenter.loadInvitedPeople()) {
                 is AppResult.Success -> invited = result.value
-                is AppResult.Failure -> if (error == null) error = result.error.toUiMessage()
+                is AppResult.Failure -> if (error == null) error = result.error.toUiText()
             }
             loading = false
         }
@@ -174,20 +252,20 @@ fun GlobalUsersScreen(navController: NavHostController) {
                 is AppResult.Success -> {
                     val done = result.value
                     if (done.outcome == PlayerAccountOutcome.FAILED || done.outcome == PlayerAccountOutcome.SKIPPED) {
-                        error = done.message ?: "The action did not run."
+                        error = done.message?.let { UiText.Plain(it) } ?: UiText.of(Res.string.action_did_not_run)
                     } else {
                         notice = if (action == PlayerAccountAction.REVOKE) {
-                            "The invitation for ${person.playerName} is revoked."
+                            UiText.of(Res.string.invitation_revoked_for, person.playerName)
                         } else {
-                            "A new invitation was sent to ${person.email}."
+                            UiText.of(Res.string.new_invitation_sent_to, person.email)
                         }
                     }
                     when (val list = presenter.loadInvitedPeople()) {
                         is AppResult.Success -> invited = list.value
-                        is AppResult.Failure -> if (error == null) error = list.error.toUiMessage()
+                        is AppResult.Failure -> if (error == null) error = list.error.toUiText()
                     }
                 }
-                is AppResult.Failure -> error = result.error.toUiMessage()
+                is AppResult.Failure -> error = result.error.toUiText()
             }
             saving = false
         }
@@ -223,12 +301,12 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     users = (users.filterNot { it.uid == result.value.uid } + result.value)
                         .sortedBy { it.email.lowercase() }
                     if (original == null) {
-                        notice = "Account created. Firebase sent a password-reset email to ${result.value.email}."
+                        notice = UiText.of(Res.string.account_created_reset_sent, result.value.email)
                     }
                     editingUser = null
                     showCreateDialog = false
                 }
-                is AppResult.Failure -> error = result.error.toUiMessage()
+                is AppResult.Failure -> error = result.error.toUiText()
             }
             saving = false
         }
@@ -242,11 +320,11 @@ fun GlobalUsersScreen(navController: NavHostController) {
             when (val result = presenter.setUserDisabled(user.uid, disabled)) {
                 is AppResult.Success -> {
                     users = users.map { if (it.uid == user.uid) result.value else it }
-                    notice = if (disabled) "${user.email} is disabled." else "${user.email} is enabled."
+                    notice = UiText.of(if (disabled) Res.string.user_disabled else Res.string.user_enabled, user.email)
                     pendingDisabledUser = null
                     editingUser = null
                 }
-                is AppResult.Failure -> error = result.error.toUiMessage()
+                is AppResult.Failure -> error = result.error.toUiText()
             }
             saving = false
         }
@@ -267,7 +345,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
     }
 
     AppScaffold(
-        title = "App users",
+        title = stringResource(Res.string.app_users),
         isLoading = loading || saving,
         showBackgroundLogo = loading && users.isEmpty(),
         onBack = { navController.popBackStack() },
@@ -316,8 +394,8 @@ fun GlobalUsersScreen(navController: NavHostController) {
                 },
             )
             if (showInvited) SectionCard(
-                title = "Invited",
-                subtitle = if (loading) "Loading…" else "${filteredInvited.size} of ${invited.size} people did not accept yet",
+                title = stringResource(Res.string.invited),
+                subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.invited_count_summary, filteredInvited.size, invited.size),
             ) {
                 InvitedTable(
                     people = filteredInvited,
@@ -326,8 +404,8 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     onRevoke = { runInvitationAction(it, PlayerAccountAction.REVOKE) },
                 )
             } else SectionCard(
-                title = "Accounts",
-                subtitle = if (loading) "Loading…" else "${filteredUsers.size} of ${users.size} accounts",
+                title = stringResource(Res.string.accounts),
+                subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.accounts_count_summary, filteredUsers.size, users.size),
             ) {
                 UsersTable(
                     users = filteredUsers,
@@ -377,8 +455,8 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     error = null
                     notice = null
                     when (val result = presenter.requestPasswordReset(email)) {
-                        is AppResult.Success -> notice = "Password-reset email sent to $email."
-                        is AppResult.Failure -> error = result.error.toUiMessage()
+                        is AppResult.Success -> notice = UiText.of(Res.string.password_reset_sent_to, email)
+                        is AppResult.Failure -> error = result.error.toUiText()
                     }
                     saving = false
                 }
@@ -420,16 +498,16 @@ private fun UsersTable(
         item {
             DataTableHeaderRow {
                 Text(
-                    "Country",
+                    stringResource(Res.string.country),
                     modifier = Modifier.width(UserCountryColumnWidth),
                     style = MaterialTheme.typography.labelLarge,
                     textAlign = TextAlign.Center,
                 )
-                Text("Alias", modifier = Modifier.weight(0.25f), style = MaterialTheme.typography.labelLarge)
-                Text("Email", modifier = Modifier.weight(0.3f), style = MaterialTheme.typography.labelLarge)
-                Text("Role", modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
-                Text("EMA ID", modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
-                Text("Status", modifier = Modifier.weight(0.13f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.alias), modifier = Modifier.weight(0.25f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.email), modifier = Modifier.weight(0.3f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.role), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.ema_id), modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.status), modifier = Modifier.weight(0.13f), style = MaterialTheme.typography.labelLarge)
             }
             DataTableDivider()
         }
@@ -445,18 +523,18 @@ private fun UsersTable(
                     if (country.isBlank()) {
                         Text("—")
                     } else {
-                        CountryFlag(code = country, contentDescription = "Country $country")
+                        CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
                     }
                 }
                 Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.25f), maxLines = 1)
                 Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    user.roles.sorted().joinToString(" + ") { it.label() }.ifBlank { user.role.label() },
+                    user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() },
                     modifier = Modifier.weight(0.2f),
                     maxLines = 1,
                 )
                 Text(user.emaId ?: "—", modifier = Modifier.weight(0.12f), maxLines = 1)
-                Text(if (user.disabled) "Disabled" else "Active", modifier = Modifier.weight(0.13f))
+                Text(stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active), modifier = Modifier.weight(0.13f))
             }
             DataTableDivider()
         }
@@ -485,7 +563,7 @@ private fun UserFilters(
             OutlinedTextField(
                 value = emailFilter,
                 onValueChange = onEmailFilterChange,
-                label = { Text("Search by email") },
+                label = { Text(stringResource(Res.string.search_by_email)) },
                 singleLine = true,
                 trailingIcon = {
                     if (emailFilter.isNotEmpty()) {
@@ -502,8 +580,8 @@ private fun UserFilters(
                 OutlinedTextField(
                     value = tournamentFilterText,
                     onValueChange = {},
-                    label = { Text("Tournament") },
-                    placeholder = { Text("All tournaments") },
+                    label = { Text(stringResource(Res.string.tournament)) },
+                    placeholder = { Text(stringResource(Res.string.all_tournaments)) },
                     singleLine = true,
                     readOnly = true,
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(tournamentFilterExpanded) },
@@ -530,7 +608,7 @@ private fun UserFilters(
                     expanded = tournamentFilterExpanded,
                     onDismissRequest = { onTournamentFilterExpandedChange(false) },
                 ) {
-                    DropdownMenuItem(text = { Text("All tournaments") }, onClick = { onTournamentSelected(null) })
+                    DropdownMenuItem(text = { Text(stringResource(Res.string.all_tournaments)) }, onClick = { onTournamentSelected(null) })
                     tournaments.filter {
                         tournamentFilterText.isBlank() || it.name.matchesSearch(tournamentFilterText)
                     }.forEach { tournament ->
@@ -540,11 +618,11 @@ private fun UserFilters(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = !showInvited, onClick = { onShowInvitedChange(false) }, label = { Text("Accounts") })
+            FilterChip(selected = !showInvited, onClick = { onShowInvitedChange(false) }, label = { Text(stringResource(Res.string.accounts)) })
             FilterChip(
                 selected = showInvited,
                 onClick = { onShowInvitedChange(true) },
-                label = { Text("Invited ($invitedCount)") },
+                label = { Text(stringResource(Res.string.invited_chip, invitedCount)) },
             )
             if (!showInvited) GlobalUserRole.entries.forEach { role ->
                 FilterChip(
@@ -565,7 +643,7 @@ private fun InvitedTable(
     onRevoke: (InvitedPerson) -> Unit,
 ) {
     if (people.isEmpty()) {
-        Text("No invitation is waiting for an answer.", modifier = Modifier.padding(12.dp))
+        Text(stringResource(Res.string.no_invitation_is_waiting_for_an), modifier = Modifier.padding(12.dp))
         return
     }
     LazyColumnWithScrollbar(
@@ -574,11 +652,11 @@ private fun InvitedTable(
     ) {
         item {
             DataTableHeaderRow {
-                Text("Player", modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
-                Text("EMA ID", modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.labelLarge)
-                Text("Email", modifier = Modifier.weight(0.24f), style = MaterialTheme.typography.labelLarge)
-                Text("Invited in", modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
-                Text("Expires", modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.player), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.ema_id), modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.email), modifier = Modifier.weight(0.24f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.invited_in), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.expires), modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
                 Text("", modifier = Modifier.weight(0.24f))
             }
             DataTableDivider()
@@ -590,23 +668,18 @@ private fun InvitedTable(
                 Text(person.email, modifier = Modifier.weight(0.24f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(person.tournamentName, modifier = Modifier.weight(0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Text(
-                    person.expiresAt?.take(10)?.let { if (person.expired) "$it (expired)" else it } ?: "—",
+                    person.expiresAt?.take(10)?.let { if (person.expired) stringResource(Res.string.date_expired, it) else it } ?: "—",
                     modifier = Modifier.weight(0.12f),
                 )
                 Row(modifier = Modifier.weight(0.24f), horizontalArrangement = Arrangement.End) {
-                    FocusedTextButton(onClick = { onResend(person) }, enabled = enabled) { Text("Resend") }
-                    FocusedTextButton(onClick = { onRevoke(person) }, enabled = enabled) { Text("Revoke") }
+                    FocusedTextButton(onClick = { onResend(person) }, enabled = enabled) { Text(stringResource(Res.string.resend)) }
+                    FocusedTextButton(onClick = { onRevoke(person) }, enabled = enabled) { Text(stringResource(Res.string.revoke)) }
                 }
             }
             DataTableDivider()
         }
     }
 }
-
-private const val PASSWORD_RESET_INFO =
-    "The link in the password-reset email works for about 1 hour. Firebase sets this time and the app cannot change it. " +
-        "If the link expires, the person can ask for a new email with the forgot-password option on the sign-in screen. " +
-        "You can also send a new email from this dialog."
 
 @Composable
 private fun ManageUserDialog(
@@ -678,7 +751,7 @@ private fun ManageUserDialog(
     AlertDialog(
         onDismissRequest = { if (!saving) onDismiss() },
         modifier = Modifier.appFocusGroup(),
-        title = { Text(if (original == null) "Add account" else "Edit account") },
+        title = { Text(stringResource(if (original == null) Res.string.add_account else Res.string.edit_account)) },
         text = {
             Column(
                 modifier = Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
@@ -693,13 +766,13 @@ private fun ManageUserDialog(
                         onUpload = { contentType, bytes ->
                             when (val result = onUploadPhoto(target, contentType, bytes)) {
                                 is AppResult.Success -> { photoUser = result.value; null }
-                                is AppResult.Failure -> result.error.toUiMessage()
+                                is AppResult.Failure -> result.error.toUiText()
                             }
                         },
                         onRemove = {
                             when (val result = onRemovePhoto(target)) {
                                 is AppResult.Success -> { photoUser = result.value; null }
-                                is AppResult.Failure -> result.error.toUiMessage()
+                                is AppResult.Failure -> result.error.toUiText()
                             }
                         },
                         modifier = Modifier.fillMaxWidth(),
@@ -708,8 +781,8 @@ private fun ManageUserDialog(
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = { Text("Email") },
-                    supportingText = { if (emailOwner != null) Text("Another account already uses this email.") },
+                    label = { Text(stringResource(Res.string.email)) },
+                    supportingText = { if (emailOwner != null) Text(stringResource(Res.string.another_account_already_uses_this_email)) },
                     isError = emailOwner != null,
                     singleLine = true,
                     enabled = !saving,
@@ -719,8 +792,8 @@ private fun ManageUserDialog(
                 OutlinedTextField(
                     value = alias,
                     onValueChange = { alias = it },
-                    label = { Text("Alias") },
-                    supportingText = { Text("Optional display name") },
+                    label = { Text(stringResource(Res.string.alias)) },
+                    supportingText = { Text(stringResource(Res.string.optional_display_name)) },
                     singleLine = true,
                     enabled = !saving,
                     modifier = Modifier.fillMaxWidth(),
@@ -731,21 +804,21 @@ private fun ManageUserDialog(
                     OutlinedTextField(
                         value = emaId,
                         onValueChange = { emaId = it.filter(Char::isLetterOrDigit) },
-                        label = { Text("EMA ID") },
+                        label = { Text(stringResource(Res.string.ema_id)) },
                         supportingText = {
                             Text(
                                 when {
-                                    emaOwner != null -> "Another User already uses this EMA ID: ${emaOwner.email}."
-                                    emaPlayer != null -> "EMA Player: ${emaPlayer.displayName}"
-                                    isPlayerRole && emaId.isBlank() -> "A player account needs an EMA ID."
-                                    else -> "Links this account to an EMA Player and to all their tournaments."
+                                    emaOwner != null -> stringResource(Res.string.ema_owner_other, emaOwner.email)
+                                    emaPlayer != null -> stringResource(Res.string.ema_player_n, emaPlayer.displayName)
+                                    isPlayerRole && emaId.isBlank() -> stringResource(Res.string.ema_needed_for_player)
+                                    else -> stringResource(Res.string.ema_links_account)
                                 },
                             )
                         },
                         isError = emaOwner != null,
                         trailingIcon = {
                             IconButton(onClick = { showEmaPicker = true }, enabled = !saving) {
-                                Icon(Icons.Default.Search, contentDescription = "Search EMA players")
+                                Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search_ema_players))
                             }
                         },
                         singleLine = true,
@@ -757,9 +830,9 @@ private fun ManageUserDialog(
                     OutlinedTextField(
                         value = confirmEmail,
                         onValueChange = { confirmEmail = it },
-                        label = { Text("Confirm email") },
+                        label = { Text(stringResource(Res.string.confirm_email)) },
                         supportingText = {
-                            if (confirmEmail.isNotEmpty() && !emailsMatch) Text("The email addresses do not match.")
+                            if (confirmEmail.isNotEmpty() && !emailsMatch) Text(stringResource(Res.string.the_email_addresses_do_not_match))
                         },
                         isError = confirmEmail.isNotEmpty() && !emailsMatch,
                         singleLine = true,
@@ -782,15 +855,15 @@ private fun ManageUserDialog(
                     onSelect = { role = it },
                 )
                 if (role == GlobalUserRole.EDITOR) {
-                    Text("Tournament assignments", style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(Res.string.tournament_assignments), style = MaterialTheme.typography.titleSmall)
                     if (tournaments.isEmpty()) {
-                        Text("No tournaments are available.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(Res.string.no_tournaments_are_available), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     } else {
                         val selectedTournaments = tournaments.filter { assignments[it.id] == true }
                         val assignmentSummary = when (selectedTournaments.size) {
-                            0 -> "No tournaments assigned"
+                            0 -> stringResource(Res.string.no_tournaments_assigned)
                             1 -> selectedTournaments.single().name
-                            else -> "${selectedTournaments.size} tournaments selected"
+                            else -> stringResource(Res.string.tournaments_selected, selectedTournaments.size)
                         }
                         FocusedOutlinedButton(
                             onClick = {
@@ -809,12 +882,12 @@ private fun ManageUserDialog(
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Text("Change")
+                            Text(stringResource(Res.string.change))
                         }
                         if (selectedTournaments.size > 1) {
                             Text(
                                 text = selectedTournaments.take(2).joinToString { it.name } +
-                                    if (selectedTournaments.size > 2) " · +${selectedTournaments.size - 2} more" else "",
+                                    if (selectedTournaments.size > 2) " · " + stringResource(Res.string.plus_more, selectedTournaments.size - 2) else "",
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
@@ -822,28 +895,28 @@ private fun ManageUserDialog(
                         }
                     }
                 } else if (role == GlobalUserRole.ADMIN) {
-                    Text("Admins have access to every tournament.")
+                    Text(stringResource(Res.string.admins_have_access_to_every_tournament))
                 } else {
-                    Text("A player sees the tournaments where this EMA ID plays.")
+                    Text(stringResource(Res.string.a_player_sees_the_tournaments_where))
                 }
                 if (original == null) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text("Firebase will send a password-reset email after creation.", modifier = Modifier.weight(1f))
-                        InfoTooltipIcon(PASSWORD_RESET_INFO)
+                        Text(stringResource(Res.string.firebase_will_send_a_password_reset), modifier = Modifier.weight(1f))
+                        InfoTooltipIcon(stringResource(Res.string.password_reset_info))
                     }
                 } else if (!isSelf) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         FocusedTextButton(
                             onClick = { onResetPassword(original.email) },
                             enabled = !saving,
-                        ) { Text("Send password-reset email") }
-                        InfoTooltipIcon(PASSWORD_RESET_INFO)
+                        ) { Text(stringResource(Res.string.send_password_reset_email)) }
+                        InfoTooltipIcon(stringResource(Res.string.password_reset_info))
                     }
                     if (canDisable) {
                         FocusedTextButton(
                             onClick = { onChangeDisabled(original) },
                             enabled = !saving,
-                        ) { Text(if (original.disabled) "Enable account" else "Disable account") }
+                        ) { Text(stringResource(if (original.disabled) Res.string.enable_account else Res.string.disable_account_action)) }
                     }
                 }
             }
@@ -860,7 +933,7 @@ private fun ManageUserDialog(
                 enabled = valid && !saving,
                 focusRequester = saveFocus,
                 buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-            ) { Text("Save") }
+            ) { Text(stringResource(Res.string.save)) }
         },
         dismissButton = {
             FocusedTextButton(
@@ -868,7 +941,7 @@ private fun ManageUserDialog(
                 enabled = !saving,
                 focusRequester = cancelFocus,
                 buttonModifier = Modifier.focusLoop(saveFocus, saveFocus),
-            ) { Text("Cancel") }
+            ) { Text(stringResource(Res.string.cancel)) }
         },
     )
     if (showEmaPicker) {
@@ -896,7 +969,7 @@ private fun GlobalRoleDropdown(
             value = role.label(),
             onValueChange = {},
             readOnly = true,
-            label = { Text("Global role") },
+            label = { Text(stringResource(Res.string.global_role)) },
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             enabled = enabled,
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
@@ -942,13 +1015,13 @@ private fun TournamentAssignmentsDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.appFocusGroup(),
-        title = { Text("Assign tournaments") },
+        title = { Text(stringResource(Res.string.assign_tournaments)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 OutlinedTextField(
                     value = searchText,
                     onValueChange = { searchText = it },
-                    label = { Text("Search by name") },
+                    label = { Text(stringResource(Res.string.search_by_name)) },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -962,10 +1035,10 @@ private fun TournamentAssignmentsDialog(
                     FilterChip(
                         selected = showSelectedOnly,
                         onClick = { showSelectedOnly = !showSelectedOnly },
-                        label = { Text("Selected only") },
+                        label = { Text(stringResource(Res.string.selected_only)) },
                     )
                     Text(
-                        text = "$selectedCount selected",
+                        text = stringResource(Res.string.selected_count, selectedCount),
                         modifier = Modifier.weight(1f).padding(top = 8.dp),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         textAlign = TextAlign.End,
@@ -974,9 +1047,9 @@ private fun TournamentAssignmentsDialog(
                 if (filteredTournaments.isEmpty()) {
                     Text(
                         text = if (showSelectedOnly && selectedCount == 0) {
-                            "No tournaments are selected."
+                            stringResource(Res.string.no_tournaments_selected)
                         } else {
-                            "No tournaments match the search."
+                            stringResource(Res.string.no_tournaments_match)
                         },
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.height(240.dp).padding(top = 16.dp),
@@ -1010,7 +1083,7 @@ private fun TournamentAssignmentsDialog(
                 enabled = enabled,
                 focusRequester = closeFocus,
                 buttonModifier = Modifier.focusProperties { next = searchFocus },
-            ) { Text("Close") }
+            ) { Text(stringResource(Res.string.close)) }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -1019,13 +1092,13 @@ private fun TournamentAssignmentsDialog(
                         filteredTournaments.forEach { onAssignmentChange(it.id, true) }
                     },
                     enabled = enabled && filteredTournaments.isNotEmpty(),
-                ) { Text("Select results") }
+                ) { Text(stringResource(Res.string.select_results)) }
                 FocusedTextButton(
                     onClick = {
                         tournaments.forEach { onAssignmentChange(it.id, false) }
                     },
                     enabled = enabled && selectedCount > 0,
-                ) { Text("Clear all") }
+                ) { Text(stringResource(Res.string.clear_all)) }
             }
         },
     )
@@ -1087,15 +1160,15 @@ private fun DisableUserDialog(
     AlertDialog(
         onDismissRequest = { if (!saving) onDismiss() },
         modifier = Modifier.appFocusGroup(),
-        title = { Text("Disable account?") },
-        text = { Text("${user.email} will not be able to sign in. Its profile and history will remain.") },
+        title = { Text(stringResource(Res.string.disable_account)) },
+        text = { Text(stringResource(Res.string.disable_user_message, user.email)) },
         confirmButton = {
             FocusedButton(
                 onClick = onConfirm,
                 enabled = !saving,
                 focusRequester = disableFocus,
                 buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-            ) { Text("Disable") }
+            ) { Text(stringResource(Res.string.disable)) }
         },
         dismissButton = {
             FocusedTextButton(
@@ -1103,16 +1176,19 @@ private fun DisableUserDialog(
                 enabled = !saving,
                 focusRequester = cancelFocus,
                 buttonModifier = Modifier.focusLoop(disableFocus, disableFocus),
-            ) { Text("Cancel") }
+            ) { Text(stringResource(Res.string.cancel)) }
         },
     )
 }
 
-private fun GlobalUserRole.label(): String = when (this) {
-    GlobalUserRole.EDITOR -> "Editor"
-    GlobalUserRole.ADMIN -> "Admin"
-    GlobalUserRole.PLAYER -> "Player"
-}
+@Composable
+private fun GlobalUserRole.label(): String = stringResource(
+    when (this) {
+        GlobalUserRole.EDITOR -> Res.string.role_editor
+        GlobalUserRole.ADMIN -> Res.string.role_admin
+        GlobalUserRole.PLAYER -> Res.string.role_player
+    },
+)
 
 private fun Key.typeaheadCharacter(): Char? = when (this) {
     Key.A -> 'a'

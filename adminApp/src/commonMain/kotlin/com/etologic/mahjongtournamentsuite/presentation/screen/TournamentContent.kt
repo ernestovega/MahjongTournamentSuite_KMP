@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -13,61 +12,71 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material.icons.Icons
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
-import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.testTag
-import androidx.compose.foundation.layout.Box
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.next_round
+import mahjongtournamentsuite.adminapp.generated.resources.preview_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.previous_round
+import mahjongtournamentsuite.adminapp.generated.resources.round_n
+import mahjongtournamentsuite.adminapp.generated.resources.round_n_text
+import mahjongtournamentsuite.adminapp.generated.resources.round_table_header
+import mahjongtournamentsuite.adminapp.generated.resources.save
+import mahjongtournamentsuite.adminapp.generated.resources.save_and_next_table
+import org.jetbrains.compose.resources.stringResource
 
 /** The stateless body of the tournament screen: the round and table strip, and the editor of the selected table. */
 @Composable
@@ -106,7 +115,7 @@ internal fun TournamentContent(
         )
         if (selectedEditor != null) {
             Text(
-                text = "Round ${selectedEditor.roundId} • Table ${selectedEditor.tableId}",
+                text = stringResource(Res.string.round_table_header, selectedEditor.roundId, selectedEditor.tableId),
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.headlineSmall,
@@ -151,13 +160,13 @@ internal fun TournamentContent(
                             modifier = Modifier.focusRequester(saveFocusRequester),
                             containerColor = accent,
                             contentColor = MaterialTheme.colorScheme.onTertiary,
-                        ) { Text("Save") }
+                        ) { Text(stringResource(Res.string.save)) }
                         if (roundTableCount > 1) {
                             ExtendedFloatingActionButton(
                                 onClick = { onSaveAndNext(tableId) },
                                 containerColor = accent,
                                 contentColor = MaterialTheme.colorScheme.onTertiary,
-                            ) { Text("Save and next table") }
+                            ) { Text(stringResource(Res.string.save_and_next_table)) }
                         }
                     }
                 }
@@ -181,7 +190,7 @@ private fun TournamentContentPreview() {
                 hasProgress = id == editor.tableId,
             )
         }
-        AppScaffold(title = "Preview Tournament") {
+        AppScaffold(title = stringResource(Res.string.preview_tournament)) {
             TournamentContent(
                 rounds = listOf(TournamentRound(1), TournamentRound(editor.roundId)),
                 allTables = tables,
@@ -241,14 +250,14 @@ private fun RoundTableStrip(
             FocusedIconButton(
                 onClick = { rounds.getOrNull(roundIndex - 1)?.let { onSelectRound(it.roundId) } },
                 enabled = enabled && roundIndex > 0,
-            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = "Previous round") }
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = stringResource(Res.string.previous_round)) }
             Box {
                 FocusedOutlinedButton(
                     onClick = { roundMenuOpen = true },
                     enabled = enabled,
                     focusRequester = roundFocusRequester,
                 ) {
-                    Text("Round ${selectedRoundId ?: "-"}", style = MaterialTheme.typography.titleMedium)
+                    Text(stringResource(Res.string.round_n_text, selectedRoundId?.toString() ?: "-"), style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.width(8.dp))
                     StatusIconWithTooltip(roundStatus)
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
@@ -256,7 +265,7 @@ private fun RoundTableStrip(
                 DropdownMenu(expanded = roundMenuOpen, onDismissRequest = { roundMenuOpen = false }) {
                     rounds.forEach { round ->
                         DropdownMenuItem(
-                            text = { Text("Round ${round.roundId}") },
+                            text = { Text(stringResource(Res.string.round_n, round.roundId)) },
                             trailingIcon = {
                                 StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId }))
                             },
@@ -271,7 +280,7 @@ private fun RoundTableStrip(
             FocusedIconButton(
                 onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },
                 enabled = enabled && roundIndex in 0 until rounds.lastIndex,
-            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = "Next round") }
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_round)) }
             }
             Box(Modifier.height(32.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
             LazyRow(

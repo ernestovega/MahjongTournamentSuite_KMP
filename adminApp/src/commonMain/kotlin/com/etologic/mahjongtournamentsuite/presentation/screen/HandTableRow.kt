@@ -1,8 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,34 +10,40 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.background
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.add_penalty_to_hand
+import mahjongtournamentsuite.adminapp.generated.resources.entry_penalty_n
+import mahjongtournamentsuite.adminapp.generated.resources.hand_invalid
+import mahjongtournamentsuite.adminapp.generated.resources.remove_penalty_of_hand
+import org.jetbrains.compose.resources.stringResource
 
 /** One hand as a table row. The penalty rows open below it and use the same columns as the seat totals. */
 @Composable
@@ -216,7 +222,7 @@ internal fun HandTableRow(
                 IconButton(onClick = { penaltyRowToFocus = hand.addPenaltyRow() }, enabled = rowEnabled, buttonModifier = Modifier.size(40.dp)) {
                     Icon(
                         imageVector = Icons.Default.Add,
-                        contentDescription = "Add penalty to hand ${index + 1}",
+                        contentDescription = stringResource(Res.string.add_penalty_to_hand, index + 1),
                     )
                 }
             }
@@ -242,7 +248,7 @@ internal fun HandTableRow(
             GridRow(height = GridRowHeight, background = penaltyBackground) {
                 GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight), alignment = Alignment.CenterStart) {
                     Text(
-                        text = "Penalty ${penaltyIndex + 1}",
+                        text = stringResource(Res.string.entry_penalty_n, penaltyIndex + 1),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -276,7 +282,7 @@ internal fun HandTableRow(
                     ) {
                         Icon(
                             imageVector = Icons.Default.Delete,
-                            contentDescription = "Remove penalty ${penaltyIndex + 1} of hand ${index + 1}",
+                            contentDescription = stringResource(Res.string.remove_penalty_of_hand, penaltyIndex + 1, index + 1),
                         )
                     }
                 }
@@ -290,8 +296,9 @@ internal fun HandTableRow(
         GridRow(height = 40.dp, background = MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.3f)) {
             Text(
                 text = listOfNotNull(hand.validationErrorMessage).plus(hand.validationDetailMessages)
+                    .map { it.asString() }
                     .joinToString(" ")
-                    .ifBlank { "This hand is invalid and cannot be marked as done or completed." },
+                    .ifBlank { stringResource(Res.string.hand_invalid) },
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(start = HandsIndexColumnWidth + 8.dp),

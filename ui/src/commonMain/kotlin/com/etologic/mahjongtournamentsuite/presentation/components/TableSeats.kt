@@ -10,24 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.runtime.remember
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.launch
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -35,9 +24,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -49,13 +43,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntRect
+import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.PopupPositionProvider
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.PointsDiff
-import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.SeatDiffs
 import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
+import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
+import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.chicken_hand
+import mahjongtournamentsuite.ui.generated.resources.diffs_about
+import mahjongtournamentsuite.ui.generated.resources.diffs_explanation
+import mahjongtournamentsuite.ui.generated.resources.diffs_him
+import mahjongtournamentsuite.ui.generated.resources.diffs_label
+import mahjongtournamentsuite.ui.generated.resources.diffs_other
+import mahjongtournamentsuite.ui.generated.resources.diffs_self
 import mahjongtournamentsuite.ui.generated.resources.icon_chicken
 import mahjongtournamentsuite.ui.generated.resources.icon_sad_face
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy
@@ -65,14 +72,36 @@ import mahjongtournamentsuite.ui.generated.resources.icon_wind_east
 import mahjongtournamentsuite.ui.generated.resources.icon_wind_north
 import mahjongtournamentsuite.ui.generated.resources.icon_wind_south
 import mahjongtournamentsuite.ui.generated.resources.icon_wind_west
+import mahjongtournamentsuite.ui.generated.resources.penalty_n
+import mahjongtournamentsuite.ui.generated.resources.place_1st
+import mahjongtournamentsuite.ui.generated.resources.place_1st_long
+import mahjongtournamentsuite.ui.generated.resources.place_2nd
+import mahjongtournamentsuite.ui.generated.resources.place_3rd
+import mahjongtournamentsuite.ui.generated.resources.points_short
+import mahjongtournamentsuite.ui.generated.resources.position_n
+import mahjongtournamentsuite.ui.generated.resources.wind_east
+import mahjongtournamentsuite.ui.generated.resources.wind_north
+import mahjongtournamentsuite.ui.generated.resources.wind_south
+import mahjongtournamentsuite.ui.generated.resources.wind_west
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
-enum class SeatWind(val label: String) {
-    EAST("East"),
-    SOUTH("South"),
-    WEST("West"),
-    NORTH("North"),
+enum class SeatWind {
+    EAST,
+    SOUTH,
+    WEST,
+    NORTH,
 }
+
+@Composable
+fun SeatWind.label(): String = stringResource(
+    when (this) {
+        SeatWind.EAST -> Res.string.wind_east
+        SeatWind.SOUTH -> Res.string.wind_south
+        SeatWind.WEST -> Res.string.wind_west
+        SeatWind.NORTH -> Res.string.wind_north
+    },
+)
 
 /** What one player of a table shows. Scores and points are the text of the table. */
 data class SeatDisplay(
@@ -127,7 +156,7 @@ fun WindIcon(wind: SeatWind, size: Dp = 24.dp, tint: Color = MaterialTheme.color
             SeatWind.NORTH -> Res.drawable.icon_wind_north
         },
     )
-    Icon(painter = painter, contentDescription = wind.label, modifier = Modifier.size(size), tint = tint)
+    Icon(painter = painter, contentDescription = wind.label(), modifier = Modifier.size(size), tint = tint)
 }
 
 /** The chicken hand icon. */
@@ -135,7 +164,7 @@ fun WindIcon(wind: SeatWind, size: Dp = 24.dp, tint: Color = MaterialTheme.color
 fun ChickenIcon(size: Dp = 22.dp, modifier: Modifier = Modifier) {
     Icon(
         painter = painterResource(Res.drawable.icon_chicken),
-        contentDescription = "Chicken hand",
+        contentDescription = stringResource(Res.string.chicken_hand),
         modifier = modifier.size(size),
         tint = Color.Unspecified,
     )
@@ -161,7 +190,7 @@ fun PositionTrophy(position: Int, size: Dp = 28.dp) {
     }
     Icon(
         painter = painterResource(resource),
-        contentDescription = "Position $position",
+        contentDescription = stringResource(Res.string.position_n, position),
         modifier = Modifier.size(size),
         tint = Color.Unspecified,
     )
@@ -181,7 +210,7 @@ fun positionColor(position: Int): Color = when (position) {
 fun LastPlaceIcon(size: Dp = 28.dp) {
     Icon(
         painter = painterResource(Res.drawable.icon_sad_face),
-        contentDescription = "Position 4",
+        contentDescription = stringResource(Res.string.position_n, 4),
         modifier = Modifier.size(size),
         tint = Color.Unspecified,
     )
@@ -230,7 +259,7 @@ fun TableSeatsView(
                 Modifier.clickable { showDiffs = !showDiffs },
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("Diffs", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
                 Switch(
                     checked = showDiffs,
                     onCheckedChange = { showDiffs = it },
@@ -242,12 +271,6 @@ fun TableSeatsView(
         }
     }
 }
-
-private const val DIFFS_EXPLANATION = "The table shows the hand score that a player needs to reach a higher place. " +
-    "There are three ways to win:\n" +
-    "- Self: the player wins by self-pick.\n" +
-    "- Him: the player wins on a discard of the player to overtake.\n" +
-    "- Other: the player wins on a discard of another player."
 
 /**
  * Puts the tooltip above the icon with its right edge on the right edge of the icon, and keeps it inside the window.
@@ -276,14 +299,15 @@ private object EndAlignedTooltipPosition : PopupPositionProvider {
 private fun DiffsInfo() {
     val state = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
+    val diffsInfoDescription = stringResource(Res.string.diffs_about)
     TooltipBox(
         positionProvider = remember { EndAlignedTooltipPosition },
-        tooltip = { AppPlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(DIFFS_EXPLANATION) } },
+        tooltip = { AppPlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(stringResource(Res.string.diffs_explanation)) } },
         state = state,
     ) {
         IconButton(
             onClick = { scope.launch { if (state.isVisible) state.dismiss() else state.show() } },
-            modifier = Modifier.semantics { contentDescription = "About differences" },
+            modifier = Modifier.semantics { contentDescription = diffsInfoDescription },
         ) {
             Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -386,14 +410,14 @@ private fun SeatCard(
             if (showPoints && seat.points.isNotBlank()) {
                 // The table points are the result of a finished table, so they are big and have the color of the place.
                 Text(
-                    "${formatPoints(seat.points)} pts",
+                    stringResource(Res.string.points_short, formatPoints(seat.points)),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.Bold,
                     color = place?.let { positionColor(it) } ?: Color.Unspecified,
                 )
             }
             if (seat.penalty != 0) {
-                Text("Penalty ${seat.penalty}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                Text(stringResource(Res.string.penalty_n, seat.penalty), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 SeatLevelMedal(seat)
@@ -418,16 +442,16 @@ private fun SeatCard(
 @Composable
 private fun DiffsTable(diffs: SeatDiffs) {
     val rows = listOf(
-        "1st" to diffs.pointsToBeFirst,
-        "2nd" to diffs.pointsToBeSecond,
-        "3rd" to diffs.pointsToBeThird,
+        stringResource(Res.string.place_1st) to diffs.pointsToBeFirst,
+        stringResource(Res.string.place_2nd) to diffs.pointsToBeSecond,
+        stringResource(Res.string.place_3rd) to diffs.pointsToBeThird,
     ).mapNotNull { (label, value) -> value?.let { label to it } }
     if (rows.isEmpty()) {
-        Text("1st place", style = MaterialTheme.typography.labelMedium, color = GainColor)
+        Text(stringResource(Res.string.place_1st_long), style = MaterialTheme.typography.labelMedium, color = GainColor)
         return
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        DiffsRow("", "Self", "Him", "Other", header = true)
+        DiffsRow("", stringResource(Res.string.diffs_self), stringResource(Res.string.diffs_him), stringResource(Res.string.diffs_other), header = true)
         rows.forEach { (label, value) -> DiffsRow(label, "${value.bySelfPick}", "${value.byDirectHu}", "${value.byIndirectHu}") }
     }
 }

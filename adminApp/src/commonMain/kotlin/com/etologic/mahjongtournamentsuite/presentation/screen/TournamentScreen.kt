@@ -1,19 +1,20 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
-import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material.icons.Icons
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,19 +23,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Text
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -42,15 +37,21 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
+import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
+import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
@@ -59,22 +60,33 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPr
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.presentation.util.dataStatusLabel
-import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
-import com.etologic.mahjongtournamentsuite.presentation.util.tournamentDataRevision
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
-import kotlin.time.Clock
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.foundation.layout.Box
 import com.etologic.mahjongtournamentsuite.presentation.sync.ActivityTracker
 import com.etologic.mahjongtournamentsuite.presentation.sync.PollSchedule
 import com.etologic.mahjongtournamentsuite.presentation.sync.TableSyncPoller
 import com.etologic.mahjongtournamentsuite.presentation.sync.trackActivity
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import com.etologic.mahjongtournamentsuite.presentation.util.dataStatus
+import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import com.etologic.mahjongtournamentsuite.presentation.util.tournamentDataRevision
+import kotlin.time.Clock
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_export
+import mahjongtournamentsuite.adminapp.generated.resources.ema_report
+import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.role_admin
+import mahjongtournamentsuite.adminapp.generated.resources.role_editor
+import mahjongtournamentsuite.adminapp.generated.resources.save_ema_report
+import mahjongtournamentsuite.adminapp.generated.resources.scope_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.statistics
+import mahjongtournamentsuite.adminapp.generated.resources.teams
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 private sealed class RoundEditorAction {
@@ -145,7 +157,8 @@ fun TournamentScreen(
     val scoreFocusRequester = remember { FocusRequester() }
     val selectedRoundTables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
     val hasUnsavedChanges = tableEditors.values.any { it.hasUnsavedChanges }
-    val roleLabel = adminStatus?.let { if (it.isAdmin) "Admin" else "Editor" }
+    val saveEmaReportTitle = stringResource(Res.string.save_ema_report)
+    val roleLabel = adminStatus?.let { stringResource(if (it.isAdmin) Res.string.role_admin else Res.string.role_editor) }
 
     /**
      * Loads the table summaries of the round, then selects a table.
@@ -168,7 +181,7 @@ fun TournamentScreen(
         } else {
             when (val result = tablesPresenter.loadTables(tournamentId, roundId, force)) {
                 is AppResult.Failure -> {
-                    errorMessage = result.error.toUiMessage()
+                    errorMessage = result.error.toUiText()
                     isLoading = false
                     return
                 }
@@ -210,7 +223,7 @@ fun TournamentScreen(
                             if (selectedRoundId != roundId) return@launch
                             when (detail) {
                                 is AppResult.Success -> add(tableId, detail.value)
-                                is AppResult.Failure -> errorMessage = detail.error.toUiMessage()
+                                is AppResult.Failure -> errorMessage = detail.error.toUiText()
                             }
                         }
                     }
@@ -233,7 +246,7 @@ fun TournamentScreen(
         val newRounds = when (val result = tablesPresenter.loadRounds(tournamentId, force)) {
             is AppResult.Success -> result.value.sortedBy { it.roundId }
             is AppResult.Failure -> {
-                errorMessage = result.error.toUiMessage()
+                errorMessage = result.error.toUiText()
                 isLoading = false
                 return
             }
@@ -243,7 +256,7 @@ fun TournamentScreen(
         allTables = when (allTablesResult) {
             is AppResult.Success -> allTablesResult.value.sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
             is AppResult.Failure -> {
-                errorMessage = allTablesResult.error.toUiMessage()
+                errorMessage = allTablesResult.error.toUiText()
                 emptyList()
             }
         }
@@ -304,7 +317,7 @@ fun TournamentScreen(
         isLoading = true
         errorMessage = null
         when (val result = rankingPresenter.load(tournamentId)) {
-            is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+            is AppResult.Failure -> errorMessage = result.error.toUiText()
             is AppResult.Success -> {
                 val snapshot = result.value
                 officialResultsExportError(snapshot.rankingTables)?.let {
@@ -313,13 +326,14 @@ fun TournamentScreen(
                     return
                 }
                 if (snapshot.tournamentPlayers.any { !it.isAssigned }) {
-                    errorMessage = "Assign an EMA player or non-member to every tournament slot before export."
+                    errorMessage = UiText.of(Res.string.assign_all_before_export)
                     isLoading = false
                     return
                 }
                 when (val report = rankingPresenter.generateEmaReport(tournamentId, snapshot.rankings.players)) {
-                    is AppResult.Failure -> errorMessage = report.error.toUiMessage()
+                    is AppResult.Failure -> errorMessage = report.error.toUiText()
                     is AppResult.Success -> saveBinaryFile(
+                        dialogTitle = saveEmaReportTitle,
                         // The name tells which results the file holds: the revision, and when it was made.
                         fileName = generatedFileName(
                             tournamentName = tournament?.name ?: "tournament",
@@ -414,7 +428,7 @@ fun TournamentScreen(
 
     Box(modifier = Modifier.trackActivity(activity)) {
     AppScaffold(
-        title = tournament?.name?.ifBlank { "Tournament" } ?: "Tournament",
+        title = tournament?.name?.ifBlank { null } ?: stringResource(Res.string.scope_tournament),
         titleAction = {
             TournamentEditTitleAction(
                 tournamentId = tournamentId,
@@ -440,26 +454,26 @@ fun TournamentScreen(
         actions = {
             if (tournament?.isTeams == true) {
                 AppTopBarButton(
-                    text = "Teams",
+                    text = stringResource(Res.string.teams),
                     icon = Icons.Default.Groups,
                     onClick = { requestAction(RoundEditorAction.Teams) },
                     enabled = !isLoading,
                 )
             }
             AppTopBarButton(
-                text = "Players",
+                text = stringResource(Res.string.players),
                 icon = Icons.Default.People,
                 onClick = { requestAction(RoundEditorAction.Players) },
                 enabled = !isLoading,
             )
             AppTopBarButton(
-                text = "Statistics",
+                text = stringResource(Res.string.statistics),
                 icon = StatisticsIcon,
                 onClick = { requestAction(RoundEditorAction.Statistics) },
                 enabled = !isLoading,
             )
             AppTopBarButton(
-                text = "EMA report",
+                text = stringResource(Res.string.ema_report),
                 icon = Icons.Outlined.Assessment,
                 onClick = { requestAction(RoundEditorAction.Export) },
                 enabled = !isLoading && !isLoadingRest,
@@ -473,10 +487,10 @@ fun TournamentScreen(
             ),
         ) {
         // The results the screen holds, and when the server was last asked. Support can ask for this.
-        val dataStatus = dataStatusLabel(
+        val dataStatus = dataStatus(
             revision = allTables.takeIf { it.isNotEmpty() }?.let { rows -> tournamentDataRevision(rows.map { it.version }) },
             at = sync.lastCheckedAt,
-        )
+        ).asString()
         Column(Modifier.fillMaxSize()) {
         if (dataStatus.isNotBlank()) {
             Text(

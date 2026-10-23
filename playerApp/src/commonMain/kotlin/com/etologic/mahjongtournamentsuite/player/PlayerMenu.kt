@@ -1,10 +1,10 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -12,16 +12,22 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.Color
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
-import kotlinx.coroutines.launch
-import androidx.compose.ui.graphics.Color
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlinx.coroutines.launch
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.menu_profile
+import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_out
+import mahjongtournamentsuite.playerapp.generated.resources.menu_statistics
+import org.jetbrains.compose.resources.stringResource
 
 /** The top bar button that switches the theme. It shows the icon of the current preference. */
 @Composable
@@ -40,7 +46,7 @@ fun ThemeAction() {
 @Composable
 fun SignOutAction(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
-        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Sign out", tint = Color.White)
+        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = stringResource(Res.string.menu_sign_out), tint = Color.White)
     }
 }
 
@@ -48,7 +54,7 @@ fun SignOutAction(onClick: () -> Unit) {
 @Composable
 fun StatisticsAction(onClick: () -> Unit) {
     IconButton(onClick = onClick) {
-        Icon(StatisticsIcon, contentDescription = "Statistics", tint = Color.White)
+        Icon(StatisticsIcon, contentDescription = stringResource(Res.string.menu_statistics), tint = Color.White)
     }
 }
 
@@ -57,18 +63,18 @@ fun StatisticsAction(onClick: () -> Unit) {
 fun ProfileAction(session: PlayerSessionPresenter) {
     val scope = rememberCoroutineScope()
     var profile by remember { mutableStateOf<UserProfile?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
     IconButton(
         onClick = {
             scope.launch {
                 when (val result = session.loadProfile()) {
                     is AppResult.Success -> profile = result.value
-                    is AppResult.Failure -> error = result.error.toUiMessage()
+                    is AppResult.Failure -> error = result.error.toUiText()
                 }
             }
         },
     ) {
-        Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color.White)
+        Icon(Icons.Default.Person, contentDescription = stringResource(Res.string.menu_profile), tint = Color.White)
     }
     profile?.let { current ->
         ProfileDialog(

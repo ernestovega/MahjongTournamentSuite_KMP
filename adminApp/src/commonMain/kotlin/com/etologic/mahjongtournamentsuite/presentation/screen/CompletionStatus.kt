@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import org.jetbrains.compose.resources.StringResource
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
@@ -7,35 +10,38 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.size
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.completed
 import mahjongtournamentsuite.adminapp.generated.resources.icon_status_completed
 import mahjongtournamentsuite.adminapp.generated.resources.icon_status_empty
 import mahjongtournamentsuite.adminapp.generated.resources.icon_status_in_progress
 import mahjongtournamentsuite.adminapp.generated.resources.icon_status_manual
+import mahjongtournamentsuite.adminapp.generated.resources.status_empty
+import mahjongtournamentsuite.adminapp.generated.resources.status_incomplete
+import mahjongtournamentsuite.adminapp.generated.resources.status_partial
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 internal enum class CompletionStatus(
-    val label: String,
-    val description: String,
+    val label: StringResource,
+    val description: StringResource,
     val image: DrawableResource,
 ) {
-    Empty("Empty", "Empty", Res.drawable.icon_status_empty),
-    InProgress("Incomplete", "Incomplete", Res.drawable.icon_status_in_progress),
-    Manual("Partially complete", "Partially complete", Res.drawable.icon_status_manual),
-    Completed("Completed", "Completed", Res.drawable.icon_status_completed),
+    Empty(Res.string.status_empty, Res.string.status_empty, Res.drawable.icon_status_empty),
+    InProgress(Res.string.status_incomplete, Res.string.status_incomplete, Res.drawable.icon_status_in_progress),
+    Manual(Res.string.status_partial, Res.string.status_partial, Res.drawable.icon_status_manual),
+    Completed(Res.string.completed, Res.string.completed, Res.drawable.icon_status_completed),
 }
 
 /** Status icon with a hover and click tooltip. An empty status shows no icon. */
 @Composable
 internal fun StatusIconWithTooltip(status: CompletionStatus) {
     if (status == CompletionStatus.Empty) return
-    HintTooltip(status.description) {
+    HintTooltip(stringResource(status.description)) {
         Image(
             painter = painterResource(status.image),
-            contentDescription = status.label,
+            contentDescription = stringResource(status.label),
             modifier = Modifier.size(StatusIconSize),
         )
     }

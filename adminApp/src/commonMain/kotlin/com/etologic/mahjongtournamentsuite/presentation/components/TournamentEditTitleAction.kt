@@ -9,9 +9,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.edit_tournament
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 /**
  * Pencil button for the top bar title. It opens the edit tournament dialog.
@@ -33,7 +36,7 @@ fun TournamentEditTitleAction(
     IconButton(onClick = { showDialog = true }) {
         Icon(
             imageVector = Icons.Default.Edit,
-            contentDescription = "Edit tournament",
+            contentDescription = stringResource(Res.string.edit_tournament),
         )
     }
 

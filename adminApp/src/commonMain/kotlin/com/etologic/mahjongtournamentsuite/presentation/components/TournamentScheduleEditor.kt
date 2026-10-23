@@ -25,6 +25,32 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.activity
+import mahjongtournamentsuite.adminapp.generated.resources.add_activity
+import mahjongtournamentsuite.adminapp.generated.resources.date
+import mahjongtournamentsuite.adminapp.generated.resources.dd_mm_yyyy
+import mahjongtournamentsuite.adminapp.generated.resources.hh_mm
+import mahjongtournamentsuite.adminapp.generated.resources.player_agenda
+import mahjongtournamentsuite.adminapp.generated.resources.registration_lunch_break_awards
+import mahjongtournamentsuite.adminapp.generated.resources.remove
+import mahjongtournamentsuite.adminapp.generated.resources.round_n
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_agenda_invalid_date
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_agenda_invalid_time
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_choose_activity_date
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_choose_activity_time
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_choose_round_date
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_choose_round_time
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_enter_rounds
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_format_note
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_no_activities
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_invalid_date
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_invalid_time
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_outside_range
+import mahjongtournamentsuite.adminapp.generated.resources.start
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_schedule
+import org.jetbrains.compose.resources.stringResource
 
 data class RoundScheduleEditorRow(
     val roundId: Int,
@@ -83,16 +109,16 @@ fun TournamentScheduleEditor(
             .appFocusGroup(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text("Tournament schedule", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.tournament_schedule), style = MaterialTheme.typography.titleSmall)
         Text(
-            "Dates use DD/MM/YYYY. Times use the tournament's local time in HH:mm format.",
+            stringResource(Res.string.schedule_format_note),
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             style = MaterialTheme.typography.bodySmall,
         )
 
         if (roundRows.isEmpty()) {
             Text(
-                "Enter a valid number of rounds to configure their start times.",
+                stringResource(Res.string.schedule_enter_rounds),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -107,7 +133,7 @@ fun TournamentScheduleEditor(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        "Round ${row.roundId}",
+                        stringResource(Res.string.round_n, row.roundId),
                         modifier = Modifier.width(72.dp),
                         style = MaterialTheme.typography.bodyMedium,
                     )
@@ -119,8 +145,8 @@ fun TournamentScheduleEditor(
                             )
                         },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Date") },
-                        placeholder = { Text("DD/MM/YYYY") },
+                        label = { Text(stringResource(Res.string.date)) },
+                        placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                         trailingIcon = {
                             FocusedIconButton(
                                 enabled = enabled,
@@ -135,7 +161,7 @@ fun TournamentScheduleEditor(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Choose round ${row.roundId} date",
+                                    contentDescription = stringResource(Res.string.schedule_choose_round_date, row.roundId),
                                 )
                             }
                         },
@@ -151,8 +177,8 @@ fun TournamentScheduleEditor(
                             )
                         },
                         modifier = Modifier.width(128.dp),
-                        label = { Text("Start") },
-                        placeholder = { Text("HH:mm") },
+                        label = { Text(stringResource(Res.string.start)) },
+                        placeholder = { Text(stringResource(Res.string.hh_mm)) },
                         trailingIcon = {
                             FocusedIconButton(
                                 enabled = enabled,
@@ -167,7 +193,7 @@ fun TournamentScheduleEditor(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AccessTime,
-                                    contentDescription = "Choose round ${row.roundId} start time",
+                                    contentDescription = stringResource(Res.string.schedule_choose_round_time, row.roundId),
                                 )
                             }
                         },
@@ -179,10 +205,10 @@ fun TournamentScheduleEditor(
             }
         }
 
-        Text("Player agenda", style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(Res.string.player_agenda), style = MaterialTheme.typography.titleSmall)
         if (agendaRows.isEmpty()) {
             Text(
-                "No activities have been added.",
+                stringResource(Res.string.schedule_no_activities),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
@@ -206,8 +232,8 @@ fun TournamentScheduleEditor(
                             onAgendaRowsChange(agendaRows.replaceAt(index, row.copy(title = value)))
                         },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Activity") },
-                        placeholder = { Text("Registration, lunch, break, awards…") },
+                        label = { Text(stringResource(Res.string.activity)) },
+                        placeholder = { Text(stringResource(Res.string.registration_lunch_break_awards)) },
                         singleLine = true,
                         enabled = enabled,
                     )
@@ -219,7 +245,7 @@ fun TournamentScheduleEditor(
                             )
                         },
                     ) {
-                        Text("Remove")
+                        Text(stringResource(Res.string.remove))
                     }
                 }
                 Row(
@@ -235,8 +261,8 @@ fun TournamentScheduleEditor(
                             )
                         },
                         modifier = Modifier.weight(1f),
-                        label = { Text("Date") },
-                        placeholder = { Text("DD/MM/YYYY") },
+                        label = { Text(stringResource(Res.string.date)) },
+                        placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                         trailingIcon = {
                             FocusedIconButton(
                                 enabled = enabled,
@@ -251,7 +277,7 @@ fun TournamentScheduleEditor(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.DateRange,
-                                    contentDescription = "Choose activity ${index + 1} date",
+                                    contentDescription = stringResource(Res.string.schedule_choose_activity_date, index + 1),
                                 )
                             }
                         },
@@ -268,8 +294,8 @@ fun TournamentScheduleEditor(
                             )
                         },
                         modifier = Modifier.width(128.dp),
-                        label = { Text("Start") },
-                        placeholder = { Text("HH:mm") },
+                        label = { Text(stringResource(Res.string.start)) },
+                        placeholder = { Text(stringResource(Res.string.hh_mm)) },
                         trailingIcon = {
                             FocusedIconButton(
                                 enabled = enabled,
@@ -284,7 +310,7 @@ fun TournamentScheduleEditor(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.AccessTime,
-                                    contentDescription = "Choose activity ${index + 1} start time",
+                                    contentDescription = stringResource(Res.string.schedule_choose_activity_time, index + 1),
                                 )
                             }
                         },
@@ -300,7 +326,7 @@ fun TournamentScheduleEditor(
             enabled = enabled,
             onClick = { onAgendaRowsChange(agendaRows + AgendaItemEditorRow()) },
         ) {
-            Text("Add activity")
+            Text(stringResource(Res.string.add_activity))
         }
     }
 
@@ -414,16 +440,16 @@ fun tournamentScheduleEditorError(
     agendaRows: List<AgendaItemEditorRow>,
     eventStartDate: String,
     eventEndDate: String,
-): String? {
+): UiText? {
     roundRows.forEach { row ->
         val date = row.date.trim()
         val isoDate = date.toIsoTournamentDateOrNull()
-        if (date.isNotEmpty() && isoDate == null) return "Round ${row.roundId} has an invalid date."
+        if (date.isNotEmpty() && isoDate == null) return UiText.of(Res.string.schedule_round_invalid_date, row.roundId)
         if (isoDate != null && isoDate !in eventStartDate..eventEndDate) {
-            return "Round ${row.roundId} must be inside the tournament date range."
+            return UiText.of(Res.string.schedule_round_outside_range, row.roundId)
         }
         if (row.startTime.isNotBlank() && row.startTime.toTournamentTimeOrNull() == null) {
-            return "Round ${row.roundId} has an invalid start time."
+            return UiText.of(Res.string.schedule_round_invalid_time, row.roundId)
         }
     }
 
@@ -431,9 +457,9 @@ fun tournamentScheduleEditorError(
         if (row.title.isBlank()) return@forEachIndexed
         val date = row.date.trim()
         val isoDate = date.toIsoTournamentDateOrNull()
-        if (date.isNotEmpty() && isoDate == null) return "Agenda item ${index + 1} has an invalid date."
+        if (date.isNotEmpty() && isoDate == null) return UiText.of(Res.string.schedule_agenda_invalid_date, index + 1)
         val startTime = row.startTime.toTournamentTimeOrNull()
-        if (row.startTime.isNotBlank() && startTime == null) return "Agenda item ${index + 1} has an invalid start time."
+        if (row.startTime.isNotBlank() && startTime == null) return UiText.of(Res.string.schedule_agenda_invalid_time, index + 1)
     }
     return null
 }

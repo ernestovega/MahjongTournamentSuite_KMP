@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -13,8 +12,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -39,23 +38,58 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.contactState
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
-
-private const val INVITATION_INFO =
-    "An invitation link works once and expires after 14 days. After that, the player cannot accept it and the slot stays unlinked. " +
-        "Resend creates a new link and the old link stops working. Revoke cancels the invitation."
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.account_exists_note
+import mahjongtournamentsuite.adminapp.generated.resources.account_of_player
+import mahjongtournamentsuite.adminapp.generated.resources.assign_an_ema_player_to_this
+import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.contact_invited
+import mahjongtournamentsuite.adminapp.generated.resources.contact_no_ema_id
+import mahjongtournamentsuite.adminapp.generated.resources.contact_state_linked
+import mahjongtournamentsuite.adminapp.generated.resources.contact_state_not_invited
+import mahjongtournamentsuite.adminapp.generated.resources.contact_state_reminded
+import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
+import mahjongtournamentsuite.adminapp.generated.resources.email
+import mahjongtournamentsuite.adminapp.generated.resources.invitation_info
+import mahjongtournamentsuite.adminapp.generated.resources.link_works_once
+import mahjongtournamentsuite.adminapp.generated.resources.not_known
+import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_failed
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_invited
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_notified
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_revoked
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_skipped
+import mahjongtournamentsuite.adminapp.generated.resources.remove_account_link
+import mahjongtournamentsuite.adminapp.generated.resources.resend_with_new_link
+import mahjongtournamentsuite.adminapp.generated.resources.revoke_invitation
+import mahjongtournamentsuite.adminapp.generated.resources.save_email_only
+import mahjongtournamentsuite.adminapp.generated.resources.send_an_invitation_link_to_the
+import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
+import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
+import mahjongtournamentsuite.adminapp.generated.resources.send_reminder_again
+import mahjongtournamentsuite.adminapp.generated.resources.sent
+import mahjongtournamentsuite.adminapp.generated.resources.something_went_wrong
+import mahjongtournamentsuite.adminapp.generated.resources.this_player_has_an_account_and
+import org.jetbrains.compose.resources.stringResource
 
 internal val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 
 /** The time of a contact as local date and time in the device language. */
 internal fun contactTimeText(isoTime: String?): String? = localizedDateTimeOrNull(isoTime)
 
-internal fun PlayerContactState.label(): String = when (this) {
-    PlayerContactState.NO_EMA_ID -> "No EMA ID"
-    PlayerContactState.NOT_INVITED -> "Not invited"
-    PlayerContactState.LINKED -> "Linked, not reminded"
-    PlayerContactState.INVITED -> "Invited"
-    PlayerContactState.CONTACTED -> "Linked, reminded"
-}
+@Composable
+internal fun PlayerContactState.label(): String = stringResource(
+    when (this) {
+        PlayerContactState.NO_EMA_ID -> Res.string.contact_no_ema_id
+        PlayerContactState.NOT_INVITED -> Res.string.contact_state_not_invited
+        PlayerContactState.LINKED -> Res.string.contact_state_linked
+        PlayerContactState.INVITED -> Res.string.contact_invited
+        PlayerContactState.CONTACTED -> Res.string.contact_state_reminded
+    },
+)
 
 /**
  * The account state of one tournament slot. An editor invites, reminds or revokes by hand.
@@ -82,47 +116,44 @@ fun PlayerAccountDialog(
     AlertDialog(
         modifier = Modifier.appFocusGroup(),
         onDismissRequest = onDismiss,
-        title = { Text("Account of player ${slot.id}") },
+        title = { Text(stringResource(Res.string.account_of_player, slot.id)) },
         text = {
             Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text(state.label(), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
                     if (state == PlayerContactState.NOT_INVITED || state == PlayerContactState.INVITED) {
-                        InfoTooltipIcon(INVITATION_INFO)
+                        InfoTooltipIcon(stringResource(Res.string.invitation_info))
                     }
                 }
                 when (state) {
                     PlayerContactState.NO_EMA_ID ->
-                        Text("Assign an EMA player to this slot first.")
+                        Text(stringResource(Res.string.assign_an_ema_player_to_this))
                     PlayerContactState.NOT_INVITED -> {
-                        Text("Send an invitation link to the email of this player. Nothing is sent before you press Send.")
+                        Text(stringResource(Res.string.send_an_invitation_link_to_the))
                         OutlinedTextField(
                             value = email,
                             onValueChange = { email = it },
-                            label = { Text("Email") },
+                            label = { Text(stringResource(Res.string.email)) },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth().focusRequester(emailFocus),
                         )
                     }
                     PlayerContactState.LINKED ->
-                        Text(
-                            "An account with this EMA ID already exists and sees this tournament. " +
-                                "No email was sent. Send a reminder when you are ready.",
-                        )
+                        Text(stringResource(Res.string.account_exists_note))
                     PlayerContactState.INVITED -> {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            DetailRow("Email", invitation?.email ?: slot.invitedEmail ?: "Not known")
-                            contactTimeText(slot.contactedAt)?.let { DetailRow("Sent", it) }
+                            DetailRow(stringResource(Res.string.email), invitation?.email ?: slot.invitedEmail ?: stringResource(Res.string.not_known))
+                            contactTimeText(slot.contactedAt)?.let { DetailRow(stringResource(Res.string.sent), it) }
                         }
                         Text(
-                            "The link works once and expires after 14 days. Resend creates a new link and the old link stops working.",
+                            stringResource(Res.string.link_works_once),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
                     PlayerContactState.CONTACTED -> {
-                        Text("This player has an account and received an email.")
-                        contactTimeText(slot.contactedAt)?.let { DetailRow("Sent", it) }
+                        Text(stringResource(Res.string.this_player_has_an_account_and))
+                        contactTimeText(slot.contactedAt)?.let { DetailRow(stringResource(Res.string.sent), it) }
                     }
                 }
             }
@@ -140,19 +171,19 @@ fun PlayerAccountDialog(
                 PlayerContactState.NOT_INVITED -> Button(
                     enabled = (validEmail || slot.invitedEmail != null && email.isBlank()) && !busy,
                     onClick = { onAction(PlayerAccountAction.SEND, email.trim().ifBlank { null }) },
-                ) { Text("Send invitation") }
+                ) { Text(stringResource(Res.string.send_invitation)) }
                 PlayerContactState.LINKED -> Button(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.SEND, null) },
-                ) { Text("Send reminder") }
+                ) { Text(stringResource(Res.string.send_reminder)) }
                 PlayerContactState.INVITED -> Button(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.RESEND, null) },
-                ) { Text("Resend with new link") }
+                ) { Text(stringResource(Res.string.resend_with_new_link)) }
                 PlayerContactState.CONTACTED -> OutlinedButton(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.RESEND, null) },
-                ) { Text("Send reminder again") }
+                ) { Text(stringResource(Res.string.send_reminder_again)) }
             }
             }
         },
@@ -170,15 +201,15 @@ private fun SecondaryActions(
     onDismiss: () -> Unit,
 ) {
     if (state == PlayerContactState.NOT_INVITED) {
-        TextButton(enabled = validEmail && !busy, onClick = { onSaveEmail(email.trim()) }) { Text("Save email only") }
+        TextButton(enabled = validEmail && !busy, onClick = { onSaveEmail(email.trim()) }) { Text(stringResource(Res.string.save_email_only)) }
     }
     if (state == PlayerContactState.INVITED) {
-        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text("Revoke invitation") }
+        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text(stringResource(Res.string.revoke_invitation)) }
     }
     if (state == PlayerContactState.LINKED || state == PlayerContactState.CONTACTED) {
-        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text("Remove account link") }
+        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text(stringResource(Res.string.remove_account_link)) }
     }
-    TextButton(onClick = onDismiss) { Text("Close") }
+    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
 }
 
 @Composable
@@ -195,18 +226,18 @@ private fun DetailRow(label: String, value: String) {
 }
 
 /** The result of one account action, shown in its own dialog after the account dialog closes. */
-data class AccountOutcome(val message: String, val isError: Boolean)
+data class AccountOutcome(val message: UiText, val isError: Boolean)
 
 /** The plain sentence for the result of one account action on one slot. */
 internal fun PlayerAccountActionResult.toOutcome(): AccountOutcome {
     val detail = message?.let { " $it" }.orEmpty()
     return when (outcome.name) {
-        "FAILED" -> AccountOutcome("The action failed.$detail", isError = true)
-        "SKIPPED" -> AccountOutcome("Nothing was done.$detail", isError = false)
-        "INVITED" -> AccountOutcome("The invitation was sent.$detail", isError = false)
-        "NOTIFIED" -> AccountOutcome("The reminder was sent.$detail", isError = false)
-        "REVOKED" -> AccountOutcome("The invitation or account link was removed.$detail", isError = false)
-        else -> AccountOutcome(outcome.name.lowercase().replaceFirstChar(Char::uppercase) + "." + detail, isError = false)
+        "FAILED" -> AccountOutcome(UiText.of(Res.string.outcome_failed, detail), isError = true)
+        "SKIPPED" -> AccountOutcome(UiText.of(Res.string.outcome_skipped, detail), isError = false)
+        "INVITED" -> AccountOutcome(UiText.of(Res.string.outcome_invited, detail), isError = false)
+        "NOTIFIED" -> AccountOutcome(UiText.of(Res.string.outcome_notified, detail), isError = false)
+        "REVOKED" -> AccountOutcome(UiText.of(Res.string.outcome_revoked, detail), isError = false)
+        else -> AccountOutcome(UiText.Plain(outcome.name.lowercase().replaceFirstChar(Char::uppercase) + "." + detail), isError = false)
     }
 }
 
@@ -223,8 +254,8 @@ fun AccountOutcomeDialog(outcome: AccountOutcome, onDismiss: () -> Unit) {
                 tint = color,
             )
         },
-        title = { Text(if (outcome.isError) "Something went wrong" else "Done", color = color) },
-        text = { Text(outcome.message, style = MaterialTheme.typography.bodyLarge) },
-        confirmButton = { Button(onClick = onDismiss) { Text("OK") } },
+        title = { Text(stringResource(if (outcome.isError) Res.string.something_went_wrong else Res.string.dialog_done_title), color = color) },
+        text = { Text(outcome.message.asString(), style = MaterialTheme.typography.bodyLarge) },
+        confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
     )
 }

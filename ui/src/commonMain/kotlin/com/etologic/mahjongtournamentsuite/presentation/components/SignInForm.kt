@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,9 +46,18 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.field_email
+import mahjongtournamentsuite.ui.generated.resources.field_password
 import mahjongtournamentsuite.ui.generated.resources.ic_visibility
 import mahjongtournamentsuite.ui.generated.resources.ic_visibility_off
+import mahjongtournamentsuite.ui.generated.resources.password_hide
+import mahjongtournamentsuite.ui.generated.resources.password_show
+import mahjongtournamentsuite.ui.generated.resources.sign_in_button
+import mahjongtournamentsuite.ui.generated.resources.sign_in_description
+import mahjongtournamentsuite.ui.generated.resources.sign_in_forgot_password
+import mahjongtournamentsuite.ui.generated.resources.sign_in_title
 import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The sign-in screen of the editor app and of the player app.
@@ -59,14 +70,14 @@ fun SignInForm(
     password: String,
     onPasswordChange: (String) -> Unit,
     isLoading: Boolean,
-    errorMessage: String?,
-    infoMessage: String?,
+    errorMessage: UiText?,
+    infoMessage: UiText?,
     backendVersion: String?,
     emailRequester: FocusRequester,
     onSubmit: () -> Unit,
     onForgotPassword: () -> Unit,
     onErrorDismiss: () -> Unit,
-    description: String = "Use your email to sign in. Accounts are invitation-only.",
+    description: String = stringResource(Res.string.sign_in_description),
 ) {
     val focusManager = LocalFocusManager.current
     val passwordRequester = remember { FocusRequester() }
@@ -74,7 +85,7 @@ fun SignInForm(
     var isPasswordVisible by rememberSaveable { mutableStateOf(false) }
 
     AppScaffold(
-        title = "Sign in",
+        title = stringResource(Res.string.sign_in_title),
         isLoading = isLoading,
         autoFocusFirst = false,
         showBackgroundLogo = false,
@@ -103,7 +114,7 @@ fun SignInForm(
                         OutlinedTextField(
                             value = email,
                             onValueChange = onEmailChange,
-                            label = { Text("Email") },
+                            label = { Text(stringResource(Res.string.field_email)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .contentType(ContentType.EmailAddress)
@@ -140,7 +151,7 @@ fun SignInForm(
                         OutlinedTextField(
                             value = password,
                             onValueChange = onPasswordChange,
-                            label = { Text("Password") },
+                            label = { Text(stringResource(Res.string.field_password)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .contentType(ContentType.Password)
@@ -171,9 +182,9 @@ fun SignInForm(
                             },
                             trailingIcon = {
                                 val (icon, contentDescription) = if (isPasswordVisible) {
-                                    Res.drawable.ic_visibility_off to "Hide password"
+                                    Res.drawable.ic_visibility_off to stringResource(Res.string.password_hide)
                                 } else {
-                                    Res.drawable.ic_visibility to "Show password"
+                                    Res.drawable.ic_visibility to stringResource(Res.string.password_show)
                                 }
 
                                 FocusedIconButton(
@@ -203,7 +214,7 @@ fun SignInForm(
 
                         infoMessage?.let { message ->
                             Text(
-                                text = message,
+                                text = message.asString(),
                                 color = MaterialTheme.colorScheme.primary,
                                 style = MaterialTheme.typography.bodyMedium,
                             )
@@ -213,7 +224,7 @@ fun SignInForm(
                             enabled = !isLoading,
                             onClick = onForgotPassword,
                         ) {
-                            Text("Forgot password?")
+                            Text(stringResource(Res.string.sign_in_forgot_password))
                         }
 
                         FocusedButton(
@@ -229,7 +240,7 @@ fun SignInForm(
                                     strokeWidth = 2.dp,
                                 )
                             } else {
-                                Text("Sign in")
+                                Text(stringResource(Res.string.sign_in_button))
                             }
                         }
                     }

@@ -6,6 +6,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import kotlinx.coroutines.test.runTest
+import com.etologic.mahjongtournamentsuite.presentation.util.render
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -101,7 +102,7 @@ class RoundEditorSyncTest {
 
         assertFalse(user.sync.hasUnsavedChanges)
         assertEquals("8", user.editor().hands.first().handScore)
-        val lost = user.sync.updateNotices.single().lostChanges.associate { it.label to it.value }
+        val lost = user.sync.updateNotices.single().lostChanges.associate { it.label.render() to it.value.render() }
         assertEquals("16", lost["Hand 1 · Hand score"])
         assertEquals("2", lost["Hand 1 · Player winner id"])
     }
@@ -316,7 +317,7 @@ class RoundEditorSyncTest {
         user.sync.checkForChanges()
 
         assertEquals(listOf("players FORCE"), server.calls.filter { it.startsWith("players") })
-        assertEquals("Player 1", user.sync.playerNamesById[1])
+        assertEquals(null, user.sync.playerNamesById[1])
     }
 
     @Test
@@ -343,7 +344,7 @@ class RoundEditorSyncTest {
 
         server.failPlayers = false
         user.sync.checkForChanges()
-        assertEquals("Player 1", user.sync.playerNamesById[1])
+        assertEquals(null, user.sync.playerNamesById[1])
     }
 
     @Test
@@ -490,7 +491,7 @@ class RoundEditorSyncTest {
         assertFalse(user.sync.hasUnsavedChanges)
         val notice = user.sync.updateNotices.single()
         assertTrue(notice.saveRejected)
-        assertEquals(listOf("Hand 1 · Hand score" to "16"), notice.lostChanges.map { it.label to it.value })
+        assertEquals(listOf("Hand 1 · Hand score" to "16"), notice.lostChanges.map { it.label.render() to it.value.render() })
         assertFalse(user.sync.isLoading)
         assertNull(user.sync.errorMessage)
     }
@@ -647,7 +648,7 @@ class RoundEditorSyncTest {
 
         assertEquals("16", server.tables.getValue(TableKey(1, 1)).second.first().handScore)
         assertEquals("16", ben.editor().hands.first().handScore)
-        assertEquals(listOf("24"), ben.sync.updateNotices.single().lostChanges.map { it.value })
+        assertEquals(listOf("24"), ben.sync.updateNotices.single().lostChanges.map { it.value.render() })
     }
 
     @Test

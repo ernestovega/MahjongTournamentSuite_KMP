@@ -4,11 +4,37 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.field_hand_score
+import mahjongtournamentsuite.adminapp.generated.resources.field_is_chicken_hand
+import mahjongtournamentsuite.adminapp.generated.resources.field_is_completed
+import mahjongtournamentsuite.adminapp.generated.resources.field_is_done
+import mahjongtournamentsuite.adminapp.generated.resources.field_manual_player_east_score
+import mahjongtournamentsuite.adminapp.generated.resources.field_manual_player_north_score
+import mahjongtournamentsuite.adminapp.generated.resources.field_manual_player_south_score
+import mahjongtournamentsuite.adminapp.generated.resources.field_manual_player_west_score
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_east_id
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_east_penalty
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_looser_id
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_north_id
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_north_penalty
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_south_id
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_south_penalty
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_west_id
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_west_penalty
+import mahjongtournamentsuite.adminapp.generated.resources.field_player_winner_id
+import mahjongtournamentsuite.adminapp.generated.resources.field_use_totals_only
+import mahjongtournamentsuite.adminapp.generated.resources.hand_field_label
+import mahjongtournamentsuite.adminapp.generated.resources.no
+import mahjongtournamentsuite.adminapp.generated.resources.value_empty
+import mahjongtournamentsuite.adminapp.generated.resources.yes
+import org.jetbrains.compose.resources.StringResource
 
 /** One value that the user typed and that the server data replaced. */
 internal data class LostChange(
-    val label: String,
-    val value: String,
+    val label: UiText,
+    val value: UiText,
 )
 
 /** Tells the user that the server data replaced a table, and which typed values were lost. */
@@ -80,20 +106,45 @@ internal object TableReconciler {
         }
         handPatches.entries.sortedBy { it.key }.forEach { (handId, patch) ->
             patch.forEach { (field, value) ->
-                add(LostChange("Hand $handId · ${field.toFieldLabel()}", value.toDisplayValue()))
+                add(LostChange(UiText.of(Res.string.hand_field_label, handId, field.toFieldLabel()), value.toDisplayValue()))
             }
         }
     }
 }
 
-/** `playerEastId` becomes `Player east id`. */
-internal fun String.toFieldLabel(): String =
-    replace(Regex("([a-z])([A-Z])")) { "${it.groupValues[1]} ${it.groupValues[2].lowercase()}" }
-        .replaceFirstChar { it.uppercase() }
+private val FieldLabels: Map<String, StringResource> = mapOf(
+    "isCompleted" to Res.string.field_is_completed,
+    "useTotalsOnly" to Res.string.field_use_totals_only,
+    "playerEastId" to Res.string.field_player_east_id,
+    "playerSouthId" to Res.string.field_player_south_id,
+    "playerWestId" to Res.string.field_player_west_id,
+    "playerNorthId" to Res.string.field_player_north_id,
+    "manualPlayerEastScore" to Res.string.field_manual_player_east_score,
+    "manualPlayerSouthScore" to Res.string.field_manual_player_south_score,
+    "manualPlayerWestScore" to Res.string.field_manual_player_west_score,
+    "manualPlayerNorthScore" to Res.string.field_manual_player_north_score,
+    "playerWinnerId" to Res.string.field_player_winner_id,
+    "playerLooserId" to Res.string.field_player_looser_id,
+    "handScore" to Res.string.field_hand_score,
+    "isChickenHand" to Res.string.field_is_chicken_hand,
+    "isDone" to Res.string.field_is_done,
+    "playerEastPenalty" to Res.string.field_player_east_penalty,
+    "playerSouthPenalty" to Res.string.field_player_south_penalty,
+    "playerWestPenalty" to Res.string.field_player_west_penalty,
+    "playerNorthPenalty" to Res.string.field_player_north_penalty,
+)
 
-internal fun Any?.toDisplayValue(): String = when (this) {
-    null -> "empty"
-    is String -> if (isBlank()) "empty" else this
-    is Boolean -> if (this) "Yes" else "No"
-    else -> toString()
+/** The name of a field of the table or of a hand, in the language of the app. */
+internal fun String.toFieldLabel(): UiText =
+    FieldLabels[this]?.let { UiText.of(it) }
+        ?: UiText.Plain(
+            replace(Regex("([a-z])([A-Z])")) { "${it.groupValues[1]} ${it.groupValues[2].lowercase()}" }
+                .replaceFirstChar { it.uppercase() },
+        )
+
+internal fun Any?.toDisplayValue(): UiText = when (this) {
+    null -> UiText.of(Res.string.value_empty)
+    is String -> if (isBlank()) UiText.of(Res.string.value_empty) else UiText.Plain(this)
+    is Boolean -> UiText.of(if (this) Res.string.yes else Res.string.no)
+    else -> UiText.Plain(toString())
 }

@@ -93,3 +93,9 @@ compose.desktop {
         }
     }
 }
+
+// The UI tests look for English texts, so they run in English on every machine.
+tasks.withType<Test>().configureEach {
+    systemProperty("user.language", "en")
+    systemProperty("user.country", "US")
+}

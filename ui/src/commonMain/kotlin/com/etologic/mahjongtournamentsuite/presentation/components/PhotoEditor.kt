@@ -28,7 +28,20 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.photo_add
+import mahjongtournamentsuite.ui.generated.resources.photo_change
+import mahjongtournamentsuite.ui.generated.resources.photo_crop_hint
+import mahjongtournamentsuite.ui.generated.resources.photo_crop_title
+import mahjongtournamentsuite.ui.generated.resources.photo_error_size
+import mahjongtournamentsuite.ui.generated.resources.photo_error_type
+import mahjongtournamentsuite.ui.generated.resources.photo_none
+import mahjongtournamentsuite.ui.generated.resources.photo_of
+import mahjongtournamentsuite.ui.generated.resources.photo_remove
+import org.jetbrains.compose.resources.stringResource
 
 private const val MAX_PHOTO_BYTES = 5 * 1024 * 1024
 private val SUPPORTED_PHOTO_TYPES = setOf("image/jpeg", "image/png", "image/webp", "image/gif")
@@ -44,19 +57,19 @@ fun PhotoEditor(
     photoUrl: String?,
     hasOwnPhoto: Boolean,
     name: String,
-    onUpload: suspend (contentType: String, bytes: ByteArray) -> String?,
-    onRemove: suspend () -> String?,
+    onUpload: suspend (contentType: String, bytes: ByteArray) -> UiText?,
+    onRemove: suspend () -> UiText?,
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
     var imageToCrop by remember { mutableStateOf<SelectedImage?>(null) }
     var saving by remember { mutableStateOf(false) }
-    var error by remember { mutableStateOf<String?>(null) }
+    var error by remember { mutableStateOf<UiText?>(null) }
     val picker = rememberImagePicker(
         onImageSelected = { image ->
             when {
-                image.contentType !in SUPPORTED_PHOTO_TYPES -> error = "Choose a JPEG, PNG, WebP, or GIF image."
-                image.bytes.size > MAX_PHOTO_BYTES -> error = "Choose a photo that is 5 MB or smaller."
+                image.contentType !in SUPPORTED_PHOTO_TYPES -> error = UiText.of(Res.string.photo_error_type)
+                image.bytes.size > MAX_PHOTO_BYTES -> error = UiText.of(Res.string.photo_error_size)
                 else -> {
                     error = null
                     imageToCrop = image
@@ -74,7 +87,7 @@ fun PhotoEditor(
         ProfilePhoto(photoUrl = photoUrl, name = name)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             FocusedTextButton(enabled = !saving, onClick = { picker.launch() }) {
-                Text(if (hasOwnPhoto) "Change photo" else "Add photo")
+                Text(stringResource(if (hasOwnPhoto) Res.string.photo_change else Res.string.photo_add))
             }
             if (hasOwnPhoto) {
                 FocusedTextButton(
@@ -87,20 +100,20 @@ fun PhotoEditor(
                             saving = false
                         }
                     },
-                ) { Text("Remove photo") }
+                ) { Text(stringResource(Res.string.photo_remove)) }
             }
             if (saving) CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
         }
         error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
+            Text(it.asString(), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
         }
     }
 
     imageToCrop?.let { image ->
         ImageCropDialog(
             image = image,
-            title = "Crop photo",
-            hint = "Drag the image or use the controls. The circle shows the area that the apps show.",
+            title = stringResource(Res.string.photo_crop_title),
+            hint = stringResource(Res.string.photo_crop_hint),
             onDismiss = { imageToCrop = null },
             onCropped = { cropped ->
                 imageToCrop = null
@@ -133,14 +146,14 @@ fun ProfilePhoto(photoUrl: String?, name: String) {
         if (photoUrl.isNullOrBlank()) {
             Icon(
                 imageVector = Icons.Default.Person,
-                contentDescription = "No photo",
+                contentDescription = stringResource(Res.string.photo_none),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(size * 0.62f),
             )
         } else {
             AsyncImage(
                 model = photoUrl,
-                contentDescription = "Photo of $name",
+                contentDescription = stringResource(Res.string.photo_of, name),
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.size(size),
             )

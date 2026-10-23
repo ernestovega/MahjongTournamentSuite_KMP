@@ -21,6 +21,10 @@ import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import kotlinx.datetime.TimeZone
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.no_matching_time_zones
+import mahjongtournamentsuite.adminapp.generated.resources.time_zone
+import org.jetbrains.compose.resources.stringResource
 
 /** Most zone names that the menu shows at one time. The text of the field narrows the list. */
 private const val MAX_TIME_ZONE_OPTIONS = 40
@@ -62,7 +66,7 @@ fun TimeZoneDropdown(
     onValueChange: (String) -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
-    label: String = "Time zone",
+    label: String = stringResource(Res.string.time_zone),
     required: Boolean = false,
     isError: Boolean = false,
     supportingText: String? = null,
@@ -127,7 +131,7 @@ fun TimeZoneDropdown(
             onDismissRequest = { expanded = false },
         ) {
             if (options.isEmpty()) {
-                DropdownMenuItem(text = { Text("No matching time zones") }, onClick = {}, enabled = false)
+                DropdownMenuItem(text = { Text(stringResource(Res.string.no_matching_time_zones)) }, onClick = {}, enabled = false)
             }
             options.forEach { zoneId ->
                 DropdownMenuItem(

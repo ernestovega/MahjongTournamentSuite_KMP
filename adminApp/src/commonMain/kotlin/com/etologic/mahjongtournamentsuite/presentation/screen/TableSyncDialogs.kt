@@ -1,11 +1,13 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -20,15 +22,26 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.checking
+import mahjongtournamentsuite.adminapp.generated.resources.continue_action
+import mahjongtournamentsuite.adminapp.generated.resources.enter_these_values_again_if_they
+import mahjongtournamentsuite.adminapp.generated.resources.idle_paused_message
+import mahjongtournamentsuite.adminapp.generated.resources.lost_change_line
+import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.table_headline_latest
+import mahjongtournamentsuite.adminapp.generated.resources.table_headline_rejected
+import mahjongtournamentsuite.adminapp.generated.resources.table_headline_replaced
+import mahjongtournamentsuite.adminapp.generated.resources.table_updated
+import mahjongtournamentsuite.adminapp.generated.resources.tables_updated
+import mahjongtournamentsuite.adminapp.generated.resources.updates_paused
+import org.jetbrains.compose.resources.stringResource
 
 /** The headline of one notice. The wording tells the user what happened to the typed values. */
-internal fun TableUpdateNotice.headline(): String {
-    val table = "Round ${key.roundId} · Table ${key.tableId}"
-    return when {
-        saveRejected -> "$table: someone else saved this table first. Your changes were not saved."
-        lostChanges.isNotEmpty() -> "$table: another user changed this table. Your unsaved changes were replaced."
-        else -> "$table: another user changed this table. It now shows the latest data."
-    }
+internal fun TableUpdateNotice.headline(): UiText = when {
+    saveRejected -> UiText.of(Res.string.table_headline_rejected, key.roundId, key.tableId)
+    lostChanges.isNotEmpty() -> UiText.of(Res.string.table_headline_replaced, key.roundId, key.tableId)
+    else -> UiText.of(Res.string.table_headline_latest, key.roundId, key.tableId)
 }
 
 /** Tells the user that server data replaced one or more tables. The user must accept it. */
@@ -44,7 +57,7 @@ internal fun TableUpdatesDialog(
     AlertDialog(
         modifier = Modifier.appFocusGroup(),
         onDismissRequest = onDismiss,
-        title = { Text(if (notices.size == 1) "Table updated" else "Tables updated") },
+        title = { Text(stringResource(if (notices.size == 1) Res.string.table_updated else Res.string.tables_updated)) },
         text = {
             ScrollableColumnWithScrollbar(
                 state = scrollState,
@@ -52,13 +65,13 @@ internal fun TableUpdatesDialog(
             ) {
                 notices.forEachIndexed { index, notice ->
                     if (index > 0) Spacer(Modifier.height(16.dp))
-                    Text(notice.headline(), fontWeight = FontWeight.Bold)
+                    Text(notice.headline().asString(), fontWeight = FontWeight.Bold)
                     if (notice.lostChanges.isNotEmpty()) {
                         Spacer(Modifier.height(6.dp))
-                        Text("Enter these values again if they are still correct:", style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(Res.string.enter_these_values_again_if_they), style = MaterialTheme.typography.bodySmall)
                         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                             notice.lostChanges.forEach { change ->
-                                Text("• ${change.label}: ${change.value}", style = MaterialTheme.typography.bodyMedium)
+                                Text(stringResource(Res.string.lost_change_line, change.label.asString(), change.value.asString()), style = MaterialTheme.typography.bodyMedium)
                             }
                         }
                     }
@@ -66,7 +79,7 @@ internal fun TableUpdatesDialog(
             }
         },
         confirmButton = {
-            FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text("OK") }
+            FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
         },
     )
 }
@@ -81,19 +94,16 @@ internal fun IdlePauseDialog(onContinue: () -> Unit, isChecking: Boolean) {
         modifier = Modifier.appFocusGroup(),
         // The user must choose Continue. A tap outside the dialog must not hide it.
         onDismissRequest = {},
-        title = { Text("Updates paused") },
+        title = { Text(stringResource(Res.string.updates_paused)) },
         text = {
-            Text(
-                "The app stopped checking for changes because you were away. " +
-                    "Continue to load the latest data before you edit.",
-            )
+            Text(stringResource(Res.string.idle_paused_message))
         },
         confirmButton = {
             FocusedButton(
                 enabled = !isChecking,
                 onClick = onContinue,
                 focusRequester = continueFocusRequester,
-            ) { Text(if (isChecking) "Checking…" else "Continue") }
+            ) { Text(stringResource(if (isChecking) Res.string.checking else Res.string.continue_action)) }
         },
     )
 }

@@ -21,6 +21,9 @@ import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppBackground
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.mahjong_tournament_suite
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -52,7 +55,7 @@ fun SplashScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
         ) {
             Text(
-                text = "Mahjong Tournament Suite",
+                text = stringResource(Res.string.mahjong_tournament_suite),
                 style = MaterialTheme.typography.headlineMedium,
             )
             CircularProgressIndicator()
@@ -72,7 +75,7 @@ private fun SplashScreenPreview() {
             verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
         ) {
             Text(
-                text = "Mahjong Tournament Suite",
+                text = stringResource(Res.string.mahjong_tournament_suite),
                 style = MaterialTheme.typography.headlineMedium,
             )
             CircularProgressIndicator()

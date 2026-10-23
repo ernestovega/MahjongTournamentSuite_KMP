@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import kotlinx.datetime.LocalDateTime
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
@@ -112,10 +113,10 @@ data class PlayerTournamentView(
     val myTables: List<PlayerTable>
         get() = mySlotId?.let { id -> tables.filter { id in it.playerSlots() } }.orEmpty()
 
-    fun nameOf(slotId: Int?): String = slotId?.let { players[it]?.name } ?: "-"
+    fun nameOf(slotId: Int?): String = slotId?.let { players[it]?.name }?.let(PlaceholderNames::localize) ?: "-"
 
     /** The first name of a player, without the surname. */
-    fun firstNameOf(slotId: Int?): String = slotId?.let { players[it]?.firstName } ?: "-"
+    fun firstNameOf(slotId: Int?): String = slotId?.let { players[it]?.firstName }?.let(PlaceholderNames::localize) ?: "-"
 
     /** True when the round has started at [now]. A round with no date counts as started. */
     fun roundHasStarted(roundId: Int, now: LocalDateTime): Boolean =

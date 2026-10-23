@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.material.icons.filled.Edit
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,15 +8,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.zIndex
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,21 +27,49 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.topHandScores
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
+import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.TrophyMedal
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.at_least_one_hand_is_invalid
+import mahjongtournamentsuite.adminapp.generated.resources.calculated_from_hands_trophies_show_the
+import mahjongtournamentsuite.adminapp.generated.resources.chicken
+import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
+import mahjongtournamentsuite.adminapp.generated.resources.completed
+import mahjongtournamentsuite.adminapp.generated.resources.done
+import mahjongtournamentsuite.adminapp.generated.resources.fold_hands
+import mahjongtournamentsuite.adminapp.generated.resources.hands
+import mahjongtournamentsuite.adminapp.generated.resources.hands_done_summary
+import mahjongtournamentsuite.adminapp.generated.resources.loser
+import mahjongtournamentsuite.adminapp.generated.resources.no_hands_yet
+import mahjongtournamentsuite.adminapp.generated.resources.not_used_manual
+import mahjongtournamentsuite.adminapp.generated.resources.penalty
+import mahjongtournamentsuite.adminapp.generated.resources.score
+import mahjongtournamentsuite.adminapp.generated.resources.seat_positions_first
+import mahjongtournamentsuite.adminapp.generated.resources.show_how_the_chicken_and_best
+import mahjongtournamentsuite.adminapp.generated.resources.the_hands_of_this_table_show
+import mahjongtournamentsuite.adminapp.generated.resources.total_scores
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_best_hand_n
+import mahjongtournamentsuite.adminapp.generated.resources.unfold_hands
+import mahjongtournamentsuite.adminapp.generated.resources.when_on_mark_the_table_complete
+import mahjongtournamentsuite.adminapp.generated.resources.winner
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun TableHandsCard(
@@ -52,6 +77,7 @@ internal fun TableHandsCard(
     enabled: Boolean,
     playerNamesById: Map<Int, String>,
 ) {
+    val seatLabels = seatLabels()
     val isHandsActive = !editor.useTotalsOnly
     var handsExpanded by remember { mutableStateOf(isHandsActive) }
     LaunchedEffect(isHandsActive) { handsExpanded = isHandsActive }
@@ -59,8 +85,8 @@ internal fun TableHandsCard(
     val showChicken = LocalHandStatOptions.current.countChickenHands
     val doneCount = editor.hands.count { it.isDone }
     val subtitle = when {
-        !editor.hasCompleteSeatPositions -> "Select all four seat positions first"
-        !isHandsActive -> "Not used while manual scores are on"
+        !editor.hasCompleteSeatPositions -> stringResource(Res.string.seat_positions_first)
+        !isHandsActive -> stringResource(Res.string.not_used_manual)
         else -> null
     }
     val handSubtotals = editor.cumulativeHandScoreSubtotals
@@ -77,14 +103,14 @@ internal fun TableHandsCard(
     var tableHeight by remember { mutableStateOf(0f) }
 
     SectionCard(
-        title = "Hands",
+        title = stringResource(Res.string.hands),
         subtitle = subtitle,
         verticalSpacing = 20.dp,
         centerTitle = true,
         startContent = if (subtitle == null) {
             {
                 Text(
-                    text = "$doneCount of ${editor.hands.size} hands done.",
+                    text = stringResource(Res.string.hands_done_summary, doneCount, editor.hands.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -99,14 +125,14 @@ internal fun TableHandsCard(
             ) {
                 Icon(
                     imageVector = if (handsExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = if (handsExpanded) "Fold hands" else "Unfold hands",
+                    contentDescription = stringResource(if (handsExpanded) Res.string.fold_hands else Res.string.unfold_hands),
                 )
             }
         },
         actions = {
             LabeledSwitch(
-                label = "Completed",
-                description = "When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.",
+                label = stringResource(Res.string.completed),
+                description = stringResource(Res.string.when_on_mark_the_table_complete),
                 checked = editor.isCompleted,
                 enabled = handsEnabled,
                 onCheckedChange = { editor.updateCompletedState(it) },
@@ -117,15 +143,15 @@ internal fun TableHandsCard(
         if (editor.hands.isEmpty()) {
             AppEmptyState(
                 icon = Icons.Default.Edit,
-                title = "No hands yet",
-                message = "The hands of this table show here when they are saved.",
+                title = stringResource(Res.string.no_hands_yet),
+                message = stringResource(Res.string.the_hands_of_this_table_show),
                 compact = true,
             )
             return@SectionCard
         }
         if (editor.hasInvalidHands) {
             Text(
-                text = "At least one hand is invalid. It cannot be marked as done or completed.",
+                text = stringResource(Res.string.at_least_one_hand_is_invalid),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
             )
@@ -164,21 +190,21 @@ internal fun TableHandsCard(
                     },
             ) {
                 GridHeaderCell(text = "#", modifier = Modifier.width(HandsIndexColumnWidth))
-                GridHeaderCell(text = "Winner", modifier = Modifier.weight(HandsPlayerColumnWeight))
-                GridHeaderCell(text = "Loser", modifier = Modifier.weight(HandsPlayerColumnWeight))
-                GridHeaderCell(text = "Score", modifier = Modifier.width(HandsScoreColumnWidth))
-                if (showChicken) GridHeaderCell(text = "Chicken", modifier = Modifier.width(HandsChickenColumnWidth))
+                GridHeaderCell(text = stringResource(Res.string.winner), modifier = Modifier.weight(HandsPlayerColumnWeight))
+                GridHeaderCell(text = stringResource(Res.string.loser), modifier = Modifier.weight(HandsPlayerColumnWeight))
+                GridHeaderCell(text = stringResource(Res.string.score), modifier = Modifier.width(HandsScoreColumnWidth))
+                if (showChicken) GridHeaderCell(text = stringResource(Res.string.chicken), modifier = Modifier.width(HandsChickenColumnWidth))
                 listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId)
                     .forEachIndexed { seat, id ->
                         GridHeaderCell(
-                            text = SeatLabels[seat],
+                            text = seatLabels[seat],
                             icon = SeatWindIcons[seat],
-                            subtext = playerNameOrNull(id, playerNamesById),
+                            subtext = playerNameOrNull(id, playerNamesById)?.asString(),
                             modifier = Modifier.weight(HandsSeatColumnWeight),
                         )
                     }
-                GridHeaderCell(text = "Penalty", modifier = Modifier.width(HandsPenaltyColumnWidth))
-                GridHeaderCell(text = "Done", modifier = Modifier.width(HandsDoneColumnWidth), last = true)
+                GridHeaderCell(text = stringResource(Res.string.penalty), modifier = Modifier.width(HandsPenaltyColumnWidth))
+                GridHeaderCell(text = stringResource(Res.string.done), modifier = Modifier.width(HandsDoneColumnWidth), last = true)
             }
             editor.hands.forEachIndexed { index, hand ->
                 HandTableRow(
@@ -207,7 +233,7 @@ private fun HandsTotalsRow(totals: SeatTextValues) {
     GridRow(height = GridRowHeight, topDivider = false, modifier = Modifier.padding(horizontal = 1.dp)) {
         GridCell(modifier = Modifier.width(HandsIndexColumnWidth), last = true) {}
         GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight), last = true, alignment = Alignment.CenterStart) {
-            Text(text = "Total Scores", style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
+            Text(text = stringResource(Res.string.total_scores), style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold))
         }
         GridCell(modifier = Modifier.weight(HandsPlayerColumnWeight), last = true) {}
         GridCell(modifier = Modifier.width(HandsScoreColumnWidth), last = true) {}
@@ -247,7 +273,7 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
     ) {
         if (chickenHandCount > 0) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                ChickenIcon(contentDescription = "Chicken hands")
+                ChickenIcon(contentDescription = stringResource(Res.string.chicken_hands))
                 Text("$chickenHandCount", style = MaterialTheme.typography.titleLarge)
             }
         }
@@ -260,7 +286,7 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
                 else -> TrophyMedal.Bronze
             }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                TrophyIcon(contentDescription = "Tournament best hand $place", medal = medal)
+                TrophyIcon(contentDescription = stringResource(Res.string.tournament_best_hand_n, place), medal = medal)
                 Text("$score", style = MaterialTheme.typography.titleLarge)
                 winnerId?.let {
                     Text(
@@ -272,8 +298,8 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
             }
         }
         InfoTooltipIcon(
-            description = "Calculated from hands. Trophies show the best hands of the tournament that this table holds.",
-            contentDescription = "Show how the chicken and best hand values are calculated",
+            description = stringResource(Res.string.calculated_from_hands_trophies_show_the),
+            contentDescription = stringResource(Res.string.show_how_the_chicken_and_best),
         )
     }
 }

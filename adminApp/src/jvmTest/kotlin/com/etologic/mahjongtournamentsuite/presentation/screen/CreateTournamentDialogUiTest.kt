@@ -29,6 +29,14 @@ import kotlin.test.Test
 /** The form marks the required fields and the wrong fields. */
 @OptIn(ExperimentalTestApi::class)
 class CreateTournamentDialogUiTest {
+    private val originalLocale = java.util.Locale.getDefault()
+
+    @kotlin.test.AfterTest
+    fun restoreLocale() = java.util.Locale.setDefault(originalLocale)
+
+    private fun ComposeUiTest.awaitText(text: String) =
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+
     private fun ComposeUiTest.showForm() {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false) {}
@@ -158,5 +166,36 @@ class CreateTournamentDialogUiTest {
 
         /** From, to. */
         const val ScheduleRequiredFieldCount = 2
+    }
+
+    @Test
+    fun theFormIsInSpanishWhenTheLanguageIsSpanish() = runComposeUiTest {
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
+        showForm()
+
+        awaitText("Los campos marcados con * son obligatorios.")
+        onNodeWithText("Crea las rondas, las mesas y los jugadores automáticamente.").assertExists()
+        onNodeWithText("General").assertExists()
+        onNodeWithText("Sede").assertExists()
+        onNodeWithText("Imagen").assertExists()
+        onNodeWithText("Horario").assertExists()
+        onNodeWithText("Crear").assertExists()
+    }
+
+    @Test
+    fun theValidationMessagesAreInSpanish() = runComposeUiTest {
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
+        showForm()
+        awaitText("Crear")
+
+        onNodeWithText("Crear").performClick()
+        awaitText("El nombre es obligatorio.")
+        onNodeWithText("Usa de 1 a 10 caracteres.").assertExists()
+
+        onNodeWithText("Sede").performClick()
+        awaitText("Elige un país anfitrión.")
+        onNodeWithText("La ciudad es obligatoria.").assertExists()
+        onNodeWithText("Añade un enlace de Google Maps, o escribe el nombre de la sede y la dirección.").assertExists()
+        onNodeWithText("El correo electrónico de contacto es obligatorio.").assertExists()
     }
 }

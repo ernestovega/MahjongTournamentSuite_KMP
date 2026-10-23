@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.platform
 
 import androidx.compose.runtime.Composable
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import kotlin.io.encoding.Base64
 
 data class SelectedImage(
@@ -27,14 +28,14 @@ class ImagePicker internal constructor(
 @Composable
 expect fun rememberImagePicker(
     onImageSelected: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 ): ImagePicker
 
 expect fun cropSelectedImage(
     image: SelectedImage,
     crop: SquareImageCrop,
     onCropped: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 )
 
 internal fun selectedImageFromBase64(

@@ -1,8 +1,14 @@
 package com.etologic.mahjongtournamentsuite.presentation.util
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlin.time.Instant
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.data_checked
+import mahjongtournamentsuite.adminapp.generated.resources.data_loaded
+import mahjongtournamentsuite.adminapp.generated.resources.data_results
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * One number for the results the app holds: the sum of the versions of all tables.
@@ -29,15 +35,18 @@ fun clockLabel(now: Instant, zone: TimeZone = TimeZone.currentSystemDefault()): 
 }
 
 /** The text under the title of the tournament screen, and in a corner of the ranking: `Results r123 · checked 15:30:12`. */
-fun dataStatusLabel(
+fun dataStatus(
     revision: Long?,
     at: Instant?,
-    verb: String = "checked",
+    loaded: Boolean = false,
     zone: TimeZone = TimeZone.currentSystemDefault(),
-): String = listOfNotNull(
-    revision?.let { "Results ${dataRevisionLabel(it)}" },
-    at?.let { "$verb ${clockLabel(it, zone)}" },
-).joinToString(" · ")
+): UiText = UiText.Joined(
+    listOfNotNull(
+        revision?.let { UiText.of(Res.string.data_results, dataRevisionLabel(it)) },
+        at?.let { UiText.of(if (loaded) Res.string.data_loaded else Res.string.data_checked, clockLabel(it, zone)) },
+    ),
+    separator = " · ",
+)
 
 private val unsafeFileCharacters = Regex("[^A-Za-z0-9_-]+")
 

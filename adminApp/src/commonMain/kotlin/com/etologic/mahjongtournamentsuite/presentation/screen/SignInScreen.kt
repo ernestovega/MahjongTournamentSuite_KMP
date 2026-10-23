@@ -17,8 +17,13 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCred
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.sign_in_enter_email
+import mahjongtournamentsuite.adminapp.generated.resources.sign_in_reset_sent
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -33,8 +38,8 @@ fun SignInScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var infoMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<UiText?>(null) }
+    var infoMessage by remember { mutableStateOf<UiText?>(null) }
     var backendVersion by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(versionPresenter) {
@@ -70,7 +75,7 @@ fun SignInScreen(
                     }
                 }
                 is AppResult.Failure -> {
-                    errorMessage = result.error.toUiMessage()
+                    errorMessage = result.error.toUiText()
                 }
             }
             isLoading = false
@@ -81,7 +86,7 @@ fun SignInScreen(
         errorMessage = null
         infoMessage = null
         if (email.trim().isEmpty()) {
-            errorMessage = "Enter your email address first."
+            errorMessage = UiText.of(Res.string.sign_in_enter_email)
             emailRequester.requestFocus()
             return
         }
@@ -90,9 +95,9 @@ fun SignInScreen(
         coroutineScope.launch {
             when (val result = authPresenter.requestPasswordReset(email.trim())) {
                 is AppResult.Success -> {
-                    infoMessage = "If an account exists, we sent password reset instructions to your email."
+                    infoMessage = UiText.of(Res.string.sign_in_reset_sent)
                 }
-                is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+                is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
             isLoading = false
         }

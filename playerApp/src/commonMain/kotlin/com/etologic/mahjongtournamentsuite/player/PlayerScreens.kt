@@ -1,169 +1,251 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import androidx.compose.material.icons.filled.Edit
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
-import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.MyLocation
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bolt
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.HorizontalRule
+import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Leaderboard
+import androidx.compose.material.icons.filled.MyLocation
+import androidx.compose.material.icons.filled.PanTool
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.SecondaryTabRow
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableIntStateOf
-import kotlin.time.TimeSource
-import kotlin.time.Duration
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
-import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.compositeOver
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.SwapHoriz
-import androidx.compose.material.icons.filled.HorizontalRule
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.background
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.SecondaryTabRow
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.runtime.saveable.rememberSaveable
-import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Switch
-import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.border
-import androidx.compose.material.icons.filled.Directions
-import androidx.compose.ui.layout.ContentScale
-import coil3.compose.AsyncImage
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material.icons.filled.Place
-import androidx.compose.material.icons.filled.Groups
-import androidx.compose.material.icons.filled.PanTool
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
-import androidx.compose.material.icons.filled.Leaderboard
-import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.HourglassEmpty
-import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.ui.draw.clip
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
-import androidx.compose.ui.graphics.Color
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
-import com.etologic.mahjongtournamentsuite.domain.model.TableHand
-import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
-import com.etologic.mahjongtournamentsuite.domain.model.seatScores
-import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
-import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
-import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
-import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
-import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
-import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
-import com.etologic.mahjongtournamentsuite.presentation.components.SeatLevelMedal
-import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
-import kotlin.time.Clock
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.navigation.NavHostController
+import coil3.compose.AsyncImage
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
+import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
+import com.etologic.mahjongtournamentsuite.domain.model.seatScores
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
+import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
+import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
+import com.etologic.mahjongtournamentsuite.presentation.components.SeatLevelMedal
+import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
+import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
+import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
+import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
+import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
+import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.TimeSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.action_open
+import mahjongtournamentsuite.playerapp.generated.resources.age_hours
+import mahjongtournamentsuite.playerapp.generated.resources.age_minutes
+import mahjongtournamentsuite.playerapp.generated.resources.age_seconds
+import mahjongtournamentsuite.playerapp.generated.resources.contact_send_email
+import mahjongtournamentsuite.playerapp.generated.resources.data_stale
+import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_message
+import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_title
+import mahjongtournamentsuite.playerapp.generated.resources.field_password
+import mahjongtournamentsuite.playerapp.generated.resources.field_password_repeat
+import mahjongtournamentsuite.playerapp.generated.resources.field_search
+import mahjongtournamentsuite.playerapp.generated.resources.hand_discard
+import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
+import mahjongtournamentsuite.playerapp.generated.resources.hand_penalty
+import mahjongtournamentsuite.playerapp.generated.resources.hand_self_pick
+import mahjongtournamentsuite.playerapp.generated.resources.info_contact
+import mahjongtournamentsuite.playerapp.generated.resources.info_directions
+import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
+import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
+import mahjongtournamentsuite.playerapp.generated.resources.invite_accept
+import mahjongtournamentsuite.playerapp.generated.resources.invite_choose_password
+import mahjongtournamentsuite.playerapp.generated.resources.invite_have_account
+import mahjongtournamentsuite.playerapp.generated.resources.invite_signed_in
+import mahjongtournamentsuite.playerapp.generated.resources.invite_title
+import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
+import mahjongtournamentsuite.playerapp.generated.resources.player_ranking_summary
+import mahjongtournamentsuite.playerapp.generated.resources.progress_ongoing
+import mahjongtournamentsuite.playerapp.generated.resources.progress_rounds
+import mahjongtournamentsuite.playerapp.generated.resources.progress_tables
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_short
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_chicken_hands
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_chicken_short
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_points_score
+import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
+import mahjongtournamentsuite.playerapp.generated.resources.round_n
+import mahjongtournamentsuite.playerapp.generated.resources.schedule_hide
+import mahjongtournamentsuite.playerapp.generated.resources.scope_me
+import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
+import mahjongtournamentsuite.playerapp.generated.resources.scope_player
+import mahjongtournamentsuite.playerapp.generated.resources.scope_players
+import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
+import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
+import mahjongtournamentsuite.playerapp.generated.resources.sign_in_invite_description
+import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
+import mahjongtournamentsuite.playerapp.generated.resources.standing_place
+import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
+import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
+import mahjongtournamentsuite.playerapp.generated.resources.stats_title
+import mahjongtournamentsuite.playerapp.generated.resources.status_finished
+import mahjongtournamentsuite.playerapp.generated.resources.status_in_progress
+import mahjongtournamentsuite.playerapp.generated.resources.status_upcoming
+import mahjongtournamentsuite.playerapp.generated.resources.tab_all_tables
+import mahjongtournamentsuite.playerapp.generated.resources.tab_info
+import mahjongtournamentsuite.playerapp.generated.resources.tab_my_tables
+import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
+import mahjongtournamentsuite.playerapp.generated.resources.tab_tables
+import mahjongtournamentsuite.playerapp.generated.resources.table_details
+import mahjongtournamentsuite.playerapp.generated.resources.table_done
+import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
+import mahjongtournamentsuite.playerapp.generated.resources.table_hands_done
+import mahjongtournamentsuite.playerapp.generated.resources.table_n
+import mahjongtournamentsuite.playerapp.generated.resources.tables_all_empty
+import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.tables_mine_empty
+import mahjongtournamentsuite.playerapp.generated.resources.tables_not_linked
+import mahjongtournamentsuite.playerapp.generated.resources.tables_player_empty_message
+import mahjongtournamentsuite.playerapp.generated.resources.team_hide_players
+import mahjongtournamentsuite.playerapp.generated.resources.team_n
+import mahjongtournamentsuite.playerapp.generated.resources.team_show_players
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_logo_of
+import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_message
+import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.won_best_hands_ranking
+import mahjongtournamentsuite.playerapp.generated.resources.won_teams_ranking
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 /** The interval of the checks for new results while a tournament screen is open. */
@@ -207,8 +289,8 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf<String?>(null) }
-    var infoMessage by remember { mutableStateOf<String?>(null) }
+    var errorMessage by remember { mutableStateOf<UiText?>(null) }
+    var infoMessage by remember { mutableStateOf<UiText?>(null) }
     var backendVersion by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
@@ -235,7 +317,7 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
                         navController.navigate(TournamentRoute(openTournamentId))
                     }
                 }
-                is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+                is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
             busy = false
         }
@@ -245,7 +327,7 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
         errorMessage = null
         infoMessage = null
         if (email.trim().isEmpty()) {
-            errorMessage = "Enter your email address first."
+            errorMessage = UiText.of(Res.string.sign_in_enter_email)
             emailRequester.requestFocus()
             return
         }
@@ -253,8 +335,8 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
         scope.launch {
             when (val result = presenter.resetPassword(email)) {
                 is AppResult.Success ->
-                    infoMessage = "If an account exists, we sent password reset instructions to your email."
-                is AppResult.Failure -> errorMessage = result.error.toUiMessage()
+                    infoMessage = UiText.of(Res.string.sign_in_reset_sent)
+                is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
             busy = false
         }
@@ -273,7 +355,7 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
         onSubmit = ::submit,
         onForgotPassword = ::requestPasswordReset,
         onErrorDismiss = { errorMessage = null },
-        description = "Use the email of your invitation to sign in.",
+        description = stringResource(Res.string.sign_in_invite_description),
     )
 }
 
@@ -284,7 +366,7 @@ fun InviteScreen(navController: NavHostController, token: String) {
     var password by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<UiText?>(null) }
     var hasSession by remember { mutableStateOf<Boolean?>(null) }
     LaunchedEffect(Unit) { hasSession = presenter.hasSession() }
 
@@ -292,17 +374,17 @@ fun InviteScreen(navController: NavHostController, token: String) {
         Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
     ) {
-        Text("Accept your invitation", style = MaterialTheme.typography.headlineMedium)
+        Text(stringResource(Res.string.invite_title), style = MaterialTheme.typography.headlineMedium)
         if (hasSession == true) {
-            Text("You are signed in. Accept the invitation with this account.")
+            Text(stringResource(Res.string.invite_signed_in))
         } else {
-            Text("Choose a password for your new account. If you already have an account, sign in first.")
+            Text(stringResource(Res.string.invite_choose_password))
             OutlinedTextField(
-                value = password, onValueChange = { password = it }, label = { Text("Password") }, singleLine = true,
+                value = password, onValueChange = { password = it }, label = { Text(stringResource(Res.string.field_password)) }, singleLine = true,
                 visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
-                value = confirm, onValueChange = { confirm = it }, label = { Text("Repeat password") }, singleLine = true,
+                value = confirm, onValueChange = { confirm = it }, label = { Text(stringResource(Res.string.field_password_repeat)) }, singleLine = true,
                 visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
             )
         }
@@ -327,16 +409,16 @@ fun InviteScreen(navController: NavHostController, token: String) {
                                 }
                             }
                         }
-                        is AppResult.Failure -> message = result.error.toUiMessage()
+                        is AppResult.Failure -> message = result.error.toUiText()
                     }
                     busy = false
                 }
             },
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("Accept invitation") }
+        ) { Text(stringResource(Res.string.invite_accept)) }
         if (hasSession == false) {
             TextButton(onClick = { navController.navigate(SignInRoute(inviteToken = token)) }) {
-                Text("I already have an account")
+                Text(stringResource(Res.string.invite_have_account))
             }
         }
     }
@@ -348,7 +430,7 @@ fun TournamentsScreen(navController: NavHostController) {
     val session = koinInject<PlayerSessionPresenter>()
     val scope = rememberCoroutineScope()
     var items by remember { mutableStateOf<List<Tournament>?>(null) }
-    var message by remember { mutableStateOf<String?>(null) }
+    var message by remember { mutableStateOf<UiText?>(null) }
     // The place of the player in each tournament that started. It fills in while the list is on screen.
     var standings by remember { mutableStateOf<Map<String, TournamentStanding>>(emptyMap()) }
     var tab by rememberPersistentInt("tournaments-tab", 0)
@@ -358,7 +440,7 @@ fun TournamentsScreen(navController: NavHostController) {
     LaunchedEffect(Unit) {
         when (val result = tournaments.listTournaments(RefreshMode.FORCE)) {
             is AppResult.Success -> items = result.value
-            is AppResult.Failure -> message = result.error.toUiMessage()
+            is AppResult.Failure -> message = result.error.toUiText()
         }
     }
     LaunchedEffect(items) {
@@ -397,7 +479,7 @@ fun TournamentsScreen(navController: NavHostController) {
     // The tab rows hide when the content scrolls down and show when it scrolls up.
     val hideOnScroll = rememberHideOnScrollState()
     AppScaffold(
-        title = "My tournaments",
+        title = stringResource(Res.string.scope_my_tournaments),
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
         navigationIcon = {
@@ -421,7 +503,7 @@ fun TournamentsScreen(navController: NavHostController) {
                 indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
                 modifier = Modifier.widthIn(max = 720.dp),
             ) {
-                listOf("My tournaments", "Statistics").forEachIndexed { index, title ->
+                listOf(stringResource(Res.string.scope_my_tournaments), stringResource(Res.string.stats_title)).forEachIndexed { index, title ->
                     CompactTab(
                         selected = tab == index,
                         onClick = { tab = index },
@@ -452,7 +534,7 @@ fun TournamentsScreen(navController: NavHostController) {
                 when {
                     list == null -> Unit
                     list.isEmpty() -> Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) {
-                        EmptyState(Icons.Default.EmojiEvents, "No tournaments yet", "You are not registered in any tournament yet.")
+                        EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_empty_title), stringResource(Res.string.tournaments_empty_message))
                     }
                     // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
                     else -> LazyColumn(
@@ -476,7 +558,11 @@ private fun EmptyState(icon: ImageVector, title: String, message: String) {
     AppEmptyState(icon, title, message, compact = true)
 }
 
-private enum class TournamentStatus(val label: String) { UPCOMING("Upcoming"), IN_PROGRESS("In progress"), FINISHED("Finished") }
+private enum class TournamentStatus(val label: StringResource) {
+    UPCOMING(Res.string.status_upcoming),
+    IN_PROGRESS(Res.string.status_in_progress),
+    FINISHED(Res.string.status_finished),
+}
 
 /** The place of the player in a tournament, and the rankings that the player won. */
 private data class TournamentStanding(
@@ -521,7 +607,7 @@ private fun StatusChip(status: TournamentStatus) {
         TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
     }
     OutlinedTag(color) {
-        Text(status.label, style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(status.label), style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -533,7 +619,7 @@ private fun StandingTag(standing: TournamentStanding) {
         if (standing.position <= 3) {
             PositionTrophy(standing.position, size = 18.dp)
         } else {
-            Icon(Icons.Default.Leaderboard, contentDescription = "Place", Modifier.size(18.dp), tint = color)
+            Icon(Icons.Default.Leaderboard, contentDescription = stringResource(Res.string.standing_place), Modifier.size(18.dp), tint = color)
         }
         Text("${standing.position}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color)
     }
@@ -556,7 +642,7 @@ private fun TournamentLogo(tournament: Tournament) {
     } else {
         AsyncImage(
             model = tournament.associationLogoUrl,
-            contentDescription = "Logo of ${tournament.name}",
+            contentDescription = stringResource(Res.string.tournament_logo_of, tournament.name),
             contentScale = ContentScale.Fit,
             modifier = modifier,
         )
@@ -633,7 +719,7 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                                     style = MaterialTheme.typography.bodyMedium,
                                 )
                                 if (mapLink != null) {
-                                    LinkButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") {
+                                    LinkButton(Icons.Default.Directions, stringResource(Res.string.info_directions), stringResource(Res.string.info_open_directions)) {
                                         uriHandler.openUri(mapLink)
                                     }
                                 }
@@ -646,12 +732,12 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                             StandingTag(standing)
                             if (standing.wonTeams || standing.wonChickenHands || standing.wonBestHands) {
                                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = "Won the teams ranking", Modifier.size(22.dp))
+                                    if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.won_teams_ranking), Modifier.size(22.dp))
                                     if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
                                     if (standing.wonBestHands) {
                                         // The hand tells this trophy apart from the trophy of the place.
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                            Icon(Icons.Default.PanTool, contentDescription = "Won the best hands ranking", Modifier.size(16.dp))
+                                            Icon(Icons.Default.PanTool, contentDescription = stringResource(Res.string.won_best_hands_ranking), Modifier.size(16.dp))
                                             PositionTrophy(1, size = 22.dp)
                                         }
                                     }
@@ -670,17 +756,17 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     if (email.isNotBlank()) {
-                        LinkButton(Icons.Default.Email, "Contact", "Send an email to the organizers") { uriHandler.openUri("mailto:$email") }
+                        LinkButton(Icons.Default.Email, stringResource(Res.string.info_contact), stringResource(Res.string.contact_send_email)) { uriHandler.openUri("mailto:$email") }
                     }
                     if (hasSchedule(tournament)) {
-                        LinkButton(Icons.Default.Schedule, if (expanded) "Hide schedule" else "Schedule") { expanded = !expanded }
+                        LinkButton(Icons.Default.Schedule, stringResource(if (expanded) Res.string.schedule_hide else Res.string.info_schedule)) { expanded = !expanded }
                     }
                 }
                 Button(
                     onClick = onClick,
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 ) {
-                    Text("Open", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)
                 }
             }
             if (expanded) TournamentSchedule(tournament)
@@ -708,10 +794,10 @@ private fun LinkButton(icon: ImageVector, label: String, description: String? = 
  * After [STALE_AFTER_FAILURES] failed checks in a row, the message tells how long the data is old.
  */
 @Composable
-private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pair<PlayerTournamentView?, String?> {
+private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pair<PlayerTournamentView?, UiText?> {
     val presenter = koinInject<PlayerTournamentPresenter>()
     var view by remember(tournamentId) { mutableStateOf<PlayerTournamentView?>(null) }
-    var message by remember(tournamentId) { mutableStateOf<String?>(null) }
+    var message by remember(tournamentId) { mutableStateOf<UiText?>(null) }
     var failures by remember(tournamentId) { mutableIntStateOf(0) }
     var lastUpdate by remember(tournamentId) { mutableStateOf(TimeSource.Monotonic.markNow()) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
@@ -729,9 +815,9 @@ private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pa
                 is AppResult.Failure -> {
                     failures++
                     if (view == null) {
-                        message = result.error.toUiMessage()
+                        message = result.error.toUiText()
                     } else if (failures >= STALE_AFTER_FAILURES) {
-                        message = "The data has not updated for ${lastUpdate.elapsedNow().toAgeText()}. The app tries again."
+                        message = UiText.of(Res.string.data_stale, lastUpdate.elapsedNow().toAgeText())
                     }
                 }
             }
@@ -745,14 +831,13 @@ private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pa
 private const val STALE_AFTER_FAILURES = 3
 
 /** The age as plain text, for example "45 seconds", "1 minute" or "2 hours". */
-private fun Duration.toAgeText(): String {
+private fun Duration.toAgeText(): UiText {
     val seconds = inWholeSeconds
-    val (value, unit) = when {
-        seconds < 60 -> seconds to "second"
-        seconds < 3600 -> seconds / 60 to "minute"
-        else -> seconds / 3600 to "hour"
+    return when {
+        seconds < 60 -> UiText.Plural(Res.plurals.age_seconds, seconds.toInt(), listOf(seconds))
+        seconds < 3600 -> (seconds / 60).let { UiText.Plural(Res.plurals.age_minutes, it.toInt(), listOf(it)) }
+        else -> (seconds / 3600).let { UiText.Plural(Res.plurals.age_hours, it.toInt(), listOf(it)) }
     }
-    return "$value $unit" + if (value == 1L) "" else "s"
 }
 
 @Composable
@@ -769,7 +854,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     val hideOnScroll = rememberHideOnScrollState()
 
     AppScaffold(
-        title = view?.tournament?.name ?: "Tournament",
+        title = view?.tournament?.name ?: stringResource(Res.string.scope_tournament),
         isLoading = (view == null && message == null) || (tab == 2 && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
@@ -789,7 +874,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                     containerColor = tabRowColor(), contentColor = TabContentColor,
                     indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
                 ) {
-                    listOf("Tables", "Ranking", "Statistics", "Info").forEachIndexed { index, title ->
+                    listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_ranking), stringResource(Res.string.stats_title), stringResource(Res.string.tab_info)).forEachIndexed { index, title ->
                         CompactTab(
                             selected = tab == index,
                             onClick = { tab = index },
@@ -818,7 +903,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 containerColor = tabRowColor(), contentColor = TabContentColor,
                                 indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
                             ) {
-                                listOf("My tables", "All tables").forEachIndexed { index, title ->
+                                listOf(stringResource(Res.string.tab_my_tables), stringResource(Res.string.tab_all_tables)).forEachIndexed { index, title ->
                                     CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = index }, title = title)
                                 }
                             }
@@ -828,10 +913,9 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 view,
                                 view.myTables,
                                 if (view.mySlotId == null) {
-                                    "Your account is not linked to a player of this tournament. " +
-                                        "Ask the organizers to send you an invitation. All tables are in the All tables tab."
+                                    stringResource(Res.string.tables_not_linked)
                                 } else {
-                                    "The tables of the player show here when the organizers draw the round."
+                                    stringResource(Res.string.tables_mine_empty)
                                 },
                                 open,
                                 stickyRounds = false,
@@ -844,7 +928,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center,
                             )
-                            TableList(view, view.tables, "The tables show here when the organizers draw the first round.", open)
+                            TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open)
                         }
                     }
                     1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
@@ -861,6 +945,7 @@ private fun datesOf(tournament: Tournament): String? =
     formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)
 
 /** How far the tournament is, for the top of the All tables tab. Example: "2 of 5 rounds - 8 of 20 tables - 3 ongoing". */
+@Composable
 private fun progressOf(view: PlayerTournamentView): String {
     val rounds = view.tournament.numRounds
     val tablesPerRound = view.tournament.numPlayers / 4
@@ -870,9 +955,9 @@ private fun progressOf(view: PlayerTournamentView): String {
         tablesPerRound > 0 && view.tables.count { it.roundId == round && it.isComplete } >= tablesPerRound
     }
     return listOf(
-        "$completedRounds of $rounds rounds",
-        "$completedTables of ${rounds * tablesPerRound} tables",
-        "$ongoingTables ongoing",
+        stringResource(Res.string.progress_rounds, completedRounds, rounds),
+        stringResource(Res.string.progress_tables, completedTables, rounds * tablesPerRound),
+        stringResource(Res.string.progress_ongoing, ongoingTables),
     ).joinToString(" - ")
 }
 
@@ -924,7 +1009,7 @@ private fun TableList(
     stickyRounds: Boolean = true,
 ) {
     if (tables.isEmpty()) {
-        Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) { EmptyState(Icons.Default.People, "No tables yet", emptyText) }
+        Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), emptyText) }
         return
     }
     val rounds = tables.sortedBy { it.roundId }.groupBy { it.roundId }
@@ -966,7 +1051,7 @@ private fun RoundHeader(roundId: Int, start: String?) {
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            "Round $roundId",
+            stringResource(Res.string.round_n, roundId),
             Modifier.weight(1f),
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
@@ -1008,7 +1093,7 @@ private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hig
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                "Table ${table.tableId}",
+                stringResource(Res.string.table_n, table.tableId),
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
@@ -1023,8 +1108,8 @@ private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hig
                 Icon(statusIcon, contentDescription = null, Modifier.size(20.dp), tint = headerContent)
                 Text(
                     when {
-                        complete -> "Finished"
-                        else -> "${table.doneHands}/${table.hands.size} hands"
+                        complete -> stringResource(Res.string.status_finished)
+                        else -> stringResource(Res.string.table_hands_done, table.doneHands, table.hands.size)
                     },
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
@@ -1100,11 +1185,11 @@ private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hig
 }
 
 /** [short] is the label of the button of the ranking. It is short because the buttons share a row with the search. */
-private enum class RankingKind(val title: String, val short: String) {
-    PLAYERS("Players", "Players"),
-    TEAMS("Teams", "Teams"),
-    CHICKEN("Chicken hands", "Chicken"),
-    BEST("Best hands", "Best"),
+private enum class RankingKind(val title: StringResource, val short: StringResource) {
+    PLAYERS(Res.string.scope_players, Res.string.scope_players),
+    TEAMS(Res.string.ranking_teams, Res.string.ranking_teams),
+    CHICKEN(Res.string.ranking_chicken_hands, Res.string.ranking_chicken_short),
+    BEST(Res.string.ranking_best_hands, Res.string.ranking_best_short),
 }
 
 /** One line of a ranking list. The chip is the main number, outlined. The score is the plain number next to it. */
@@ -1146,7 +1231,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
                 key = "p${row.playerId}",
                 position = row.position,
                 title = view.nameOf(row.playerId),
-                subtitle = row.substitution?.label,
+                subtitle = row.substitution?.label(),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
                 chip = formatPoints(row.points),
                 score = "${row.score}",
@@ -1164,7 +1249,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
                         key = "t${row.teamId}_p${member.playerId}",
                         position = member.position,
                         title = view.nameOf(member.playerId),
-                        subtitle = member.substitution?.label,
+                        subtitle = member.substitution?.label(),
                         country = view.players[member.playerId]?.country?.takeIf { it.isNotBlank() },
                         chip = formatPoints(member.points),
                         score = "${member.score}",
@@ -1176,7 +1261,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
             RankingRow(
                 key = "t${row.teamId}",
                 position = row.position,
-                title = view.teamNames[row.teamId] ?: "Team ${row.teamId}",
+                title = view.teamNames[row.teamId] ?: stringResource(Res.string.team_n, row.teamId),
                 subtitle = null,
                 chip = formatPoints(row.points),
                 score = "${row.score}",
@@ -1189,7 +1274,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
                 key = "c${row.playerId}",
                 position = row.position,
                 title = view.nameOf(row.playerId),
-                subtitle = "${formatPoints(row.points)} points - ${row.score} score",
+                subtitle = stringResource(Res.string.ranking_points_score, formatPoints(row.points), row.score),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
                 chip = "${row.chickenHands}",
                 chipChicken = true,
@@ -1202,7 +1287,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
                 key = "b${index}_${row.playerId}",
                 position = row.position,
                 title = view.nameOf(row.playerId),
-                subtitle = "${formatPoints(row.points)} points - ${row.score} score",
+                subtitle = stringResource(Res.string.ranking_points_score, formatPoints(row.points), row.score),
                 country = view.players[row.playerId]?.country?.takeIf { it.isNotBlank() },
                 chip = "${row.handScore}",
                 mine = row.playerId == view.mySlotId,
@@ -1213,7 +1298,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
 
     RankingRows(
         rows,
-        emptyText = "The ranking shows when the first table is completed.",
+        emptyText = stringResource(Res.string.ranking_empty),
         onPlayerClick = onPlayerClick,
         controls = {
             // One low button for each ranking: the icon over its label.
@@ -1235,7 +1320,7 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
                             RankingKind.CHICKEN -> ChickenIcon(size = 20.dp)
                             RankingKind.BEST -> PositionTrophy(1, size = 20.dp)
                         }
-                        Text(item.short, style = MaterialTheme.typography.labelSmall, color = contentColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(stringResource(item.short), style = MaterialTheme.typography.labelSmall, color = contentColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -1254,7 +1339,7 @@ private fun RankingRows(
     if (rows.isEmpty()) {
         Column(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), content = controls)
-            EmptyState(Icons.Default.Leaderboard, "No ranking yet", emptyText)
+            EmptyState(Icons.Default.Leaderboard, stringResource(Res.string.ranking_empty_title), emptyText)
         }
         return
     }
@@ -1267,22 +1352,23 @@ private fun RankingRows(
         // One row: the ranking buttons, then "Jump to me", then the small dropdown at the right.
         Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             controls()
+            val jumpToMe = stringResource(Res.string.jump_to_me)
             if (myIndex >= 0) {
                 Column(
                     Modifier.width(44.dp).height(44.dp)
                         .clip(RoundedCornerShape(10.dp))
                         .clickable { scope.launch { listState.animateScrollToItem(myIndex) } }
-                        .semantics { contentDescription = "Jump to me" },
+                        .semantics { contentDescription = jumpToMe },
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Icon(Icons.Default.MyLocation, contentDescription = null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                    Text("Me", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                    Text(stringResource(Res.string.scope_me), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
                 }
             }
             // The dropdown does not filter the list. Choosing a line scrolls the list to it.
             SearchableDropdownField<String>(
-                label = "Search",
+                label = stringResource(Res.string.field_search),
                 options = options,
                 selected = null,
                 onChoose = { key ->
@@ -1411,7 +1497,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
         if (trailing != null) {
             Icon(
                 if (trailing) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                contentDescription = if (trailing) "Hide players" else "Show players",
+                contentDescription = stringResource(if (trailing) Res.string.team_hide_players else Res.string.team_show_players),
                 Modifier.size(24.dp),
                 tint = colors.onSurfaceVariant,
             )
@@ -1436,7 +1522,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     }
 
     AppScaffold(
-        title = view?.tournament?.name ?: "Tournament",
+        title = view?.tournament?.name ?: stringResource(Res.string.scope_tournament),
         subtitle = view?.roundStartOf(roundId),
         isLoading = view == null && message == null,
         autoFocusFirst = false,
@@ -1453,7 +1539,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             MessageDialog(message)
             if (view == null || table == null) return@ScreenColumn
             Text(
-                "Round $roundId - Table $tableId",
+                stringResource(Res.string.stats_round_table, roundId, tableId),
                 Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
@@ -1464,7 +1550,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             TableSeatsView(
                 seats = table.seatsFor(view, withLevelChange = true),
                 handNumber = handNumber,
-                centerLabel = if (complete) "Done" else "Hand\n$handNumber/${table.hands.size}",
+                centerLabel = if (complete) stringResource(Res.string.table_done) else stringResource(Res.string.table_hand_progress, handNumber, table.hands.size),
                 showPoints = complete,
                 windsKnown = table.seatsAssigned,
                 showIds = details,
@@ -1497,7 +1583,7 @@ private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details:
     // Extra space separates the list from the players and the button above.
     Box(Modifier.fillMaxWidth().padding(top = 20.dp), contentAlignment = Alignment.Center) {
         Text(
-            "Hands",
+            stringResource(Res.string.stat_hands),
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
@@ -1506,14 +1592,14 @@ private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details:
             Modifier.align(Alignment.CenterEnd).clickable { onDetailsChange(!details) },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Details", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(Res.string.table_details), style = MaterialTheme.typography.labelLarge)
             Switch(checked = details, onCheckedChange = onDetailsChange, modifier = Modifier.padding(start = 8.dp))
         }
     }
     if (details) {
         HandDetailsTable(table) { seat -> SeatWind.entries.getOrNull(seat) }
     } else if (table.hands.none { it.isDone || it.penaltyRows().isNotEmpty() }) {
-        EmptyState(Icons.Default.Edit, "No hands yet", "The hands show here when the players save them.")
+        EmptyState(Icons.Default.Edit, stringResource(Res.string.details_no_hands_title), stringResource(Res.string.details_no_hands_message))
     } else {
         HandList(view, table)
     }
@@ -1560,7 +1646,7 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
-            Icon(Icons.Default.Warning, contentDescription = "Penalty", Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+            Icon(Icons.Default.Warning, contentDescription = stringResource(Res.string.hand_penalty), Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             values.forEachIndexed { seat, value ->
@@ -1678,9 +1764,9 @@ private fun WinTypePill(kind: HandKind, accent: Color) {
             Icon(kind.icon(), contentDescription = null, Modifier.size(16.dp), tint = accent)
             Text(
                 when (kind) {
-                    HandKind.SELF_PICK -> "Self-pick"
-                    HandKind.DISCARD -> "Discard"
-                    HandKind.DRAW -> "Draw"
+                    HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
+                    HandKind.DISCARD -> stringResource(Res.string.hand_discard)
+                    HandKind.DRAW -> stringResource(Res.string.hand_draw)
                 },
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
@@ -1711,8 +1797,8 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
     val tables = view?.tables.orEmpty().filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
 
     AppScaffold(
-        title = view?.nameOf(slotId) ?: "Player",
-        subtitle = ranking?.let { "Place ${it.position} - ${it.points} points - ${it.score} score" },
+        title = view?.nameOf(slotId) ?: stringResource(Res.string.scope_player),
+        subtitle = ranking?.let { stringResource(Res.string.player_ranking_summary, it.position, it.points, it.score) },
         isLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
@@ -1729,7 +1815,7 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
             MessageDialog(message)
             if (view == null) return@ScreenColumn
             if (tables.isEmpty()) {
-                Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, "No tables yet", "This player has no table in this tournament yet.") }
+                Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message)) }
             } else {
                 // The padding is inside the list, so the list ends at the top bar and at the bottom of the screen.
                 LazyColumn(
@@ -1754,7 +1840,7 @@ private val WinnerColor = Color(0xFF00934C)
 
 /** Shows a polling message once. The dialog returns only after the message went away and came back. */
 @Composable
-private fun MessageDialog(message: String?) {
+private fun MessageDialog(message: UiText?) {
     var seen by remember(message != null) { mutableStateOf(false) }
     if (message != null && !seen) AppErrorDialog(message, onDismiss = { seen = true })
 }

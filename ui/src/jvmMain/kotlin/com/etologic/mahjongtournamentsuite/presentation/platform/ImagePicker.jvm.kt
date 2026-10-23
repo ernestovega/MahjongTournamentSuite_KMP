@@ -3,27 +3,34 @@ package com.etologic.mahjongtournamentsuite.presentation.platform
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import java.nio.file.Files
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import java.awt.RenderingHints
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.nio.file.Files
 import javax.imageio.ImageIO
 import javax.swing.JFileChooser
 import javax.swing.filechooser.FileNameExtensionFilter
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.image_chooser_filter
+import mahjongtournamentsuite.ui.generated.resources.image_chooser_title
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 actual fun rememberImagePicker(
     onImageSelected: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 ): ImagePicker {
     val currentOnImageSelected = rememberUpdatedState(onImageSelected)
     val currentOnError = rememberUpdatedState(onError)
-    return remember {
+    val chooserTitle = stringResource(Res.string.image_chooser_title)
+    val chooserFilter = stringResource(Res.string.image_chooser_filter)
+    return remember(chooserTitle, chooserFilter) {
         ImagePicker {
             val chooser = JFileChooser().apply {
-                dialogTitle = "Choose player photo"
-                fileFilter = FileNameExtensionFilter("Image files", "jpg", "jpeg", "png", "webp", "gif")
+                dialogTitle = chooserTitle
+                fileFilter = FileNameExtensionFilter(chooserFilter, "jpg", "jpeg", "png", "webp", "gif")
                 isAcceptAllFileFilterUsed = false
             }
             if (chooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
@@ -35,7 +42,7 @@ actual fun rememberImagePicker(
                         bytes = file.readBytes(),
                     )
                 }.onSuccess(currentOnImageSelected.value)
-                    .onFailure { currentOnError.value(it.message ?: "The photo could not be read.") }
+                    .onFailure { currentOnError.value(it.toImageUiText(ImageReadError)) }
             }
         }
     }
@@ -45,11 +52,11 @@ actual fun cropSelectedImage(
     image: SelectedImage,
     crop: SquareImageCrop,
     onCropped: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 ) {
     runCatching {
         val source = ImageIO.read(ByteArrayInputStream(image.bytes))
-            ?: error("The selected logo could not be decoded.")
+            ?: throw ImageException(ImageDecodeError)
         val cropSize = minOf(source.width, source.height) / crop.zoom.coerceIn(1f, 3f)
         val side = cropSize.toInt().coerceAtLeast(1)
         val left = ((source.width - cropSize) * (crop.horizontalPosition.coerceIn(-1f, 1f) + 1f) / 2f)
@@ -75,7 +82,7 @@ actual fun cropSelectedImage(
             bytes = bytes,
         )
     }.onSuccess(onCropped)
-        .onFailure { onError(it.message ?: "The logo could not be cropped.") }
+        .onFailure { onError(it.toImageUiText(ImageCropError)) }
 }
 
 private fun contentTypeFromFileName(fileName: String): String = when (fileName.substringAfterLast('.', "").lowercase()) {

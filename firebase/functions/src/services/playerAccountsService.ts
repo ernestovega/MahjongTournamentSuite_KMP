@@ -6,6 +6,7 @@ import { auth, db } from "../firebase";
 import { badRequest, conflict, forbidden, notFound } from "../api/httpError";
 import { bumpTournamentDataVersion } from "./dataVersionsService";
 import { sendEmail } from "./mailService";
+import { buildInvitationEmail, buildRegistrationEmail, DEFAULT_LANGUAGE, type Language } from "./i18n";
 import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer } from "./playersService";
 import { grantPlayerCapability } from "./usersService";
 
@@ -195,24 +196,10 @@ async function createInvitationDoc(params: {
   return { invitationId: invitationRef.id, token: buildToken(params.tournamentId, invitationRef.id, secret), tournamentName };
 }
 
-const APP_DESCRIPTION = "This is the player app of the tournament. "
-  + "After you sign in, you can see where you play in each round, the ranking after every round, "
-  + "and your own results. You can also see upcoming and past tournaments, your statistics, and more.";
-
-async function sendInvitationEmail(email: string, tournamentName: string, token: string): Promise<void> {
+async function sendInvitationEmail(email: string, tournamentName: string, token: string, language: Language): Promise<void> {
   const link = `${playerAppUrl()}/invite?token=${encodeURIComponent(token)}`;
-  const subject = `Invitation to ${tournamentName}`;
-  const text = `You are invited to play in ${tournamentName}.\n\n${APP_DESCRIPTION}\n\n`
-    + `Open this link to accept: ${link}\nThe link works once and expires in ${INVITATION_TTL_DAYS} days.`;
-  const html = `<p>You are invited to play in <strong>${escapeHtml(tournamentName)}</strong>.</p>`
-    + `<p>${APP_DESCRIPTION}</p>`
-    + `<p><a href="${link}">Accept the invitation</a></p>`
-    + `<p>The link works once and expires in ${INVITATION_TTL_DAYS} days.</p>`;
-  await sendEmail({ to: email, subject, text, html });
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const built = buildInvitationEmail(language, { tournamentName, link, days: INVITATION_TTL_DAYS });
+  await sendEmail({ to: email, ...built });
 }
 
 /** Links a slot to the account that already owns the EMA id of the slot. Sends no email. */
@@ -348,7 +335,7 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_BULK_PLAYERS = 200;
 const BULK_CONCURRENCY = 5;
 
-async function notifyRegistration(params: { tournamentId: string; playerId: number; uid: string }): Promise<void> {
+async function notifyRegistration(params: { tournamentId: string; playerId: number; uid: string; language: Language }): Promise<void> {
   const [tournament, account] = await Promise.all([
     db.doc(`tournaments/${params.tournamentId}`).get(),
     auth.getUser(params.uid),
@@ -356,14 +343,7 @@ async function notifyRegistration(params: { tournamentId: string; playerId: numb
   if (!account.email) throw badRequest("The account of this player has no email");
   const name = String(tournament.get("name") ?? "");
   const link = `${playerAppUrl()}/?tournament=${encodeURIComponent(params.tournamentId)}`;
-  await sendEmail({
-    to: account.email,
-    subject: `You are registered in ${name}`,
-    text: `You have been added to the tournament "${name}".\n\n${APP_DESCRIPTION}\n\nOpen the tournament: ${link}`,
-    html: `<p>You have been added to the tournament <strong>${escapeHtml(name)}</strong>.</p>`
-      + `<p>${APP_DESCRIPTION}</p>`
-      + `<p><a href="${link}">Open the tournament</a></p>`,
-  });
+  await sendEmail({ to: account.email, ...buildRegistrationEmail(params.language, { tournamentName: name, link }) });
   await db.doc(`tournaments/${params.tournamentId}/players/${params.playerId}`)
     .update({ notifiedAt: FieldValue.serverTimestamp() });
   await bumpTournamentDataVersion(params.tournamentId, "players");
@@ -375,9 +355,10 @@ async function sendInvitation(params: {
   email: string;
   invitedBy: string;
   replaceInvitationId?: string;
+  language: Language;
 }): Promise<void> {
   const created = await createInvitationDoc(params);
-  await sendInvitationEmail(params.email, created.tournamentName, created.token);
+  await sendInvitationEmail(params.email, created.tournamentName, created.token, params.language);
 }
 
 async function runOne(
@@ -385,6 +366,7 @@ async function runOne(
   action: AccountAction,
   item: AccountActionItem,
   invitedBy: string,
+  language: Language,
 ): Promise<AccountActionResult> {
   const { playerId } = item;
   const slotRef = db.doc(`tournaments/${tournamentId}/players/${playerId}`);
@@ -435,7 +417,7 @@ async function runOne(
       if (action === "send" && (slot.get("notifiedAt") != null || slot.get("invitedAt") != null)) {
         return { playerId, outcome: "SKIPPED", message: "Already notified" };
       }
-      await notifyRegistration({ tournamentId, playerId, uid: accountUid });
+      await notifyRegistration({ tournamentId, playerId, uid: accountUid, language });
       return { playerId, outcome: "NOTIFIED" };
     }
     const personInvites = (await listPendingInvitations()).filter((item) => item.emaId === emaId);
@@ -451,11 +433,11 @@ async function runOne(
         await grantPlayerCapability(existing.uid);
         const linkedUid = await linkKnownAccountToSlot(tournamentId, playerId);
         if (linkedUid != null) {
-          await notifyRegistration({ tournamentId, playerId, uid: linkedUid });
+          await notifyRegistration({ tournamentId, playerId, uid: linkedUid, language });
           return { playerId, outcome: "NOTIFIED" };
         }
       }
-      await sendInvitation({ tournamentId, playerId, email: target, invitedBy });
+      await sendInvitation({ tournamentId, playerId, email: target, invitedBy, language });
       return { playerId, outcome: "INVITED" };
     }
     // Resend: a new link replaces the old one.
@@ -465,7 +447,7 @@ async function runOne(
     // A new link replaces the invitation of this slot. Invitations of the same person in other slots end.
     const own = personInvites.find((item) => item.tournamentId === tournamentId && item.playerId === playerId);
     await revokePendingForEma(String(emaId), own?.invitationId);
-    await sendInvitation({ tournamentId, playerId, email: target, invitedBy, replaceInvitationId: own?.invitationId });
+    await sendInvitation({ tournamentId, playerId, email: target, invitedBy, replaceInvitationId: own?.invitationId, language });
     return { playerId, outcome: "INVITED" };
   } catch (error) {
     if ((error as { code?: string }).code === "email_failed") {
@@ -487,6 +469,8 @@ export async function runAccountAction(params: {
   action: AccountAction;
   items: AccountActionItem[];
   invitedBy: string;
+  /** The language of the emails. The default is English. */
+  language?: Language;
 }): Promise<AccountActionResult[]> {
   if (params.items.length === 0) throw badRequest("Choose at least one player");
   if (params.items.length > MAX_BULK_PLAYERS) throw badRequest(`At most ${MAX_BULK_PLAYERS} players per request`);
@@ -497,7 +481,7 @@ export async function runAccountAction(params: {
       const index = next++;
       const item = params.items[index];
       try {
-        results[index] = await runOne(params.tournamentId, params.action, item, params.invitedBy);
+        results[index] = await runOne(params.tournamentId, params.action, item, params.invitedBy, params.language ?? DEFAULT_LANGUAGE);
       } catch (error) {
         results[index] = {
           playerId: item.playerId,

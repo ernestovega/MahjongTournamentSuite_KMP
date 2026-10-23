@@ -284,12 +284,12 @@ object SkillScale {
 }
 
 /** The level of a player. [minScore] is the lowest skill score of the level. */
-enum class PlayerLevel(val label: String, val minScore: Int) {
-    BEGINNER("Beginner", 0),
-    INTERMEDIATE("Intermediate", 30),
-    ADVANCED("Advanced", 45),
-    EXPERT("Expert", 60),
-    MASTER("Master", 75),
+enum class PlayerLevel(val minScore: Int) {
+    BEGINNER(0),
+    INTERMEDIATE(30),
+    ADVANCED(45),
+    EXPERT(60),
+    MASTER(75),
     ;
 
     companion object {

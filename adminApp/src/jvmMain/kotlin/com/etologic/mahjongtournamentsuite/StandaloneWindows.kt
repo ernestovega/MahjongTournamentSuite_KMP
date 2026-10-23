@@ -7,6 +7,10 @@ import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.rememberWindowState
 import java.util.UUID
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.rankings
+import mahjongtournamentsuite.adminapp.generated.resources.timer
+import org.jetbrains.compose.resources.stringResource
 
 sealed class StandaloneWindow {
     abstract val id: String
@@ -46,7 +50,7 @@ object StandaloneWindows {
             when (w) {
                 is StandaloneWindow.Timer -> {
                     Window(
-                        title = "Timer",
+                        title = stringResource(Res.string.timer),
                         onCloseRequest = { windows.removeAll { it.id == w.id } },
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {
@@ -56,7 +60,7 @@ object StandaloneWindows {
 
                 is StandaloneWindow.Rankings -> {
                     Window(
-                        title = "Rankings",
+                        title = stringResource(Res.string.rankings),
                         onCloseRequest = { windows.removeAll { it.id == w.id } },
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {

@@ -15,8 +15,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.generate_id_card_preview
+import mahjongtournamentsuite.adminapp.generated.resources.save_id_card_proof
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -28,10 +33,11 @@ fun TournamentIdCardPreviewButton(
     associationLogoBytes: ByteArray?,
     associationLogoUrl: String?,
     roundSchedules: List<TournamentRoundSchedule> = emptyList(),
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val presenter = koinInject<IdCardProofPresenter>()
+    val saveTitle = stringResource(Res.string.save_id_card_proof)
     val scope = rememberCoroutineScope()
     var isGenerating by remember { mutableStateOf(false) }
 
@@ -60,9 +66,10 @@ fun TournamentIdCardPreviewButton(
                             fileName = "$safeName-${year.ifBlank { "proof" }}-id-card-proof.pdf",
                             content = result.value,
                             mimeType = "application/pdf",
+                            dialogTitle = saveTitle,
                         )
                     }
-                    is AppResult.Failure -> onError(result.error.toUiMessage())
+                    is AppResult.Failure -> onError(result.error.toUiText())
                 }
                 isGenerating = false
             }
@@ -72,7 +79,7 @@ fun TournamentIdCardPreviewButton(
         if (isGenerating) {
             CircularProgressIndicator(strokeWidth = 2.dp)
         } else {
-            Text("Generate ID card preview")
+            Text(stringResource(Res.string.generate_id_card_preview))
         }
     }
 }

@@ -4,6 +4,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.FeatureUsage
 import com.etologic.mahjongtournamentsuite.domain.model.UsageAccounts
 import com.etologic.mahjongtournamentsuite.domain.model.UsagePeriod
 import com.etologic.mahjongtournamentsuite.domain.model.UsageReport
+import com.etologic.mahjongtournamentsuite.presentation.util.render
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -27,48 +29,48 @@ class UsageInsightsTest {
     )
 
     @Test
-    fun aFallOfTheSavesIsAWarning() {
+    fun aFallOfTheSavesIsAWarning() = runTest {
         val insights = usageInsights(report(current = period(saves = 10), previous = period(saves = 20)))
-        assertTrue(insights.any { it.level == InsightLevel.WARNING && "fell by 50%" in it.text })
+        assertTrue(insights.any { it.level == InsightLevel.WARNING && "fell by 50%" in it.text.render() })
     }
 
     @Test
-    fun accountsThatNeverSignedInAreListed() {
+    fun accountsThatNeverSignedInAreListed() = runTest {
         val insights = usageInsights(report(accounts = UsageAccounts(10, 1, 2, 7, 0, 3, 1, 1, 5)))
-        assertTrue(insights.any { it.text == "5 of 10 accounts never signed in." })
+        assertTrue(insights.any { it.text.render() == "5 of 10 accounts never signed in." })
     }
 
     @Test
-    fun unusedFeaturesAreNamed() {
+    fun unusedFeaturesAreNamed() = runTest {
         val feature = FeatureUsage("substitution", "Player substitution", "Players", true, 0, 0, null, null)
         val insights = usageInsights(report(features = listOf(feature)))
-        assertTrue(insights.any { "Player substitution" in it.text })
+        assertTrue(insights.any { "Player substitution" in it.text.render() })
     }
 
     @Test
-    fun theBusiestTimeUsesTheHeatmap() {
+    fun theBusiestTimeUsesTheHeatmap() = runTest {
         val heatmap = List(7) { day -> List(24) { hour -> if (day == 5 && hour == 11) 9 else 1 } }
         val insights = usageInsights(report(heatmap = heatmap))
-        assertTrue(insights.any { "Saturday at 11:00" in it.text })
+        assertTrue(insights.any { "Saturday at 11:00" in it.text.render() })
     }
 
     @Test
-    fun aHighConflictRateIsAWarning() {
+    fun aHighConflictRateIsAWarning() = runTest {
         val insights = usageInsights(report(current = period(saves = 8, conflicts = 4)))
-        assertTrue(insights.any { it.level == InsightLevel.WARNING && "refused" in it.text })
+        assertTrue(insights.any { it.level == InsightLevel.WARNING && "refused" in it.text.render() })
     }
 
     @Test
-    fun changeTextHandlesAnEmptyBase() {
-        assertEquals("New against the previous 7 days.", changeText(3, 0, 7))
-        assertEquals("Up 50% against the previous 7 days.", changeText(3, 2, 7))
-        assertEquals("Down 50% against the previous 30 days.", changeText(1, 2, 30))
+    fun changeTextHandlesAnEmptyBase() = runTest {
+        assertEquals("New against the previous 7 days.", changeText(3, 0, 7).render())
+        assertEquals("Up 50% against the previous 7 days.", changeText(3, 2, 7).render())
+        assertEquals("Down 50% against the previous 30 days.", changeText(1, 2, 30).render())
     }
 
     @Test
-    fun agoTextIsShort() {
-        assertEquals("never", agoText(null))
-        assertEquals("yesterday", agoText(1))
-        assertEquals("12 days ago", agoText(12))
+    fun agoTextIsShort() = runTest {
+        assertEquals("never", agoText(null).render())
+        assertEquals("yesterday", agoText(1).render())
+        assertEquals("12 days ago", agoText(12).render())
     }
 }

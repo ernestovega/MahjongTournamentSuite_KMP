@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -58,8 +59,16 @@ private class RecordingHandRepository : PlayerHandRepository {
 @OptIn(ExperimentalTestApi::class)
 class HandEntryPanelUiTest {
     // Koin keeps one global context. Each test needs its own presenter, so the context stops after the test.
+    private val originalLocale = java.util.Locale.getDefault()
+
     @AfterTest
-    fun stopKoinContext() = stopKoin()
+    fun stopKoinContext() {
+        stopKoin()
+        java.util.Locale.setDefault(originalLocale)
+    }
+
+    private fun androidx.compose.ui.test.ComposeUiTest.awaitText(text: String) =
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
     /** The round starts on 2026-10-10 at 10:00. The match lasts 120 minutes and the extra time lasts 15 minutes. */
     private fun view(mode: MatchEndMode): PlayerTournamentView {
@@ -156,5 +165,51 @@ class HandEntryPanelUiTest {
         onNodeWithText("The time of this match is over. You cannot add hands now. The organizers enter the missing data.")
             .assertIsDisplayed()
         onNodeWithText("Add win").assertDoesNotExist()
+    }
+
+    @Test
+    fun theButtonsOfThePanelAreInSpanish() = runComposeUiTest {
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
+        show(MatchEndMode.FINISH_HAND, "11:00")
+
+        awaitText("Añadir mano sin ganador")
+        onNodeWithText("Añadir victoria").assertIsDisplayed()
+        onNodeWithText("Añadir penalización").assertIsDisplayed()
+        onNodeWithText("Add draw").assertDoesNotExist()
+    }
+
+    @Test
+    fun theEntryDialogIsInSpanish() = runComposeUiTest {
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
+        show(MatchEndMode.FINISH_HAND, "11:00")
+
+        awaitText("Añadir mano sin ganador")
+        onNodeWithText("Añadir mano sin ganador").performClick()
+        awaitText("Última mano de la mesa")
+        onNodeWithText("Ningún jugador gana esta mano. Todos los asientos puntúan cero.").assertIsDisplayed()
+        onNodeWithText("Revisar").assertIsDisplayed()
+        onNodeWithText("Cancelar").assertIsDisplayed()
+    }
+
+    @Test
+    fun theMessageOfAnOverMatchIsInSpanish() = runComposeUiTest {
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
+        show(MatchEndMode.STOP, "12:00")
+
+        awaitText("El tiempo de esta partida ha terminado. Ya no puedes añadir manos. Los organizadores introducen los datos que faltan.")
+        onNodeWithText("Añadir victoria").assertDoesNotExist()
+    }
+
+    @Test
+    fun anEmptySlotHasASpanishName() = runComposeUiTest {
+        java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
+        com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames.playerTemplate = { "Jugador $it" }
+        try {
+            // Slots 2 to 4 have no person, so their names are the placeholder of the data.
+            assertEquals("Jugador 2", view(MatchEndMode.STOP).nameOf(2))
+            assertEquals("Jugador 3", view(MatchEndMode.STOP).firstNameOf(3))
+        } finally {
+            com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames.playerTemplate = null
+        }
     }
 }

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -8,9 +9,11 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -24,21 +27,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CalendarLocale
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DatePickerState
-import androidx.compose.material3.DisplayMode
-import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.DateRangePicker
 import androidx.compose.material3.DateRangePickerDefaults
 import androidx.compose.material3.DateRangePickerState
+import androidx.compose.material3.DisplayMode
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -49,7 +52,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TimePicker
-import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.TimePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -63,17 +66,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.draw.clip
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -85,24 +86,18 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import coil3.compose.AsyncImage
-import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
 import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.atStartOfDayIn
-import kotlinx.datetime.toLocalDateTime
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
@@ -111,6 +106,40 @@ import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 import kotlin.time.Instant
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
+import kotlinx.datetime.toLocalDateTime
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.brightness
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.choose_tournament_color
+import mahjongtournamentsuite.adminapp.generated.resources.color_wheel_use_arrows_or_select
+import mahjongtournamentsuite.adminapp.generated.resources.crop_tournament_logo
+import mahjongtournamentsuite.adminapp.generated.resources.drag_the_image_or_use_the
+import mahjongtournamentsuite.adminapp.generated.resources.extra_time_hint
+import mahjongtournamentsuite.adminapp.generated.resources.extra_time_minutes
+import mahjongtournamentsuite.adminapp.generated.resources.finish_the_hand_in_play
+import mahjongtournamentsuite.adminapp.generated.resources.logo_decoded
+import mahjongtournamentsuite.adminapp.generated.resources.logo_none
+import mahjongtournamentsuite.adminapp.generated.resources.logo_unknown_dimensions
+import mahjongtournamentsuite.adminapp.generated.resources.match_duration_hint
+import mahjongtournamentsuite.adminapp.generated.resources.match_duration_minutes
+import mahjongtournamentsuite.adminapp.generated.resources.no_saved_tournament_logos_are_available
+import mahjongtournamentsuite.adminapp.generated.resources.ok
+import mahjongtournamentsuite.adminapp.generated.resources.reuse_tournament_logo
+import mahjongtournamentsuite.adminapp.generated.resources.rrggbb
+import mahjongtournamentsuite.adminapp.generated.resources.select_time
+import mahjongtournamentsuite.adminapp.generated.resources.show_info_for
+import mahjongtournamentsuite.adminapp.generated.resources.time_zone_hint
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_color
+import mahjongtournamentsuite.adminapp.generated.resources.tournament_logo_preview
+import mahjongtournamentsuite.adminapp.generated.resources.when_the_time_is_off
+import mahjongtournamentsuite.adminapp.generated.resources.when_the_time_is_over_the
+import org.jetbrains.compose.resources.stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 internal expect fun mondayFirstCalendarLocale(): CalendarLocale
@@ -126,6 +155,7 @@ fun TournamentColorField(
     errorMessage: String? = null,
 ) {
     val previewColor = value.toTournamentColorOrNull() ?: DefaultTournamentColor
+    val chooseColorDescription = stringResource(Res.string.choose_tournament_color)
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -137,7 +167,7 @@ fun TournamentColorField(
             onClick = onPreviewClick,
             buttonModifier = Modifier
                 .size(56.dp)
-                .semantics { contentDescription = "Choose tournament color" },
+                .semantics { contentDescription = chooseColorDescription },
         ) {
             Box(
                 modifier = Modifier
@@ -150,8 +180,8 @@ fun TournamentColorField(
             value = value,
             onValueChange = { onValueChange(it.toHexColorInput()) },
             modifier = fieldModifier.weight(1f),
-            label = { RequiredLabel("Tournament color") },
-            placeholder = { Text("#RRGGBB") },
+            label = { RequiredLabel(stringResource(Res.string.tournament_color)) },
+            placeholder = { Text(stringResource(Res.string.rrggbb)) },
             enabled = enabled,
             singleLine = true,
             isError = isError,
@@ -195,7 +225,7 @@ fun TournamentColorPickerDialog(
     AlertDialog(
         modifier = Modifier.appFocusGroup(),
         onDismissRequest = onDismiss,
-        title = { Text("Choose tournament color") },
+        title = { Text(stringResource(Res.string.choose_tournament_color)) },
         text = {
             Column(
                 modifier = Modifier.fillMaxWidth(),
@@ -216,7 +246,7 @@ fun TournamentColorPickerDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text("Brightness", style = MaterialTheme.typography.bodySmall)
+                    Text(stringResource(Res.string.brightness), style = MaterialTheme.typography.bodySmall)
                     Slider(
                         value = brightness,
                         onValueChange = { updateFromHsv(hue, saturation, it) },
@@ -261,8 +291,8 @@ fun TournamentColorPickerDialog(
                             }
                             isColorFieldFocused = focusState.isFocused
                         },
-                    label = { Text("Tournament color") },
-                    placeholder = { Text("#RRGGBB") },
+                    label = { Text(stringResource(Res.string.tournament_color)) },
+                    placeholder = { Text(stringResource(Res.string.rrggbb)) },
                     singleLine = true,
                     isError = hexValue.text.toRgbColorOrNull() == null,
                 )
@@ -273,12 +303,12 @@ fun TournamentColorPickerDialog(
                 enabled = hexValue.text.toRgbColorOrNull() != null,
                 onClick = { onColorSelected(hexValue.text.uppercase()) },
             ) {
-                Text("OK")
+                Text(stringResource(Res.string.ok))
             }
         },
         dismissButton = {
             FocusedTextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         },
     )
@@ -293,6 +323,7 @@ private fun VisualColorWheel(
     onColorChanged: (hue: Float, saturation: Float) -> Unit,
 ) {
     val interactionSource = remember { MutableInteractionSource() }
+    val colorWheelDescription = stringResource(Res.string.color_wheel_use_arrows_or_select)
     var canvasSize by remember { mutableStateOf(IntSize.Zero) }
 
     fun selectAt(position: Offset) {
@@ -315,9 +346,7 @@ private fun VisualColorWheel(
                 .size(240.dp)
                 .focusRequester(focusRequester)
                 .focusable(interactionSource = interactionSource)
-                .semantics {
-                    contentDescription = "Color wheel. Use arrows or select a point."
-                }
+                .semantics { contentDescription = colorWheelDescription }
                 .onPreviewKeyEvent { event ->
                     if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
                     when (event.key) {
@@ -386,6 +415,8 @@ fun TournamentLogoPreview(
     onImageInfo: (String) -> Unit,
     modifier: Modifier = Modifier.fillMaxWidth().height(160.dp),
 ) {
+    val unknownDimensions = stringResource(Res.string.logo_unknown_dimensions)
+    val decoded = rememberTemplate(Res.string.logo_decoded)
     Box(
         modifier = modifier
             .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.medium)
@@ -394,14 +425,14 @@ fun TournamentLogoPreview(
     ) {
         if (model == null) {
             Text(
-                "No logo",
+                stringResource(Res.string.logo_none),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
             )
         } else {
             AsyncImage(
                 model = model,
-                contentDescription = "Tournament logo preview",
+                contentDescription = stringResource(Res.string.tournament_logo_preview),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize().padding(8.dp),
                 onSuccess = { state ->
@@ -409,9 +440,9 @@ fun TournamentLogoPreview(
                     val dimensions = if (image.width > 0 && image.height > 0) {
                         "${image.width} × ${image.height} px"
                     } else {
-                        "Unknown dimensions"
+                        unknownDimensions
                     }
-                    onImageInfo("$dimensions · ${formatByteSize(image.size)} decoded")
+                    onImageInfo("$dimensions · " + decoded(formatByteSize(image.size)))
                 },
             )
         }
@@ -423,12 +454,12 @@ fun TournamentLogoCropDialog(
     image: SelectedImage,
     onDismiss: () -> Unit,
     onCropped: (SelectedImage) -> Unit,
-    onError: (String) -> Unit,
+    onError: (UiText) -> Unit,
 ) {
     ImageCropDialog(
         image = image,
-        title = "Crop tournament logo",
-        hint = "Drag the image or use the controls. The circle shows the ID card logo area.",
+        title = stringResource(Res.string.crop_tournament_logo),
+        hint = stringResource(Res.string.drag_the_image_or_use_the),
         onDismiss = onDismiss,
         onCropped = onCropped,
         onError = onError,
@@ -461,10 +492,10 @@ fun TournamentLogoLibraryDialog(
     AlertDialog(
         modifier = Modifier.appFocusGroup(),
         onDismissRequest = onDismiss,
-        title = { Text("Reuse tournament logo") },
+        title = { Text(stringResource(Res.string.reuse_tournament_logo)) },
         text = {
             if (logos.isEmpty()) {
-                Text("No saved tournament logos are available.")
+                Text(stringResource(Res.string.no_saved_tournament_logos_are_available))
             } else {
                 FlowRow(
                     modifier = Modifier
@@ -508,7 +539,7 @@ fun TournamentLogoLibraryDialog(
                     Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
                 },
             ) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         },
     )
@@ -580,12 +611,12 @@ fun TournamentDatePickerDialog(
                     state.selectedDateMillis?.let { onDateSelected(epochMillisToDisplayDate(it)) }
                 },
             ) {
-                Text("OK")
+                Text(stringResource(Res.string.ok))
             }
         },
         dismissButton = {
             FocusedTextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         },
     ) {
@@ -633,7 +664,7 @@ fun TournamentTimePickerDialog(
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.appFocusGroup(),
-        title = { Text("Select time") },
+        title = { Text(stringResource(Res.string.select_time)) },
         text = {
             Box(
                 modifier = Modifier.fillMaxWidth(),
@@ -652,12 +683,12 @@ fun TournamentTimePickerDialog(
                 },
                 focusRequester = confirmFocusRequester,
             ) {
-                Text("OK")
+                Text(stringResource(Res.string.ok))
             }
         },
         dismissButton = {
             FocusedTextButton(onClick = onDismiss) {
-                Text("Cancel")
+                Text(stringResource(Res.string.cancel))
             }
         },
     )
@@ -781,7 +812,7 @@ fun TournamentDateRangePickerDialog(
                     horizontalArrangement = Arrangement.End,
                 ) {
                     FocusedTextButton(onClick = onDismiss) {
-                        Text("Cancel")
+                        Text(stringResource(Res.string.cancel))
                     }
                     FocusedTextButton(
                         enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
@@ -796,7 +827,7 @@ fun TournamentDateRangePickerDialog(
                             }
                         },
                     ) {
-                        Text("OK")
+                        Text(stringResource(Res.string.ok))
                     }
                 }
             }
@@ -945,7 +976,7 @@ fun TournamentOptionSwitch(
             Text(text = label)
             InfoTooltipIcon(
                 description = description,
-                contentDescription = "Show $label information",
+                contentDescription = stringResource(Res.string.show_info_for, label),
             )
         }
     }
@@ -993,7 +1024,7 @@ fun VenueTimeZoneField(
         onValueChange = onTimeZoneChange,
         required = true,
         isError = timeZoneError != null,
-        supportingText = timeZoneError ?: "Time zone of the venue, for example Europe/Madrid. The round times use it.",
+        supportingText = timeZoneError ?: stringResource(Res.string.time_zone_hint),
         enabled = enabled,
         modifier = modifier,
     )
@@ -1022,10 +1053,10 @@ fun MatchTimeFields(
         OutlinedTextField(
             value = durationText,
             onValueChange = { onDurationChange(it.toDigitsInput(3)) },
-            label = { RequiredLabel("Match duration (minutes)") },
+            label = { RequiredLabel(stringResource(Res.string.match_duration_minutes)) },
             isError = durationError != null,
             supportingText = {
-                Text(durationError ?: "Normally 90 to 120 minutes. A table ends this long after its round starts.")
+                Text(durationError ?: stringResource(Res.string.match_duration_hint))
             },
             modifier = Modifier.fillMaxWidth().let { base ->
                 if (durationFocusRequester != null) base.focusRequester(durationFocusRequester) else base
@@ -1034,9 +1065,9 @@ fun MatchTimeFields(
             enabled = enabled,
         )
         TournamentOptionSwitch(
-            label = "Finish the hand in play",
-            description = "When the time is over, the players can record one more hand during the extra time. " +
-                "When this is off, the table ends at the end time and the hand in play does not count.",
+            label = stringResource(Res.string.finish_the_hand_in_play),
+            description = stringResource(Res.string.when_the_time_is_over_the) + " " +
+                stringResource(Res.string.when_the_time_is_off),
             checked = finishHand,
             enabled = enabled,
             onCheckedChange = onFinishHandChange,
@@ -1045,10 +1076,10 @@ fun MatchTimeFields(
             OutlinedTextField(
                 value = extraMinutesText,
                 onValueChange = { onExtraMinutesChange(it.toDigitsInput(3)) },
-                label = { RequiredLabel("Extra time (minutes)") },
+                label = { RequiredLabel(stringResource(Res.string.extra_time_minutes)) },
                 isError = extraMinutesError != null,
                 supportingText = {
-                    Text(extraMinutesError ?: "The players can record the hand in play for this long after the end time.")
+                    Text(extraMinutesError ?: stringResource(Res.string.extra_time_hint))
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,

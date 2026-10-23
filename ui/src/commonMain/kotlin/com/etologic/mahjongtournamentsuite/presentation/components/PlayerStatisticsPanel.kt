@@ -1,36 +1,12 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.SpanStyle
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.clickable
-import androidx.compose.material.icons.filled.ExpandLess
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.UnfoldLess
-import androidx.compose.material.icons.filled.UnfoldMore
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.layout.LayoutCoordinates
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.zIndex
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -42,68 +18,185 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.LocalFireDepartment
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.UnfoldLess
+import androidx.compose.material.icons.filled.UnfoldMore
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.unit.sp
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
-import com.etologic.mahjongtournamentsuite.domain.model.STEADY_LEVEL_HANDS
-import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
-import com.etologic.mahjongtournamentsuite.domain.model.RivalWeights
-import com.etologic.mahjongtournamentsuite.domain.model.SkillScale
-import kotlin.math.max
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
+import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
+import com.etologic.mahjongtournamentsuite.domain.model.RivalWeights
+import com.etologic.mahjongtournamentsuite.domain.model.STEADY_LEVEL_HANDS
+import com.etologic.mahjongtournamentsuite.domain.model.SkillScale
+import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.PI
 import kotlin.math.cos
+import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 import kotlin.math.sin
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.card_fold
+import mahjongtournamentsuite.ui.generated.resources.card_unfold
+import mahjongtournamentsuite.ui.generated.resources.date_from
+import mahjongtournamentsuite.ui.generated.resources.date_to
+import mahjongtournamentsuite.ui.generated.resources.field_tournament
+import mahjongtournamentsuite.ui.generated.resources.fold_all
+import mahjongtournamentsuite.ui.generated.resources.level_info
+import mahjongtournamentsuite.ui.generated.resources.level_needs_hands
+import mahjongtournamentsuite.ui.generated.resources.level_not_rated
+import mahjongtournamentsuite.ui.generated.resources.level_provisional
+import mahjongtournamentsuite.ui.generated.resources.level_range_between
+import mahjongtournamentsuite.ui.generated.resources.level_range_or_more
+import mahjongtournamentsuite.ui.generated.resources.level_range_under
+import mahjongtournamentsuite.ui.generated.resources.level_skill_score_of
+import mahjongtournamentsuite.ui.generated.resources.more_information
+import mahjongtournamentsuite.ui.generated.resources.outcome_by_discard
+import mahjongtournamentsuite.ui.generated.resources.outcome_by_discard_deal_in
+import mahjongtournamentsuite.ui.generated.resources.outcome_by_self_draw
+import mahjongtournamentsuite.ui.generated.resources.outcome_hands_drawn
+import mahjongtournamentsuite.ui.generated.resources.outcome_hands_lost
+import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
+import mahjongtournamentsuite.ui.generated.resources.outcome_hands_won
+import mahjongtournamentsuite.ui.generated.resources.outcome_lost_to_self_draw
+import mahjongtournamentsuite.ui.generated.resources.outcome_neutral_hands
+import mahjongtournamentsuite.ui.generated.resources.outcome_third_player_win
+import mahjongtournamentsuite.ui.generated.resources.place_1st
+import mahjongtournamentsuite.ui.generated.resources.place_2nd
+import mahjongtournamentsuite.ui.generated.resources.place_3rd
+import mahjongtournamentsuite.ui.generated.resources.place_4th
+import mahjongtournamentsuite.ui.generated.resources.places_all
+import mahjongtournamentsuite.ui.generated.resources.places_avg_place
+import mahjongtournamentsuite.ui.generated.resources.places_history_title
+import mahjongtournamentsuite.ui.generated.resources.places_last
+import mahjongtournamentsuite.ui.generated.resources.range_none
+import mahjongtournamentsuite.ui.generated.resources.range_some
+import mahjongtournamentsuite.ui.generated.resources.rank_of
+import mahjongtournamentsuite.ui.generated.resources.rival_ahead_of_you
+import mahjongtournamentsuite.ui.generated.resources.rival_deal_ins
+import mahjongtournamentsuite.ui.generated.resources.rival_ema
+import mahjongtournamentsuite.ui.generated.resources.rival_player
+import mahjongtournamentsuite.ui.generated.resources.rival_self_draws
+import mahjongtournamentsuite.ui.generated.resources.rival_shared_tables
+import mahjongtournamentsuite.ui.generated.resources.rival_third_party_deal_ins
+import mahjongtournamentsuite.ui.generated.resources.rival_wins_against_you
+import mahjongtournamentsuite.ui.generated.resources.rivals_info
+import mahjongtournamentsuite.ui.generated.resources.rivals_none
+import mahjongtournamentsuite.ui.generated.resources.rivals_title
+import mahjongtournamentsuite.ui.generated.resources.round_n
+import mahjongtournamentsuite.ui.generated.resources.skill_deal_in_rate
+import mahjongtournamentsuite.ui.generated.resources.skill_deal_in_rate_info
+import mahjongtournamentsuite.ui.generated.resources.skill_hand_value
+import mahjongtournamentsuite.ui.generated.resources.skill_hand_value_info
+import mahjongtournamentsuite.ui.generated.resources.skill_score_n
+import mahjongtournamentsuite.ui.generated.resources.skill_self_draw
+import mahjongtournamentsuite.ui.generated.resources.skill_self_draw_info
+import mahjongtournamentsuite.ui.generated.resources.skill_sub_avg
+import mahjongtournamentsuite.ui.generated.resources.skill_sub_rate
+import mahjongtournamentsuite.ui.generated.resources.skill_win_rate
+import mahjongtournamentsuite.ui.generated.resources.skill_win_rate_info
+import mahjongtournamentsuite.ui.generated.resources.skills_empty_message
+import mahjongtournamentsuite.ui.generated.resources.skills_empty_title
+import mahjongtournamentsuite.ui.generated.resources.stat_best_hand
+import mahjongtournamentsuite.ui.generated.resources.stat_best_table_score
+import mahjongtournamentsuite.ui.generated.resources.stat_chicken_hands
+import mahjongtournamentsuite.ui.generated.resources.stat_hands
+import mahjongtournamentsuite.ui.generated.resources.stat_hands_without_dealin
+import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_on_table
+import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_row
+import mahjongtournamentsuite.ui.generated.resources.stat_highest_hand_score
+import mahjongtournamentsuite.ui.generated.resources.stat_highest_penalty
+import mahjongtournamentsuite.ui.generated.resources.stat_highest_rank
+import mahjongtournamentsuite.ui.generated.resources.stat_highest_table_score
+import mahjongtournamentsuite.ui.generated.resources.stat_penalties
+import mahjongtournamentsuite.ui.generated.resources.stat_penalties_info
+import mahjongtournamentsuite.ui.generated.resources.stat_rank
+import mahjongtournamentsuite.ui.generated.resources.stat_tables
+import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
+import mahjongtournamentsuite.ui.generated.resources.stat_tournaments
+import mahjongtournamentsuite.ui.generated.resources.stats_empty_message
+import mahjongtournamentsuite.ui.generated.resources.stats_empty_title
+import mahjongtournamentsuite.ui.generated.resources.stats_hand_stats_missing
+import mahjongtournamentsuite.ui.generated.resources.stats_hand_values_use
+import mahjongtournamentsuite.ui.generated.resources.stats_places
+import mahjongtournamentsuite.ui.generated.resources.stats_records
+import mahjongtournamentsuite.ui.generated.resources.stats_skills
+import mahjongtournamentsuite.ui.generated.resources.stats_totals
+import mahjongtournamentsuite.ui.generated.resources.table_n
+import mahjongtournamentsuite.ui.generated.resources.tournaments_show_all
+import mahjongtournamentsuite.ui.generated.resources.tournaments_show_more
+import mahjongtournamentsuite.ui.generated.resources.tournaments_showing
+import mahjongtournamentsuite.ui.generated.resources.unfold_all
+import org.jetbrains.compose.resources.stringResource
 
 /** Two cards side by side need at least this width. Narrower screens stack the cards. */
 private val WideLayoutWidth = 760.dp
@@ -131,8 +224,8 @@ fun PlayerStatisticsPanel(
             header?.invoke()
             AppEmptyState(
                 icon = StatisticsIcon,
-                title = "No statistics yet",
-                message = "The statistics show when the first table is completed.",
+                title = stringResource(Res.string.stats_empty_title),
+                message = stringResource(Res.string.stats_empty_message),
             )
         }
         return
@@ -160,9 +253,9 @@ fun PlayerStatisticsPanel(
             if (statistics.tablesWithHands < statistics.tablesPlayed) {
                 Text(
                     if (statistics.tablesWithHands == 0) {
-                        "Hand statistics need tables with entered hands. No table here has them."
+                        stringResource(Res.string.stats_hand_stats_missing)
                     } else {
-                        "Hand values use ${statistics.tablesWithHands} of ${statistics.tablesPlayed} tables."
+                        stringResource(Res.string.stats_hand_values_use, statistics.tablesWithHands, statistics.tablesPlayed)
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -199,7 +292,7 @@ internal fun StatCard(
                         CardTitle(title, Modifier.weight(1f), info)
                         Icon(
                             if (expanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
-                            contentDescription = if (expanded) "Fold" else "Unfold",
+                            contentDescription = stringResource(if (expanded) Res.string.card_fold else Res.string.card_unfold),
                         )
                     }
                 }
@@ -291,7 +384,7 @@ internal fun InfoTip(text: String, modifier: Modifier = Modifier) {
     HoverTip(text, modifier) {
         Icon(
             Icons.Outlined.Info,
-            contentDescription = "More information",
+            contentDescription = stringResource(Res.string.more_information),
             modifier = Modifier.size(18.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -318,16 +411,16 @@ private fun RecordsCard(
         if (loadStandings != null && tournamentIds.isNotEmpty()) standings = loadStandings(tournamentIds)
     }
     val best = standings?.values?.minWithOrNull(compareBy<Standing> { it.rank }.thenByDescending { it.of })
-    StatCard("Records", modifier) {
+    StatCard(stringResource(Res.string.stats_records), modifier) {
         StatGrid(Modifier.fillMaxWidth()) {
-            if (loadStandings != null) BigNumber("Highest rank", best?.rank?.toString() ?: EMPTY, suffix = best?.let { " of ${it.of}" })
-            BigNumber("Highest table score", statistics.bestTableScore.text())
-            BigNumber("Highest hand score", statistics.bestHand.text())
-            BigNumber("Hands won on a table", statistics.mostHandsWonAtATable.text())
-            BigNumber("Highest penalty got", statistics.highestPenalty.text())
-            BigNumber("Tables won in a row", streaks.tableWins.toString())
-            BigNumber("Hands won in a row", streaks.handsWon.text())
-            BigNumber("Hands without a deal-in", streaks.handsWithoutDealIn.text())
+            if (loadStandings != null) BigNumber(stringResource(Res.string.stat_highest_rank), best?.rank?.toString() ?: EMPTY, suffix = best?.let { " " + stringResource(Res.string.rank_of, it.of) })
+            BigNumber(stringResource(Res.string.stat_highest_table_score), statistics.bestTableScore.text())
+            BigNumber(stringResource(Res.string.stat_highest_hand_score), statistics.bestHand.text())
+            BigNumber(stringResource(Res.string.stat_hands_won_on_table), statistics.mostHandsWonAtATable.text())
+            BigNumber(stringResource(Res.string.stat_highest_penalty), statistics.highestPenalty.text())
+            BigNumber(stringResource(Res.string.stat_tables_won_row), streaks.tableWins.toString())
+            BigNumber(stringResource(Res.string.stat_hands_won_row), streaks.handsWon.text())
+            BigNumber(stringResource(Res.string.stat_hands_without_dealin), streaks.handsWithoutDealIn.text())
         }
     }
 }
@@ -344,20 +437,19 @@ private fun RivalsCard(
 ) {
     val rivals = remember(statistics) { statistics.toughestRivals() }
     StatCard(
-        "Best Rivals",
+        stringResource(Res.string.rivals_title),
         modifier,
-        info = "Rivals are ordered by a score. A higher score means a tougher rival.\n" +
-                "Everything counts only on tables where you played with that rival.\n" +
-                "The score adds points for each of these numbers:\n" +
-                "• ${RivalWeights.TABLE_BEHIND.toInt()} for each \"Ahead of you\": a table where the rival finished above you.\n" +
-                "• ${RivalWeights.DISCARD_LOSS.toInt()} for each \"Deal-in\": a hand that you discarded and the rival won.\n" +
-                "• ${RivalWeights.SELF_DRAW_LOSS.toInt()} for each \"Self-draw\": a hand that the rival won by self-draw.\n" +
-                "• ${RivalWeights.OTHERS_DISCARD_WIN.toInt()} for each \"Third party deal-in\": a hand that the rival won on the discard of another player, not yours.\n" +
-                "The sum is divided by the shared tables so a rival is not first only because you met often.",
+        info = stringResource(
+            Res.string.rivals_info,
+            RivalWeights.TABLE_BEHIND.toInt(),
+            RivalWeights.DISCARD_LOSS.toInt(),
+            RivalWeights.SELF_DRAW_LOSS.toInt(),
+            RivalWeights.OTHERS_DISCARD_WIN.toInt(),
+        ),
     ) {
         if (rivals.isEmpty()) {
             Text(
-                "No rival yet. It needs ${RivalWeights.MIN_SHARED_TABLES} shared tables.",
+                stringResource(Res.string.rivals_none, RivalWeights.MIN_SHARED_TABLES),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -369,12 +461,12 @@ private fun RivalsCard(
                 val open = onOpenRival?.takeIf { '#' !in rival.opponent }
                 RivalHeading(rivalName(rival.opponent, names), heat = FLAMES - index, open = open?.let { { it(rival.opponent) } })
                 StatGrid(Modifier.fillMaxWidth()) {
-                    BigNumber("Shared tables", rival.sharedTables.toString())
-                    BigNumber("Ahead of you", rival.tablesBehind.toString())
-                    BigNumber("Wins against you", (rival.discardLosses + rival.selfDrawLosses + rival.othersDiscardWins).toString())
-                    BigNumber("Deal-ins", rival.discardLosses.toString())
-                    BigNumber("Self-draws", rival.selfDrawLosses.toString())
-                    BigNumber("Third party deal-ins", rival.othersDiscardWins.toString())
+                    BigNumber(stringResource(Res.string.rival_shared_tables), rival.sharedTables.toString())
+                    BigNumber(stringResource(Res.string.rival_ahead_of_you), rival.tablesBehind.toString())
+                    BigNumber(stringResource(Res.string.rival_wins_against_you), (rival.discardLosses + rival.selfDrawLosses + rival.othersDiscardWins).toString())
+                    BigNumber(stringResource(Res.string.rival_deal_ins), rival.discardLosses.toString())
+                    BigNumber(stringResource(Res.string.rival_self_draws), rival.selfDrawLosses.toString())
+                    BigNumber(stringResource(Res.string.rival_third_party_deal_ins), rival.othersDiscardWins.toString())
                 }
             }
         }
@@ -415,19 +507,20 @@ private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
 /** The flames in the heat row of a rival. */
 private const val FLAMES = 3
 
+@Composable
 private fun rivalName(key: String, names: Map<String, String>): String = names[key] ?: when {
-    '#' in key -> "Player ${key.substringAfter('#')}"
-    else -> "EMA $key"
+    '#' in key -> stringResource(Res.string.rival_player, key.substringAfter('#'))
+    else -> stringResource(Res.string.rival_ema, key)
 }
 
 @Composable
 private fun OverviewCard(statistics: PlayerStatistics, modifier: Modifier) {
     val hasHands = statistics.tablesWithHands > 0
-    StatCard("Totals", modifier) {
+    StatCard(stringResource(Res.string.stats_totals), modifier) {
         StatGrid(Modifier.fillMaxWidth()) {
-            BigNumber("Tournaments", statistics.tournamentsPlayed.toString())
-            BigNumber("Tables", statistics.tablesPlayed.toString())
-            BigNumber("Hands", if (hasHands) statistics.handsPlayed.toString() else EMPTY)
+            BigNumber(stringResource(Res.string.stat_tournaments), statistics.tournamentsPlayed.toString())
+            BigNumber(stringResource(Res.string.stat_tables), statistics.tablesPlayed.toString())
+            BigNumber(stringResource(Res.string.stat_hands), if (hasHands) statistics.handsPlayed.toString() else EMPTY)
         }
         if (hasHands) {
             HorizontalDivider(Modifier.padding(vertical = 8.dp))
@@ -449,15 +542,15 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
     // [inOuter] parts are the sectors of the outer ring.
     class Part(val label: String, val value: Int, val color: Color, val sub: Boolean, val inOuter: Boolean = sub)
     val parts = listOf(
-        Part("Hands won", s.handsWon, won, false),
-        Part("By discard", s.winsByDiscard, won.copy(alpha = 0.75f), true),
-        Part("By self-draw", s.selfDraws, won.copy(alpha = 0.45f), true),
-        Part("Hands lost", s.dealIns + s.lostToSelfDraws, lost, false),
-        Part("By discard (deal-in)", s.dealIns, lost.copy(alpha = 0.75f), true),
-        Part("By selfdraw", s.lostToSelfDraws, lost.copy(alpha = 0.5f), true),
-        Part("Neutral hands", s.otherWins + s.drawnHands, neutral, false),
-        Part("Third player win", s.otherWins, neutral.copy(alpha = 0.75f), true),
-        Part("Hands drawn", s.drawnHands, neutral.copy(alpha = 0.5f), true),
+        Part(stringResource(Res.string.outcome_hands_won), s.handsWon, won, false),
+        Part(stringResource(Res.string.outcome_by_discard), s.winsByDiscard, won.copy(alpha = 0.75f), true),
+        Part(stringResource(Res.string.outcome_by_self_draw), s.selfDraws, won.copy(alpha = 0.45f), true),
+        Part(stringResource(Res.string.outcome_hands_lost), s.dealIns + s.lostToSelfDraws, lost, false),
+        Part(stringResource(Res.string.outcome_by_discard_deal_in), s.dealIns, lost.copy(alpha = 0.75f), true),
+        Part(stringResource(Res.string.outcome_lost_to_self_draw), s.lostToSelfDraws, lost.copy(alpha = 0.5f), true),
+        Part(stringResource(Res.string.outcome_neutral_hands), s.otherWins + s.drawnHands, neutral, false),
+        Part(stringResource(Res.string.outcome_third_player_win), s.otherWins, neutral.copy(alpha = 0.75f), true),
+        Part(stringResource(Res.string.outcome_hands_drawn), s.drawnHands, neutral.copy(alpha = 0.5f), true),
     )
     val inner = parts.filter { !it.sub }.map { Slice(it.value, it.color) }
     val outer = parts.filter { it.inOuter }.map { Slice(it.value, it.color) }
@@ -474,7 +567,7 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
             }
         }
         val chart: @Composable () -> Unit = {
-            SectorChart(inner, outer, chartSize, 0.18f, s.handsPlayed.toString(), "hands")
+            SectorChart(inner, outer, chartSize, 0.18f, s.handsPlayed.toString(), stringResource(Res.string.outcome_hands_unit))
         }
         if (maxWidth >= 520.dp) {
             Row(
@@ -609,54 +702,55 @@ private class Skill(
     val fraction: Float get() = (((value ?: empty) - empty) / (full - empty)).coerceIn(0.0, 1.0).toFloat()
 }
 
+@Composable
 private fun skillsOf(s: PlayerStatistics): List<Skill> = listOf(
     // Share of the played hands that the player won. A strong player wins about 4 hands in 10.
     Skill(
-        "Win rate", s.winRate, SkillScale.WIN_RATE_FULL, s.winRate.percent(),
-        "How often you win a hand.\nHands won divided by hands played.\nAxis full at 40%.",
+        stringResource(Res.string.skill_win_rate), s.winRate, SkillScale.WIN_RATE_FULL, s.winRate.percent(),
+        stringResource(Res.string.skill_win_rate_info),
     ),
     // Share of the won hands that came from a self-draw. Half of the wins fills the axis.
     Skill(
-        "Self-draw", s.selfDrawRate, SkillScale.SELF_DRAW_RATE_FULL, s.selfDrawRate.percent(),
-        "How often your wins come from drawing the winning tile yourself.\nSelf-draw wins divided by hands won.\n" +
-            "Axis full at 50%.",
-        subLabel = "rate",
+        stringResource(Res.string.skill_self_draw), s.selfDrawRate, SkillScale.SELF_DRAW_RATE_FULL, s.selfDrawRate.percent(),
+        stringResource(Res.string.skill_self_draw_info),
+        subLabel = stringResource(Res.string.skill_sub_rate),
     ),
     // Share of the played hands that the player lost by discarding the winning tile. Lower is better.
     Skill(
-        "Deal-in rate", s.dealInRate, SkillScale.DEAL_IN_RATE_FULL, s.dealInRate.percent(),
-        "How often you discard the tile that another player wins with.\nDeal-ins divided by hands played.\n" +
-            "A lower value is better.\nAxis full at 25%.",
+        stringResource(Res.string.skill_deal_in_rate), s.dealInRate, SkillScale.DEAL_IN_RATE_FULL, s.dealInRate.percent(),
+        stringResource(Res.string.skill_deal_in_rate_info),
     ),
     // Average points of the won hands, counted above the 8 point minimum.
     Skill(
-        "Hand value", s.averageWinningScore, SkillScale.HAND_VALUE_FULL, s.averageWinningScore.decimal(),
-        "The average points of the hands you won.\nPoints of all winning hands divided by hands won.\n" +
-            "Axis starts at 8 (min. hand value) and is full at 32.",
+        stringResource(Res.string.skill_hand_value), s.averageWinningScore, SkillScale.HAND_VALUE_FULL, s.averageWinningScore.decimal(),
+        stringResource(Res.string.skill_hand_value_info),
         empty = SkillScale.HAND_VALUE_EMPTY,
-        subLabel = "avg.",
+        subLabel = stringResource(Res.string.skill_sub_avg),
     ),
 )
 
 private fun percentOf(value: Double): Int = (value * 100).roundToInt()
 
-private val LEVEL_INFO =
-    "The skill score goes from 0 to 100. It is the mean of the four skills in the chart.\n" +
-        "Each skill gives 0 to 100 points:\n" +
-        "- Win rate: ${percentOf(SkillScale.WIN_RATE_FULL)}% or more gives 100.\n" +
-        "- Self-draw rate: ${percentOf(SkillScale.SELF_DRAW_RATE_FULL)}% or more gives 100.\n" +
-        "- Deal-in rate: 0% gives 100 and ${percentOf(SkillScale.DEAL_IN_RATE_FULL)}% or more gives 0.\n" +
-        "- Hand value: ${SkillScale.HAND_VALUE_EMPTY.roundToInt()} gives 0 and ${SkillScale.HAND_VALUE_FULL.roundToInt()} or more gives 100.\n" +
-        "The level follows the score. The list on the right shows the limits.\n" +
-        "A level needs $MIN_HANDS_FOR_LEADERBOARD hands. It is provisional under $STEADY_LEVEL_HANDS hands."
+@Composable
+private fun levelInfo(): String = stringResource(
+    Res.string.level_info,
+    percentOf(SkillScale.WIN_RATE_FULL),
+    percentOf(SkillScale.SELF_DRAW_RATE_FULL),
+    percentOf(SkillScale.DEAL_IN_RATE_FULL),
+    SkillScale.HAND_VALUE_EMPTY.roundToInt(),
+    SkillScale.HAND_VALUE_FULL.roundToInt(),
+    MIN_HANDS_FOR_LEADERBOARD,
+    STEADY_LEVEL_HANDS,
+)
 
 /** The score range of a level, for example "45 to 59". */
+@Composable
 private fun PlayerLevel.rangeText(): String {
     val next = PlayerLevel.entries.getOrNull(ordinal + 1)
     return when {
-        ordinal == 0 && next != null -> "under ${next.minScore}"
-        next == null -> "$minScore or more"
-        else -> "$minScore to ${next.minScore - 1}"
+        ordinal == 0 && next != null -> stringResource(Res.string.level_range_under, next.minScore)
+        next == null -> stringResource(Res.string.level_range_or_more, minScore)
+        else -> stringResource(Res.string.level_range_between, minScore, next.minScore - 1)
     }
 }
 
@@ -678,7 +772,7 @@ private fun LevelLegend(current: PlayerLevel?, modifier: Modifier = Modifier) {
             ) {
                 LevelMedal(level, 28.dp)
                 Text(
-                    level.label,
+                    level.label(),
                     Modifier.weight(1f),
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = if (selected) FontWeight.Bold else null,
@@ -708,21 +802,21 @@ private fun LevelBadge(statistics: PlayerStatistics) {
         Column(Modifier.width(190.dp)) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (level == null || score == null) {
-                    Text("Level: not rated yet", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(Res.string.level_not_rated), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     LevelRibbonBadge(level)
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        if (score == null) "Needs $MIN_HANDS_FOR_LEADERBOARD hands"
-                        else "Skill score ${score.roundToInt()} of 100",
+                        if (score == null) stringResource(Res.string.level_needs_hands, MIN_HANDS_FOR_LEADERBOARD.toString())
+                        else stringResource(Res.string.level_skill_score_of, score.roundToInt()),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                    InfoTip(LEVEL_INFO)
+                    InfoTip(levelInfo())
                 }
                 if (score != null && statistics.isLevelProvisional) {
-                    Text("Provisional", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(stringResource(Res.string.level_provisional), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -736,8 +830,8 @@ private fun SkillsBlock(statistics: PlayerStatistics, chartHeight: Dp, modifier:
     if (statistics.tablesWithHands == 0) {
         AppEmptyState(
             icon = StatisticsIcon,
-            title = "No skills yet",
-            message = "Skills need tables with entered hands.",
+            title = stringResource(Res.string.skills_empty_title),
+            message = stringResource(Res.string.skills_empty_message),
             modifier = modifier,
             compact = true,
         )
@@ -751,7 +845,7 @@ private fun SkillsBlock(statistics: PlayerStatistics, chartHeight: Dp, modifier:
 
 @Composable
 private fun SkillsCard(statistics: PlayerStatistics, modifier: Modifier) {
-    StatCard("Skills", modifier) { SkillsBlock(statistics, 300.dp) }
+    StatCard(stringResource(Res.string.stats_skills), modifier) { SkillsBlock(statistics, 300.dp) }
 }
 
 /** The radar shapes are drawn on a canvas. The names and values are real views, so they can show a tooltip. */
@@ -802,7 +896,7 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
                         val info: @Composable () -> Unit = {
                             Icon(
                                 Icons.Outlined.Info,
-                                contentDescription = "More information",
+                                contentDescription = stringResource(Res.string.more_information),
                                 modifier = Modifier.size(14.dp),
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -850,12 +944,15 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
 private fun radiusFor(width: Float, height: Float, density: Float): Float =
     min(width / 2f - 90f * density, height / 2f - 44f * density).coerceAtLeast(40f * density)
 
-private val PlaceNames = listOf("1st", "2nd", "3rd", "4th")
+@Composable
+private fun placeNames(): List<String> = listOf(
+    stringResource(Res.string.place_1st), stringResource(Res.string.place_2nd), stringResource(Res.string.place_3rd), stringResource(Res.string.place_4th),
+)
 private val ChartSizes = listOf(10, 20, 50)
 
 @Composable
 private fun PlacesCard(statistics: PlayerStatistics, tournaments: List<Tournament>, modifier: Modifier) {
-    StatCard("Places", modifier) {
+    StatCard(stringResource(Res.string.stats_places), modifier) {
         val all = statistics.tablesPlayed
         var chosen by remember { mutableStateOf<Int?>(null) }
         val shown = chosen?.coerceAtMost(all) ?: all
@@ -866,7 +963,7 @@ private fun PlacesCard(statistics: PlayerStatistics, tournaments: List<Tournamen
                     FilterChip(
                         selected = size == shown,
                         onClick = { chosen = if (size == all) null else size },
-                        label = { Text(if (size == all) "ALL($all)" else "Last $size") },
+                        label = { Text(if (size == all) stringResource(Res.string.places_all, all) else stringResource(Res.string.places_last, size)) },
                     )
                 }
             }
@@ -885,12 +982,13 @@ private fun PlacesCard(statistics: PlayerStatistics, tournaments: List<Tournamen
 private fun PlaceSectors(statistics: PlayerStatistics, size: Dp, modifier: Modifier = Modifier) {
     val counts = statistics.placeCounts
     val tables = statistics.tablesPlayed
+    val placeNames = placeNames()
     val chart: @Composable () -> Unit = {
         SectorChart(
             counts.mapIndexed { index, value -> Slice(value, positionColor(index + 1)) },
             null, size, 0.26f,
             centerValue = statistics.averagePosition.decimal(),
-            centerLabel = "avg. place",
+            centerLabel = stringResource(Res.string.places_avg_place),
         )
     }
     val legend: @Composable () -> Unit = {
@@ -899,7 +997,7 @@ private fun PlaceSectors(statistics: PlayerStatistics, size: Dp, modifier: Modif
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Box(Modifier.size(12.dp).background(positionColor(index + 1), CircleShape))
                     if (index < 3) PositionTrophy(index + 1, size = 22.dp) else LastPlaceIcon(size = 22.dp)
-                    Text(PlaceNames[index], Modifier.width(30.dp), style = MaterialTheme.typography.bodyMedium)
+                    Text(placeNames[index], Modifier.width(30.dp), style = MaterialTheme.typography.bodyMedium)
                     Text(
                         "$value (${if (tables == 0) 0 else (value * 100.0 / tables).roundToInt()}%)",
                         style = MaterialTheme.typography.bodyMedium,
@@ -930,7 +1028,7 @@ private fun LevelMedalWithScore(statistics: PlayerStatistics, modifier: Modifier
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         LevelRibbonBadge(level, medalSize = 64.dp)
         Text(
-            "Skill score ${score.roundToInt()}",
+            stringResource(Res.string.skill_score_n, score.roundToInt()),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -1043,19 +1141,19 @@ fun PlayerTournamentsSection(
             ) {
                 val options = remember(sorted) { sorted.map { it.first.id to it.first.name } }
                 SearchableDropdownField(
-                    "Tournament", options, selectedId, { selectedId = it },
+                    stringResource(Res.string.field_tournament), options, selectedId, { selectedId = it },
                     Modifier.widthIn(min = 240.dp).weight(1f),
                 )
                 // The two dates stay in one line. On a narrow screen they share the full width.
                 Row(Modifier.widthIn(max = 392.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    DateField("From", from, { from = it }, Modifier.weight(1f))
-                    DateField("To", to, { to = it }, Modifier.weight(1f))
+                    DateField(stringResource(Res.string.date_from), from, { from = it }, Modifier.weight(1f))
+                    DateField(stringResource(Res.string.date_to), to, { to = it }, Modifier.weight(1f))
                 }
                 val anyOpen = expanded.values.any { it }
                 TextButton(onClick = { visible.forEach { expanded[it.first.id] = !anyOpen } }) {
                     Icon(if (anyOpen) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore, contentDescription = null)
                     Spacer(Modifier.width(8.dp))
-                    Text(if (anyOpen) "Fold all" else "Unfold all", maxLines = 1, softWrap = false)
+                    Text(stringResource(if (anyOpen) Res.string.fold_all else Res.string.unfold_all), maxLines = 1, softWrap = false)
                 }
             }
         }
@@ -1065,7 +1163,7 @@ fun PlayerTournamentsSection(
             OutlinedButton(onClick = { visible.forEach { expanded[it.first.id] = !anyVisibleOpen } }) {
                 Icon(if (anyVisibleOpen) Icons.Default.UnfoldLess else Icons.Default.UnfoldMore, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
-                Text(if (anyVisibleOpen) "Fold all" else "Unfold all", maxLines = 1, softWrap = false)
+                Text(stringResource(if (anyVisibleOpen) Res.string.fold_all else Res.string.unfold_all), maxLines = 1, softWrap = false)
             }
         }
         visible.forEach { (tournament, stats) ->
@@ -1079,20 +1177,20 @@ fun PlayerTournamentsSection(
                 val hasHands = stats.tablesWithHands > 0
                 StatGrid(Modifier.fillMaxWidth()) {
                     LevelMedalWithScore(stats)
-                    standings[tournament.id]?.let { BigNumber("Rank", it.rank.toString(), suffix = " of ${it.of}") }
+                    standings[tournament.id]?.let { BigNumber(stringResource(Res.string.stat_rank), it.rank.toString(), suffix = " " + stringResource(Res.string.rank_of, it.of)) }
                     BigNumber("Tables", stats.tablesPlayed.toString())
                     BigNumber("Hands", if (hasHands) stats.handsPlayed.toString() else EMPTY)
-                    BigNumber("Best table score", stats.bestTableScore.text())
-                    BigNumber("Best hand", stats.bestHand.text())
-                    if (tournament.countChickenHands && hasHands) BigNumber("Chicken hands", stats.chickenHands.toString())
-                    BigNumber("Penalties", penaltiesText(stats), info = "Number of penalties (total points lost)")
+                    BigNumber(stringResource(Res.string.stat_best_table_score), stats.bestTableScore.text())
+                    BigNumber(stringResource(Res.string.stat_best_hand), stats.bestHand.text())
+                    if (tournament.countChickenHands && hasHands) BigNumber(stringResource(Res.string.stat_chicken_hands), stats.chickenHands.toString())
+                    BigNumber(stringResource(Res.string.stat_penalties), penaltiesText(stats), info = stringResource(Res.string.stat_penalties_info))
                 }
                 // The skills, the places and the hands go in one row when there is room. With less room they move to the next row.
                 BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 28.dp)) {
                     val blocks = buildList<@Composable (Modifier) -> Unit> {
-                        add { m -> TitledBlock("Skills", m) { SkillsBlock(stats, 240.dp, Modifier.fillMaxWidth(), showLevel = false) } }
-                        add { m -> TitledBlock("Places", m) { PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth()) } }
-                        if (hasHands) add { m -> TitledBlock("Hands", m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }
+                        add { m -> TitledBlock(stringResource(Res.string.stats_skills), m) { SkillsBlock(stats, 240.dp, Modifier.fillMaxWidth(), showLevel = false) } }
+                        add { m -> TitledBlock(stringResource(Res.string.stats_places), m) { PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth()) } }
+                        if (hasHands) add { m -> TitledBlock(stringResource(Res.string.stat_hands), m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }
                     }
                     val gap = 24.dp
                     val columns = ((maxWidth + gap) / (TOURNAMENT_BLOCK_MIN_WIDTH + gap)).toInt().coerceIn(1, blocks.size)
@@ -1110,7 +1208,7 @@ fun PlayerTournamentsSection(
         }
         if (rangeActive) {
             Text(
-                if (visible.isEmpty()) "No tournament in this date range." else "${visible.size} of ${sorted.size} tournaments in this date range.",
+                if (visible.isEmpty()) stringResource(Res.string.range_none) else stringResource(Res.string.range_some, visible.size, sorted.size),
                 Modifier.fillMaxWidth(),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -1159,7 +1257,7 @@ private fun ShowMoreTournaments(
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp), horizontalAlignment = Alignment.CenterHorizontally) {
         if (total > INITIAL_TOURNAMENTS) {
             Text(
-                "Showing $shown of $total tournaments. The newest tournaments come first.",
+                stringResource(Res.string.tournaments_showing, shown, total),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -1170,8 +1268,8 @@ private fun ShowMoreTournaments(
             itemVerticalAlignment = Alignment.CenterVertically,
         ) {
             if (shown < total) {
-                OutlinedButton(onClick = onShowMore) { Text("Show $TOURNAMENTS_STEP more") }
-                OutlinedButton(onClick = onShowAll) { Text("Show all") }
+                OutlinedButton(onClick = onShowMore) { Text(stringResource(Res.string.tournaments_show_more, TOURNAMENTS_STEP)) }
+                OutlinedButton(onClick = onShowAll) { Text(stringResource(Res.string.tournaments_show_all)) }
             }
             foldAll?.invoke()
         }
@@ -1188,18 +1286,20 @@ private fun tableTime(result: TableResult, tournaments: List<Tournament>): Strin
 }
 
 /** The short name of the tournament, the round and the table, for example "EMA Open - Round 2 - Table 5". */
+@Composable
 private fun tableLabel(result: TableResult, tournaments: List<Tournament>): String {
     val tournament = tournaments.firstOrNull { it.id == result.tournamentId } ?: tournaments.singleOrNull()
     val name = tournament?.let { it.shortName.ifBlank { it.name } }.orEmpty()
-    return listOf(name, "Round ${result.roundId}", "Table ${result.tableId}").filter { it.isNotBlank() }.joinToString(" - ")
+    return listOf(name, stringResource(Res.string.round_n, result.roundId), stringResource(Res.string.table_n, result.tableId)).filter { it.isNotBlank() }.joinToString(" - ")
 }
 
 @Composable
 private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournament>) {
     val places = results.map { it.position }
+    val placeNames = placeNames()
     val times = results.map { tableTime(it, tournaments) }
     val tips = results.mapIndexed { index, result -> tableLabel(result, tournaments) + "\n" + times[index].replace('\n', ' ') }
-    Text("Place in the last ${places.size} tables", Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
+    Text(stringResource(Res.string.places_history_title, places.size), Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
     val pointColors = (1..4).map { positionColor(it) }
     val grid = MaterialTheme.colorScheme.outlineVariant
     val line = MaterialTheme.colorScheme.onSurfaceVariant
@@ -1220,7 +1320,7 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
         fun x(step: Int) = left + if (places.size == 1) width / 2f else width * step / (places.size - 1)
         (1..4).forEach { place ->
             drawLine(grid, Offset(left, y(place)), Offset(size.width - pad, y(place)), strokeWidth = 1.dp.toPx())
-            val layout = measurer.measure(PlaceNames[place - 1], labelStyle)
+            val layout = measurer.measure(placeNames[place - 1], labelStyle)
             drawText(layout, topLeft = Offset(0f, y(place) - layout.size.height / 2f))
         }
         val path = Path()

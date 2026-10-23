@@ -56,15 +56,6 @@ data class PlayerSubstitution(
 
     /** True when the player has no personal statistics at all. Only an excluded player. */
     val excludedFromStatistics: Boolean get() = excludedFromEma
-
-    /** A short text for lists and rankings. */
-    val label: String
-        get() = when (reason) {
-            SubstitutionReason.LATE -> "substituted from round $fromRound"
-            SubstitutionReason.ILLNESS ->
-                "ill, substituted from round $fromRound" + if (excludedFromEma) ", excluded from the EMA ranking" else ""
-            SubstitutionReason.DISQUALIFIED -> "disqualified from round $fromRound"
-        }
 }
 
 enum class InvitationStatus {

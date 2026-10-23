@@ -1,8 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.material3.AlertDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -14,6 +14,13 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.discard
+import mahjongtournamentsuite.adminapp.generated.resources.save
+import mahjongtournamentsuite.adminapp.generated.resources.unsaved_changes
+import mahjongtournamentsuite.adminapp.generated.resources.you_have_unsaved_changes_save_them
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun UnsavedChangesDialog(
@@ -33,8 +40,8 @@ fun UnsavedChangesDialog(
     AlertDialog(
         modifier = Modifier.appFocusGroup(),
         onDismissRequest = { if (!isSaving) onCancel() },
-        title = { Text("Unsaved changes") },
-        text = { Text("You have unsaved changes. Save them before continuing?") },
+        title = { Text(stringResource(Res.string.unsaved_changes)) },
+        text = { Text(stringResource(Res.string.you_have_unsaved_changes_save_them)) },
         confirmButton = {
             FocusedButton(
                 enabled = !isSaving,
@@ -45,7 +52,7 @@ fun UnsavedChangesDialog(
                     next = cancelFocusRequester,
                 ),
             ) {
-                Text("Save")
+                Text(stringResource(Res.string.save))
             }
         },
         dismissButton = {
@@ -59,7 +66,7 @@ fun UnsavedChangesDialog(
                         next = discardFocusRequester,
                     ),
                 ) {
-                    Text("Cancel")
+                    Text(stringResource(Res.string.cancel))
                 }
                 FocusedTextButton(
                     enabled = !isSaving,
@@ -71,7 +78,7 @@ fun UnsavedChangesDialog(
                     ),
                 ) {
                     Text(
-                        text = "Discard",
+                        text = stringResource(Res.string.discard),
                         color = MaterialTheme.colorScheme.error,
                     )
                 }

@@ -24,6 +24,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.a_disqualified_player_gets_0_table
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.first_round_of_the_substitute
+import mahjongtournamentsuite.adminapp.generated.resources.reason
+import mahjongtournamentsuite.adminapp.generated.resources.reason_disqualified
+import mahjongtournamentsuite.adminapp.generated.resources.reason_ill
+import mahjongtournamentsuite.adminapp.generated.resources.reason_late
+import mahjongtournamentsuite.adminapp.generated.resources.remove_substitution
+import mahjongtournamentsuite.adminapp.generated.resources.save
+import mahjongtournamentsuite.adminapp.generated.resources.substitute
+import mahjongtournamentsuite.adminapp.generated.resources.substitute_player_question
+import mahjongtournamentsuite.adminapp.generated.resources.substitution_explanation
+import mahjongtournamentsuite.adminapp.generated.resources.substitution_of_player
+import mahjongtournamentsuite.adminapp.generated.resources.the_head_referee_excluded_the_player
+import mahjongtournamentsuite.adminapp.generated.resources.the_player_leaves_after_the_session
+import org.jetbrains.compose.resources.stringResource
 
 /**
  * The editor sets here that a substitute plays for a player from a round on.
@@ -47,14 +64,11 @@ fun PlayerSubstitutionDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (current == null) "Substitute $playerName?" else "Substitution of $playerName") },
+        title = { Text(if (current == null) stringResource(Res.string.substitute_player_question, playerName) else stringResource(Res.string.substitution_of_player, playerName)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(
-                    "A substitute plays for this player from the chosen round. The substitute is not recorded " +
-                        "and gets no result in the ranking. The player gets 0 table points for the rounds that the substitute plays.",
-                )
-                Text("Reason", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.substitution_explanation))
+                Text(stringResource(Res.string.reason), style = MaterialTheme.typography.labelLarge)
                 SubstitutionReason.entries.forEach { option ->
                     Row(
                         Modifier.fillMaxWidth(),
@@ -70,14 +84,14 @@ fun PlayerSubstitutionDialog(
                         )
                         Text(
                             when (option) {
-                                SubstitutionReason.LATE -> "The player came late."
-                                SubstitutionReason.ILLNESS -> "The player is ill."
-                                SubstitutionReason.DISQUALIFIED -> "The player is disqualified."
+                                SubstitutionReason.LATE -> stringResource(Res.string.reason_late)
+                                SubstitutionReason.ILLNESS -> stringResource(Res.string.reason_ill)
+                                SubstitutionReason.DISQUALIFIED -> stringResource(Res.string.reason_disqualified)
                             },
                         )
                     }
                 }
-                Text("First round of the substitute", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.first_round_of_the_substitute), style = MaterialTheme.typography.labelLarge)
                 Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     rounds.forEach { round ->
                         FilterChip(selected = fromRound == round, onClick = { fromRound = round }, label = { Text("$round") })
@@ -86,17 +100,17 @@ fun PlayerSubstitutionDialog(
                 if (reason != SubstitutionReason.LATE) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = duringSession, onCheckedChange = { duringSession = it })
-                        Text("The player leaves after the session has started. The substitute gets 0 table points in that round.")
+                        Text(stringResource(Res.string.the_player_leaves_after_the_session))
                     }
                 }
                 if (reason == SubstitutionReason.ILLNESS) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(checked = excluded, onCheckedChange = { excluded = it })
-                        Text("The head referee excluded the player from the final ranking. The EMA report has no row for the player.")
+                        Text(stringResource(Res.string.the_head_referee_excluded_the_player))
                     }
                 }
                 if (reason == SubstitutionReason.DISQUALIFIED) {
-                    Text("A disqualified player gets 0 table points for the whole tournament. The result still counts for the EMA ranking.")
+                    Text(stringResource(Res.string.a_disqualified_player_gets_0_table))
                 }
             }
         },
@@ -104,12 +118,12 @@ fun PlayerSubstitutionDialog(
             Button(
                 enabled = !busy,
                 onClick = { onSave(PlayerSubstitution(reason, fromRound, duringSession, excluded)) },
-            ) { Text(if (current == null) "Substitute" else "Save") }
+            ) { Text(stringResource(if (current == null) Res.string.substitute else Res.string.save)) }
         },
         dismissButton = {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (current != null) TextButton(enabled = !busy, onClick = onRemove) { Text("Remove substitution") }
-                TextButton(onClick = onDismiss) { Text("Cancel") }
+                if (current != null) TextButton(enabled = !busy, onClick = onRemove) { Text(stringResource(Res.string.remove_substitution)) }
+                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
             }
         },
     )

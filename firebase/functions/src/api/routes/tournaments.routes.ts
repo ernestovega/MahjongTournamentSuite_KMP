@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
+import { parseAcceptLanguage } from "../../services/i18n";
 import { recordActivity, tournamentNameOf } from "../../services/activityLog";
 
 import { auth } from "../../firebase";
@@ -1043,6 +1044,7 @@ export function tournamentsRouter(): Router {
           const actor = res.locals.auth as { uid: string };
           const results = await runAccountAction({
             tournamentId: req.params.tournamentId, action, items, invitedBy: actor.uid,
+            language: parseAcceptLanguage(req.headers["accept-language"]),
           });
           await recordActivity({
             action: `account.${action}`, actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,

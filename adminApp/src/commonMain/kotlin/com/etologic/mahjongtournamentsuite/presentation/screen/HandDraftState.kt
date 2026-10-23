@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -8,6 +9,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.key
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.hand_chicken_maximum
+import mahjongtournamentsuite.adminapp.generated.resources.hand_invalid
+import mahjongtournamentsuite.adminapp.generated.resources.hand_loser_without_winner
+import mahjongtournamentsuite.adminapp.generated.resources.hand_missing_fields
+import mahjongtournamentsuite.adminapp.generated.resources.hand_score_minimum
+import mahjongtournamentsuite.adminapp.generated.resources.hand_score_whole
+import org.jetbrains.compose.resources.stringResource
 
 @Stable
 internal class PenaltyDraftState(
@@ -76,14 +85,14 @@ internal class HandDraftState private constructor(
     val showValidationError: Boolean
         get() = resultFieldsTouched && isResultSelectionInvalid
 
-    val validationErrorMessage: String?
+    val validationErrorMessage: UiText?
         get() = when {
             !isResultSelectionInvalid -> null
             isCompletelyEmpty -> null
-            else -> "This hand is invalid and cannot be marked as done or completed."
+            else -> UiText.of(Res.string.hand_invalid)
         }
 
-    val validationDetailMessages: List<String>
+    val validationDetailMessages: List<UiText>
         get() {
             if (!isResultSelectionInvalid || isCompletelyEmpty) return emptyList()
 
@@ -91,26 +100,26 @@ internal class HandDraftState private constructor(
             val loserId = normalizedLoserId
             val score = handScore.trim()
             val parsedScore = score.toIntOrNull()
-            val messages = mutableListOf<String>()
+            val messages = mutableListOf<UiText>()
 
             if (winnerId.isEmpty() || score.isEmpty()) {
-                messages += "There are missing fields."
+                messages += UiText.of(Res.string.hand_missing_fields)
             }
 
             if (winnerId.isEmpty() && loserId.isNotEmpty()) {
-                messages += "A loser cannot be selected without a winner."
+                messages += UiText.of(Res.string.hand_loser_without_winner)
             }
 
             if (score.isNotEmpty() && parsedScore == null) {
-                messages += "The score must be a whole number."
+                messages += UiText.of(Res.string.hand_score_whole)
             }
 
             if (parsedScore != null && parsedScore < MIN_HAND_SCORE) {
-                messages += "The minimum score to win a hand is 8."
+                messages += UiText.of(Res.string.hand_score_minimum)
             }
 
             if (parsedScore != null && isChickenHand && parsedScore > MAX_CHICKEN_HAND_SCORE) {
-                messages += "A chicken hand cannot score more than 12 points."
+                messages += UiText.of(Res.string.hand_chicken_maximum)
             }
 
             return messages.distinct()

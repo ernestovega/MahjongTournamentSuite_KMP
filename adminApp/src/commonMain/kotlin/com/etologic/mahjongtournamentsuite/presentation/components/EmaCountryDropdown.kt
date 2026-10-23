@@ -1,6 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -37,6 +37,11 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.host_country
+import mahjongtournamentsuite.adminapp.generated.resources.no_matching_countries
+import org.jetbrains.compose.resources.stringResource
 
 private data class EmaCountryOption(
     val code: String,
@@ -86,7 +91,7 @@ fun EmaCountryDropdown(
     enabled: Boolean = true,
     isError: Boolean = false,
     errorMessage: String? = null,
-    label: String = "Host country",
+    label: String = stringResource(Res.string.host_country),
     required: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -94,24 +99,25 @@ fun EmaCountryDropdown(
     var moveFocusToMenu by remember { mutableStateOf(false) }
     val anchorFocusRequester = remember { FocusRequester() }
     val menuFocusRequester = remember { FocusRequester() }
-    val options = remember(countries) {
+    val countryNameOf = rememberCountryNames()
+    val options = remember(countries, countryNameOf) {
         countries
             .mapNotNull { country ->
                 val code = country.code.trim().uppercase()
                 val name = country.name.trim()
                 if (code.length == 2 && name.isNotEmpty()) {
-                    EmaCountryOption(code = code, name = name, flagCode = code)
+                    EmaCountryOption(code = code, name = countryNameOf(code, name), flagCode = code)
                 } else {
                     null
                 }
             }
             .distinctBy(EmaCountryOption::code)
             .sortedBy(EmaCountryOption::name)
-            .ifEmpty { EmaHostCountries }
+            .ifEmpty { EmaHostCountries.map { it.copy(name = countryNameOf(it.flagCode, it.name)) } }
     }
     val normalizedSelectedCode = selectedCode.trim().uppercase()
     val selected = options.firstOrNull { it.code == normalizedSelectedCode }
-        ?: EmaHostCountries.firstOrNull { it.code == normalizedSelectedCode }
+        ?: EmaHostCountries.firstOrNull { it.code == normalizedSelectedCode }?.let { it.copy(name = countryNameOf(it.flagCode, it.name)) }
     val selectedName = selected?.name ?: selectedCode
     var input by remember { mutableStateOf(TextFieldValue(selectedName)) }
     val hasFullSelection = input.selection.start == 0 && input.selection.end == input.text.length
@@ -307,7 +313,7 @@ fun EmaCountryDropdown(
                 }
                 if (filteredOptions.isEmpty()) {
                     DropdownMenuItem(
-                        text = { Text("No matching countries") },
+                        text = { Text(stringResource(Res.string.no_matching_countries)) },
                         onClick = {},
                         enabled = false,
                     )

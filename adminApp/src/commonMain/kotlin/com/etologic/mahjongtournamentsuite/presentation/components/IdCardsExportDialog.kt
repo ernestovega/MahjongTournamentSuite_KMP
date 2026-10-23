@@ -2,41 +2,41 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AspectRatio
-import androidx.compose.material.icons.filled.CropLandscape
-import androidx.compose.material.icons.filled.GridView
-import androidx.compose.material.icons.filled.Link
-import androidx.compose.material.icons.filled.RestartAlt
-import androidx.compose.material.icons.filled.Straighten
-import androidx.compose.material.icons.filled.CropPortrait
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AspectRatio
+import androidx.compose.material.icons.filled.CropLandscape
+import androidx.compose.material.icons.filled.CropPortrait
+import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.Link
+import androidx.compose.material.icons.filled.RestartAlt
+import androidx.compose.material.icons.filled.Straighten
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalIconToggleButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
-import androidx.compose.material3.TooltipAnchorPosition
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
@@ -57,6 +57,25 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import kotlin.math.roundToInt
 import kotlin.math.roundToLong
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.arrange_the_cards_for_printing_on
+import mahjongtournamentsuite.adminapp.generated.resources.back_sheet
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.card_size
+import mahjongtournamentsuite.adminapp.generated.resources.cards_per_sheet
+import mahjongtournamentsuite.adminapp.generated.resources.create_id_cards
+import mahjongtournamentsuite.adminapp.generated.resources.create_pdf
+import mahjongtournamentsuite.adminapp.generated.resources.front_sheet
+import mahjongtournamentsuite.adminapp.generated.resources.height_mm
+import mahjongtournamentsuite.adminapp.generated.resources.id_cards_proportion_info
+import mahjongtournamentsuite.adminapp.generated.resources.landscape
+import mahjongtournamentsuite.adminapp.generated.resources.portrait
+import mahjongtournamentsuite.adminapp.generated.resources.print_cut_marks_around_the_cards
+import mahjongtournamentsuite.adminapp.generated.resources.restore_settings
+import mahjongtournamentsuite.adminapp.generated.resources.the_width_and_the_height_keep
+import mahjongtournamentsuite.adminapp.generated.resources.use_range
+import mahjongtournamentsuite.adminapp.generated.resources.width_mm
+import org.jetbrains.compose.resources.stringResource
 
 private fun Double.oneDecimal(): String {
     val tenths = (this * 10).roundToLong()
@@ -78,21 +97,14 @@ private fun ProportionLinkIcon(originalWidthMm: Double, originalHeightMm: Double
         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
         tooltip = {
             AppPlainTooltip(modifier = Modifier.widthIn(max = 340.dp)) {
-                Text(
-                    "The width and the height are linked, so the card keeps its proportion.\n" +
-                        "• The proportion is the relation between the width and the height of the card. " +
-                        "The width is always $ratio times the height.\n" +
-                        "• When you change one side, the other side changes by itself. The card is never stretched.\n" +
-                        "• The original size is ${originalWidthMm.oneDecimal()} x ${originalHeightMm.oneDecimal()} mm. " +
-                        "It is the size that lets 10 cards fit on one portrait A4 sheet, in 2 columns and 5 rows.",
-                )
+                Text(stringResource(Res.string.id_cards_proportion_info, ratio.toString(), originalWidthMm.oneDecimal(), originalHeightMm.oneDecimal()))
             }
         },
         state = rememberTooltipState(),
     ) {
         Icon(
             Icons.Default.Link,
-            contentDescription = "The width and the height keep the card proportion",
+            contentDescription = stringResource(Res.string.the_width_and_the_height_keep),
             modifier = Modifier.size(20.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -182,7 +194,7 @@ fun IdCardsExportDialog(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Create ID cards")
+                Text(stringResource(Res.string.create_id_cards))
                 FocusedTextButton(
                     onClick = {
                         layout = IdCardSheetLayout()
@@ -191,7 +203,7 @@ fun IdCardsExportDialog(
                     },
                 ) {
                     Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text("Restore settings", modifier = Modifier.padding(start = 6.dp))
+                    Text(stringResource(Res.string.restore_settings), modifier = Modifier.padding(start = 6.dp))
                 }
             }
         },
@@ -203,7 +215,7 @@ fun IdCardsExportDialog(
                 if (capacity > 1) {
                     LabeledSlider(
                         icon = Icons.Default.GridView,
-                        label = "Cards per sheet",
+                        label = stringResource(Res.string.cards_per_sheet),
                         value = effective.cardsPerSheet.toFloat(),
                         onValueChange = { layout = layout.copy(cardsPerSheet = it.roundToInt()) },
                         valueRange = 1f..capacity.toFloat(),
@@ -213,7 +225,7 @@ fun IdCardsExportDialog(
                 }
                 LabeledSlider(
                     icon = Icons.Default.AspectRatio,
-                    label = "Card size",
+                    label = stringResource(Res.string.card_size),
                     value = layout.scalePercent.toFloat(),
                     onValueChange = { applyScale((it * 10).roundToLong() / 10.0) },
                     valueRange = minScale.toFloat()..maxScale.toFloat(),
@@ -231,11 +243,11 @@ fun IdCardsExportDialog(
                                 applyScale(mmToScalePercent(mm), updateWidthText = false)
                             }
                         },
-                        label = { Text("Width (mm)") },
+                        label = { Text(stringResource(Res.string.width_mm)) },
                         singleLine = true,
                         isError = widthInvalid,
                         supportingText = if (widthInvalid) {
-                            { Text("Use ${minWidthMm.oneDecimal()} to ${maxWidthMm.oneDecimal()}.") }
+                            { Text(stringResource(Res.string.use_range, minWidthMm.oneDecimal(), maxWidthMm.oneDecimal())) }
                         } else {
                             null
                         },
@@ -254,11 +266,11 @@ fun IdCardsExportDialog(
                                 applyScale(mmHeightToScalePercent(mm), updateHeightText = false)
                             }
                         },
-                        label = { Text("Height (mm)") },
+                        label = { Text(stringResource(Res.string.height_mm)) },
                         singleLine = true,
                         isError = heightInvalid,
                         supportingText = if (heightInvalid) {
-                            { Text("Use ${minHeightMm.oneDecimal()} to ${maxHeightMm.oneDecimal()}.") }
+                            { Text(stringResource(Res.string.use_range, minHeightMm.oneDecimal(), maxHeightMm.oneDecimal())) }
                         } else {
                             null
                         },
@@ -269,19 +281,19 @@ fun IdCardsExportDialog(
                             checked = !layout.landscape,
                             onCheckedChange = { applyOrientation(false) },
                         ) {
-                            Icon(Icons.Default.CropPortrait, contentDescription = "Portrait")
+                            Icon(Icons.Default.CropPortrait, contentDescription = stringResource(Res.string.portrait))
                         }
                         FilledTonalIconToggleButton(
                             checked = layout.landscape,
                             onCheckedChange = { applyOrientation(true) },
                         ) {
-                            Icon(Icons.Default.CropLandscape, contentDescription = "Landscape")
+                            Icon(Icons.Default.CropLandscape, contentDescription = stringResource(Res.string.landscape))
                         }
                     }
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
-                    SheetSketch(effective, title = "Front sheet", back = false)
-                    SheetSketch(effective, title = "Back sheet", back = true)
+                    SheetSketch(effective, title = stringResource(Res.string.front_sheet), back = false)
+                    SheetSketch(effective, title = stringResource(Res.string.back_sheet), back = true)
                 }
                 // The checkboxes use a smaller touch target, so the two lines stay close to each other.
                 CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
@@ -291,14 +303,14 @@ fun IdCardsExportDialog(
                                 checked = layout.cutMarks,
                                 onCheckedChange = { layout = layout.copy(cutMarks = it) },
                             )
-                            Text("Print cut marks around the cards.")
+                            Text(stringResource(Res.string.print_cut_marks_around_the_cards))
                         }
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Checkbox(
                                 checked = layout.doubleSided,
                                 onCheckedChange = { layout = layout.copy(doubleSided = it) },
                             )
-                            Text("Arrange the cards for printing on both sides of the paper.")
+                            Text(stringResource(Res.string.arrange_the_cards_for_printing_on))
                         }
                     }
                 }
@@ -309,11 +321,11 @@ fun IdCardsExportDialog(
                 enabled = !widthInvalid && !heightInvalid,
                 onClick = { onExport(effective) },
             ) {
-                Text("Create PDF")
+                Text(stringResource(Res.string.create_pdf))
             }
         },
         dismissButton = {
-            FocusedTextButton(onClick = onDismiss) { Text("Cancel") }
+            FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
         },
     )
 }
