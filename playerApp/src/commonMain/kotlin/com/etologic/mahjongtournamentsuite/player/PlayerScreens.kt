@@ -115,7 +115,6 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.EmojiEvents
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Groups
@@ -577,51 +576,58 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (status != null) StatusChip(status)
+                    // The dates are the subtitle of the item. They stay at the right of the status badge, or alone when there is no badge.
+                    if (status != null || dates != null) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            if (status != null) StatusChip(status)
+                            if (dates != null) {
+                                Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    }
                 }
             }
-            if (dates != null || hasCity || venueText.isNotBlank() || standing != null) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        if (dates != null) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Icon(Icons.Default.CalendarMonth, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                                Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
-                        }
-                        if (hasCity) {
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                                if (tournament.hostCity.isNotBlank()) {
-                                    Text(tournament.hostCity, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                }
-                                if (tournament.hostCountry.isNotBlank()) {
-                                    CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
-                                }
-                            }
-                        }
-                        // The Directions button is next to the venue text. It moves under the text when the row is full.
-                        if (venueText.isNotBlank()) {
+            if (hasCity || venueText.isNotBlank() || standing != null) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                    if (hasCity || venueText.isNotBlank()) {
+                        // The pin and the Directions button are centered between the lines of the place.
+                        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            // The address follows the city. It moves to a second line when the row is full.
                             FlowRow(
-                                Modifier.padding(start = 26.dp),
+                                Modifier.weight(1f),
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(0.dp),
+                                itemVerticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Text(
-                                    venueText,
-                                    Modifier.align(Alignment.CenterVertically),
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                                if (mapLink != null) {
-                                    LinkButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") {
-                                        uriHandler.openUri(mapLink)
+                                if (hasCity) {
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        if (tournament.hostCity.isNotBlank()) {
+                                            Text(tournament.hostCity, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                        if (tournament.hostCountry.isNotBlank()) {
+                                            CountryFlag(code = tournament.hostCountry, contentDescription = tournament.hostCountry)
+                                        }
                                     }
                                 }
+                                if (venueText.isNotBlank()) {
+                                    Text(
+                                        venueText,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                }
+                            }
+                            if (mapLink != null) {
+                                LinkButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") {
+                                    uriHandler.openUri(mapLink)
+                                }
                             }
                         }
+                    } else {
+                        Spacer(Modifier.weight(1f))
                     }
                     // The place and the prizes are at the right, so they do not use a row of the card.
                     if (standing != null) {
@@ -644,7 +650,6 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                     }
                 }
             }
-            HorizontalDivider()
             // The link buttons are at the left. The Open button is at the bottom right, in line with them.
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
                 FlowRow(
