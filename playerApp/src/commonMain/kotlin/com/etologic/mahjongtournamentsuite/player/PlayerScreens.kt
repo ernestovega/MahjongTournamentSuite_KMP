@@ -569,13 +569,35 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TournamentLogo(tournament)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        tournament.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    // The place and the prizes are at the top right, centered on the lines of the name.
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            tournament.name,
+                            Modifier.weight(1f),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (standing != null) {
+                            Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                StandingTag(standing)
+                                if (standing.wonTeams || standing.wonChickenHands || standing.wonBestHands) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = "Won the teams ranking", Modifier.size(22.dp))
+                                        if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
+                                        if (standing.wonBestHands) {
+                                            // The hand tells this trophy apart from the trophy of the place.
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Icon(Icons.Default.PanTool, contentDescription = "Won the best hands ranking", Modifier.size(16.dp))
+                                                PositionTrophy(1, size = 22.dp)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                     // The dates are the subtitle of the item. They stay at the right of the status badge, or alone when there is no badge.
                     if (status != null || dates != null) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -587,9 +609,9 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                     }
                 }
             }
-            if (hasCity || venueText.isNotBlank() || standing != null) {
+            if (hasCity || venueText.isNotBlank()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                    if (hasCity || venueText.isNotBlank()) {
+                    run {
                         // The pin and the Directions button are centered between the lines of the place.
                         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Default.Place, contentDescription = null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
@@ -623,27 +645,6 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                             if (mapLink != null) {
                                 LinkButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") {
                                     uriHandler.openUri(mapLink)
-                                }
-                            }
-                        }
-                    } else {
-                        Spacer(Modifier.weight(1f))
-                    }
-                    // The place and the prizes are at the right, so they do not use a row of the card.
-                    if (standing != null) {
-                        Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            StandingTag(standing)
-                            if (standing.wonTeams || standing.wonChickenHands || standing.wonBestHands) {
-                                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                    if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = "Won the teams ranking", Modifier.size(22.dp))
-                                    if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
-                                    if (standing.wonBestHands) {
-                                        // The hand tells this trophy apart from the trophy of the place.
-                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                            Icon(Icons.Default.PanTool, contentDescription = "Won the best hands ranking", Modifier.size(16.dp))
-                                            PositionTrophy(1, size = 22.dp)
-                                        }
-                                    }
                                 }
                             }
                         }
