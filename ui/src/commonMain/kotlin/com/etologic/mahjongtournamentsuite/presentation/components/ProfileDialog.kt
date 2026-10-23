@@ -31,6 +31,7 @@ const val MAX_ALIAS_LENGTH = 60
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
+ * When [onSignOut] is set, the dialog shows an Exit button that calls it.
  */
 @Composable
 fun ProfileDialog(
@@ -40,6 +41,7 @@ fun ProfileDialog(
     onRemovePhoto: suspend () -> AppResult<UserProfile>,
     onSaved: (UserProfile) -> Unit,
     onDismiss: () -> Unit,
+    onSignOut: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     var alias by remember(profile.uid) { mutableStateOf(profile.alias) }
@@ -128,6 +130,9 @@ fun ProfileDialog(
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                }
+                if (onSignOut != null) {
+                    FocusedTextButton(enabled = !saving, onClick = onSignOut) { Text("Exit") }
                 }
             }
         },

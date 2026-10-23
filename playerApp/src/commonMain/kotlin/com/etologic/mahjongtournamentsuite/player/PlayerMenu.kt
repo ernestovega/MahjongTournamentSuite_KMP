@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.automirrored.filled.Logout
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import androidx.compose.runtime.Composable
@@ -36,12 +35,6 @@ fun ThemeAction() {
     )
 }
 
-/** The top bar button that signs the player out. */
-@Composable
-fun SignOutAction(onClick: () -> Unit) {
-    AppTopBarButton(text = "Exit", icon = Icons.AutoMirrored.Filled.Logout, onClick = onClick)
-}
-
 /** The top bar button that opens the statistics of the screen. */
 @Composable
 fun StatisticsAction(onClick: () -> Unit) {
@@ -70,10 +63,9 @@ class AccountActions(
         }
     }
 
-    /** The buttons left of the title: Exit, then Profile. */
+    /** The Profile button left of the title. The Exit button is inside the profile dialog. */
     @Composable
     fun Buttons() {
-        SignOutAction { confirmingSignOut = true }
         AppTopBarButton(text = "Profile", icon = Icons.Default.Person, onClick = ::openProfile)
     }
 
@@ -99,6 +91,10 @@ class AccountActions(
                 onRemovePhoto = session::removePhoto,
                 onSaved = { profile = it },
                 onDismiss = { profile = null },
+                onSignOut = {
+                    profile = null
+                    confirmingSignOut = true
+                },
             )
         }
         error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
