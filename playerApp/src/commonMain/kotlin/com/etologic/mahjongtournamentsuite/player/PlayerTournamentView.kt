@@ -64,6 +64,15 @@ data class PlayerTable(
     fun playerSlots(): List<Int> = if (seatsAssigned) seatIds().filterNotNull() else table.playerIds
 }
 
+/** How far the tournament is. */
+data class TournamentProgress(
+    val completedRounds: Int,
+    val totalRounds: Int,
+    val completedTables: Int,
+    val totalTables: Int,
+    val ongoingTables: Int,
+)
+
 /** Everything the player screens show for one tournament. */
 data class PlayerTournamentView(
     val tournament: Tournament,
@@ -113,6 +122,22 @@ data class PlayerTournamentView(
 
     val myTables: List<PlayerTable>
         get() = mySlotId?.let { id -> tables.filter { id in it.playerSlots() } }.orEmpty()
+
+    /** The rounds and tables that are finished, and the tables that are ongoing. */
+    val progress: TournamentProgress
+        get() {
+            val rounds = tournament.numRounds
+            val tablesPerRound = tournament.numPlayers / 4
+            return TournamentProgress(
+                completedRounds = (1..rounds).count { round ->
+                    tablesPerRound > 0 && tables.count { it.roundId == round && it.isComplete } >= tablesPerRound
+                },
+                totalRounds = rounds,
+                completedTables = tables.count { it.isComplete },
+                totalTables = rounds * tablesPerRound,
+                ongoingTables = tables.count { !it.isComplete && it.doneHands > 0 },
+            )
+        }
 
     /** The tables where a member of my team sits. Empty for a tournament without teams. */
     val teamTables: List<PlayerTable>

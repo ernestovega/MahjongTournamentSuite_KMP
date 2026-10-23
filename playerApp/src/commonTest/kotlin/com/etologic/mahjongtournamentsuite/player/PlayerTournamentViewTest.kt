@@ -111,4 +111,14 @@ class PlayerTournamentViewTest {
 
         assertEquals(emptyList(), view.teamTables)
     }
+
+    @Test
+    fun progressCountsFinishedAndOngoingTables() {
+        val done = table(1, 1, 2, 3, 4).copy(isCompleted = true)
+        val tables = listOf(done to emptyList<TableHand>(), table(2, 5, 6, 7, 8) to emptyList<TableHand>())
+
+        val view = buildPlayerTournamentView(tournament, slots, registry, tables, rankings, myEmaId = null)
+
+        assertEquals(TournamentProgress(1, 1, 1, 1, 0), view.progress)
+    }
 }

@@ -844,19 +844,12 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 open,
                             )
                         } else {
-                            Text(
-                                progressOf(view),
-                                Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
                             TableList(view, view.tables, "The tables show here when the organizers draw the first round.", open)
                         }
                     }
                     1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
                     2 -> TournamentStatisticsTab(tournamentId, view.mySlotId) { statisticsLoading = it }
-                    else -> TournamentInfoTab(view.tournament)
+                    else -> TournamentInfoTab(view)
                 }
             }
         }
@@ -866,22 +859,6 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
 
 private fun datesOf(tournament: Tournament): String? =
     formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)
-
-/** How far the tournament is, for the top of the All tables tab. Example: "2 of 5 rounds - 8 of 20 tables - 3 ongoing". */
-private fun progressOf(view: PlayerTournamentView): String {
-    val rounds = view.tournament.numRounds
-    val tablesPerRound = view.tournament.numPlayers / 4
-    val completedTables = view.tables.count { it.isComplete }
-    val ongoingTables = view.tables.count { !it.isComplete && it.doneHands > 0 }
-    val completedRounds = (1..rounds).count { round ->
-        tablesPerRound > 0 && view.tables.count { it.roundId == round && it.isComplete } >= tablesPerRound
-    }
-    return listOf(
-        "$completedRounds of $rounds rounds",
-        "$completedTables of ${rounds * tablesPerRound} tables",
-        "$ongoingTables ongoing",
-    ).joinToString(" - ")
-}
 
 /**
  * The four players of a table in the order of hand 1 (East, South, West, North).

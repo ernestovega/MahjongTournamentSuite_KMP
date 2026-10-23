@@ -57,28 +57,56 @@ fun agendaByDay(items: List<TournamentAgendaItem>): List<AgendaDay> =
 
 /** The venue, the contact and the schedule of the tournament. The tab scrolls when its content is taller than the screen. */
 @Composable
-fun TournamentInfoTab(tournament: Tournament) {
+fun TournamentInfoTab(view: PlayerTournamentView) {
+    val tournament = view.tournament
     val venue = tournament.venue
     val hasPlace = tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()
-    if (venue.isEmpty && !hasPlace && !hasSchedule(tournament)) {
-        Text(
-            "The organizers did not add information yet.",
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(start = 16.dp, top = 24.dp, end = 16.dp, bottom = 24.dp),
-        )
-        return
-    }
+    val hasInfo = !venue.isEmpty || hasPlace || hasSchedule(tournament)
     Column(
         // The padding is inside the scroll, so the content ends at the tabs.
         Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
+        ProgressCard(view.progress)
+        if (!hasInfo) {
+            Text(
+                "The organizers did not add information yet.",
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(vertical = 12.dp),
+            )
+        }
         // An email alone gives no venue card. It has its own card.
         if (hasPlace || venue.name.isNotBlank() || venue.address.isNotBlank()) VenueCard(tournament)
         if (venue.contactEmail.isNotBlank()) ContactCard(venue.contactEmail)
         if (hasSchedule(tournament)) {
             InfoCard("Schedule") { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
         }
+    }
+}
+
+/** How far the tournament is: finished rounds, finished tables and ongoing tables, in large numbers. */
+@Composable
+private fun ProgressCard(progress: TournamentProgress) {
+    InfoCard("Progress") {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            ProgressStat("Rounds", "${progress.completedRounds}/${progress.totalRounds}", Modifier.weight(1f))
+            ProgressStat("Tables", "${progress.completedTables}/${progress.totalTables}", Modifier.weight(1f))
+            ProgressStat("Ongoing", "${progress.ongoingTables}", Modifier.weight(1f))
+        }
+    }
+}
+
+@Composable
+private fun ProgressStat(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(
+            value,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = MaterialTheme.colorScheme.primary,
+            maxLines = 1,
+        )
+        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
