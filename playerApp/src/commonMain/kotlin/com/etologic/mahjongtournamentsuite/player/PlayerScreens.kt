@@ -751,7 +751,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     // A negative value means that the player did not choose a tab.
     var tab by rememberPersistentInt("mainTab", 0)
     var chosenTablesTab by rememberPersistentInt("tablesTab", -1)
-    val tablesTab = chosenTablesTab.takeIf { it >= 0 } ?: if (view?.mySlotId == null) 1 else 0
+    // The values are ids: 0 is My tables, 1 is All tables and 2 is Team tables (only in a tournament with teams).
+    val tablesTabs = if (view?.tournament?.isTeams == true) listOf(0, 2, 1) else listOf(0, 1)
+    val tablesTabId = chosenTablesTab.takeIf { it in tablesTabs } ?: if (view?.mySlotId == null) 1 else 0
+    val tablesTab = tablesTabs.indexOf(tablesTabId)
     // The statistics tab tells this screen when it loads, so the progress bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
     // The tab rows hide when the content scrolls down and show when it scrolls up.
@@ -810,38 +813,43 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 containerColor = tabRowColor(), contentColor = TabContentColor,
                                 indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
                             ) {
-                                listOf("My tables", "All tables").forEachIndexed { index, title ->
-                                    CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = index }, title = title)
+                                tablesTabs.forEachIndexed { index, id ->
+                                    val title = when (id) {
+                                        0 -> "Me"
+                                        2 -> "My team"
+                                        else -> "All"
+                                    }
+                                    CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = id }, title = title)
                                 }
                             }
                         }
-                        if (tablesTab == 0) {
+                        if (tablesTabId == 0) {
                             TableList(
                                 view,
                                 view.myTables,
                                 if (view.mySlotId == null) {
                                     "Your account is not linked to a player of this tournament. " +
-                                        "Ask the organizers to send you an invitation. All tables are in the All tables tab."
+                                        "Ask the organizers to send you an invitation. All tables are in the All tab."
                                 } else {
                                     "The tables of the player show here when the organizers draw the round."
                                 },
                                 open,
                                 stickyRounds = false,
                             )
-                        } else {
-                            Text(
-                                progressOf(view),
-                                Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp),
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
+                        } else if (tablesTabId == 2) {
+                            TableList(
+                                view,
+                                view.teamTables,
+                                "The tables of the members of your team show here when the organizers draw the round.",
+                                open,
                             )
+                        } else {
                             TableList(view, view.tables, "The tables show here when the organizers draw the first round.", open)
                         }
                     }
                     1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
                     2 -> TournamentStatisticsTab(tournamentId, view.mySlotId) { statisticsLoading = it }
-                    else -> TournamentInfoTab(view.tournament)
+                    else -> TournamentInfoTab(view)
                 }
             }
         }
@@ -851,22 +859,6 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
 
 private fun datesOf(tournament: Tournament): String? =
     formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)
-
-/** How far the tournament is, for the top of the All tables tab. Example: "2 of 5 rounds - 8 of 20 tables - 3 ongoing". */
-private fun progressOf(view: PlayerTournamentView): String {
-    val rounds = view.tournament.numRounds
-    val tablesPerRound = view.tournament.numPlayers / 4
-    val completedTables = view.tables.count { it.isComplete }
-    val ongoingTables = view.tables.count { !it.isComplete && it.doneHands > 0 }
-    val completedRounds = (1..rounds).count { round ->
-        tablesPerRound > 0 && view.tables.count { it.roundId == round && it.isComplete } >= tablesPerRound
-    }
-    return listOf(
-        "$completedRounds of $rounds rounds",
-        "$completedTables of ${rounds * tablesPerRound} tables",
-        "$ongoingTables ongoing",
-    ).joinToString(" - ")
-}
 
 /**
  * The four players of a table in the order of hand 1 (East, South, West, North).
@@ -1036,10 +1028,23 @@ private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hig
             }
             seats.forEachIndexed { position, seat ->
                 val highlighted = seat.slotId != null && seat.slotId == highlightSlot
+                val teammate = !highlighted && view.isTeammate(seat.slotId)
                 Row(
                     Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (highlighted) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
+                        .background(
+                            when {
+                                highlighted -> colors.primaryContainer.copy(alpha = 0.45f)
+                                // A darker tone of the same green marks the other members of my team.
+                                // The light theme uses the primary green, because the other color has the tone of the card there.
+                                teammate -> if (colors.background.luminance() < 0.5f) {
+                                    colors.onPrimaryContainer.copy(alpha = 0.2f)
+                                } else {
+                                    colors.primary.copy(alpha = 0.3f)
+                                }
+                                else -> Color.Transparent
+                            },
+                        )
                         .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),

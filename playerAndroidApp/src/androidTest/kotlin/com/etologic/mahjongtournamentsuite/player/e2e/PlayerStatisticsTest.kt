@@ -7,7 +7,7 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     private fun openTournamentStatistics() {
         start(E2eAccounts.PLAYER, ready = "My tournaments")
         c.clickButton("Test - Live ongoing tournament")
-        c.waitForText("My tables")
+        c.waitForText("Me")
         c.clickButton("Statistics")
     }
 

@@ -6,7 +6,7 @@ class PlayerTournamentTest : PlayerE2eTest() {
     private fun open(email: String = E2eAccounts.PLAYER) {
         start(email, ready = "My tournaments")
         c.clickButton("Test - Live ongoing tournament")
-        c.waitForText("My tables")
+        c.waitForText("Me")
     }
 
     @Test
@@ -25,10 +25,10 @@ class PlayerTournamentTest : PlayerE2eTest() {
     @Test
     fun allTablesListsMoreTables() {
         open()
-        c.clickButton("All tables")
+        c.clickButton("All")
         c.scrollListTo("Table 1")
         c.waitForText("Table 1")
-        c.clickButton("My tables")
+        c.clickButton("Me")
         c.scrollListTo("Round 4")
     }
 

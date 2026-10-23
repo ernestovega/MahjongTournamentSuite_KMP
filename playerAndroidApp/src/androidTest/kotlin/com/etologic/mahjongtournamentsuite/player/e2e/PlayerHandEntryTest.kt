@@ -21,7 +21,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     private fun openTable(account: String, tableText: String) {
         start(account, ready = "My tournaments")
         c.clickButton("Test - Live ongoing tournament")
-        c.waitForText("My tables")
+        c.waitForText("Me")
         c.scrollListTo(tableText)
         c.clickButton(tableText)
     }
@@ -122,7 +122,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun seatedPlayerWithoutHandsOpensTheTable() {
         start(E2eAccounts.SEATED, ready = "My tournaments")
         c.clickButton("Test - Live ongoing tournament")
-        c.waitForText("My tables")
+        c.waitForText("Me")
         c.scrollListTo("Round 4")
     }
 }
