@@ -41,6 +41,7 @@ kotlin {
     sourceSets {
         commonMain.dependencies {
             implementation(libs.androidx.navigation.compose)
+            implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.compose.runtime)
             implementation(libs.compose.foundation)
             implementation(libs.compose.material3)
@@ -65,6 +66,9 @@ kotlin {
         jvmTest.dependencies {
             implementation(compose.desktop.currentOs)
             implementation(libs.compose.ui.test.junit4.desktop)
+        }
+        wasmJsMain.dependencies {
+            implementation(npm("@js-joda/timezone", "2.3.0"))
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

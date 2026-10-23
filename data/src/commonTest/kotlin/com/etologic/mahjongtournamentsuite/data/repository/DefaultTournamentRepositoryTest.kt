@@ -318,7 +318,7 @@ class DefaultTournamentRepositoryTest {
         repository.getAllTablesWithHands("t1")
         val before = server.requests.size
 
-        repository.getAllTablesWithHands("t1")
+        repository.getAllTablesWithHands("t1", RefreshMode.CACHED)
 
         assertEquals(before, server.requests.size)
     }
@@ -331,7 +331,9 @@ class DefaultTournamentRepositoryTest {
         repository.save(expectedVersion = 1, east = "9")
         val before = server.requests.size
 
-        val tables = assertIs<AppResult.Success<List<Pair<TableState, *>>>>(repository.getAllTablesWithHands("t1")).value
+        val tables = assertIs<AppResult.Success<List<Pair<TableState, *>>>>(
+            repository.getAllTablesWithHands("t1", RefreshMode.CACHED),
+        ).value
 
         assertEquals(2L, tables.single().first.version)
         assertEquals(before, server.requests.size)
@@ -364,7 +366,7 @@ class DefaultTournamentRepositoryTest {
         val before = server.requests.size
 
         clock += 10.minutes
-        repeat(3) { repository.getAllTablesWithHands("t1") }
+        repeat(3) { repository.getAllTablesWithHands("t1", RefreshMode.CACHED) }
 
         assertEquals(before, server.requests.size)
     }
@@ -389,9 +391,53 @@ class DefaultTournamentRepositoryTest {
         server.eastPlayer = "6"
         repository.getTableWithHands("t1", 1, 1, RefreshMode.FORCE)
 
-        val tables = assertIs<AppResult.Success<List<Pair<TableState, *>>>>(repository.getAllTablesWithHands("t1")).value
+        val tables = assertIs<AppResult.Success<List<Pair<TableState, *>>>>(
+            repository.getAllTablesWithHands("t1", RefreshMode.CACHED),
+        ).value
 
         assertEquals("6", tables.single().first.playerEastId)
+    }
+
+    @Test
+    fun anIfChangedLoadChecksTheManifestAndKeepsTablesThatDidNotChange() = runTest {
+        val server = FakeTournamentServer()
+        val repository = repository(server)
+        repository.getAllTablesWithHands("t1")
+
+        repository.getAllTablesWithHands("t1", RefreshMode.IF_CHANGED)
+
+        assertEquals(1, server.count("/tables-with-hands"))
+    }
+
+    @Test
+    fun anIfChangedLoadFetchesAgainWhenSomeoneElseSavedATable() = runTest {
+        val clock = TestTimeSource()
+        val server = FakeTournamentServer()
+        val repository = repository(server, clock)
+        repository.getAllTablesWithHands("t1")
+        server.tableVersions["1_1"] = 5
+        server.tableVersion = 5
+        server.eastPlayer = "7"
+        clock += 3.seconds
+
+        val tables = assertIs<AppResult.Success<List<Pair<TableState, *>>>>(
+            repository.getAllTablesWithHands("t1", RefreshMode.IF_CHANGED),
+        ).value
+
+        assertEquals("7", tables.single().first.playerEastId)
+        assertEquals(2, server.count("/tables-with-hands"))
+    }
+
+    @Test
+    fun aCachedLoadNeverChecksTheManifest() = runTest {
+        val server = FakeTournamentServer()
+        val repository = repository(server)
+        repository.getAllTablesWithHands("t1")
+        val before = server.count("/sync/manifest")
+
+        repeat(3) { repository.getAllTablesWithHands("t1", RefreshMode.CACHED) }
+
+        assertEquals(before, server.count("/sync/manifest"))
     }
 
     // ---- polling tells the cached lists that they are old

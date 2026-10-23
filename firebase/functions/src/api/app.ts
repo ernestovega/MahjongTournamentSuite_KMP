@@ -15,6 +15,8 @@ import { venuesRouter } from "./routes/venues.routes";
 export function buildApp(): express.Express {
   const app = express();
 
+  // The API runs behind Firebase Hosting and Google front ends. Trust them to get the client address.
+  app.set("trust proxy", true);
   app.use(gzipJson);
   app.use(express.json({ limit: "8mb" }));
 
@@ -34,15 +36,7 @@ export function buildApp(): express.Express {
   });
 
   app.get("/version", (_req, res) => {
-    res.status(200).json({
-      ok: true,
-      version: "1.0.0",
-      project: process.env.GCLOUD_PROJECT ?? null,
-      service: process.env.K_SERVICE ?? null,
-      revision: process.env.K_REVISION ?? null,
-      target: process.env.FUNCTION_TARGET ?? null,
-      node: process.version,
-    });
+    res.status(200).json({ ok: true, version: "1.0.0" });
   });
 
   app.use("/auth", authRouter());

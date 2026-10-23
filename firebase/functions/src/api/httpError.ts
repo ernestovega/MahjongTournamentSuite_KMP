@@ -30,3 +30,14 @@ export function notFound(message = "Not found"): HttpError {
 export function conflict(message: string, details?: unknown): HttpError {
   return new HttpError(409, "conflict", message, details);
 }
+
+/**
+ * Stops ids that could leave their place in a document path. Express decodes `%2F` to a slash in route parameters,
+ * so an id from a URL or an invitation token must not contain one.
+ */
+export function assertSafeDocumentId(value: string, name = "id"): string {
+  if (value.length === 0 || value.length > 200 || value.includes("/") || value === "." || value === "..") {
+    throw badRequest(`Invalid ${name}`);
+  }
+  return value;
+}

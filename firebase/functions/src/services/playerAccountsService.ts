@@ -29,7 +29,7 @@ export function buildToken(tournamentId: string, invitationId: string, secret: s
 
 export function parseToken(token: string): { tournamentId: string; invitationId: string; secret: string } | null {
   const parts = token.split(".");
-  if (parts.length !== 3 || parts.some((part) => part.length === 0)) return null;
+  if (parts.length !== 3 || parts.some((part) => part.length === 0 || part.includes("/") || part.length > 200)) return null;
   return { tournamentId: parts[0], invitationId: parts[1], secret: parts[2] };
 }
 

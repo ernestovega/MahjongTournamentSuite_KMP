@@ -1,3 +1,4 @@
+import { timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { recordActivity } from "../../services/activityLog";
 import { actorFromToken } from "../../services/changeLog";
@@ -70,7 +71,11 @@ function requireBootstrapKey(req: { header(name: string): string | undefined }):
   const expected = BOOTSTRAP_KEY.value();
   if (!expected) throw new Error("Missing secret MTS_BOOTSTRAP_KEY");
   const provided = req.header("x-bootstrap-key");
-  if (!provided || provided !== expected) throw forbidden("Invalid bootstrap key");
+  const providedBytes = Buffer.from(provided ?? "");
+  const expectedBytes = Buffer.from(expected);
+  if (providedBytes.length !== expectedBytes.length || !timingSafeEqual(providedBytes, expectedBytes)) {
+    throw forbidden("Invalid bootstrap key");
+  }
 }
 
 export function adminRouter(): Router {
@@ -202,6 +207,10 @@ export function adminRouter(): Router {
       }
 
       const email = requireEmail(req.body?.email, "email");
+      // A new email plus a password reset takes over the account. Only admins may change the email of an account.
+      if (!hasAdminClaim(actor) && email.toLowerCase() !== current.email.toLowerCase()) {
+        throw forbidden("Only an admin can change the email of an account");
+      }
       const alias = String(req.body?.alias ?? "").trim();
       const assignmentScope = await assignmentScopeFor(actor);
       const tournamentAssignments = role === "ADMIN" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments);

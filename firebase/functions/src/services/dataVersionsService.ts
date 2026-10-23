@@ -34,20 +34,6 @@ export async function getGlobalDataVersions(): Promise<Record<GlobalDataResource
   };
 }
 
-export async function getTournamentDataVersions(
-  tournamentId: string,
-): Promise<Record<TournamentDataResource, VersionStamp>> {
-  const snapshot = await db.collection("tournaments").doc(tournamentId).get();
-  const resources = snapshot.get("dataVersions") as Record<string, unknown> | undefined ?? {};
-  return {
-    members: readVersion(resources.members),
-    players: readVersion(resources.players),
-    teams: readVersion(resources.teams),
-    rounds: readVersion(resources.rounds),
-    tables: readVersion(resources.tables),
-  };
-}
-
 export type TournamentManifest = {
   resources: Record<TournamentDataResource, VersionStamp>;
   /** The revisions that are shared by all tournaments. They come in the same answer, so one poll sees everything. */

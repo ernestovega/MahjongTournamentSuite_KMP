@@ -1,7 +1,8 @@
 import { Router, type Request, type Response } from "express";
 
 import { auth } from "../../firebase";
-import { badRequest } from "../httpError";
+import { assertSafeDocumentId, badRequest } from "../httpError";
+import { rateLimit } from "../middleware/rateLimit";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRegisteredPlayer } from "../middleware/requireRegisteredPlayer";
 import { acceptInvitation } from "../../services/playerAccountsService";
@@ -11,7 +12,7 @@ import { addPenalties, parseHandInput, parsePenaltyInput, previewHand, recordHan
 export function playerRouter(): Router {
   const router = Router();
 
-  router.post("/invitations/accept", async (req, res, next) => {
+  router.post("/invitations/accept", rateLimit({ windowMs: 60_000, max: 20 }), async (req, res, next) => {
     try {
       const token = String(req.body?.token ?? "").trim();
       if (!token) throw badRequest("Missing token");
@@ -23,6 +24,15 @@ export function playerRouter(): Router {
       res.status(200).json(result);
     } catch (e) {
       next(e);
+    }
+  });
+
+  router.param("tournamentId", (_req, _res, next, value: string) => {
+    try {
+      assertSafeDocumentId(value, "tournament id");
+      next();
+    } catch (error) {
+      next(error);
     }
   });
 

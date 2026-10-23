@@ -212,6 +212,15 @@ The table editor checks the server for changes while it is open. See [Multi-edit
 - Load when a screen opens. A cached copy is used for 10 seconds. After that, one manifest request decides if a reload is needed.
 - A save, a reset or a conflict marks the cached copies old.
 - The table editor polls the manifest. Other screens do not poll.
+- The player app checks the server every 15 seconds while a tournament screen is open and visible. It loads all tables again only when the table versions of the manifest are higher than the held versions.
+
+## Public routes
+
+- `/auth/signIn`, `/auth/passwordReset`, `/auth/refresh` and `/player/invitations/accept` allow a limited number of requests for each client address. The counter lives in one function instance.
+- `/auth/passwordReset` answers `200` for an unknown email, so the answer does not show which emails have an account.
+- `/version` returns only `ok` and the version number.
+- A tournament id in a route must not contain `/`.
+- The hosting sites send `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'` and `Permissions-Policy`.
 
 ## Bootstrap admin
 

@@ -160,7 +160,9 @@ interface TournamentRepository {
 
     /**
      * Loads every table of the tournament with its hands, sorted by round and table. The rankings need all of them.
-     * The first call makes one request. Later calls make none, unless [refreshMode] is [RefreshMode.FORCE].
+     * The first call makes one request. With [RefreshMode.CACHED] later calls make none. With [RefreshMode.IF_CHANGED]
+     * they read the tournament manifest and load all tables again only if someone saved a table. [RefreshMode.FORCE]
+     * always loads.
      * The table editor keeps the held tables current with its saves, loads and polling.
      */
     suspend fun getAllTablesWithHands(

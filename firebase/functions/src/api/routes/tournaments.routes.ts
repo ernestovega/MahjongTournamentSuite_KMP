@@ -13,7 +13,7 @@ import {
   saveContactEmails,
   type AccountAction,
 } from "../../services/playerAccountsService";
-import { badRequest } from "../httpError";
+import { assertSafeDocumentId, badRequest } from "../httpError";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import {
   createTournament,
@@ -85,6 +85,15 @@ function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | u
 
 export function tournamentsRouter(): Router {
   const router = Router();
+
+  router.param("tournamentId", (_req, _res, next, value: string) => {
+    try {
+      assertSafeDocumentId(value, "tournament id");
+      next();
+    } catch (error) {
+      next(error);
+    }
+  });
 
   router.get(
     "/:tournamentId/sync/manifest",
