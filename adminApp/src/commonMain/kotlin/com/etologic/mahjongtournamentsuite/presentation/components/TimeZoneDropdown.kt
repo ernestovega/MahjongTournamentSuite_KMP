@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -9,6 +10,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -19,6 +21,8 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.TextFieldValue
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import kotlinx.datetime.TimeZone
 
@@ -68,29 +72,54 @@ fun TimeZoneDropdown(
     supportingText: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // The menu shows all names until the user types. Then it shows the names that match.
+    // The menu shows all names until the user taps the text or types. Then it shows the names that match.
     var filtering by remember { mutableStateOf(false) }
+    var input by remember { mutableStateOf(TextFieldValue(value)) }
+    var selectAllPending by remember { mutableStateOf(false) }
+    val textInteractionSource = remember { MutableInteractionSource() }
+    LaunchedEffect(value) {
+        if (input.text.trim() != value) input = TextFieldValue(value)
+    }
     val options = remember(value, filtering) {
         matchingTimeZoneIds(if (filtering) value else "").take(MAX_TIME_ZONE_OPTIONS)
     }
 
+    OnFieldTextClick(textInteractionSource) {
+        if (!enabled) return@OnFieldTextClick
+        input = TextFieldValue(input.text, TextRange(0, input.text.length))
+        selectAllPending = true
+        filtering = true
+        expanded = true
+    }
+
+    // The box ignores its own toggle. The arrow and the text decide when the menu opens.
     ExposedDropdownMenuBox(
         expanded = expanded && enabled,
-        onExpandedChange = { shouldExpand ->
-            expanded = shouldExpand
-            if (shouldExpand) filtering = false
-        },
+        onExpandedChange = {},
         modifier = modifier,
     ) {
         OutlinedTextField(
-            value = value,
+            value = input,
             onValueChange = {
-                filtering = true
-                expanded = true
-                onValueChange(it.trim())
+                if (it.text == input.text) {
+                    // A tap sets the cursor. Keep the selection of the whole text after the first tap.
+                    if (selectAllPending) selectAllPending = false else input = it
+                } else {
+                    selectAllPending = false
+                    input = it
+                    filtering = true
+                    expanded = true
+                    onValueChange(it.text.trim())
+                }
             },
             label = { if (required) RequiredLabel(label) else Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded && enabled) },
+            trailingIcon = {
+                DropdownArrow(expanded && enabled, enabled) {
+                    filtering = false
+                    expanded = !expanded
+                }
+            },
+            interactionSource = textInteractionSource,
             supportingText = supportingText?.let { message -> { Text(message) } },
             isError = isError,
             enabled = enabled,

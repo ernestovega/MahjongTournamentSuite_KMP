@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -114,8 +115,11 @@ fun EmaCountryDropdown(
         ?: EmaHostCountries.firstOrNull { it.code == normalizedSelectedCode }
     val selectedName = selected?.name ?: selectedCode
     var input by remember { mutableStateOf(TextFieldValue(selectedName)) }
-    val hasFullSelection = input.selection.start == 0 && input.selection.end == input.text.length
-    val query = if (hasFocus && !hasFullSelection) input.text.trim() else ""
+    // The menu shows all countries until the user taps the text or types. Then it shows the matching ones.
+    var filtering by remember { mutableStateOf(false) }
+    var selectAllPending by remember { mutableStateOf(false) }
+    val query = if (hasFocus && filtering) input.text.trim() else ""
+    val textInteractionSource = remember { MutableInteractionSource() }
     val filteredOptions = remember(options, query) {
         if (query.isEmpty()) {
             options
@@ -132,6 +136,7 @@ fun EmaCountryDropdown(
 
     fun closeMenu() {
         expanded = false
+        filtering = false
         moveFocusToMenu = false
     }
 
@@ -166,27 +171,48 @@ fun EmaCountryDropdown(
         }
     }
 
+    OnFieldTextClick(textInteractionSource) {
+        if (!enabled) return@OnFieldTextClick
+        if (input.text == selectedName) {
+            input = TextFieldValue(selectedName, TextRange(0, selectedName.length))
+            selectAllPending = true
+        }
+        filtering = true
+        expanded = true
+        moveFocusToMenu = false
+    }
+
+    // The box ignores its own toggle. The arrow and the text decide when the menu opens.
     ExposedDropdownMenuBox(
         expanded = expanded,
-        onExpandedChange = { shouldExpand ->
-            if (enabled) {
-                expanded = shouldExpand
-                moveFocusToMenu = false
-            }
-        },
+        onExpandedChange = {},
         modifier = modifier,
     ) {
         OutlinedTextField(
             value = input,
             onValueChange = {
-                input = it
-                expanded = enabled
+                if (it.text == input.text) {
+                    // A tap sets the cursor. Keep the selection of the whole text after the first tap.
+                    if (selectAllPending) selectAllPending = false else input = it
+                } else {
+                    selectAllPending = false
+                    input = it
+                    filtering = true
+                    expanded = enabled
+                }
             },
             label = { if (required) RequiredLabel(label) else Text(label) },
             leadingIcon = selected?.let { option ->
                 { CountryFlag(code = option.flagCode, contentDescription = option.name) }
             },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            trailingIcon = {
+                DropdownArrow(expanded, enabled) {
+                    filtering = false
+                    moveFocusToMenu = false
+                    expanded = !expanded
+                }
+            },
+            interactionSource = textInteractionSource,
             enabled = enabled,
             isError = isError,
             supportingText = errorMessage?.let { message -> { Text(message) } },
@@ -206,6 +232,8 @@ fun EmaCountryDropdown(
                         )
                     } else if (!focusState.isFocused && hasFocus) {
                         input = TextFieldValue(selectedName)
+                        filtering = false
+                        selectAllPending = false
                     }
                     hasFocus = focusState.isFocused
                 }
