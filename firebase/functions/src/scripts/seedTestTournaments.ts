@@ -4,6 +4,7 @@ import { db, firebaseProjectId } from "../firebase";
 import { globalVersionUpdate } from "../services/dataVersionsService";
 import { handScoreTotals, tablePointsOf } from "../services/handScoring";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
+import { drawProblem } from "../services/tournamentDraw";
 import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../services/tournamentContentRules";
 import {
   randomTable,
@@ -276,7 +277,7 @@ const TOURNAMENTS: TournamentSpec[] = [
       "Team 5",
       "The Last Standing Wind",
     ],
-    numRounds: 5,
+    numRounds: 4,
     // Team 1 is full, team 2 has one open slot, team 3 has two, team 4 has three, team 5 is empty, team 6 has guests.
     players: [
       "ema", "ema", "ema", "ema",
@@ -288,7 +289,7 @@ const TOURNAMENTS: TournamentSpec[] = [
       { firstName: "Mike", lastName: "BROWN", country: "BEL" }, "ema",
     ],
     countBestHands: true, countChickenHands: true,
-    schedule: spread(5, "2026-08-22", 3),
+    schedule: spread(4, "2026-08-22", 3),
     agenda: standardAgenda("2026-08-22", "2026-08-23"),
     mode: (round, table) => (round === 2 && table === 1 ? { kind: "full", style: "oneWinner" } : { kind: "full" }),
   },
@@ -368,7 +369,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-upcoming@example.com",
     isTeams: true, numRounds: 5,
-    players: mixedPlayers(24, 6),
+    players: mixedPlayers(28, 6),
     countBestHands: true, countChickenHands: true,
     schedule: spread(5, "2027-03-06", 4),
     agenda: standardAgenda("2027-03-06", "2027-03-07"),
@@ -539,7 +540,10 @@ function testerMode(_round: number, table: number): TableMode {
   return cycle<TableMode>([{ kind: "partial", done: 4 }, { kind: "partial", done: 9 }, { kind: "seats" }], table - 1);
 }
 
-/** Two players cannot meet twice in a tournament, so 24 players allow 5 rounds at most. */
+/**
+ * Two players cannot meet twice in a tournament, so 24 players allow 5 rounds at most.
+ * With teams, 24 players (6 teams) cannot play 5 rounds with teammates apart, so a teams tournament uses 28 players (7 teams).
+ */
 const TESTER_ROUNDS_PER_PART = 5;
 
 /** The rounds follow the time of the venue (Madrid), so the match time rules apply. */
@@ -579,7 +583,7 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     contactEmail: "test-teams-in@example.com",
     isTeams: true,
     // Edgar and Edu share team 1. Héctor, Raúl, Ernesto, Marcos and Cintia sit in teams 2 to 4.
-    players: withTesters(24, { 1: "10990026", 2: "10990020", 5: "10990018", 6: "10990043", 9: "10990039", 12: "10990051", 13: "10990133" }),
+    players: withTesters(28, { 1: "10990026", 2: "10990020", 5: "10990018", 6: "10990043", 9: "10990039", 12: "10990051", 13: "10990133" }),
     avoidEmaIds: TESTER_EMA_IDS,
   },
   {
@@ -601,7 +605,7 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     primaryColor: "#AD1457",
     contactEmail: "test-teams-out@example.com",
     isTeams: true,
-    players: mixedPlayers(24, 6),
+    players: mixedPlayers(28, 6),
     avoidEmaIds: TESTER_EMA_IDS,
   },
 ];
@@ -641,10 +645,10 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
     venue: ESKALERRIA, contactEmail: `test-upcoming-${item.slug}@example.com`,
     isTeams: item.teams, numRounds: item.rounds,
     players: item.testers
-      ? withTesters(24, item.teams
+      ? withTesters(item.teams ? 28 : 24, item.teams
         ? { 1: "10990026", 2: "10990020", 5: "10990018", 6: "10990043", 9: "10990039", 12: "10990051", 13: "10990133" }
         : { 1: "10990026", 2: "10990020", 3: "10990018", 4: "10990039", 5: "10990043", 6: "10990133", 12: "10990051" })
-      : mixedPlayers(24, 6),
+      : mixedPlayers(item.teams ? 28 : 24, 6),
     countBestHands: true, countChickenHands: true,
     schedule: spread(item.rounds, item.start, 3),
     agenda: standardAgenda(item.start, addDays(item.start, 1)),
@@ -882,8 +886,9 @@ function buildTable(params: {
 // -- Seating ---------------------------------------------------------------------------------
 
 /**
- * Builds the schedule. No two players sit together twice, and teammates never share a table when that is possible.
- * It throws when the round count is too high for that, so a test tournament never has repeat opponents.
+ * Builds the schedule. No two players sit together twice. In a teams tournament, teammates never share a table.
+ * It throws when the round count is too high for that, so a test tournament never has repeat opponents
+ * and a teams tournament never seats teammates together.
  */
 function seatingFor(
   numPlayers: number,
@@ -891,13 +896,13 @@ function seatingFor(
   teamOf: (playerId: number) => number | null,
   rng: Rng,
 ): number[][][] {
-  for (const separateTeams of [true, false]) {
-    for (let attempt = 0; attempt < 300; attempt += 1) {
-      const rounds = tryNoRepeatSeating(numPlayers, numRounds, separateTeams ? teamOf : () => null, rng);
-      if (rounds != null) return rounds;
-    }
+  const isTeams = teamOf(1) != null;
+  // Without teams mode the team number has no meaning, so the first pass is the only one.
+  for (let attempt = 0; attempt < (isTeams ? 20000 : 300); attempt += 1) {
+    const rounds = tryNoRepeatSeating(numPlayers, numRounds, teamOf, rng);
+    if (rounds != null) return rounds;
   }
-  throw new Error(`No schedule without repeat opponents found for ${numPlayers} players and ${numRounds} rounds`);
+  throw new Error(`No schedule found for ${numPlayers} players and ${numRounds} rounds${isTeams ? " with teammates apart" : ""}`);
 }
 
 function tryNoRepeatSeating(
@@ -919,7 +924,7 @@ function tryNoRepeatSeating(
     let steps = 0;
     const search = (left: number[], done: number[][]): number[][] | null => {
       if (left.length === 0) return done;
-      if ((steps += 1) > 20000) return null;
+      if ((steps += 1) > 300000) return null;
       const [first, ...others] = left;
       const options = shuffled(others.filter((other) => canSit(first, other)), rng);
       for (let i = 0; i < options.length; i += 1) {
@@ -1035,6 +1040,12 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
 
   const seating = seatingFor(numPlayers, spec.numRounds, (id) => (spec.isTeams ? Math.ceil(id / 4) : null), rng);
   const tablesPerRound = numPlayers / 4;
+  const problem = drawProblem(
+    Array.from({ length: numPlayers }, (_, index) => ({ id: index + 1, team: Math.ceil((index + 1) / 4) })),
+    seating.flatMap((tables, roundIndex) => tables.map((playerIds, tableIndex) => ({ roundId: roundIndex + 1, tableId: tableIndex + 1, playerIds }))),
+    spec.numRounds, tablesPerRound, spec.isTeams,
+  );
+  if (problem) throw new Error(`${spec.id}: ${problem}`);
   const kinds: Record<string, number> = {};
   const tableVersions: Record<string, number> = {};
   let progress = 0;

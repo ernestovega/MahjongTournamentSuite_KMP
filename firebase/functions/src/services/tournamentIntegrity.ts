@@ -310,6 +310,7 @@ function normalizedPoints(value: unknown): string {
 }
 
 function checkTables(c: Collector, input: IntegrityInput, numPlayers: number, numRounds: number, slotIds: Set<number>): void {
+  const teamOf = new Map(input.players.map(({ id, data }) => [Number(data.id ?? id), Number(data.team)]));
   const tablesPerRound = Number.isInteger(numPlayers) ? numPlayers / 4 : NaN;
   if (Number.isInteger(numRounds) && Number.isInteger(tablesPerRound) && input.tables.length !== numRounds * tablesPerRound) {
     c.add("error", "tables.count", `The tournament has ${input.tables.length} tables but ${numRounds} rounds with ${tablesPerRound} tables need ${numRounds * tablesPerRound}.`);
@@ -342,6 +343,12 @@ function checkTables(c: Collector, input: IntegrityInput, numPlayers: number, nu
         const key = `${roundId}:${player}`;
         appearances.set(key, [...(appearances.get(key) ?? []), tableId]);
       });
+      if (input.tournament.isTeams === true) {
+        const teams = assigned.map((player) => teamOf.get(player) ?? 0).filter((team) => team > 0);
+        if (new Set(teams).size !== teams.length) {
+          c.add("error", "tables.teamTogether", `The table seats players of the same team together (players ${assigned.join(", ")}).`, where);
+        }
+      }
       for (let a = 0; a < 4; a += 1) {
         for (let b = a + 1; b < 4; b += 1) {
           const pair = [assigned[a], assigned[b]].sort((x, y) => x - y).join("-");

@@ -37,6 +37,7 @@
     "backfill:legacy-draw-hands:apply": "npm run build && node lib/scripts/backfillLegacyDrawHands.js --apply",
     "backfill:venue": "npm run build && node lib/scripts/backfillVenue.js",
     "backfill:venue:apply": "npm run build && node lib/scripts/backfillVenue.js --apply",
+    "audit:team-conflicts": "npm run build && node lib/scripts/auditTeamConflicts.js",
     "audit:repeat-opponents": "npm run build && node lib/scripts/auditRepeatOpponents.js",
     "check:integrity": "npm run build && node lib/scripts/checkTournamentIntegrity.js",
     "remove:agenda-end-times": "npm run build && node lib/scripts/removeAgendaEndTimes.js",

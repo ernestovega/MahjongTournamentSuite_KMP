@@ -114,3 +114,14 @@ test("a player count that is not a multiple of 4 is an error", () => {
 test("16 players is the smallest valid tournament", () => {
   assert.ok(!codes(valid()).includes("info.numPlayers"));
 });
+
+test("two players of one team at a table is an error in a teams tournament only", () => {
+  const input = valid();
+  input.players.forEach(({ data }) => { data.team = Math.ceil(Number(data.id) / 4); });
+  assert.ok(!codes(input).includes("tables.teamTogether"));
+  input.tournament.isTeams = true;
+  input.teams = [1, 2, 3, 4].map((id) => ({
+    id: String(id), data: { id, name: `Team ${id}`, playerIds: [4 * id - 3, 4 * id - 2, 4 * id - 1, 4 * id] },
+  }));
+  assert.ok(codes(input).includes("tables.teamTogether"));
+});
