@@ -137,7 +137,8 @@ class GenerateTournamentScheduleBruteForceParallelUseCase {
             TournamentPlayer(
                 id = p.id,
                 name = "Player ${p.id}",
-                team = p.team,
+                // A tournament without teams has no team data.
+                team = if (isTeams) p.team else 0,
             )
         }
         val domainTables = generateTables(

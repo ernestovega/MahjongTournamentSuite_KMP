@@ -28,7 +28,7 @@ function valid(): IntegrityInput {
       isTeams: false, isCompleted: false, tablesWithProgress: 0,
       countBestHands: true, countChickenHands: true,
     },
-    players: ids.map((id) => ({ id: String(id), data: { id, name: `P${id}`, team: 1, assignedEmaId: ema(id) } })),
+    players: ids.map((id) => ({ id: String(id), data: { id, name: `P${id}`, team: 0, assignedEmaId: ema(id) } })),
     teams: [],
     rounds: [{ id: "1", data: { roundId: 1 } }],
     tables: [1, 2, 3, 4].map((tableId) => ({
@@ -124,4 +124,11 @@ test("two players of one team at a table is an error in a teams tournament only"
     id: String(id), data: { id, name: `Team ${id}`, playerIds: [4 * id - 3, 4 * id - 2, 4 * id - 1, 4 * id] },
   }));
   assert.ok(codes(input).includes("tables.teamTogether"));
+});
+
+test("a team number in a tournament without teams is an error", () => {
+  const input = valid();
+  assert.ok(!codes(input).includes("players.teamUnused"));
+  input.players[0].data.team = 1;
+  assert.ok(codes(input).includes("players.teamUnused"));
 });

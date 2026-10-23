@@ -193,7 +193,9 @@ export async function createTournament(params: {
   if (params.tables.length !== expectedTables) {
     throw badRequest("Invalid tables payload", { expected: expectedTables, received: params.tables.length });
   }
-  const problem = drawProblem(params.players, params.tables, params.numRounds, numTablesPerRound, params.isTeams);
+  // A tournament without teams has no team data. Every slot gets team 0.
+  const players = params.isTeams ? params.players : params.players.map((player) => ({ ...player, team: 0 }));
+  const problem = drawProblem(players, params.tables, params.numRounds, numTablesPerRound, params.isTeams);
   if (problem) throw badRequest("Invalid draw", { problem });
   const roundSchedules = normalizeRoundSchedules(
     params.roundSchedules,
@@ -266,7 +268,7 @@ export async function createTournament(params: {
     return Promise.resolve();
   };
 
-  for (const player of params.players) {
+  for (const player of players) {
     const playerRef = ref.collection("players").doc(String(player.id));
     // eslint-disable-next-line no-await-in-loop
     await addSet(playerRef, {
@@ -280,7 +282,7 @@ export async function createTournament(params: {
   }
 
   if (params.isTeams) {
-    const teamIds = [...new Set(params.players.map((player) => player.team))]
+    const teamIds = [...new Set(players.map((player) => player.team))]
       .filter((teamId) => Number.isInteger(teamId) && teamId > 0)
       .sort((a, b) => a - b);
     for (const teamId of teamIds) {

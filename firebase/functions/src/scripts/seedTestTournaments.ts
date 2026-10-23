@@ -985,7 +985,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
   let open = 0;
   spec.players.forEach((entry, index) => {
     const playerId = index + 1;
-    const team = Math.ceil(playerId / 4);
+    const team = spec.isTeams ? Math.ceil(playerId / 4) : 0;
     let data: Data;
     if (entry === "ema" || isFixedEma(entry)) {
       const member = entry === "ema" ? pool.shift()! : registry.find((candidate) => candidate.id === entry.emaId);

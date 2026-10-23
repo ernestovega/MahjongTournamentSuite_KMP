@@ -238,6 +238,9 @@ function checkPlayers(c: Collector, input: IntegrityInput, numPlayers: number): 
     if (input.tournament.isTeams === true && (!Number.isInteger(team) || team < 1)) {
       c.add("error", "players.team", "The tournament has teams, but the slot has no valid team.", where);
     }
+    if (input.tournament.isTeams !== true && team !== 0) {
+      c.add("error", "players.teamUnused", `The tournament has no teams, but the slot has team ${text(data.team)}. It must be 0.`, where);
+    }
   });
   emaOwners.forEach((owners, ema) => {
     if (owners.length > 1) {
