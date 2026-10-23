@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Timeline
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -81,7 +83,7 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
         if (hasPlace || venue.name.isNotBlank() || venue.address.isNotBlank()) VenueCard(tournament)
         if (venue.contactEmail.isNotBlank()) ContactCard(venue.contactEmail)
         if (hasSchedule(tournament)) {
-            InfoCard("Schedule") { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
+            InfoCard("Schedule", Icons.Default.Schedule) { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
         }
     }
 }
@@ -89,7 +91,7 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
 /** How far the tournament is: finished rounds, finished tables and ongoing tables, in large numbers. */
 @Composable
 private fun ProgressCard(progress: TournamentProgress) {
-    InfoCard("Progress") {
+    InfoCard("Progress", Icons.Default.Timeline) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             ProgressStat("Rounds", "${progress.completedRounds}/${progress.totalRounds}", Modifier.weight(1f))
             ProgressStat("Tables", "${progress.completedTables}/${progress.totalTables}", Modifier.weight(1f))
@@ -118,7 +120,7 @@ private fun VenueCard(tournament: Tournament) {
     val venue = tournament.venue
     val uriHandler = LocalUriHandler.current
     val mapLink = venueMapLink(tournament)
-    InfoCard("Venue") {
+    InfoCard("Venue", Icons.Default.Place) {
         if (tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (tournament.hostCountry.isNotBlank()) {
@@ -130,18 +132,10 @@ private fun VenueCard(tournament: Tournament) {
             }
         }
         if (venue.name.isNotBlank() || venue.address.isNotBlank()) {
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(
-                    Icons.Default.Place,
-                    contentDescription = null,
-                    Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary,
-                )
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    if (venue.name.isNotBlank()) Text(venue.name, style = MaterialTheme.typography.titleSmall)
-                    if (venue.address.isNotBlank()) {
-                        Text(venue.address, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                if (venue.name.isNotBlank()) Text(venue.name, style = MaterialTheme.typography.titleSmall)
+                if (venue.address.isNotBlank()) {
+                    Text(venue.address, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
             // The buttons are side by side. The second one moves under the first when the row is full.
@@ -178,10 +172,8 @@ private fun VenueButton(icon: ImageVector, label: String, description: String, o
 @Composable
 private fun ContactCard(email: String) {
     val uriHandler = LocalUriHandler.current
-    InfoCard("Contact") {
+    InfoCard("Contact", Icons.Default.Email) {
         TextButton(onClick = { uriHandler.openUri("mailto:$email") }) {
-            Icon(Icons.Default.Email, contentDescription = null, Modifier.size(18.dp))
-            Spacer(Modifier.width(8.dp))
             // The app font has no @ sign, so the email uses the system font.
             Text(email, fontFamily = FontFamily.Default)
         }
@@ -189,20 +181,27 @@ private fun ContactCard(email: String) {
 }
 
 @Composable
-private fun InfoCard(title: String, content: @Composable () -> Unit) {
+private fun InfoCard(title: String, icon: ImageVector, content: @Composable () -> Unit) {
     Card(
         Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text(
-                title,
+            // The icon is on the left of the title. The pair is centered.
+            Row(
                 Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            ) {
+                Icon(icon, contentDescription = null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.primary)
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                )
+            }
             content()
         }
     }
