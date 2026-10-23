@@ -751,7 +751,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     // A negative value means that the player did not choose a tab.
     var tab by rememberPersistentInt("mainTab", 0)
     var chosenTablesTab by rememberPersistentInt("tablesTab", -1)
-    val tablesTab = chosenTablesTab.takeIf { it >= 0 } ?: if (view?.mySlotId == null) 1 else 0
+    // The values are ids: 0 is My tables, 1 is All tables and 2 is Team tables (only in a tournament with teams).
+    val tablesTabs = if (view?.tournament?.isTeams == true) listOf(0, 2, 1) else listOf(0, 1)
+    val tablesTabId = chosenTablesTab.takeIf { it in tablesTabs } ?: if (view?.mySlotId == null) 1 else 0
+    val tablesTab = tablesTabs.indexOf(tablesTabId)
     // The statistics tab tells this screen when it loads, so the progress bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
     // The tab rows hide when the content scrolls down and show when it scrolls up.
@@ -810,12 +813,17 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 containerColor = tabRowColor(), contentColor = TabContentColor,
                                 indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
                             ) {
-                                listOf("My tables", "All tables").forEachIndexed { index, title ->
-                                    CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = index }, title = title)
+                                tablesTabs.forEachIndexed { index, id ->
+                                    val title = when (id) {
+                                        0 -> "My tables"
+                                        2 -> "Team tables"
+                                        else -> "All tables"
+                                    }
+                                    CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = id }, title = title)
                                 }
                             }
                         }
-                        if (tablesTab == 0) {
+                        if (tablesTabId == 0) {
                             TableList(
                                 view,
                                 view.myTables,
@@ -827,6 +835,13 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 },
                                 open,
                                 stickyRounds = false,
+                            )
+                        } else if (tablesTabId == 2) {
+                            TableList(
+                                view,
+                                view.teamTables,
+                                "The tables of the members of your team show here when the organizers draw the round.",
+                                open,
                             )
                         } else {
                             Text(

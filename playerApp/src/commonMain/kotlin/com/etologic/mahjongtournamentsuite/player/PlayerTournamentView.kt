@@ -29,6 +29,8 @@ data class PlayerEntry(
     val country: String,
     /** Set when a substitute plays for this person from a round on. Statistics ignore those rounds. */
     val substitution: PlayerSubstitution? = null,
+    /** Team id of the person. Zero for a tournament without teams. */
+    val team: Int = 0,
 )
 
 data class PlayerTable(
@@ -112,6 +114,13 @@ data class PlayerTournamentView(
     val myTables: List<PlayerTable>
         get() = mySlotId?.let { id -> tables.filter { id in it.playerSlots() } }.orEmpty()
 
+    /** The tables where a member of my team sits. Empty for a tournament without teams. */
+    val teamTables: List<PlayerTable>
+        get() {
+            val myTeam = mySlotId?.let { players[it]?.team }?.takeIf { tournament.isTeams && it > 0 } ?: return emptyList()
+            return tables.filter { table -> table.playerSlots().any { players[it]?.team == myTeam } }
+        }
+
     fun nameOf(slotId: Int?): String = slotId?.let { players[it]?.name } ?: "-"
 
     /** The first name of a player, without the surname. */
@@ -174,6 +183,7 @@ fun buildPlayerTournamentView(
             firstName = (registered?.firstName ?: slot.nonMember?.firstName)?.trim()?.takeIf { it.isNotEmpty() }?.uppercase() ?: name,
             country = registered?.country ?: slot.nonMember?.country.orEmpty(),
             substitution = slot.substitution,
+            team = slot.team,
         )
     }
     val mySlot = myEmaId?.let { ema -> slots.firstOrNull { it.assignedEmaId == ema }?.id }

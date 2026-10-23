@@ -74,4 +74,38 @@ class PlayerTournamentViewTest {
         assertNull(view.mySlotId)
         assertEquals(emptyList(), view.myTables)
     }
+
+    @Test
+    fun teamTablesAreTheTablesWhereAMemberOfMyTeamSits() {
+        val teamSlots = listOf(
+            TournamentPlayer(id = 1, name = "", team = 1, assignedEmaId = "10000001"),
+            TournamentPlayer(id = 2, name = "", team = 2),
+            TournamentPlayer(id = 3, name = "", team = 1),
+            TournamentPlayer(id = 4, name = "", team = 2),
+            TournamentPlayer(id = 5, name = "", team = 2),
+            TournamentPlayer(id = 6, name = "", team = 2),
+            TournamentPlayer(id = 7, name = "", team = 2),
+            TournamentPlayer(id = 8, name = "", team = 2),
+        )
+        val tables = listOf(
+            table(1, 1, 2, 4, 5) to emptyList<TableHand>(),
+            table(2, 3, 6, 7, 8) to emptyList<TableHand>(),
+            table(3, 2, 4, 5, 6) to emptyList<TableHand>(),
+        )
+
+        val view = buildPlayerTournamentView(
+            tournament.copy(isTeams = true, numPlayers = 8), teamSlots, registry, tables, rankings, myEmaId = "10000001",
+        )
+
+        assertEquals(listOf(1, 2), view.teamTables.map { it.tableId })
+    }
+
+    @Test
+    fun withoutTeamsThereAreNoTeamTables() {
+        val tables = listOf(table(1, 1, 2, 3, 4) to emptyList<TableHand>())
+
+        val view = buildPlayerTournamentView(tournament, slots, registry, tables, rankings, myEmaId = "10000001")
+
+        assertEquals(emptyList(), view.teamTables)
+    }
 }
