@@ -72,6 +72,9 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         ProgressCard(view.progress)
+        if (hasSchedule(tournament)) {
+            InfoCard("Schedule", Icons.Default.Schedule) { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
+        }
         if (!hasInfo) {
             Text(
                 "The organizers did not add information yet.",
@@ -82,9 +85,6 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
         // An email alone gives no venue card. It has its own card.
         if (hasPlace || venue.name.isNotBlank() || venue.address.isNotBlank()) VenueCard(tournament)
         if (venue.contactEmail.isNotBlank()) ContactCard(venue.contactEmail)
-        if (hasSchedule(tournament)) {
-            InfoCard("Schedule", Icons.Default.Schedule) { TournamentSchedule(tournament, Modifier.fillMaxWidth()) }
-        }
     }
 }
 
