@@ -172,7 +172,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     val account = rememberAccountActions(navController)
     account.Dialogs()
     AppScaffold(
-        leadingActions = { account.Buttons() },
+        pinnedLeadingActions = { account.Buttons() },
         title = title,
         subtitle = "Statistics",
         isLoading = !finished && message == null,

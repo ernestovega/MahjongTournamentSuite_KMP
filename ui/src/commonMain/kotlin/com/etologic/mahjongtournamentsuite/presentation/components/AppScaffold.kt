@@ -75,6 +75,8 @@ fun AppScaffold(
     onBack: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     leadingActions: @Composable (() -> Unit)? = null,
+    /** Left of the title, after the back button. These buttons never go into the three-dots menu. */
+    pinnedLeadingActions: @Composable (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
@@ -157,6 +159,11 @@ fun AppScaffold(
                                 leadingActions()
                             }
                         }
+                        if (pinnedLeadingActions != null) {
+                            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                pinnedLeadingActions()
+                            }
+                        }
                     }
                 }
 
@@ -200,6 +207,11 @@ fun AppScaffold(
                                         TopBarOverflowMenu(isLoading) {
                                             navigationIcon?.invoke()
                                             leadingActions?.invoke()
+                                        }
+                                    }
+                                    if (pinnedLeadingActions != null) {
+                                        CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                            pinnedLeadingActions()
                                         }
                                     }
                                 }

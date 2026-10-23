@@ -385,7 +385,7 @@ fun TournamentsScreen(navController: NavHostController) {
     val account = rememberAccountActions(navController)
     account.Dialogs()
     AppScaffold(
-        leadingActions = { account.Buttons() },
+        pinnedLeadingActions = { account.Buttons() },
         title = "My tournaments",
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
@@ -754,7 +754,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     val account = rememberAccountActions(navController)
     account.Dialogs()
     AppScaffold(
-        leadingActions = { account.Buttons() },
+        pinnedLeadingActions = { account.Buttons() },
         title = view?.tournament?.name ?: "Tournament",
         isLoading = (view == null && message == null) || (tab == 2 && statisticsLoading),
         autoFocusFirst = false,
@@ -1424,7 +1424,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     val account = rememberAccountActions(navController)
     account.Dialogs()
     AppScaffold(
-        leadingActions = { account.Buttons() },
+        pinnedLeadingActions = { account.Buttons() },
         title = view?.tournament?.name ?: "Tournament",
         subtitle = view?.roundStartOf(roundId),
         isLoading = view == null && message == null,
@@ -1707,7 +1707,7 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
     val account = rememberAccountActions(navController)
     account.Dialogs()
     AppScaffold(
-        leadingActions = { account.Buttons() },
+        pinnedLeadingActions = { account.Buttons() },
         title = view?.nameOf(slotId) ?: "Player",
         subtitle = ranking?.let { "Place ${it.position} - ${it.points} points - ${it.score} score" },
         isLoading = (view == null && message == null) || (tab == 1 && statisticsLoading),
