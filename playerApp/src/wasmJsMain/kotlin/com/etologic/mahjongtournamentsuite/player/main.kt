@@ -29,6 +29,7 @@ private fun tournamentFromUrl(): String? = window.location.search.removePrefix("
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    loadTimeZones()
     ComposeViewport {
         PlayerApp(
             inviteToken = inviteTokenFromUrl(),
