@@ -381,6 +381,8 @@ fun TournamentsScreen(navController: NavHostController) {
         }
     }
 
+    val profileDialog = rememberProfileDialogState(session)
+    profileDialog.Dialogs()
     var confirmingSignOut by remember { mutableStateOf(false) }
     if (confirmingSignOut) {
         SignOutConfirmDialog(
@@ -400,12 +402,10 @@ fun TournamentsScreen(navController: NavHostController) {
         title = "My tournaments",
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
-        navigationIcon = {
-            SignOutAction { confirmingSignOut = true }
-        },
         actions = {
-            ProfileAction(session)
+            ProfileAction(profileDialog)
             ThemeAction()
+            SignOutAction { confirmingSignOut = true }
         },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
