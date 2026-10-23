@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.material.icons.filled.Edit
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
@@ -381,32 +380,16 @@ fun TournamentsScreen(navController: NavHostController) {
         }
     }
 
-    val profileDialog = rememberProfileDialogState(session)
-    profileDialog.Dialogs()
-    var confirmingSignOut by remember { mutableStateOf(false) }
-    if (confirmingSignOut) {
-        SignOutConfirmDialog(
-            onConfirm = {
-                confirmingSignOut = false
-                scope.launch {
-                    session.signOut()
-                    navController.navigate(SignInRoute()) { popUpTo(0) }
-                }
-            },
-            onDismiss = { confirmingSignOut = false },
-        )
-    }
     // The tab rows hide when the content scrolls down and show when it scrolls up.
     val hideOnScroll = rememberHideOnScrollState()
+    val account = rememberAccountActions(navController)
+    account.Dialogs()
     AppScaffold(
+        leadingActions = { account.Buttons() },
         title = "My tournaments",
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
-        actions = {
-            ProfileAction(profileDialog)
-            ThemeAction()
-            SignOutAction { confirmingSignOut = true }
-        },
+        actions = { ThemeAction() },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The screen uses the full width. The tab row and the tournament list keep a narrow column. The statistics use all the width.
@@ -768,7 +751,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     // The tab rows hide when the content scrolls down and show when it scrolls up.
     val hideOnScroll = rememberHideOnScrollState()
 
+    val account = rememberAccountActions(navController)
+    account.Dialogs()
     AppScaffold(
+        leadingActions = { account.Buttons() },
         title = view?.tournament?.name ?: "Tournament",
         isLoading = (view == null && message == null) || (tab == 2 && statisticsLoading),
         autoFocusFirst = false,
@@ -1435,7 +1421,10 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
         }
     }
 
+    val account = rememberAccountActions(navController)
+    account.Dialogs()
     AppScaffold(
+        leadingActions = { account.Buttons() },
         title = view?.tournament?.name ?: "Tournament",
         subtitle = view?.roundStartOf(roundId),
         isLoading = view == null && message == null,
@@ -1710,7 +1699,10 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
     val ranking = view?.rankings?.players?.firstOrNull { it.playerId == slotId }
     val tables = view?.tables.orEmpty().filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
 
+    val account = rememberAccountActions(navController)
+    account.Dialogs()
     AppScaffold(
+        leadingActions = { account.Buttons() },
         title = view?.nameOf(slotId) ?: "Player",
         subtitle = ranking?.let { "Place ${it.position} - ${it.points} points - ${it.score} score" },
         isLoading = view == null && message == null,

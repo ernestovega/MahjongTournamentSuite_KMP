@@ -169,7 +169,10 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         StatisticsScope.PLAYER -> shown?.names?.get(chosenSlotId ?: mySlotId) ?: "Player"
     }
 
+    val account = rememberAccountActions(navController)
+    account.Dialogs()
     AppScaffold(
+        leadingActions = { account.Buttons() },
         title = title,
         subtitle = "Statistics",
         isLoading = !finished && message == null,
