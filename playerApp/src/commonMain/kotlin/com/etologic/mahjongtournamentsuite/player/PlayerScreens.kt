@@ -1698,6 +1698,11 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
     val (view, message) = rememberTournamentView(tournamentId)
     val ranking = view?.rankings?.players?.firstOrNull { it.playerId == slotId }
     val tables = view?.tables.orEmpty().filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
+    var tab by rememberPersistentInt("playerTab", 0)
+    // The Stats tab tells this screen when it loads, so the progress bar stays until the content shows.
+    var statisticsLoading by remember { mutableStateOf(false) }
+    // The tab row hides when the content scrolls down and shows when it scrolls up.
+    val hideOnScroll = rememberHideOnScrollState()
 
     val account = rememberAccountActions(navController)
     account.Dialogs()
@@ -1705,37 +1710,61 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
         leadingActions = { account.Buttons() },
         title = view?.nameOf(slotId) ?: "Player",
         subtitle = ranking?.let { "Place ${it.position} - ${it.points} points - ${it.score} score" },
-        isLoading = view == null && message == null,
+        isLoading = (view == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = {
-            StatisticsAction {
-                navController.navigate(
-                    StatisticsRoute(StatisticsScope.PLAYER.name, tournamentId = tournamentId, slotId = slotId),
-                )
-            }
-            ThemeAction()
-        },
+        actions = { ThemeAction() },
     ) {
+        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
         ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            MessageDialog(message)
-            if (view == null) return@ScreenColumn
-            if (tables.isEmpty()) {
-                Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, "No tables yet", "This player has no table in this tournament yet.") }
-            } else {
-                // The padding is inside the list, so the list ends at the top bar and at the bottom of the screen.
-                LazyColumn(
-                    state = rememberPersistentLazyListState("tables"),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                    contentPadding = PaddingValues(16.dp),
+            if (view == null) {
+                MessageDialog(message)
+                return@ScreenColumn
+            }
+            HideOnScrollTabs(tab) {
+                PrimaryTabRow(
+                    selectedTabIndex = tab,
+                    containerColor = tabRowColor(), contentColor = TabContentColor,
+                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
                 ) {
-                    items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                        TableSummaryCard(view, table, highlightSlot = slotId) {
-                            navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                    listOf("Tables", "Stats").forEachIndexed { index, title ->
+                        CompactTab(
+                            selected = tab == index,
+                            onClick = { tab = index },
+                            title = title,
+                            icon = {
+                                Icon(
+                                    if (index == 0) Icons.Default.People else StatisticsIcon,
+                                    contentDescription = null,
+                                    Modifier.size(20.dp),
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
+                MessageDialog(message)
+                if (tab == 1) {
+                    PlayerSlotStatisticsTab(tournamentId, slotId) { statisticsLoading = it }
+                } else if (tables.isEmpty()) {
+                    Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, "No tables yet", "This player has no table in this tournament yet.") }
+                } else {
+                    // The padding is inside the list, so the list ends at the tab row and at the bottom of the screen.
+                    LazyColumn(
+                        state = rememberPersistentLazyListState("tables"),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(16.dp),
+                    ) {
+                        items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
+                            TableSummaryCard(view, table, highlightSlot = slotId) {
+                                navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                            }
                         }
                     }
                 }
             }
+        }
         }
     }
 }

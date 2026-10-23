@@ -3,7 +3,6 @@ package com.etologic.mahjongtournamentsuite.player
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -33,12 +32,6 @@ fun ThemeAction() {
         icon = theme.preference.icon,
         onClick = theme.onTogglePreference,
     )
-}
-
-/** The top bar button that opens the statistics of the screen. */
-@Composable
-fun StatisticsAction(onClick: () -> Unit) {
-    AppTopBarButton(text = "Statistics", icon = StatisticsIcon, onClick = onClick)
 }
 
 /**
