@@ -1036,7 +1036,12 @@ private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hig
                             when {
                                 highlighted -> colors.primaryContainer.copy(alpha = 0.45f)
                                 // A darker tone of the same green marks the other members of my team.
-                                teammate -> colors.onPrimaryContainer.copy(alpha = 0.2f)
+                                // The light theme uses the primary green, because the other color has the tone of the card there.
+                                teammate -> if (colors.background.luminance() < 0.5f) {
+                                    colors.onPrimaryContainer.copy(alpha = 0.2f)
+                                } else {
+                                    colors.primary.copy(alpha = 0.3f)
+                                }
                                 else -> Color.Transparent
                             },
                         )
