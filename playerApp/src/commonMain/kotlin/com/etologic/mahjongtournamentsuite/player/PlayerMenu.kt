@@ -16,6 +16,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiMessage
+import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
+import org.koin.compose.koinInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
@@ -46,14 +49,19 @@ fun StatisticsAction(onClick: () -> Unit) {
 }
 
 /**
- * The state of the profile dialog. The screen owns it, so the dialog stays open
- * when the top bar button is inside a three-dots menu that closes.
+ * The Exit and Profile buttons and their dialogs. The screen owns the state, so the dialogs stay open
+ * when the top bar buttons are inside a three-dots menu that closes.
  */
-class ProfileDialogState(private val session: PlayerSessionPresenter, private val scope: CoroutineScope) {
-    var profile by mutableStateOf<UserProfile?>(null)
-    var error by mutableStateOf<String?>(null)
+class AccountActions(
+    private val session: PlayerSessionPresenter,
+    private val navController: NavHostController,
+    private val scope: CoroutineScope,
+) {
+    private var profile by mutableStateOf<UserProfile?>(null)
+    private var error by mutableStateOf<String?>(null)
+    private var confirmingSignOut by mutableStateOf(false)
 
-    fun open() {
+    private fun openProfile() {
         scope.launch {
             when (val result = session.loadProfile()) {
                 is AppResult.Success -> profile = result.value
@@ -62,8 +70,27 @@ class ProfileDialogState(private val session: PlayerSessionPresenter, private va
         }
     }
 
+    /** The buttons left of the title: Exit, then Profile. */
+    @Composable
+    fun Buttons() {
+        SignOutAction { confirmingSignOut = true }
+        AppTopBarButton(text = "Profile", icon = Icons.Default.Person, onClick = ::openProfile)
+    }
+
     @Composable
     fun Dialogs() {
+        if (confirmingSignOut) {
+            SignOutConfirmDialog(
+                onConfirm = {
+                    confirmingSignOut = false
+                    scope.launch {
+                        session.signOut()
+                        navController.navigate(SignInRoute()) { popUpTo(0) }
+                    }
+                },
+                onDismiss = { confirmingSignOut = false },
+            )
+        }
         profile?.let { current ->
             ProfileDialog(
                 profile = current,
@@ -79,13 +106,8 @@ class ProfileDialogState(private val session: PlayerSessionPresenter, private va
 }
 
 @Composable
-fun rememberProfileDialogState(session: PlayerSessionPresenter): ProfileDialogState {
+fun rememberAccountActions(navController: NavHostController): AccountActions {
+    val session = koinInject<PlayerSessionPresenter>()
     val scope = rememberCoroutineScope()
-    return remember(session, scope) { ProfileDialogState(session, scope) }
-}
-
-/** The top bar button that opens the profile of the player. In the profile the player can change the alias. */
-@Composable
-fun ProfileAction(state: ProfileDialogState) {
-    AppTopBarButton(text = "Profile", icon = Icons.Default.Person, onClick = state::open)
+    return remember(session, navController, scope) { AccountActions(session, navController, scope) }
 }
