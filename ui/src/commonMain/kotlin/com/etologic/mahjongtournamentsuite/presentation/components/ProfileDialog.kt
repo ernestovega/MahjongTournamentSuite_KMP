@@ -2,6 +2,9 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -33,7 +36,7 @@ const val MAX_ALIAS_LENGTH = 60
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
- * When [onSignOut] is set, the dialog shows a red Logout button at the bottom left that calls it.
+ * When [onSignOut] is set, the dialog shows a red Logout button at the left of the button row that calls it.
  */
 @Composable
 fun ProfileDialog(
@@ -133,21 +136,23 @@ fun ProfileDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+            }
+        },
+        // Logout is at the left of the button row. Close and Save are at the right.
+        confirmButton = {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 if (onSignOut != null) {
                     FocusedTextButton(
                         enabled = !saving,
                         onClick = onSignOut,
-                        modifier = Modifier.align(Alignment.Start),
                         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     ) { Text("Logout") }
                 }
+                Spacer(Modifier.weight(1f))
+                FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text("Close") }
+                Spacer(Modifier.width(8.dp))
+                FocusedButton(enabled = canSave, onClick = { save() }) { Text("Save") }
             }
-        },
-        confirmButton = {
-            FocusedButton(enabled = canSave, onClick = { save() }) { Text("Save") }
-        },
-        dismissButton = {
-            FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text("Close") }
         },
     )
 }

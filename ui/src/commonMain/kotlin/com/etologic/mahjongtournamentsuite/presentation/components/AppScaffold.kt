@@ -75,6 +75,11 @@ fun AppScaffold(
     onBack: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     leadingActions: @Composable (() -> Unit)? = null,
+    /**
+     * Left of the title, after the back button. On a narrow screen they go into the three-dots menu
+     * when the back button is present, and they stay visible when it is not.
+     */
+    rootLeadingActions: @Composable (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
@@ -104,6 +109,9 @@ fun AppScaffold(
             CompositionLocalProvider(LocalTopBarLabels provides topBarLabels) {
             // The progress bar covers the bottom edge of the top bar. It takes no height, so the content under it does not move.
             Box {
+                // The player top bar has no extra padding. The top bar already has 4 dp, and the buttons have their own 12 dp,
+                // so the icons line up with the 16 dp of the content.
+                val sidePadding = if (rootLeadingActions != null) 0.dp else AppTopBarSidePadding
                 val titleContent: @Composable () -> Unit = {
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -137,7 +145,7 @@ fun AppScaffold(
 
                 val navigationContent: @Composable () -> Unit = {
                     Row(
-                        modifier = Modifier.padding(start = AppTopBarSidePadding),
+                        modifier = Modifier.padding(start = sidePadding),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -157,13 +165,18 @@ fun AppScaffold(
                                 leadingActions()
                             }
                         }
+                        if (rootLeadingActions != null) {
+                            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                rootLeadingActions()
+                            }
+                        }
                     }
                 }
 
                 val actionsContent: @Composable () -> Unit = {
                     if (actions != null) {
                         Box(
-                            modifier = Modifier.padding(end = AppTopBarSidePadding),
+                            modifier = Modifier.padding(end = sidePadding),
                         ) {
                             Row(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -184,6 +197,34 @@ fun AppScaffold(
                 )
 
                 when {
+                    compact && rootLeadingActions != null -> {
+                        // One icon at the left: the back button, or the root actions when there is no back button.
+                        // One three-dots menu at the right. The root actions are in it when the back button is present.
+                        val hasBack = onBack != null
+                        CompositionLocalProvider(LocalTopBarLabels provides false) {
+                            CenterAlignedTopAppBar(
+                                title = titleContent,
+                                navigationIcon = {
+                                    if (hasBack) {
+                                        AppBackButton(onClick = onBack!!, showLabel = false)
+                                    } else {
+                                        CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                            rootLeadingActions()
+                                        }
+                                    }
+                                },
+                                actions = {
+                                    if (hasBack || actions != null) {
+                                        TopBarOverflowMenu(isLoading) {
+                                            if (hasBack) rootLeadingActions()
+                                            actions?.invoke()
+                                        }
+                                    }
+                                },
+                                colors = colors,
+                            )
+                        }
+                    }
                     compact -> {
                         CenterAlignedTopAppBar(
                             title = titleContent,
