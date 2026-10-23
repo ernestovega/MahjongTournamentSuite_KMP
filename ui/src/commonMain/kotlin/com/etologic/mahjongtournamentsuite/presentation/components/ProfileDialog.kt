@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -31,7 +33,7 @@ const val MAX_ALIAS_LENGTH = 60
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
- * When [onSignOut] is set, the dialog shows an Exit button that calls it.
+ * When [onSignOut] is set, the dialog shows a red Logout button at the bottom left that calls it.
  */
 @Composable
 fun ProfileDialog(
@@ -132,7 +134,12 @@ fun ProfileDialog(
                     )
                 }
                 if (onSignOut != null) {
-                    FocusedTextButton(enabled = !saving, onClick = onSignOut) { Text("Exit") }
+                    FocusedTextButton(
+                        enabled = !saving,
+                        onClick = onSignOut,
+                        modifier = Modifier.align(Alignment.Start),
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    ) { Text("Logout") }
                 }
             }
         },
