@@ -141,6 +141,21 @@ data class Country(
     val name: String,
 )
 
+/** The place that Google Places found for a map link. A value is null when Places does not hold it. */
+data class VenueLinkPlace(
+    val name: String?,
+    val address: String?,
+    val city: String?,
+    /** Two-letter country code. */
+    val countryCode: String?,
+)
+
+/** A map link as the full Google Maps link, with the place when Google Places found it. */
+data class ResolvedVenueLink(
+    val url: String,
+    val place: VenueLinkPlace?,
+)
+
 data class TournamentRound(
     val roundId: Int,
 )

@@ -5,3 +5,5 @@ export const ID_TOOLKIT_API_KEY = defineSecret("MTS_ID_TOOLKIT_API_KEY");
 export const BOOTSTRAP_KEY = defineSecret("MTS_BOOTSTRAP_KEY");
 // The SMTP address of the mailbox that sends the invitations, for example smtps://user:password@host:465.
 export const MAIL_SMTP_URI = defineSecret("MTS_SMTP_URI");
+// The key of Google Places (New). The server uses it to read the place of a Google Maps link.
+export const PLACES_API_KEY = defineSecret("PLACES_API_KEY");

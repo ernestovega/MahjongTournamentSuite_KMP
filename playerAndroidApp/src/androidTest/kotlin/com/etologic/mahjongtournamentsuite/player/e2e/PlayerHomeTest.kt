@@ -13,7 +13,7 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("In progress")
         c.waitForText("Eskalerria - Calle Cipriano Sancho 36, Madrid")
         c.waitForText("Directions")
-        c.waitForText("Email")
+        c.waitForText("Contact")
     }
 
     @Test

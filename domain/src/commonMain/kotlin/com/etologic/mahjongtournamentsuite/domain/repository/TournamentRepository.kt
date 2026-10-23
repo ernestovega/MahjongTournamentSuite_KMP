@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.domain.repository
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -112,8 +113,11 @@ interface TournamentRepository {
 
     suspend fun listCountries(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Country>>
 
-    /** Turns a short Google Maps link into the full link, which holds the name and the address of the place. */
-    suspend fun resolveVenueLink(url: String): AppResult<String>
+    /**
+     * Turns a short Google Maps link into the full link. The answer also holds the place from Google Places.
+     * The place is null when Places is off or finds nothing.
+     */
+    suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink>
 
     /** Assigns an EMA player or a tournament-only non-member. Pass both null to clear it. */
     suspend fun assignTournamentPlayer(

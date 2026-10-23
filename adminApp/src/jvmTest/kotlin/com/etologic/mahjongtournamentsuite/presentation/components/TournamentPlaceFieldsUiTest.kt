@@ -12,6 +12,8 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
+import com.etologic.mahjongtournamentsuite.domain.model.VenueLinkPlace
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -31,7 +33,7 @@ class TournamentPlaceFieldsUiTest {
         val resolved = mutableListOf<String>()
     }
 
-    private fun ComposeUiTest.show(form: Form, resolve: suspend (String) -> AppResult<String> = { AppResult.Success(it) }) {
+    private fun ComposeUiTest.show(form: Form, resolve: suspend (String) -> AppResult<ResolvedVenueLink> = { AppResult.Success(ResolvedVenueLink(it, null)) }) {
         setContent {
             MtsTheme(useDarkTheme = false) {
                 TournamentPlaceFields(
@@ -80,13 +82,13 @@ class TournamentPlaceFieldsUiTest {
         onNodeWithText("City").assertIsNotEnabled()
         onNodeWithText("Country").assertIsNotEnabled()
         onNodeWithText("Google Maps link").assertIsEnabled()
-        assertEquals(emptyList(), form.resolved)
+        assertEquals(listOf(placeLink), form.resolved)
     }
 
     @Test
     fun aShortLinkIsOpenedByTheServerFirst() = runComposeUiTest {
         val form = Form()
-        show(form, resolve = { AppResult.Success(placeLink) })
+        show(form, resolve = { AppResult.Success(ResolvedVenueLink(placeLink, null)) })
 
         onNodeWithText("Google Maps link").performTextInput("https://maps.app.goo.gl/abc123")
         mainClock.advanceTimeBy(1_000)
@@ -94,6 +96,23 @@ class TournamentPlaceFieldsUiTest {
 
         assertEquals(listOf("https://maps.app.goo.gl/abc123"), form.resolved)
         assertEquals("Hotel Arts", form.currentVenue.name)
+        onNodeWithText("Venue name").assertIsNotEnabled()
+    }
+
+    @Test
+    fun thePlaceFromTheServerWinsOverTheTextOfTheLink() = runComposeUiTest {
+        val form = Form()
+        val place = VenueLinkPlace("Hotel Arts Barcelona", "Carrer de la Marina 19-21, 08005 Barcelona", "Barcelona", "ES")
+        show(form, resolve = { AppResult.Success(ResolvedVenueLink(it, place)) })
+
+        onNodeWithText("Google Maps link").performTextInput(placeLink)
+        mainClock.advanceTimeBy(1_000)
+        waitForIdle()
+
+        assertEquals("Hotel Arts Barcelona", form.currentVenue.name)
+        assertEquals("Carrer de la Marina 19-21, 08005 Barcelona", form.currentVenue.address)
+        assertEquals("Barcelona", form.city)
+        assertEquals("ES", form.country)
         onNodeWithText("Venue name").assertIsNotEnabled()
     }
 

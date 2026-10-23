@@ -178,7 +178,7 @@ private class RecordingTournamentRepository(
     override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode) = unusedResult<List<TournamentTeam>>()
     override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = unusedResult<Unit>()
     override suspend fun listCountries(refreshMode: RefreshMode) = unusedResult<List<Country>>()
-    override suspend fun resolveVenueLink(url: String) = unusedResult<String>()
+    override suspend fun resolveVenueLink(url: String) = unusedResult<ResolvedVenueLink>()
 
     override suspend fun assignTournamentPlayer(
         tournamentId: String,

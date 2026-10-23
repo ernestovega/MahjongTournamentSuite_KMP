@@ -17,8 +17,3 @@ internal actual fun platformFormatDate(year: Int, month: Int, day: Int, withWeek
     if (!withWeekday) return date
     return SimpleDateFormat("EEE", Locale.getDefault()).format(calendar.time) + ", " + date
 }
-
-internal actual fun platformFormatTime(hour: Int, minute: Int): String {
-    val calendar = Calendar.getInstance().apply { clear(); set(2000, 0, 1, hour, minute) }
-    return DateFormat.getTimeInstance(DateFormat.SHORT).format(calendar.time)
-}

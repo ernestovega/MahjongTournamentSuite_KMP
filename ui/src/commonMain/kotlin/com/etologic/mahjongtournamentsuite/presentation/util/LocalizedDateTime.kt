@@ -19,15 +19,13 @@ fun formatLocalizedDateRange(start: String?, end: String?): String? =
         .joinToString(" - ") { formatLocalizedDate(it) }
         .ifBlank { null }
 
-/** Formats a local time (HH:mm) in the style of the device. Returns the input when it is not a time. */
+/** Formats a local time (HH:mm) in the 24-hour format on every device. Returns the input when it is not a time. */
 fun formatLocalizedTime(time: String): String {
     val parts = time.trim().split(":")
     if (parts.size < 2) return time
     val hour = parts[0].toIntOrNull()?.takeIf { it in 0..23 } ?: return time
     val minute = parts[1].toIntOrNull()?.takeIf { it in 0..59 } ?: return time
-    return platformFormatTime(hour, minute)
+    return "${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}"
 }
 
 internal expect fun platformFormatDate(year: Int, month: Int, day: Int, withWeekday: Boolean, withYear: Boolean): String
-
-internal expect fun platformFormatTime(hour: Int, minute: Int): String

@@ -199,7 +199,7 @@ internal class FakeTournamentRepository : TournamentRepository {
     override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode) = AppResult.Success(emptyList<TournamentTeam>())
     override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = unusedFakeResult<Unit>()
     override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = AppResult.Success(countries)
-    override suspend fun resolveVenueLink(url: String): AppResult<String> = AppResult.Success(url)
+    override suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = AppResult.Success(ResolvedVenueLink(url, null))
 
     override suspend fun assignTournamentPlayer(
         tournamentId: String,

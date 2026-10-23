@@ -17,7 +17,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.filled.Directions
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Place
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
@@ -74,6 +82,7 @@ fun TournamentInfoTab(tournament: Tournament) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun VenueCard(tournament: Tournament) {
     val venue = tournament.venue
@@ -91,22 +100,47 @@ private fun VenueCard(tournament: Tournament) {
             }
         }
         if (venue.name.isNotBlank() || venue.address.isNotBlank()) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(
+                    Icons.Default.Place,
+                    contentDescription = null,
+                    Modifier.size(24.dp),
+                    tint = MaterialTheme.colorScheme.primary,
+                )
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     if (venue.name.isNotBlank()) Text(venue.name, style = MaterialTheme.typography.titleSmall)
-                    if (venue.address.isNotBlank()) Text(venue.address)
+                    if (venue.address.isNotBlank()) {
+                        Text(venue.address, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            // The buttons are side by side. The second one moves under the first when the row is full.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                if (venue.mapUrl.isNotBlank()) {
+                    VenueButton(Icons.Default.Map, "Google Maps", "Open the venue in Google Maps") {
+                        uriHandler.openUri(venue.mapUrl)
+                    }
                 }
                 if (mapLink != null) {
-                    IconButton(onClick = { uriHandler.openUri(mapLink) }) {
-                        Icon(
-                            Icons.Default.Directions,
-                            contentDescription = "Open directions in Google Maps",
-                            tint = MaterialTheme.colorScheme.primary,
-                        )
+                    VenueButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") {
+                        uriHandler.openUri(venueDirectionsLink(tournament) ?: mapLink)
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun VenueButton(icon: ImageVector, label: String, description: String, onClick: () -> Unit) {
+    OutlinedButton(
+        onClick = onClick,
+        modifier = Modifier.semantics { contentDescription = description },
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+    ) {
+        Icon(icon, contentDescription = null, Modifier.size(18.dp))
+        Spacer(Modifier.width(6.dp))
+        Text(label, style = MaterialTheme.typography.labelLarge)
     }
 }
 
@@ -171,6 +205,14 @@ fun venueMapLink(tournament: Tournament): String? {
     if (venue.mapUrl.isNotBlank()) return venue.mapUrl
     val place = listOf(venue.name, venue.address, tournament.hostCity).filter { it.isNotBlank() }.joinToString(", ")
     if (venue.name.isBlank() && venue.address.isBlank()) return null
+    return "https://www.google.com/maps/dir/?api=1&destination=${encodeQueryValue(place)}"
+}
+
+/** A link that opens Google Maps with directions to the venue. It is null when the venue has no name and no address. */
+fun venueDirectionsLink(tournament: Tournament): String? {
+    val venue = tournament.venue
+    if (venue.name.isBlank() && venue.address.isBlank()) return null
+    val place = listOf(venue.name, venue.address, tournament.hostCity).filter { it.isNotBlank() }.joinToString(", ")
     return "https://www.google.com/maps/dir/?api=1&destination=${encodeQueryValue(place)}"
 }
 

@@ -578,7 +578,6 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
     val email = tournament.venue.contactEmail
     val dates = datesOf(tournament)
     val hasCity = tournament.hostCity.isNotBlank() || tournament.hostCountry.isNotBlank()
-    val hasLinks = (venueText.isNotBlank() && mapLink != null) || email.isNotBlank() || hasSchedule(tournament)
     Card(
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
@@ -618,16 +617,27 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                                 }
                             }
                         }
-                        // The venue is plain text. The link to the map is a button below.
+                        // The Directions button is next to the venue text. It moves under the text when the row is full.
                         if (venueText.isNotBlank()) {
-                            Text(
-                                venueText,
+                            FlowRow(
                                 Modifier.padding(start = 26.dp),
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Text(
+                                    venueText,
+                                    Modifier.align(Alignment.CenterVertically),
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                                if (mapLink != null) {
+                                    LinkButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") {
+                                        uriHandler.openUri(mapLink)
+                                    }
+                                }
+                            }
                         }
                     }
                     // The place and the prizes are at the right, so they do not use a row of the card.
@@ -651,21 +661,29 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                     }
                 }
             }
-            if (hasLinks) {
-                HorizontalDivider()
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (venueText.isNotBlank() && mapLink != null) {
-                        LinkButton(Icons.Default.Directions, "Directions", "Open directions in Google Maps") { uriHandler.openUri(mapLink) }
-                    }
+            HorizontalDivider()
+            // The link buttons are at the left. The Open button is at the bottom right, in line with them.
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Bottom) {
+                FlowRow(
+                    Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
                     if (email.isNotBlank()) {
-                        LinkButton(Icons.Default.Email, "Email") { uriHandler.openUri("mailto:$email") }
+                        LinkButton(Icons.Default.Email, "Contact", "Send an email to the organizers") { uriHandler.openUri("mailto:$email") }
                     }
                     if (hasSchedule(tournament)) {
                         LinkButton(Icons.Default.Schedule, if (expanded) "Hide schedule" else "Schedule") { expanded = !expanded }
                     }
                 }
-                if (expanded) TournamentSchedule(tournament)
+                Button(
+                    onClick = onClick,
+                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
+                ) {
+                    Text("Open", style = MaterialTheme.typography.labelLarge)
+                }
             }
+            if (expanded) TournamentSchedule(tournament)
         }
     }
 }

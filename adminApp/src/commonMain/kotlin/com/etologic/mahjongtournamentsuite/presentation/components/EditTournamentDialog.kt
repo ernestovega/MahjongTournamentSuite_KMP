@@ -38,6 +38,8 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
@@ -69,8 +71,8 @@ private enum class TournamentEditField {
 
 private enum class EditTournamentTab(val title: String) {
     GENERAL("General"),
+    VENUE("Venue"),
     BRANDING("Branding"),
-    MATCH("Match"),
     SCHEDULE("Schedule"),
     DATA("Data"),
 }
@@ -212,7 +214,8 @@ fun EditTournamentDialog(
     }
 
     AlertDialog(
-        modifier = Modifier.appFocusGroup(),
+        modifier = Modifier.appFocusGroup().widthIn(max = 720.dp).fillMaxWidth(0.92f),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = {
             if (!isLoading) {
                 showDateRangePicker = false
@@ -292,6 +295,33 @@ fun EditTournamentDialog(
                                         null
                                     },
                                 )
+
+                                MatchTimeFields(
+                                    durationText = settingsMatchDurationText,
+                                    onDurationChange = { settingsMatchDurationText = it },
+                                    finishHand = settingsFinishHand,
+                                    onFinishHandChange = { settingsFinishHand = it },
+                                    extraMinutesText = settingsMatchExtraText,
+                                    onExtraMinutesChange = { settingsMatchExtraText = it },
+                                    enabled = !isLoading,
+                                )
+
+                                TournamentOptionSwitch(
+                                    label = "Best hands",
+                                    description = "Count the best hands and show them in the ranking and the tournament screens.",
+                                    checked = settingsCountBestHands,
+                                    enabled = !isLoading,
+                                    onCheckedChange = { settingsCountBestHands = it },
+                                )
+                                TournamentOptionSwitch(
+                                    label = "Chicken hands",
+                                    description = "Count the chicken hands and show them in the ranking and the tournament screens.",
+                                    checked = settingsCountChickenHands,
+                                    enabled = !isLoading,
+                                    onCheckedChange = { settingsCountChickenHands = it },
+                                )
+                            }
+                            EditTournamentTab.VENUE -> {
                                 TournamentPlaceFields(
                                     venue = settingsVenue,
                                     onVenueChange = {
@@ -340,78 +370,11 @@ fun EditTournamentDialog(
                                     mapUrlFocusRequester = settingsMapUrlFocusRequester,
                                     contactEmailFocusRequester = settingsContactEmailFocusRequester,
                                 )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                OutlinedTextField(
-                                    value = settingsEventStartDate,
-                                    onValueChange = {
-                                        settingsEventStartDate = it.toDateInput()
-                                        settingsEventEndDate = adjustedEndDate(
-                                            startDisplayDate = settingsEventStartDate,
-                                            endDisplayDate = settingsEventEndDate,
-                                        )
-                                        invalidEditFields = invalidEditFields - setOf(
-                                            TournamentEditField.START_DATE,
-                                            TournamentEditField.END_DATE,
-                                        )
-                                        renameError = null
-                                    },
-                                    modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
-                                    label = { RequiredLabel("From") },
-                                    placeholder = { Text("DD/MM/YYYY") },
-                                    trailingIcon = {
-                                        IconButton(onClick = { showDateRangePicker = true }) {
-                                            Icon(
-                                                imageVector = Icons.Default.DateRange,
-                                                contentDescription = "Choose start date",
-                                            )
-                                        }
-                                    },
-                                    singleLine = true,
-                                    isError = TournamentEditField.START_DATE in invalidEditFields,
-                                    supportingText = if (TournamentEditField.START_DATE in invalidEditFields) {
-                                        { Text("Use DD/MM/YYYY.") }
-                                    } else {
-                                        null
-                                    },
+                                VenueTimeZoneField(
+                                    timeZoneText = settingsTimeZone,
+                                    onTimeZoneChange = { settingsTimeZone = it },
+                                    enabled = !isLoading,
                                 )
-                                OutlinedTextField(
-                                    value = settingsEventEndDate,
-                                    onValueChange = {
-                                        val newValue = it.toDateInput()
-                                        settingsEventEndDate = when {
-                                            newValue.isEmpty() && settingsEventStartDate.toIsoTournamentDateOrNull() != null ->
-                                                settingsEventStartDate
-                                            else -> adjustedEndDate(settingsEventStartDate, newValue)
-                                        }
-                                        invalidEditFields = invalidEditFields - setOf(
-                                            TournamentEditField.START_DATE,
-                                            TournamentEditField.END_DATE,
-                                        )
-                                        renameError = null
-                                    },
-                                    modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
-                                    label = { RequiredLabel("To") },
-                                    placeholder = { Text("DD/MM/YYYY") },
-                                    trailingIcon = {
-                                        IconButton(onClick = { showDateRangePicker = true }) {
-                                            Icon(
-                                                imageVector = Icons.Default.DateRange,
-                                                contentDescription = "Choose end date",
-                                            )
-                                        }
-                                    },
-                                    singleLine = true,
-                                    isError = TournamentEditField.END_DATE in invalidEditFields,
-                                    supportingText = if (TournamentEditField.END_DATE in invalidEditFields) {
-                                        { Text("Use a valid date on or after From.") }
-                                    } else {
-                                        null
-                                    },
-                                )
-                            }
                             }
                             EditTournamentTab.BRANDING -> {
                                 TournamentColorField(
@@ -519,35 +482,79 @@ fun EditTournamentDialog(
                                 onError = { renameError = it },
                             )
                             }
-                            EditTournamentTab.MATCH -> {
-                                MatchTimeFields(
-                                    durationText = settingsMatchDurationText,
-                                    onDurationChange = { settingsMatchDurationText = it },
-                                    timeZoneText = settingsTimeZone,
-                                    onTimeZoneChange = { settingsTimeZone = it },
-                                    finishHand = settingsFinishHand,
-                                    onFinishHandChange = { settingsFinishHand = it },
-                                    extraMinutesText = settingsMatchExtraText,
-                                    onExtraMinutesChange = { settingsMatchExtraText = it },
-                                    enabled = !isLoading,
+                            EditTournamentTab.SCHEDULE -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                OutlinedTextField(
+                                    value = settingsEventStartDate,
+                                    onValueChange = {
+                                        settingsEventStartDate = it.toDateInput()
+                                        settingsEventEndDate = adjustedEndDate(
+                                            startDisplayDate = settingsEventStartDate,
+                                            endDisplayDate = settingsEventEndDate,
+                                        )
+                                        invalidEditFields = invalidEditFields - setOf(
+                                            TournamentEditField.START_DATE,
+                                            TournamentEditField.END_DATE,
+                                        )
+                                        renameError = null
+                                    },
+                                    modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
+                                    label = { RequiredLabel("From") },
+                                    placeholder = { Text("DD/MM/YYYY") },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showDateRangePicker = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.DateRange,
+                                                contentDescription = "Choose start date",
+                                            )
+                                        }
+                                    },
+                                    singleLine = true,
+                                    isError = TournamentEditField.START_DATE in invalidEditFields,
+                                    supportingText = if (TournamentEditField.START_DATE in invalidEditFields) {
+                                        { Text("Use DD/MM/YYYY.") }
+                                    } else {
+                                        null
+                                    },
                                 )
-
-                                TournamentOptionSwitch(
-                                    label = "Best hands",
-                                    description = "Count the best hands and show them in the ranking and the tournament screens.",
-                                    checked = settingsCountBestHands,
-                                    enabled = !isLoading,
-                                    onCheckedChange = { settingsCountBestHands = it },
-                                )
-                                TournamentOptionSwitch(
-                                    label = "Chicken hands",
-                                    description = "Count the chicken hands and show them in the ranking and the tournament screens.",
-                                    checked = settingsCountChickenHands,
-                                    enabled = !isLoading,
-                                    onCheckedChange = { settingsCountChickenHands = it },
+                                OutlinedTextField(
+                                    value = settingsEventEndDate,
+                                    onValueChange = {
+                                        val newValue = it.toDateInput()
+                                        settingsEventEndDate = when {
+                                            newValue.isEmpty() && settingsEventStartDate.toIsoTournamentDateOrNull() != null ->
+                                                settingsEventStartDate
+                                            else -> adjustedEndDate(settingsEventStartDate, newValue)
+                                        }
+                                        invalidEditFields = invalidEditFields - setOf(
+                                            TournamentEditField.START_DATE,
+                                            TournamentEditField.END_DATE,
+                                        )
+                                        renameError = null
+                                    },
+                                    modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
+                                    label = { RequiredLabel("To") },
+                                    placeholder = { Text("DD/MM/YYYY") },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showDateRangePicker = true }) {
+                                            Icon(
+                                                imageVector = Icons.Default.DateRange,
+                                                contentDescription = "Choose end date",
+                                            )
+                                        }
+                                    },
+                                    singleLine = true,
+                                    isError = TournamentEditField.END_DATE in invalidEditFields,
+                                    supportingText = if (TournamentEditField.END_DATE in invalidEditFields) {
+                                        { Text("Use a valid date on or after From.") }
+                                    } else {
+                                        null
+                                    },
                                 )
                             }
-                            EditTournamentTab.SCHEDULE -> {
                                 TournamentScheduleEditor(
                                     roundRows = settingsRoundScheduleRows,
                                     onRoundRowsChange = { settingsRoundScheduleRows = it },
@@ -711,10 +718,17 @@ fun EditTournamentDialog(
                         if (newInvalidFields.isNotEmpty()) {
                             invalidEditFields = newInvalidFields
                             val firstInvalid = newInvalidFields.first()
-                            selectedTab = if (firstInvalid == TournamentEditField.PRIMARY_COLOR) {
-                                EditTournamentTab.BRANDING
-                            } else {
-                                EditTournamentTab.GENERAL
+                            selectedTab = when (firstInvalid) {
+                                TournamentEditField.PRIMARY_COLOR -> EditTournamentTab.BRANDING
+                                TournamentEditField.HOST_COUNTRY,
+                                TournamentEditField.HOST_CITY,
+                                TournamentEditField.VENUE,
+                                TournamentEditField.CONTACT_EMAIL,
+                                -> EditTournamentTab.VENUE
+                                TournamentEditField.START_DATE,
+                                TournamentEditField.END_DATE,
+                                -> EditTournamentTab.SCHEDULE
+                                else -> EditTournamentTab.GENERAL
                             }
                             pendingFocusField = firstInvalid
                             return@Button
@@ -734,18 +748,18 @@ fun EditTournamentDialog(
                         }
                         val validMatchDuration = matchDurationOrNull(settingsMatchDurationText)
                         if (validMatchDuration == null) {
-                            selectedTab = EditTournamentTab.MATCH
+                            selectedTab = EditTournamentTab.GENERAL
                             renameError = "Match duration must be a whole number of minutes from 1 to $MAX_MATCH_DURATION_MINUTES."
                             return@Button
                         }
                         if (!isTimeZoneIdShape(settingsTimeZone)) {
-                            selectedTab = EditTournamentTab.MATCH
+                            selectedTab = EditTournamentTab.VENUE
                             renameError = "Time zone must be a name like Europe/Madrid."
                             return@Button
                         }
                         val validMatchExtra = matchExtraMinutesOrNull(settingsMatchExtraText)
                         if (settingsFinishHand && validMatchExtra == null) {
-                            selectedTab = EditTournamentTab.MATCH
+                            selectedTab = EditTournamentTab.GENERAL
                             renameError = "Extra time must be a whole number of minutes from 1 to $MAX_MATCH_EXTRA_MINUTES."
                             return@Button
                         }

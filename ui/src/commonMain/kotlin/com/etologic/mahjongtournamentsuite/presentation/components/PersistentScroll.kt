@@ -79,7 +79,8 @@ fun rememberPersistentLazyListState(name: String = ""): LazyListState {
 fun rememberPersistentInt(name: String, default: Int): MutableState<Int> {
     val store = LocalScrollPositionStore.current
     val key = LocalScrollScope.current + "/value:" + name
-    val state = remember(store, key) { mutableStateOf(store?.takeRestored(key)?.index ?: default) }
+    // rememberSaveable keeps the value when the user opens another screen and comes back.
+    val state = rememberSaveable(store, key) { mutableStateOf(store?.takeRestored(key)?.index ?: default) }
     if (store != null) {
         LaunchedEffect(state, store, key) {
             snapshotFlow { state.value }.collect { store.put(key, ScrollPosition(it)) }

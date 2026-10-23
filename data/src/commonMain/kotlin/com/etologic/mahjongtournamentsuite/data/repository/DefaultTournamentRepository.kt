@@ -19,6 +19,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRankingRowDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.VenueLinkPlace
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -482,8 +484,16 @@ class DefaultTournamentRepository(
             }
     }
 
-    override suspend fun resolveVenueLink(url: String): AppResult<String> = runCatching {
-        withFreshIdToken { idToken -> backendApi.resolveVenueLink(idToken, url.trim()).url }
+    override suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = runCatching {
+        withFreshIdToken { idToken ->
+            val response = backendApi.resolveVenueLink(idToken, url.trim())
+            ResolvedVenueLink(
+                url = response.url,
+                place = response.place?.let { place ->
+                    VenueLinkPlace(place.name, place.address, place.city, place.countryCode)
+                },
+            )
+        }
     }.fold(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->

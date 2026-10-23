@@ -19,6 +19,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import kotlinx.coroutines.delay
 
@@ -41,7 +42,8 @@ private const val LINK_READ_DELAY_MS = 400L
  *
  * With a link, the form reads the venue name, the address, the country and the city from Google Maps.
  * A field that the link fills is locked. A field that the link does not hold stays open for typing.
- * Without a link, the user types every field. [resolveLink] turns a short link into a full link.
+ * Without a link, the user types every field. [resolveLink] turns a short link into a full link and asks the
+ * server for the place from Google Places. When the server gives no place, the form reads the text of the link.
  */
 @Composable
 fun TournamentPlaceFields(
@@ -52,7 +54,7 @@ fun TournamentPlaceFields(
     hostCity: String,
     onHostCityChange: (String) -> Unit,
     countries: List<Country>,
-    resolveLink: suspend (String) -> AppResult<String>,
+    resolveLink: suspend (String) -> AppResult<ResolvedVenueLink>,
     enabled: Boolean = true,
     countryError: String? = null,
     cityError: String? = null,
@@ -98,18 +100,27 @@ fun TournamentPlaceFields(
             return@LaunchedEffect
         }
         status = LinkStatus.Reading
-        val fullLink = if (isShortMapLink(link)) {
-            when (val result = currentResolveLink(link)) {
-                is AppResult.Success -> result.value
-                is AppResult.Failure -> {
+        val resolved = when (val result = currentResolveLink(link)) {
+            is AppResult.Success -> result.value
+            is AppResult.Failure -> {
+                // A full link holds the place text, so the form can still read it without the server.
+                if (isShortMapLink(link)) {
                     status = LinkStatus.Failed("The link could not be opened. Check it or type the place.")
                     return@LaunchedEffect
                 }
+                ResolvedVenueLink(url = link, place = null)
             }
-        } else {
-            link
         }
-        val place = parseMapLink(fullLink, currentCountries)
+        val place = resolved.place?.let { found ->
+            MapLinkPlace(
+                name = found.name,
+                address = found.address,
+                city = found.city,
+                countryCode = found.countryCode?.takeIf { code ->
+                    currentCountries.isEmpty() || currentCountries.any { it.code.equals(code, ignoreCase = true) }
+                }?.uppercase(),
+            )
+        } ?: parseMapLink(resolved.url, currentCountries)
         if (place == null) {
             status = LinkStatus.Failed("The link has no place data. Use the link of a place, or type the place.")
             return@LaunchedEffect

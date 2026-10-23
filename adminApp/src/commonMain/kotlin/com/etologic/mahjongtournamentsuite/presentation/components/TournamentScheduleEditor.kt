@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -97,12 +98,13 @@ fun TournamentScheduleEditor(
             )
         } else {
             roundRows.forEachIndexed { index, row ->
+                if (index > 0) HorizontalDivider()
                 val datePickerFocusRequester = remember(row.roundId) { FocusRequester() }
                 val timePickerFocusRequester = remember(row.roundId) { FocusRequester() }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
                         "Round ${row.roundId}",
@@ -186,6 +188,7 @@ fun TournamentScheduleEditor(
             )
         }
         agendaRows.forEachIndexed { index, row ->
+            if (index > 0) HorizontalDivider()
             val datePickerFocusRequester = remember(index) { FocusRequester() }
             val startTimePickerFocusRequester = remember(index) { FocusRequester() }
             Column(
@@ -195,7 +198,7 @@ fun TournamentScheduleEditor(
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.Top,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     OutlinedTextField(
                         value = row.title,

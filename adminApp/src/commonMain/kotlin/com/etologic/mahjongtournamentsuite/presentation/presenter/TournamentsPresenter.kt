@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -22,7 +23,7 @@ class TournamentsPresenter(
 ) {
     suspend fun loadProfile(force: Boolean = false): AppResult<UserProfile> = authRepository.getMe(force.toRefreshMode())
 
-    suspend fun resolveVenueLink(url: String): AppResult<String> = tournamentRepository.resolveVenueLink(url)
+    suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = tournamentRepository.resolveVenueLink(url)
 
     suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias)
 

@@ -979,8 +979,28 @@ fun RequiredLabel(text: String) {
     }
 }
 
+/** The time zone of the venue. The round times use it. The create and edit forms show it in the venue tab. */
+@Composable
+fun VenueTimeZoneField(
+    timeZoneText: String,
+    onTimeZoneChange: (String) -> Unit,
+    enabled: Boolean,
+    modifier: Modifier = Modifier,
+    timeZoneError: String? = null,
+) {
+    TimeZoneDropdown(
+        value = timeZoneText,
+        onValueChange = onTimeZoneChange,
+        required = true,
+        isError = timeZoneError != null,
+        supportingText = timeZoneError ?: "Time zone of the venue, for example Europe/Madrid. The round times use it.",
+        enabled = enabled,
+        modifier = modifier,
+    )
+}
+
 /**
- * The match time fields: duration, time zone, what happens when the time is over and, for the mode
+ * The match time fields: duration, what happens when the time is over and, for the mode
  * "finish the hand", the extra minutes. The same fields are in the create and edit forms.
  * An error text marks its field as wrong.
  */
@@ -988,8 +1008,6 @@ fun RequiredLabel(text: String) {
 fun MatchTimeFields(
     durationText: String,
     onDurationChange: (String) -> Unit,
-    timeZoneText: String,
-    onTimeZoneChange: (String) -> Unit,
     finishHand: Boolean,
     onFinishHandChange: (Boolean) -> Unit,
     extraMinutesText: String,
@@ -998,7 +1016,6 @@ fun MatchTimeFields(
     modifier: Modifier = Modifier,
     durationFocusRequester: FocusRequester? = null,
     durationError: String? = null,
-    timeZoneError: String? = null,
     extraMinutesError: String? = null,
 ) {
     Column(modifier = modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -1014,14 +1031,6 @@ fun MatchTimeFields(
                 if (durationFocusRequester != null) base.focusRequester(durationFocusRequester) else base
             },
             singleLine = true,
-            enabled = enabled,
-        )
-        TimeZoneDropdown(
-            value = timeZoneText,
-            onValueChange = onTimeZoneChange,
-            required = true,
-            isError = timeZoneError != null,
-            supportingText = timeZoneError ?: "Time zone of the venue, for example Europe/Madrid. The round times use it.",
             enabled = enabled,
         )
         TournamentOptionSwitch(

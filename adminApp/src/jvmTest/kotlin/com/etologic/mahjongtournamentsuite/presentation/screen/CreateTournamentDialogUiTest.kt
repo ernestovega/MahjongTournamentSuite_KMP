@@ -67,9 +67,13 @@ class CreateTournamentDialogUiTest {
         waitForIdle()
         onAllNodesWithText(" *").assertCountEquals(BrandingRequiredFieldCount)
 
-        onNodeWithText("Match").performClick()
+        onNodeWithText("Venue").performClick()
         waitForIdle()
-        onAllNodesWithText(" *").assertCountEquals(MatchRequiredFieldCount)
+        onAllNodesWithText(" *").assertCountEquals(VenueRequiredFieldCount)
+
+        onNodeWithText("Schedule").performClick()
+        waitForIdle()
+        onAllNodesWithText(" *").assertCountEquals(ScheduleRequiredFieldCount)
     }
 
     @Test
@@ -81,6 +85,9 @@ class CreateTournamentDialogUiTest {
 
         onNodeWithText("Name is required.").assertExists()
         onNodeWithText("Use 1 to 10 characters.").assertExists()
+
+        onNodeWithText("Venue").performClick()
+        waitForIdle()
         onNodeWithText("Select a host country.").assertExists()
         onNodeWithText("City is required.").assertExists()
         onNodeWithText("Add a Google Maps link, or type the venue name and the address.").assertExists()
@@ -90,9 +97,8 @@ class CreateTournamentDialogUiTest {
     @Test
     fun aWrongFieldOnAnotherTabOpensThatTab() = runComposeUiTest {
         showForm()
-        onNodeWithText("Match").performClick()
+        onNodeWithText("Schedule").performClick()
         waitForIdle()
-        onNodeWithText("Match duration (minutes)").performTextReplacement("")
 
         onNodeWithText("Create").performClick()
         waitForIdle()
@@ -104,9 +110,13 @@ class CreateTournamentDialogUiTest {
     @Test
     fun anInvalidContactEmailIsMarkedWrong() = runComposeUiTest {
         showForm()
+        onNodeWithText("Venue").performClick()
+        waitForIdle()
         onNodeWithText("Contact email").performTextInput("not an email")
 
         onNodeWithText("Create").performClick()
+        waitForIdle()
+        onNodeWithText("Venue").performClick()
         waitForIdle()
 
         onNodeWithText("Use a valid email address.").assertExists()
@@ -129,7 +139,7 @@ class CreateTournamentDialogUiTest {
     @Test
     fun theTimeZoneIsAFieldWithAMenuAndStartsWithTheZoneOfTheDevice() = runComposeUiTest {
         showForm()
-        onNodeWithText("Match").performClick()
+        onNodeWithText("Venue").performClick()
         waitForIdle()
 
         onNodeWithText("Time zone").assertExists()
@@ -137,13 +147,16 @@ class CreateTournamentDialogUiTest {
     }
 
     private companion object {
-        /** Name, short name, players, rounds, map link, country, city, contact email, from, to. */
-        const val GeneralRequiredFieldCount = 10
+        /** Name, short name, players, rounds, match duration. */
+        const val GeneralRequiredFieldCount = 5
+
+        /** Map link, country, city, contact email, time zone. */
+        const val VenueRequiredFieldCount = 5
 
         /** Color. */
         const val BrandingRequiredFieldCount = 1
 
-        /** Match duration, time zone. */
-        const val MatchRequiredFieldCount = 2
+        /** From, to. */
+        const val ScheduleRequiredFieldCount = 2
     }
 }

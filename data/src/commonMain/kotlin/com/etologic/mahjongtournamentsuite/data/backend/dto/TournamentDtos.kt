@@ -353,6 +353,15 @@ data class ResolveVenueLinkRequestDto(
 @Serializable
 data class ResolveVenueLinkResponseDto(
     val url: String,
+    val place: VenueLinkPlaceDto? = null,
+)
+
+@Serializable
+data class VenueLinkPlaceDto(
+    val name: String? = null,
+    val address: String? = null,
+    val city: String? = null,
+    val countryCode: String? = null,
 )
 
 @Serializable

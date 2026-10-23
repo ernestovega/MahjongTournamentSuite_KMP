@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.platform.platformCpuCount
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
@@ -25,7 +26,7 @@ class CreateTournamentPresenter(
 ) {
     suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
 
-    suspend fun resolveVenueLink(url: String): AppResult<String> = tournamentRepository.resolveVenueLink(url)
+    suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = tournamentRepository.resolveVenueLink(url)
 
     enum class ComputeMode {
         LIGHT,

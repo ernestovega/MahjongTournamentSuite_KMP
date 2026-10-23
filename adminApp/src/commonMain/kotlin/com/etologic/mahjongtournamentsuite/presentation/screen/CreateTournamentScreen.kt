@@ -54,6 +54,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -70,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.isTimeZoneIdS
 import com.etologic.mahjongtournamentsuite.presentation.components.matchExtraMinutesOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.MatchTimeFields
+import com.etologic.mahjongtournamentsuite.presentation.components.VenueTimeZoneField
 import com.etologic.mahjongtournamentsuite.presentation.components.matchDurationOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
@@ -125,19 +127,21 @@ private enum class CreateField {
 
 private enum class CreateTab(val title: String) {
     GENERAL("General"),
+    VENUE("Venue"),
     BRANDING("Branding"),
-    MATCH("Match"),
     SCHEDULE("Schedule"),
 }
 
 /** The tab that holds the field. */
 private fun CreateField.tab(): CreateTab = when (this) {
-    CreateField.NAME, CreateField.SHORT_NAME, CreateField.PLAYERS, CreateField.ROUNDS, CreateField.COUNTRY,
-    CreateField.CITY, CreateField.VENUE, CreateField.CONTACT_EMAIL, CreateField.START_DATE,
-    CreateField.END_DATE,
+    CreateField.NAME, CreateField.SHORT_NAME, CreateField.PLAYERS, CreateField.ROUNDS,
+    CreateField.MATCH_DURATION, CreateField.EXTRA_TIME,
     -> CreateTab.GENERAL
+    CreateField.COUNTRY, CreateField.CITY, CreateField.VENUE, CreateField.CONTACT_EMAIL,
+    CreateField.TIME_ZONE,
+    -> CreateTab.VENUE
     CreateField.COLOR -> CreateTab.BRANDING
-    CreateField.MATCH_DURATION, CreateField.TIME_ZONE, CreateField.EXTRA_TIME -> CreateTab.MATCH
+    CreateField.START_DATE, CreateField.END_DATE -> CreateTab.SCHEDULE
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -415,7 +419,8 @@ fun CreateTournamentDialog(
     }
 
     AlertDialog(
-        modifier = Modifier.appFocusGroup(),
+        modifier = Modifier.appFocusGroup().widthIn(max = 720.dp).fillMaxWidth(0.92f),
+        properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = {
             if (!isLoading) {
                 cancelCreation()
@@ -528,6 +533,107 @@ fun CreateTournamentDialog(
                                     supportingText = fieldErrors[CreateField.ROUNDS]?.let { message -> { Text(message) } },
                                 )
                             }
+
+                            MatchTimeFields(
+                                durationText = matchDurationText,
+                                onDurationChange = {
+                                    matchDurationText = it
+                                    clearError(CreateField.MATCH_DURATION)
+                                },
+                                finishHand = finishHandInPlay,
+                                onFinishHandChange = {
+                                    finishHandInPlay = it
+                                    clearError(CreateField.EXTRA_TIME)
+                                },
+                                extraMinutesText = matchExtraText,
+                                onExtraMinutesChange = {
+                                    matchExtraText = it
+                                    clearError(CreateField.EXTRA_TIME)
+                                },
+                                enabled = !isLoading,
+                                durationFocusRequester = matchDurationFocusRequester,
+                                durationError = fieldErrors[CreateField.MATCH_DURATION],
+                                extraMinutesError = fieldErrors[CreateField.EXTRA_TIME],
+                            )
+
+                            FocusHighlightContainer(
+                                modifier = Modifier.fillMaxWidth(),
+                                interactionSource = teamsToggleInteractionSource,
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    Switch(
+                                        checked = isTeams,
+                                        onCheckedChange = ::setTeamsChecked,
+                                        enabled = !isLoading,
+                                        interactionSource = teamsToggleInteractionSource,
+                                    )
+                                    Text(
+                                        text = "Teams",
+                                        modifier = Modifier.toggleable(
+                                            value = isTeams,
+                                            enabled = !isLoading,
+                                            role = Role.Switch,
+                                            interactionSource = teamsToggleInteractionSource,
+                                            indication = null,
+                                            onValueChange = ::setTeamsChecked,
+                                        ),
+                                    )
+                                    InfoTooltipIcon(
+                                        "Group players into teams of four. Team members will not play together.",
+                                    )
+                                }
+                            }
+
+                            TournamentOptionSwitch(
+                                label = "Best hands",
+                                description = "Count the best hands and show them in the ranking and the tournament screens.",
+                                checked = countBestHands,
+                                enabled = !isLoading,
+                                onCheckedChange = { countBestHands = it },
+                            )
+
+                            TournamentOptionSwitch(
+                                label = "Chicken hands",
+                                description = "Count the chicken hands and show them in the ranking and the tournament screens.",
+                                checked = countChickenHands,
+                                enabled = !isLoading,
+                                onCheckedChange = { countChickenHands = it },
+                            )
+
+                            FocusHighlightContainer(
+                                modifier = Modifier.fillMaxWidth(),
+                                interactionSource = computeToggleInteractionSource,
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
+                                    Switch(
+                                        checked = isHeavy,
+                                        onCheckedChange = ::setHeavyCompute,
+                                        enabled = !isLoading,
+                                        interactionSource = computeToggleInteractionSource,
+                                    )
+                                    Text(
+                                        text = "Heavy computing",
+                                        modifier = Modifier.toggleable(
+                                            value = isHeavy,
+                                            enabled = !isLoading,
+                                            role = Role.Switch,
+                                            interactionSource = computeToggleInteractionSource,
+                                            indication = null,
+                                            onValueChange = ::setHeavyCompute,
+                                        ),
+                                    )
+                                    InfoTooltipIcon("Use more CPU to calculate the schedule faster.")
+                                }
+                            }
+                        }
+                        CreateTab.VENUE -> {
                             TournamentPlaceFields(
                                 venue = venue,
                                 onVenueChange = {
@@ -556,60 +662,15 @@ fun CreateTournamentDialog(
                                 mapUrlFocusRequester = mapUrlFocusRequester,
                                 contactEmailFocusRequester = contactEmailFocusRequester,
                             )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                OutlinedTextField(
-                                    value = eventStartDate,
-                                    onValueChange = {
-                                        eventStartDate = it.toDateInput()
-                                        eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
-                                        clearError(CreateField.START_DATE, CreateField.END_DATE)
-                                    },
-                                    label = { RequiredLabel("From") },
-                                    placeholder = { Text("DD/MM/YYYY") },
-                                    trailingIcon = {
-                                        IconButton(onClick = { showDateRangePicker = true }) {
-                                            androidx.compose.material3.Icon(
-                                                Icons.Default.DateRange,
-                                                contentDescription = "Choose start date",
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f).focusRequester(eventStartDateFocusRequester),
-                                    singleLine = true,
-                                    enabled = !isLoading,
-                                    isError = CreateField.START_DATE in fieldErrors,
-                                    supportingText = fieldErrors[CreateField.START_DATE]?.let { message -> { Text(message) } },
-                                )
-                                OutlinedTextField(
-                                    value = eventEndDate,
-                                    onValueChange = {
-                                        val newValue = it.toDateInput()
-                                        eventEndDate = when {
-                                            newValue.isEmpty() && eventStartDate.toIsoTournamentDateOrNull() != null -> eventStartDate
-                                            else -> adjustedEndDate(eventStartDate, newValue)
-                                        }
-                                        clearError(CreateField.START_DATE, CreateField.END_DATE)
-                                    },
-                                    label = { RequiredLabel("To") },
-                                    placeholder = { Text("DD/MM/YYYY") },
-                                    trailingIcon = {
-                                        IconButton(onClick = { showDateRangePicker = true }) {
-                                            androidx.compose.material3.Icon(
-                                                Icons.Default.DateRange,
-                                                contentDescription = "Choose end date",
-                                            )
-                                        }
-                                    },
-                                    modifier = Modifier.weight(1f).focusRequester(eventEndDateFocusRequester),
-                                    singleLine = true,
-                                    enabled = !isLoading,
-                                    isError = CreateField.END_DATE in fieldErrors,
-                                    supportingText = fieldErrors[CreateField.END_DATE]?.let { message -> { Text(message) } },
-                                )
-                            }
+                            VenueTimeZoneField(
+                                timeZoneText = timeZoneText,
+                                onTimeZoneChange = {
+                                    timeZoneText = it
+                                    clearError(CreateField.TIME_ZONE)
+                                },
+                                enabled = !isLoading,
+                                timeZoneError = fieldErrors[CreateField.TIME_ZONE],
+                            )
                         }
                         CreateTab.BRANDING -> {
                             TournamentColorField(
@@ -697,113 +758,61 @@ fun CreateTournamentDialog(
                                 onError = { errorMessage = it },
                             )
                         }
-                        CreateTab.MATCH -> {
-                            MatchTimeFields(
-                                durationText = matchDurationText,
-                                onDurationChange = {
-                                    matchDurationText = it
-                                    clearError(CreateField.MATCH_DURATION)
-                                },
-                                timeZoneText = timeZoneText,
-                                onTimeZoneChange = {
-                                    timeZoneText = it
-                                    clearError(CreateField.TIME_ZONE)
-                                },
-                                finishHand = finishHandInPlay,
-                                onFinishHandChange = {
-                                    finishHandInPlay = it
-                                    clearError(CreateField.EXTRA_TIME)
-                                },
-                                extraMinutesText = matchExtraText,
-                                onExtraMinutesChange = {
-                                    matchExtraText = it
-                                    clearError(CreateField.EXTRA_TIME)
-                                },
-                                enabled = !isLoading,
-                                durationFocusRequester = matchDurationFocusRequester,
-                                durationError = fieldErrors[CreateField.MATCH_DURATION],
-                                timeZoneError = fieldErrors[CreateField.TIME_ZONE],
-                                extraMinutesError = fieldErrors[CreateField.EXTRA_TIME],
-                            )
-
-                            FocusHighlightContainer(
-                                modifier = Modifier.fillMaxWidth(),
-                                interactionSource = teamsToggleInteractionSource,
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    Switch(
-                                        checked = isTeams,
-                                        onCheckedChange = ::setTeamsChecked,
-                                        enabled = !isLoading,
-                                        interactionSource = teamsToggleInteractionSource,
-                                    )
-                                    Text(
-                                        text = "Teams",
-                                        modifier = Modifier.toggleable(
-                                            value = isTeams,
-                                            enabled = !isLoading,
-                                            role = Role.Switch,
-                                            interactionSource = teamsToggleInteractionSource,
-                                            indication = null,
-                                            onValueChange = ::setTeamsChecked,
-                                        ),
-                                    )
-                                    InfoTooltipIcon(
-                                        "Group players into teams of four. Team members will not play together.",
-                                    )
-                                }
-                            }
-
-                            TournamentOptionSwitch(
-                                label = "Best hands",
-                                description = "Count the best hands and show them in the ranking and the tournament screens.",
-                                checked = countBestHands,
-                                enabled = !isLoading,
-                                onCheckedChange = { countBestHands = it },
-                            )
-
-                            TournamentOptionSwitch(
-                                label = "Chicken hands",
-                                description = "Count the chicken hands and show them in the ranking and the tournament screens.",
-                                checked = countChickenHands,
-                                enabled = !isLoading,
-                                onCheckedChange = { countChickenHands = it },
-                            )
-
-                            FocusHighlightContainer(
-                                modifier = Modifier.fillMaxWidth(),
-                                interactionSource = computeToggleInteractionSource,
-                            ) {
-                                Row(
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    val isHeavy = computeMode == CreateTournamentPresenter.ComputeMode.HEAVY
-                                    Switch(
-                                        checked = isHeavy,
-                                        onCheckedChange = ::setHeavyCompute,
-                                        enabled = !isLoading,
-                                        interactionSource = computeToggleInteractionSource,
-                                    )
-                                    Text(
-                                        text = "Heavy computing",
-                                        modifier = Modifier.toggleable(
-                                            value = isHeavy,
-                                            enabled = !isLoading,
-                                            role = Role.Switch,
-                                            interactionSource = computeToggleInteractionSource,
-                                            indication = null,
-                                            onValueChange = ::setHeavyCompute,
-                                        ),
-                                    )
-                                    InfoTooltipIcon("Use more CPU to calculate the schedule faster.")
-                                }
-                            }
-                        }
                         CreateTab.SCHEDULE -> {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                OutlinedTextField(
+                                    value = eventStartDate,
+                                    onValueChange = {
+                                        eventStartDate = it.toDateInput()
+                                        eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
+                                        clearError(CreateField.START_DATE, CreateField.END_DATE)
+                                    },
+                                    label = { RequiredLabel("From") },
+                                    placeholder = { Text("DD/MM/YYYY") },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showDateRangePicker = true }) {
+                                            androidx.compose.material3.Icon(
+                                                Icons.Default.DateRange,
+                                                contentDescription = "Choose start date",
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).focusRequester(eventStartDateFocusRequester),
+                                    singleLine = true,
+                                    enabled = !isLoading,
+                                    isError = CreateField.START_DATE in fieldErrors,
+                                    supportingText = fieldErrors[CreateField.START_DATE]?.let { message -> { Text(message) } },
+                                )
+                                OutlinedTextField(
+                                    value = eventEndDate,
+                                    onValueChange = {
+                                        val newValue = it.toDateInput()
+                                        eventEndDate = when {
+                                            newValue.isEmpty() && eventStartDate.toIsoTournamentDateOrNull() != null -> eventStartDate
+                                            else -> adjustedEndDate(eventStartDate, newValue)
+                                        }
+                                        clearError(CreateField.START_DATE, CreateField.END_DATE)
+                                    },
+                                    label = { RequiredLabel("To") },
+                                    placeholder = { Text("DD/MM/YYYY") },
+                                    trailingIcon = {
+                                        IconButton(onClick = { showDateRangePicker = true }) {
+                                            androidx.compose.material3.Icon(
+                                                Icons.Default.DateRange,
+                                                contentDescription = "Choose end date",
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.weight(1f).focusRequester(eventEndDateFocusRequester),
+                                    singleLine = true,
+                                    enabled = !isLoading,
+                                    isError = CreateField.END_DATE in fieldErrors,
+                                    supportingText = fieldErrors[CreateField.END_DATE]?.let { message -> { Text(message) } },
+                                )
+                            }
                             TournamentScheduleEditor(
                                 roundRows = roundScheduleRows,
                                 onRoundRowsChange = { roundScheduleRows = it },

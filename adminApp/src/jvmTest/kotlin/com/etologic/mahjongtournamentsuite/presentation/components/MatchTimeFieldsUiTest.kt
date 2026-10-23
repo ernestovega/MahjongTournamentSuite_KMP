@@ -23,8 +23,6 @@ class MatchTimeFieldsUiTest {
                 MatchTimeFields(
                     durationText = "120",
                     onDurationChange = {},
-                    timeZoneText = "Europe/Madrid",
-                    onTimeZoneChange = {},
                     finishHand = finishHand,
                     onFinishHandChange = { finishHand = it },
                     extraMinutesText = "15",
@@ -35,7 +33,6 @@ class MatchTimeFieldsUiTest {
         }
 
         onNodeWithText("Match duration (minutes)").assertIsDisplayed()
-        onNodeWithText("Time zone").assertIsDisplayed()
         onNodeWithText("Extra time (minutes)").assertDoesNotExist()
 
         onNode(isToggleable()).performClick()
