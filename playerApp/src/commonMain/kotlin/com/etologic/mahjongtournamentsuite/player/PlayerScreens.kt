@@ -829,7 +829,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 view.myTables,
                                 if (view.mySlotId == null) {
                                     "Your account is not linked to a player of this tournament. " +
-                                        "Ask the organizers to send you an invitation. All tables are in the All tables tab."
+                                        "Ask the organizers to send you an invitation. All tables are in the All tab."
                                 } else {
                                     "The tables of the player show here when the organizers draw the round."
                                 },
