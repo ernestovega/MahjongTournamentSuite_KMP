@@ -9,12 +9,14 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,6 +50,21 @@ fun AppTopBarButton(
                 onClick()
             },
         )
+        return
+    }
+    if (!labelVisible) {
+        // An icon button has its own 12 dp padding and no outer halo, so the icon lines up with the 16 dp of the content.
+        IconButton(
+            onClick = onClick,
+            enabled = buttonEnabled,
+            modifier = if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
+        ) {
+            if (iconContent == null) {
+                Icon(imageVector = icon, contentDescription = text, tint = textColor)
+            } else {
+                iconContent()
+            }
+        }
         return
     }
     AppTextButton(
