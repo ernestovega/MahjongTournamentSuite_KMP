@@ -3,8 +3,13 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +32,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.action_close
+import mahjongtournamentsuite.ui.generated.resources.action_logout
 import mahjongtournamentsuite.ui.generated.resources.action_save
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
@@ -43,6 +49,7 @@ const val MAX_ALIAS_LENGTH = 60
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
+ * When [onSignOut] is set, the dialog shows a red Logout button at the left of the button row that calls it.
  */
 @Composable
 fun ProfileDialog(
@@ -52,6 +59,7 @@ fun ProfileDialog(
     onRemovePhoto: suspend () -> AppResult<UserProfile>,
     onSaved: (UserProfile) -> Unit,
     onDismiss: () -> Unit,
+    onSignOut: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     var alias by remember(profile.uid) { mutableStateOf(profile.alias) }
@@ -144,11 +152,21 @@ fun ProfileDialog(
                 }
             }
         },
+        // Logout is at the left of the button row. Close and Save are at the right.
         confirmButton = {
-            FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
-        },
-        dismissButton = {
-            FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                if (onSignOut != null) {
+                    FocusedTextButton(
+                        enabled = !saving,
+                        onClick = onSignOut,
+                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    ) { Text(stringResource(Res.string.action_logout)) }
+                }
+                Spacer(Modifier.weight(1f))
+                FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+                Spacer(Modifier.width(8.dp))
+                FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
+            }
         },
     )
 }

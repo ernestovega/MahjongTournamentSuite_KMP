@@ -27,6 +27,7 @@
     <string name="dialog_done_title">Hecho</string>
     <string name="action_save">Guardar</string>
     <string name="action_close">Cerrar</string>
+    <string name="action_logout">Cerrar sesión</string>
     <string name="profile_title">Perfil</string>
     <string name="profile_alias">Alias</string>
     <string name="profile_alias_hint">El nombre que las apps muestran para tu cuenta.</string>
@@ -295,4 +296,8 @@
     <string name="language_label">Idioma</string>
     <string name="language_system">Igual que el dispositivo</string>
     <string name="error_tournament_not_found">No se ha encontrado el torneo. Puede que lo hayan eliminado.</string>
+    <string name="action_back">Volver</string>
+    <string name="dropdown_show_all">Mostrar todas las opciones</string>
+    <string name="logo_of">Logotipo de %1$s</string>
+    <string name="app_version_label">App %1$s - Servidor %2$s</string>
 </resources>

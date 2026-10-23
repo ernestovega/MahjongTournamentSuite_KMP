@@ -89,6 +89,8 @@ fun TablesScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val playersByTournamentId by store.tournamentPlayers.collectAsState()
+    val tournaments by store.tournaments.collectAsState()
+    val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
     val roundsByTournamentId by store.tournamentRounds.collectAsState()
     val tablesByTournamentId by store.tournamentTables.collectAsState()
 
@@ -315,8 +317,10 @@ fun TablesScreen(
                                         val player = playersById[playerId]
                                         if (player == null) {
                                             playerId.toString()
-                                        } else {
+                                        } else if (isTeamsTournament) {
                                             "${player.id}(T${player.team})"
+                                        } else {
+                                            player.id.toString()
                                         }
                                     }
 

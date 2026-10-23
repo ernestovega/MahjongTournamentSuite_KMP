@@ -81,14 +81,9 @@
     <string name="tab_tables">Tables</string>
     <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Info</string>
-    <string name="tab_my_tables">My tables</string>
-    <string name="tab_all_tables">All tables</string>
-    <string name="tables_not_linked">Your account is not linked to a player of this tournament. Ask the organizers to send you an invitation. All tables are in the All tables tab.</string>
+    <string name="tables_not_linked">Your account is not linked to a player of this tournament. Ask the organizers to send you an invitation. All tables are in the All tab.</string>
     <string name="tables_mine_empty">The tables of the player show here when the organizers draw the round.</string>
     <string name="tables_all_empty">The tables show here when the organizers draw the first round.</string>
-    <string name="progress_rounds">%1$d of %2$d rounds</string>
-    <string name="progress_tables">%1$d of %2$d tables</string>
-    <string name="progress_ongoing">%1$d ongoing</string>
     <string name="tables_empty_title">No tables yet</string>
     <string name="table_n">Table %1$d</string>
     <string name="table_hands_done">%1$d/%2$d hands</string>
@@ -167,4 +162,13 @@
     <string name="changed_call_staff">You can call a staff member to check the table, or close this window and go on.</string>
     <string name="changed_close">Close and continue</string>
     <string name="scope_table">Table</string>
+    <string name="tab_tables_me">Me</string>
+    <string name="tab_tables_team">My team</string>
+    <string name="tab_tables_all">All</string>
+    <string name="tables_team_empty">The tables of the members of your team show here when the organizers draw the round.</string>
+    <string name="progress_title">Progress</string>
+    <string name="progress_rounds_label">Rounds</string>
+    <string name="progress_tables_label">Tables</string>
+    <string name="progress_ongoing_label">Ongoing</string>
+    <string name="tab_stats">Stats</string>
 </resources>

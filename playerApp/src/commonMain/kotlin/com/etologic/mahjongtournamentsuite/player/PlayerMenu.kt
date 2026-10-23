@@ -1,90 +1,106 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.menu_profile
+import org.jetbrains.compose.resources.stringResource
+import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
+import org.koin.compose.koinInject
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
-import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import kotlinx.coroutines.launch
-import mahjongtournamentsuite.playerapp.generated.resources.Res
-import mahjongtournamentsuite.playerapp.generated.resources.menu_profile
-import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_out
-import mahjongtournamentsuite.playerapp.generated.resources.menu_statistics
-import org.jetbrains.compose.resources.stringResource
 
 /** The top bar button that switches the theme. It shows the icon of the current preference. */
 @Composable
 fun ThemeAction() {
     val theme = LocalThemeController.current
-    IconButton(onClick = theme.onTogglePreference) {
-        Icon(
-            theme.preference.icon,
-            contentDescription = theme.preference.contentDescription,
-            tint = Color.White,
-        )
-    }
+    AppTopBarButton(
+        text = theme.preference.contentDescription,
+        icon = theme.preference.icon,
+        onClick = theme.onTogglePreference,
+    )
 }
 
-/** The top bar button that signs the player out. It sits on the left of the top bar. */
-@Composable
-fun SignOutAction(onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = stringResource(Res.string.menu_sign_out), tint = Color.White)
-    }
-}
+/**
+ * The Exit and Profile buttons and their dialogs. The screen owns the state, so the dialogs stay open
+ * when the top bar buttons are inside a three-dots menu that closes.
+ */
+class AccountActions(
+    private val session: PlayerSessionPresenter,
+    private val navController: NavHostController,
+    private val scope: CoroutineScope,
+) {
+    private var profile by mutableStateOf<UserProfile?>(null)
+    private var error by mutableStateOf<UiText?>(null)
+    private var confirmingSignOut by mutableStateOf(false)
 
-/** The top bar button that opens the statistics of the screen. */
-@Composable
-fun StatisticsAction(onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(StatisticsIcon, contentDescription = stringResource(Res.string.menu_statistics), tint = Color.White)
-    }
-}
-
-/** The top bar button that opens the profile of the player. In the profile the player can change the alias. */
-@Composable
-fun ProfileAction(session: PlayerSessionPresenter) {
-    val scope = rememberCoroutineScope()
-    var profile by remember { mutableStateOf<UserProfile?>(null) }
-    var error by remember { mutableStateOf<UiText?>(null) }
-    IconButton(
-        onClick = {
-            scope.launch {
-                when (val result = session.loadProfile()) {
-                    is AppResult.Success -> profile = result.value
-                    is AppResult.Failure -> error = result.error.toUiText()
-                }
+    private fun openProfile() {
+        scope.launch {
+            when (val result = session.loadProfile()) {
+                is AppResult.Success -> profile = result.value
+                is AppResult.Failure -> error = result.error.toUiText()
             }
-        },
-    ) {
-        Icon(Icons.Default.Person, contentDescription = stringResource(Res.string.menu_profile), tint = Color.White)
+        }
     }
-    profile?.let { current ->
-        ProfileDialog(
-            profile = current,
-            onSaveAlias = session::updateAlias,
-            onSavePhoto = session::updatePhoto,
-            onRemovePhoto = session::removePhoto,
-            onSaved = { profile = it },
-            onDismiss = { profile = null },
-        )
+
+    /** The Profile button left of the title. The Exit button is inside the profile dialog. */
+    @Composable
+    fun Buttons() {
+        AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
     }
-    error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
+
+    @Composable
+    fun Dialogs() {
+        if (confirmingSignOut) {
+            SignOutConfirmDialog(
+                onConfirm = {
+                    confirmingSignOut = false
+                    scope.launch {
+                        session.signOut()
+                        navController.navigate(SignInRoute()) { popUpTo(0) }
+                    }
+                },
+                onDismiss = { confirmingSignOut = false },
+            )
+        }
+        profile?.let { current ->
+            ProfileDialog(
+                profile = current,
+                onSaveAlias = session::updateAlias,
+                onSavePhoto = session::updatePhoto,
+                onRemovePhoto = session::removePhoto,
+                onSaved = { profile = it },
+                onDismiss = { profile = null },
+                onSignOut = {
+                    profile = null
+                    confirmingSignOut = true
+                },
+            )
+        }
+        error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
+    }
+}
+
+@Composable
+fun rememberAccountActions(navController: NavHostController): AccountActions {
+    val session = koinInject<PlayerSessionPresenter>()
+    val scope = rememberCoroutineScope()
+    return remember(session, navController, scope) { AccountActions(session, navController, scope) }
 }

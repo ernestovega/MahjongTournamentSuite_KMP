@@ -195,7 +195,10 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         StatisticsScope.PLAYER -> shown?.names?.get(chosenSlotId ?: mySlotId) ?: stringResource(Res.string.scope_player)
     }
 
+    val account = rememberAccountActions(navController)
+    account.Dialogs()
     AppScaffold(
+        rootLeadingActions = { account.Buttons() },
         title = title,
         subtitle = stringResource(Res.string.stats_title),
         isLoading = !finished && message == null,
@@ -378,6 +381,47 @@ fun TournamentStatisticsTab(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * The statistics of one player in one tournament. The player screen shows it in its Stats tab.
+ * [onLoadingChange] tells the screen when the data loads, so the progress bar stays until the content shows.
+ */
+@Composable
+fun PlayerSlotStatisticsTab(
+    tournamentId: String,
+    slotId: Int,
+    onLoadingChange: (Boolean) -> Unit = {},
+) {
+    val presenter = koinInject<PlayerStatisticsPresenter>()
+    var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
+    var message by remember(tournamentId) { mutableStateOf<UiText?>(null) }
+    LaunchedEffect(tournamentId) {
+        when (val result = presenter.tournament(tournamentId)) {
+            is AppResult.Success -> data = result.value
+            is AppResult.Failure -> message = result.error.toUiText()
+        }
+    }
+    ReportLoading(data == null && message == null, onLoadingChange)
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("player-statistics-$slotId"))
+            .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        val loaded = data ?: return@Column
+        val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
+        if (stats == null) {
+            AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
+        } else {
+            PlayerStatisticsPanel(
+                stats,
+                header = loaded.profiles[slotId]?.let { profile -> { PlayerStatisticsHeader(profile) } },
+                tournaments = listOf(loaded.tournament),
+                rivalNames = loaded.rivalNames,
+            )
         }
     }
 }

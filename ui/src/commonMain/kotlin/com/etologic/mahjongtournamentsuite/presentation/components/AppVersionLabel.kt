@@ -7,6 +7,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.app_version_label
+import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AppVersionLabel(
@@ -14,7 +17,7 @@ fun AppVersionLabel(
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = "App ${AppVersion.name} - Backend ${backendVersion ?: "…"}",
+        text = stringResource(Res.string.app_version_label, AppVersion.name, backendVersion ?: "…"),
         modifier = modifier.padding(8.dp),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),

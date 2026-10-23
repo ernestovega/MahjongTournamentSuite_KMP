@@ -30,6 +30,8 @@ data class PlayerEntry(
     val country: String,
     /** Set when a substitute plays for this person from a round on. Statistics ignore those rounds. */
     val substitution: PlayerSubstitution? = null,
+    /** Team id of the person. Zero for a tournament without teams. */
+    val team: Int = 0,
 )
 
 data class PlayerTable(
@@ -62,6 +64,15 @@ data class PlayerTable(
     /** The players of the table: the seats when they are set, otherwise the players of the draw. */
     fun playerSlots(): List<Int> = if (seatsAssigned) seatIds().filterNotNull() else table.playerIds
 }
+
+/** How far the tournament is. */
+data class TournamentProgress(
+    val completedRounds: Int,
+    val totalRounds: Int,
+    val completedTables: Int,
+    val totalTables: Int,
+    val ongoingTables: Int,
+)
 
 /** Everything the player screens show for one tournament. */
 data class PlayerTournamentView(
@@ -112,6 +123,36 @@ data class PlayerTournamentView(
 
     val myTables: List<PlayerTable>
         get() = mySlotId?.let { id -> tables.filter { id in it.playerSlots() } }.orEmpty()
+
+    /** The rounds and tables that are finished, and the tables that are ongoing. */
+    val progress: TournamentProgress
+        get() {
+            val rounds = tournament.numRounds
+            val tablesPerRound = tournament.numPlayers / 4
+            return TournamentProgress(
+                completedRounds = (1..rounds).count { round ->
+                    tablesPerRound > 0 && tables.count { it.roundId == round && it.isComplete } >= tablesPerRound
+                },
+                totalRounds = rounds,
+                completedTables = tables.count { it.isComplete },
+                totalTables = rounds * tablesPerRound,
+                ongoingTables = tables.count { !it.isComplete && it.doneHands > 0 },
+            )
+        }
+
+    /** The tables where a member of my team sits. Empty for a tournament without teams. */
+    val teamTables: List<PlayerTable>
+        get() {
+            val myTeam = mySlotId?.let { players[it]?.team }?.takeIf { tournament.isTeams && it > 0 } ?: return emptyList()
+            return tables.filter { table -> table.playerSlots().any { players[it]?.team == myTeam } }
+        }
+
+    /** True when the person is another member of my team. False for me and in a tournament without teams. */
+    fun isTeammate(slotId: Int?): Boolean {
+        if (slotId == null || slotId == mySlotId || !tournament.isTeams) return false
+        val myTeam = mySlotId?.let { players[it]?.team }?.takeIf { it > 0 } ?: return false
+        return players[slotId]?.team == myTeam
+    }
 
     fun nameOf(slotId: Int?): String = slotId?.let { players[it]?.name }?.let(PlaceholderNames::localize) ?: "-"
 
@@ -175,6 +216,7 @@ fun buildPlayerTournamentView(
             firstName = (registered?.firstName ?: slot.nonMember?.firstName)?.trim()?.takeIf { it.isNotEmpty() }?.uppercase() ?: name,
             country = registered?.country ?: slot.nonMember?.country.orEmpty(),
             substitution = slot.substitution,
+            team = slot.team,
         )
     }
     val mySlot = myEmaId?.let { ema -> slots.firstOrNull { it.assignedEmaId == ema }?.id }

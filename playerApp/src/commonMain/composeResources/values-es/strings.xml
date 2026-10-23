@@ -81,14 +81,9 @@
     <string name="tab_tables">Mesas</string>
     <string name="tab_ranking">Clasificación</string>
     <string name="tab_info">Info</string>
-    <string name="tab_my_tables">Mis mesas</string>
-    <string name="tab_all_tables">Todas las mesas</string>
-    <string name="tables_not_linked">Tu cuenta no está vinculada a un jugador de este torneo. Pide a los organizadores que te envíen una invitación. Todas las mesas están en la pestaña Todas las mesas.</string>
+    <string name="tables_not_linked">Tu cuenta no está vinculada a un jugador de este torneo. Pide a los organizadores que te envíen una invitación. Todas las mesas están en la pestaña Todas.</string>
     <string name="tables_mine_empty">Las mesas del jugador aparecen aquí cuando los organizadores sortean la ronda.</string>
     <string name="tables_all_empty">Las mesas aparecen aquí cuando los organizadores sortean la primera ronda.</string>
-    <string name="progress_rounds">%1$d de %2$d rondas</string>
-    <string name="progress_tables">%1$d de %2$d mesas</string>
-    <string name="progress_ongoing">%1$d en curso</string>
     <string name="tables_empty_title">Aún no hay mesas</string>
     <string name="table_n">Mesa %1$d</string>
     <string name="table_hands_done">%1$d/%2$d manos</string>
@@ -167,4 +162,13 @@
     <string name="changed_call_staff">Puedes llamar a un miembro del personal para que compruebe la mesa, o cerrar esta ventana y seguir.</string>
     <string name="changed_close">Cerrar y continuar</string>
     <string name="scope_table">Mesa</string>
+    <string name="tab_tables_me">Yo</string>
+    <string name="tab_tables_team">Mi equipo</string>
+    <string name="tab_tables_all">Todas</string>
+    <string name="tables_team_empty">Las mesas de los miembros de tu equipo se muestran aquí cuando la organización sortea la ronda.</string>
+    <string name="progress_title">Progreso</string>
+    <string name="progress_rounds_label">Rondas</string>
+    <string name="progress_tables_label">Mesas</string>
+    <string name="progress_ongoing_label">En curso</string>
+    <string name="tab_stats">Estadísticas</string>
 </resources>

@@ -44,9 +44,10 @@ class SpanishScreensUiTest {
     fun theProfileDialogIsInSpanish() = runComposeUiTest {
         val profile = UserProfile(uid = "u1", email = "ada@example.test", alias = "Ada", emaId = "10001")
         show("es") {
-            ProfileDialog(profile, onSaveAlias = { error("unused") }, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaved = {}, onDismiss = {})
+            ProfileDialog(profile, onSaveAlias = { error("unused") }, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaved = {}, onDismiss = {}, onSignOut = {})
         }
         awaitText("Perfil")
+        onNodeWithText("Cerrar sesión").assertExists()
         onNodeWithText("Número EMA").assertExists()
         onNodeWithText("Correo electrónico").assertExists()
         onNodeWithText("Guardar").assertExists()

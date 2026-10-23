@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import mahjongtournamentsuite.ui.generated.resources.logo_of
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -26,6 +27,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -405,7 +407,7 @@ fun TournamentStatisticsHeader(
         } else {
             AsyncImage(
                 model = tournament.associationLogoUrl,
-                contentDescription = "Logo of ${tournament.name}",
+                contentDescription = stringResource(Res.string.logo_of, tournament.name),
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.size(HeaderImageSize).clip(shape),
             )
@@ -445,12 +447,14 @@ fun <K> SearchableDropdownField(
     selected: K?,
     onChoose: (K) -> Unit,
     modifier: Modifier = Modifier,
-    /** A field of 40 dp height with the label as placeholder. The standard outlined field is 56 dp high. */
+    /** A field of 40 dp height with a magnifier icon as placeholder. The standard outlined field is 56 dp high. */
     compact: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
     // Null while the user does not type. Then the field shows the chosen option.
     var query by remember { mutableStateOf<String?>(null) }
+    // The menu shows all options until the user taps the text or types. Then it shows the matching options.
+    var filtering by remember { mutableStateOf(false) }
     val selectedLabel = options.firstOrNull { it.first == selected }?.second ?: ""
     // The whole text is selected when the field gets the focus, so it is easy to delete.
     var selection by remember { mutableStateOf(TextRange.Zero) }
@@ -458,15 +462,29 @@ fun <K> SearchableDropdownField(
     val currentText = query ?: selectedLabel
     val fieldValue = TextFieldValue(currentText, selection.coerceIn(0, currentText.length))
     val onFieldChange: (TextFieldValue) -> Unit = { new ->
-        if (selectAllPending && new.text == currentText) {
-            // The tap that gave the focus sets the cursor. Keep the selection of the whole text.
-            selectAllPending = false
+        if (new.text == currentText) {
+            // A tap sets the cursor. Keep the selection of the whole text after the first tap.
+            if (selectAllPending) selectAllPending = false else selection = new.selection
         } else {
             selectAllPending = false
             selection = new.selection
             query = new.text
+            filtering = true
             expanded = true
         }
+    }
+    val onTextClick: () -> Unit = {
+        if (query == null) {
+            selection = TextRange(0, currentText.length)
+            selectAllPending = true
+        }
+        filtering = true
+        expanded = true
+    }
+    val onArrowClick: () -> Unit = {
+        query = null
+        filtering = false
+        expanded = !expanded
     }
     val onFocus: (FocusState) -> Unit = { state ->
         if (state.isFocused) {
@@ -476,14 +494,16 @@ fun <K> SearchableDropdownField(
             selectAllPending = false
         }
     }
-    val shown = remember(query, options) {
-        val text = query?.trim().orEmpty()
+    val shown = remember(query, filtering, options, selectedLabel) {
+        val text = if (filtering) (query ?: selectedLabel).trim() else ""
         (if (text.isEmpty()) options else options.filter { it.second.matchesSearch(text) }).take(MAX_DROPDOWN_OPTIONS)
     }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }, modifier = modifier) {
+    // The box ignores its own toggle. The arrow and the text decide when the menu opens.
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = {}, modifier = modifier) {
         if (compact) {
             val interactionSource = remember { MutableInteractionSource() }
             val text = query ?: selectedLabel
+            OnFieldTextClick(interactionSource, onTextClick)
             BasicTextField(
                 value = fieldValue,
                 onValueChange = onFieldChange,
@@ -500,26 +520,29 @@ fun <K> SearchableDropdownField(
                         singleLine = true,
                         visualTransformation = VisualTransformation.None,
                         interactionSource = interactionSource,
-                        placeholder = { Text(label) },
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                        placeholder = { Icon(Icons.Default.Search, contentDescription = label, modifier = Modifier.size(20.dp)) },
+                        trailingIcon = { DropdownArrow(expanded, onClick = onArrowClick) },
                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
                     )
                 },
             )
         } else {
+            val interactionSource = remember { MutableInteractionSource() }
+            OnFieldTextClick(interactionSource, onTextClick)
             OutlinedTextField(
                 value = fieldValue,
                 onValueChange = onFieldChange,
                 singleLine = true,
                 label = { Text(label) },
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+                trailingIcon = { DropdownArrow(expanded, onClick = onArrowClick) },
+                interactionSource = interactionSource,
                 modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth().onFocusChanged(onFocus),
             )
         }
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false; query = null }) {
+        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false; query = null; filtering = false }) {
             if (shown.isEmpty()) DropdownMenuItem(text = { Text(stringResource(Res.string.dropdown_no_match)) }, onClick = {}, enabled = false)
             shown.forEach { (key, name) ->
-                DropdownMenuItem(text = { Text(name) }, onClick = { expanded = false; query = null; onChoose(key) })
+                DropdownMenuItem(text = { Text(name) }, onClick = { expanded = false; query = null; filtering = false; onChoose(key) })
             }
         }
     }
@@ -536,5 +559,5 @@ fun PlayerDropdownField(
     modifier: Modifier = Modifier,
 ) {
     val options = remember(names) { names.entries.sortedBy { it.value }.map { it.key to it.value } }
-    SearchableDropdownField("Player", options, selectedId, onChoose, modifier)
+    SearchableDropdownField(stringResource(Res.string.column_player), options, selectedId, onChoose, modifier)
 }

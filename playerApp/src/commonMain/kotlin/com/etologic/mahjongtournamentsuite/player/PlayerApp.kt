@@ -22,6 +22,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUse
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
@@ -104,6 +105,7 @@ fun PlayerApp(
             LocalThemeController provides themeController,
             LocalScrollPositionStore provides remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } },
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
+            LocalAdaptiveTopBar provides true,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value
             },
