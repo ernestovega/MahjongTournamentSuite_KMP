@@ -26,6 +26,7 @@ import androidx.compose.material.icons.filled.Place
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -181,7 +182,8 @@ private fun ContactCard(email: String) {
         TextButton(onClick = { uriHandler.openUri("mailto:$email") }) {
             Icon(Icons.Default.Email, contentDescription = null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
-            Text(email)
+            // The app font has no @ sign, so the email uses the system font.
+            Text(email, fontFamily = FontFamily.Default)
         }
     }
 }
