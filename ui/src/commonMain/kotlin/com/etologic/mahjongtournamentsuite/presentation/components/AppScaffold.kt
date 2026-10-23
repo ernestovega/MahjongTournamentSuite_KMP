@@ -75,8 +75,11 @@ fun AppScaffold(
     onBack: (() -> Unit)? = null,
     navigationIcon: @Composable (() -> Unit)? = null,
     leadingActions: @Composable (() -> Unit)? = null,
-    /** Left of the title, after the back button. These buttons never go into the three-dots menu. */
-    pinnedLeadingActions: @Composable (() -> Unit)? = null,
+    /**
+     * Left of the title, after the back button. On a narrow screen they go into the three-dots menu
+     * when the back button is present, and they stay visible when it is not.
+     */
+    rootLeadingActions: @Composable (() -> Unit)? = null,
     actions: @Composable (() -> Unit)? = null,
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
@@ -159,9 +162,9 @@ fun AppScaffold(
                                 leadingActions()
                             }
                         }
-                        if (pinnedLeadingActions != null) {
+                        if (rootLeadingActions != null) {
                             CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                pinnedLeadingActions()
+                                rootLeadingActions()
                             }
                         }
                     }
@@ -195,23 +198,24 @@ fun AppScaffold(
                         CenterAlignedTopAppBar(
                             title = titleContent,
                             navigationIcon = {
-                                Row(
-                                    modifier = Modifier.padding(start = AppTopBarSidePadding),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    if (onBack != null && navigationIcon == null) {
+                                val hasBack = onBack != null && navigationIcon == null
+                                // The root actions are in the menu when the back button is present.
+                                val rootInMenu = hasBack && rootLeadingActions != null
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    if (hasBack) {
                                         // The buttons are collapsed, so the back button drops its label.
-                                        AppBackButton(onClick = onBack, showLabel = false)
+                                        AppBackButton(onClick = onBack!!, showLabel = false)
                                     }
-                                    if (navigationIcon != null || leadingActions != null) {
+                                    if (navigationIcon != null || leadingActions != null || rootInMenu) {
                                         TopBarOverflowMenu(isLoading) {
                                             navigationIcon?.invoke()
                                             leadingActions?.invoke()
+                                            if (rootInMenu) rootLeadingActions?.invoke()
                                         }
                                     }
-                                    if (pinnedLeadingActions != null) {
+                                    if (rootLeadingActions != null && !rootInMenu) {
                                         CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                            pinnedLeadingActions()
+                                            rootLeadingActions()
                                         }
                                     }
                                 }
