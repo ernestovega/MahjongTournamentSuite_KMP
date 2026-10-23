@@ -815,9 +815,9 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                             ) {
                                 tablesTabs.forEachIndexed { index, id ->
                                     val title = when (id) {
-                                        0 -> "My tables"
-                                        2 -> "My team tables"
-                                        else -> "All tables"
+                                        0 -> "Me"
+                                        2 -> "My team"
+                                        else -> "All"
                                     }
                                     CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = id }, title = title)
                                 }
