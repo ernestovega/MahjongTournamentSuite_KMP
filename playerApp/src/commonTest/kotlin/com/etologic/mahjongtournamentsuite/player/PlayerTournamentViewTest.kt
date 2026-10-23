@@ -98,6 +98,9 @@ class PlayerTournamentViewTest {
         )
 
         assertEquals(listOf(1, 2), view.teamTables.map { it.tableId })
+        assertEquals(true, view.isTeammate(3))
+        assertEquals(false, view.isTeammate(1))
+        assertEquals(false, view.isTeammate(2))
     }
 
     @Test

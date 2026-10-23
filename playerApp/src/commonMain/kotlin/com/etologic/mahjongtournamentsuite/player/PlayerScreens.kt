@@ -1051,10 +1051,18 @@ private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hig
             }
             seats.forEachIndexed { position, seat ->
                 val highlighted = seat.slotId != null && seat.slotId == highlightSlot
+                val teammate = !highlighted && view.isTeammate(seat.slotId)
                 Row(
                     Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(10.dp))
-                        .background(if (highlighted) colors.primaryContainer.copy(alpha = 0.45f) else Color.Transparent)
+                        .background(
+                            when {
+                                highlighted -> colors.primaryContainer.copy(alpha = 0.45f)
+                                // A darker tone of the same green marks the other members of my team.
+                                teammate -> colors.onPrimaryContainer.copy(alpha = 0.2f)
+                                else -> Color.Transparent
+                            },
+                        )
                         .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(10.dp),

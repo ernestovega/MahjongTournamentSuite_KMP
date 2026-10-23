@@ -121,6 +121,13 @@ data class PlayerTournamentView(
             return tables.filter { table -> table.playerSlots().any { players[it]?.team == myTeam } }
         }
 
+    /** True when the person is another member of my team. False for me and in a tournament without teams. */
+    fun isTeammate(slotId: Int?): Boolean {
+        if (slotId == null || slotId == mySlotId || !tournament.isTeams) return false
+        val myTeam = mySlotId?.let { players[it]?.team }?.takeIf { it > 0 } ?: return false
+        return players[slotId]?.team == myTeam
+    }
+
     fun nameOf(slotId: Int?): String = slotId?.let { players[it]?.name } ?: "-"
 
     /** The first name of a player, without the surname. */
