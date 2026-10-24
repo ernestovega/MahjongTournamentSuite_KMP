@@ -68,7 +68,7 @@ kotlin {
             implementation(libs.compose.ui.test.junit4.desktop)
         }
         wasmJsMain.dependencies {
-            implementation(npm("@js-joda/timezone", "2.3.0"))
+            implementation(npm("@js-joda/timezone", "3.1.0"))
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
