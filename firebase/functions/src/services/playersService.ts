@@ -4,7 +4,7 @@ import { randomUUID } from "node:crypto";
 import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { normalizePlayerNamePart } from "./playerName";
-import { bumpGlobalDataVersion } from "./dataVersionsService";
+import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 
 /** Firestore collection for EMA registry records. Never use this for tournament player slots. */
 export const EMA_PLAYER_REGISTRY_COLLECTION = "emaPlayerRegistry";
@@ -124,8 +124,24 @@ export async function updatePlayer(params: {
   const { name: _legacyName, ...retainedData } = previousData;
   batch.create(targetRef, { ...retainedData, ...update });
   batch.delete(previousRef);
-  references.docs.forEach((reference) => batch.update(reference.ref, { assignedEmaId: params.emaId, updatedAt: FieldValue.serverTimestamp() }));
+  // Every tournament keeps a map from EMA number to slot. It must follow the new number, or the same
+  // person could be assigned twice, and clearing the slot would leave the old entry behind.
+  const tournamentIds = new Set<string>();
+  references.docs.forEach((reference) => {
+    batch.update(reference.ref, { assignedEmaId: params.emaId, updatedAt: FieldValue.serverTimestamp() });
+    const tournament = reference.ref.parent.parent;
+    if (tournament == null) return;
+    tournamentIds.add(tournament.id);
+    const assignments = tournament.collection("emaPlayerAssignments");
+    batch.delete(assignments.doc(params.previousEmaId));
+    batch.set(assignments.doc(params.emaId), {
+      playerId: Number(reference.get("id") ?? reference.id),
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
   await batch.commit();
+  // Clients keep the slots in a cache until the revision of the players changes.
+  await Promise.all([...tournamentIds].map((id) => bumpTournamentDataVersion(id, "players")));
   await bumpGlobalDataVersion("emaPlayers");
 }
 
