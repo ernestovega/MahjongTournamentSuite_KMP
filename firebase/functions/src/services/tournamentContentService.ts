@@ -98,10 +98,18 @@ export type TournamentTable = {
   chickenHandCount: number;
 };
 
-export async function listTournamentPlayers(tournamentId: string): Promise<TournamentPlayer[]> {
+/**
+ * Lists the slots of a tournament. Pending invitations belong to the person, so by default every slot of a person
+ * with an invitation shows it. That needs a read of all pending invitations. Pass `withInvitations: false` when
+ * the caller needs only the slots, for example to assign players in a batch.
+ */
+export async function listTournamentPlayers(
+  tournamentId: string,
+  options: { withInvitations?: boolean } = {},
+): Promise<TournamentPlayer[]> {
   const [snap, pending] = await Promise.all([
     db.collection("tournaments").doc(tournamentId).collection("players").get(),
-    listPendingInvitations(),
+    options.withInvitations === false ? Promise.resolve([]) : listPendingInvitations(),
   ]);
   const inviteByEmaId = new Map(pending.map((item) => [item.emaId, item]));
   return snap.docs

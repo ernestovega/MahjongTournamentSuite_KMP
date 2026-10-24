@@ -17,6 +17,16 @@ export function errorHandler(
     return;
   }
 
+  // The body parser reports a bad or too large body with a status of its own. It is the fault of the caller.
+  const status = (err as { status?: unknown } | null)?.status;
+  if (typeof status === "number" && status >= 400 && status < 500 && (err as { type?: unknown }).type !== undefined) {
+    res.status(status).json({
+      error: status === 413 ? "payload_too_large" : "bad_request",
+      message: status === 413 ? "The request is too large" : "The request body is not valid",
+    });
+    return;
+  }
+
   console.error(err);
 
   res.status(500).json({

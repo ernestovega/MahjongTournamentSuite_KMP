@@ -47,6 +47,19 @@ describe("player import routes", () => {
     assert.equal((await db.doc(`tournaments/${tournamentId}/players/1`).get()).get("assignedEmaId"), null);
   });
 
+  it("sends no-store and nosniff headers and refuses a body that is not JSON", async () => {
+    const response = await fetch(`${server.baseUrl}/tournaments/${tournamentId}/player-import/preview`, {
+      method: "POST",
+      headers: { authorization: `Bearer ${editor.token}`, "content-type": "application/json" },
+      body: "{not json",
+    });
+
+    assert.equal(response.status, 400);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+    assert.equal(response.headers.get("x-powered-by"), null);
+  });
+
   it("refuses a request without a file or with a file that is not a table", async () => {
     assert.equal((await preview(editor.token, {})).status, 400);
     assert.equal((await preview(editor.token, file("name,email\nAna,a@b.es"))).status, 400);

@@ -3,6 +3,7 @@ import test from "node:test";
 
 import {
   cellText,
+  declaredUnpackedBytes,
   parseCsv,
   parsePlayerImportFile,
   planPlayerImport,
@@ -219,4 +220,36 @@ test("an EMA number held by a slot outside the file blocks the row", () => {
   });
   assert.deepEqual(codes(result, 0), ["EMA_ASSIGNED_ELSEWHERE"]);
   assert.deepEqual(result.rows[0].issues[0].args, ["1"]);
+});
+
+test("declaredUnpackedBytes adds the sizes of a real xlsx and refuses text", async () => {
+  const ExcelJS = await import("exceljs");
+  const workbook = new ExcelJS.Workbook();
+  workbook.addWorksheet("A").addRow(["id", "ema id"]);
+  const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+
+  const total = declaredUnpackedBytes(buffer);
+
+  assert.ok(total != null && total > 0 && total < 1_000_000);
+  assert.equal(declaredUnpackedBytes(Buffer.from("not a zip file at all")), null);
+});
+
+test("an Excel file that claims a huge sheet is refused before it is read cell by cell", async () => {
+  const ExcelJS = await import("exceljs");
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("A");
+  sheet.addRow(["id", "ema id"]);
+  sheet.getCell("A6000").value = "1";
+  const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+
+  await assert.rejects(parsePlayerImportFile("big.xlsx", buffer), /too large/);
+});
+
+test("an Excel file with too many columns is refused", async () => {
+  const ExcelJS = await import("exceljs");
+  const workbook = new ExcelJS.Workbook();
+  workbook.addWorksheet("A").getCell("AZ1").value = "x";
+  const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+
+  await assert.rejects(parsePlayerImportFile("wide.xlsx", buffer), /too large/);
 });

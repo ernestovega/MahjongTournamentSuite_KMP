@@ -69,13 +69,15 @@ async function load(params: {
   fileName: string;
   buffer: Buffer;
   replaceExisting: boolean;
+  /** False for the steps that only assign players. They need no invitation data. */
+  withInvitations?: boolean;
 }): Promise<Loaded> {
   const tournament = await db.collection("tournaments").doc(params.tournamentId).get();
   if (!tournament.exists) throw notFound("Tournament not found");
   const isTeams = tournament.get("isTeams") === true;
   const parsed = await parsePlayerImportFile(params.fileName, params.buffer);
   const [players, teams] = await Promise.all([
-    listTournamentPlayers(params.tournamentId),
+    listTournamentPlayers(params.tournamentId, { withInvitations: params.withInvitations }),
     listTournamentTeams(params.tournamentId),
   ]);
   const emaIds = [...new Set(parsed.rows.map((row) => normalizeEmaId(row.emaId)).filter((id): id is string => id != null))];
@@ -146,7 +148,7 @@ export async function applyPlayerImport(params: {
   /** Lines of the file for ASSIGN. */
   rows?: number[];
 }): Promise<PlayerImportResult> {
-  const { plan, players } = await load(params);
+  const { plan, players } = await load({ ...params, withInvitations: params.phase === "FINISH" });
   const slots = new Map(players.map((player) => [player.id, player]));
   const result: PlayerImportResult = { assigned: 0, emailsSaved: 0, teamsRenamed: 0, skipped: 0, failures: [] };
   const fail = (row: PlannedRow, error: unknown) => {

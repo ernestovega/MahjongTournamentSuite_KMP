@@ -20,6 +20,11 @@ export type ParsedImport = {
 };
 
 export const MAX_IMPORT_ROWS = 1000;
+/** A sheet can claim a million rows and 16 000 columns. The import reads only a sheet of a sensible size. */
+const MAX_SHEET_ROWS = 5000;
+const MAX_SHEET_COLUMNS = 40;
+/** A zip file can hold much more data than its size says. The import refuses a file that unpacks to more than this. */
+const MAX_UNPACKED_BYTES = 30 * 1024 * 1024;
 export const MAX_TEAM_NAME_LENGTH = 80;
 
 const HEADER_ALIASES: Record<"id" | "emaId" | "email" | "team", string[]> = {
@@ -109,7 +114,33 @@ export function cellText(value: unknown): string {
   return "";
 }
 
+/** Adds the unpacked sizes that the central directory of a zip file declares. Returns null for a broken file. */
+export function declaredUnpackedBytes(buffer: Buffer): number | null {
+  // The end record is in the last 64 KiB: signature 0x06054b50, entry count at 10, directory offset at 16.
+  const from = Math.max(0, buffer.length - 22 - 0xffff);
+  let end = -1;
+  for (let index = buffer.length - 22; index >= from; index--) {
+    if (buffer.readUInt32LE(index) === 0x06054b50) {
+      end = index;
+      break;
+    }
+  }
+  if (end < 0) return null;
+  const entries = buffer.readUInt16LE(end + 10);
+  let offset = buffer.readUInt32LE(end + 16);
+  let total = 0;
+  for (let entry = 0; entry < entries; entry++) {
+    if (offset + 46 > buffer.length || buffer.readUInt32LE(offset) !== 0x02014b50) return null;
+    total += buffer.readUInt32LE(offset + 24);
+    offset += 46 + buffer.readUInt16LE(offset + 28) + buffer.readUInt16LE(offset + 30) + buffer.readUInt16LE(offset + 32);
+  }
+  return total;
+}
+
 async function readXlsx(buffer: Buffer): Promise<string[][]> {
+  const unpacked = declaredUnpackedBytes(buffer);
+  if (unpacked == null) throw badRequest("The file is not a valid Excel file");
+  if (unpacked > MAX_UNPACKED_BYTES) throw badRequest("The Excel file is too large");
   const workbook = new ExcelJS.Workbook();
   try {
     await workbook.xlsx.load(buffer as unknown as ExcelJS.Buffer);
@@ -118,6 +149,9 @@ async function readXlsx(buffer: Buffer): Promise<string[][]> {
   }
   const sheet = workbook.worksheets[0];
   if (sheet == null) throw badRequest("The Excel file has no sheet");
+  if (sheet.rowCount > MAX_SHEET_ROWS || sheet.columnCount > MAX_SHEET_COLUMNS) {
+    throw badRequest("The Excel sheet is too large");
+  }
   const records: string[][] = [];
   const columns = sheet.columnCount;
   // Keep the line numbers of the sheet: empty lines stay as empty records.

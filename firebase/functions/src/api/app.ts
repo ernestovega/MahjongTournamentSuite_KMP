@@ -17,6 +17,13 @@ export function buildApp(): express.Express {
 
   // The API runs behind Firebase Hosting and Google front ends. Trust them to get the client address.
   app.set("trust proxy", true);
+  app.disable("x-powered-by");
+  // Answers hold personal data. A browser or a proxy must not keep them, unless a route says otherwise.
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("Cache-Control", "no-store");
+    next();
+  });
   app.use(gzipJson);
   app.use(express.json({ limit: "8mb" }));
 

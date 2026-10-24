@@ -82,16 +82,27 @@ export type InvitedPerson = PendingInvitation & { tournamentName: string; player
 export async function listInvitedPeople(scope?: ReadonlySet<string>): Promise<InvitedPerson[]> {
   const pending = (await listPendingInvitations()).filter((item) => scope == null || scope.has(item.tournamentId));
   const now = Date.now();
+  // A person can have an invitation in many tournaments. Read each tournament and each person once.
+  const tournamentNames = new Map<string, Promise<string>>();
+  const personNames = new Map<string, Promise<string>>();
+  const tournamentName = (id: string) => {
+    if (!tournamentNames.has(id)) {
+      tournamentNames.set(id, db.doc(`tournaments/${id}`).get().then((doc) => String(doc.get("name") ?? "")));
+    }
+    return tournamentNames.get(id)!;
+  };
+  const personName = (emaId: string) => {
+    if (!personNames.has(emaId)) {
+      personNames.set(emaId, db.doc(`emaPlayerRegistry/${emaId}`).get().then((doc) =>
+        [doc.get("firstName"), doc.get("lastName")].filter((part) => typeof part === "string" && part.length > 0).join(" ")));
+    }
+    return personNames.get(emaId)!;
+  };
   const rows = await Promise.all(pending.map(async (item) => {
-    const [tournament, person] = await Promise.all([
-      db.doc(`tournaments/${item.tournamentId}`).get(),
-      db.doc(`emaPlayerRegistry/${item.emaId}`).get(),
-    ]);
-    const playerName = [person.get("firstName"), person.get("lastName")]
-      .filter((part) => typeof part === "string" && part.length > 0).join(" ");
+    const [name, playerName] = await Promise.all([tournamentName(item.tournamentId), personName(item.emaId)]);
     return {
       ...item,
-      tournamentName: String(tournament.get("name") ?? ""),
+      tournamentName: name,
       playerName: playerName || item.emaId,
       expired: item.expiresAt != null && Date.parse(item.expiresAt) < now,
     };
