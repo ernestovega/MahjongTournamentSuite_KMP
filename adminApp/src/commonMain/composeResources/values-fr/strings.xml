@@ -733,9 +733,6 @@
     <string name="something_went_wrong">Une erreur s'est produite</string>
     <string name="dialog_done_title">Terminé</string>
     <string name="save_ema_report">Enregistrer les résultats EMA</string>
-    <string name="save_id_cards">Enregistrer les cartes d\'identité</string>
-    <string name="save_id_list">Enregistrer la liste d\'identité</string>
-    <string name="save_id_card_proof">Enregistrer l\'épreuve des cartes d\'identité</string>
     <string name="import_players">Importer les joueurs</string>
     <string name="import_players_title">Importer les joueurs depuis un fichier</string>
     <string name="import_intro">Choisissez un fichier CSV ou Excel pour remplir en une fois les places de joueurs de ce tournoi. La première ligne du fichier doit contenir les noms des colonnes :</string>
