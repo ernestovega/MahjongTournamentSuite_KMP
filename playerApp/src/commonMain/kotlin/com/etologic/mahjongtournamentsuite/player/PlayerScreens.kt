@@ -792,10 +792,14 @@ private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pa
     var lastUpdate by remember(tournamentId) { mutableStateOf(TimeSource.Monotonic.markNow()) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(tournamentId, reloadKey) {
+        // Only the first load after a manual reload reads everything again. The later checks ask for changes only.
+        var forceNext = reloadKey > 0
         while (true) {
             // A hidden tab or an app in the background does not check the server. The checks go on when it returns.
             lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.STARTED) }
-            when (val result = presenter.load(tournamentId, if (reloadKey > 0) RefreshMode.FORCE else RefreshMode.IF_CHANGED)) {
+            val mode = if (forceNext) RefreshMode.FORCE else RefreshMode.IF_CHANGED
+            forceNext = false
+            when (val result = presenter.load(tournamentId, mode)) {
                 is AppResult.Success -> {
                     view = result.value
                     message = null
