@@ -10,7 +10,6 @@ import { buildInvitationEmail, buildRegistrationEmail, DEFAULT_LANGUAGE, type La
 import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer } from "./playersService";
 import { grantPlayerCapability } from "./usersService";
 
-export type InvitationStatus = "NONE" | "INVITED" | "ACCEPTED";
 
 export const INVITATION_TTL_DAYS = 14;
 

@@ -182,7 +182,7 @@ export function buildTableDigest(params: {
   const opponentKey = (slotId: number): string => emaBySlot.get(slotId) || `${params.tournamentId}#${slotId}`;
   let drawn = 0;
 
-  for (const { hand, change } of counted) {
+  for (const { hand } of counted) {
     [hand.playerEastPenalty, hand.playerSouthPenalty, hand.playerWestPenalty, hand.playerNorthPenalty]
       .forEach((entry, seat) => { maxPenalty[seat] = Math.max(maxPenalty[seat], worstPenaltyOf(entry)); });
     [hand.playerEastPenalty, hand.playerSouthPenalty, hand.playerWestPenalty, hand.playerNorthPenalty]

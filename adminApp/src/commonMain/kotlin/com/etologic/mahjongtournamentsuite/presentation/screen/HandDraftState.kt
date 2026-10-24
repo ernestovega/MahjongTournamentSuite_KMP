@@ -293,24 +293,6 @@ internal class HandDraftState private constructor(
         playerNorthPenalty = currentPenalty(3),
     )
 
-    fun copyValuesFrom(other: HandDraftState) {
-        playerWinnerId = other.playerWinnerId
-        playerLooserId = other.playerLooserId
-        handScore = other.handScore
-        isChickenHand = other.isChickenHand
-        isDone = other.isDone
-        playerEastPenalty = other.playerEastPenalty
-        playerSouthPenalty = other.playerSouthPenalty
-        playerWestPenalty = other.playerWestPenalty
-        playerNorthPenalty = other.playerNorthPenalty
-        penaltyRows.clear()
-        other.penaltyRows.forEach { row ->
-            penaltyRows += PenaltyDraftState(row.east, row.south, row.west, row.north)
-        }
-        penaltyRowsEdited = other.penaltyRowsEdited
-        resultFieldsTouched = other.resultFieldsTouched
-    }
-
     fun buildPatch(): Map<String, Any?> {
         val patch = linkedMapOf<String, Any?>()
 

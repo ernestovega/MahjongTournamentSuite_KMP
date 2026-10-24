@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="menu_sign_out">Cerrar sesión</string>
-    <string name="menu_statistics">Estadísticas</string>
     <string name="menu_profile">Perfil</string>
     <string name="info_none">Los organizadores aún no han añadido información.</string>
     <string name="info_schedule">Horario</string>

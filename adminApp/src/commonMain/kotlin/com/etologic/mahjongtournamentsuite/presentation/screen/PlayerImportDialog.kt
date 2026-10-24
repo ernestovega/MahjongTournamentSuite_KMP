@@ -49,7 +49,6 @@ import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.close
-import mahjongtournamentsuite.adminapp.generated.resources.import_apply
 import mahjongtournamentsuite.adminapp.generated.resources.import_apply_count
 import mahjongtournamentsuite.adminapp.generated.resources.import_applying
 import mahjongtournamentsuite.adminapp.generated.resources.import_choose_file

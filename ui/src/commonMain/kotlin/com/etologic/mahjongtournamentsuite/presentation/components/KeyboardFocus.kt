@@ -355,37 +355,6 @@ fun FocusedIconButton(
     }
 }
 
-@Composable
-fun FocusedExtendedFloatingActionButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    enabled: Boolean = true,
-    containerColor: Color = FloatingActionButtonDefaults.containerColor,
-    contentColor: Color = contentColorFor(containerColor),
-    interactionSource: MutableInteractionSource? = null,
-    content: @Composable RowScope.() -> Unit,
-) {
-    val buttonEnabled = enabled && LocalAppButtonsEnabled.current
-    val thresholdOnClick = rememberThresholdOnClick(onClick)
-    val defaultInteractionSource = remember { MutableInteractionSource() }
-    val resolvedInteractionSource = interactionSource ?: defaultInteractionSource
-    FocusHighlightContainer(
-        modifier = Modifier,
-        interactionSource = resolvedInteractionSource,
-    ) {
-        ExtendedFloatingActionButton(
-            onClick = if (buttonEnabled) thresholdOnClick else emptyFunction,
-            modifier = modifier
-                .focusProperties { canFocus = buttonEnabled }
-                .alpha(if (buttonEnabled) 1f else 0.38f),
-            containerColor = containerColor,
-            contentColor = contentColor,
-            interactionSource = resolvedInteractionSource,
-            content = content,
-        )
-    }
-}
-
 private val emptyFunction: () -> Unit = {}
 
 @Composable

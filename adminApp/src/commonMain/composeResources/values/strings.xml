@@ -696,12 +696,6 @@
     <string name="status_empty">Empty</string>
     <string name="status_incomplete">Incomplete</string>
     <string name="status_partial">Partially complete</string>
-    <string name="best_hand_of_tournament">Best hand of the tournament: %1$d</string>
-    <string name="best_hands_of_tournament">%1$d best hands of the tournament: %2$s</string>
-    <plurals name="chicken_hands_count">
-        <item quantity="one">%1$d chicken hand</item>
-        <item quantity="other">%1$d chicken hands</item>
-    </plurals>
     <string name="timer_pause">Pause timer</string>
     <string name="timer_start">Start timer</string>
     <string name="round_table_header">Round %1$d • Table %2$d</string>
@@ -755,7 +749,6 @@
     <string name="import_replace_checkbox">Replace the players that are in a slot already (%1$d rows)</string>
     <string name="import_replace_hint">If you do not select this box, the import skips the rows that replace a player.</string>
     <string name="import_started_warning">This tournament has table results already. A replaced player changes results that exist.</string>
-    <string name="import_apply">Import</string>
     <string name="import_apply_count">Import %1$d rows</string>
     <string name="import_row_title">Line %1$d · Slot %2$s</string>
     <string name="import_status_new">New</string>

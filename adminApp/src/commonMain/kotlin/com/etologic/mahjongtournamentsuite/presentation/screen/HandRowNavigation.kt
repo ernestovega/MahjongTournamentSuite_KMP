@@ -7,8 +7,6 @@ import androidx.compose.ui.unit.dp
 
 internal val HandMiniFieldHeight = 38.dp
 
-private val TableSummaryRowLabelWidth = 84.dp
-
 internal enum class HandArrowDirection {
     Left,
     Right,

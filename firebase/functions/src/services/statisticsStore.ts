@@ -219,7 +219,6 @@ export async function prepareTableStats(
     global.handsPlayed += sign * stored.summary.handsPlayed;
     global.drawnHands += sign * stored.summary.drawnHands;
     global.winningHands += sign * stored.summary.winningHands;
-    // A table stored before this field existed has no value. The backfill stores the table again with the value.
     global.selfDraws += sign * (stored.summary.selfDraws ?? 0);
     global.winningScoreSum += sign * stored.summary.winningScoreSum;
     global.chickenHands += sign * stored.summary.chickenHands;

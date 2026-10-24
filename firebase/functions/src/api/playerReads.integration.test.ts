@@ -17,7 +17,7 @@ describe("what a player can read", () => {
     server = await startServer();
     t1 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
     t2 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
-    for (const [tournamentId, emaId] of [[t1, "10000001"], [t1, "10000002"], [t2, "10000003"]] as const) {
+    for (const emaId of ["10000001", "10000002", "10000003"]) {
       await db.doc(`emaPlayerRegistry/${emaId}`).set({ firstName: "Name", lastName: emaId, country: "ESP" });
     }
     await db.doc(`tournaments/${t1}/players/1`).set({

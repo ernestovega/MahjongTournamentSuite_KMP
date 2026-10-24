@@ -696,12 +696,6 @@
     <string name="status_empty">Vuoto</string>
     <string name="status_incomplete">Incompleto</string>
     <string name="status_partial">Parzialmente completo</string>
-    <string name="best_hand_of_tournament">Mano migliore del torneo: %1$d</string>
-    <string name="best_hands_of_tournament">%1$d mani migliori del torneo: %2$s</string>
-    <plurals name="chicken_hands_count">
-        <item quantity="one">%1$d mano pollo</item>
-        <item quantity="other">%1$d mani pollo</item>
-    </plurals>
     <string name="timer_pause">Metti in pausa il timer</string>
     <string name="timer_start">Avvia il timer</string>
     <string name="round_table_header">Turno %1$d • Tavolo %2$d</string>
@@ -755,7 +749,6 @@
     <string name="import_replace_checkbox">Sostituisci i giocatori già presenti in uno slot (%1$d righe)</string>
     <string name="import_replace_hint">Se non selezioni questa casella, l'importazione salta le righe che sostituiscono un giocatore.</string>
     <string name="import_started_warning">Questo torneo ha già risultati dei tavoli. Sostituire un giocatore cambia risultati esistenti.</string>
-    <string name="import_apply">Importa</string>
     <string name="import_apply_count">Importa %1$d righe</string>
     <string name="import_row_title">Riga %1$d · Slot %2$s</string>
     <string name="import_status_new">Nuovo</string>

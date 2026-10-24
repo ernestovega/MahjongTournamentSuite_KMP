@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="menu_sign_out">Esci</string>
-    <string name="menu_statistics">Statistiche</string>
     <string name="menu_profile">Profilo</string>
     <string name="info_none">Gli organizzatori non hanno ancora aggiunto informazioni.</string>
     <string name="info_schedule">Programma</string>

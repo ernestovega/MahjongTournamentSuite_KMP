@@ -52,7 +52,6 @@ export type IntegrityReport = {
 };
 
 const text = (value: unknown): string => String(value ?? "").trim();
-const isInteger = (value: unknown): boolean => /^-?\d+$/.test(text(value));
 const TIME_PATTERN = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const MAX_FINDINGS_PER_CODE = 25;
 

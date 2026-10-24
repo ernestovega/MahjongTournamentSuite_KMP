@@ -696,12 +696,6 @@
     <string name="status_empty">Vacía</string>
     <string name="status_incomplete">Incompleta</string>
     <string name="status_partial">Parcialmente completa</string>
-    <string name="best_hand_of_tournament">Mejor mano del torneo: %1$d</string>
-    <string name="best_hands_of_tournament">%1$d mejores manos del torneo: %2$s</string>
-    <plurals name="chicken_hands_count">
-        <item quantity="one">%1$d mano de pollo</item>
-        <item quantity="other">%1$d manos de pollo</item>
-    </plurals>
     <string name="timer_pause">Pausar el temporizador</string>
     <string name="timer_start">Iniciar el temporizador</string>
     <string name="round_table_header">Ronda %1$d • Mesa %2$d</string>
@@ -755,7 +749,6 @@
     <string name="import_replace_checkbox">Sustituir a los jugadores que ya están en un hueco (%1$d filas)</string>
     <string name="import_replace_hint">Si no marcas esta casilla, la importación omite las filas que sustituyen a un jugador.</string>
     <string name="import_started_warning">Este torneo ya tiene resultados de mesas. Sustituir a un jugador cambia resultados que ya existen.</string>
-    <string name="import_apply">Importar</string>
     <string name="import_apply_count">Importar %1$d filas</string>
     <string name="import_row_title">Línea %1$d · Hueco %2$s</string>
     <string name="import_status_new">Nuevo</string>

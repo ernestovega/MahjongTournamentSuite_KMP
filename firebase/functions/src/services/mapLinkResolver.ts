@@ -1,5 +1,5 @@
 import { badRequest } from "../api/httpError";
-import { isGoogleMapsHost, normalizeMapUrl } from "./tournamentVenue";
+import { normalizeMapUrl } from "./tournamentVenue";
 
 /** The answer of one request that does not follow redirects. */
 export type RedirectStep = { status: number; location: string | null };

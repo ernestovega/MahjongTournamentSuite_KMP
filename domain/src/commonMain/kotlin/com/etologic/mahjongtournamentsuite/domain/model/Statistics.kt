@@ -151,10 +151,7 @@ data class PlayerStatistics(
     val tablesWithHands: Int get() = handResults.size
     val totalPoints: Double get() = results.sumOf { it.points }
     val totalScore: Int get() = results.sumOf { it.score }
-    val averagePoints: Double? get() = results.takeIf { it.isNotEmpty() }?.let { totalPoints / it.size }
-    val averageScore: Double? get() = results.takeIf { it.isNotEmpty() }?.let { totalScore.toDouble() / it.size }
     val bestTableScore: Int? get() = results.maxOfOrNull { it.score }
-    val worstTableScore: Int? get() = results.minOfOrNull { it.score }
     val averagePosition: Double? get() = results.takeIf { it.isNotEmpty() }?.map { it.position }?.average()
 
     /** How many times the player finished in places 1, 2, 3 and 4. */
@@ -171,8 +168,6 @@ data class PlayerStatistics(
     /** Tournaments with at least one completed table. Results without a tournament id count as one tournament. */
     val tournamentsPlayed: Int get() = results.map { it.tournamentId }.distinct().size
 
-    /** Hands that another player won, whatever the way. */
-    val handsLost: Int get() = dealIns + lostToSelfDraws + otherWins
     val winsByDiscard: Int get() = handsWon - selfDraws
     val chickenHands: Int get() = handResults.sumOf { it.chickenHands }
     val bestHand: Int? get() = handResults.maxOfOrNull { it.bestHand }?.takeIf { it > 0 }

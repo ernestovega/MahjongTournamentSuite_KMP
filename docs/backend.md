@@ -44,8 +44,7 @@ Body:
 - `email` (required)
 - `password`
 
-The current client sends the email as `email`. During deployment, the function also accepts the old
-`identifier` field so older clients and newly deployed functions can coexist.
+The client sends the email as `email`.
 
 ### Password recovery
 
@@ -200,7 +199,7 @@ Membership is stored at:
 - `tournaments/{tournamentId}/changes/{changeId}` is the change log. It has one entry for each table save or reset.
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
-A tournament has a required venue and a required `contactEmail` for the organizers. The venue is a `venueMapUrl`, or a `venueName` together with a `venueAddress`. `POST /tournaments` and `PATCH /tournaments/:id` return 400 when the venue or the email is missing. `contactEmail` must be a valid email address. Run `npm run backfill:venue` to fix old tournaments. It sets a Google Maps search link for the host city and the email of the creator. Add `:apply` to write.
+A tournament has a required venue and a required `contactEmail` for the organizers. The venue is a `venueMapUrl`, or a `venueName` together with a `venueAddress`. `POST /tournaments` and `PATCH /tournaments/:id` return 400 when the venue or the email is missing. `contactEmail` must be a valid email address.
 `venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Round schedules must stay inside the tournament dates. The player app shows the venue, the round times and the agenda on the Info tab.
 
 Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive. Legacy documents with only `eventDate` use that value for both dates. Older documents without dates use their creation date as a fallback.

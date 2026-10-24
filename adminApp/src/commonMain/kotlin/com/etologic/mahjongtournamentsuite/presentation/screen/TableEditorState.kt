@@ -81,13 +81,6 @@ internal class TableManagerEditorState private constructor(
                 .sum()
         }
 
-    /**
-     * The sum that the calculated scores must have. Penalties take points from a player and give them
-     * to nobody, so the scores add up to the total of the penalties.
-     */
-    val expectedScoreSum: Long
-        get() = seatPenaltyTotals.sum()
-
     /** The total penalty of each seat (East, South, West, North) over the hands that count. Penalties are negative. */
     val seatPenaltyTotals: List<Long>
         get() {

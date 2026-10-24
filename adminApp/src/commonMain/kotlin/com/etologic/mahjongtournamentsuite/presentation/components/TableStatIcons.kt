@@ -1,16 +1,12 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import org.jetbrains.compose.resources.pluralStringResource
-import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_count
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
@@ -19,20 +15,16 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.best_hand_of_tournament
-import mahjongtournamentsuite.adminapp.generated.resources.best_hands_of_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.icon_chicken
 import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy
 import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy_bronze
 import mahjongtournamentsuite.adminapp.generated.resources.icon_trophy_silver
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
 
 /** Chicken image from the app resources (`drawable/icon_chicken.png`, Twemoji). */
 @Composable
@@ -111,33 +103,5 @@ fun HintTooltip(
                 }
             },
         ) { content() }
-    }
-}
-
-/** Chicken and trophy images for list entries, each with a tooltip. They show only when they have data. */
-@Composable
-fun TableStatBadges(
-    chickenHandCount: Int,
-    bestHandScores: List<Int>,
-) {
-    val options = LocalHandStatOptions.current
-    if (options.countChickenHands && chickenHandCount > 0) {
-        val text = pluralStringResource(Res.plurals.chicken_hands_count, chickenHandCount, chickenHandCount)
-        HintTooltip(text) { ChickenIcon(contentDescription = text) }
-    }
-    if (options.countBestHands && bestHandScores.isNotEmpty()) {
-        val text = if (bestHandScores.size == 1) {
-            stringResource(Res.string.best_hand_of_tournament, bestHandScores.first())
-        } else {
-            stringResource(Res.string.best_hands_of_tournament, bestHandScores.size, bestHandScores.joinToString(", "))
-        }
-        HintTooltip(text) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                TrophyIcon(contentDescription = text)
-                if (bestHandScores.size > 1) {
-                    Text("×${bestHandScores.size}", style = MaterialTheme.typography.labelSmall)
-                }
-            }
-        }
     }
 }

@@ -696,12 +696,6 @@
     <string name="status_empty">Vide</string>
     <string name="status_incomplete">Incomplet</string>
     <string name="status_partial">Partiellement terminé</string>
-    <string name="best_hand_of_tournament">Meilleure main du tournoi : %1$d</string>
-    <string name="best_hands_of_tournament">%1$d meilleures mains du tournoi : %2$s</string>
-    <plurals name="chicken_hands_count">
-        <item quantity="one">%1$d main poule</item>
-        <item quantity="other">%1$d mains poule</item>
-    </plurals>
     <string name="timer_pause">Mettre le minuteur en pause</string>
     <string name="timer_start">Démarrer le minuteur</string>
     <string name="round_table_header">Tour %1$d • Table %2$d</string>
@@ -752,7 +746,6 @@
     <string name="import_replace_checkbox">Remplacer les joueurs déjà présents dans une place (%1$d lignes)</string>
     <string name="import_replace_hint">Si vous ne cochez pas cette case, l'import ignore les lignes qui remplacent un joueur.</string>
     <string name="import_started_warning">Ce tournoi a déjà des résultats de tables. Remplacer un joueur modifie des résultats existants.</string>
-    <string name="import_apply">Importer</string>
     <string name="import_apply_count">Importer %1$d lignes</string>
     <string name="import_row_title">Ligne %1$d · Place %2$s</string>
     <string name="import_status_new">Nouveau</string>

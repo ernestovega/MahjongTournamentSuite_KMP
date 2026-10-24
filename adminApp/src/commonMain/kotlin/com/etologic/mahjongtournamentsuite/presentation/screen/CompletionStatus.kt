@@ -50,9 +50,6 @@ internal fun StatusIconWithTooltip(status: CompletionStatus) {
 /** Size of the status icon next to round and table numbers. */
 private val StatusIconSize = 16.dp
 
-/** Space between the icons of a list entry. */
-private val SidebarIconSpacing = 12.dp
-
 internal fun tableCompletionStatus(table: TournamentTable): CompletionStatus = when (table.completionStatus) {
     "empty" -> CompletionStatus.Empty
     "incomplete" -> CompletionStatus.InProgress

@@ -1001,15 +1001,6 @@ private fun formatWithDots(value: Long): String {
     return reversed.reversed()
 }
 
-private fun formatDecimal(value: Double, decimals: Int): String {
-    val safeDecimals = decimals.coerceIn(0, 6)
-    val factor = (0 until safeDecimals).fold(1.0) { acc, _ -> acc * 10.0 }
-    val rounded = (value * factor).roundToLong().toDouble() / factor
-    // Avoid "-0.0"
-    val safe = if (abs(rounded) < 0.000_000_1) 0.0 else rounded
-    return if (decimals == 0) safe.toLong().toString() else safe.toString()
-}
-
 @Composable
 private fun RunningTriesSlots(
     runningTries: Int,

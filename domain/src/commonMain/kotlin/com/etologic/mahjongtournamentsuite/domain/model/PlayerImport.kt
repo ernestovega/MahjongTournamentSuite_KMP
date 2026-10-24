@@ -80,9 +80,6 @@ data class PlayerImportPreview(
     val newCount: Int get() = rows.count { it.status == ImportRowStatus.NEW }
     val errorCount: Int get() = rows.count { it.status == ImportRowStatus.ERROR }
     val unchangedCount: Int get() = rows.count { it.status == ImportRowStatus.UNCHANGED }
-
-    /** True when at least one row can change the tournament. */
-    val hasChanges: Boolean get() = newCount + replaceCount > 0
 }
 
 data class PlayerImportFailure(

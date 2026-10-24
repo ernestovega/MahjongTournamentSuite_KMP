@@ -7,10 +7,7 @@ import { readSubstitution, SUBSTITUTION_REASONS, type PlayerSubstitution } from 
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import { linkKnownAccountToSlot, listPendingInvitations } from "./playerAccountsService";
 import {
-  calculateTableCompletionStatus,
   hasDuplicateEmaAssignments,
-  hasFourValidScores,
-  calculateHandSummary,
 } from "./tournamentContentRules";
 import {
   bumpGlobalDataVersion,
@@ -572,92 +569,19 @@ export async function listTournamentTables(
     ? await collection.get()
     : await collection.where("roundId", "==", roundId).get();
 
-  const tables = await Promise.all(snap.docs.map(async (d) => {
-    const storedHasProgress = d.get("hasProgress");
-    const storedHasValidManualTotals = d.get("hasValidManualTotals");
-    const storedCompletionStatus = d.get("completionStatus");
-    const storedChickenHandCount = d.get("chickenHandCount");
-    const storedBestHandScores = d.get("bestHandScores");
-    if (
-      typeof storedHasProgress === "boolean"
-      && typeof storedHasValidManualTotals === "boolean"
-      && typeof storedCompletionStatus === "string"
-      && typeof storedChickenHandCount === "number"
-      && Array.isArray(storedBestHandScores)
-      && storedBestHandScores.every((score) => typeof score === "number")
-    ) {
-      return {
-        version: Number(d.get("version") ?? 0),
-        roundId: Number(d.get("roundId")),
-        tableId: Number(d.get("tableId")),
-        playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
-        isCompleted: Boolean(d.get("isCompleted") ?? false),
-        useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? false),
-        hasProgress: storedHasProgress,
-        hasValidManualTotals: storedHasValidManualTotals,
-        completionStatus: storedCompletionStatus,
-        bestHandScores: storedBestHandScores as number[],
-        chickenHandCount: storedChickenHandCount,
-      };
-    }
-    // Old documents use this fallback until the summary backfill runs.
-    const hands = await d.ref.collection("hands").get();
-    const hasHandProgress = hands.docs.some((hand) => {
-      const value = hand.data();
-      return [
-        value.playerWinnerId,
-        value.playerLooserId,
-        value.handScore,
-        value.playerEastPenalty,
-        value.playerSouthPenalty,
-        value.playerWestPenalty,
-        value.playerNorthPenalty,
-      ].some((field) => String(field ?? "").trim().length > 0)
-        || Boolean(value.isChickenHand)
-        || Boolean(value.isDone);
-    });
-    const hasTableProgress = [
-      d.get("playerEastId"),
-      d.get("playerSouthId"),
-      d.get("playerWestId"),
-      d.get("playerNorthId"),
-      d.get("playerEastScore"),
-      d.get("playerSouthScore"),
-      d.get("playerWestScore"),
-      d.get("playerNorthScore"),
-      d.get("playerEastPoints"),
-      d.get("playerSouthPoints"),
-      d.get("playerWestPoints"),
-      d.get("playerNorthPoints"),
-    ].some((field) => String(field ?? "").trim().length > 0);
-    const hasValidManualScores = hasFourValidScores([
-      d.get("manualPlayerEastScore") || d.get("playerEastScore"),
-      d.get("manualPlayerSouthScore") || d.get("playerSouthScore"),
-      d.get("manualPlayerWestScore") || d.get("playerWestScore"),
-      d.get("manualPlayerNorthScore") || d.get("playerNorthScore"),
-    ]);
-    const useTotalsOnly = Boolean(d.get("useTotalsOnly") ?? false);
-
-    const hasValidManualTotals = useTotalsOnly && hasValidManualScores;
-    return {
-      version: Number(d.get("version") ?? 0),
-      roundId: Number(d.get("roundId")),
-      tableId: Number(d.get("tableId")),
-      playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
-      isCompleted: Boolean(d.get("isCompleted") ?? false),
-      useTotalsOnly,
-      hasProgress: hasTableProgress || hasHandProgress || Boolean(d.get("isCompleted") ?? false),
-      hasValidManualTotals,
-      completionStatus: calculateTableCompletionStatus({
-        hasData: hasTableProgress || hasHandProgress,
-        seatIds: [d.get("playerEastId"), d.get("playerSouthId"), d.get("playerWestId"), d.get("playerNorthId")],
-        useTotalsOnly,
-        hasValidTotals: useTotalsOnly ? hasValidManualScores : hasFourValidScores([
-          d.get("playerEastScore"), d.get("playerSouthScore"), d.get("playerWestScore"), d.get("playerNorthScore"),
-        ]),
-      }),
-      ...calculateHandSummary(hands.docs.map((hand) => hand.data())),
-    };
+  // Every save keeps the summary on the table document, so a list needs no read of the hands.
+  const tables = snap.docs.map((d) => ({
+    version: Number(d.get("version") ?? 0),
+    roundId: Number(d.get("roundId")),
+    tableId: Number(d.get("tableId")),
+    playerIds: (d.get("playerIds") as unknown[] | undefined ?? []).map((x) => Number(x)),
+    isCompleted: Boolean(d.get("isCompleted") ?? false),
+    useTotalsOnly: Boolean(d.get("useTotalsOnly") ?? false),
+    hasProgress: Boolean(d.get("hasProgress") ?? false),
+    hasValidManualTotals: Boolean(d.get("hasValidManualTotals") ?? false),
+    completionStatus: String(d.get("completionStatus") ?? "empty"),
+    bestHandScores: (d.get("bestHandScores") as number[] | undefined) ?? [],
+    chickenHandCount: Number(d.get("chickenHandCount") ?? 0),
   }));
 
   return tables

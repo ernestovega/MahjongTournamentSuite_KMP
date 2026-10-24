@@ -43,7 +43,7 @@ Several people can edit one tournament at the same time. This page describes how
 - Only a save that completes a table runs the "other incomplete tables" query. It uses `limit(2)`.
 - The answer of a save is built from the data the transaction wrote. The client needs no second read.
 - The global `_meta/dataVersions` document changes only when a table completes or reopens.
-- `tablesWithProgress` on the tournament document counts the tables with data. Changing a player after results start is checked with it. `progressTracked: true` marks a tournament that keeps the counter. Older tournaments are scanned until the backfill runs.
+- `tablesWithProgress` on the tournament document counts the tables with data. Changing a player after results start is checked with it. `progressTracked: true` marks a tournament that keeps the counter.
 - Reset is a transaction and **admin only**.
 - The change log (`tournaments/{id}/changes`) records who changed which fields, with the old and the new value. Totals that follow from the hands are left out.
 
@@ -56,11 +56,10 @@ Several people can edit one tournament at the same time. This page describes how
 
 ## Data requirements
 
-- Every table has its 16 hand documents. A save needs all 16, so the backfill also completes tables that have only some of them. New tournaments get them at creation. `npm run backfill:table-progress` (preview) and `:apply` create the missing ones in older tournaments. It never overwrites a hand and can run again.
-- The tournament document has `tablesWithProgress`. Saves and resets keep it. The same script sets it.
+- Every table has its 16 hand documents. A save needs all 16. New tournaments get them at creation.
+- The tournament document has `tablesWithProgress`. Saves and resets keep it.
 - A save of a table without hands fails with 404. A save always needs `expectedVersion`.
 
-Rollout on 2026-10-10: the backfill ran on all 6 tournaments of `mahjong-tournament-suite`, then the Functions and the hosting were deployed.
 
 ## Tests
 

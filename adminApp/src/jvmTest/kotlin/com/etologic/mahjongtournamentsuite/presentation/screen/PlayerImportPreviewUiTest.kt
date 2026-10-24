@@ -60,7 +60,6 @@ class PlayerImportPreviewUiTest {
         assertEquals(1, preview.newCount)
         assertEquals(1, preview.replaceCount)
         assertEquals(1, preview.errorCount)
-        assertTrue(preview.hasChanges)
     }
 
     @Test
