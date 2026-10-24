@@ -22,6 +22,9 @@
       ]
     }
   ],
+  "storage": {
+    "rules": "firebase/storage.rules"
+  },
   "hosting": [
     {
       "site": "mahjong-tournament-suite",

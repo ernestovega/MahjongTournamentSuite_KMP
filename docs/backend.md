@@ -141,6 +141,12 @@ Each change writes an entry to `tournaments/{id}/playerLog` with `kind` (`replac
 One player who sits at the table writes the hands down. There is no start step and no confirmation by the other players.
 The table must be in hands mode, not completed, and all four seats must be assigned. Hands mode is the default for new tables.
 
+**Who and when.** A player writes only when all of these are true. If one fails, the server refuses the request and writes nothing:
+- The account has the player claim, and its registration (`users/{uid}/playerTournaments/{id}`) matches the slot: same EMA id, and the slot links to this account.
+- The player sits at the table (the slot is one of the four seats).
+- The table is not completed, and the match is on: after the round start and before the end, plus the extra minutes of the finish-hand mode. Before the start, after the end, or without a round schedule, an editor enters the data.
+- The table version is the one the player saw.
+
 **Seats.** A player cannot set or change the seats. An editor sets them in the admin app. Without seats, the server answers `409`.
 
 **Hand fields.** The body of preview and record has `playerWinnerId`, `playerLooserId`, `handScore` and `isChickenHand`, and these optional fields:
@@ -202,7 +208,15 @@ Membership is stored at:
 A tournament has a required venue and a required `contactEmail` for the organizers. The venue is a `venueMapUrl`, or a `venueName` together with a `venueAddress`. `POST /tournaments` and `PATCH /tournaments/:id` return 400 when the venue or the email is missing. `contactEmail` must be a valid email address.
 `venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Round schedules must stay inside the tournament dates. The player app shows the venue, the round times and the agenda on the Info tab.
 
-Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive. Legacy documents with only `eventDate` use that value for both dates. Older documents without dates use their creation date as a fallback.
+Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive.
+
+A team document has `id`, `name` and the time stamps. The players of a team come from the `team` field of the slots.
+
+**Indexes.** `firebase/firestore.indexes.json` lists the single-field indexes that the queries need, and nothing else:
+- `members.uid` and `players.assignedEmaId` in collection groups, for the editor lists and for a change of an EMA number.
+- `playerInvitations.status` and `playerInvitations.emaId`, for the invitations of a person.
+
+Deploy them with `firebase deploy --only firestore:indexes`. The emulator needs no index, so a query without an index fails only in production.
 
 ## Seed countries
 
@@ -223,6 +237,12 @@ The table editor checks the server for changes while it is open. See [Multi-edit
 - The player app checks the server every 15 seconds while a tournament screen is open and visible. It loads all tables again only when the table versions of the manifest are higher than the held versions.
 
 ## Public routes
+
+These routes need no sign-in. Every other route needs a valid token and a role check:
+- `GET /health`, `GET /version` and `GET /config` (the feature flags).
+- `POST /auth/signIn`, `/auth/passwordReset` and `/auth/refresh`.
+- `POST /player/invitations/accept`. The invitation token is the secret.
+- `POST /admin/bootstrapAdmin`. It needs the bootstrap key and works only while no enabled admin exists.
 
 - `/auth/signIn`, `/auth/passwordReset`, `/auth/refresh` and `/player/invitations/accept` allow a limited number of requests for each client address. The counter lives in one function instance.
 - `/auth/passwordReset` answers `200` for an unknown email, so the answer does not show which emails have an account.

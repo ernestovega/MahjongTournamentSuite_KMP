@@ -74,9 +74,9 @@ async function main(): Promise<void> {
     const args = ["lib/scripts/seedTestTournaments.js", "--apply", ...(only ? [`--only=${only.join(",")}`] : [])];
     const seed = spawnSync(process.execPath, args, { stdio: "inherit", env: process.env });
     if (seed.status !== 0) throw new Error("The seed script failed.");
-    // The statistics are written when a table is saved, so seeded tournaments need the backfill.
+    // The statistics are written when a table is saved, so seeded tournaments need the rebuild.
     const stats = spawnSync(process.execPath, ["lib/scripts/backfillStatistics.js", "--apply"], { stdio: "inherit", env: process.env });
-    if (stats.status !== 0) throw new Error("The statistics backfill failed.");
+    if (stats.status !== 0) throw new Error("The statistics rebuild failed.");
   }
 
   async function restoreMemberships(tournamentIds: string[]): Promise<void> {

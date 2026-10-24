@@ -116,11 +116,16 @@ async function loadFor(
   const registration = await getPlayerRegistration(uid, key.tournamentId);
   if (!registration) throw forbidden("You are not registered in this tournament");
   const tableRef = db.doc(`tournaments/${key.tournamentId}/tables/${key.roundId}_${key.tableId}`);
-  const [tournamentSnap, tableSnap, handSnaps] = await Promise.all([
+  const [tournamentSnap, slotSnap, tableSnap, handSnaps] = await Promise.all([
     read.get(db.doc(`tournaments/${key.tournamentId}`)),
+    read.get(db.doc(`tournaments/${key.tournamentId}/players/${registration.playerId}`)),
     read.get(tableRef),
     readAll(Array.from({ length: HANDS_PER_TABLE }, (_, i) => tableRef.collection("hands").doc(String(i + 1)))),
   ]);
+  // The registration must still match the slot. A slot that holds another person gives this account no access.
+  if (!slotSnap.exists || slotSnap.get("accountUid") !== uid || slotSnap.get("assignedEmaId") !== registration.emaId) {
+    throw forbidden("You are not registered in this tournament");
+  }
   if (!tableSnap.exists) throw notFound("Table not found");
   const table: Data = tableSnap.data() ?? {};
   const seats = seatIdsOf(table);

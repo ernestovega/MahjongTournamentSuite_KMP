@@ -36,10 +36,6 @@ data class TournamentDto(
     val createdByName: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
-    // Backwards-compatible aliases (older backend / legacy Firestore docs).
-    val createdBy: String? = null,
-    val created: String? = null,
-    val updated: String? = null,
 )
 
 @Serializable

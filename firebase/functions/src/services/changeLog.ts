@@ -5,7 +5,7 @@
 
 type Data = Record<string, unknown>;
 
-/** Where a change came from. A change without a source came from an editor app. */
+/** Where a change came from. An actor without a source is an editor app. */
 export type ChangeSource = "player" | "editor" | "system";
 
 export type ChangeActor = {

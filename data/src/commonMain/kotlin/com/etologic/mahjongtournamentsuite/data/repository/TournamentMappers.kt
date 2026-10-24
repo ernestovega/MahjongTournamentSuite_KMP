@@ -51,10 +51,10 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     timeZone = timeZone.normalizedOrNull(),
     numTries = numTries,
     isCompleted = isCompleted,
-    createdByUid = createdByUid.normalizedOrNull() ?: createdBy.normalizedOrNull(),
+    createdByUid = createdByUid.normalizedOrNull(),
     createdByName = createdByName.normalizedOrNull(),
-    createdAt = createdAt.normalizedOrNull() ?: created.normalizedOrNull(),
-    updatedAt = updatedAt.normalizedOrNull() ?: updated.normalizedOrNull(),
+    createdAt = createdAt.normalizedOrNull(),
+    updatedAt = updatedAt.normalizedOrNull(),
 )
 
 private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf(String::isNotBlank)

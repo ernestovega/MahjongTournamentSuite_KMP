@@ -111,7 +111,7 @@ export async function updatePlayer(params: {
     updatedAt: FieldValue.serverTimestamp(),
   };
   if (params.previousEmaId === params.emaId) {
-    await previousRef.update({ ...update, name: FieldValue.delete() });
+    await previousRef.update(update);
     await bumpGlobalDataVersion("emaPlayers");
     return;
   }
@@ -121,8 +121,7 @@ export async function updatePlayer(params: {
     .get();
   const batch = db.batch();
   const previousData = previousSnapshot.data() ?? {};
-  const { name: _legacyName, ...retainedData } = previousData;
-  batch.create(targetRef, { ...retainedData, ...update });
+  batch.create(targetRef, { ...previousData, ...update });
   batch.delete(previousRef);
   // Every tournament keeps a map from EMA number to slot. It must follow the new number, or the same
   // person could be assigned twice, and clearing the slot would leave the old entry behind.

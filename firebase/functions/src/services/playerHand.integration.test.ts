@@ -34,6 +34,8 @@ async function seedTable(options: { totalsOnly?: boolean; seats?: boolean; start
   const otherUid = `u-${tournamentId}-9`;
   await db.doc(`users/${uid}/playerTournaments/${tournamentId}`).set({ playerId: 1, emaId: "E1" });
   await db.doc(`users/${otherUid}/playerTournaments/${tournamentId}`).set({ playerId: 9, emaId: "E9" });
+  await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, assignedEmaId: "E1", accountUid: uid });
+  await db.doc(`tournaments/${tournamentId}/players/9`).set({ id: 9, assignedEmaId: "E9", accountUid: otherUid });
   return { tournamentId, uid, otherUid };
 }
 
@@ -126,6 +128,18 @@ describe("hand entry by a player", () => {
       await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 }), 409);
       await rejects(addPenalties({ ...at(fixture), uid: fixture.uid, penalties: ["-10", "", "", ""], expectedVersion: 0 }), 409);
       assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 0);
+    }
+  });
+
+  it("refuses an account whose registration no longer matches the slot", async () => {
+    const otherPerson = await seedTable();
+    const otherAccount = await seedTable();
+    await db.doc(`tournaments/${otherPerson.tournamentId}/players/1`).update({ assignedEmaId: "E77" });
+    await db.doc(`tournaments/${otherAccount.tournamentId}/players/1`).update({ accountUid: "someone-else" });
+
+    for (const fixture of [otherPerson, otherAccount]) {
+      await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 403);
+      await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 }), 403);
     }
   });
 

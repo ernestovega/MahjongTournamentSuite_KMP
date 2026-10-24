@@ -18,7 +18,7 @@ import kotlinx.coroutines.test.runTest
 
 class RepositorySupportTest {
     @Test
-    fun tournamentMappingTrimsValuesAndUsesLegacyFallbacks() {
+    fun tournamentMappingTrimsValues() {
         val tournament = TournamentDto(
             id = "tournament-1",
             name = "Spring Open",
@@ -27,10 +27,8 @@ class RepositorySupportTest {
             numRounds = 4,
             associationLogoUrl = "  https://example.test/logo.png  ",
             eventStartDate = " 2026-04-01 ",
-            createdByUid = " ",
-            createdBy = "legacy-user",
-            createdAt = null,
-            created = "legacy-created",
+            createdByUid = " user-1 ",
+            createdAt = " 2026-03-01T10:00:00Z ",
             roundSchedules = listOf(
                 TournamentRoundScheduleDto(1, " 2026-04-01 ", " 09:30 "),
             ),
@@ -41,8 +39,8 @@ class RepositorySupportTest {
 
         assertEquals("https://example.test/logo.png", tournament.associationLogoUrl)
         assertEquals("2026-04-01", tournament.eventStartDate)
-        assertEquals("legacy-user", tournament.createdByUid)
-        assertEquals("legacy-created", tournament.createdAt)
+        assertEquals("user-1", tournament.createdByUid)
+        assertEquals("2026-03-01T10:00:00Z", tournament.createdAt)
         assertEquals("2026-04-01", tournament.roundSchedules.single().date)
         assertEquals("09:30", tournament.roundSchedules.single().startTime)
         assertEquals("Registration", tournament.agendaItems.single().title)

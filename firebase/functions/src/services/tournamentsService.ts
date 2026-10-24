@@ -106,11 +106,11 @@ async function resolveCreatedByName(uid: string | null): Promise<string | null> 
 }
 
 async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<Tournament> {
-  const createdByUid = (d.get("createdByUid") as string) ?? (d.get("createdBy") as string) ?? null;
+  const createdByUid = (d.get("createdByUid") as string) ?? null;
   const createdByName = (d.get("createdByName") as string) ?? await resolveCreatedByName(createdByUid);
   const numRounds = Number(d.get("numRounds") ?? 0);
-  const eventStartDate = (d.get("eventStartDate") as string) ?? (d.get("eventDate") as string) ?? null;
-  const eventEndDate = (d.get("eventEndDate") as string) ?? (d.get("eventDate") as string) ?? null;
+  const eventStartDate = (d.get("eventStartDate") as string) ?? null;
+  const eventEndDate = (d.get("eventEndDate") as string) ?? null;
   const safeStartDate = eventStartDate ?? "0000-01-01";
   const safeEndDate = eventEndDate ?? "9999-12-31";
 

@@ -111,5 +111,12 @@ class TournamentScreenTest {
         useTotalsOnly = false,
         hasProgress = hasProgress,
         hasValidManualTotals = hasValidManualTotals,
+        // The server sets the status from the flags in this order.
+        completionStatus = when {
+            hasValidManualTotals -> "partial"
+            isCompleted -> "completed"
+            hasProgress -> "incomplete"
+            else -> "empty"
+        },
     )
 }

@@ -55,13 +55,7 @@ internal fun tableCompletionStatus(table: TournamentTable): CompletionStatus = w
     "incomplete" -> CompletionStatus.InProgress
     "partial" -> CompletionStatus.Manual
     "completed" -> CompletionStatus.Completed
-    // Data from an older server has no status. Use the old flags until the next refresh.
-    else -> when {
-        table.hasValidManualTotals -> CompletionStatus.Manual
-        table.isCompleted -> CompletionStatus.Completed
-        table.hasProgress -> CompletionStatus.InProgress
-        else -> CompletionStatus.Empty
-    }
+    else -> CompletionStatus.Empty
 }
 
 internal fun firstTournamentTableToOpen(tables: List<TournamentTable>): TournamentTable? {

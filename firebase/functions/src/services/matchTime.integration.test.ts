@@ -31,6 +31,7 @@ async function seedTimedTable(startedMinutesAgo: number, mode: Mode, doneHands =
   }
   const uid = `u-${tournamentId}-1`;
   await db.doc(`users/${uid}/playerTournaments/${tournamentId}`).set({ playerId: 1, emaId: "E1" });
+  await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, assignedEmaId: "E1", accountUid: uid });
   return { tournamentId, uid };
 }
 

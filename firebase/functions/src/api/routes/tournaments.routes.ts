@@ -229,8 +229,8 @@ export function tournamentsRouter(): Router {
       const associationLogoSourceTournamentId = body?.associationLogoSourceTournamentId == null
         ? null
         : String(body.associationLogoSourceTournamentId).trim();
-      const eventStartDate = String(body?.eventStartDate ?? body?.eventDate ?? "").trim();
-      const eventEndDate = String(body?.eventEndDate ?? body?.eventDate ?? "").trim();
+      const eventStartDate = String(body?.eventStartDate ?? "").trim();
+      const eventEndDate = String(body?.eventEndDate ?? "").trim();
       const hostCountry = String(body?.hostCountry ?? "").trim().toUpperCase();
       const hostCity = String(body?.hostCity ?? "").trim();
       const isTeams = Boolean(body?.isTeams ?? false);
@@ -261,8 +261,8 @@ export function tournamentsRouter(): Router {
       }
       if (!body) issues.push({ field: "body", message: "Request body must be JSON", value: req.body });
       if (!name) issues.push({ field: "name", message: "Required", value: body?.name });
-      if (!/^[A-Z]{2,3}$/.test(hostCountry)) {
-        issues.push({ field: "hostCountry", message: "Must use a two-letter country code or legacy three-letter EMA code", value: body?.hostCountry });
+      if (!/^[A-Z]{2}$/.test(hostCountry)) {
+        issues.push({ field: "hostCountry", message: "Must use a two-letter country code", value: body?.hostCountry });
       }
       if (!hostCity) issues.push({ field: "hostCity", message: "Required", value: body?.hostCity });
       if (!shortName || shortName.length > 10) {
@@ -526,8 +526,8 @@ export function tournamentsRouter(): Router {
       if (!isValidIsoDateRange(eventStartDate, eventEndDate)) {
         throw badRequest("Tournament dates must use yyyy-MM-dd, and the end date must not be before the start date");
       }
-      if (!/^[A-Z]{2,3}$/.test(hostCountry)) {
-        throw badRequest("Host country must use a two-letter country code or legacy three-letter EMA code");
+      if (!/^[A-Z]{2}$/.test(hostCountry)) {
+        throw badRequest("Host country must use a two-letter country code");
       }
       if (!hostCity) throw badRequest("Host city is required");
       const venue = normalizeVenue(body);
