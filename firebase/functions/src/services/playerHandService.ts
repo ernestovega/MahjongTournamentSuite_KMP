@@ -128,8 +128,11 @@ async function loadFor(
   if (Boolean(table.useTotalsOnly ?? false)) throw conflict("This table uses totals only. An editor enters its results");
   if (seats == null) throw conflict("The seats of this table are not assigned yet");
   if (!seats.includes(String(registration.playerId))) throw forbidden("You do not play at this table");
-  // The players cannot change a table after the time of the match. An organizer enters the missing data.
+  // Players write only while the match is on. Before the start, after the end, or without a known schedule, an
+  // organizer enters the data.
   const phase = tournamentMatchPhase(tournamentSnap.data() ?? {}, key.roundId, Date.now());
+  if (phase == null) throw conflict("The schedule of this match is not set. An organizer must enter the data");
+  if (phase === "NOT_STARTED") throw conflict("This match has not started yet");
   if (phase === "OVER") throw conflict("The time of this match is over. An organizer must enter the missing data");
   const hands = handsFromData(handSnaps.map((snap) => snap.data() ?? {}));
   return { registration, table, seats, hands, phase };

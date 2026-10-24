@@ -442,13 +442,9 @@ function planPlayers(snapshot: TournamentSnapshot, people: Map<string, LegacyPer
 
 function planTeams(snapshot: TournamentSnapshot): Operation[] {
   if (!snapshot.tournament.isTeams) return [];
-  const byTeam = new Map<number, number[]>();
-  Object.values(snapshot.players).forEach((slot) => {
-    const team = Number(slot.team);
-    byTeam.set(team, [...(byTeam.get(team) ?? []), Number(slot.id)]);
-  });
+  const teams = new Set(Object.values(snapshot.players).map((slot) => Number(slot.team)));
   const operations: Operation[] = [];
-  [...byTeam.entries()].sort((a, b) => a[0] - b[0]).forEach(([team, playerIds]) => {
+  [...teams].sort((a, b) => a - b).forEach((team) => {
     const current = snapshot.teams[String(team)];
     operations.push({
       path: `tournaments/${snapshot.id}/teams/${team}`,
@@ -456,7 +452,6 @@ function planTeams(snapshot: TournamentSnapshot): Operation[] {
       data: {
         id: team,
         name: text(current?.name) || `Team ${team}`,
-        playerIds: playerIds.sort((a, b) => a - b),
         ...(current == null ? { createdAt: FieldValue.serverTimestamp() } : {}),
         updatedAt: FieldValue.serverTimestamp(),
       },

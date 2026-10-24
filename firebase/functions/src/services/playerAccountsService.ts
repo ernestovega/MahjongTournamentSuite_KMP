@@ -61,19 +61,31 @@ function isoOf(value: unknown): string | null {
  */
 export async function listPendingInvitations(): Promise<PendingInvitation[]> {
   const snapshot = await db.collectionGroup("playerInvitations").where("status", "==", "PENDING").get();
-  return snapshot.docs.flatMap((doc) => {
-    const tournamentId = doc.ref.parent.parent?.id;
-    if (!tournamentId) return [];
-    return [{
-      tournamentId,
-      invitationId: doc.id,
-      playerId: Number(doc.get("playerId")),
-      emaId: String(doc.get("emaId") ?? ""),
-      email: String(doc.get("email") ?? ""),
-      createdAt: isoOf(doc.get("createdAt")),
-      expiresAt: isoOf(doc.get("expiresAt")),
-    }];
-  });
+  return snapshot.docs.flatMap(pendingInvitationOf);
+}
+
+/** Lists the pending invitations of some people. It reads only their documents, not every pending invitation. */
+export async function listPendingInvitationsOf(emaIds: string[]): Promise<PendingInvitation[]> {
+  const unique = [...new Set(emaIds.filter((emaId) => emaId !== ""))];
+  const chunks: string[][] = [];
+  for (let start = 0; start < unique.length; start += 30) chunks.push(unique.slice(start, start + 30));
+  const snapshots = await Promise.all(chunks.map((chunk) => db.collectionGroup("playerInvitations")
+    .where("emaId", "in", chunk).where("status", "==", "PENDING").get()));
+  return snapshots.flatMap((snapshot) => snapshot.docs.flatMap(pendingInvitationOf));
+}
+
+function pendingInvitationOf(doc: FirebaseFirestore.QueryDocumentSnapshot): PendingInvitation[] {
+  const tournamentId = doc.ref.parent.parent?.id;
+  if (!tournamentId) return [];
+  return [{
+    tournamentId,
+    invitationId: doc.id,
+    playerId: Number(doc.get("playerId")),
+    emaId: String(doc.get("emaId") ?? ""),
+    email: String(doc.get("email") ?? ""),
+    createdAt: isoOf(doc.get("createdAt")),
+    expiresAt: isoOf(doc.get("expiresAt")),
+  }];
 }
 
 export type InvitedPerson = PendingInvitation & { tournamentName: string; playerName: string; expired: boolean };
@@ -112,8 +124,8 @@ export async function listInvitedPeople(scope?: ReadonlySet<string>): Promise<In
 
 /** Marks the invitations of an EMA id as revoked and clears the invited mark on the slots that hold them. */
 async function revokePendingForEma(emaId: string, keepInvitationId?: string): Promise<void> {
-  const pending = (await listPendingInvitations())
-    .filter((item) => item.emaId === emaId && item.invitationId !== keepInvitationId);
+  const pending = (await listPendingInvitationsOf([emaId]))
+    .filter((item) => item.invitationId !== keepInvitationId);
   for (const item of pending) {
     const slotRef = db.doc(`tournaments/${item.tournamentId}/players/${item.playerId}`);
     await db.runTransaction(async (transaction) => {
@@ -391,7 +403,7 @@ async function runOne(
     const accountUid = typeof slot.get("accountUid") === "string" ? String(slot.get("accountUid")) : null;
     const status = String(slot.get("invitationStatus") ?? "NONE");
     // The invitation may belong to another tournament of the same person.
-    const inviteOfPerson = hasEma && (await listPendingInvitations()).some((item) => item.emaId === emaId);
+    const inviteOfPerson = hasEma && (await listPendingInvitationsOf([String(emaId)])).length > 0;
     if (accountUid == null && status !== "INVITED" && !inviteOfPerson) {
       return { playerId, outcome: "SKIPPED", message: "Nothing to revoke" };
     }
@@ -430,7 +442,7 @@ async function runOne(
       await notifyRegistration({ tournamentId, playerId, uid: accountUid, language });
       return { playerId, outcome: "NOTIFIED" };
     }
-    const personInvites = (await listPendingInvitations()).filter((item) => item.emaId === emaId);
+    const personInvites = hasEma ? await listPendingInvitationsOf([String(emaId)]) : [];
     const status = slot.get("invitationStatus") === "INVITED" || personInvites.length > 0 ? "INVITED" : "NONE";
     if (action === "send") {
       if (status === "INVITED") return { playerId, outcome: "SKIPPED", message: "Already invited" };

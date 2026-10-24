@@ -5,7 +5,7 @@ import { badRequest, conflict, notFound } from "../api/httpError";
 import { tablePointsOf } from "./handScoring";
 import { readSubstitution, SUBSTITUTION_REASONS, type PlayerSubstitution } from "./playerSubstitution";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
-import { linkKnownAccountToSlot, listPendingInvitations } from "./playerAccountsService";
+import { linkKnownAccountToSlot, listPendingInvitationsOf } from "./playerAccountsService";
 import {
   hasDuplicateEmaAssignments,
 } from "./tournamentContentRules";
@@ -100,17 +100,17 @@ export type TournamentTable = {
 
 /**
  * Lists the slots of a tournament. Pending invitations belong to the person, so by default every slot of a person
- * with an invitation shows it. That needs a read of all pending invitations. Pass `withInvitations: false` when
- * the caller needs only the slots, for example to assign players in a batch.
+ * with an invitation shows it. That needs a read of the pending invitations of these people. Pass
+ * `withInvitations: false` when the caller needs only the slots, for example to assign players in a batch.
  */
 export async function listTournamentPlayers(
   tournamentId: string,
   options: { withInvitations?: boolean } = {},
 ): Promise<TournamentPlayer[]> {
-  const [snap, pending] = await Promise.all([
-    db.collection("tournaments").doc(tournamentId).collection("players").get(),
-    options.withInvitations === false ? Promise.resolve([]) : listPendingInvitations(),
-  ]);
+  const snap = await db.collection("tournaments").doc(tournamentId).collection("players").get();
+  const pending = options.withInvitations === false ? [] : await listPendingInvitationsOf(
+    snap.docs.flatMap((d) => (typeof d.get("assignedEmaId") === "string" && d.get("accountUid") == null ? [d.get("assignedEmaId")] : [])),
+  );
   const inviteByEmaId = new Map(pending.map((item) => [item.emaId, item]));
   return snap.docs
     .map((d) => {

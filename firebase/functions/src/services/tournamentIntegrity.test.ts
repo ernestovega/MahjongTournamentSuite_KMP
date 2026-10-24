@@ -121,7 +121,7 @@ test("two players of one team at a table is an error in a teams tournament only"
   assert.ok(!codes(input).includes("tables.teamTogether"));
   input.tournament.isTeams = true;
   input.teams = [1, 2, 3, 4].map((id) => ({
-    id: String(id), data: { id, name: `Team ${id}`, playerIds: [4 * id - 3, 4 * id - 2, 4 * id - 1, 4 * id] },
+    id: String(id), data: { id, name: `Team ${id}` },
   }));
   assert.ok(codes(input).includes("tables.teamTogether"));
 });

@@ -1027,7 +1027,6 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
         data: {
           id: team,
           name: spec.teamNames?.[team - 1] ?? `Team ${team}`,
-          playerIds: [4 * team - 3, 4 * team - 2, 4 * team - 1, 4 * team],
           ...stamp(),
         },
       });

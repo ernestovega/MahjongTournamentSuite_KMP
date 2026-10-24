@@ -95,7 +95,7 @@ export function checkTournamentIntegrity(tournamentId: string, input: IntegrityI
 
   checkTournamentInfo(c, input, numPlayers, numRounds);
   const slotIds = checkPlayers(c, input, numPlayers);
-  checkTeams(c, input, slotIds);
+  checkTeams(c, input);
   checkRounds(c, input, numRounds);
   checkTables(c, input, numPlayers, numRounds, slotIds);
   checkTournamentCounters(c, input);
@@ -251,19 +251,16 @@ function checkPlayers(c: Collector, input: IntegrityInput, numPlayers: number): 
 
 // -- Teams -----------------------------------------------------------------------------------
 
-function checkTeams(c: Collector, input: IntegrityInput, slotIds: Set<number>): void {
+function checkTeams(c: Collector, input: IntegrityInput): void {
   const isTeams = input.tournament.isTeams === true;
   if (!isTeams) {
     if (input.teams.length > 0) c.add("info", "teams.unused", `The tournament has no teams mode, but ${input.teams.length} team documents exist.`);
     return;
   }
-  const members = new Map<number, number[]>();
-  input.players.forEach(({ data }) => {
-    const team = Number(data.team);
-    members.set(team, [...(members.get(team) ?? []), Number(data.id)]);
-  });
+  const members = new Map<number, number>();
+  input.players.forEach(({ data }) => members.set(Number(data.team), (members.get(Number(data.team)) ?? 0) + 1));
   const documents = new Map(input.teams.map(({ id, data }) => [Number(data.id ?? id), data]));
-  members.forEach((slotsOfTeam, team) => {
+  members.forEach((_size, team) => {
     const where = `team ${team}`;
     const document = documents.get(team);
     if (document == null) {
@@ -271,19 +268,12 @@ function checkTeams(c: Collector, input: IntegrityInput, slotIds: Set<number>): 
       return;
     }
     if (text(document.name) === "") c.add("warning", "teams.name", "The team has no name.", where);
-    const listed = ((document.playerIds as unknown[] | undefined) ?? []).map(Number).sort((a, b) => a - b);
-    const actual = [...slotsOfTeam].sort((a, b) => a - b);
-    if (listed.join(",") !== actual.join(",")) {
-      c.add("warning", "teams.playerIds", `The team lists players ${listed.join(", ") || "none"} but the slots say ${actual.join(", ")}.`, where);
-    }
-    listed.forEach((id) => {
-      if (!slotIds.has(id)) c.add("error", "teams.unknownPlayer", `The team lists player ${id}, who has no slot.`, where);
-    });
+    if (document.playerIds !== undefined) c.add("warning", "teams.playerIds", "The team document holds a player list. Teams get their players from the slots.", where);
   });
   documents.forEach((_document, team) => {
     if (!members.has(team)) c.add("warning", "teams.empty", `The team ${team} has no players.`, `team ${team}`);
   });
-  const sizes = new Set([...members.values()].map((list) => list.length));
+  const sizes = new Set(members.values());
   if (sizes.size > 1) c.add("warning", "teams.sizes", `The teams have different sizes (${[...sizes].sort().join(", ")}).`);
 }
 

@@ -10,9 +10,22 @@ import { saveTableState } from "./tableManagerService";
 
 type Fixture = { tournamentId: string; uid: string; otherUid: string };
 
+/** Gives round 1 a schedule in UTC. The match lasts 120 minutes and ends with the hand in play cut off. */
+async function startMatch(tournamentId: string, startedMinutesAgo: number): Promise<void> {
+  const start = new Date(Date.now() - startedMinutesAgo * 60_000).toISOString();
+  await db.doc(`tournaments/${tournamentId}`).update({
+    timeZone: "UTC",
+    matchDurationMinutes: 120,
+    matchEndMode: "STOP",
+    matchExtraMinutes: 15,
+    roundSchedules: [{ roundId: 1, date: start.slice(0, 10), startTime: start.slice(11, 16) }],
+  });
+}
+
 /** A hands-mode table with seats 1..4 from east to north. Slot 1 and slot 2 have a player account. */
-async function seedTable(options: { totalsOnly?: boolean; seats?: boolean } = {}): Promise<Fixture> {
+async function seedTable(options: { totalsOnly?: boolean; seats?: boolean; startedMinutesAgo?: number | null } = {}): Promise<Fixture> {
   const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+  if (options.startedMinutesAgo !== null) await startMatch(tournamentId, options.startedMinutesAgo ?? 10);
   await db.doc(`tournaments/${tournamentId}/tables/1_1`).update({
     useTotalsOnly: options.totalsOnly ?? false,
     ...(options.seats === false ? {} : { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" }),
@@ -101,6 +114,19 @@ describe("hand entry by a player", () => {
 
     await rejects(previewHand({ ...at(fixture), uid: fixture.otherUid, input: hand("1", "4") }), 403);
     await rejects(previewHand({ ...at(fixture), uid: "nobody", input: hand("1", "4") }), 403);
+  });
+
+  it("refuses a hand before the match starts, after it ends, and without a schedule", async () => {
+    const early = await seedTable({ startedMinutesAgo: -30 });
+    const late = await seedTable({ startedMinutesAgo: 300 });
+    const unscheduled = await seedTable({ startedMinutesAgo: null });
+
+    for (const fixture of [early, late, unscheduled]) {
+      await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 409);
+      await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 }), 409);
+      await rejects(addPenalties({ ...at(fixture), uid: fixture.uid, penalties: ["-10", "", "", ""], expectedVersion: 0 }), 409);
+      assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 0);
+    }
   });
 
   it("refuses totals-only tables and tables without four seats", async () => {
