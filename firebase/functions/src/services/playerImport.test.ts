@@ -166,3 +166,57 @@ test("a team name in an individual tournament is ignored with a warning", () => 
   assert.deepEqual(codes(result, 0), ["TEAM_IGNORED"]);
   assert.equal(result.rows[0].status, "NEW");
 });
+
+test("parsePlayerImportFile reads a real Excel file with numbers, links and an empty line", async () => {
+  const ExcelJS = await import("exceljs");
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Players");
+  sheet.addRow(["ID", "EMA", "Email", "Team"]);
+  sheet.addRow([1, 12345, { text: "a@b.es", hyperlink: "mailto:a@b.es" }, "Reds"]);
+  sheet.addRow([]);
+  sheet.addRow([2, "00000002", "", ""]);
+  const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
+
+  const parsed = await parsePlayerImportFile("players.xlsx", buffer);
+
+  assert.deepEqual(parsed.rows, [
+    { row: 2, id: "1", emaId: "12345", email: "a@b.es", team: "Reds" },
+    { row: 4, id: "2", emaId: "00000002", email: "", team: "" },
+  ]);
+});
+
+test("parsePlayerImportFile detects Excel content by its content, not only by the name", async () => {
+  await assert.rejects(parsePlayerImportFile("players.xlsx", Buffer.from("not a zip")), /not a valid Excel file/);
+});
+
+test("parsePlayerImportFile refuses empty files and files without rows", async () => {
+  await assert.rejects(parsePlayerImportFile("a.csv", Buffer.from("\n\n")), /empty/);
+  await assert.rejects(parsePlayerImportFile("a.csv", Buffer.from("id,ema id\n")), /no player rows/);
+});
+
+test("parsePlayerImportFile refuses a file with too many rows", async () => {
+  const lines = Array.from({ length: 1001 }, (_, index) => `${index + 1},1`).join("\n");
+  await assert.rejects(parsePlayerImportFile("a.csv", Buffer.from(`id,ema id\n${lines}`)), /more than 1000/);
+});
+
+test("parseCsv keeps new lines inside quotes and reads tab separated text", () => {
+  assert.deepEqual(parseCsv("a\tb\n\"x\ny\"\tz"), [["a", "b"], ["x\ny", "z"]]);
+});
+
+test("a team name over 80 characters is an error", () => {
+  const result = plan([row(2, "1", "1", { team: "x".repeat(81) })], { isTeams: true, teamNames: new Map([[1, "Team 1"]]) });
+  assert.deepEqual(codes(result, 0), ["TEAM_NAME_TOO_LONG"]);
+});
+
+test("a non-member in the slot makes the row a replacement", () => {
+  const result = plan([row(2, "1", "1")], { slots: [slot(1, { nonMemberName: "Guest Player" })] });
+  assert.equal(result.rows[0].status, "REPLACE");
+});
+
+test("an EMA number held by a slot outside the file blocks the row", () => {
+  const result = plan([row(2, "2", "1")], {
+    slots: [slot(1, { emaId: "00000001" }), slot(2), slot(3)],
+  });
+  assert.deepEqual(codes(result, 0), ["EMA_ASSIGNED_ELSEWHERE"]);
+  assert.deepEqual(result.rows[0].issues[0].args, ["1"]);
+});

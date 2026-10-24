@@ -39,6 +39,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
+import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -124,6 +125,9 @@ fun PlayerImportDialog(
     playerNameOf: (String) -> String?,
     onChanged: () -> Unit,
     onDismiss: () -> Unit,
+    /** Gives the file chooser. Tests give a chooser that picks a file at once. */
+    pickerFactory: @Composable (onSelected: (SelectedSpreadsheet) -> Unit, onError: (UiText) -> Unit) -> SpreadsheetPicker =
+        { onSelected, onError -> rememberSpreadsheetPicker(onSelected, onError) },
 ) {
     val presenter = koinInject<PlayerImportPresenter>()
     val scope = rememberCoroutineScope()
@@ -145,10 +149,7 @@ fun PlayerImportDialog(
         }
     }
 
-    val picker = rememberSpreadsheetPicker(
-        onSelected = { file -> preview(file) },
-        onError = { error = it },
-    )
+    val picker = pickerFactory({ file -> preview(file) }, { error = it })
 
     error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
 

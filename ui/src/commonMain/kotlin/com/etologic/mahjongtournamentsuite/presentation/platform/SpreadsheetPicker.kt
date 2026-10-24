@@ -11,7 +11,7 @@ class SelectedSpreadsheet(
     val bytes: ByteArray,
 )
 
-class SpreadsheetPicker internal constructor(
+class SpreadsheetPicker(
     private val launchAction: () -> Unit,
 ) {
     fun launch() = launchAction()

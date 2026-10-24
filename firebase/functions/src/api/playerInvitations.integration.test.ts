@@ -95,8 +95,8 @@ describe("player invitations", () => {
     it("writes the invitation in English without a header or for another language", async () => {
       const withoutHeader = await inviteWith(12, `${randomUUID()}@example.test`);
       assert.match(withoutHeader.subject, /^Invitation to /);
-      const french = await inviteWith(13, `${randomUUID()}@example.test`, "fr-FR");
-      assert.match(french.subject, /^Invitation to /);
+      const german = await inviteWith(13, `${randomUUID()}@example.test`, "de-DE");
+      assert.match(german.subject, /^Invitation to /);
     });
   });
 
