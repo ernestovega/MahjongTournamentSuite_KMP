@@ -18,6 +18,7 @@
     "backfill:statistics": "npm run build && node lib/scripts/backfillStatistics.js",
     "backfill:statistics:apply": "npm run build && node lib/scripts/backfillStatistics.js --apply",
     "watch": "tsc -w",
+    "test:coverage": "npm run build && firebase emulators:exec --config ../../firebase.json --only auth,firestore --project demo-mts-tests \"node --test --test-concurrency=1 --experimental-test-coverage --test-coverage-exclude=lib/**/*.test.js --test-coverage-exclude=lib/testing/** --test-coverage-exclude=lib/scripts/** lib/**/*.test.js\"",
     "test:integration": "npm run build && firebase emulators:exec --config ../../firebase.json --only auth,firestore --project demo-mts-tests \"node --test --test-concurrency=1 lib/services/*.integration.test.js lib/api/*.integration.test.js\"",
     "test-env:backend": "npm run e2e:backend",
     "e2e:backend": "npm run build && JAVA_HOME=${E2E_JAVA_HOME:-/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home} firebase emulators:exec --config ../../firebase.e2e.json --only auth,firestore --project demo-mts-e2e \"node lib/scripts/startE2eBackend.js\"",
@@ -30,20 +31,20 @@
     "check:integrity": "npm run build && node lib/scripts/checkTournamentIntegrity.js"
   },
   "dependencies": {
-    "exceljs": "^3.4.0",
+    "exceljs": "^4.4.0",
     "express": "^4.21.2",
     "firebase-admin": "^14.5.0",
     "firebase-functions": "^7.4.0",
-    "flag-icons": "^7.5.0",
+    "flag-icons": "^7.6.0",
     "nodemailer": "^10.2.1",
-    "pdfkit": "^0.16.0",
+    "pdfkit": "^0.20.2",
     "sharp": "0.35.5",
     "svg-to-pdfkit": "^0.1.8"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",
     "@types/nodemailer": "^8.0.2",
-    "@types/pdfkit": "^0.17.6",
+    "@types/pdfkit": "^0.17.7",
     "typescript": "^5.8.3"
   },
   "overrides": {
