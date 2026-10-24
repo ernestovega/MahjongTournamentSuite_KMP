@@ -8,7 +8,7 @@ import { requireRegisteredPlayer } from "./middleware/requireRegisteredPlayer";
 import { requireTournamentReader } from "./middleware/requireTournamentReader";
 import { requireAuth } from "./middleware/requireAuth";
 import { requireTournamentEditor } from "./middleware/requireTournamentEditor";
-import { buildApp } from "./app";
+import { buildApp, MOUNTED_ROUTERS } from "./app";
 import { seedTournament } from "../testing/firestoreFixtures";
 import { createAccount, signInTestAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
@@ -96,7 +96,7 @@ const MATRIX: Array<[string, string, Access]> = [
 ];
 
 function actualGuards(): Map<string, Access> {
-  const app = buildApp() as unknown as { _router: { stack: any[] } };
+  const app = buildApp() as unknown as { router: { stack: any[] } };
   const result = new Map<string, Access>();
   const walk = (layer: any, prefix: string) => {
     if (layer.route) {
@@ -110,11 +110,14 @@ function actualGuards(): Map<string, Access> {
         : "PUBLIC";
       for (const method of Object.keys(layer.route.methods)) result.set(`${method.toUpperCase()} ${prefix}${layer.route.path}`, access);
     } else if (layer.name === "router") {
-      const match = layer.regexp.source.match(/^\^\\\/(\w[\w-]*)/);
-      layer.handle.stack.forEach((inner: any) => walk(inner, prefix + (match ? `/${match[1]}` : "")));
+      layer.handle.stack.forEach((inner: any) => walk(inner, prefix));
     }
   };
-  app._router.stack.forEach((layer) => walk(layer, ""));
+  // The mounted routers come in the order of MOUNTED_ROUTERS, so the order gives each one its prefix.
+  const routerLayers = app.router.stack.filter((layer) => layer.name === "router");
+  assert.equal(routerLayers.length, MOUNTED_ROUTERS.length);
+  routerLayers.forEach((layer, index) => walk(layer, MOUNTED_ROUTERS[index][0]));
+  app.router.stack.filter((layer) => layer.route).forEach((layer) => walk(layer, ""));
   return result;
 }
 

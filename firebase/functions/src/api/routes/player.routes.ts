@@ -7,6 +7,7 @@ import { requireAuth } from "../middleware/requireAuth";
 import { requireRegisteredPlayer } from "../middleware/requireRegisteredPlayer";
 import { acceptInvitation } from "../../services/playerAccountsService";
 import { addPenalties, parseHandInput, parsePenaltyInput, previewHand, recordHand } from "../../services/playerHandService";
+import { pathParam } from "../pathParam";
 
 /** Routes for player accounts. The invitation route is public because a new player has no account yet. */
 export function playerRouter(): Router {
@@ -38,12 +39,12 @@ export function playerRouter(): Router {
 
   const tableRoute = "/tournaments/:tournamentId/tables/:roundId/:tableId";
   const tableParams = (req: Request) => {
-    const roundId = Number(req.params.roundId);
-    const tableId = Number(req.params.tableId);
+    const roundId = Number(pathParam(req, "roundId"));
+    const tableId = Number(pathParam(req, "tableId"));
     if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
       throw badRequest("roundId and tableId must be positive integers");
     }
-    return { tournamentId: req.params.tournamentId, roundId, tableId };
+    return { tournamentId: pathParam(req, "tournamentId"), roundId, tableId };
   };
   const uidOf = (res: Response) => (res.locals.auth as { uid: string }).uid;
 

@@ -4,6 +4,7 @@ import { hasAdminClaim } from "../../models/globalRole";
 import { getPlayerRegistration } from "../../services/playerAccountsService";
 import { forbidden } from "../httpError";
 import { requireTournamentEditor } from "./requireTournamentEditor";
+import { pathParam } from "../pathParam";
 
 /** Who a read route serves. Player readers get a reduced view of the data. */
 export type ReaderKind = "EDITOR" | "PLAYER";
@@ -29,7 +30,7 @@ export async function requireTournamentReader(
     return;
   }
 
-  const tournamentId = req.params.tournamentId;
+  const tournamentId = pathParam(req, "tournamentId");
   if (decoded.player === true && tournamentId) {
     const registration = await getPlayerRegistration(decoded.uid, tournamentId);
     if (registration) {

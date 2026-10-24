@@ -12,6 +12,19 @@ import { tournamentsRouter } from "./routes/tournaments.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { venuesRouter } from "./routes/venues.routes";
 
+/** The route groups of the API and where each one is mounted. A test reads this list to check every route. */
+export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
+  ["/auth", authRouter],
+  ["/config", configRouter],
+  ["/countries", countriesRouter],
+  ["/ema-player-registry", playersRouter],
+  ["/admin", adminRouter],
+  ["/sync", syncRouter],
+  ["/player", playerRouter],
+  ["/tournaments", tournamentsRouter],
+  ["/venues", venuesRouter],
+];
+
 export function buildApp(): express.Express {
   const app = express();
 
@@ -46,15 +59,7 @@ export function buildApp(): express.Express {
     res.status(200).json({ ok: true, version: "1.0.0" });
   });
 
-  app.use("/auth", authRouter());
-  app.use("/config", configRouter());
-  app.use("/countries", countriesRouter());
-  app.use("/ema-player-registry", playersRouter());
-  app.use("/admin", adminRouter());
-  app.use("/sync", syncRouter());
-  app.use("/player", playerRouter());
-  app.use("/tournaments", tournamentsRouter());
-  app.use("/venues", venuesRouter());
+  MOUNTED_ROUTERS.forEach(([prefix, router]) => app.use(prefix, router()));
 
   app.use(errorHandler);
 

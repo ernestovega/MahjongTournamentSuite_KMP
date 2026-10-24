@@ -32,6 +32,7 @@ import { BOOTSTRAP_KEY } from "../../config";
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, listInvitedPeople, setAccountEmaId } from "../../services/playerAccountsService";
 import { DEFAULT_USAGE_PERIOD, loadUsageReport, USAGE_PERIODS } from "../../services/usageService";
+import { pathParam } from "../pathParam";
 
 type Actor = { uid: string; admin?: boolean };
 
@@ -194,7 +195,7 @@ export function adminRouter(): Router {
   router.put("/users/:uid", requireAuth, requireEditor, async (req, res, next) => {
     try {
       const actor = res.locals.auth as Actor;
-      const current = await getManagedUser(req.params.uid);
+      const current = await getManagedUser(pathParam(req, "uid"));
       // A player-only account may keep its role. Management cannot create players or demote editors to players.
       const role = parseGlobalUserRole(req.body?.role)
         ?? (req.body?.role === "PLAYER" && current.role === "PLAYER" ? "PLAYER" as const : null);
@@ -250,11 +251,11 @@ export function adminRouter(): Router {
   router.put("/users/:uid/photo", requireAuth, requireAdmin, async (req, res, next) => {
     try {
       const contentType = readContentType(req.body);
-      await setUserPhoto(req.params.uid, contentType, readPhotoData(req.body));
+      await setUserPhoto(pathParam(req, "uid"), contentType, readPhotoData(req.body));
       await recordActivity({
-        action: "user.photo", actor: actorFromToken(res.locals.auth), target: req.params.uid, details: { contentType },
+        action: "user.photo", actor: actorFromToken(res.locals.auth), target: pathParam(req, "uid"), details: { contentType },
       });
-      res.status(200).json(await getManagedUser(req.params.uid));
+      res.status(200).json(await getManagedUser(pathParam(req, "uid")));
     } catch (error) {
       next(error);
     }
@@ -262,11 +263,11 @@ export function adminRouter(): Router {
 
   router.delete("/users/:uid/photo", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      await clearUserPhoto(req.params.uid);
+      await clearUserPhoto(pathParam(req, "uid"));
       await recordActivity({
-        action: "user.photo.remove", actor: actorFromToken(res.locals.auth), target: req.params.uid, details: {},
+        action: "user.photo.remove", actor: actorFromToken(res.locals.auth), target: pathParam(req, "uid"), details: {},
       });
-      res.status(200).json(await getManagedUser(req.params.uid));
+      res.status(200).json(await getManagedUser(pathParam(req, "uid")));
     } catch (error) {
       next(error);
     }
@@ -277,7 +278,7 @@ export function adminRouter(): Router {
       const actor = res.locals.auth as Actor;
       const disabled = req.body?.disabled;
       if (typeof disabled !== "boolean") throw badRequest("disabled must be a boolean");
-      const current = await getManagedUser(req.params.uid);
+      const current = await getManagedUser(pathParam(req, "uid"));
       if (actor.uid === current.uid && disabled) throw badRequest("You cannot disable your own account");
       await assertAdminRemainsEnabled(current.role, current.disabled, current.role, disabled);
 

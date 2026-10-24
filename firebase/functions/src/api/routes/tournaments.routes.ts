@@ -58,6 +58,7 @@ import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDa
 import { normalizeVenue, venueRequiredProblems } from "../../services/tournamentVenue";
 import { getTournamentManifest } from "../../services/dataVersionsService";
 import { parseSaveTableRequest } from "../tableRequests";
+import { pathParam } from "../pathParam";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
 import { applyPlayerImport, IMPORT_BATCH_SIZE, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
@@ -104,7 +105,7 @@ export function tournamentsRouter(): Router {
     async (req, res, next) => {
       try {
         res.setHeader("Cache-Control", "no-store");
-        res.status(200).json(await getTournamentManifest(req.params.tournamentId));
+        res.status(200).json(await getTournamentManifest(pathParam(req, "tournamentId")));
       } catch (error) {
         next(error);
       }
@@ -182,7 +183,7 @@ export function tournamentsRouter(): Router {
   const personHandler = (own: boolean) => async (req: Request, res: Response, next: NextFunction) => {
     try {
       const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
-      const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(req.params.emaId);
+      const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(pathParam(req, "emaId"));
       if (emaId === "") {
         res.status(200).json({ emaId, tournaments: [] });
         return;
@@ -197,7 +198,7 @@ export function tournamentsRouter(): Router {
   const standingsHandler = (own: boolean) => async (req: Request, res: Response, next: NextFunction) => {
     try {
       const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
-      const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(req.params.emaId);
+      const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(pathParam(req, "emaId"));
       const allowed = await visibleTournamentIds(decoded);
       const ids = readTournamentIds(req.query.tournaments).filter((id) => allowed == null || allowed.has(id));
       res.status(200).json({ standings: emaId === "" ? [] : await loadStandings(emaId, ids) });
@@ -439,7 +440,7 @@ export function tournamentsRouter(): Router {
   router.get("/:tournamentId/integrity", requireAuth, requireTournamentEditor, async (req, res, next) => {
     try {
       res.setHeader("Cache-Control", "no-store");
-      res.status(200).json(await runTournamentIntegrityCheck(req.params.tournamentId));
+      res.status(200).json(await runTournamentIntegrityCheck(pathParam(req, "tournamentId")));
     } catch (e) {
       next(e);
     }
@@ -447,9 +448,9 @@ export function tournamentsRouter(): Router {
 
   router.get("/:tournamentId/id-cards", requireAuth, requireTournamentEditor, async (req, res, next) => {
     try {
-      const pdf = await generateTournamentIdCards(req.params.tournamentId, readIdCardSheetOptions(req.query));
+      const pdf = await generateTournamentIdCards(pathParam(req, "tournamentId"), readIdCardSheetOptions(req.query));
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-cards.pdf"`);
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-id-cards.pdf"`);
       res.status(200).send(pdf);
     } catch (e) {
       next(e);
@@ -458,9 +459,9 @@ export function tournamentsRouter(): Router {
 
   router.get("/:tournamentId/id-list", requireAuth, requireTournamentEditor, async (req, res, next) => {
     try {
-      const workbook = await generateTournamentIdList(req.params.tournamentId);
+      const workbook = await generateTournamentIdList(pathParam(req, "tournamentId"));
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-      res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-id-list.xlsx"`);
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-id-list.xlsx"`);
       res.status(200).send(workbook);
     } catch (e) {
       next(e);
@@ -487,9 +488,9 @@ export function tournamentsRouter(): Router {
         }
         return parsed;
       });
-      const report = await generateEmaReport({ tournamentId: req.params.tournamentId, rows });
+      const report = await generateEmaReport({ tournamentId: pathParam(req, "tournamentId"), rows });
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-      res.setHeader("Content-Disposition", `attachment; filename="tournament-${req.params.tournamentId}-ema.xlsx"`);
+      res.setHeader("Content-Disposition", `attachment; filename="tournament-${pathParam(req, "tournamentId")}-ema.xlsx"`);
       res.status(200).send(report);
     } catch (e) {
       next(e);
@@ -540,7 +541,7 @@ export function tournamentsRouter(): Router {
         throw badRequest("Supply an uploaded logo or a reusable logo, not both");
       }
       const tournament = await updateTournamentSettings({
-        tournamentId: req.params.tournamentId,
+        tournamentId: pathParam(req, "tournamentId"),
         name,
         shortName,
         primaryColor,
@@ -563,7 +564,7 @@ export function tournamentsRouter(): Router {
         timeZone: body.timeZone,
       });
       await recordActivity({
-        action: "tournament.update", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+        action: "tournament.update", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
         target: name,
         details: {
           shortName, primaryColor, eventStartDate, eventEndDate, hostCountry, hostCity,
@@ -583,10 +584,10 @@ export function tournamentsRouter(): Router {
 
   router.delete("/:tournamentId", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      const removed = await tournamentNameOf(req.params.tournamentId);
-      await deleteTournament(req.params.tournamentId);
+      const removed = await tournamentNameOf(pathParam(req, "tournamentId"));
+      await deleteTournament(pathParam(req, "tournamentId"));
       await recordActivity({
-        action: "tournament.delete", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+        action: "tournament.delete", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
         target: removed,
       });
       res.status(200).json({ ok: true });
@@ -601,9 +602,9 @@ export function tournamentsRouter(): Router {
       const name = String(body?.name ?? "").trim();
       if (!name) throw badRequest("Tournament name is required");
 
-      await renameTournament(req.params.tournamentId, name);
+      await renameTournament(pathParam(req, "tournamentId"), name);
       await recordActivity({
-        action: "tournament.rename", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+        action: "tournament.rename", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
         target: name,
       });
       res.status(200).json({ ok: true });
@@ -634,7 +635,7 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const members = await listTournamentMembers(req.params.tournamentId);
+        const members = await listTournamentMembers(pathParam(req, "tournamentId"));
         res.status(200).json({ members });
       } catch (e) {
         next(e);
@@ -648,7 +649,7 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const playerId = Number(req.params.playerId);
+        const playerId = Number(pathParam(req, "playerId"));
         const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
         const rawEmaId = body?.emaId;
         const emaId = rawEmaId == null ? null : validateEmaId(rawEmaId);
@@ -674,14 +675,14 @@ export function tournamentsRouter(): Router {
         }
 
         await assignTournamentPlayer({
-          tournamentId: req.params.tournamentId,
+          tournamentId: pathParam(req, "tournamentId"),
           playerId,
           emaId,
           nonMember,
           uid: (res.locals.auth as { uid: string }).uid,
         });
         await recordActivity({
-          action: "player.assign", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+          action: "player.assign", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `player ${playerId}`,
           details: { emaId, nonMember: nonMember == null ? undefined : { ...nonMember } },
         });
@@ -698,18 +699,18 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const playerId = Number(req.params.playerId);
+        const playerId = Number(pathParam(req, "playerId"));
         if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
         const substitution = readSubstitution(req.body);
         if (substitution == null) throw badRequest("A substitution needs a reason and a round");
         await setPlayerSubstitution({
-          tournamentId: req.params.tournamentId,
+          tournamentId: pathParam(req, "tournamentId"),
           playerId,
           substitution,
           uid: (res.locals.auth as { uid: string }).uid,
         });
         await recordActivity({
-          action: "player.substitute", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+          action: "player.substitute", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `player ${playerId}`, details: { substitution: { ...substitution } },
         });
         res.status(200).json({ ok: true });
@@ -725,17 +726,17 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const playerId = Number(req.params.playerId);
+        const playerId = Number(pathParam(req, "playerId"));
         if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
         await setPlayerSubstitution({
-          tournamentId: req.params.tournamentId,
+          tournamentId: pathParam(req, "tournamentId"),
           playerId,
           substitution: null,
           uid: (res.locals.auth as { uid: string }).uid,
         });
         await recordActivity({
           action: "player.clearSubstitution", actor: actorFromToken(res.locals.auth),
-          tournamentId: req.params.tournamentId, target: `player ${playerId}`,
+          tournamentId: pathParam(req, "tournamentId"), target: `player ${playerId}`,
         });
         res.status(200).json({ ok: true });
       } catch (e) {
@@ -751,12 +752,12 @@ export function tournamentsRouter(): Router {
     async (req, res, next) => {
       try {
         await upsertTournamentMember({
-          tournamentId: req.params.tournamentId,
-          uid: req.params.uid,
+          tournamentId: pathParam(req, "tournamentId"),
+          uid: pathParam(req, "uid"),
         });
         await recordActivity({
-          action: "member.add", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
-          target: `user ${req.params.uid}`,
+          action: "member.add", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
+          target: `user ${pathParam(req, "uid")}`,
         });
 
         res.status(200).json({ ok: true });
@@ -773,12 +774,12 @@ export function tournamentsRouter(): Router {
     async (req, res, next) => {
       try {
         await removeTournamentMember({
-          tournamentId: req.params.tournamentId,
-          uid: req.params.uid,
+          tournamentId: pathParam(req, "tournamentId"),
+          uid: pathParam(req, "uid"),
         });
         await recordActivity({
-          action: "member.remove", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
-          target: `user ${req.params.uid}`,
+          action: "member.remove", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
+          target: `user ${pathParam(req, "uid")}`,
         });
         res.status(200).json({ ok: true });
       } catch (e) {
@@ -793,7 +794,7 @@ export function tournamentsRouter(): Router {
     requireTournamentReader,
     async (req, res, next) => {
       try {
-        const players = await listTournamentPlayers(req.params.tournamentId);
+        const players = await listTournamentPlayers(pathParam(req, "tournamentId"));
         if (res.locals.reader === "PLAYER") {
           // Players see who plays and where, never the accounts or emails of other players.
           res.status(200).json({
@@ -816,7 +817,7 @@ export function tournamentsRouter(): Router {
     requireTournamentReader,
     async (req, res, next) => {
       try {
-        const teams = await listTournamentTeams(req.params.tournamentId);
+        const teams = await listTournamentTeams(pathParam(req, "tournamentId"));
         res.status(200).json({ teams });
       } catch (e) {
         next(e);
@@ -830,7 +831,7 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const teamId = Number(req.params.teamId);
+        const teamId = Number(pathParam(req, "teamId"));
         const body = (req.body != null && typeof req.body === "object")
           ? req.body as Record<string, unknown>
           : null;
@@ -864,13 +865,13 @@ export function tournamentsRouter(): Router {
         }
 
         await updateTournamentTeam({
-          tournamentId: req.params.tournamentId,
+          tournamentId: pathParam(req, "tournamentId"),
           teamId,
           name,
           emaIds,
         });
         await recordActivity({
-          action: "team.update", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+          action: "team.update", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `team ${teamId}`, details: { name, emaIds },
         });
         res.status(200).json({ ok: true });
@@ -886,7 +887,7 @@ export function tournamentsRouter(): Router {
     requireTournamentReader,
     async (req, res, next) => {
       try {
-        const rounds = await listTournamentRounds(req.params.tournamentId);
+        const rounds = await listTournamentRounds(pathParam(req, "tournamentId"));
         res.status(200).json({ rounds });
       } catch (e) {
         next(e);
@@ -906,7 +907,7 @@ export function tournamentsRouter(): Router {
           throw badRequest("roundId must be a positive integer");
         }
 
-        const tables = await listTournamentTables(req.params.tournamentId, roundId);
+        const tables = await listTournamentTables(pathParam(req, "tournamentId"), roundId);
         res.status(200).json({ tables });
       } catch (e) {
         next(e);
@@ -920,7 +921,7 @@ export function tournamentsRouter(): Router {
     requireTournamentReader,
     async (req, res, next) => {
       try {
-        const tables = await getAllTablesWithHands({ tournamentId: req.params.tournamentId });
+        const tables = await getAllTablesWithHands({ tournamentId: pathParam(req, "tournamentId") });
         res.status(200).json({ tables });
       } catch (e) {
         next(e);
@@ -934,12 +935,12 @@ export function tournamentsRouter(): Router {
     requireTournamentReader,
     async (req, res, next) => {
       try {
-        const roundId = Number(req.params.roundId);
+        const roundId = Number(pathParam(req, "roundId"));
         if (!Number.isInteger(roundId) || roundId <= 0) {
           throw badRequest("roundId must be a positive integer");
         }
 
-        const tables = await getRoundTablesWithHands({ tournamentId: req.params.tournamentId, roundId });
+        const tables = await getRoundTablesWithHands({ tournamentId: pathParam(req, "tournamentId"), roundId });
         res.status(200).json({ tables });
       } catch (e) {
         next(e);
@@ -953,14 +954,14 @@ export function tournamentsRouter(): Router {
     requireTournamentReader,
     async (req, res, next) => {
       try {
-        const roundId = Number(req.params.roundId);
-        const tableId = Number(req.params.tableId);
+        const roundId = Number(pathParam(req, "roundId"));
+        const tableId = Number(pathParam(req, "tableId"));
         if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
           throw badRequest("roundId and tableId must be positive integers");
         }
 
         const data = await getTableWithHands({
-          tournamentId: req.params.tournamentId,
+          tournamentId: pathParam(req, "tournamentId"),
           roundId,
           tableId,
         });
@@ -979,7 +980,7 @@ export function tournamentsRouter(): Router {
       try {
         const request = parseSaveTableRequest(req.params, req.body);
         res.status(200).json(await saveTableState({
-          tournamentId: req.params.tournamentId,
+          tournamentId: pathParam(req, "tournamentId"),
           ...request,
           actor: actorFromToken(res.locals.auth),
         }));
@@ -995,14 +996,14 @@ export function tournamentsRouter(): Router {
     requireAdmin,
     async (req, res, next) => {
       try {
-        const roundId = Number(req.params.roundId);
-        const tableId = Number(req.params.tableId);
+        const roundId = Number(pathParam(req, "roundId"));
+        const tableId = Number(pathParam(req, "tableId"));
         if (!Number.isInteger(roundId) || roundId <= 0 || !Number.isInteger(tableId) || tableId <= 0) {
           throw badRequest("roundId and tableId must be positive integers");
         }
 
         await resetTable({
-          tournamentId: req.params.tournamentId,
+          tournamentId: pathParam(req, "tournamentId"),
           roundId,
           tableId,
           actor: actorFromToken(res.locals.auth),
@@ -1020,7 +1021,7 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        res.status(200).json({ invitations: await listInvitations(req.params.tournamentId) });
+        res.status(200).json({ invitations: await listInvitations(pathParam(req, "tournamentId")) });
       } catch (e) {
         next(e);
       }
@@ -1044,11 +1045,11 @@ export function tournamentsRouter(): Router {
           });
           const actor = res.locals.auth as { uid: string };
           const results = await runAccountAction({
-            tournamentId: req.params.tournamentId, action, items, invitedBy: actor.uid,
+            tournamentId: pathParam(req, "tournamentId"), action, items, invitedBy: actor.uid,
             language: parseAcceptLanguage(req.headers["accept-language"]),
           });
           await recordActivity({
-            action: `account.${action}`, actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+            action: `account.${action}`, actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
             target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
           });
           res.status(200).json({ results });
@@ -1072,9 +1073,9 @@ export function tournamentsRouter(): Router {
           if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
           return { playerId, email: String(value.email ?? "") };
         });
-        await saveContactEmails({ tournamentId: req.params.tournamentId, items });
+        await saveContactEmails({ tournamentId: pathParam(req, "tournamentId"), items });
         await recordActivity({
-          action: "account.saveEmails", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+          action: "account.saveEmails", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
         });
         res.status(200).json({ ok: true });
@@ -1099,7 +1100,7 @@ export function tournamentsRouter(): Router {
     async (req, res, next) => {
       try {
         const file = readImportFile(req.body);
-        res.status(200).json(await previewPlayerImport({ tournamentId: req.params.tournamentId, ...file }));
+        res.status(200).json(await previewPlayerImport({ tournamentId: pathParam(req, "tournamentId"), ...file }));
       } catch (e) {
         next(e);
       }
@@ -1122,10 +1123,10 @@ export function tournamentsRouter(): Router {
           throw badRequest(`At most ${IMPORT_BATCH_SIZE} rows per request`);
         }
         const result = await applyPlayerImport({
-          tournamentId: req.params.tournamentId, ...file, replaceExisting, uid, phase, rows,
+          tournamentId: pathParam(req, "tournamentId"), ...file, replaceExisting, uid, phase, rows,
         });
         await recordActivity({
-          action: "player.import", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+          action: "player.import", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `${result.assigned} players`,
           details: { phase, ...result, failures: result.failures.length, replaceExisting },
         });
@@ -1145,7 +1146,7 @@ export function tournamentsRouter(): Router {
       res.status(501).json({
         error: "not_implemented",
         message: "Tournament details endpoint not implemented yet",
-        tournamentId: req.params.tournamentId,
+        tournamentId: pathParam(req, "tournamentId"),
       });
     },
   );
