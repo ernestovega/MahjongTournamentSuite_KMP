@@ -59,6 +59,7 @@ import { normalizeVenue, venueRequiredProblems } from "../../services/tournament
 import { getTournamentManifest } from "../../services/dataVersionsService";
 import { parseSaveTableRequest } from "../tableRequests";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
+import { applyPlayerImport, IMPORT_BATCH_SIZE, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
@@ -1077,6 +1078,58 @@ export function tournamentsRouter(): Router {
           target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
         });
         res.status(200).json({ ok: true });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  /** Reads the file of the request. The apply step reads it again, so the server never trusts rows from the client. */
+  const readImportFile = (body: unknown): { fileName: string; buffer: Buffer } => {
+    const value = (body != null && typeof body === "object") ? body as Record<string, unknown> : {};
+    const dataBase64 = String(value.dataBase64 ?? "").trim();
+    if (!dataBase64) throw badRequest("The file is required");
+    return { fileName: String(value.fileName ?? "players.csv"), buffer: Buffer.from(dataBase64, "base64") };
+  };
+
+  router.post(
+    "/:tournamentId/player-import/preview",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const file = readImportFile(req.body);
+        res.status(200).json(await previewPlayerImport({ tournamentId: req.params.tournamentId, ...file }));
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.post(
+    "/:tournamentId/player-import/apply",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const file = readImportFile(req.body);
+        const replaceExisting = req.body?.replaceExisting === true;
+        const uid = (res.locals.auth as { uid: string }).uid;
+        const phase = req.body?.phase;
+        if (phase !== "CLEAR" && phase !== "ASSIGN" && phase !== "FINISH") throw badRequest("phase must be CLEAR, ASSIGN or FINISH");
+        const rows = Array.isArray(req.body?.rows) ? (req.body.rows as unknown[]).map(Number) : [];
+        if (rows.length > IMPORT_BATCH_SIZE || rows.some((row) => !Number.isInteger(row) || row <= 0)) {
+          throw badRequest(`At most ${IMPORT_BATCH_SIZE} rows per request`);
+        }
+        const result = await applyPlayerImport({
+          tournamentId: req.params.tournamentId, ...file, replaceExisting, uid, phase, rows,
+        });
+        await recordActivity({
+          action: "player.import", actor: actorFromToken(res.locals.auth), tournamentId: req.params.tournamentId,
+          target: `${result.assigned} players`,
+          details: { phase, ...result, failures: result.failures.length, replaceExisting },
+        });
+        res.status(200).json(result);
       } catch (e) {
         next(e);
       }

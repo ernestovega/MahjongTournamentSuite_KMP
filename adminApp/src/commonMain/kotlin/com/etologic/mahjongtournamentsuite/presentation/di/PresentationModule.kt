@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.di
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
@@ -29,6 +30,7 @@ val presentationModule = module {
     factory { CreateTournamentPresenter(get(), get(), get()) }
     factory { UsersPresenter(get(), get(), get(), get(), get()) }
     factory { PlayersPresenter(get(), get(), get(), get()) }
+    factory { PlayerImportPresenter(get(), get()) }
     factory { TeamsPresenter(get(), get(), get()) }
     factory { PlayerBasePresenter(get(), get()) }
     factory { TablesPresenter(get(), get(), get()) }

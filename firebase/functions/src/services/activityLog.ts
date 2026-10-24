@@ -12,7 +12,7 @@ export const ACTIVITY_COLLECTION = "activity";
 
 export type ActivityAction =
   | "tournament.create" | "tournament.update" | "tournament.rename" | "tournament.delete"
-  | "player.assign" | "player.substitute" | "player.clearSubstitution"
+  | "player.assign" | "player.import" | "player.substitute" | "player.clearSubstitution"
   | "team.update" | "member.add" | "member.remove"
   | "account.send" | "account.resend" | "account.revoke" | "account.saveEmails"
   | "user.create" | "user.update" | "user.disable" | "user.enable" | "user.photo" | "user.photo.remove"

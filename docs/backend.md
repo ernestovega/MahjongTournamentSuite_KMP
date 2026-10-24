@@ -93,6 +93,15 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
   - `POST /tournaments/:id/player-accounts/resend`: creates a new invitation link (the old link stops working), or sends the reminder again.
   - `POST /tournaments/:id/player-accounts/revoke`: cancels a pending invitation, or removes the account link.
   - `PUT /tournaments/:id/player-accounts/emails`: saves the email of players with no account, for a later send.
+  - `POST /tournaments/:id/player-import/preview`: reads a CSV or Excel file (`fileName`, `dataBase64`) and returns what an import would do. It changes nothing.
+  - `POST /tournaments/:id/player-import/apply`: reads the same file again and runs one step of the import. It needs `replaceExisting: true` to replace a player that is in a slot already.
+    - The app runs the steps in order, so that no request lasts long: `phase: "CLEAR"` once (empties the slots whose player moves), `phase: "ASSIGN"` with up to 25 `rows` (line numbers) for each batch, and `phase: "FINISH"` once (saves the emails and renames the teams).
+    - The first line of the file names the columns. Required: `id` (the slot number) and `ema id`. Optional: `email` and `team`.
+    - The delimiter of a CSV file can be a comma, a semicolon or a tab. Excel files use the first sheet.
+    - A row has an error when the slot or the EMA number is unknown, when a slot or an EMA number appears twice, or when the email or the team name is wrong. The import skips these rows and applies the others.
+    - Players can move between slots in one file. The server clears the slots that give up a player first, so an EMA number is never in two slots.
+    - The email is saved as a contact email and no message is sent. The preview warns when it differs from the saved email.
+    - The team name renames the team of the slot. Team members stay in their fixed slots.
 - The slot keeps `invitationStatus`, `invitedEmail` and the time of the last email (`contactedAt` in the players list). The editor app uses them to filter "not invited yet", "invited, waiting" and "contacted".
 - The email has one link. The token is `{tournamentId}.{invitationId}.{secret}`. Only a hash of the secret is stored. The link works once and expires after 14 days.
 - `POST /player/invitations/accept` is public. A new account sends `{ token, password }` and the server creates the account. An existing account signs in and sends `{ token }`.

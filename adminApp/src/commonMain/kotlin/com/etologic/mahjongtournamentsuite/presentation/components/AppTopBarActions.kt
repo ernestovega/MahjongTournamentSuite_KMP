@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.UploadFile
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_users
 import mahjongtournamentsuite.adminapp.generated.resources.ema_report
+import mahjongtournamentsuite.adminapp.generated.resources.import_players
 import mahjongtournamentsuite.adminapp.generated.resources.new_player
 import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.players
@@ -37,6 +39,7 @@ fun AppTopBarActions(
     onIdCards: (() -> Unit)? = null,
     onIdList: (() -> Unit)? = null,
     onPlayerAccounts: (() -> Unit)? = null,
+    onImportPlayers: (() -> Unit)? = null,
     onPlayerBase: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
     onStatistics: (() -> Unit)? = null,
@@ -63,6 +66,7 @@ fun AppTopBarActions(
             AppTopBarButton(stringResource(Res.string.top_bar_id_list), Icons.AutoMirrored.Filled.FormatListBulleted, it, idListFocusRequester)
         }
         onPlayerAccounts?.let { AppTopBarButton(stringResource(Res.string.top_bar_invitations), Icons.Default.Email, it) }
+        onImportPlayers?.let { AppTopBarButton(stringResource(Res.string.import_players), Icons.Default.UploadFile, it) }
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.app_users), Icons.Default.ManageAccounts, it, usersFocusRequester) }
         onStatistics?.let { AppTopBarButton(stringResource(Res.string.statistics), StatisticsIcon, it) }
         onEmaReport?.let { AppTopBarButton(stringResource(Res.string.ema_report), Icons.Outlined.Assessment, it, exportFocusRequester) }

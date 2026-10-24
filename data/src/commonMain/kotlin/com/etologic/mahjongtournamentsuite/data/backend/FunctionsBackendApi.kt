@@ -16,6 +16,9 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportPreviewDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportResultDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerInvitationsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
@@ -506,6 +509,26 @@ class FunctionsBackendApi(
         request: PlayerAccountActionRequestDto,
     ): PlayerAccountActionResponseDto = post(
         path = "/tournaments/$tournamentId/player-accounts/$action",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun previewPlayerImport(
+        idToken: String,
+        tournamentId: String,
+        request: PlayerImportRequestDto,
+    ): PlayerImportPreviewDto = post(
+        path = "/tournaments/$tournamentId/player-import/preview",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun applyPlayerImport(
+        idToken: String,
+        tournamentId: String,
+        request: PlayerImportRequestDto,
+    ): PlayerImportResultDto = post(
+        path = "/tournaments/$tournamentId/player-import/apply",
         requestBody = request,
         idToken = idToken,
     )

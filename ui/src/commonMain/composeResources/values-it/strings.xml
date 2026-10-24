@@ -303,4 +303,7 @@
     <string name="theme_light">Chiaro</string>
     <string name="theme_dark">Scuro</string>
     <string name="theme_description">Tema: %1$s</string>
+    <string name="spreadsheet_chooser_title">Scegli il file dei giocatori</string>
+    <string name="spreadsheet_chooser_filter">File CSV ed Excel</string>
+    <string name="spreadsheet_error_read">L\'app non è riuscita a leggere il file. Scegli un file CSV o Excel e riprova.</string>
 </resources>

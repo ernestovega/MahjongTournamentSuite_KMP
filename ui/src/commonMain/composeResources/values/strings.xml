@@ -303,4 +303,7 @@
     <string name="theme_light">Light</string>
     <string name="theme_dark">Dark</string>
     <string name="theme_description">Theme: %1$s</string>
+    <string name="spreadsheet_chooser_title">Choose the players file</string>
+    <string name="spreadsheet_chooser_filter">CSV and Excel files</string>
+    <string name="spreadsheet_error_read">The app could not read the file. Choose a CSV or Excel file and try again.</string>
 </resources>

@@ -75,6 +75,8 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/tournaments/:tournamentId/player-accounts/resend", "MEMBER"],
   ["POST", "/tournaments/:tournamentId/player-accounts/revoke", "MEMBER"],
   ["PUT", "/tournaments/:tournamentId/player-accounts/emails", "MEMBER"],
+  ["POST", "/tournaments/:tournamentId/player-import/preview", "MEMBER"],
+  ["POST", "/tournaments/:tournamentId/player-import/apply", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/teams", "READER"],
   ["PUT", "/tournaments/:tournamentId/teams/:teamId", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/rounds", "READER"],

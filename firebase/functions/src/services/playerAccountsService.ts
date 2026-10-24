@@ -331,7 +331,7 @@ export type AccountOutcome = "INVITED" | "NOTIFIED" | "REVOKED" | "SKIPPED" | "F
 export type AccountActionItem = { playerId: number; email?: string };
 export type AccountActionResult = { playerId: number; outcome: AccountOutcome; message?: string };
 
-const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAX_BULK_PLAYERS = 200;
 const BULK_CONCURRENCY = 5;
 

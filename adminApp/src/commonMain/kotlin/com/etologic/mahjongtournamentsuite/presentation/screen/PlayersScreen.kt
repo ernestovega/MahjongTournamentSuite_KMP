@@ -205,6 +205,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var accountResults by remember { mutableStateOf<List<PlayerAccountActionResult>>(emptyList()) }
     var bulkAccountsOpen by remember { mutableStateOf(false) }
     var idCardsDialogOpen by remember { mutableStateOf(false) }
+    var importDialogOpen by remember { mutableStateOf(false) }
     var assignmentSearchQuery by remember { mutableStateOf("") }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -1130,6 +1131,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 onIdCards = { idCardsDialogOpen = true },
                 onIdList = ::exportIdList,
                 onPlayerAccounts = { accountError = null; accountResults = emptyList(); loadInvitations(); bulkAccountsOpen = true },
+                onImportPlayers = { importDialogOpen = true },
             )
         },
     ) {
@@ -1138,6 +1140,14 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 AppErrorDialog(
                     message = it,
                     onDismiss = { error = null },
+                )
+            }
+            if (importDialogOpen) {
+                PlayerImportDialog(
+                    tournamentId = tournamentId,
+                    playerNameOf = { emaId -> playersByEma[emaId]?.displayName },
+                    onChanged = { refresh(force = true) },
+                    onDismiss = { importDialogOpen = false },
                 )
             }
             if (idCardsDialogOpen) {

@@ -126,6 +126,7 @@ fun TeamsScreen(
     var basePlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var editingTeamId by remember { mutableStateOf<Int?>(null) }
+    var importDialogOpen by remember { mutableStateOf(false) }
     var restoreTeamId by remember { mutableStateOf<Int?>(null) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
@@ -281,7 +282,7 @@ fun TeamsScreen(
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
         actions = {
-            AppTopBarActions()
+            AppTopBarActions(onImportPlayers = { importDialogOpen = true })
         },
     ) {
         ScreenColumn(
@@ -293,6 +294,14 @@ fun TeamsScreen(
                 AppErrorDialog(
                     message = it,
                     onDismiss = { error = null },
+                )
+            }
+            if (importDialogOpen) {
+                PlayerImportDialog(
+                    tournamentId = tournamentId,
+                    playerNameOf = { emaId -> basePlayersByEma[emaId]?.displayName },
+                    onChanged = { refresh(force = true) },
+                    onDismiss = { importDialogOpen = false },
                 )
             }
             if (teams.isNotEmpty()) {
