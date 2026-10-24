@@ -151,7 +151,7 @@
     <string name="use_the_field_above_to_search">Use the field above to search a player by name or EMA number and see his/her skills.</string>
     <string name="players_results">Players &amp; results</string>
     <string name="manual_scores">Manual scores</string>
-    <string name="when_on_enter_each_player_s">When on, enter each player\'s final score yourself. The hands do not count (except for counting chicken and best hands).</string>
+    <string name="when_on_enter_each_player_s">When on, enter each player's final score yourself. The hands do not count (except for counting chicken and best hands).</string>
     <string name="hands">Hands</string>
     <string name="when_on_mark_the_table_complete">When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.</string>
     <string name="no_hands_yet">No hands yet</string>
@@ -615,8 +615,7 @@
     <string name="no_teams">No teams</string>
     <string name="no_teams_message">This tournament does not use teams.</string>
     <string name="no_teams_match">No teams match the current filters.</string>
-    <string name="team_id">Team ID</string>
-    <string name="team_move_warning">%1$s is assigned to %2$s as player %3$d. Saving will change the player\'s ID and tables. An occupied source slot will receive the displaced player.</string>
+    <string name="team_move_warning">%1$s is assigned to %2$s as player %3$d. Saving will change the player's ID and tables. An occupied source slot will receive the displaced player.</string>
     <string name="edit_team_n">Edit team %1$d</string>
     <string name="select_player_n">Select player %1$d</string>
     <string name="rival_ema">EMA %1$s</string>
@@ -687,7 +686,7 @@
     <string name="reason_ill">The player is ill.</string>
     <string name="reason_disqualified">The player is disqualified.</string>
     <string name="time_zone">Time zone</string>
-    <string name="schedule_format_note">Dates use DD/MM/YYYY. Times use the tournament\'s local time in HH:mm format.</string>
+    <string name="schedule_format_note">Dates use DD/MM/YYYY. Times use the tournament's local time in HH:mm format.</string>
     <string name="schedule_enter_rounds">Enter a valid number of rounds to configure their start times.</string>
     <string name="schedule_choose_round_date">Choose round %1$d date</string>
     <string name="schedule_choose_round_time">Choose round %1$d start time</string>

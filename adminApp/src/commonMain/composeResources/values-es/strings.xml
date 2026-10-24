@@ -615,7 +615,6 @@
     <string name="no_teams">Sin equipos</string>
     <string name="no_teams_message">Este torneo no usa equipos.</string>
     <string name="no_teams_match">Ningún equipo coincide con los filtros actuales.</string>
-    <string name="team_id">ID del equipo</string>
     <string name="team_move_warning">%1$s está asignado a %2$s como jugador %3$d. Al guardar cambiará el ID y las mesas del jugador. Un puesto de origen ocupado recibirá al jugador desplazado.</string>
     <string name="edit_team_n">Editar el equipo %1$d</string>
     <string name="select_player_n">Elegir el jugador %1$d</string>

@@ -73,7 +73,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
@@ -87,6 +86,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.clear_slot
 import mahjongtournamentsuite.adminapp.generated.resources.edit
 import mahjongtournamentsuite.adminapp.generated.resources.edit_team_n
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
+import mahjongtournamentsuite.adminapp.generated.resources.id
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_matches
@@ -104,7 +104,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.save_team
 import mahjongtournamentsuite.adminapp.generated.resources.search_by_team_or_player_name
 import mahjongtournamentsuite.adminapp.generated.resources.search_players
 import mahjongtournamentsuite.adminapp.generated.resources.select_player_n
-import mahjongtournamentsuite.adminapp.generated.resources.team_id
 import mahjongtournamentsuite.adminapp.generated.resources.team_members
 import mahjongtournamentsuite.adminapp.generated.resources.team_move_warning
 import mahjongtournamentsuite.adminapp.generated.resources.team_n
@@ -267,16 +266,6 @@ fun TeamsScreen(
 
     AppScaffold(
         title = stringResource(Res.string.tournament_teams),
-        titleAction = {
-            TournamentEditTitleAction(
-                tournamentId = tournamentId,
-                onDeleted = {
-                    navController.navigate(TournamentsRoute) {
-                        popUpTo(TournamentsRoute) { inclusive = true }
-                    }
-                },
-            )
-        },
         isLoading = loading || saving,
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
@@ -378,7 +367,7 @@ fun TeamsScreen(
                 }
                 Column(Modifier.fillMaxWidth()) {
                     DataTableHeaderRow {
-                        TeamHeader(stringResource(Res.string.team_id), Modifier.width(90.dp))
+                        TeamHeader(stringResource(Res.string.id), Modifier.width(90.dp))
                         TeamHeader(stringResource(Res.string.name), Modifier.weight(1f))
                         TeamHeader(stringResource(Res.string.players), Modifier.weight(1.6f))
                         Spacer(Modifier.width(96.dp))

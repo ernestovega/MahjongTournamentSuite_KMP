@@ -100,7 +100,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExport
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
@@ -1112,16 +1111,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
     AppScaffold(
         title = stringResource(Res.string.tournament_players),
-        titleAction = {
-            TournamentEditTitleAction(
-                tournamentId = tournamentId,
-                onDeleted = {
-                    navController.navigate(TournamentsRoute) {
-                        popUpTo(TournamentsRoute) { inclusive = true }
-                    }
-                },
-            )
-        },
         isLoading = loading || savingId != null,
         showBackgroundLogo = loading && players.isEmpty(),
         onBack = { navController.popBackStack() },

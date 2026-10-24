@@ -673,7 +673,7 @@ private fun rememberRankingColumnWidths(
             name = widthFor(listOf(page.nameHeader) + page.rows.map { it.name }, 80.dp),
             extra = widthFor(listOfNotNull(page.extraHeader) + page.rows.mapNotNull { it.extra }, 34.dp),
             points = widthFor(listOf(pointsHeader) + page.rows.map { formatPoints(it.points) }, 50.dp),
-            score = widthFor(listOf(scoreHeader) + page.rows.map { it.score.toString() }, 50.dp),
+            score = widthFor(listOf(scoreHeader) + page.rows.map { it.score.toString() }, 50.dp) + 10.dp,
             team = widthFor(listOfNotNull(page.teamHeader) + page.rows.mapNotNull { it.team }, 50.dp),
             showCountry = page.showCountry,
             showExtra = page.extraHeader != null,

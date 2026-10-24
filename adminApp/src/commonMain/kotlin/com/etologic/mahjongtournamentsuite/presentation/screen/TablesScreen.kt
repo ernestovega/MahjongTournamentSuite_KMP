@@ -49,7 +49,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMen
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -186,16 +185,6 @@ fun TablesScreen(
     AppScaffold(
         title = stringResource(Res.string.tables),
         subtitle = tournamentId,
-        titleAction = {
-            TournamentEditTitleAction(
-                tournamentId = tournamentId,
-                onDeleted = {
-                    navController.navigate(TournamentsRoute) {
-                        popUpTo(TournamentsRoute) { inclusive = true }
-                    }
-                },
-            )
-        },
         isLoading = isLoading,
         showBackgroundLogo = isLoading && tables.isEmpty(),
         onBack = { navController.popBackStack() },

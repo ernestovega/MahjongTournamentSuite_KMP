@@ -67,7 +67,7 @@ internal val GridLabelColumnWidth = 128.dp
 
 internal val HandsIndexColumnWidth = 48.dp
 
-internal val HandsScoreColumnWidth = 88.dp
+internal val HandsScoreColumnWidth = 104.dp
 
 internal val HandsChickenColumnWidth = 84.dp
 

@@ -1183,21 +1183,21 @@ fun PlayerTournamentsSection(
                     if (tournament.countChickenHands && hasHands) BigNumber(stringResource(Res.string.stat_chicken_hands), stats.chickenHands.toString())
                     BigNumber(stringResource(Res.string.stat_penalties), penaltiesText(stats), info = stringResource(Res.string.stat_penalties_info))
                 }
-                // The skills, the places and the hands go in one row when there is room. With less room they move to the next row.
+                // The skills and the hands go in the first row. The places and the place history go in the second row. With less room each block takes one row.
                 BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 28.dp)) {
                     val blocks = buildList<@Composable (Modifier) -> Unit> {
                         add { m -> TitledBlock(stringResource(Res.string.stats_skills), m) { SkillsBlock(stats, 240.dp, Modifier.fillMaxWidth(), showLevel = false) } }
+                        if (hasHands) add { m -> TitledBlock(stringResource(Res.string.stat_hands), m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }
                         add { m -> TitledBlock(stringResource(Res.string.stats_places), m) { PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth()) } }
-                        // The place history goes before the hands, so on two columns it sits at the left of the hands.
+                        // The place history goes after the places, so it sits at the right of the places in the second row.
                         if (stats.results.size > 1) add { m ->
                             TitledBlock(stringResource(Res.string.places_history_title, stats.results.size), m) {
                                 PlaceHistory(stats.results, listOf(tournament), showTitle = false)
                             }
                         }
-                        if (hasHands) add { m -> TitledBlock(stringResource(Res.string.stat_hands), m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }
                     }
                     val gap = 24.dp
-                    val columns = ((maxWidth + gap) / (TOURNAMENT_BLOCK_MIN_WIDTH + gap)).toInt().coerceIn(1, blocks.size)
+                    val columns = ((maxWidth + gap) / (TOURNAMENT_BLOCK_MIN_WIDTH + gap)).toInt().coerceIn(1, minOf(2, blocks.size))
                     Column(verticalArrangement = Arrangement.spacedBy(gap)) {
                         blocks.chunked(columns).forEachIndexed { index, row ->
                             if (index > 0) HorizontalDivider()
