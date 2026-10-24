@@ -407,7 +407,8 @@ fun TournamentsScreen(
                                 val actionCellMinWidth = 56.dp
                                 val flexibleColumns = 5
                                 val columnsMinWidth = (cellMinWidth * flexibleColumns) + featuresGroupMinWidth(cellMinWidth) +
-                                    ColorColumnWidth + CountryColumnWidth + ShortNameColumnWidth + actionCellMinWidth
+                                    ColorColumnWidth + CountryColumnWidth + ShortNameColumnWidth + actionCellMinWidth +
+                                    (PlayersColumnMinWidth - cellMinWidth)
                                 val columnSpacing = 12.dp
                                 val baseMinWidth = columnsMinWidth + (columnSpacing * (numColumns - 1))
                                 val needsHorizontalScroll = baseMinWidth > maxWidth
@@ -614,12 +615,12 @@ private fun TournamentTableHeader(
 ) {
     DataTableHeaderRow {
         HeaderCell(text = stringResource(Res.string.color), minWidth = cellMinWidth, weight = 0f, width = ColorColumnWidth, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.logo), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = stringResource(Res.string.country), minWidth = cellMinWidth, weight = 0f, width = CountryColumnWidth, textAlign = TextAlign.Center)
         HeaderCell(text = stringResource(Res.string.city), minWidth = cellMinWidth, weight = 0.7f)
-        HeaderCell(text = stringResource(Res.string.logo), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = stringResource(Res.string.name), minWidth = cellMinWidth, weight = NameWeight)
         HeaderCell(text = stringResource(Res.string.short_name), minWidth = cellMinWidth, weight = 0f, width = ShortNameColumnWidth)
-        HeaderCell(text = stringResource(Res.string.players), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
+        HeaderCell(text = stringResource(Res.string.players), minWidth = PlayersColumnMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = stringResource(Res.string.from_to), minWidth = cellMinWidth, weight = 1.8f, textAlign = TextAlign.Center)
         Column(
             modifier = Modifier.weight(FeaturesGroupWeight).widthIn(min = featuresGroupMinWidth(cellMinWidth)),
@@ -637,7 +638,7 @@ private fun TournamentTableHeader(
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                HeaderCell(text = stringResource(Res.string.teams), minWidth = cellMinWidth, weight = TeamsWeight, textAlign = TextAlign.Center)
+                HeaderCell(text = stringResource(Res.string.teams), minWidth = TeamsColumnMinWidth, weight = TeamsWeight, textAlign = TextAlign.Center)
                 HeaderCell(text = stringResource(Res.string.best_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
                 HeaderCell(text = stringResource(Res.string.chicken_hands_header), minWidth = FeatureColumnMinWidth, weight = FeatureWeight, textAlign = TextAlign.Center, maxLines = 2)
             }
@@ -674,16 +675,16 @@ private fun TournamentTableRow(
             colorValue = tournament.primaryColor,
             minWidth = cellMinWidth,
         )
-        TournamentCountryCell(
-            countryCode = tournament.hostCountry,
-            minWidth = cellMinWidth,
-        )
-        BodyCell(text = tournament.hostCity.ifBlank { "—" }, minWidth = cellMinWidth, weight = 0.7f, maxLines = 2)
         TournamentLogoCell(
             logoUrl = tournament.associationLogoUrl,
             tournamentName = tournament.name,
             minWidth = cellMinWidth,
         )
+        TournamentCountryCell(
+            countryCode = tournament.hostCountry,
+            minWidth = cellMinWidth,
+        )
+        BodyCell(text = tournament.hostCity.ifBlank { "—" }, minWidth = cellMinWidth, weight = 0.7f, maxLines = 2)
         BodyCell(text = tournament.name, minWidth = cellMinWidth, weight = NameWeight, maxLines = 2)
         BodyCell(
             text = tournament.shortName.ifBlank { "—" },
@@ -695,7 +696,7 @@ private fun TournamentTableRow(
         )
         BodyCell(
             text = tournament.numPlayers.toString(),
-            minWidth = cellMinWidth,
+            minWidth = PlayersColumnMinWidth,
             weight = .5f,
             textAlign = TextAlign.Center,
         )
@@ -716,7 +717,7 @@ private fun TournamentTableRow(
                 enabled = tournament.isTeams,
                 enabledDescription = stringResource(Res.string.feature_team),
                 disabledDescription = stringResource(Res.string.feature_individual),
-                minWidth = cellMinWidth,
+                minWidth = TeamsColumnMinWidth,
                 weight = TeamsWeight,
             )
             FeatureStateCell(
@@ -846,7 +847,7 @@ private fun RowScope.HeaderCell(
     weight: Float,
     width: Dp? = null,
     textAlign: TextAlign = TextAlign.Start,
-    maxLines: Int = 1,
+    maxLines: Int = 2,
 ) {
     Text(
         text = text,
@@ -914,10 +915,12 @@ private const val FeatureWeight = .8f
 /** The Features group holds the Teams, Best hands and Chicken hands columns. Its weight is their sum. */
 private const val FeaturesGroupWeight = TeamsWeight + FeatureWeight * 2
 
-private fun featuresGroupMinWidth(cellMinWidth: Dp): Dp = cellMinWidth + (FeatureColumnMinWidth * 2) + 24.dp
+private fun featuresGroupMinWidth(cellMinWidth: Dp): Dp = TeamsColumnMinWidth + (FeatureColumnMinWidth * 2) + 24.dp
 private val ColorColumnWidth = 44.dp
 private val CountryColumnWidth = 76.dp
 private val ShortNameColumnWidth = 88.dp
+private val PlayersColumnMinWidth = 80.dp
+private val TeamsColumnMinWidth = 80.dp
 
 private fun UserProfile.toUiName(): String {
     val rawName = email

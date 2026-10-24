@@ -18,7 +18,7 @@
     <string name="sign_in_button">Accedi</string>
     <string name="app_logo_description">Logo di Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Utenti</string>
-    <string name="top_bar_app_usage">Utilizzo dell\'app</string>
+    <string name="top_bar_app_usage">Utilizzo dell'app</string>
     <string name="top_bar_timer">Timer</string>
     <string name="top_bar_ranking">Classifica</string>
     <string name="date_field_clear">Cancella %1$s</string>
@@ -32,13 +32,13 @@
     <string name="profile_alias">Alias</string>
     <string name="profile_alias_hint">Il nome che le app mostrano per il tuo account.</string>
     <string name="profile_ema_number">Numero EMA</string>
-    <string name="photo_error_type">Scegli un\'immagine JPEG, PNG, WebP o GIF.</string>
+    <string name="photo_error_type">Scegli un'immagine JPEG, PNG, WebP o GIF.</string>
     <string name="photo_error_size">Scegli una foto di 5 MB o meno.</string>
     <string name="photo_change">Cambia foto</string>
     <string name="photo_add">Aggiungi foto</string>
     <string name="photo_remove">Rimuovi foto</string>
     <string name="photo_crop_title">Ritaglia foto</string>
-    <string name="photo_crop_hint">Trascina l\'immagine o usa i controlli. Il cerchio mostra l\'area visibile nelle app.</string>
+    <string name="photo_crop_hint">Trascina l'immagine o usa i controlli. Il cerchio mostra l'area visibile nelle app.</string>
     <string name="photo_none">Nessuna foto</string>
     <string name="photo_of">Foto di %1$s</string>
     <string name="crop_zoom">Zoom</string>
@@ -49,7 +49,7 @@
     <string name="menu">Menu</string>
     <string name="error_network">La richiesta di rete non è riuscita.</string>
     <string name="error_credentials_missing">Inserisci la tua email e la tua password.</string>
-    <string name="error_credentials_wrong">L\'email o la password non sono corrette.</string>
+    <string name="error_credentials_wrong">L'email o la password non sono corrette.</string>
     <string name="error_email_invalid">Inserisci un indirizzo email valido.</string>
     <string name="error_too_many_attempts">Troppi tentativi. Attendi un momento e riprova.</string>
     <string name="error_not_linked_to_player">Il tuo account non è ancora collegato a un giocatore. Chiedi agli organizzatori di collegare il tuo numero EMA.</string>
@@ -62,7 +62,7 @@
     <string name="image_error_open">Non è stato possibile aprire la foto selezionata.</string>
     <string name="image_error_decode">Non è stato possibile decodificare il logo selezionato.</string>
     <string name="image_error_crop">Non è stato possibile ritagliare il logo.</string>
-    <string name="image_error_invalid">Il file selezionato non è un\'immagine valida.</string>
+    <string name="image_error_invalid">Il file selezionato non è un'immagine valida.</string>
     <string name="image_chooser_title">Scegli la foto del giocatore</string>
     <string name="image_chooser_filter">File immagine</string>
     <string name="wind_east">Est</string>
@@ -146,9 +146,9 @@
     <string name="skill_deal_in_rate">Percentuale di sconfitte su scarto</string>
     <string name="skill_deal_in_rate_info">Quanto spesso scarti la tessera con cui vince un altro giocatore.\nSconfitte su scarto divise per mani giocate.\nUn valore più basso è migliore.\nAsse pieno al 25%.</string>
     <string name="skill_hand_value">Valore della mano</string>
-    <string name="skill_hand_value_info">La media dei punti delle mani che hai vinto.\nPunti di tutte le mani vincenti divisi per mani vinte.\nL\'asse parte da 8 (valore minimo di una mano) ed è pieno a 32.</string>
+    <string name="skill_hand_value_info">La media dei punti delle mani che hai vinto.\nPunti di tutte le mani vincenti divisi per mani vinte.\nL'asse parte da 8 (valore minimo di una mano) ed è pieno a 32.</string>
     <string name="skill_sub_avg">media</string>
-    <string name="level_info">Il punteggio di abilità va da 0 a 100. È la media delle quattro abilità del grafico.\nOgni abilità dà da 0 a 100 punti:\n- Percentuale di vittorie: %1$d% o più dà 100.\n- Percentuale di vittorie dal muro: %2$d% o più dà 100.\n- Percentuale di sconfitte su scarto: 0% dà 100 e %3$d% o più dà 0.\n- Valore della mano: %4$d dà 0 e %5$d o più dà 100.\nIl livello segue il punteggio. L\'elenco a destra mostra i limiti.\nUn livello richiede %6$d mani. È provvisorio sotto le %7$d mani.</string>
+    <string name="level_info">Il punteggio di abilità va da 0 a 100. È la media delle quattro abilità del grafico.\nOgni abilità dà da 0 a 100 punti:\n- Percentuale di vittorie: %1$d% o più dà 100.\n- Percentuale di vittorie dal muro: %2$d% o più dà 100.\n- Percentuale di sconfitte su scarto: 0% dà 100 e %3$d% o più dà 0.\n- Valore della mano: %4$d dà 0 e %5$d o più dà 100.\nIl livello segue il punteggio. L'elenco a destra mostra i limiti.\nUn livello richiede %6$d mani. È provvisorio sotto le %7$d mani.</string>
     <string name="level_not_rated">Livello: non ancora valutato</string>
     <string name="level_needs_hands">Servono %1$s mani</string>
     <string name="level_skill_score_of">Punteggio di abilità %1$d su 100</string>
@@ -305,5 +305,5 @@
     <string name="theme_description">Tema: %1$s</string>
     <string name="spreadsheet_chooser_title">Scegli il file dei giocatori</string>
     <string name="spreadsheet_chooser_filter">File CSV ed Excel</string>
-    <string name="spreadsheet_error_read">L\'app non è riuscita a leggere il file. Scegli un file CSV o Excel e riprova.</string>
+    <string name="spreadsheet_error_read">L'app non è riuscita a leggere il file. Scegli un file CSV o Excel e riprova.</string>
 </resources>

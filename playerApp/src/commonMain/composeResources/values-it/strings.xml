@@ -44,7 +44,7 @@
     <string name="action_change">Cambia</string>
     <string name="sign_in_enter_email">Inserisci prima il tuo indirizzo email.</string>
     <string name="sign_in_reset_sent">Se esiste un account, abbiamo inviato le istruzioni per reimpostare la password alla tua email.</string>
-    <string name="data_stale">I dati non si aggiornano da %1$s. L\'app riprova.</string>
+    <string name="data_stale">I dati non si aggiornano da %1$s. L'app riprova.</string>
     <plurals name="age_seconds">
         <item quantity="one">%1$d secondo</item>
         <item quantity="other">%1$d secondi</item>
@@ -57,13 +57,13 @@
         <item quantity="one">%1$d ora</item>
         <item quantity="other">%1$d ore</item>
     </plurals>
-    <string name="sign_in_invite_description">Usa l\'email del tuo invito per accedere.</string>
+    <string name="sign_in_invite_description">Usa l'email del tuo invito per accedere.</string>
     <string name="invite_title">Accetta il tuo invito</string>
-    <string name="invite_signed_in">Hai effettuato l\'accesso. Accetta l\'invito con questo account.</string>
+    <string name="invite_signed_in">Hai effettuato l'accesso. Accetta l'invito con questo account.</string>
     <string name="invite_choose_password">Scegli una password per il tuo nuovo account. Se hai già un account, accedi prima.</string>
     <string name="field_password">Password</string>
     <string name="field_password_repeat">Ripeti la password</string>
-    <string name="invite_accept">Accetta l\'invito</string>
+    <string name="invite_accept">Accetta l'invito</string>
     <string name="invite_have_account">Ho già un account</string>
     <string name="tournaments_empty_title">Ancora nessun torneo</string>
     <string name="tournaments_empty_message">Non sei ancora iscritto a nessun torneo.</string>
@@ -74,7 +74,7 @@
     <string name="tournament_logo_of">Logo di %1$s</string>
     <string name="won_teams_ranking">Ha vinto la classifica a squadre</string>
     <string name="won_best_hands_ranking">Ha vinto la classifica delle mani migliori</string>
-    <string name="contact_send_email">Invia un\'email agli organizzatori</string>
+    <string name="contact_send_email">Invia un'email agli organizzatori</string>
     <string name="schedule_hide">Nascondi il programma</string>
     <string name="action_open">Apri</string>
     <string name="tab_tables">Tavoli</string>
@@ -123,14 +123,14 @@
     <string name="entry_chicken_limit">Una mano pollo ha 12 punti o meno.</string>
     <string name="chicken_hand">Mano pollo</string>
     <string name="entry_draw_explanation">Nessun giocatore vince questa mano. Ogni posto segna zero.</string>
-    <string name="entry_extra_time_last">Il tempo è finito. Questa mano è l\'ultima mano del tavolo.</string>
+    <string name="entry_extra_time_last">Il tempo è finito. Questa mano è l'ultima mano del tavolo.</string>
     <string name="entry_last_hand">Ultima mano del tavolo</string>
     <string name="entry_review">Controlla</string>
     <string name="entry_check_hand">Controlla la mano</string>
     <string name="entry_saving_hand">Salvataggio della mano...</string>
     <string name="entry_confirm_save">Conferma e salva</string>
     <string name="entry_edit">Modifica</string>
-    <string name="entry_add_another_penalty">Aggiungi un\'altra penalità</string>
+    <string name="entry_add_another_penalty">Aggiungi un'altra penalità</string>
     <string name="entry_penalty_note">Una penalità non termina la mano. I suoi punti contano quando la mano viene salvata.</string>
     <string name="entry_check_penalty">Controlla la penalità</string>
     <string name="entry_saving_penalty">Salvataggio della penalità...</string>
@@ -145,7 +145,7 @@
     <string name="entry_share">Dividila con gli altri giocatori</string>
     <string name="entry_wins">vince %1$d</string>
     <string name="entry_from">da</string>
-    <string name="entry_last_hand_note">Questa è l\'ultima mano. Dopo averla salvata, il tavolo è completato.</string>
+    <string name="entry_last_hand_note">Questa è l'ultima mano. Dopo averla salvata, il tavolo è completato.</string>
     <string name="changed_title">Il tavolo è cambiato</string>
     <string name="changed_not_saved">La tua mano non è salvata. Controlla qui sotto i dati del server.</string>
     <string name="changed_table_now">Tavolo adesso</string>
