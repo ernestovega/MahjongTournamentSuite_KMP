@@ -17,9 +17,6 @@ internal actual object LanguagePreferenceStorage {
     private const val KEY = "languagePreference"
 }
 
-/** The language of the device when the app started. */
-private val deviceLocale: Locale = Locale.getDefault()
-
-internal actual fun applyPlatformLanguage(tag: String?) {
-    Locale.setDefault(tag?.let(Locale::forLanguageTag) ?: deviceLocale)
+internal actual fun applyPlatformLanguage(tag: String) {
+    Locale.setDefault(Locale.forLanguageTag(tag))
 }

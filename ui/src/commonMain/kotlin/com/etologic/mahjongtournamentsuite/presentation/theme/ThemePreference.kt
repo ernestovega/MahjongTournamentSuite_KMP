@@ -15,6 +15,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.vector.ImageVector
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.theme_dark
+import mahjongtournamentsuite.ui.generated.resources.theme_description
+import mahjongtournamentsuite.ui.generated.resources.theme_light
+import mahjongtournamentsuite.ui.generated.resources.theme_system
+import org.jetbrains.compose.resources.stringResource
 
 enum class ThemePreference {
     System,
@@ -59,14 +65,25 @@ val ThemePreference.icon: ImageVector
         ThemePreference.Dark -> Icons.Default.DarkMode
     }
 
+/** The name of the preference in the language of the app. */
+val ThemePreference.label: String
+    @Composable get() = stringResource(
+        when (this) {
+            ThemePreference.System -> Res.string.theme_system
+            ThemePreference.Light -> Res.string.theme_light
+            ThemePreference.Dark -> Res.string.theme_dark
+        },
+    )
+
 val ThemePreference.contentDescription: String
-    get() = "Theme: $name"
+    @Composable get() = stringResource(Res.string.theme_description, label)
 
 @Immutable
 data class ThemeController(
     val preference: ThemePreference,
     val isDarkTheme: Boolean,
     val onTogglePreference: () -> Unit,
+    val onSelectPreference: (ThemePreference) -> Unit = {},
 )
 
 val LocalThemeController = staticCompositionLocalOf<ThemeController> {
@@ -95,6 +112,10 @@ fun rememberThemeController(): ThemeController {
                 preferenceName = next.name
                 ThemePreferenceStorage.save(next.name)
             },
+            onSelectPreference = { chosen ->
+                preferenceName = chosen.name
+                ThemePreferenceStorage.save(chosen.name)
+            },
         )
     }
 }
@@ -114,6 +135,7 @@ fun rememberScreenThemeController(): ThemeController {
             preference = preference,
             isDarkTheme = useDarkTheme,
             onTogglePreference = { preferenceName = preference.next().name },
+            onSelectPreference = { preferenceName = it.name },
         )
     }
 }

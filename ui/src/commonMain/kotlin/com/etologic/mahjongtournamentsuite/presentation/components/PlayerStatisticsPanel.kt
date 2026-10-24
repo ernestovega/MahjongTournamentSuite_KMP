@@ -161,7 +161,6 @@ import mahjongtournamentsuite.ui.generated.resources.skill_score_n
 import mahjongtournamentsuite.ui.generated.resources.skill_self_draw
 import mahjongtournamentsuite.ui.generated.resources.skill_self_draw_info
 import mahjongtournamentsuite.ui.generated.resources.skill_sub_avg
-import mahjongtournamentsuite.ui.generated.resources.skill_sub_rate
 import mahjongtournamentsuite.ui.generated.resources.skill_win_rate
 import mahjongtournamentsuite.ui.generated.resources.skill_win_rate_info
 import mahjongtournamentsuite.ui.generated.resources.skills_empty_message
@@ -713,7 +712,6 @@ private fun skillsOf(s: PlayerStatistics): List<Skill> = listOf(
     Skill(
         stringResource(Res.string.skill_self_draw), s.selfDrawRate, SkillScale.SELF_DRAW_RATE_FULL, s.selfDrawRate.percent(),
         stringResource(Res.string.skill_self_draw_info),
-        subLabel = stringResource(Res.string.skill_sub_rate),
     ),
     // Share of the played hands that the player lost by discarding the winning tile. Lower is better.
     Skill(
@@ -1190,6 +1188,12 @@ fun PlayerTournamentsSection(
                     val blocks = buildList<@Composable (Modifier) -> Unit> {
                         add { m -> TitledBlock(stringResource(Res.string.stats_skills), m) { SkillsBlock(stats, 240.dp, Modifier.fillMaxWidth(), showLevel = false) } }
                         add { m -> TitledBlock(stringResource(Res.string.stats_places), m) { PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth()) } }
+                        // The place history goes before the hands, so on two columns it sits at the left of the hands.
+                        if (stats.results.size > 1) add { m ->
+                            TitledBlock(stringResource(Res.string.places_history_title, stats.results.size), m) {
+                                PlaceHistory(stats.results, listOf(tournament), showTitle = false)
+                            }
+                        }
                         if (hasHands) add { m -> TitledBlock(stringResource(Res.string.stat_hands), m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }
                     }
                     val gap = 24.dp
@@ -1294,12 +1298,12 @@ private fun tableLabel(result: TableResult, tournaments: List<Tournament>): Stri
 }
 
 @Composable
-private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournament>) {
+private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournament>, showTitle: Boolean = true) {
     val places = results.map { it.position }
     val placeNames = placeNames()
     val times = results.map { tableTime(it, tournaments) }
     val tips = results.mapIndexed { index, result -> tableLabel(result, tournaments) + "\n" + times[index].replace('\n', ' ') }
-    Text(stringResource(Res.string.places_history_title, places.size), Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
+    if (showTitle) Text(stringResource(Res.string.places_history_title, places.size), Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
     val pointColors = (1..4).map { positionColor(it) }
     val grid = MaterialTheme.colorScheme.outlineVariant
     val line = MaterialTheme.colorScheme.onSurfaceVariant

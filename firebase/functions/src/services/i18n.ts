@@ -1,5 +1,5 @@
 /** The languages of the emails. English is the base and the fallback. */
-export const LANGUAGES = ["en", "es"] as const;
+export const LANGUAGES = ["en", "es", "fr", "it"] as const;
 export type Language = typeof LANGUAGES[number];
 export const DEFAULT_LANGUAGE: Language = "en";
 
@@ -68,7 +68,37 @@ const spanish: EmailTexts = {
   registrationOpen: (link) => `Abrir el torneo: ${link}`,
 };
 
-const TEXTS: Record<Language, EmailTexts> = { en: english, es: spanish };
+const french: EmailTexts = {
+  appDescription: "Voici l'app joueur du tournoi. "
+    + "Après votre connexion, vous voyez où vous jouez à chaque tour, le classement après chaque tour "
+    + "et vos propres résultats. Vous voyez aussi les tournois à venir et passés, vos statistiques et plus encore.",
+  invitationSubject: (name) => `Invitation à ${name}`,
+  invitationIntro: (name) => `Vous êtes invité à jouer dans ${name}.`,
+  invitationAction: "Accepter l'invitation",
+  invitationOpen: (link) => `Ouvrez ce lien pour accepter : ${link}`,
+  invitationExpiry: (days) => `Le lien fonctionne une seule fois et expire dans ${days} jours.`,
+  registrationSubject: (name) => `Vous êtes inscrit à ${name}`,
+  registrationIntro: (name) => `Vous avez été ajouté au tournoi «${name}».`,
+  registrationAction: "Ouvrir le tournoi",
+  registrationOpen: (link) => `Ouvrir le tournoi : ${link}`,
+};
+
+const italian: EmailTexts = {
+  appDescription: "Questa è l'app del giocatore del torneo. "
+    + "Dopo l'accesso, puoi vedere dove giochi in ogni turno, la classifica dopo ogni turno "
+    + "e i tuoi risultati. Puoi anche vedere i tornei in arrivo e passati, le tue statistiche e altro.",
+  invitationSubject: (name) => `Invito a ${name}`,
+  invitationIntro: (name) => `Sei invitato a giocare in ${name}.`,
+  invitationAction: "Accetta l'invito",
+  invitationOpen: (link) => `Apri questo link per accettare: ${link}`,
+  invitationExpiry: (days) => `Il link funziona una volta sola e scade tra ${days} giorni.`,
+  registrationSubject: (name) => `Sei iscritto a ${name}`,
+  registrationIntro: (name) => `Sei stato aggiunto al torneo «${name}».`,
+  registrationAction: "Apri il torneo",
+  registrationOpen: (link) => `Apri il torneo: ${link}`,
+};
+
+const TEXTS: Record<Language, EmailTexts> = { en: english, es: spanish, fr: french, it: italian };
 
 export function emailTexts(language: Language): EmailTexts {
   return TEXTS[language];

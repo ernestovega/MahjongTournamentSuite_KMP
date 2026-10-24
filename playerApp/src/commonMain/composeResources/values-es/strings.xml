@@ -34,7 +34,6 @@
     <string name="stats_round_table">Ronda %1$d - Mesa %2$d</string>
     <string name="stats_title">Estadísticas</string>
     <string name="stats_unavailable">Tus estadísticas aún no están disponibles.</string>
-    <string name="stats_table_none">Esta mesa aún no tiene estadísticas.</string>
     <string name="stats_empty_title">Aún no hay estadísticas</string>
     <string name="stats_player_empty_message">Este jugador aún no tiene estadísticas en este torneo.</string>
     <string name="stats_player_field">Jugador (nombre o número EMA)</string>
@@ -104,9 +103,9 @@
     <string name="stat_hands">Manos</string>
     <string name="table_details">Detalles</string>
     <string name="hand_penalty">Penalización</string>
-    <string name="hand_self_pick">Autorrobo</string>
+    <string name="hand_self_pick">Del muro</string>
     <string name="hand_discard">Descarte</string>
-    <string name="hand_draw">Sin ganador</string>
+    <string name="hand_draw">Empate</string>
     <string name="player_ranking_summary">Puesto %1$d - %2$s puntos - %3$d de puntuación</string>
     <string name="tables_player_empty_message">Este jugador aún no tiene mesa en este torneo.</string>
     <string name="jump_to_me">Ir a mi posición</string>
@@ -114,11 +113,11 @@
     <string name="entry_round_not_started">Esta ronda aún no ha empezado. Podrás añadir manos cuando empiece.</string>
     <string name="entry_time_over">El tiempo de esta partida ha terminado. Ya no puedes añadir manos. Los organizadores introducen los datos que faltan.</string>
     <string name="entry_extra_time">El tiempo ha terminado. Puedes añadir la mano en juego. Después, la mesa queda completada.</string>
-    <string name="entry_add_draw">Añadir mano sin ganador</string>
+    <string name="entry_add_draw">Añadir empate</string>
     <string name="entry_add_win">Añadir victoria</string>
     <string name="entry_add_penalty">Añadir penalización</string>
     <string name="entry_winner">Ganador</string>
-    <string name="entry_self_draw">Autorrobo</string>
+    <string name="entry_self_draw">Del muro</string>
     <string name="entry_loser">Perdedor (quien descartó)</string>
     <string name="entry_hand_score">Puntuación de la mano (8 o más)</string>
     <string name="entry_chicken_limit">Una mano de pollo tiene 12 puntos o menos.</string>
@@ -153,10 +152,10 @@
     <string name="changed_table_row">%1$s %2$s: %3$s (%4$s puntos)</string>
     <string name="changed_saved_hands">Manos guardadas: %1$d de %2$d</string>
     <string name="changed_last_hand_from">Última mano %1$d: %2$s ganó con %3$d a %4$s</string>
-    <string name="changed_last_hand_self">Última mano %1$d: %2$s ganó con %3$d (autorrobo)</string>
+    <string name="changed_last_hand_self">Última mano %1$d: %2$s ganó con %3$d (del muro)</string>
     <string name="changed_your_hand">Tu mano, sin guardar</string>
     <string name="changed_entered_from">%1$s ganó con %2$d a %3$s</string>
-    <string name="changed_entered_self">%1$s ganó con %2$d (autorrobo)</string>
+    <string name="changed_entered_self">%1$s ganó con %2$d (del muro)</string>
     <string name="changed_entered_chicken">%1$s - mano de pollo</string>
     <string name="changed_already">Si la mano ya está en la mesa, no la introduzcas otra vez.</string>
     <string name="changed_call_staff">Puedes llamar a un miembro del personal para que compruebe la mesa, o cerrar esta ventana y seguir.</string>

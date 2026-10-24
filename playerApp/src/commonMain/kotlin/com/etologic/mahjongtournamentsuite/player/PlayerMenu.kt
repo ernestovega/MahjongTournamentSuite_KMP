@@ -23,20 +23,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfir
 import org.koin.compose.koinInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
-import com.etologic.mahjongtournamentsuite.presentation.theme.contentDescription
-import com.etologic.mahjongtournamentsuite.presentation.theme.icon
-
-/** The top bar button that switches the theme. It shows the icon of the current preference. */
-@Composable
-fun ThemeAction() {
-    val theme = LocalThemeController.current
-    AppTopBarButton(
-        text = theme.preference.contentDescription,
-        icon = theme.preference.icon,
-        onClick = theme.onTogglePreference,
-    )
-}
 
 /**
  * The Exit and Profile buttons and their dialogs. The screen owns the state, so the dialogs stay open

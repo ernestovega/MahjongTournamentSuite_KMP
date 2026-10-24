@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -139,7 +140,6 @@ fun ProfileDialog(
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                LanguageSelector()
                 profile.emaId?.let { emaId ->
                     OutlinedTextField(
                         value = emaId,
@@ -150,6 +150,8 @@ fun ProfileDialog(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
+                ThemeSelector()
+                LanguageSelector(Modifier.fillMaxWidth())
             }
         },
         // Logout is at the left of the button row. Close and Save are at the right.

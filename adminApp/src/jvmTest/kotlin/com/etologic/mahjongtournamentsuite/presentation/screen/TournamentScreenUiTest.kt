@@ -72,7 +72,7 @@ private class ScreenHarness(private val role: GlobalUserRole? = null) {
 
     fun ComposeUiTest.show() {
         setContent {
-            val themeController = ThemeController(ThemePreference.Light, false) {}
+            val themeController = ThemeController(ThemePreference.Light, false, {})
             // An isolated Koin for each test. The global one would keep the server of the first test.
             val koin = remember {
                 koinApplication {

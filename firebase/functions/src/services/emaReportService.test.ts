@@ -39,3 +39,11 @@ test("EMA report keeps exact columns and typed Excel values", async () => {
   assert.equal(sheet.getCell("O2").value, "Chinese official");
   assert.equal(sheet.getCell("R2").value, "NO");
 });
+
+test("the EMA report headers are always in English, whatever the language of the apps", () => {
+  assert.deepEqual([...EMA_REPORT_HEADERS], [
+    "Tournament name", "Number of participants", "Place", "Player's first name", "Player's last name",
+    "EMA number", "Table points", "Score", "EMA member", "Country", "Date", "Countrycourt", "city",
+    "shortname", "rules", "period", "NbDays", "Extra",
+  ]);
+});

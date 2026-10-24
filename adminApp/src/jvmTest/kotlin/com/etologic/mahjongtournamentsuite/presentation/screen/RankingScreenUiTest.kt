@@ -33,7 +33,7 @@ class RankingScreenUiTest {
 
     private fun androidx.compose.ui.test.ComposeUiTest.show(server: FakeTournamentRepository) {
         setContent {
-            val themeController = ThemeController(ThemePreference.Light, false) {}
+            val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
                 koinApplication {
                     modules(

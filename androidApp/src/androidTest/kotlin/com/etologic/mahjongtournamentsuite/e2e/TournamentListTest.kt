@@ -52,7 +52,7 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
-        listOf("Logout", "App Users", "System", "App usage", "Timer", "Statistics", "EMA players", "New tournament")
+        listOf("Logout", "Users", "System", "App usage", "Timer", "Statistics", "EMA players", "New tournament")
             .forEach { c.waitForText(it) }
     }
 
@@ -90,7 +90,7 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun playerOpeningAppUsersGetsAPermissionError() {
         start(E2eAccounts.PLAYER)
-        c.clickButton("App Users")
+        c.clickButton("Users")
         c.waitForText("You do not have permission to perform this action.")
         c.waitForText("0 of 0 accounts")
     }

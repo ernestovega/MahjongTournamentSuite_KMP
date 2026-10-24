@@ -472,7 +472,6 @@ fun TournamentsScreen(navController: NavHostController) {
         title = stringResource(Res.string.scope_my_tournaments),
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
-        actions = { ThemeAction() },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The screen uses the full width. The tab row and the tournament list keep a narrow column. The statistics use all the width.
@@ -855,7 +854,6 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
         isLoading = (view == null && message == null) || (tab == 2 && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = { ThemeAction() },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The provider is outside the column, so all the tab rows use the same state.
@@ -1528,7 +1526,6 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
         isLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = { ThemeAction() },
     ) {
         ScreenColumn(
             maxWidth = 720.dp,
@@ -1811,7 +1808,6 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
         isLoading = (view == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = { ThemeAction() },
     ) {
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
         ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {

@@ -15,18 +15,20 @@ import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.rival_player
 
 /**
- * The languages of the apps. [System] follows the language of the device.
+ * The languages of the apps. [English] is the default.
  * [endonym] is the name of the language in the language itself, so a user finds it in any language.
+ * [flagCode] is the country whose flag marks the language.
  */
-enum class AppLanguage(val tag: String?, val endonym: String?) {
-    System(null, null),
-    English("en", "English"),
-    Spanish("es", "Español"),
+enum class AppLanguage(val tag: String, val endonym: String, val flagCode: String) {
+    English("en", "English", "GB"),
+    Spanish("es", "Español", "ES"),
+    French("fr", "Français", "FR"),
+    Italian("it", "Italiano", "IT"),
     ;
 
     companion object {
-        /** The language with this tag, or [System] when the tag is empty or unknown. */
-        fun fromTag(tag: String?): AppLanguage = entries.firstOrNull { it.tag != null && it.tag == tag } ?: System
+        /** The language with this tag, or [English] when the tag is empty or unknown. */
+        fun fromTag(tag: String?): AppLanguage = entries.firstOrNull { it.tag == tag } ?: English
     }
 }
 
@@ -37,7 +39,7 @@ class LanguageController(
     val onChange: (AppLanguage) -> Unit,
 )
 
-val LocalLanguageController = staticCompositionLocalOf { LanguageController(AppLanguage.System) {} }
+val LocalLanguageController = staticCompositionLocalOf { LanguageController(AppLanguage.English) {} }
 
 /**
  * Applies the saved language before [content] draws, and draws [content] again when the user changes the language.
@@ -68,16 +70,16 @@ fun ProvideAppLanguage(
 /** Where the choice of the user is kept, and how the language reaches the platform. */
 interface LanguageStore {
     fun load(): String?
-    fun save(tag: String?)
+    fun save(tag: String)
 
-    /** Makes the platform use [tag]. A null tag brings back the language of the device. */
-    fun apply(tag: String?)
+    /** Makes the platform use [tag]. */
+    fun apply(tag: String)
 }
 
 internal object PlatformLanguageStore : LanguageStore {
     override fun load(): String? = LanguagePreferenceStorage.load()?.takeIf { it.isNotBlank() }
-    override fun save(tag: String?) = LanguagePreferenceStorage.save(tag.orEmpty())
-    override fun apply(tag: String?) = applyPlatformLanguage(tag)
+    override fun save(tag: String) = LanguagePreferenceStorage.save(tag)
+    override fun apply(tag: String) = applyPlatformLanguage(tag)
 }
 
 internal expect object LanguagePreferenceStorage {
@@ -85,4 +87,4 @@ internal expect object LanguagePreferenceStorage {
     fun save(value: String)
 }
 
-internal expect fun applyPlatformLanguage(tag: String?)
+internal expect fun applyPlatformLanguage(tag: String)

@@ -21,7 +21,7 @@ class ProfileDialogUiTest {
     @Test
     fun showsTheAliasTheEmailAndTheEmaNumberOfAPlayer() = runComposeUiTest {
         setContent {
-            MtsTheme(useDarkTheme = false) {
+            TestTheme {
                 ProfileDialog(profile = player, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaveAlias = { error("unused") }, onSaved = {}, onDismiss = {})
             }
         }
@@ -36,7 +36,7 @@ class ProfileDialogUiTest {
     @Test
     fun anAccountWithoutAnEmaNumberShowsNoEmaField() = runComposeUiTest {
         setContent {
-            MtsTheme(useDarkTheme = false) {
+            TestTheme {
                 ProfileDialog(
                     profile = player.copy(emaId = null),
                     onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaveAlias = { error("unused") },
@@ -55,7 +55,7 @@ class ProfileDialogUiTest {
         var saved: UserProfile? = null
         var closed = false
         setContent {
-            MtsTheme(useDarkTheme = false) {
+            TestTheme {
                 ProfileDialog(
                     profile = player,
                     onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaveAlias = { alias ->
@@ -85,7 +85,7 @@ class ProfileDialogUiTest {
     fun aFailedSaveShowsTheErrorAndKeepsTheDialogOpen() = runComposeUiTest {
         var closed = false
         setContent {
-            MtsTheme(useDarkTheme = false) {
+            TestTheme {
                 ProfileDialog(
                     profile = player,
                     onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaveAlias = { AppResult.Failure(AppError.Network) },
@@ -107,7 +107,7 @@ class ProfileDialogUiTest {
     @Test
     fun theUserCanAddAPhotoAndRemovesOnlyAnOwnPhoto() = runComposeUiTest {
         setContent {
-            MtsTheme(useDarkTheme = false) {
+            TestTheme {
                 ProfileDialog(
                     profile = player,
                     onSavePhoto = { _, _ -> error("unused") },
@@ -126,7 +126,7 @@ class ProfileDialogUiTest {
     @Test
     fun aProfileWithAnOwnPhotoOffersChangeAndRemove() = runComposeUiTest {
         setContent {
-            MtsTheme(useDarkTheme = false) {
+            TestTheme {
                 ProfileDialog(
                     profile = player.copy(photoUrl = "https://example.test/me.png", hasOwnPhoto = true),
                     onSavePhoto = { _, _ -> error("unused") },
@@ -141,4 +141,15 @@ class ProfileDialogUiTest {
         onNodeWithText("Change photo").assertExists()
         onNodeWithText("Remove photo").assertExists()
     }
+}
+
+/** The profile dialog has the theme selector, so the tests give it a theme controller. */
+@androidx.compose.runtime.Composable
+private fun TestTheme(content: @androidx.compose.runtime.Composable () -> Unit) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController provides
+            com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController(
+                com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference.Light, false, {},
+            ),
+    ) { MtsTheme(useDarkTheme = false) { content() } }
 }

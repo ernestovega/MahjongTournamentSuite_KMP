@@ -93,7 +93,7 @@
     <string name="period">Periodo</string>
     <string name="enter_these_values_again_if_they">Introduce estos valores otra vez si siguen siendo correctos:</string>
     <string name="updates_paused">Actualizaciones en pausa</string>
-    <string name="app_users">Usuarios de la app</string>
+    <string name="app_users">Usuarios</string>
     <string name="invited">Invitados</string>
     <string name="accounts">Cuentas</string>
     <string name="alias">Alias</string>
@@ -139,7 +139,6 @@
     <string name="add_player">Añadir jugador</string>
     <string name="search_by_name_or_ema_number">Buscar por nombre o número EMA</string>
     <string name="clear_search">Borrar la búsqueda</string>
-    <string name="filter_by_country">Filtrar por país</string>
     <string name="player_base">Base de jugadores</string>
     <string name="player_details">Datos del jugador</string>
     <string name="no_player_selected">Ningún jugador seleccionado</string>
@@ -160,11 +159,11 @@
     <string name="at_least_one_hand_is_invalid">Al menos una mano no es válida. No se puede marcar como hecha ni como completada.</string>
     <string name="winner">Ganador</string>
     <string name="loser">Perdedor</string>
-    <string name="score">Puntuación</string>
+    <string name="score">Puntos</string>
     <string name="chicken">Pollo</string>
     <string name="penalty">Penalización</string>
     <string name="done">Hecha</string>
-    <string name="total_scores">Puntuaciones totales</string>
+    <string name="total_scores">Puntos</string>
     <string name="calculated_from_hands_trophies_show_the">Calculado a partir de las manos. Los trofeos muestran las mejores manos del torneo que tiene esta mesa.</string>
     <string name="show_how_the_chicken_and_best">Mostrar cómo se calculan los valores de las manos de pollo y de las mejores manos</string>
     <string name="save_and_next_table">Guardar e ir a la mesa siguiente</string>
@@ -205,11 +204,11 @@
     <string name="select_ema_player">Elegir un jugador EMA</string>
     <string name="name_ema_id_or_country">Nombre, ID EMA o país</string>
     <string name="no_player_found">No se ha encontrado ningún jugador.</string>
-    <string name="new_tournament">Torneo nuevo</string>
+    <string name="new_tournament">Nuevo torneo</string>
     <string name="heavy_computing">Cálculo pesado</string>
     <string name="reuse_existing">Reutilizar uno existente</string>
     <string name="search_by_name_country_or_ema">Buscar por nombre, país o número EMA</string>
-    <string name="enter_non_member">Introducir un no miembro</string>
+    <string name="enter_non_member">Introducir jugador no EMA</string>
     <string name="assign">Asignar</string>
     <string name="clear_assignment">¿Quitar la asignación?</string>
     <string name="clear_assignment_2">Quitar la asignación</string>
@@ -281,7 +280,7 @@
     <string name="country_n">País %1$s</string>
     <string name="no_matches">Sin coincidencias</string>
     <string name="no_ema_players_match">Ningún jugador EMA coincide con esta búsqueda.</string>
-    <string name="assign_non_member_to_player">Asignar un no miembro al jugador %1$d</string>
+    <string name="assign_non_member_to_player">Asignar jugador no EMA al jugador %1$d</string>
     <string name="clear_assignment_message">¿Quitar a %1$s del jugador %2$d del torneo?</string>
     <string name="this_assignment">esta asignación</string>
     <string name="filter_by_code">Filtrar por %1$s</string>
@@ -290,7 +289,7 @@
     <string name="no_tournament_players_match">Ningún jugador del torneo coincide con los filtros actuales.</string>
     <string name="team">Equipo</string>
     <string name="account">Cuenta</string>
-    <string name="non_member">No miembro</string>
+    <string name="non_member">No EMA</string>
     <string name="no_country">Sin país</string>
     <string name="not_assigned">Sin asignar</string>
     <string name="contact_invite">Invitar</string>
@@ -598,7 +597,6 @@
     <string name="not_known">Desconocido</string>
     <string name="sent">Enviado</string>
     <string name="link_works_once">El enlace funciona una vez y caduca a los 14 días. Reenviar crea un enlace nuevo y el enlace antiguo deja de funcionar.</string>
-    <string name="open_tournament">Abrir %1$s</string>
     <string name="edit_tournament_named">Editar %1$s</string>
     <string name="no_logo_for">Sin logotipo para %1$s</string>
     <string name="tournament_color_value">Color del torneo %1$s</string>
@@ -640,8 +638,8 @@
     <string name="score_has_penalty">%1$s tiene una penalización de %2$s</string>
     <string name="score_matches_penalty">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones. %2$s tiene una penalización de %3$s.</string>
     <string name="score_matches_penalties">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones. %2$s.</string>
-    <string name="top_bar_id_cards">Tarjetas de identificación</string>
-    <string name="top_bar_id_list">Lista de identificación</string>
+    <string name="top_bar_id_cards">Tarjetas de Ids</string>
+    <string name="top_bar_id_list">Lista de Ids</string>
     <string name="top_bar_invitations">Invitaciones</string>
     <string name="top_bar_ema_players">Jugadores EMA</string>
     <string name="top_bar_new_user">Usuario nuevo</string>

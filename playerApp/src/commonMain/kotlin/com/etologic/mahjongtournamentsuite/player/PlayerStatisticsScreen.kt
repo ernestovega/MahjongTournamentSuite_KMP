@@ -86,7 +86,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
 import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
@@ -109,8 +108,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.stats_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.stats_my_statistics
 import mahjongtournamentsuite.playerapp.generated.resources.stats_player_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.stats_player_field
-import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
-import mahjongtournamentsuite.playerapp.generated.resources.stats_table_none
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
 import mahjongtournamentsuite.playerapp.generated.resources.stats_unavailable
 import org.jetbrains.compose.resources.StringResource
@@ -135,12 +132,10 @@ private fun ReportLoading(loading: Boolean, onChange: (Boolean) -> Unit) {
 fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     val hasTournament = route.tournamentId != null
-    val hasTable = hasTournament && route.roundId != null && route.tableId != null
     val scopes = buildList {
         add(StatisticsScope.PERSON)
         add(StatisticsScope.PERSON_TOURNAMENTS)
         if (hasTournament) add(StatisticsScope.TOURNAMENT)
-        if (hasTable) add(StatisticsScope.TABLE)
         if (hasTournament) add(StatisticsScope.PLAYER)
     }
     // A page refresh restores the scope that the player chose.
@@ -191,7 +186,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     val title = when (scope) {
         StatisticsScope.PERSON, StatisticsScope.PERSON_TOURNAMENTS -> stringResource(Res.string.stats_my_statistics)
         StatisticsScope.TOURNAMENT -> shown?.tournament?.name ?: stringResource(Res.string.scope_tournament)
-        StatisticsScope.TABLE -> stringResource(Res.string.stats_round_table, route.roundId ?: 0, route.tableId ?: 0)
+        // The player app has no table scope. The scope list never holds it.
+        StatisticsScope.TABLE -> stringResource(Res.string.scope_tournament)
         StatisticsScope.PLAYER -> shown?.names?.get(chosenSlotId ?: mySlotId) ?: stringResource(Res.string.scope_player)
     }
 
@@ -204,7 +200,6 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         isLoading = !finished && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
-        actions = { ThemeAction() },
     ) {
         ScreenColumn(
             // The statistics sections use the full width and flow into columns.
@@ -267,10 +262,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     )
                 }
 
-                StatisticsScope.TABLE -> shown?.statistics?.tables
-                    ?.firstOrNull { it.roundId == route.roundId && it.tableId == route.tableId }
-                    ?.let { TableStatisticsPanel(it, shown.names) }
-                    ?: Text(stringResource(Res.string.stats_table_none))
+                StatisticsScope.TABLE -> Unit
 
                 StatisticsScope.PLAYER -> shown?.let { data ->
                     val slotId = chosenSlotId ?: mySlotId ?: data.slots.firstOrNull()?.id

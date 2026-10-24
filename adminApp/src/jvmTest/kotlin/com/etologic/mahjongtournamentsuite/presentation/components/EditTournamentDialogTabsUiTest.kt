@@ -52,7 +52,7 @@ class EditTournamentDialogTabsUiTest {
         val server = FakeTournamentRepository().apply { tournaments = listOf(tournament) }
         val store = AppMemoryStore()
         setContent {
-            val themeController = ThemeController(ThemePreference.Light, false) {}
+            val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
                 koinApplication {
                     modules(

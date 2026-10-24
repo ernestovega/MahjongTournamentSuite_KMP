@@ -39,7 +39,7 @@ class CreateTournamentDialogUiTest {
 
     private fun ComposeUiTest.showForm() {
         setContent {
-            val themeController = ThemeController(ThemePreference.Light, false) {}
+            val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
                 koinApplication {
                     modules(

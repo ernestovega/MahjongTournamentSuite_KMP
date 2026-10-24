@@ -57,7 +57,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
-import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -74,7 +73,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
@@ -89,7 +87,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.clear_slot
 import mahjongtournamentsuite.adminapp.generated.resources.edit
 import mahjongtournamentsuite.adminapp.generated.resources.edit_team_n
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
-import mahjongtournamentsuite.adminapp.generated.resources.filter_by_country
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_matches
@@ -284,11 +281,7 @@ fun TeamsScreen(
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
         actions = {
-            AppTopBarActions(
-                onStatistics = {
-                    navController.navigate(StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = tournamentId))
-                },
-            )
+            AppTopBarActions()
         },
     ) {
         ScreenColumn(
@@ -326,11 +319,6 @@ fun TeamsScreen(
                 )
                 if (tournamentCountryCodes.isNotEmpty()) {
                     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(
-                            text = stringResource(Res.string.filter_by_country),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(4.dp),

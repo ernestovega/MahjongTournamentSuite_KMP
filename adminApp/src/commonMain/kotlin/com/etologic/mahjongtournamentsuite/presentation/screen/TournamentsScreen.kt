@@ -138,7 +138,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_logo_for
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_yet
 import mahjongtournamentsuite.adminapp.generated.resources.open
 import mahjongtournamentsuite.adminapp.generated.resources.open_profile
-import mahjongtournamentsuite.adminapp.generated.resources.open_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.role_admin
 import mahjongtournamentsuite.adminapp.generated.resources.role_editor
@@ -342,7 +341,6 @@ fun TournamentsScreen(
         },
         leadingActions = {
             AppTopBarLeadingActions(
-                showThemeToggle = true,
                 onAppUsers = if (adminStatus?.canManageUsers == true) {
                     {
                         lastFocusedControl = "users"
@@ -406,7 +404,7 @@ fun TournamentsScreen(
                                 val listState = rememberPersistentLazyListState("tournaments")
                                 val cellMinWidth = 56.dp
                                 val numColumns = 10
-                                val actionCellMinWidth = 144.dp
+                                val actionCellMinWidth = 56.dp
                                 val flexibleColumns = 5
                                 val columnsMinWidth = (cellMinWidth * flexibleColumns) + featuresGroupMinWidth(cellMinWidth) +
                                     ColorColumnWidth + CountryColumnWidth + ShortNameColumnWidth + actionCellMinWidth
@@ -619,7 +617,7 @@ private fun TournamentTableHeader(
         HeaderCell(text = stringResource(Res.string.country), minWidth = cellMinWidth, weight = 0f, width = CountryColumnWidth, textAlign = TextAlign.Center)
         HeaderCell(text = stringResource(Res.string.city), minWidth = cellMinWidth, weight = 0.7f)
         HeaderCell(text = stringResource(Res.string.logo), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
-        HeaderCell(text = stringResource(Res.string.name), minWidth = cellMinWidth, weight = 2.0f)
+        HeaderCell(text = stringResource(Res.string.name), minWidth = cellMinWidth, weight = NameWeight)
         HeaderCell(text = stringResource(Res.string.short_name), minWidth = cellMinWidth, weight = 0f, width = ShortNameColumnWidth)
         HeaderCell(text = stringResource(Res.string.players), minWidth = cellMinWidth, weight = .5f, textAlign = TextAlign.Center)
         HeaderCell(text = stringResource(Res.string.from_to), minWidth = cellMinWidth, weight = 1.8f, textAlign = TextAlign.Center)
@@ -667,7 +665,6 @@ private fun TournamentTableRow(
     onClick: () -> Unit,
     onEdit: () -> Unit,
 ) {
-    val openDescription = stringResource(Res.string.open_tournament, tournament.name)
     val editDescription = stringResource(Res.string.edit_tournament_named, tournament.name)
     DataTableRow(
         modifier = modifier,
@@ -687,7 +684,7 @@ private fun TournamentTableRow(
             tournamentName = tournament.name,
             minWidth = cellMinWidth,
         )
-        BodyCell(text = tournament.name, minWidth = cellMinWidth, weight = 2.0f, maxLines = 2)
+        BodyCell(text = tournament.name, minWidth = cellMinWidth, weight = NameWeight, maxLines = 2)
         BodyCell(
             text = tournament.shortName.ifBlank { "—" },
             minWidth = cellMinWidth,
@@ -742,13 +739,6 @@ private fun TournamentTableRow(
             horizontalArrangement = Arrangement.End,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            TextButton(
-                enabled = enabled,
-                onClick = onClick,
-                buttonModifier = Modifier.semantics { contentDescription = openDescription },
-            ) {
-                Text(stringResource(Res.string.open))
-            }
             if (showEdit) {
                 IconButton(
                     enabled = enabled,
@@ -916,6 +906,8 @@ private fun RowScope.FeatureStateCell(
 
 /** Minimum width of the Best hands and Chicken hands columns. It fits their titles. */
 private val FeatureColumnMinWidth = 96.dp
+/** The name takes the width that the removed Open button left free. */
+private const val NameWeight = 3.0f
 private const val TeamsWeight = .5f
 private const val FeatureWeight = .8f
 

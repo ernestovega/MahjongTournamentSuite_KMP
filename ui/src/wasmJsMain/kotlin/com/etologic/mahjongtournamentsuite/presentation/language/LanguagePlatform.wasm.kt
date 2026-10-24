@@ -12,11 +12,11 @@ internal actual object LanguagePreferenceStorage {
     private const val KEY = "languagePreference"
 }
 
-internal actual fun applyPlatformLanguage(tag: String?) {
-    overrideBrowserLanguage(tag.orEmpty())
+internal actual fun applyPlatformLanguage(tag: String) {
+    overrideBrowserLanguage(tag)
 }
 
-/** The resources read the language from the browser. An empty tag removes the override. */
+/** The resources read the language from the browser. This sets the language that the app uses. */
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 @JsFun(
     """(tag) => {

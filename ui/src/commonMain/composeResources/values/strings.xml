@@ -17,7 +17,7 @@
     <string name="sign_in_forgot_password">Forgot password?</string>
     <string name="sign_in_button">Sign in</string>
     <string name="app_logo_description">Mahjong Tournament Suite logo</string>
-    <string name="top_bar_app_users">App Users</string>
+    <string name="top_bar_app_users">Users</string>
     <string name="top_bar_app_usage">App usage</string>
     <string name="top_bar_timer">Timer</string>
     <string name="top_bar_ranking">Ranking</string>
@@ -141,9 +141,8 @@
     <string name="outcome_hands_unit">hands</string>
     <string name="skill_win_rate">Win rate</string>
     <string name="skill_win_rate_info">How often you win a hand.\nHands won divided by hands played.\nAxis full at 40%.</string>
-    <string name="skill_self_draw">Self-draw</string>
+    <string name="skill_self_draw">Self-draw rate</string>
     <string name="skill_self_draw_info">How often your wins come from drawing the winning tile yourself.\nSelf-draw wins divided by hands won.\nAxis full at 50%.</string>
-    <string name="skill_sub_rate">rate</string>
     <string name="skill_deal_in_rate">Deal-in rate</string>
     <string name="skill_deal_in_rate_info">How often you discard the tile that another player wins with.\nDeal-ins divided by hands played.\nA lower value is better.\nAxis full at 25%.</string>
     <string name="skill_hand_value">Hand value</string>
@@ -294,10 +293,14 @@
     <string name="country_uz">Uzbekistan</string>
     <string name="country_za">South Africa</string>
     <string name="language_label">Language</string>
-    <string name="language_system">Same as the device</string>
     <string name="error_tournament_not_found">The tournament was not found. It may have been deleted.</string>
     <string name="action_back">Back</string>
     <string name="dropdown_show_all">Show all options</string>
     <string name="logo_of">Logo of %1$s</string>
     <string name="app_version_label">App %1$s - Backend %2$s</string>
+    <string name="theme_title">Theme</string>
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+    <string name="theme_description">Theme: %1$s</string>
 </resources>

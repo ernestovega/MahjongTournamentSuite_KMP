@@ -82,7 +82,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.contactState
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
-import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -101,7 +100,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExport
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
@@ -139,7 +137,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.country_n
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.enter_non_member
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
-import mahjongtournamentsuite.adminapp.generated.resources.filter_by_country
 import mahjongtournamentsuite.adminapp.generated.resources.first_name
 import mahjongtournamentsuite.adminapp.generated.resources.last_name
 import mahjongtournamentsuite.adminapp.generated.resources.name
@@ -1130,9 +1127,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
-                onStatistics = {
-                    navController.navigate(StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = tournamentId))
-                },
                 onIdCards = { idCardsDialogOpen = true },
                 onIdList = ::exportIdList,
                 onPlayerAccounts = { accountError = null; accountResults = emptyList(); loadInvitations(); bulkAccountsOpen = true },
@@ -1174,7 +1168,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     )
                     if (tournamentCountryCodes.isNotEmpty()) {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            Text(stringResource(Res.string.filter_by_country), style = MaterialTheme.typography.labelMedium)
                             Row(
                                 modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),

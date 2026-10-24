@@ -29,27 +29,34 @@ class AllTextsResolveTest {
         return texts
     }
 
+    /** The languages with their own texts. Each one has the same keys as English. */
+    private val translated = listOf("es", "fr", "it")
+
     @Test
-    fun everyTextLoadsInEnglishAndSpanish() = runTest {
+    fun everyTextLoadsInEveryLanguage() = runTest {
         val english = textsIn("en")
-        val spanish = textsIn("es")
         assertTrue(english.isNotEmpty())
-        assertEquals(english.keys, spanish.keys)
         english.forEach { (key, text) -> assertTrue(text.isNotBlank() || key in BLANK_ALLOWED, "English text $key is empty") }
-        spanish.forEach { (key, text) -> assertTrue(text.isNotBlank() || key in BLANK_ALLOWED, "Spanish text $key is empty") }
+        for (language in translated) {
+            val texts = textsIn(language)
+            assertEquals(english.keys, texts.keys, language)
+            texts.forEach { (key, text) -> assertTrue(text.isNotBlank() || key in BLANK_ALLOWED, "$language text $key is empty") }
+        }
     }
 
     @Test
-    fun mostSpanishTextsDifferFromTheEnglishOnes() = runTest {
+    fun mostTextsDifferFromTheEnglishOnes() = runTest {
         val english = textsIn("en")
-        val spanish = textsIn("es")
-        val same = english.keys.count { english[it] == spanish[it] }
-        assertTrue(same < english.size * 0.35, "Too many Spanish texts equal the English ones: $same of ${english.size}")
+        for (language in translated) {
+            val texts = textsIn(language)
+            val same = english.keys.count { english[it] == texts[it] }
+            assertTrue(same < english.size * 0.35, "Too many $language texts equal the English ones: $same of ${english.size}")
+        }
     }
 
     @Test
     fun aLanguageWithoutTextsUsesTheEnglishTexts() = runTest {
-        assertEquals(textsIn("en"), textsIn("fr"))
+        assertEquals(textsIn("en"), textsIn("sw"))
     }
 
     private companion object {

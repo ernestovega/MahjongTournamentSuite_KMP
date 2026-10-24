@@ -93,7 +93,7 @@
     <string name="period">Period</string>
     <string name="enter_these_values_again_if_they">Enter these values again if they are still correct:</string>
     <string name="updates_paused">Updates paused</string>
-    <string name="app_users">App users</string>
+    <string name="app_users">Users</string>
     <string name="invited">Invited</string>
     <string name="accounts">Accounts</string>
     <string name="alias">Alias</string>
@@ -139,7 +139,6 @@
     <string name="add_player">Add player</string>
     <string name="search_by_name_or_ema_number">Search by name or EMA number</string>
     <string name="clear_search">Clear search</string>
-    <string name="filter_by_country">Filter by country</string>
     <string name="player_base">Player base</string>
     <string name="player_details">Player details</string>
     <string name="no_player_selected">No player selected</string>
@@ -598,7 +597,6 @@
     <string name="not_known">Not known</string>
     <string name="sent">Sent</string>
     <string name="link_works_once">The link works once and expires after 14 days. Resend creates a new link and the old link stops working.</string>
-    <string name="open_tournament">Open %1$s</string>
     <string name="edit_tournament_named">Edit %1$s</string>
     <string name="no_logo_for">No logo for %1$s</string>
     <string name="tournament_color_value">Tournament color %1$s</string>

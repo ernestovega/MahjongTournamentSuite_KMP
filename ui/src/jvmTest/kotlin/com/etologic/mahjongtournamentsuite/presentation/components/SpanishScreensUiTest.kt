@@ -33,12 +33,12 @@ class SpanishScreensUiTest {
 
     private fun ComposeUiTest.show(language: String, content: @Composable () -> Unit) {
         Locale.setDefault(Locale.forLanguageTag(language))
-        setContent { MtsTheme(useDarkTheme = false) { content() } }
+        setContent { TestTheme { content() } }
     }
 
     /** The texts load in the background, so the test waits until the text shows. */
-    private fun ComposeUiTest.awaitText(text: String) =
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+    private fun ComposeUiTest.awaitText(text: String, substring: Boolean = false) =
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
 
     @Test
     fun theProfileDialogIsInSpanish() = runComposeUiTest {
@@ -56,6 +56,23 @@ class SpanishScreensUiTest {
     }
 
     @Test
+    fun theProfileDialogFollowsEveryLanguage() {
+        val expected = mapOf(
+            "fr" to listOf("Profil", "Langue", "Enregistrer", "English"),
+            "it" to listOf("Profilo", "Lingua", "Salva", "English"),
+        )
+        for ((language, texts) in expected) {
+            runComposeUiTest {
+                val profile = UserProfile(uid = "u1", email = "ada@example.test", alias = "Ada", emaId = null)
+                show(language) {
+                    ProfileDialog(profile, onSaveAlias = { error("unused") }, onSavePhoto = { _, _ -> error("unused") }, onRemovePhoto = { error("unused") }, onSaved = {}, onDismiss = {})
+                }
+                texts.forEach { awaitText(it, substring = true) }
+            }
+        }
+    }
+
+    @Test
     fun theProfileDialogIsInEnglishByDefault() = runComposeUiTest {
         val profile = UserProfile(uid = "u1", email = "ada@example.test", alias = "Ada", emaId = null)
         show("en") {
@@ -63,7 +80,6 @@ class SpanishScreensUiTest {
         }
         awaitText("Profile")
         onNodeWithText("Language").assertExists()
-        onNodeWithText("Español").assertExists()
         onNodeWithText("English").assertExists()
     }
 
@@ -154,7 +170,18 @@ class SpanishScreensUiTest {
 
     @Test
     fun theSignOutDialogIsInEnglishForAnotherLanguage() = runComposeUiTest {
-        show("fr") { SignOutConfirmDialog(onConfirm = {}, onDismiss = {}) }
+        show("sw") { SignOutConfirmDialog(onConfirm = {}, onDismiss = {}) }
         awaitText("Do you want to sign out?")
     }
+}
+
+/** The profile dialog has the theme selector, so the tests give it a theme controller. */
+@androidx.compose.runtime.Composable
+private fun TestTheme(content: @androidx.compose.runtime.Composable () -> Unit) {
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController provides
+            com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController(
+                com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference.Light, false, {},
+            ),
+    ) { MtsTheme(useDarkTheme = false) { content() } }
 }

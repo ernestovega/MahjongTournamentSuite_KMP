@@ -110,7 +110,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
-import mahjongtournamentsuite.adminapp.generated.resources.filter_by_country
 import mahjongtournamentsuite.adminapp.generated.resources.first_name
 import mahjongtournamentsuite.adminapp.generated.resources.last_name
 import mahjongtournamentsuite.adminapp.generated.resources.name
@@ -611,11 +610,6 @@ fun PlayerBaseScreen(navController: NavHostController) {
             )
             if (existingPlayerCountryCodes.isNotEmpty()) {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text(
-                        text = stringResource(Res.string.filter_by_country),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
                     FullBleedRow(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(4.dp),

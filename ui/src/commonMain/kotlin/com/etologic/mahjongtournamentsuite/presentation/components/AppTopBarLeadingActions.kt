@@ -10,6 +10,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.label
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
@@ -45,7 +46,7 @@ fun AppTopBarLeadingActions(
 @Composable
 private fun ThemeModeToggleButton() {
     val themeController = LocalThemeController.current
-    val label = themeController.preference.name
+    val label = themeController.preference.label
 
     AppTopBarButton(
         text = label,

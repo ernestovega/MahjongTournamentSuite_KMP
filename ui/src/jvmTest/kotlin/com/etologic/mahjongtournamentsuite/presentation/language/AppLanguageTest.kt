@@ -2,7 +2,10 @@ package com.etologic.mahjongtournamentsuite.presentation.language
 
 import androidx.compose.material3.Text
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -21,12 +24,12 @@ import kotlin.test.assertNotEquals
 private fun Sample() = Text(stringResource(Res.string.sign_out_message))
 
 private class FakeLanguageStore(var saved: String? = null) : LanguageStore {
-    val applied = mutableListOf<String?>()
+    val applied = mutableListOf<String>()
     override fun load(): String? = saved
-    override fun save(tag: String?) { saved = tag }
-    override fun apply(tag: String?) {
+    override fun save(tag: String) { saved = tag }
+    override fun apply(tag: String) {
         applied += tag
-        Locale.setDefault(tag?.let(Locale::forLanguageTag) ?: Locale.ENGLISH)
+        Locale.setDefault(Locale.forLanguageTag(tag))
     }
 }
 
@@ -34,6 +37,14 @@ private class FakeLanguageStore(var saved: String? = null) : LanguageStore {
 @OptIn(ExperimentalTestApi::class)
 private fun androidx.compose.ui.test.ComposeUiTest.awaitText(text: String) =
     waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
+
+/** Opens the menu of the selector with a tap on the field, which shows the [current] language, and taps the option [name]. */
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.chooseLanguage(current: String, name: String) {
+    onAllNodesWithText(current).onFirst().performClick()
+    waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(name).fetchSemanticsNodes().isNotEmpty() }
+    onAllNodesWithText(name).onLast().performClick()
+}
 
 @OptIn(ExperimentalTestApi::class)
 class AppLanguageTest {
@@ -45,21 +56,22 @@ class AppLanguageTest {
     @Test
     fun aKnownTagGivesItsLanguage() {
         assertEquals(AppLanguage.Spanish, AppLanguage.fromTag("es"))
+        assertEquals(AppLanguage.French, AppLanguage.fromTag("fr"))
+        assertEquals(AppLanguage.Italian, AppLanguage.fromTag("it"))
         assertEquals(AppLanguage.English, AppLanguage.fromTag("en"))
     }
 
     @Test
-    fun anEmptyOrUnknownTagGivesTheLanguageOfTheDevice() {
-        assertEquals(AppLanguage.System, AppLanguage.fromTag(null))
-        assertEquals(AppLanguage.System, AppLanguage.fromTag(""))
-        assertEquals(AppLanguage.System, AppLanguage.fromTag("xx"))
+    fun anEmptyOrUnknownTagGivesEnglish() {
+        assertEquals(AppLanguage.English, AppLanguage.fromTag(null))
+        assertEquals(AppLanguage.English, AppLanguage.fromTag(""))
+        assertEquals(AppLanguage.English, AppLanguage.fromTag("xx"))
     }
 
     @Test
     fun everyLanguageHasADifferentTag() {
         val tags = AppLanguage.entries.mapNotNull { it.tag }
         assertEquals(tags.size, tags.toSet().size)
-        assertEquals(null, AppLanguage.System.endonym)
     }
 
     @Test
@@ -67,15 +79,15 @@ class AppLanguageTest {
         val store = FakeLanguageStore(saved = "es")
         setContent { ProvideAppLanguage(store) { Sample() } }
         awaitText("¿Quieres cerrar la sesión?")
-        assertEquals(listOf<String?>("es"), store.applied)
+        assertEquals(listOf("es"), store.applied)
     }
 
     @Test
-    fun withoutASavedLanguageTheDeviceLanguageStays() = runComposeUiTest {
+    fun withoutASavedLanguageEnglishIsTheDefault() = runComposeUiTest {
         val store = FakeLanguageStore(saved = null)
         setContent { ProvideAppLanguage(store) { Sample() } }
         awaitText("Do you want to sign out?")
-        assertEquals(listOf<String?>(null), store.applied)
+        assertEquals(listOf("en"), store.applied)
     }
 
     @Test
@@ -89,31 +101,34 @@ class AppLanguageTest {
         }
         awaitText("Do you want to sign out?")
 
-        onNodeWithText("Español").performClick()
+        chooseLanguage("English", "Español")
         awaitText("¿Quieres cerrar la sesión?")
         assertEquals("es", store.saved)
 
-        onNodeWithText("English").performClick()
+        chooseLanguage("Español", "English")
         awaitText("Do you want to sign out?")
         assertEquals("en", store.saved)
     }
 
     @Test
-    fun choosingTheDeviceLanguageClearsTheSavedChoice() = runComposeUiTest {
+    fun choosingEnglishSavesIt() = runComposeUiTest {
         val store = FakeLanguageStore(saved = "es")
         setContent { ProvideAppLanguage(store) { LanguageSelector() } }
-        awaitText("Igual que el dispositivo")
-        onNodeWithText("Igual que el dispositivo").performClick()
-        awaitText("Same as the device")
-        assertEquals(null, store.saved)
+        awaitText("Español")
+        chooseLanguage("Español", "English")
+        awaitText("English")
+        assertEquals("en", store.saved)
     }
 
     @Test
     fun theSelectorShowsEachLanguageInItsOwnName() = runComposeUiTest {
         setContent { ProvideAppLanguage(FakeLanguageStore()) { LanguageSelector() } }
         onNodeWithText("English").assertExists()
-        onNodeWithText("Español").assertExists()
         onNodeWithText("Language").assertExists()
+        onNodeWithText("English").performClick()
+        awaitText("Español")
+        awaitText("Français")
+        awaitText("Italiano")
     }
 
     @Test
@@ -128,7 +143,7 @@ class AppLanguageTest {
             }
         }
         assertEquals(1, created)
-        onNodeWithText("Español").performClick()
+        chooseLanguage("English", "Español")
         waitForIdle()
         assertEquals(2, created)
     }

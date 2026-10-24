@@ -64,7 +64,7 @@ class RoleGatingUiTest {
 
     private fun ComposeUiTest.show(world: World, players: List<Player> = emptyList(), content: @Composable () -> Unit) {
         setContent {
-            val themeController = ThemeController(ThemePreference.Light, false) {}
+            val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
                 koinApplication {
                     modules(
@@ -108,8 +108,7 @@ class RoleGatingUiTest {
 
         onNodeWithText("New tournament").assertExists()
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(1)
-        onAllNodesWithContentDescription("Open Open").assertCountEquals(1)
-        onNodeWithText("App Users").assertExists()
+        onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
         onAllNodesWithText("Admin", substring = true).assertCountEquals(1)
     }
@@ -120,8 +119,7 @@ class RoleGatingUiTest {
 
         onAllNodesWithText("New tournament").assertCountEquals(0)
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(0)
-        onAllNodesWithContentDescription("Open Open").assertCountEquals(1)
-        onNodeWithText("App Users").assertExists()
+        onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
         onAllNodesWithText("Editor", substring = true).assertCountEquals(1)
     }

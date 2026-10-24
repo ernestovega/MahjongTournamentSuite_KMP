@@ -34,7 +34,6 @@
     <string name="stats_round_table">Round %1$d - Table %2$d</string>
     <string name="stats_title">Statistics</string>
     <string name="stats_unavailable">Your statistics are not available yet.</string>
-    <string name="stats_table_none">This table has no statistics yet.</string>
     <string name="stats_empty_title">No statistics yet</string>
     <string name="stats_player_empty_message">This player has no statistics in this tournament yet.</string>
     <string name="stats_player_field">Player (name or EMA number)</string>

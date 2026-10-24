@@ -172,7 +172,7 @@ class HandEntryPanelUiTest {
         java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
         show(MatchEndMode.FINISH_HAND, "11:00")
 
-        awaitText("Añadir mano sin ganador")
+        awaitText("Añadir empate")
         onNodeWithText("Añadir victoria").assertIsDisplayed()
         onNodeWithText("Añadir penalización").assertIsDisplayed()
         onNodeWithText("Add draw").assertDoesNotExist()
@@ -183,8 +183,8 @@ class HandEntryPanelUiTest {
         java.util.Locale.setDefault(java.util.Locale.forLanguageTag("es"))
         show(MatchEndMode.FINISH_HAND, "11:00")
 
-        awaitText("Añadir mano sin ganador")
-        onNodeWithText("Añadir mano sin ganador").performClick()
+        awaitText("Añadir empate")
+        onNodeWithText("Añadir empate").performClick()
         awaitText("Última mano de la mesa")
         onNodeWithText("Ningún jugador gana esta mano. Todos los asientos puntúan cero.").assertIsDisplayed()
         onNodeWithText("Revisar").assertIsDisplayed()
