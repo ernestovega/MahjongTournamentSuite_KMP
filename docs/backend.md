@@ -239,30 +239,23 @@ The table editor checks the server for changes while it is open. See [Multi-edit
 ## Public routes
 
 These routes need no sign-in. Every other route needs a valid token and a role check:
-- `GET /health`, `GET /version` and `GET /config` (the feature flags).
+- `GET /health` and `GET /config` (the feature flags).
 - `POST /auth/signIn`, `/auth/passwordReset` and `/auth/refresh`.
 - `POST /player/invitations/accept`. The invitation token is the secret.
-- `POST /admin/bootstrapAdmin`. It needs the bootstrap key and works only while no enabled admin exists.
 
 - `/auth/signIn`, `/auth/passwordReset`, `/auth/refresh` and `/player/invitations/accept` allow a limited number of requests for each client address. The counter lives in one function instance.
 - `/auth/passwordReset` answers `200` for an unknown email, so the answer does not show which emails have an account.
-- `/version` returns only `ok` and the version number.
+- Every write (`POST`, `PUT`, `DELETE`) is limited to 120 requests per minute for each address and token. The counter lives in one function instance.
+- An editor cannot save a table of a completed tournament. Only an admin can.
 - A tournament id in a route must not contain `/`.
 - The hosting sites send `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'` and `Permissions-Policy`.
 
-## Bootstrap admin
+## First admin
 
-A one-time endpoint exists to grant the first `admin` custom claim.
-
-Set an environment variable `BOOTSTRAP_KEY` in Functions and call:
-
-`POST /admin/bootstrapAdmin` with header `X-Bootstrap-Key: <value>`.
-
-Send an existing Firebase Authentication `uid` in the request body. The endpoint rejects the request when an enabled admin already exists.
+The API has no route to create the first admin. Set the `admin: true` custom claim with the Firebase Admin SDK or the Firebase console, and create the profile document `users/{uid}`.
 
 For the full role migration order, deployment commands, and permission checks, see [Firebase role rollout](firebase-role-rollout.md).
 
 ## Required env vars (Functions)
 
 - `FIREBASE_API_KEY` (Web API key from Firebase project settings)
-- `BOOTSTRAP_KEY` (a random secret string)

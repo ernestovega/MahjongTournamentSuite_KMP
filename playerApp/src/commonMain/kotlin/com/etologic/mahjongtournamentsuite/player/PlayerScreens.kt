@@ -291,10 +291,8 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
     var busy by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
     var infoMessage by remember { mutableStateOf<UiText?>(null) }
-    var backendVersion by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
-        backendVersion = presenter.backendVersion()
         // Chrome mediates this request through its password manager UI.
         loadBrowserCredentials { savedEmail, savedPassword ->
             email = savedEmail
@@ -350,7 +348,6 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
         isLoading = busy,
         errorMessage = errorMessage,
         infoMessage = infoMessage,
-        backendVersion = backendVersion,
         emailRequester = emailRequester,
         onSubmit = ::submit,
         onForgotPassword = ::requestPasswordReset,

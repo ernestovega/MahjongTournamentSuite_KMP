@@ -20,12 +20,10 @@ type Access = "PUBLIC" | "SIGNED_IN" | "EDITOR" | "READER" | "PLAYER" | "MEMBER"
 
 const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/health", "PUBLIC"],
-  ["GET", "/version", "PUBLIC"],
   ["GET", "/config/", "PUBLIC"],
   ["POST", "/auth/signIn", "PUBLIC"],
   ["POST", "/auth/passwordReset", "PUBLIC"],
   ["POST", "/auth/refresh", "PUBLIC"],
-  ["POST", "/admin/bootstrapAdmin", "PUBLIC"],
   ["POST", "/player/invitations/accept", "PUBLIC"],
   ["GET", "/auth/me", "SIGNED_IN"],
   ["PUT", "/auth/me", "SIGNED_IN"],
@@ -395,13 +393,6 @@ describe("account rules", () => {
     }
   });
 
-  it("the bootstrap route needs the right key and works only without an enabled admin", async () => {
-    process.env.MTS_BOOTSTRAP_KEY = "secret-key";
-    assert.equal((await server.request("POST", "/admin/bootstrapAdmin", { body: { uid: editor.uid } })).status, 403);
-    assert.equal((await server.request("POST", "/admin/bootstrapAdmin", { body: { uid: editor.uid }, headers: { "x-bootstrap-key": "wrong" } })).status, 403);
-    // The right key is still refused, because an enabled admin exists.
-    assert.equal((await server.request("POST", "/admin/bootstrapAdmin", { body: { uid: editor.uid }, headers: { "x-bootstrap-key": "secret-key" } })).status, 403);
-  });
 });
 
 describe("tournament rules for assigned editors", () => {
@@ -434,6 +425,16 @@ describe("tournament rules for assigned editors", () => {
     const { status } = await server.request("PUT", `/tournaments/${t1}/members/${admin.uid}`, { token: admin.token });
 
     assert.equal(status, 400);
+  });
+
+  it("an editor cannot save a table of a completed tournament, an admin can", async () => {
+    const done = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], isCompleted: true });
+    const editor = await createAccount({ role: "EDITOR", memberOf: [done] });
+    const path = `/tournaments/${done}/tables/1/1/state`;
+    const body = { expectedVersion: 0, tablePatch: { playerEastId: "1" }, handPatches: [] };
+
+    assert.equal((await server.request("PUT", path, { token: editor.token, body })).status, 403);
+    assert.equal((await server.request("PUT", path, { token: admin.token, body })).status, 200);
   });
 
   it("an assigned editor can save a table, an outsider cannot", async () => {
@@ -499,11 +500,5 @@ describe("input checks on public and path values", () => {
     const { status } = await server.request("POST", "/auth/passwordReset", { body: { email: "nobody-here@example.test" } });
 
     assert.equal(status, 200);
-  });
-
-  it("hides the deployment details in the version answer", async () => {
-    const { body } = await server.request("GET", "/version");
-
-    assert.deepEqual(body, { ok: true, version: "1.0.0" });
   });
 });

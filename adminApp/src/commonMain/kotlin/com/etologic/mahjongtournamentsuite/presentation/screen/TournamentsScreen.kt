@@ -106,7 +106,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusI
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
-import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
@@ -155,7 +154,6 @@ fun TournamentsScreen(
     navController: NavHostController,
 ) {
     val presenter = koinInject<TournamentsPresenter>()
-    val versionPresenter = koinInject<VersionPresenter>()
     val store = koinInject<AppMemoryStore>()
     val coroutineScope = rememberCoroutineScope()
 
@@ -167,7 +165,6 @@ fun TournamentsScreen(
     var isRefreshing by remember { mutableStateOf(true) }
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
-    var backendVersion by remember { mutableStateOf<String?>(null) }
     var editDialogTournament by remember { mutableStateOf<Tournament?>(null) }
     var showCreateTournamentDialog by remember { mutableStateOf(false) }
     var restoreNewTournamentFocus by remember { mutableStateOf(false) }
@@ -246,10 +243,6 @@ fun TournamentsScreen(
 
     LaunchedEffect(presenter) {
         refresh()
-    }
-
-    LaunchedEffect(versionPresenter) {
-        backendVersion = versionPresenter.loadBackendVersion()
     }
 
     val roleLabel = adminStatus?.let {
@@ -522,7 +515,6 @@ fun TournamentsScreen(
             }
 
             AppVersionLabel(
-                backendVersion = backendVersion,
                 modifier = Modifier.align(Alignment.BottomStart),
             )
         }

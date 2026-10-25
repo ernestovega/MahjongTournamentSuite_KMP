@@ -24,7 +24,7 @@ The Android and desktop clients build locally. They are not distributed by Fireb
 ## Required order
 
 1. Deploy the `api` function.
-2. Check `/health` and `/version`.
+2. Check `/health`.
 3. Run the access-reset script in dry-run mode.
 4. Review the selected admin email and affected counts.
 5. Run the access reset in apply mode.
@@ -75,7 +75,7 @@ npx -y firebase-tools@latest hosting:channel:deploy roles-ready \
   --project mahjong-tournament-suite
 ```
 
-Check the application page, `/api/health`, and `/api/version` on the temporary URL. Then deploy the live site:
+Check the application page, and `/api/health` on the temporary URL. Then deploy the live site:
 
 ```bash
 npx -y firebase-tools@latest deploy \

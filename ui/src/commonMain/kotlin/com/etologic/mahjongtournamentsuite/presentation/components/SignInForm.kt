@@ -72,7 +72,6 @@ fun SignInForm(
     isLoading: Boolean,
     errorMessage: UiText?,
     infoMessage: UiText?,
-    backendVersion: String?,
     emailRequester: FocusRequester,
     onSubmit: () -> Unit,
     onForgotPassword: () -> Unit,
@@ -248,7 +247,6 @@ fun SignInForm(
             }
 
             AppVersionLabel(
-                backendVersion = backendVersion,
                 modifier = Modifier.align(Alignment.BottomStart),
             )
         }

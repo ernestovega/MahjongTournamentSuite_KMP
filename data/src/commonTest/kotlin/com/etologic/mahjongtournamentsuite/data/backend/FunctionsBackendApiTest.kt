@@ -15,19 +15,6 @@ import kotlinx.coroutines.test.runTest
 
 class FunctionsBackendApiTest {
     @Test
-    fun versionUsesTheConfiguredBaseUrlAndDecodesJson() = runTest {
-        var request: HttpRequestData? = null
-        val api = mockBackendApi { received ->
-            request = received
-            jsonResponse("{\"version\":\"2026.10\"}")
-        }
-
-        assertEquals("2026.10", api.version().version)
-        assertEquals(HttpMethod.Get, request?.method)
-        assertEquals("https://backend.test/functions/version", request?.url.toString())
-    }
-
-    @Test
     fun authenticatedLookupUsesTournamentPathAndEmailParameter() = runTest {
         var request: HttpRequestData? = null
         val api = mockBackendApi { received ->
@@ -87,7 +74,7 @@ class FunctionsBackendApiTest {
             )
         }
 
-        val error = assertFailsWith<BackendHttpException> { api.version() }
+        val error = assertFailsWith<BackendHttpException> { api.featureFlags() }
 
         assertEquals(HttpStatusCode.BadRequest, error.status)
         assertEquals("backend failure", error.responseBody)

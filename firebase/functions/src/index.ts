@@ -5,7 +5,7 @@ import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { buildApp } from "./api/app";
 import { closeRoundTables } from "./services/matchTimeCloseService";
 import { CLOSE_ROUND_TASK_REGION, planRoundCloses } from "./services/matchTimeTaskService";
-import { BOOTSTRAP_KEY, ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY } from "./config";
+import { ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY } from "./config";
 
 const app = buildApp();
 
@@ -15,7 +15,7 @@ export const api = onRequest(
     region: "europe-southwest1",
     // The code needs about 170 MB just to load. The default of 256 MiB is too small and the container is killed at start.
     memory: "512MiB",
-    secrets: [ID_TOOLKIT_API_KEY, BOOTSTRAP_KEY, MAIL_SMTP_URI, PLACES_API_KEY],
+    secrets: [ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY],
   },
   app,
 );

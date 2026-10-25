@@ -351,7 +351,8 @@ fun GlobalUsersScreen(navController: NavHostController) {
         onBack = { navController.popBackStack() },
         actions = {
             AppTopBarActions(
-                onNewUser = { showCreateDialog = true },
+                // Only admins create accounts. A new account is an editor or an admin.
+                onNewUser = if (access?.isAdmin == true) ({ showCreateDialog = true }) else null,
                 newUserFocusRequester = addFocusRequester,
             )
         },
@@ -412,6 +413,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     countryByEmaId = emaPlayers.associate { it.emaId to it.country },
                     enabled = !loading && !saving,
                     canEditAdmins = access?.isAdmin == true,
+                    selfUid = access?.uid,
                     rowFocusRequesters = rowFocusRequesters,
                     onEdit = { user ->
                         restoreUid = user.uid
@@ -488,6 +490,7 @@ private fun UsersTable(
     countryByEmaId: Map<String, String>,
     enabled: Boolean,
     canEditAdmins: Boolean,
+    selfUid: String?,
     rowFocusRequesters: Map<String, FocusRequester>,
     onEdit: (ManagedUser) -> Unit,
 ) {
@@ -512,7 +515,8 @@ private fun UsersTable(
             DataTableDivider()
         }
         itemsIndexed(users, key = { _, user -> user.uid }) { _, user ->
-            val canEdit = enabled && (canEditAdmins || user.role != GlobalUserRole.ADMIN)
+            // An editor edits player accounts and the own account. Admins edit every account.
+            val canEdit = enabled && (canEditAdmins || user.role == GlobalUserRole.PLAYER || user.uid == selfUid)
             DataTableRow(
                 modifier = Modifier.focusRequester(rowFocusRequesters.getValue(user.uid)),
                 onClick = { if (canEdit) onEdit(user) },

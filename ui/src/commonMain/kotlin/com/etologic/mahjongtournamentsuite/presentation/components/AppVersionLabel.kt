@@ -13,11 +13,10 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun AppVersionLabel(
-    backendVersion: String?,
     modifier: Modifier = Modifier,
 ) {
     Text(
-        text = stringResource(Res.string.app_version_label, AppVersion.name, backendVersion ?: "…"),
+        text = stringResource(Res.string.app_version_label, AppVersion.name),
         modifier = modifier.padding(8.dp),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.42f),

@@ -33,7 +33,6 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
-import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -52,6 +51,8 @@ import kotlin.test.assertTrue
 class RoleGatingUiTest {
     private val boss = ManagedUser("a1", "boss@example.test", "Boss", GlobalUserRole.ADMIN, false, emptyList())
     private val ed = ManagedUser("e1", "ed@example.test", "Ed", GlobalUserRole.EDITOR, false, emptyList())
+    /** The account of the signed-in editor. The fake repository signs in as uid "me". */
+    private val me = ManagedUser("me", "me@example.test", "Me", GlobalUserRole.EDITOR, false, emptyList())
 
     private class World(role: GlobalUserRole, users: List<ManagedUser>) {
         val admin = FakeAdminRepository(role, users)
@@ -76,10 +77,7 @@ class RoleGatingUiTest {
                             single<PlayerRepository> { FakePlayerRepository(players) }
                             single<PlayerInvitationRepository> { world.invited }
                             single { world.store }
-                            // The version call fails at once and the screen ignores it.
-                            single { FunctionsBackendApi(HttpClient(), ApiConfiguration("http://127.0.0.1:1/")) }
                             factory { TournamentsPresenter(get(), get(), get()) }
-                            factory { VersionPresenter(get(), get()) }
                             factory { UsersPresenter(get(), get(), get(), get(), get()) }
                             factory { PlayerBasePresenter(get(), get()) }
                         },
@@ -227,16 +225,26 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun editorCanOpenAnotherEditorButNotDisableIt() = runComposeUiTest {
-        show(World(GlobalUserRole.EDITOR, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+    fun editorCanOpenTheOwnAccountButNotDisableIt() = runComposeUiTest {
+        show(World(GlobalUserRole.EDITOR, listOf(boss, ed, me))) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("me@example.test")
+        onNodeWithText("me@example.test").performClick()
+        waitForIdle()
+
+        onNodeWithText("Save").assertExists()
+        onAllNodesWithText("Disable account").assertCountEquals(0)
+    }
+
+    @Test
+    fun editorCannotOpenAnotherEditorAccount() = runComposeUiTest {
+        show(World(GlobalUserRole.EDITOR, listOf(boss, ed, me))) { GlobalUsersScreen(rememberNavController()) }
 
         awaitText("ed@example.test")
         onNodeWithText("ed@example.test").performClick()
         waitForIdle()
 
-        onNodeWithText("Save").assertExists()
-        onAllNodesWithText("Disable account").assertCountEquals(0)
-        onNodeWithText("Send password-reset email").assertExists()
+        onAllNodesWithText("Save").assertCountEquals(0)
     }
 
     @Test
@@ -251,9 +259,19 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun editorCanStartCreatingAnAccount() = runComposeUiTest {
+    fun editorDoesNotSeeTheNewUserButton() = runComposeUiTest {
         show(World(GlobalUserRole.EDITOR, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 
+        awaitText("ed@example.test")
+
+        onAllNodesWithText("New user").assertCountEquals(0)
+    }
+
+    @Test
+    fun adminCanStartCreatingAnAccount() = runComposeUiTest {
+        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("ed@example.test")
         onNodeWithText("New user").performClick()
         waitForIdle()
 
@@ -271,9 +289,9 @@ class RoleGatingUiTest {
 
     @Test
     fun anEditorCannotChangeTheRoleOfAnAccount() = runComposeUiTest {
-        show(World(GlobalUserRole.EDITOR, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
-        awaitText("ed@example.test")
-        onNodeWithText("ed@example.test").performClick()
+        show(World(GlobalUserRole.EDITOR, listOf(boss, ed, me))) { GlobalUsersScreen(rememberNavController()) }
+        awaitText("me@example.test")
+        onNodeWithText("me@example.test").performClick()
         waitForIdle()
 
         onNodeWithText("Global role").assertIsNotEnabled()

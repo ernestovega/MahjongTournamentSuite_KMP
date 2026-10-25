@@ -297,7 +297,7 @@
     <string name="action_back">Retour</string>
     <string name="dropdown_show_all">Afficher toutes les options</string>
     <string name="logo_of">Logo de %1$s</string>
-    <string name="app_version_label">App %1$s - Serveur %2$s</string>
+    <string name="app_version_label">App %1$s</string>
     <string name="theme_title">Thème</string>
     <string name="theme_system">Système</string>
     <string name="theme_light">Clair</string>

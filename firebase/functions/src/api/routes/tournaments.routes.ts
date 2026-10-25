@@ -2,7 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { parseAcceptLanguage } from "../../services/i18n";
 import { recordActivity, tournamentNameOf } from "../../services/activityLog";
 
-import { auth } from "../../firebase";
+import { auth, db } from "../../firebase";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireEditor } from "../middleware/requireEditor";
 import { requireAdmin } from "../middleware/requireAdmin";
@@ -14,7 +14,8 @@ import {
   saveContactEmails,
   type AccountAction,
 } from "../../services/playerAccountsService";
-import { assertSafeDocumentId, badRequest } from "../httpError";
+import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
+import { hasAdminClaim } from "../../models/globalRole";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import {
   createTournament,
@@ -84,6 +85,15 @@ function readIdCardSheetOptions(query: Request["query"]): IdCardSheetOptions | u
   };
   if (idCardSheetGrid(options) == null) throw badRequest("The card size does not fit on an A4 sheet", { scalePercent });
   return options;
+}
+
+/** Only an admin changes the tables of a completed tournament, so late changes to the results are traceable. */
+async function assertTournamentOpenForEditor(tournamentId: string, token: { admin?: boolean } | undefined): Promise<void> {
+  if (hasAdminClaim(token)) return;
+  const snapshot = await db.collection("tournaments").doc(tournamentId).get();
+  if (snapshot.get("isCompleted") === true) {
+    throw forbidden("The tournament is completed. Only an admin can change its tables");
+  }
 }
 
 export function tournamentsRouter(): Router {
@@ -979,6 +989,7 @@ export function tournamentsRouter(): Router {
     async (req, res, next) => {
       try {
         const request = parseSaveTableRequest(req.params, req.body);
+        await assertTournamentOpenForEditor(pathParam(req, "tournamentId"), res.locals.auth);
         res.status(200).json(await saveTableState({
           tournamentId: pathParam(req, "tournamentId"),
           ...request,

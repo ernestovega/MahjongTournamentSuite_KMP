@@ -16,7 +16,6 @@ import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
@@ -27,13 +26,8 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsDa
 class PlayerSessionPresenter(
     private val authRepository: AuthRepository,
     private val accountRepository: PlayerAccountRepository,
-    private val backendApi: FunctionsBackendApi,
     private val logger: Logger,
 ) {
-    suspend fun backendVersion(): String? = runCatching { backendApi.version().version }
-        .onFailure { logger.w(it) { "Could not load backend version." } }
-        .getOrNull()
-
     suspend fun hasSession(): Boolean = authRepository.currentSession() != null
 
     suspend fun signIn(email: String, password: String): AppResult<Unit> =

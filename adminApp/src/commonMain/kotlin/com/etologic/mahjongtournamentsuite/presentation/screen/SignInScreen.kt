@@ -16,7 +16,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
-import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
@@ -31,7 +30,6 @@ fun SignInScreen(
     navController: NavHostController,
 ) {
     val authPresenter = koinInject<AuthPresenter>()
-    val versionPresenter = koinInject<VersionPresenter>()
     val coroutineScope = rememberCoroutineScope()
     val emailRequester = remember { FocusRequester() }
 
@@ -40,12 +38,6 @@ fun SignInScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
     var infoMessage by remember { mutableStateOf<UiText?>(null) }
-    var backendVersion by remember { mutableStateOf<String?>(null) }
-
-    LaunchedEffect(versionPresenter) {
-        backendVersion = versionPresenter.loadBackendVersion()
-    }
-
     LaunchedEffect(authPresenter) {
         // Chrome mediates this request through its password manager UI.
         loadBrowserCredentials { savedEmail, savedPassword ->
@@ -111,7 +103,6 @@ fun SignInScreen(
         isLoading = isLoading,
         errorMessage = errorMessage,
         infoMessage = infoMessage,
-        backendVersion = backendVersion,
         emailRequester = emailRequester,
         onSubmit = ::submit,
         onForgotPassword = ::requestPasswordReset,

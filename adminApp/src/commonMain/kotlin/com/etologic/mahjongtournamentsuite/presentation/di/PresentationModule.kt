@@ -13,7 +13,6 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPre
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
-import com.etologic.mahjongtournamentsuite.presentation.presenter.VersionPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
@@ -42,5 +41,4 @@ val presentationModule = module {
     factory { StatisticsPresenter(get(), get(), get(), get(), get()) }
     factory { RankingPresenter(get(), get(), get(), get()) }
     factory { IdCardProofPresenter(get()) }
-    factory { VersionPresenter(get(), get()) }
 }

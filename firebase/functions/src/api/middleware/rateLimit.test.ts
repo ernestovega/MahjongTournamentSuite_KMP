@@ -31,4 +31,17 @@ describe("rateLimit", () => {
     time = 1001;
     assert.equal(call(limit, "1.1.1.1"), undefined);
   });
+
+  it("counts by the key function when one is given", () => {
+    const limit = rateLimit({ windowMs: 1000, max: 1, now: () => 0, key: (req) => req.header("authorization") ?? "" });
+    const withToken = (token: string) => {
+      let result: unknown = "unset";
+      limit({ ip: "1.1.1.1", header: () => token } as unknown as Request, {} as never, (error?: unknown) => { result = error; });
+      return result;
+    };
+
+    assert.equal(withToken("a"), undefined);
+    assert.equal(withToken("b"), undefined);
+    assert.ok(withToken("a") instanceof HttpError);
+  });
 });

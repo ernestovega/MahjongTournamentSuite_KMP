@@ -77,7 +77,7 @@ data class StatisticsRoute(
 private val playerModule = module {
     // In the player app every account is a player, so the list holds only the tournaments where it plays.
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get(), playerScope = true) }
-    factory { PlayerSessionPresenter(get(), get(), get(), get()) }
+    factory { PlayerSessionPresenter(get(), get(), get()) }
     factory { CalculateTournamentRankingsUseCase() }
     factory { CalculateStatisticsUseCase() }
     factory { LoadStatisticsUseCase(get(), get(), get()) }

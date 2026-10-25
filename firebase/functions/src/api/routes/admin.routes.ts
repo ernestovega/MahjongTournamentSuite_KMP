@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "node:crypto";
 import { Router } from "express";
 import { recordActivity } from "../../services/activityLog";
 import { actorFromToken } from "../../services/changeLog";
@@ -28,7 +27,6 @@ import {
   type GlobalUserRole,
   type TournamentAssignment,
 } from "../../services/usersService";
-import { BOOTSTRAP_KEY } from "../../config";
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, listInvitedPeople, setAccountEmaId } from "../../services/playerAccountsService";
 import { DEFAULT_USAGE_PERIOD, loadUsageReport, USAGE_PERIODS } from "../../services/usageService";
@@ -68,39 +66,8 @@ async function assertAdminRemainsEnabled(
   }
 }
 
-function requireBootstrapKey(req: { header(name: string): string | undefined }): void {
-  const expected = BOOTSTRAP_KEY.value();
-  if (!expected) throw new Error("Missing secret MTS_BOOTSTRAP_KEY");
-  const provided = req.header("x-bootstrap-key");
-  const providedBytes = Buffer.from(provided ?? "");
-  const expectedBytes = Buffer.from(expected);
-  if (providedBytes.length !== expectedBytes.length || !timingSafeEqual(providedBytes, expectedBytes)) {
-    throw forbidden("Invalid bootstrap key");
-  }
-}
-
 export function adminRouter(): Router {
   const router = Router();
-
-  router.post("/bootstrapAdmin", async (req, res, next) => {
-    try {
-      requireBootstrapKey(req);
-      if (await countEnabledAdmins() > 0) {
-        throw forbidden("An enabled admin already exists");
-      }
-      const uid = String(req.body?.uid ?? "").trim();
-      if (!uid) throw badRequest("Missing uid");
-      const user = await auth.getUser(uid);
-      if (!user.email) throw badRequest("The bootstrap account must have an email address");
-      await createUserProfile(uid, user.email, user.displayName ?? "");
-      const claims: Record<string, unknown> = { ...(user.customClaims ?? {}), admin: true };
-      await auth.setCustomUserClaims(uid, claims);
-      await bumpGlobalDataVersion("users");
-      res.status(200).json({ ok: true });
-    } catch (error) {
-      next(error);
-    }
-  });
 
   router.get("/whoami", requireAuth, async (_req, res, next) => {
     try {

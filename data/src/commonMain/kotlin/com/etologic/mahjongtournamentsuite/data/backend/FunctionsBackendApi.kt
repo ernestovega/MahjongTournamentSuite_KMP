@@ -44,7 +44,6 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseD
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpsertMemberRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.BackendVersionDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
@@ -82,8 +81,6 @@ class FunctionsBackendApi(
     private val apiConfiguration: ApiConfiguration,
 ) {
     private fun url(path: String): String = apiConfiguration.baseUrl.trimEnd('/') + path
-
-    suspend fun version(): BackendVersionDto = get(path = "/version")
 
     suspend fun featureFlags(): FeatureFlagsDto = get(path = "/config")
 

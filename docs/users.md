@@ -53,18 +53,9 @@ Firebase Authentication stores the sign-in email and disabled state.
 
 The `admin: true` custom claim identifies an admin. An account without this claim is an editor.
 
-The application has no public sign-up endpoint. An authorized editor or admin creates each account.
+The application has no public sign-up endpoint. An admin creates each editor account. Editors cannot create or edit other editors.
 
-The bootstrap endpoint promotes an existing Firebase Authentication account to the first admin. The account must have an email address.
-
-```text
-POST /admin/bootstrapAdmin
-X-Bootstrap-Key: <value>
-
-{ "uid": "<firebase-auth-uid>" }
-```
-
-The endpoint rejects the request when an enabled admin already exists.
+The API has no route to create the first admin. Set the `admin: true` custom claim with the Firebase Admin SDK.
 
 ## Firestore assignments
 

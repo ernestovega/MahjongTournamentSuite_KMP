@@ -66,12 +66,6 @@ class SignInTest : AdminE2eTest() {
     }
 
     @Test
-    fun signInScreenShowsTheBackendVersion() {
-        app.launch()
-        c.waitForText("Backend 1.0.0", substring = true)
-    }
-
-    @Test
     fun sessionSurvivesRestartingTheApp() {
         start(E2eAccounts.ADMIN)
         app.close()

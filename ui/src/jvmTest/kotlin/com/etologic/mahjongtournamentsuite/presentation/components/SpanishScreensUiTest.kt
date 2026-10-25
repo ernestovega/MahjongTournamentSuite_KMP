@@ -94,7 +94,7 @@ class SpanishScreensUiTest {
             ) {
             SignInForm(
                 email = "", onEmailChange = {}, password = "", onPasswordChange = {}, isLoading = false,
-                errorMessage = null, infoMessage = null, backendVersion = null, emailRequester = FocusRequester(),
+                errorMessage = null, infoMessage = null, emailRequester = FocusRequester(),
                 onSubmit = {}, onForgotPassword = {}, onErrorDismiss = {},
             )
             }

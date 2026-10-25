@@ -2,6 +2,7 @@ import express from "express";
 
 import { gzipJson } from "./middleware/gzipJson";
 import { errorHandler } from "./middleware/errorHandler";
+import { rateLimit } from "./middleware/rateLimit";
 import { adminRouter } from "./routes/admin.routes";
 import { authRouter } from "./routes/auth.routes";
 import { configRouter } from "./routes/config.routes";
@@ -11,6 +12,9 @@ import { playersRouter } from "./routes/players.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { venuesRouter } from "./routes/venues.routes";
+
+const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+const WRITES_PER_MINUTE = 120;
 
 /** The route groups of the API and where each one is mounted. A test reads this list to check every route. */
 export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
@@ -55,9 +59,14 @@ export function buildApp(): express.Express {
     res.status(200).json({ ok: true });
   });
 
-  app.get("/version", (_req, res) => {
-    res.status(200).json({ ok: true, version: "1.0.0" });
+  // A brake on writes. The key is the address plus the token, so players who share one venue network do not
+  // share one limit.
+  const writeLimit = rateLimit({
+    windowMs: 60_000,
+    max: WRITES_PER_MINUTE,
+    key: (req) => `${req.ip ?? "unknown"}|${(req.header("authorization") ?? "").slice(-32)}`,
   });
+  app.use((req, res, next) => (READ_METHODS.has(req.method) ? next() : writeLimit(req, res, next)));
 
   MOUNTED_ROUTERS.forEach(([prefix, router]) => app.use(prefix, router()));
 
