@@ -154,6 +154,7 @@ export function adminRouter(): Router {
       const role = req.body?.role === "PLAYER" ? "PLAYER" as const : parseGlobalUserRole(req.body?.role);
       if (!role) throw badRequest("Invalid role");
       if (role === "ADMIN" && !hasAdminClaim(actor)) throw forbidden("Only admins can create admins");
+      if (role === "EDITOR" && !hasAdminClaim(actor)) throw forbidden("Only admins can create editor accounts");
       const assignmentScope = await assignmentScopeFor(actor);
       const tournamentAssignments = role === "EDITOR" ? parseTournamentAssignments(req.body?.tournamentAssignments) : [];
       // The EMA id links the account to a player. Only an admin sets it. Check it before the account exists.
@@ -202,6 +203,9 @@ export function adminRouter(): Router {
       if (!role) throw badRequest("Invalid role");
       if (!hasAdminClaim(actor) && (current.role === "ADMIN" || role === "ADMIN")) {
         throw forbidden("Editors cannot modify admin accounts");
+      }
+      if (!hasAdminClaim(actor) && current.role !== "PLAYER" && current.uid !== actor.uid) {
+        throw forbidden("Editors can only edit their own account");
       }
       if (actor.uid === current.uid && role !== current.role) {
         throw badRequest("You cannot change your own role");

@@ -68,8 +68,8 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/tournaments/:tournamentId/ema-report", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/users/lookup", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/members", "MEMBER"],
-  ["PUT", "/tournaments/:tournamentId/members/:uid", "MEMBER"],
-  ["DELETE", "/tournaments/:tournamentId/members/:uid", "MEMBER"],
+  ["PUT", "/tournaments/:tournamentId/members/:uid", "ADMIN"],
+  ["DELETE", "/tournaments/:tournamentId/members/:uid", "ADMIN"],
   ["GET", "/tournaments/:tournamentId/players", "READER"],
   ["PUT", "/tournaments/:tournamentId/players/:playerId", "MEMBER"],
   ["PUT", "/tournaments/:tournamentId/players/:playerId/substitution", "MEMBER"],
@@ -320,8 +320,15 @@ describe("account rules", () => {
     assert.equal((await update(admin.token, target.uid, `new-${target.email}`, "EDITOR")).status, 200);
   });
 
-  it("an editor can edit another editor account", async () => {
-    assert.equal((await update(editor.token, otherEditor.uid, otherEditor.email, "EDITOR")).status, 200);
+  it("an editor can edit the own account, not another editor account", async () => {
+    assert.equal((await update(editor.token, editor.uid, editor.email, "EDITOR")).status, 200);
+    assert.equal((await update(editor.token, otherEditor.uid, otherEditor.email, "EDITOR")).status, 403);
+  });
+
+  it("an editor cannot create an editor account", async () => {
+    const body = { email: "new-editor@example.test", role: "EDITOR", alias: "x", tournamentAssignments: [] };
+
+    assert.equal((await server.request("POST", "/admin/users", { token: editor.token, body })).status, 403);
   });
 
   it("an admin can promote an editor to admin", async () => {
@@ -412,17 +419,19 @@ describe("tournament rules for assigned editors", () => {
   });
   after(async () => { await server.close(); });
 
-  it("an assigned editor can add another editor to the tournament", async () => {
+  it("an assigned editor cannot add or remove editors, an admin can", async () => {
     const colleague = await createAccount({ role: "EDITOR" });
+    const path = `/tournaments/${t1}/members/${colleague.uid}`;
 
-    const { status } = await server.request("PUT", `/tournaments/${t1}/members/${colleague.uid}`, { token: member.token });
-
-    assert.equal(status, 200);
+    assert.equal((await server.request("PUT", path, { token: member.token })).status, 403);
+    assert.equal((await server.request("PUT", path, { token: admin.token })).status, 200);
     assert.equal((await server.request("GET", `/tournaments/${t1}/players`, { token: colleague.token })).status, 200);
+    assert.equal((await server.request("DELETE", path, { token: member.token })).status, 403);
+    assert.equal((await server.request("DELETE", path, { token: admin.token })).status, 200);
   });
 
   it("an admin account cannot be added as a member, because admins already see everything", async () => {
-    const { status } = await server.request("PUT", `/tournaments/${t1}/members/${admin.uid}`, { token: member.token });
+    const { status } = await server.request("PUT", `/tournaments/${t1}/members/${admin.uid}`, { token: admin.token });
 
     assert.equal(status, 400);
   });

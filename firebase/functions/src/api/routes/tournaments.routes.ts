@@ -748,7 +748,7 @@ export function tournamentsRouter(): Router {
   router.put(
     "/:tournamentId/members/:uid",
     requireAuth,
-    requireTournamentEditor,
+    requireAdmin,
     async (req, res, next) => {
       try {
         await upsertTournamentMember({
@@ -770,7 +770,7 @@ export function tournamentsRouter(): Router {
   router.delete(
     "/:tournamentId/members/:uid",
     requireAuth,
-    requireTournamentEditor,
+    requireAdmin,
     async (req, res, next) => {
       try {
         await removeTournamentMember({

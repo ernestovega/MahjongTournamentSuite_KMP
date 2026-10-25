@@ -73,7 +73,7 @@ Clients should refresh tokens when receiving `401 unauthenticated`.
 - Per-tournament editor assignment: `tournaments/{tournamentId}/members/{uid}`
 - Per-tournament player registration: `users/{uid}/playerTournaments/{tournamentId}`
 
-Admins manage all tournaments and the EMA registry. Editors manage content and accounts for assigned tournaments.
+Admins manage all tournaments, the EMA registry and all editor accounts. Editors manage content and player accounts of assigned tournaments. An editor edits only the own editor account and cannot add or remove editors.
 Only admins can create, delete, rename, or configure tournaments. Disabling an account keeps its profile and history.
 
 Management routes use `requireEditor`. It accepts the `admin` and `editor` claims and refuses player-only accounts.
