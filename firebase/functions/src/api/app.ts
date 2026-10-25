@@ -1,6 +1,7 @@
 import express from "express";
 
 import { gzipJson } from "./middleware/gzipJson";
+import { appCheck } from "./middleware/appCheck";
 import { errorHandler } from "./middleware/errorHandler";
 import { rateLimit } from "./middleware/rateLimit";
 import { adminRouter } from "./routes/admin.routes";
@@ -58,6 +59,9 @@ export function buildApp(): express.Express {
   app.get("/health", (_req, res) => {
     res.status(200).json({ ok: true });
   });
+
+  // Every route except /health needs a valid App Check token when the mode is "enforce".
+  app.use(appCheck());
 
   // A brake on writes. The key is the address plus the token, so players who share one venue network do not
   // share one limit.

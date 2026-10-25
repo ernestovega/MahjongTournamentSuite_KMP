@@ -501,4 +501,16 @@ describe("input checks on public and path values", () => {
 
     assert.equal(status, 200);
   });
+
+  it("refuses requests without an App Check token in enforce mode, except the health check", async () => {
+    process.env.APP_CHECK_MODE = "enforce";
+    try {
+      assert.equal((await server.request("GET", "/health")).status, 200);
+      const config = await server.request("GET", "/config");
+      assert.equal(config.status, 401);
+      assert.equal((config.body as { error?: string }).error, "app_check_failed");
+    } finally {
+      delete process.env.APP_CHECK_MODE;
+    }
+  });
 });
