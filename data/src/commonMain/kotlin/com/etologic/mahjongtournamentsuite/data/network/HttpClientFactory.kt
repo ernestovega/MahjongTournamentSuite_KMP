@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.data.network
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.HttpTimeout
@@ -14,6 +15,7 @@ import kotlinx.serialization.json.Json
 fun createHttpClient(
     json: Json,
     languageTag: () -> String? = ::currentLanguageTag,
+    appCheckToken: suspend () -> String? = ::currentAppCheckToken,
 ): HttpClient = HttpClient(httpClientEngineFactory()) {
     expectSuccess = false
 
@@ -28,6 +30,7 @@ fun createHttpClient(
     }
 
     configureDefaultRequest(languageTag)
+    configureAppCheck(appCheckToken)
 }
 
 /**
@@ -41,6 +44,26 @@ internal fun HttpClientConfig<*>.configureDefaultRequest(languageTag: () -> Stri
         languageTag()?.takeIf { it.isNotBlank() }?.let { headers.append(HttpHeaders.AcceptLanguage, it) }
     }
 }
+
+/**
+ * Every request carries the App Check token, when the app has one. The server uses it to tell the apps from scripts.
+ * A failed token request never stops the request. The server decides what a missing token means.
+ */
+internal fun HttpClientConfig<*>.configureAppCheck(appCheckToken: suspend () -> String?) {
+    install(
+        createClientPlugin("AppCheck") {
+            onRequest { request, _ ->
+                runCatching { appCheckToken() }.getOrNull()?.takeIf { it.isNotBlank() }
+                    ?.let { request.headers.append(APP_CHECK_HEADER, it) }
+            }
+        },
+    )
+}
+
+internal const val APP_CHECK_HEADER = "X-Firebase-AppCheck"
+
+/** The App Check token of this platform, or null when the app does not use App Check. */
+internal expect suspend fun currentAppCheckToken(): String?
 
 /** The language tag of the app, for example `es` or `en-US`. */
 internal expect fun currentLanguageTag(): String?

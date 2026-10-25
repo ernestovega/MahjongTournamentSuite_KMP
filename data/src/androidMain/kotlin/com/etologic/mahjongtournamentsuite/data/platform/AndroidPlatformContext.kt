@@ -1,12 +1,14 @@
 package com.etologic.mahjongtournamentsuite.data.platform
 
 import android.content.Context
+import com.etologic.mahjongtournamentsuite.data.network.AndroidAppCheck
 
 object AndroidPlatformContext {
     private var appContext: Context? = null
 
     fun init(context: Context) {
         appContext = context.applicationContext
+        AndroidAppCheck.install(context.applicationContext)
     }
 
     fun requireContext(): Context =

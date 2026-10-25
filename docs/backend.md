@@ -250,6 +250,23 @@ These routes need no sign-in. Every other route needs a valid token and a role c
 - A tournament id in a route must not contain `/`.
 - The hosting sites send `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'` and `Permissions-Policy`.
 
+## App Check
+
+App Check proves that a request comes from one of the apps and not from a script. The API checks the header `X-Firebase-AppCheck`.
+- The variable `APP_CHECK_MODE` in `firebase/functions/.env` sets the mode: `off` (default), `monitor` or `enforce`.
+- In `monitor` mode a missing or wrong token goes to the log as `App Check failed` and the request goes on.
+- In `enforce` mode the API answers `401 app_check_failed`. Only `GET /health` has no check.
+- The apps always send a token when they have one. The local test backend runs with the mode `off`.
+
+Turn it on in this order:
+1. In the Firebase console, open App Check. Register the web app with reCAPTCHA v3. Register the two Android apps with Play Integrity and add the SHA-256 of the signing key.
+2. Web: fill in `siteKey`, `apiKey` and `appId` at the top of `adminApp/src/webMain/resources/appcheck.js` and `playerApp/src/wasmJsMain/resources/appcheck.js`.
+3. Android: fill in `mts.appCheck.appId` and `mts.appCheck.apiKey` in the manifest of `androidApp` and `playerAndroidApp`.
+4. Set `APP_CHECK_MODE=monitor`, then deploy the API and both web sites. Publish the Android apps.
+5. Read the log for a few days. When no real app fails, set `APP_CHECK_MODE=enforce` and deploy the API.
+
+A debug build uses the debug provider. The console shows the debug token in the log of the app. Register it in App Check, under "Manage debug tokens". On localhost the web app prints its debug token in the browser console.
+
 ## First admin
 
 The API has no route to create the first admin. Set the `admin: true` custom claim with the Firebase Admin SDK or the Firebase console, and create the profile document `users/{uid}`.
