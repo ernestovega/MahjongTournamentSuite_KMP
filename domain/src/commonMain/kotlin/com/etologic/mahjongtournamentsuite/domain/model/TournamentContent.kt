@@ -7,12 +7,11 @@ data class TournamentPlayer(
     val country: String = "",
     /** EMA number of the shared player assigned to this tournament slot, if any. */
     val assignedEmaId: String? = null,
-    /** Tournament-only participant data when this slot is assigned to a non-member. */
-    val nonMember: NonMemberPlayer? = null,
-    /** Player account linked to this slot after the player accepted the invitation. */
+    /** Player account linked to this slot. */
     val accountUid: String? = null,
     val invitationStatus: InvitationStatus = InvitationStatus.NONE,
-    val invitedEmail: String? = null,
+    /** The email of the linked account. The email lives only in the account. Null when the slot has no account. */
+    val email: String? = null,
     /** When the last invitation or registration email was sent to the player. Null when none was sent. */
     val contactedAt: String? = null,
     /** Set when a substitute plays for this person from a round on. The substitute is never recorded. */
@@ -58,17 +57,16 @@ data class PlayerSubstitution(
     val excludedFromStatistics: Boolean get() = excludedFromEma
 }
 
+/**
+ * [NONE]: no account, or an account with no password that got no email yet.
+ * [INVITED]: the account has no password yet and the invitation email went out.
+ * [ACCEPTED]: the person chose a password.
+ */
 enum class InvitationStatus {
     NONE,
     INVITED,
     ACCEPTED,
 }
-
-data class NonMemberPlayer(
-    val firstName: String,
-    val lastName: String,
-    val country: String,
-)
 
 /** Where a player stands in the contact process. Editors filter and run bulk actions with it. */
 enum class PlayerContactState {
@@ -78,7 +76,7 @@ enum class PlayerContactState {
     NOT_INVITED,
     /** An account is linked, but no email was sent yet. */
     LINKED,
-    /** An invitation was sent and the player did not accept yet. */
+    /** The invitation was sent and the player did not choose a password yet. */
     INVITED,
     /** The player has an account and an email was sent, or the player accepted. */
     CONTACTED,
@@ -94,7 +92,7 @@ val TournamentPlayer.contactState: PlayerContactState
     }
 
 val TournamentPlayer.isAssigned: Boolean
-    get() = !assignedEmaId.isNullOrBlank() || nonMember != null
+    get() = !assignedEmaId.isNullOrBlank()
 
 /** A named group of the fixed schedule slots that share the same team id. */
 data class TournamentTeam(
@@ -116,12 +114,6 @@ data class Player(
 )
 
 val Player.displayName: String
-    get() = listOf(firstName, lastName)
-        .filter(String::isNotBlank)
-        .joinToString(" ")
-        .uppercase()
-
-val NonMemberPlayer.displayName: String
     get() = listOf(firstName, lastName)
         .filter(String::isNotBlank)
         .joinToString(" ")

@@ -121,7 +121,7 @@ internal fun TournamentPlayer.matchesQuery(
     return text.isEmpty() ||
         id.toString() == text ||
         displayName.matchesSearch(text) ||
-        invitedEmail?.matchesSearch(text) == true ||
+        email?.matchesSearch(text) == true ||
         emaId?.matchesSearch(text) == true ||
         countryCode.matchesSearch(text) ||
         countryName.matchesSearch(text)
@@ -136,7 +136,7 @@ internal fun TournamentPlayer.matchesQuery(
 fun PlayerAccountsBulkDialog(
     players: List<TournamentPlayer>,
     nameOf: (TournamentPlayer) -> String,
-    countryOf: (TournamentPlayer) -> String = { it.nonMember?.country.orEmpty() },
+    countryOf: (TournamentPlayer) -> String = { "" },
     emaIdOf: (TournamentPlayer) -> String? = { it.assignedEmaId },
     countryNameOf: (String) -> String = { "" },
     results: List<PlayerAccountActionResult>,
@@ -156,7 +156,7 @@ fun PlayerAccountsBulkDialog(
     fun items() = chosen.map { PlayerAccountActionItem(it.id) }
 
     /** Players that need an email before an invitation can go out. */
-    fun missingEmail() = chosen.filter { it.contactState == PlayerContactState.NOT_INVITED && it.invitedEmail.isNullOrBlank() }
+    fun missingEmail() = chosen.filter { it.contactState == PlayerContactState.NOT_INVITED && it.email.isNullOrBlank() }
 
     fun run(action: PlayerAccountAction) {
         if (action != PlayerAccountAction.REVOKE && missingEmail().isNotEmpty()) pendingAction = action
@@ -242,7 +242,7 @@ fun PlayerAccountsBulkDialog(
                                 maxLines = 1,
                             )
                             Column(Modifier.weight(1f)) {
-                                val email = slot.invitedEmail?.takeIf { it.isNotBlank() } ?: stringResource(Res.string.no_email_saved)
+                                val email = slot.email?.takeIf { it.isNotBlank() } ?: stringResource(Res.string.no_email_saved)
                                 val sent = contactTimeText(slot.contactedAt)?.let { stringResource(Res.string.sent_at, it) }
                                 if (wide) {
                                     Row(verticalAlignment = Alignment.CenterVertically) {

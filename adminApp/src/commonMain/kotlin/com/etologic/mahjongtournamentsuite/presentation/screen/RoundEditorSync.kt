@@ -70,7 +70,7 @@ internal class RoundEditorSync(
             is AppResult.Success -> {
                 // A slot without a person has no entry. The screens show the number of the player then.
                 playerNamesById = result.value.mapNotNull { slot ->
-                    val name = slot.assignedEmaId?.let(basePlayers::get)?.displayName ?: slot.nonMember?.displayName
+                    val name = slot.assignedEmaId?.let(basePlayers::get)?.displayName
                     name?.let { slot.id to it }
                 }.toMap()
                 null

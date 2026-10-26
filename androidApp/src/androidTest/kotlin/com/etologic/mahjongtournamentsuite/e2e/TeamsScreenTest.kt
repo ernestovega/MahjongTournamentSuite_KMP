@@ -33,9 +33,9 @@ class TeamsScreenTest : AdminE2eTest() {
     @Test
     fun searchByPlayerName() {
         openTeams()
-        c.field("Search by team or player name or ID").performTextInputText("ANNA ROSSI")
-        c.waitForText("Aces")
-        c.waitForNoText("Bamboo")
+        c.field("Search by team or player name or ID").performTextInputText("CARMEN GOMEZ")
+        c.waitForText("Bamboo")
+        c.waitForNoText("Aces")
     }
 
     @Test

@@ -55,14 +55,8 @@
         <item quantity="one">%1$d heure</item>
         <item quantity="other">%1$d heures</item>
     </plurals>
-    <string name="sign_in_invite_description">Utilisez l'e-mail de votre invitation pour vous connecter.</string>
-    <string name="invite_title">Acceptez votre invitation</string>
-    <string name="invite_signed_in">Vous êtes connecté. Acceptez l'invitation avec ce compte.</string>
-    <string name="invite_choose_password">Choisissez un mot de passe pour votre nouveau compte. Si vous avez déjà un compte, connectez-vous d'abord.</string>
+    <string name="sign_in_player_description">Connectez-vous avec votre e-mail. Si vous n\'avez pas encore de mot de passe, utilisez le lien de réinitialisation pour en choisir un.</string>
     <string name="field_password">Mot de passe</string>
-    <string name="field_password_repeat">Répétez le mot de passe</string>
-    <string name="invite_accept">Accepter l'invitation</string>
-    <string name="invite_have_account">J'ai déjà un compte</string>
     <string name="tournaments_empty_title">Pas encore de tournois</string>
     <string name="tournaments_empty_message">Vous n'êtes inscrit à aucun tournoi pour l'instant.</string>
     <string name="status_upcoming">À venir</string>
@@ -78,7 +72,7 @@
     <string name="tab_tables">Tables</string>
     <string name="tab_ranking">Classement</string>
     <string name="tab_info">Infos</string>
-    <string name="tables_not_linked">Votre compte n'est pas lié à un joueur de ce tournoi. Demandez aux organisateurs de vous envoyer une invitation. Toutes les tables sont dans l'onglet Toutes.</string>
+    <string name="tables_not_linked">Votre compte n\'est pas lié à un joueur de ce tournoi. Demandez aux organisateurs de vous ajouter. Toutes les tables sont dans l\'onglet Toutes.</string>
     <string name="tables_mine_empty">Les tables du joueur s'affichent ici quand les organisateurs tirent le tour.</string>
     <string name="tables_all_empty">Les tables s'affichent ici quand les organisateurs tirent le premier tour.</string>
     <string name="tables_empty_title">Pas encore de tables</string>

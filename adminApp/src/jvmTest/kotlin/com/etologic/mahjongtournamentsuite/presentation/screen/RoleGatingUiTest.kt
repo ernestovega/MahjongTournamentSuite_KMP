@@ -21,13 +21,12 @@ import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
-import com.etologic.mahjongtournamentsuite.domain.model.InvitedPerson
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerInvitationRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
@@ -60,7 +59,7 @@ class RoleGatingUiTest {
             tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1))
         }
         val store = AppMemoryStore()
-        val invited = FakePlayerInvitationRepository()
+        val accounts = FakePlayerAccountRepository()
     }
 
     private fun ComposeUiTest.show(world: World, players: List<Player> = emptyList(), content: @Composable () -> Unit) {
@@ -75,10 +74,10 @@ class RoleGatingUiTest {
                             single<AdminRepository> { world.admin }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
                             single<PlayerRepository> { FakePlayerRepository(players) }
-                            single<PlayerInvitationRepository> { world.invited }
+                            single<PlayerAccountRepository> { world.accounts }
                             single { world.store }
                             factory { TournamentsPresenter(get(), get(), get()) }
-                            factory { UsersPresenter(get(), get(), get(), get(), get()) }
+                            factory { UsersPresenter(get(), get(), get(), get()) }
                             factory { PlayerBasePresenter(get(), get()) }
                         },
                     )
@@ -298,20 +297,11 @@ class RoleGatingUiTest {
     }
 
     @Test
-    fun anEditorSeesInvitedPeopleAndCanRevokeAnInvitation() = runComposeUiTest {
-        val world = World(GlobalUserRole.EDITOR, listOf(ed))
-        world.invited.invited = listOf(
-            InvitedPerson("i1", "t1", "Open", 4, "10001", "Ada Lovelace", "ada@example.test", "2026-11-01T10:00:00.000Z"),
-        )
-        show(world) { GlobalUsersScreen(rememberNavController()) }
-        awaitText("Invited (1)")
+    fun theAccountsScreenHasNoListOfInvitedPeople() = runComposeUiTest {
+        show(World(GlobalUserRole.EDITOR, listOf(ed))) { GlobalUsersScreen(rememberNavController()) }
+        awaitText("ed@example.test")
 
-        onNodeWithText("Invited (1)").performClick()
-        awaitText("ada@example.test")
-        onNodeWithText("Open").assertExists()
-        onNodeWithText("Revoke").performClick()
-        awaitText("Invited (0)")
-
-        assertTrue(world.invited.actions == listOf("REVOKE t1 4"))
+        // Invited people are accounts without a password now. The accounts list shows them.
+        onAllNodesWithText("Invited", substring = true).assertCountEquals(0)
     }
 }

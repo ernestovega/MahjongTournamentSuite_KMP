@@ -4,6 +4,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithText
@@ -144,7 +145,7 @@ class PlayerImportDialogUiTest {
     fun confirmingAppliesTheNewRowsAndShowsTheResult() = runComposeUiTest {
         val repository = FakeImportRepository(
             AppResult.Success(preview(row(2, ImportRowStatus.NEW), row(3, ImportRowStatus.NEW))),
-            AppResult.Success(PlayerImportResult(2, 1, 0, 0, listOf(PlayerImportFailure(3, 2, "boom")))),
+            AppResult.Success(PlayerImportResult(2, 1, 0, 0, listOf(PlayerImportFailure(3, 2, "boom")), emailsRefused = 2)),
         )
         var changed = false
         showDialog(repository, onChanged = { changed = true })
@@ -154,10 +155,27 @@ class PlayerImportDialogUiTest {
         awaitText("Import finished")
 
         onNodeWithText("Players assigned: 2").assertExists()
-        onNodeWithText("Emails saved: 1").assertExists()
+        onNodeWithText("Accounts created from emails: 1").assertExists()
+        onNodeWithText("Emails not saved, because the account has another email or another account uses the email: 2").assertExists()
         onNodeWithText("• Line 3: boom").assertExists()
         assertTrue(changed)
         assertEquals(false to 2, repository.applied)
+    }
+
+    @Test
+    fun theResultHidesTheRefusedEmailsLineWhenNoEmailWasRefused() = runComposeUiTest {
+        val repository = FakeImportRepository(
+            AppResult.Success(preview(row(2, ImportRowStatus.NEW))),
+            AppResult.Success(PlayerImportResult(1, 1, 0, 0, emptyList())),
+        )
+        showDialog(repository)
+
+        awaitText("Import 1 rows")
+        onNodeWithText("Import 1 rows").performClick()
+        awaitText("Import finished")
+
+        onNodeWithText("Accounts created from emails: 1").assertExists()
+        onAllNodesWithText("Emails not saved", substring = true).assertCountEquals(0)
     }
 
     @Test

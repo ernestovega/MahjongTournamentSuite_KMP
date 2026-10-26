@@ -184,7 +184,6 @@ private class RecordingTournamentRepository(
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-        nonMember: NonMemberPlayer?,
     ) = unusedResult<Unit>()
 
     override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = unusedResult<Unit>()

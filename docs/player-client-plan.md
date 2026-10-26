@@ -10,7 +10,7 @@ Phases 1 and 2 are built and tested. Phase 3 (schedules and notifications) is no
 | --- | --- |
 | Editor routes closed for player accounts (`requireEditor`) | Done |
 | Roles `ADMIN`, `EDITOR`, `PLAYER` as claims, `emaId` on the account | Done |
-| Invitations with one email link, account creation, slot link | Done |
+| Account creation from an email without a password, password reset email, slot link | Done |
 | Management app: account state and invitation actions on the players screen | Done |
 | Player read access with `requireTournamentReader`, scoped lists | Done |
 | Modules `:ui`, `:playerApp`, `:playerAndroidApp` (Android and web) | Done |
@@ -34,7 +34,7 @@ Phases 1 and 2 are built and tested. Phase 3 (schedules and notifications) is no
 - `:ui` has the theme, keyboard focus helpers, dialogs and tables that both apps use. It keeps the package names of the code that moved.
 - `:playerApp` is a Kotlin Multiplatform library with the player screens. It has a web entry point (`playerApp.js`). It targets Android, JVM (tests only) and wasmJs.
 - `:playerAndroidApp` is the thin Android application. Its id is `com.etologic.mahjongtournamentsuite.player`.
-- The web app has its own Firebase Hosting site `mahjong-tournament-suite-player`. The invitation link opens `/invite?token=...` on that site.
+- The web app has its own Firebase Hosting site `mahjong-tournament-suite-player`.
 
 No new libraries were added.
 
@@ -58,7 +58,6 @@ Not started. Open points:
 ## Known gaps
 
 - The player app does not pause polling when the app is in the background.
-- Android has no deep link for the invitation link. A player accepts on the web and then signs in on Android.
 - There is no UI test for the player app screens. The view model code has unit tests.
 
 ## Player app design
@@ -74,11 +73,12 @@ The player screens use shared components from the `:ui` module. The design follo
 ## Invitations and registration emails
 
 - Assigning a player never sends an email. If an account already owns the EMA ID, the slot links to it and the player sees the tournament.
+- The email of a player lives only in the account. A player with no account gets an account without a password when an editor saves or imports the email.
 - An editor sends, resends or revokes by hand, for one player or for many (button "Invitations" on the players screen).
 - The list tracks who was contacted. Editors filter by "Not invited yet", "Invited, waiting", "Contacted" or "No EMA ID" and run the action on the selected players.
-- A linked player gets a "you are registered" email with a link to the tournament (`/?tournament=<id>`). The player app opens that tournament after sign-in.
-- An account with an EMA ID (set by an admin in the accounts screen, or created by an accepted invitation) sees every tournament where that EMA ID is assigned. The invitation email is a notice and is optional for such players.
-- Only a player without any account needs the invitation. Accepting it creates the account.
+- "Invite" sends the password reset email to an account that has no password yet. The person chooses a password and signs in on the player app.
+- A player with a password gets a "you are registered" email with a link to the tournament (`/?tournament=<id>`). The player app opens that tournament after sign-in.
+- An account with an EMA ID (set by an admin in the accounts screen, or created from an email) sees every tournament where that EMA ID is assigned. The email is a notice and is optional for such players.
 
 ## Table screen rules
 

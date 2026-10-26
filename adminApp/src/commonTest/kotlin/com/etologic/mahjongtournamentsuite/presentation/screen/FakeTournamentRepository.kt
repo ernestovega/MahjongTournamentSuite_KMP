@@ -205,7 +205,6 @@ internal class FakeTournamentRepository : TournamentRepository {
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-        nonMember: NonMemberPlayer?,
     ) = unusedFakeResult<Unit>()
 
     override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = unusedFakeResult<Unit>()

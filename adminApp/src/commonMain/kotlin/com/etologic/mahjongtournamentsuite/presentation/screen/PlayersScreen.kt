@@ -69,13 +69,12 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerContactState
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
@@ -115,12 +114,14 @@ import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account
+import mahjongtournamentsuite.adminapp.generated.resources.account_email_kept
+import mahjongtournamentsuite.adminapp.generated.resources.account_email_same
 import mahjongtournamentsuite.adminapp.generated.resources.account_email_saved
+import mahjongtournamentsuite.adminapp.generated.resources.action_did_not_run
 import mahjongtournamentsuite.adminapp.generated.resources.assign
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.assign_ema_player_to_player
-import mahjongtournamentsuite.adminapp.generated.resources.assign_non_member_to_player
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.clear
 import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment
@@ -134,7 +135,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.contact_linked
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_n
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
-import mahjongtournamentsuite.adminapp.generated.resources.enter_non_member
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.first_name
 import mahjongtournamentsuite.adminapp.generated.resources.last_name
@@ -146,7 +146,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_matches
 import mahjongtournamentsuite.adminapp.generated.resources.no_player_photo
 import mahjongtournamentsuite.adminapp.generated.resources.no_players_yet
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournament_players_match
-import mahjongtournamentsuite.adminapp.generated.resources.non_member
 import mahjongtournamentsuite.adminapp.generated.resources.not_assigned
 import mahjongtournamentsuite.adminapp.generated.resources.photo
 import mahjongtournamentsuite.adminapp.generated.resources.photo_of
@@ -189,15 +188,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var teams by remember { mutableStateOf<List<TournamentTeam>>(emptyList()) }
     var tables by remember { mutableStateOf<List<TournamentTable>>(emptyList()) }
     var assignmentSlotId by remember { mutableStateOf<Int?>(null) }
-    var nonMemberSlotId by remember { mutableStateOf<Int?>(null) }
-    var nonMemberFirstName by remember { mutableStateOf("") }
-    var nonMemberLastName by remember { mutableStateOf("") }
-    var nonMemberCountry by remember { mutableStateOf("") }
-    var nonMemberError by remember { mutableStateOf<UiText?>(null) }
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var substitutionSlotId by remember { mutableStateOf<Int?>(null) }
     var accountSlotId by remember { mutableStateOf<Int?>(null) }
-    var invitations by remember { mutableStateOf<List<PlayerInvitation>>(emptyList()) }
     var accountOutcome by remember { mutableStateOf<AccountOutcome?>(null) }
     var accountBusy by remember { mutableStateOf(false) }
     var accountError by remember { mutableStateOf<UiText?>(null) }
@@ -242,13 +235,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         loading = false
     }
 
-    fun loadInvitations() = scope.launch {
-        when (val result = presenter.loadInvitations(tournamentId)) {
-            is AppResult.Success -> invitations = result.value
-            is AppResult.Failure -> accountError = result.error.toUiText()
-        }
-    }
-
     fun runAccountAction(
         action: PlayerAccountAction,
         items: List<PlayerAccountActionItem>,
@@ -261,7 +247,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             is AppResult.Success -> {
                 accountResults = result.value
                 refresh(force = true).join()
-                loadInvitations().join()
                 if (closeAccountDialog) {
                     accountOutcome = result.value.firstOrNull()?.toOutcome()
                     accountSlotId = null
@@ -286,7 +271,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         when (val result = presenter.saveAccountEmails(tournamentId, listOf(PlayerAccountActionItem(playerId, email)))) {
             is AppResult.Success -> {
                 refresh(force = true).join()
-                accountOutcome = AccountOutcome(UiText.of(Res.string.account_email_saved), isError = false)
+                val saved = result.value.firstOrNull()
+                accountOutcome = when (saved?.outcome) {
+                    PlayerEmailOutcome.CREATED -> AccountOutcome(UiText.of(Res.string.account_email_saved), isError = false)
+                    PlayerEmailOutcome.UNCHANGED -> AccountOutcome(UiText.of(Res.string.account_email_same), isError = false)
+                    PlayerEmailOutcome.KEPT_ACCOUNT_EMAIL ->
+                        AccountOutcome(UiText.of(Res.string.account_email_kept, saved.message.orEmpty()), isError = true)
+                    PlayerEmailOutcome.FAILED, null ->
+                        AccountOutcome(saved?.message?.let { UiText.Plain(it) } ?: UiText.of(Res.string.action_did_not_run), isError = true)
+                }
                 accountSlotId = null
             }
             is AppResult.Failure -> {
@@ -317,36 +310,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             is AppResult.Failure -> error = result.error.toUiText()
         }
         substitutionSlotId = null
-        savingId = null
-    }
-
-    fun assignNonMember(slotId: Int) = scope.launch {
-        val firstName = nonMemberFirstName.trim()
-        val lastName = nonMemberLastName.trim()
-        val country = nonMemberCountry.trim().uppercase()
-        nonMemberError = when {
-            firstName.isEmpty() -> UiText.of(Res.string.player_error_first_name)
-            lastName.isEmpty() -> UiText.of(Res.string.player_error_last_name)
-            !country.matches(Regex("^[A-Z]{3}$")) -> UiText.of(Res.string.player_error_country)
-            else -> null
-        }
-        if (nonMemberError != null) return@launch
-        savingId = slotId
-        when (val result = presenter.assignPlayer(
-            tournamentId,
-            slotId,
-            emaId = null,
-            nonMember = NonMemberPlayer(firstName, lastName, country),
-        )) {
-            is AppResult.Success -> {
-                nonMemberSlotId = null
-                refresh(force = true)
-            }
-            is AppResult.Failure -> {
-                nonMemberSlotId = null
-                error = result.error.toUiText()
-            }
-        }
         savingId = null
     }
 
@@ -420,7 +383,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     }
     val tournamentCountryCodes = remember(players, playersByEma) {
         players.mapNotNull { slot ->
-            slot.assignedEmaId?.let(playersByEma::get)?.country ?: slot.nonMember?.country
+            slot.assignedEmaId?.let(playersByEma::get)?.country
         }.map { it.trim().uppercase() }
             .filter { it.isNotEmpty() && it != "EU" }
             .distinct()
@@ -430,8 +393,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         val query = normalizeSearchText(searchQuery.trim())
         players.filter { slot ->
             val assigned = slot.assignedEmaId?.let(playersByEma::get)
-            val name = assigned?.displayName ?: slot.nonMember?.displayName.orEmpty()
-            val country = assigned?.country ?: slot.nonMember?.country.orEmpty()
+            val name = assigned?.displayName.orEmpty()
+            val country = assigned?.country.orEmpty()
             val team = teamNamesById[slot.team] ?: teamLabel(slot.team)
             val tablesForPlayer = tableNumbersByPlayerId[slot.id].orEmpty()
             val matchesSearch = query.isEmpty() || listOf(
@@ -467,12 +430,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val clearAssignmentSlot = clearAssignmentSlotId?.let { id -> players.firstOrNull { it.id == id } }
     val accountSlot = accountSlotId?.let { id -> players.firstOrNull { it.id == id } }
     accountSlot?.let { slot ->
-        val invitation = invitations.firstOrNull {
-            it.tournamentPlayerId == slot.id && it.status == slot.invitationStatus
-        }
         PlayerAccountDialog(
             slot = slot,
-            invitation = invitation,
             busy = accountBusy,
             onAction = { action, email ->
                 runAccountAction(action, listOf(PlayerAccountActionItem(slot.id, email)), closeAccountDialog = true)
@@ -485,14 +444,13 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     if (bulkAccountsOpen) {
         val registry = basePlayers.associateBy { it.emaId }
         PlayerAccountsBulkDialog(
-            players = players.filter { it.assignedEmaId != null || it.isAssigned },
+            players = players.filter { it.isAssigned },
             nameOf = { slot ->
                 slot.assignedEmaId?.let(registry::get)?.displayName
-                    ?: slot.nonMember?.displayName
                     ?: playerLabel(slot.id)
             },
             countryOf = { slot ->
-                (slot.assignedEmaId?.let(registry::get)?.country ?: slot.nonMember?.country).orEmpty()
+                slot.assignedEmaId?.let(registry::get)?.country.orEmpty()
             },
             emaIdOf = { slot -> slot.assignedEmaId?.let(registry::get)?.emaId },
             countryNameOf = { code -> countries.firstOrNull { it.code == code }?.name.orEmpty() },
@@ -761,17 +719,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             null
                         },
                     )
-                    Button(
-                        enabled = savingId == null,
-                        onClick = {
-                            nonMemberFirstName = ""
-                            nonMemberLastName = ""
-                            nonMemberCountry = ""
-                            nonMemberError = null
-                            nonMemberSlotId = assignmentSlot.id
-                            assignmentSlotId = null
-                        },
-                    ) { Text(stringResource(Res.string.enter_non_member)) }
                     Column(Modifier.fillMaxWidth()) {
                         DataTableHeaderRow {
                             TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(AssignmentPhotoColumnWidth), TextAlign.Center)
@@ -936,47 +883,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         )
     }
 
-    nonMemberSlotId?.let { slotId ->
-        val firstNameFocusRequester = remember(slotId) { FocusRequester() }
-        LaunchedEffect(slotId) { firstNameFocusRequester.requestFocus() }
-        AlertDialog(
-            modifier = Modifier.appFocusGroup(),
-            onDismissRequest = { if (savingId == null) nonMemberSlotId = null },
-            title = { Text(stringResource(Res.string.assign_non_member_to_player, slotId)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    nonMemberError?.let { AppErrorDialog(it, onDismiss = { nonMemberError = null }) }
-                    OutlinedTextField(
-                        value = nonMemberFirstName,
-                        onValueChange = { nonMemberFirstName = it; nonMemberError = null },
-                        label = { Text(stringResource(Res.string.first_name)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().focusRequester(firstNameFocusRequester),
-                    )
-                    OutlinedTextField(
-                        value = nonMemberLastName,
-                        onValueChange = { nonMemberLastName = it; nonMemberError = null },
-                        label = { Text(stringResource(Res.string.last_name)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    EmaCountryDropdown(
-                        selectedCode = nonMemberCountry,
-                        onCountrySelected = { nonMemberCountry = it; nonMemberError = null },
-                        label = stringResource(Res.string.country),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            },
-            confirmButton = {
-                Button(enabled = savingId == null, onClick = { assignNonMember(slotId) }) { Text(stringResource(Res.string.assign)) }
-            },
-            dismissButton = {
-                TextButton(enabled = savingId == null, onClick = { nonMemberSlotId = null }) { Text(stringResource(Res.string.cancel)) }
-            },
-        )
-    }
-
     val substitutionSlot = substitutionSlotId?.let { id -> players.firstOrNull { it.id == id } }
     if (substitutionSlot != null) {
         val assigned = substitutionSlot.assignedEmaId?.let(playersByEma::get)
@@ -984,7 +890,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             tables.none { it.roundId == round && substitutionSlot.id in it.playerIds && it.isCompleted }
         } ?: tournamentRounds.lastOrNull() ?: 1
         PlayerSubstitutionDialog(
-            playerName = assigned?.displayName ?: substitutionSlot.nonMember?.displayName ?: playerLabel(substitutionSlot.id).lowercase(),
+            playerName = assigned?.displayName ?: playerLabel(substitutionSlot.id).lowercase(),
             current = substitutionSlot.substitution,
             rounds = tournamentRounds,
             defaultRound = firstOpenRound,
@@ -997,7 +903,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
     if (clearAssignmentSlot != null) {
         val assigned = clearAssignmentSlot.assignedEmaId?.let(playersByEma::get)
-        val assignedName = assigned?.displayName ?: clearAssignmentSlot.nonMember?.displayName
+        val assignedName = assigned?.displayName
         val clearConfirmFocusRequester = remember(clearAssignmentSlot.id) { FocusRequester() }
         val clearCancelFocusRequester = remember(clearAssignmentSlot.id) { FocusRequester() }
         val clearConfirmInteractionSource = remember(clearAssignmentSlot.id) { MutableInteractionSource() }
@@ -1121,7 +1027,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             AppTopBarActions(
                 onIdCards = { idCardsDialogOpen = true },
                 onIdList = ::exportIdList,
-                onPlayerAccounts = { accountError = null; accountResults = emptyList(); loadInvitations(); bulkAccountsOpen = true },
+                onPlayerAccounts = { accountError = null; accountResults = emptyList(); bulkAccountsOpen = true },
                 onImportPlayers = { importDialogOpen = true },
                 onExportPlayers = exportPlayers,
             )
@@ -1178,7 +1084,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     val isSelected = code in selectedCountryCodes
                                     val count = players.count { slot ->
                                         val assigned = slot.assignedEmaId?.let(playersByEma::get)
-                                        (assigned?.country ?: slot.nonMember?.country).orEmpty().uppercase() == code
+                                        assigned?.country.orEmpty().uppercase() == code
                                     }
                                     TextButton(
                                         onClick = {
@@ -1231,8 +1137,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         items(filteredPlayers.size, key = { filteredPlayers[it].id }) { index ->
                             val slot = filteredPlayers[index]
                             val assigned = slot.assignedEmaId?.let(playersByEma::get)
-                            val playerCountry = assigned?.country ?: slot.nonMember?.country.orEmpty()
-                            val playerName = assigned?.displayName ?: slot.nonMember?.displayName
+                            val playerCountry = assigned?.country.orEmpty()
+                            val playerName = assigned?.displayName
                             DataTableRow(
                                 onClick = { openAssignment(slot.id) },
                                 clickFocusable = false,
@@ -1244,7 +1150,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     textAlign = TextAlign.Center,
                                 )
                                 Text(
-                                    assigned?.emaId ?: if (slot.nonMember != null) stringResource(Res.string.non_member) else "—",
+                                    assigned?.emaId ?: "—",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
                                 )
@@ -1305,7 +1211,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             onClick = {
                                                 accountError = null
                                                 accountSlotId = slot.id
-                                                loadInvitations()
                                             },
                                             contentPadding = PaddingValues(horizontal = 4.dp),
                                         ) {

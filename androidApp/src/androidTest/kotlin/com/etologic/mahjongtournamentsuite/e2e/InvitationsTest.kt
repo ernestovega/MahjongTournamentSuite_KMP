@@ -26,7 +26,7 @@ class InvitationsTest : AdminE2eTest() {
         E2eApi.clearEmails()
     }
 
-    /** Opens the invitations dialog and selects the first player of the list "Not invited yet". */
+    /** Opens the invitations dialog and selects the first player of the list "Not invited yet". The list has 40 players. */
     private fun openDialogWithOnePlayerSelected() {
         start(E2eAccounts.ADMIN, ready = "Logout")
         c.openTournament("Test - Live ongoing tournament")
@@ -48,7 +48,7 @@ class InvitationsTest : AdminE2eTest() {
         openDialogWithOnePlayerSelected()
         c.clickButton("Invite or remind (1)")
         c.waitForText("Emails are missing")
-        c.waitForText("These players have no saved email.", substring = true)
+        c.waitForText("These players have no account and no email.", substring = true)
     }
 
     @Test
@@ -91,7 +91,7 @@ class InvitationsTest : AdminE2eTest() {
         val mails = E2eApi.sentEmails()
         check(mails.size == 1) { "Expected one email, found ${mails.size}." }
         check(mails[0].getString("to") == "guest.one@example.test") { "The email went to ${mails[0].getString("to")}." }
-        check(mails[0].getString("text").contains("Open this link to accept:")) { "The email has no invitation link." }
+        check(mails[0].getString("subject").contains("password", ignoreCase = true)) { "The email does not ask the player to choose a password." }
     }
 
     @Test
@@ -101,9 +101,9 @@ class InvitationsTest : AdminE2eTest() {
         c.waitForText("Emails are missing")
         typeEmail("fail.me@example.test")
         c.clickLastButton("Invite or remind (1)")
-        // The server saves the invitation before it sends the email. The player moves to "Invited, waiting".
+        // The server creates the account before it sends the email. The player stays in "Not invited yet" with the account.
         // The row keeps the error, so the administrator can send the email again.
-        c.waitForText("Invited, waiting (1)")
+        c.waitForText("Invited, waiting (0)")
         c.clickButton("All (40)")
         c.scrollListTo("failed", substring = true)
         check(E2eApi.sentEmails().isEmpty()) { "An email left although the mailbox refused it." }
@@ -122,6 +122,6 @@ class InvitationsTest : AdminE2eTest() {
         c.waitForText("1 selected")
         c.clickButton("Revoke (1)")
         c.waitForText("Invited, waiting (0)")
-        c.waitForText("Not invited yet (30)")
+        c.waitForText("Not invited yet (40)")
     }
 }

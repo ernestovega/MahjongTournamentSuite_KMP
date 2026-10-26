@@ -4,23 +4,20 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequ
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.FeatureFlagsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.InvitedPeopleResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.AcceptInvitationRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.AcceptInvitationResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerExportDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportResultDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerInvitationsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RenameTournamentRequestDto
@@ -477,28 +474,6 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    suspend fun acceptPlayerInvitation(
-        request: AcceptInvitationRequestDto,
-        idToken: String?,
-    ): AcceptInvitationResponseDto = post(
-        path = "/player/invitations/accept",
-        requestBody = request,
-        idToken = idToken,
-    )
-
-    suspend fun listPlayerInvitations(
-        idToken: String,
-        tournamentId: String,
-    ): PlayerInvitationsResponseDto = get(
-        path = "/tournaments/$tournamentId/player-invitations",
-        idToken = idToken,
-    )
-
-    suspend fun listInvitedPeople(idToken: String): InvitedPeopleResponseDto = get(
-        path = "/admin/invitations",
-        idToken = idToken,
-    )
-
     /** [action] is send, resend or revoke. */
     suspend fun runPlayerAccountAction(
         idToken: String,
@@ -543,7 +518,7 @@ class FunctionsBackendApi(
         idToken: String,
         tournamentId: String,
         request: PlayerAccountActionRequestDto,
-    ): OkResponseDto = put(
+    ): PlayerEmailsResponseDto = put(
         path = "/tournaments/$tournamentId/player-accounts/emails",
         requestBody = request,
         idToken = idToken,

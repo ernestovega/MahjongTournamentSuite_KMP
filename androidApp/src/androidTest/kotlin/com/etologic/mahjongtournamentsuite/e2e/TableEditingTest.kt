@@ -73,7 +73,7 @@ class TableEditingTest : AdminE2eTest() {
 
     private fun enterLastHand(done: Boolean) {
         chooseWinner("17 - JORGE MARTIN 147")
-        chooseLoser("6 - ANNA ROSSI")
+        chooseLoser("6 - RAUL RUIZ")
         typeScore("8")
         if (done) tickDone()
     }
@@ -174,7 +174,7 @@ class TableEditingTest : AdminE2eTest() {
     fun scoreBelowEightShowsMinimumScore() {
         openLastTable()
         chooseWinner("17 - JORGE MARTIN 147")
-        chooseLoser("6 - ANNA ROSSI")
+        chooseLoser("6 - RAUL RUIZ")
         typeScore("5")
         c.scrollListTo("The minimum score to win a hand is 8.", substring = true)
     }
@@ -183,7 +183,7 @@ class TableEditingTest : AdminE2eTest() {
     fun loserWithoutWinnerShowsMessage() {
         openLastTable()
         chooseWinner("17 - JORGE MARTIN 147")
-        chooseLoser("6 - ANNA ROSSI")
+        chooseLoser("6 - RAUL RUIZ")
         typeScore("8")
         // The loser list stays closed until a winner exists, so the winner is cleared after the loser is chosen.
         c.onAllNodes(hasText("17 - JORGE MARTIN 147") and hasClickAction()).onLast().performClick()

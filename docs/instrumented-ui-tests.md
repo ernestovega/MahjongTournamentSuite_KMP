@@ -48,7 +48,7 @@ A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The er
 | `TournamentListTest` | 13 | List rows, switches, roles (admin, editor, editor without tournaments, player), permission error for a player. |
 | `TournamentScreenTest` | 13 | Rounds, table chips, finished, running and not started tournaments, totals tables, back, editor access. |
 | `TableStatesTest` | 10 | Penalty explanation, hand counts, totals with a wrong sum, incomplete rounds, chicken column on and off. |
-| `PlayersScreenTest` | 14 | Columns, filters, searches, guests, open slots, linked accounts, large tournament. |
+| `PlayersScreenTest` | 13 | Columns, filters, searches, open slots, linked accounts, large tournament. |
 | `TeamsScreenTest` | 6 | Team list, searches, unicode team names, open slots. |
 | `PlayerAssignmentTest` | 8 | Clear, substitute and team edit dialogs. |
 | `EditTournamentTest` | 12 | Edit dialog values, cancel, save, agenda rows, delete with confirmation, editor is refused. |

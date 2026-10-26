@@ -163,10 +163,9 @@ data class TournamentPlayerDto(
     val team: Int,
     val country: String = "",
     val assignedEmaId: String? = null,
-    val nonMember: NonMemberPlayerDto? = null,
     val accountUid: String? = null,
     val invitationStatus: String = "NONE",
-    val invitedEmail: String? = null,
+    val email: String? = null,
     val contactedAt: String? = null,
     val substitution: PlayerSubstitutionDto? = null,
     val createdAt: String? = null,
@@ -205,60 +204,20 @@ data class PlayerAccountActionResponseDto(
 )
 
 @Serializable
-data class PlayerInvitationDto(
-    val invitationId: String,
+data class PlayerEmailResultDto(
     val playerId: Int,
-    val email: String,
-    val status: String,
-    val expiresAt: String? = null,
+    val outcome: String,
+    val message: String? = null,
 )
 
 @Serializable
-data class InvitedPersonDto(
-    val invitationId: String,
-    val tournamentId: String,
-    val tournamentName: String = "",
-    val playerId: Int,
-    val emaId: String,
-    val playerName: String = "",
-    val email: String,
-    val expiresAt: String? = null,
-    val expired: Boolean = false,
-)
-
-@Serializable
-data class InvitedPeopleResponseDto(
-    val invitations: List<InvitedPersonDto> = emptyList(),
-)
-
-@Serializable
-data class AcceptInvitationRequestDto(
-    val token: String,
-    val password: String? = null,
-)
-
-@Serializable
-data class AcceptInvitationResponseDto(
-    val tournamentId: String = "",
-    val email: String = "",
-)
-
-@Serializable
-data class PlayerInvitationsResponseDto(
-    val invitations: List<PlayerInvitationDto> = emptyList(),
-)
-
-@Serializable
-data class NonMemberPlayerDto(
-    val firstName: String,
-    val lastName: String,
-    val country: String,
+data class PlayerEmailsResponseDto(
+    val results: List<PlayerEmailResultDto> = emptyList(),
 )
 
 @Serializable
 data class AssignTournamentPlayerRequestDto(
     val emaId: String? = null,
-    val nonMember: NonMemberPlayerDto? = null,
 )
 
 @Serializable

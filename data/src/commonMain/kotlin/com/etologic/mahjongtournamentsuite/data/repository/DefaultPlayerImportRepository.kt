@@ -72,6 +72,7 @@ class DefaultPlayerImportRepository(
             PlayerImportResult(
                 assigned = assigned,
                 emailsSaved = last.emailsSaved,
+                emailsRefused = last.emailsRefused,
                 teamsRenamed = last.teamsRenamed,
                 skipped = last.skipped,
                 failures = failures.toList(),
@@ -129,5 +130,6 @@ private fun ImportRowPlanDto.toDomain() = ImportRowPlan(
             args = issue.args,
         )
     },
-    current = current?.let { ImportSlotState(it.emaId, it.nonMemberName, it.email, it.teamName) },
+    createsAccount = createsAccount,
+    current = current?.let { ImportSlotState(it.emaId, it.email, it.teamName) },
 )

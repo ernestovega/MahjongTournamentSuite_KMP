@@ -842,13 +842,12 @@ private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Ma
 )
 
 private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels): String =
-    (slots[playerId]?.assignedEmaId?.let(players::get)?.displayName ?: slots[playerId]?.nonMember?.displayName)
+    slots[playerId]?.assignedEmaId?.let(players::get)?.displayName
         ?.takeIf { it.isNotBlank() }
         ?: labels.playerN(playerId).uppercase()
 
 private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String {
-    return slots[playerId]?.assignedEmaId?.let(players::get)?.country
-        ?: slots[playerId]?.nonMember?.country.orEmpty()
+    return slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
 }
 
 private fun formatPoints(value: Double): String =

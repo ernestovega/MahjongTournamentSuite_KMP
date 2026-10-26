@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerContactState
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.contactState
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
@@ -63,8 +62,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.outcome_notified
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_revoked
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_skipped
 import mahjongtournamentsuite.adminapp.generated.resources.remove_account_link
-import mahjongtournamentsuite.adminapp.generated.resources.resend_with_new_link
-import mahjongtournamentsuite.adminapp.generated.resources.revoke_invitation
+import mahjongtournamentsuite.adminapp.generated.resources.resend_invitation
 import mahjongtournamentsuite.adminapp.generated.resources.save_email_only
 import mahjongtournamentsuite.adminapp.generated.resources.send_an_invitation_link_to_the
 import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
@@ -99,14 +97,13 @@ internal fun PlayerContactState.label(): String = stringResource(
 @Composable
 fun PlayerAccountDialog(
     slot: TournamentPlayer,
-    invitation: PlayerInvitation?,
     busy: Boolean,
     onAction: (PlayerAccountAction, String?) -> Unit,
     onSaveEmail: (String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val state = slot.contactState
-    var email by remember(slot.id) { mutableStateOf(slot.invitedEmail.orEmpty()) }
+    var email by remember(slot.id) { mutableStateOf("") }
     val emailFocus = remember { FocusRequester() }
     val validEmail = email.trim().matches(EMAIL_PATTERN)
     LaunchedEffect(slot.id, state) {
@@ -138,11 +135,13 @@ fun PlayerAccountDialog(
                             modifier = Modifier.fillMaxWidth().focusRequester(emailFocus),
                         )
                     }
-                    PlayerContactState.LINKED ->
+                    PlayerContactState.LINKED -> {
+                        DetailRow(stringResource(Res.string.email), slot.email ?: stringResource(Res.string.not_known))
                         Text(stringResource(Res.string.account_exists_note))
+                    }
                     PlayerContactState.INVITED -> {
                         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            DetailRow(stringResource(Res.string.email), invitation?.email ?: slot.invitedEmail ?: stringResource(Res.string.not_known))
+                            DetailRow(stringResource(Res.string.email), slot.email ?: stringResource(Res.string.not_known))
                             contactTimeText(slot.contactedAt)?.let { DetailRow(stringResource(Res.string.sent), it) }
                         }
                         Text(
@@ -152,6 +151,7 @@ fun PlayerAccountDialog(
                         )
                     }
                     PlayerContactState.CONTACTED -> {
+                        DetailRow(stringResource(Res.string.email), slot.email ?: stringResource(Res.string.not_known))
                         Text(stringResource(Res.string.this_player_has_an_account_and))
                         contactTimeText(slot.contactedAt)?.let { DetailRow(stringResource(Res.string.sent), it) }
                     }
@@ -169,8 +169,8 @@ fun PlayerAccountDialog(
             when (state) {
                 PlayerContactState.NO_EMA_ID -> Unit
                 PlayerContactState.NOT_INVITED -> Button(
-                    enabled = (validEmail || slot.invitedEmail != null && email.isBlank()) && !busy,
-                    onClick = { onAction(PlayerAccountAction.SEND, email.trim().ifBlank { null }) },
+                    enabled = validEmail && !busy,
+                    onClick = { onAction(PlayerAccountAction.SEND, email.trim()) },
                 ) { Text(stringResource(Res.string.send_invitation)) }
                 PlayerContactState.LINKED -> Button(
                     enabled = !busy,
@@ -179,7 +179,7 @@ fun PlayerAccountDialog(
                 PlayerContactState.INVITED -> Button(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.RESEND, null) },
-                ) { Text(stringResource(Res.string.resend_with_new_link)) }
+                ) { Text(stringResource(Res.string.resend_invitation)) }
                 PlayerContactState.CONTACTED -> OutlinedButton(
                     enabled = !busy,
                     onClick = { onAction(PlayerAccountAction.RESEND, null) },
@@ -204,7 +204,7 @@ private fun SecondaryActions(
         TextButton(enabled = validEmail && !busy, onClick = { onSaveEmail(email.trim()) }) { Text(stringResource(Res.string.save_email_only)) }
     }
     if (state == PlayerContactState.INVITED) {
-        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text(stringResource(Res.string.revoke_invitation)) }
+        TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text(stringResource(Res.string.remove_account_link)) }
     }
     if (state == PlayerContactState.LINKED || state == PlayerContactState.CONTACTED) {
         TextButton(enabled = !busy, onClick = { onAction(PlayerAccountAction.REVOKE, null) }) { Text(stringResource(Res.string.remove_account_link)) }

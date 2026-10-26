@@ -44,10 +44,7 @@ import org.koin.dsl.module
 data object SplashRoute
 
 @Serializable
-data class SignInRoute(val inviteToken: String? = null, val openTournamentId: String? = null)
-
-@Serializable
-data class InviteRoute(val token: String)
+data class SignInRoute(val openTournamentId: String? = null)
 
 @Serializable
 data object TournamentsRoute
@@ -77,7 +74,7 @@ data class StatisticsRoute(
 private val playerModule = module {
     // In the player app every account is a player, so the list holds only the tournaments where it plays.
     single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get(), playerScope = true) }
-    factory { PlayerSessionPresenter(get(), get(), get()) }
+    factory { PlayerSessionPresenter(get(), get()) }
     factory { CalculateTournamentRankingsUseCase() }
     factory { CalculateStatisticsUseCase() }
     factory { LoadStatisticsUseCase(get(), get(), get()) }
@@ -89,13 +86,11 @@ private val playerModule = module {
 
 /**
  * The player application.
- * [inviteToken] is set when the player opened the link of an invitation email.
  * [openTournamentId] is set when the player opened the link of a registration email.
  * [sessionStorage] keeps the open screen and the scroll positions through a page refresh.
  */
 @Composable
 fun PlayerApp(
-    inviteToken: String? = null,
     openTournamentId: String? = null,
     sessionStorage: SessionStateStorage? = null,
 ) {
@@ -113,7 +108,7 @@ fun PlayerApp(
             ProvideAppLanguage {
                 MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        PlayerNavigation(inviteToken, openTournamentId, sessionStorage)
+                        PlayerNavigation(openTournamentId, sessionStorage)
                     }
                 }
             }
@@ -122,7 +117,7 @@ fun PlayerApp(
 }
 
 @Composable
-private fun PlayerNavigation(inviteToken: String?, openTournamentId: String?, sessionStorage: SessionStateStorage?) {
+private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionStateStorage?) {
     val navController = rememberNavController()
     val routePersistence = remember(sessionStorage) { sessionStorage?.let { RoutePersistence(it) } }
     // The saved routes are read one time, before the first navigation changes them.
@@ -132,12 +127,11 @@ private fun PlayerNavigation(inviteToken: String?, openTournamentId: String?, se
         navController.currentBackStack.collect { routePersistence.save(it) }
     }
     NavHost(navController = navController, startDestination = SplashRoute) {
-        screen<SplashRoute> { SplashScreen(navController, inviteToken, openTournamentId, restoredRoutes) }
+        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes) }
         screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
-            SignInScreen(navController, route.inviteToken, route.openTournamentId)
+            SignInScreen(navController, route.openTournamentId)
         }
-        screen<InviteRoute> { entry -> InviteScreen(navController, entry.toRoute<InviteRoute>().token) }
         screen<TournamentsRoute> { TournamentsScreen(navController) }
         screen<TournamentRoute> { entry ->
             TournamentScreen(navController, entry.toRoute<TournamentRoute>().tournamentId)

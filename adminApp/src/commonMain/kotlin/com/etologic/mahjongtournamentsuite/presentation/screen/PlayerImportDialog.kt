@@ -58,14 +58,16 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_count_errors
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_new
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_replace
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_unchanged
+import mahjongtournamentsuite.adminapp.generated.resources.import_creates_account
 import mahjongtournamentsuite.adminapp.generated.resources.import_current_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_email_value
 import mahjongtournamentsuite.adminapp.generated.resources.import_failure_line
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_slot
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_changes
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_linked
+import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_in_use
+import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_in_use_no_ema
+import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_kept
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_ema_elsewhere
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_email
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_ema
@@ -85,6 +87,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_replace_checkb
 import mahjongtournamentsuite.adminapp.generated.resources.import_replace_hint
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_assigned
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_emails
+import mahjongtournamentsuite.adminapp.generated.resources.import_result_emails_refused
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_failures
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_skipped
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_teams
@@ -334,9 +337,10 @@ private fun ImportRowItem(row: ImportRowPlan, playerNameOf: (String) -> String?)
         }
         row.team?.let { Text(stringResource(Res.string.import_team_value, it), style = MaterialTheme.typography.bodySmall) }
         row.email?.let { Text(stringResource(Res.string.import_email_value, it), style = MaterialTheme.typography.bodySmall) }
+        if (row.createsAccount) Text(stringResource(Res.string.import_creates_account), style = MaterialTheme.typography.bodySmall)
         if (row.status == ImportRowStatus.REPLACE) {
             val now = row.current?.let { current ->
-                current.emaId?.let { playerNameOf(it) ?: it } ?: current.nonMemberName
+                current.emaId?.let { playerNameOf(it) ?: it }
             }
             now?.let {
                 Text(
@@ -362,6 +366,7 @@ private fun ImportResultContent(result: PlayerImportResult) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(Res.string.import_result_assigned, result.assigned))
         Text(stringResource(Res.string.import_result_emails, result.emailsSaved))
+        if (result.emailsRefused > 0) Text(stringResource(Res.string.import_result_emails_refused, result.emailsRefused))
         Text(stringResource(Res.string.import_result_teams, result.teamsRenamed))
         Text(stringResource(Res.string.import_result_skipped, result.skipped))
         if (result.failures.isNotEmpty()) {
@@ -395,8 +400,9 @@ private fun ImportIssue.toUiText(): UiText {
         ImportIssueCode.TEAM_NAME_CONFLICT -> UiText.of(Res.string.import_issue_team_conflict)
         ImportIssueCode.TEAM_NAME_IN_USE -> UiText.of(Res.string.import_issue_team_in_use, first)
         ImportIssueCode.REPLACES_PLAYER -> UiText.of(Res.string.import_issue_replaces_player)
-        ImportIssueCode.EMAIL_CHANGES -> UiText.of(Res.string.import_issue_email_changes, first, second)
-        ImportIssueCode.EMAIL_IGNORED_LINKED -> UiText.of(Res.string.import_issue_email_linked)
+        ImportIssueCode.EMAIL_KEPT_ACCOUNT -> UiText.of(Res.string.import_issue_email_kept, first, second)
+        ImportIssueCode.EMAIL_IN_USE ->
+            if (first.isBlank()) UiText.of(Res.string.import_issue_email_in_use_no_ema) else UiText.of(Res.string.import_issue_email_in_use, first)
         ImportIssueCode.TEAM_IGNORED -> UiText.of(Res.string.import_issue_team_ignored)
         ImportIssueCode.UNKNOWN -> UiText.of(Res.string.import_issue_unknown)
     }

@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.domain.usecase
 
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -26,8 +25,7 @@ class TournamentScenarioTest {
         val tables = fixtureTables()
 
         assertTrue(players.all(TournamentPlayer::isAssigned))
-        assertEquals(12, players.mapNotNull { it.assignedEmaId }.toSet().size)
-        assertEquals(4, players.count { it.nonMember != null })
+        assertEquals(16, players.mapNotNull { it.assignedEmaId }.toSet().size)
 
         val rankings = calculateRankings(players, tables, includeTeams = true)
         val reloadedRankings = calculateRankings(players, tables.reversed(), includeTeams = true)
@@ -49,12 +47,7 @@ class TournamentScenarioTest {
             id = id,
             name = "Player $id",
             team = ((id - 1) / 4) + 1,
-            assignedEmaId = if (id <= 12) "EMA-$id" else null,
-            nonMember = if (id > 12) {
-                NonMemberPlayer("Guest", "$id", "EU")
-            } else {
-                null
-            },
+            assignedEmaId = "EMA-$id",
         )
     }
 

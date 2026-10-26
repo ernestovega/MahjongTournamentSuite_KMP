@@ -61,11 +61,8 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
-import com.etologic.mahjongtournamentsuite.domain.model.InvitedPerson
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
@@ -116,7 +113,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.confirm_email
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_n
-import mahjongtournamentsuite.adminapp.generated.resources.date_expired
 import mahjongtournamentsuite.adminapp.generated.resources.disable
 import mahjongtournamentsuite.adminapp.generated.resources.disable_account
 import mahjongtournamentsuite.adminapp.generated.resources.disable_account_action
@@ -129,17 +125,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.ema_owner_other
 import mahjongtournamentsuite.adminapp.generated.resources.ema_player_n
 import mahjongtournamentsuite.adminapp.generated.resources.email
 import mahjongtournamentsuite.adminapp.generated.resources.enable_account
-import mahjongtournamentsuite.adminapp.generated.resources.expires
 import mahjongtournamentsuite.adminapp.generated.resources.firebase_will_send_a_password_reset
 import mahjongtournamentsuite.adminapp.generated.resources.global_role
-import mahjongtournamentsuite.adminapp.generated.resources.invitation_revoked_for
-import mahjongtournamentsuite.adminapp.generated.resources.invited
-import mahjongtournamentsuite.adminapp.generated.resources.invited_chip
-import mahjongtournamentsuite.adminapp.generated.resources.invited_count_summary
-import mahjongtournamentsuite.adminapp.generated.resources.invited_in
 import mahjongtournamentsuite.adminapp.generated.resources.loading
-import mahjongtournamentsuite.adminapp.generated.resources.new_invitation_sent_to
-import mahjongtournamentsuite.adminapp.generated.resources.no_invitation_is_waiting_for_an
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_are_available
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_assigned
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_match
@@ -149,8 +137,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.password_reset_info
 import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_to
 import mahjongtournamentsuite.adminapp.generated.resources.player
 import mahjongtournamentsuite.adminapp.generated.resources.plus_more
-import mahjongtournamentsuite.adminapp.generated.resources.resend
-import mahjongtournamentsuite.adminapp.generated.resources.revoke
 import mahjongtournamentsuite.adminapp.generated.resources.role
 import mahjongtournamentsuite.adminapp.generated.resources.role_admin
 import mahjongtournamentsuite.adminapp.generated.resources.role_editor
@@ -183,8 +169,6 @@ fun GlobalUsersScreen(navController: NavHostController) {
     var users by remember { mutableStateOf<List<ManagedUser>>(emptyList()) }
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
     var emaPlayers by remember { mutableStateOf<List<Player>>(emptyList()) }
-    var invited by remember { mutableStateOf<List<InvitedPerson>>(emptyList()) }
-    var showInvited by rememberSaveable { mutableStateOf(false) }
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
@@ -210,12 +194,6 @@ fun GlobalUsersScreen(navController: NavHostController) {
             })
     }
 
-    val filteredInvited = invited.filter { person ->
-        (person.email.matchesSearch(emailFilter) || person.playerName.matchesSearch(emailFilter) ||
-            person.emaId.contains(emailFilter.trim())) &&
-            (selectedTournamentId == null || person.tournamentId == selectedTournamentId)
-    }
-
     fun refresh(force: Boolean = false) {
         scope.launch {
             loading = true
@@ -236,39 +214,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
                 is AppResult.Success -> emaPlayers = result.value
                 is AppResult.Failure -> if (error == null) error = result.error.toUiText()
             }
-            when (val result = presenter.loadInvitedPeople()) {
-                is AppResult.Success -> invited = result.value
-                is AppResult.Failure -> if (error == null) error = result.error.toUiText()
-            }
             loading = false
-        }
-    }
-
-    fun runInvitationAction(person: InvitedPerson, action: PlayerAccountAction) {
-        scope.launch {
-            saving = true
-            error = null
-            notice = null
-            when (val result = presenter.runInvitationAction(person, action)) {
-                is AppResult.Success -> {
-                    val done = result.value
-                    if (done.outcome == PlayerAccountOutcome.FAILED || done.outcome == PlayerAccountOutcome.SKIPPED) {
-                        error = done.message?.let { UiText.Plain(it) } ?: UiText.of(Res.string.action_did_not_run)
-                    } else {
-                        notice = if (action == PlayerAccountAction.REVOKE) {
-                            UiText.of(Res.string.invitation_revoked_for, person.playerName)
-                        } else {
-                            UiText.of(Res.string.new_invitation_sent_to, person.email)
-                        }
-                    }
-                    when (val list = presenter.loadInvitedPeople()) {
-                        is AppResult.Success -> invited = list.value
-                        is AppResult.Failure -> if (error == null) error = list.error.toUiText()
-                    }
-                }
-                is AppResult.Failure -> error = result.error.toUiText()
-            }
-            saving = false
         }
     }
 
@@ -373,9 +319,6 @@ fun GlobalUsersScreen(navController: NavHostController) {
             UserFilters(
                 emailFilter = emailFilter,
                 onEmailFilterChange = { emailFilter = it },
-                showInvited = showInvited,
-                invitedCount = invited.size,
-                onShowInvitedChange = { showInvited = it },
                 selectedRoles = selectedRoles,
                 onRoleToggle = { role ->
                     selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
@@ -395,17 +338,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     tournamentFilterExpanded = false
                 },
             )
-            if (showInvited) SectionCard(
-                title = stringResource(Res.string.invited),
-                subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.invited_count_summary, filteredInvited.size, invited.size),
-            ) {
-                InvitedTable(
-                    people = filteredInvited,
-                    enabled = !loading && !saving,
-                    onResend = { runInvitationAction(it, PlayerAccountAction.RESEND) },
-                    onRevoke = { runInvitationAction(it, PlayerAccountAction.REVOKE) },
-                )
-            } else SectionCard(
+            SectionCard(
                 title = stringResource(Res.string.accounts),
                 subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.accounts_count_summary, filteredUsers.size, users.size),
             ) {
@@ -551,9 +484,6 @@ private fun UsersTable(
 private fun UserFilters(
     emailFilter: String,
     onEmailFilterChange: (String) -> Unit,
-    showInvited: Boolean,
-    invitedCount: Int,
-    onShowInvitedChange: (Boolean) -> Unit,
     selectedRoles: Set<GlobalUserRole>,
     onRoleToggle: (GlobalUserRole) -> Unit,
     tournaments: List<Tournament>,
@@ -624,65 +554,13 @@ private fun UserFilters(
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(selected = !showInvited, onClick = { onShowInvitedChange(false) }, label = { Text(stringResource(Res.string.accounts)) })
-            FilterChip(
-                selected = showInvited,
-                onClick = { onShowInvitedChange(true) },
-                label = { Text(stringResource(Res.string.invited_chip, invitedCount)) },
-            )
-            if (!showInvited) GlobalUserRole.entries.forEach { role ->
+            GlobalUserRole.entries.forEach { role ->
                 FilterChip(
                     selected = role in selectedRoles,
                     onClick = { onRoleToggle(role) },
                     label = { Text(role.label()) },
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun InvitedTable(
-    people: List<InvitedPerson>,
-    enabled: Boolean,
-    onResend: (InvitedPerson) -> Unit,
-    onRevoke: (InvitedPerson) -> Unit,
-) {
-    if (people.isEmpty()) {
-        Text(stringResource(Res.string.no_invitation_is_waiting_for_an), modifier = Modifier.padding(12.dp))
-        return
-    }
-    LazyColumnWithScrollbar(
-        state = rememberPersistentLazyListState("invited"),
-        modifier = Modifier.fillMaxWidth().appFocusGroup(),
-    ) {
-        item {
-            DataTableHeaderRow {
-                Text(stringResource(Res.string.player), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.ema_id), modifier = Modifier.weight(0.1f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.email), modifier = Modifier.weight(0.24f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.invited_in), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.expires), modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
-                Text("", modifier = Modifier.weight(0.24f))
-            }
-            DataTableDivider()
-        }
-        itemsIndexed(people, key = { _, person -> person.invitationId }) { _, person ->
-            DataTableRow {
-                Text(person.playerName, modifier = Modifier.weight(0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(person.emaId, modifier = Modifier.weight(0.1f), maxLines = 1)
-                Text(person.email, modifier = Modifier.weight(0.24f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(person.tournamentName, modifier = Modifier.weight(0.2f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    person.expiresAt?.take(10)?.let { if (person.expired) stringResource(Res.string.date_expired, it) else it } ?: "—",
-                    modifier = Modifier.weight(0.12f),
-                )
-                Row(modifier = Modifier.weight(0.24f), horizontalArrangement = Arrangement.End) {
-                    FocusedTextButton(onClick = { onResend(person) }, enabled = enabled) { Text(stringResource(Res.string.resend)) }
-                    FocusedTextButton(onClick = { onRevoke(person) }, enabled = enabled) { Text(stringResource(Res.string.revoke)) }
-                }
-            }
-            DataTableDivider()
         }
     }
 }
