@@ -88,6 +88,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
@@ -178,6 +179,8 @@ import mahjongtournamentsuite.ui.generated.resources.stat_highest_rank
 import mahjongtournamentsuite.ui.generated.resources.stat_highest_table_score
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties_info
+import mahjongtournamentsuite.ui.generated.resources.column_points
+import mahjongtournamentsuite.ui.generated.resources.column_score
 import mahjongtournamentsuite.ui.generated.resources.stat_rank
 import mahjongtournamentsuite.ui.generated.resources.stat_tables
 import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
@@ -189,6 +192,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_hand_values_use
 import mahjongtournamentsuite.ui.generated.resources.stats_places
 import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_skills
+import mahjongtournamentsuite.ui.generated.resources.stats_standing
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.table_n
 import mahjongtournamentsuite.ui.generated.resources.tournaments_show_all
@@ -209,6 +213,8 @@ fun PlayerStatisticsPanel(
     statistics: PlayerStatistics,
     modifier: Modifier = Modifier,
     header: (@Composable () -> Unit)? = null,
+    /** A card above all other cards, for example the standing of the player in the tournament. */
+    leading: (@Composable (Modifier) -> Unit)? = null,
     /** The tournaments of the results. They give the date and time of each table in the place history. */
     tournaments: List<Tournament> = emptyList(),
     /** Display name of every rival key. See `RivalTally.opponent`. */
@@ -221,6 +227,7 @@ fun PlayerStatisticsPanel(
     if (statistics.tablesPlayed == 0) {
         Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
             header?.invoke()
+            leading?.invoke(Modifier.fillMaxWidth())
             AppEmptyState(
                 icon = StatisticsIcon,
                 title = stringResource(Res.string.stats_empty_title),
@@ -235,6 +242,7 @@ fun PlayerStatisticsPanel(
             if (wide) {
                 StaggeredColumns(minColumnWidth = 480.dp) {
                     header?.invoke()
+                    leading?.invoke(Modifier.fillMaxWidth())
                     SkillsCard(statistics, Modifier.fillMaxWidth())
                     PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                     OverviewCard(statistics, Modifier.fillMaxWidth())
@@ -243,6 +251,7 @@ fun PlayerStatisticsPanel(
                 }
             } else {
                 header?.invoke()
+                leading?.invoke(Modifier.fillMaxWidth())
                 SkillsCard(statistics, Modifier.fillMaxWidth())
                 PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                 OverviewCard(statistics, Modifier.fillMaxWidth())
@@ -260,6 +269,18 @@ fun PlayerStatisticsPanel(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
+
+/** The place, the points and the score of a player in one tournament. */
+@Composable
+fun PlayerStandingCard(position: Int, points: Double, score: Int, modifier: Modifier = Modifier) {
+    StatCard(stringResource(Res.string.stats_standing), modifier) {
+        StatGrid(Modifier.fillMaxWidth()) {
+            BigNumber(stringResource(Res.string.stat_rank), position.toString())
+            BigNumber(stringResource(Res.string.column_points), formatPoints(points))
+            BigNumber(stringResource(Res.string.column_score), score.toString())
         }
     }
 }
@@ -1176,6 +1197,8 @@ fun PlayerTournamentsSection(
                 StatGrid(Modifier.fillMaxWidth()) {
                     LevelMedalWithScore(stats)
                     standings[tournament.id]?.let { BigNumber(stringResource(Res.string.stat_rank), it.rank.toString(), suffix = " " + stringResource(Res.string.rank_of, it.of)) }
+                    standings[tournament.id]?.let { BigNumber(stringResource(Res.string.column_points), formatPoints(it.points)) }
+                    standings[tournament.id]?.let { BigNumber(stringResource(Res.string.column_score), it.score.toString()) }
                     BigNumber("Tables", stats.tablesPlayed.toString())
                     BigNumber("Hands", if (hasHands) stats.handsPlayed.toString() else EMPTY)
                     BigNumber(stringResource(Res.string.stat_best_table_score), stats.bestTableScore.text())
@@ -1190,10 +1213,9 @@ fun PlayerTournamentsSection(
                         if (hasHands) add { m -> TitledBlock(stringResource(Res.string.stat_hands), m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }
                         add { m -> TitledBlock(stringResource(Res.string.stats_places), m) { PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth()) } }
                         // The place history goes after the places, so it sits at the right of the places in the second row.
+                        // It has no title: the title of the places block gives the context.
                         if (stats.results.size > 1) add { m ->
-                            TitledBlock(stringResource(Res.string.places_history_title, stats.results.size), m) {
-                                PlaceHistory(stats.results, listOf(tournament), showTitle = false)
-                            }
+                            Column(m) { PlaceHistory(stats.results, listOf(tournament), showTitle = false) }
                         }
                     }
                     val gap = 24.dp

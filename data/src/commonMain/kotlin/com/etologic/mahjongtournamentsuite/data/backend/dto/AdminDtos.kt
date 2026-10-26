@@ -239,6 +239,8 @@ data class StandingDto(
     val tournamentId: String = "",
     val rank: Int = 1,
     val of: Int = 1,
+    val points: Double = 0.0,
+    val score: Int = 0,
 )
 
 @Serializable

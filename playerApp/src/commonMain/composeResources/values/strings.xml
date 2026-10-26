@@ -104,7 +104,6 @@
     <string name="hand_self_pick">Self-pick</string>
     <string name="hand_discard">Discard</string>
     <string name="hand_draw">Draw</string>
-    <string name="player_ranking_summary">Place %1$d - %2$s points - %3$d score</string>
     <string name="tables_player_empty_message">This player has no table in this tournament yet.</string>
     <string name="jump_to_me">Jump to me</string>
     <string name="entry_totals_only">The organizers enter only the final scores of this table. You cannot add hands here.</string>

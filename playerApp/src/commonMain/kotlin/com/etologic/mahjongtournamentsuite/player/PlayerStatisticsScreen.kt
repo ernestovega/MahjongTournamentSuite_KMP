@@ -67,6 +67,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
@@ -78,6 +79,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenSc
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
@@ -385,6 +387,8 @@ fun TournamentStatisticsTab(
 fun PlayerSlotStatisticsTab(
     tournamentId: String,
     slotId: Int,
+    /** The place, points and score of the player in the tournament. They show in the first card, also when there are no statistics. */
+    ranking: PlayerRanking? = null,
     onLoadingChange: (Boolean) -> Unit = {},
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
@@ -405,12 +409,15 @@ fun PlayerSlotStatisticsTab(
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val loaded = data ?: return@Column
         val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
+        val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier) } }
         if (stats == null) {
+            standing?.invoke(Modifier.fillMaxWidth())
             AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
         } else {
             PlayerStatisticsPanel(
                 stats,
                 header = loaded.profiles[slotId]?.let { profile -> { PlayerStatisticsHeader(profile) } },
+                leading = standing,
                 tournaments = listOf(loaded.tournament),
                 rivalNames = loaded.rivalNames,
             )

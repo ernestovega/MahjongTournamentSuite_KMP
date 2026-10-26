@@ -114,7 +114,7 @@ class StatisticsViewsUiTest {
                 Column(Modifier.width(900.dp).padding(16.dp)) {
                     PlayerTournamentsSection(items, loadStandings = { ids ->
                         asked += ids
-                        ids.associateWith { Standing(2, 8) }
+                        ids.associateWith { Standing(2, 8, 3.5, 40) }
                     })
                 }
             }

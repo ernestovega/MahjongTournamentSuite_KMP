@@ -104,7 +104,6 @@
     <string name="hand_self_pick">Dal muro</string>
     <string name="hand_discard">Scarto</string>
     <string name="hand_draw">Patta</string>
-    <string name="player_ranking_summary">Posto %1$d - %2$s punti - punteggio %3$d</string>
     <string name="tables_player_empty_message">Questo giocatore non ha ancora un tavolo in questo torneo.</string>
     <string name="jump_to_me">Vai a me</string>
     <string name="entry_totals_only">Gli organizzatori inseriscono solo i punteggi finali di questo tavolo. Non puoi aggiungere mani qui.</string>

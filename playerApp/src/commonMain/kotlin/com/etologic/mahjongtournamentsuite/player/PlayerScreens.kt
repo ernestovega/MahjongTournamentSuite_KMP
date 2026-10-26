@@ -197,7 +197,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.invite_have_account
 import mahjongtournamentsuite.playerapp.generated.resources.invite_signed_in
 import mahjongtournamentsuite.playerapp.generated.resources.invite_title
 import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
-import mahjongtournamentsuite.playerapp.generated.resources.player_ranking_summary
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_short
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_chicken_hands
@@ -1810,7 +1809,7 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
         title = view?.nameOf(slotId) ?: stringResource(Res.string.scope_player),
-        subtitle = ranking?.let { stringResource(Res.string.player_ranking_summary, it.position, it.points, it.score) },
+        subtitle = view?.tournament?.name,
         isLoading = (view == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
@@ -1846,7 +1845,11 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
             Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
                 MessageDialog(message)
                 if (tab == 1) {
-                    PlayerSlotStatisticsTab(tournamentId, slotId) { statisticsLoading = it }
+                    PlayerSlotStatisticsTab(
+                        tournamentId,
+                        slotId,
+                        ranking = ranking,
+                    ) { statisticsLoading = it }
                 } else if (tables.isEmpty()) {
                     Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message)) }
                 } else {

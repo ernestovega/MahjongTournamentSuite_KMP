@@ -52,7 +52,7 @@ data class PersonStatisticsData(
 )
 
 /** A place in a tournament ranking. [rank] is the place from 1 to [of]. Equal points and score share a place. */
-data class Standing(val rank: Int, val of: Int)
+data class Standing(val rank: Int, val of: Int, val points: Double, val score: Int)
 
 class LoadStatisticsUseCase(
     private val tournamentRepository: TournamentRepository,
