@@ -163,34 +163,23 @@ export async function generateEmaReport(params: {
     const slot = slotsById.get(playerId);
     if (slot == null) return true;
     if (readSubstitution(slot.get("substitution"))?.excludedFromEma === true) return false;
-    return typeof slot.get("assignedEmaId") === "string" || slot.get("nonMember") != null;
+    return typeof slot.get("assignedEmaId") === "string";
   };
   const reportedRows = params.rows.filter((row) => hasPerson(row.playerId));
   const reportRows: EmaReportRow[] = reportedRows.map((ranking) => {
     const slot = slotsById.get(ranking.playerId);
     if (!slot) throw badRequest("Ranking contains an unknown tournament player", { playerId: ranking.playerId });
     const emaId = typeof slot.get("assignedEmaId") === "string" ? String(slot.get("assignedEmaId")) : null;
-    if (emaId != null) {
-      const player = playersById.get(emaId);
-      if (!player) throw badRequest("Assigned EMA player does not exist", { playerId: ranking.playerId, emaId });
-      return {
-        ...ranking,
-        emaId,
-        firstName: String(player.get("firstName") ?? ""),
-        lastName: String(player.get("lastName") ?? ""),
-        country: String(player.get("country") ?? ""),
-        isEmaMember: true,
-      };
-    }
-    const nonMember = slot.get("nonMember") as Record<string, unknown> | null | undefined;
-    if (!nonMember) throw badRequest("Every ranked player must have an EMA or non-member assignment", { playerId: ranking.playerId });
+    if (emaId == null) throw badRequest("Every ranked player must have an EMA assignment", { playerId: ranking.playerId });
+    const player = playersById.get(emaId);
+    if (!player) throw badRequest("Assigned EMA player does not exist", { playerId: ranking.playerId, emaId });
     return {
       ...ranking,
-      emaId: null,
-      firstName: String(nonMember.firstName ?? ""),
-      lastName: String(nonMember.lastName ?? ""),
-      country: String(nonMember.country ?? ""),
-      isEmaMember: false,
+      emaId,
+      firstName: String(player.get("firstName") ?? ""),
+      lastName: String(player.get("lastName") ?? ""),
+      country: String(player.get("country") ?? ""),
+      isEmaMember: true,
     };
   });
   return buildEmaReport({

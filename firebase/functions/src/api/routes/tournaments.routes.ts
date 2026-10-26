@@ -9,9 +9,8 @@ import { requireAdmin } from "../middleware/requireAdmin";
 import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
 import { requireTournamentReader } from "../middleware/requireTournamentReader";
 import {
-  listInvitations,
   runAccountAction,
-  saveContactEmails,
+  saveAccountEmails,
   type AccountAction,
 } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
@@ -663,23 +662,7 @@ export function tournamentsRouter(): Router {
         const body = (req.body != null && typeof req.body === "object") ? req.body as Record<string, unknown> : null;
         const rawEmaId = body?.emaId;
         const emaId = rawEmaId == null ? null : validateEmaId(rawEmaId);
-        const rawNonMember = body?.nonMember;
-        let nonMember: { firstName: string; lastName: string; country: string } | null = null;
-        if (rawNonMember != null) {
-          if (typeof rawNonMember !== "object") throw badRequest("nonMember must be an object");
-          const value = rawNonMember as Record<string, unknown>;
-          nonMember = {
-            firstName: String(value.firstName ?? "").trim(),
-            lastName: String(value.lastName ?? "").trim(),
-            country: String(value.country ?? "").trim().toUpperCase(),
-          };
-          if (!nonMember.firstName || !nonMember.lastName || !/^[A-Z]{3}$/.test(nonMember.country)) {
-            throw badRequest("A non-member needs first name, last name, and a three-letter country code");
-          }
-        }
-
         if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
-        if (emaId != null && nonMember != null) throw badRequest("Choose an EMA player or a non-member, not both");
         if (emaId != null && !(await playerExists(emaId))) {
           throw badRequest("EMA player does not exist");
         }
@@ -688,13 +671,12 @@ export function tournamentsRouter(): Router {
           tournamentId: pathParam(req, "tournamentId"),
           playerId,
           emaId,
-          nonMember,
           uid: (res.locals.auth as { uid: string }).uid,
         });
         await recordActivity({
           action: "player.assign", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `player ${playerId}`,
-          details: { emaId, nonMember: nonMember == null ? undefined : { ...nonMember } },
+          details: { emaId },
         });
         res.status(200).json({ ok: true });
       } catch (e) {
@@ -809,7 +791,7 @@ export function tournamentsRouter(): Router {
           // Players see who plays and where, never the accounts or emails of other players.
           res.status(200).json({
             players: players.map((player) => ({
-              ...player, accountUid: null, invitationStatus: "NONE", invitedEmail: null,
+              ...player, accountUid: null, invitationStatus: "NONE", email: null,
             })),
           });
           return;
@@ -1026,19 +1008,6 @@ export function tournamentsRouter(): Router {
     },
   );
 
-  router.get(
-    "/:tournamentId/player-invitations",
-    requireAuth,
-    requireTournamentEditor,
-    async (req, res, next) => {
-      try {
-        res.status(200).json({ invitations: await listInvitations(pathParam(req, "tournamentId")) });
-      } catch (e) {
-        next(e);
-      }
-    },
-  );
-
   // Send, resend and revoke work for one player or for many. The body always lists the players.
   for (const action of ["send", "resend", "revoke"] as AccountAction[]) {
     router.post(
@@ -1054,9 +1023,8 @@ export function tournamentsRouter(): Router {
             if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
             return { playerId, email: typeof value.email === "string" ? value.email : undefined };
           });
-          const actor = res.locals.auth as { uid: string };
           const results = await runAccountAction({
-            tournamentId: pathParam(req, "tournamentId"), action, items, invitedBy: actor.uid,
+            tournamentId: pathParam(req, "tournamentId"), action, items,
             language: parseAcceptLanguage(req.headers["accept-language"]),
           });
           await recordActivity({
@@ -1084,12 +1052,12 @@ export function tournamentsRouter(): Router {
           if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
           return { playerId, email: String(value.email ?? "") };
         });
-        await saveContactEmails({ tournamentId: pathParam(req, "tournamentId"), items });
+        const results = await saveAccountEmails({ tournamentId: pathParam(req, "tournamentId"), items });
         await recordActivity({
           action: "account.saveEmails", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
         });
-        res.status(200).json({ ok: true });
+        res.status(200).json({ results });
       } catch (e) {
         next(e);
       }

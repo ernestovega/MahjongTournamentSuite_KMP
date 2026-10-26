@@ -651,7 +651,7 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
 
   const orderedSlots = slots.docs.slice().sort((left, right) => Number(left.get("id")) - Number(right.get("id")));
   const missingAssignments = orderedSlots.filter((slot) => {
-    return typeof slot.get("assignedEmaId") !== "string" && slot.get("nonMember") == null;
+    return typeof slot.get("assignedEmaId") !== "string";
   });
   if (missingAssignments.length > 0) {
     throw conflict(`Assign every tournament player before creating ID cards. ${missingAssignments.length} assignments are missing.`);
@@ -690,14 +690,11 @@ export async function loadIdCardsDocument(tournamentId: string): Promise<IdCards
     const player = playerDocuments[index];
     const playerId = Number(slot.get("id") ?? slot.id);
     const teamId = Number(slot.get("team") ?? 0);
-    const nonMember = slot.get("nonMember") as Record<string, unknown> | null | undefined;
-    const countryCode = String(player?.get("country") ?? nonMember?.country ?? "").trim().toUpperCase();
+    const countryCode = String(player?.get("country") ?? "").trim().toUpperCase();
     const rounds = tablesByPlayer.get(playerId) ?? new Map<number, number>();
     return {
       playerId,
-      name: player == null
-        ? `${String(nonMember?.firstName ?? "")} ${String(nonMember?.lastName ?? "")}`.trim()
-        : `${String(player.get("firstName") ?? "")} ${String(player.get("lastName") ?? "")}`.trim(),
+      name: `${String(player?.get("firstName") ?? "")} ${String(player?.get("lastName") ?? "")}`.trim(),
       country: countryNames.get(iso2CountryCode(countryCode) ?? "") ?? countryCode,
       countryCode,
       teamName: tournament.get("isTeams") === true ? teamNames.get(teamId) ?? `Team ${teamId}` : null,

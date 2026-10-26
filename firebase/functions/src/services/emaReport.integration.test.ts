@@ -16,9 +16,9 @@ describe("EMA report with a slot that has no person", () => {
     for (const [emaId, firstName] of [["10000001", "ANA"], ["10000002", "BEA"]]) {
       await db.collection("emaPlayerRegistry").doc(emaId).set({ firstName, lastName: "LOPEZ", country: "ESP" });
     }
-    await tournament.collection("players").doc("1").set({ id: 1, assignedEmaId: "10000001", nonMember: null });
-    await tournament.collection("players").doc("2").set({ id: 2, assignedEmaId: null, nonMember: null });
-    await tournament.collection("players").doc("3").set({ id: 3, assignedEmaId: "10000002", nonMember: null });
+    await tournament.collection("players").doc("1").set({ id: 1, assignedEmaId: "10000001" });
+    await tournament.collection("players").doc("2").set({ id: 2, assignedEmaId: null });
+    await tournament.collection("players").doc("3").set({ id: 3, assignedEmaId: "10000002" });
 
     const bytes = await generateEmaReport({
       tournamentId: id,
@@ -49,14 +49,14 @@ describe("EMA report with a slot that has no person", () => {
       await db.collection("emaPlayerRegistry").doc(emaId).set({ firstName, lastName: "LOPEZ", country: "ESP" });
     }
     await tournament.collection("players").doc("1").set({
-      id: 1, assignedEmaId: "10000001", nonMember: null,
+      id: 1, assignedEmaId: "10000001",
       substitution: { reason: "ILLNESS", fromRound: 2, duringSession: false, excludedFromEma: true },
     });
     await tournament.collection("players").doc("2").set({
-      id: 2, assignedEmaId: "10000002", nonMember: null,
+      id: 2, assignedEmaId: "10000002",
       substitution: { reason: "DISQUALIFIED", fromRound: 2, duringSession: false, excludedFromEma: false },
     });
-    await tournament.collection("players").doc("3").set({ id: 3, assignedEmaId: "10000003", nonMember: null });
+    await tournament.collection("players").doc("3").set({ id: 3, assignedEmaId: "10000003" });
 
     const bytes = await generateEmaReport({
       tournamentId: id,

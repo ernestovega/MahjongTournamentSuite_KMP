@@ -14,13 +14,13 @@ async function seedPlayers(tournamentId: string): Promise<void> {
   for (const emaId of ["A", "B", "C"]) {
     await db.collection("emaPlayerRegistry").doc(emaId).set({ country: "ES" });
   }
-  await tournament.collection("players").doc("1").set({ id: 1, assignedEmaId: "A", nonMember: null, assignedCountry: "ES" });
+  await tournament.collection("players").doc("1").set({ id: 1, assignedEmaId: "A", assignedCountry: "ES" });
   await tournament.collection("emaPlayerAssignments").doc("A").set({ playerId: 1 });
-  await tournament.collection("players").doc("2").set({ id: 2, assignedEmaId: null, nonMember: null, assignedCountry: "" });
+  await tournament.collection("players").doc("2").set({ id: 2, assignedEmaId: null, assignedCountry: "" });
 }
 
 function assign(tournamentId: string, playerId: number, emaId: string | null) {
-  return assignTournamentPlayer({ tournamentId, playerId, emaId, nonMember: null });
+  return assignTournamentPlayer({ tournamentId, playerId, emaId });
 }
 
 async function startATable(tournamentId: string): Promise<void> {

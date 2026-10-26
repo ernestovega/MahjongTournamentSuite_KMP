@@ -645,22 +645,26 @@ export async function loadUsageReport(days = DEFAULT_USAGE_PERIOD, now = new Dat
     db.collectionGroup("changes").select("kind", "source", "uid", "name", "roundId", "tableId", "handChangeCount", "at").get(),
     db.collection("activity").select("action", "uid", "name", "tournamentId", "at").get(),
     db.collectionGroup("tables").select("isCompleted", "useTotalsOnly", "hasValidManualTotals", "hasProgress").get(),
-    db.collectionGroup("players").select("invitationStatus", "accountUid", "assignedEmaId", "nonMember").get(),
+    db.collectionGroup("players").select("accountUid", "notifiedAt", "assignedEmaId").get(),
     db.collection("users").select("alias").get(),
   ]);
   const aliasByUid = new Map(profiles.docs.map((doc) => [doc.id, text(doc.get("alias"))]));
   const accounts: UsageAccount[] = [];
+  const withPasswordUids = new Set<string>();
   let pageToken: string | undefined;
   do {
     const page = await auth.listUsers(1_000, pageToken);
-    page.users.forEach((user) => accounts.push({
+    page.users.forEach((user) => {
+      if (user.providerData.some((provider) => provider.providerId === "password")) withPasswordUids.add(user.uid);
+      accounts.push({
       uid: user.uid,
       name: aliasByUid.get(user.uid) || text(user.displayName) || text(user.email) || null,
       role: getGlobalUserRole(user),
       disabled: user.disabled,
       createdAt: parseMillis(user.metadata.creationTime),
       lastSeenAt: parseMillis(user.metadata.lastRefreshTime ?? undefined) ?? parseMillis(user.metadata.lastSignInTime),
-    }));
+      });
+    });
     pageToken = page.pageToken;
   } while (pageToken);
 
@@ -720,9 +724,12 @@ export async function loadUsageReport(days = DEFAULT_USAGE_PERIOD, now = new Dat
     })),
     slots: read(slots.docs, (tournamentId, data) => ({
       tournamentId,
-      invitationStatus: text(data.invitationStatus) || "NONE",
+      // An account with a password accepted. An account without one is invited once an email went out.
+      invitationStatus: text(data.accountUid) === "" ? "NONE"
+        : withPasswordUids.has(text(data.accountUid)) ? "ACCEPTED"
+        : data.notifiedAt != null ? "INVITED" : "NONE",
       hasAccount: text(data.accountUid) !== "",
-      isAssigned: text(data.assignedEmaId) !== "" || data.nonMember != null,
+      isAssigned: text(data.assignedEmaId) !== "",
     })),
     accounts,
   });

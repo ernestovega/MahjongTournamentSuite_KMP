@@ -211,7 +211,7 @@ export function buildPlayerExportRecords(slots: SlotInfo[], isTeams: boolean, te
   const rows = [...slots].sort((a, b) => a.id - b.id).map((slot) => [
     String(slot.id),
     slot.emaId ?? "",
-    slot.invitedEmail ?? "",
+    slot.email ?? "",
     ...(isTeams ? [teamNames.get(slot.team) ?? ""] : []),
   ]);
   return [header, ...rows];
@@ -244,8 +244,10 @@ export type IssueCode =
   | "TEAM_NAME_IN_USE"
   // Warnings: the row is applied.
   | "REPLACES_PLAYER"
-  | "EMAIL_CHANGES"
-  | "EMAIL_IGNORED_LINKED"
+  /** The account of the player has another email. The account email stays and the email of the file is not saved. */
+  | "EMAIL_KEPT_ACCOUNT"
+  /** The email belongs to another account, or to an earlier row of the file. The email is not saved. */
+  | "EMAIL_IN_USE"
   | "TEAM_IGNORED";
 
 export type RowIssue = {
@@ -261,10 +263,9 @@ export type SlotInfo = {
   id: number;
   team: number;
   emaId: string | null;
-  /** The name of a non-member in the slot. Null when the slot has none. */
-  nonMemberName: string | null;
   accountUid: string | null;
-  invitedEmail: string | null;
+  /** The email of the account linked to the slot. The email lives only in the account. */
+  email: string | null;
 };
 
 export type PlannedRow = {
@@ -275,8 +276,10 @@ export type PlannedRow = {
   team: string | null;
   status: RowStatus;
   issues: RowIssue[];
+  /** True when applying the row creates the account of the player, because the email is new. */
+  createsAccount: boolean;
   /** What the slot holds now. Null when the slot does not exist. */
-  current: { emaId: string | null; nonMemberName: string | null; email: string | null; teamName: string | null } | null;
+  current: { emaId: string | null; email: string | null; teamName: string | null } | null;
 };
 
 export type ImportPlan = {
@@ -293,6 +296,10 @@ export type PlanInput = {
   isTeams: boolean;
   teamNames: Map<number, string>;
   registeredEmaIds: ReadonlySet<string>;
+  /** The email of the account that owns each EMA id. An EMA id with no account is missing. */
+  accountEmailByEma: ReadonlyMap<string, string | null>;
+  /** The accounts that own an email, by email in lower case. The value is the EMA id of the account, or "" when it has none. */
+  emailOwners: ReadonlyMap<string, string>;
   /** True when the editor accepts to replace players that are in a slot already. */
   replaceExisting: boolean;
 };
@@ -406,7 +413,7 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
   const replacesPlayer = (row: ImportRow): boolean => {
     const slot = slotsById.get(slotIdOf.get(row.row)!)!;
     const emaId = emaOf.get(row.row);
-    return emaId != null && ((slot.emaId != null && slot.emaId !== emaId) || (slot.emaId == null && slot.nonMemberName != null));
+    return emaId != null && slot.emaId != null && slot.emaId !== emaId;
   };
   // A row is applied when it has no error, and when it replaces a player only if the editor accepted it.
   const isActive = (row: ImportRow) => !hasError(row.row) && (input.replaceExisting || !replacesPlayer(row));
@@ -431,6 +438,8 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     }
   }
 
+  // The email of an account never changes here. A new email creates an account only when no account owns the email.
+  const emailsToCreate = new Map<string, string>();
   const planned: PlannedRow[] = input.rows.map((row) => {
     const slotId = slotIdOf.get(row.row) ?? null;
     const slot = slotId == null ? null : slotsById.get(slotId)!;
@@ -439,18 +448,25 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     const team = teamOf.get(row.row) ?? null;
     const current = slot == null ? null : {
       emaId: slot.emaId,
-      nonMemberName: slot.nonMemberName,
-      email: slot.invitedEmail,
+      email: slot.email,
       teamName: input.isTeams ? input.teamNames.get(slot.team) ?? null : null,
     };
+    let createsAccount = false;
     if (slot != null && !hasError(row.row)) {
-      const keepsPlayer = emaId != null && slot.emaId === emaId;
       if (replacesPlayer(row)) addIssue(row.row, "REPLACES_PLAYER", "WARNING");
-      if (email != null) {
-        if (keepsPlayer && slot.accountUid != null) {
-          addIssue(row.row, "EMAIL_IGNORED_LINKED", "WARNING");
-        } else if (slot.invitedEmail != null && slot.invitedEmail.length > 0 && slot.invitedEmail !== email) {
-          addIssue(row.row, "EMAIL_CHANGES", "WARNING", [slot.invitedEmail, email]);
+      if (email != null && emaId != null && isActive(row)) {
+        const accountEmail = input.accountEmailByEma.get(emaId);
+        const owner = input.emailOwners.get(email);
+        const earlier = emailsToCreate.get(email);
+        if (accountEmail !== undefined) {
+          if (accountEmail !== email) addIssue(row.row, "EMAIL_KEPT_ACCOUNT", "WARNING", [accountEmail ?? "", email]);
+        } else if (owner !== undefined) {
+          addIssue(row.row, "EMAIL_IN_USE", "WARNING", [owner]);
+        } else if (earlier !== undefined) {
+          addIssue(row.row, "EMAIL_IN_USE", "WARNING", [earlier]);
+        } else {
+          emailsToCreate.set(email, emaId);
+          createsAccount = true;
         }
       }
     }
@@ -461,12 +477,10 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     } else if (replacesPlayer(row)) {
       status = "REPLACE";
     } else {
-      const emailSaves = email != null && email !== slot!.invitedEmail
-        && !(slot!.emaId === emaId && slot!.accountUid != null);
       const teamChanges = team != null && input.isTeams && !sameText(team, input.teamNames.get(slot!.team) ?? "");
-      status = slot!.emaId !== emaId || emailSaves || teamChanges ? "NEW" : "UNCHANGED";
+      status = slot!.emaId !== emaId || createsAccount || teamChanges ? "NEW" : "UNCHANGED";
     }
-    return { row: row.row, slotId, emaId, email, team, status, issues, current };
+    return { row: row.row, slotId, emaId, email, team, status, issues, createsAccount, current };
   });
 
   const finalNames = finalTeamNames();

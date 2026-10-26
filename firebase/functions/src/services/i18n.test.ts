@@ -2,7 +2,6 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import {
-  buildInvitationEmail,
   buildRegistrationEmail,
   DEFAULT_LANGUAGE,
   LANGUAGES,
@@ -63,36 +62,7 @@ describe("email texts", () => {
     assert.equal(DEFAULT_LANGUAGE, "en");
   });
 
-  it("builds the English invitation as before", () => {
-    const email = buildInvitationEmail("en", { tournamentName: "Madrid Open", link: "https://app/invite?token=t", days: 14 });
-    assert.equal(email.subject, "Invitation to Madrid Open");
-    assert.match(email.text, /^You are invited to play in Madrid Open\./);
-    assert.match(email.text, /Open this link to accept: https:\/\/app\/invite\?token=t/);
-    assert.match(email.text, /expires in 14 days\.$/);
-    assert.match(email.html, /<p>You are invited to play in <strong>Madrid Open<\/strong>\.<\/p>/);
-    assert.match(email.html, /<a href="https:\/\/app\/invite\?token=t">Accept the invitation<\/a>/);
-  });
-
-  it("builds the Spanish invitation", () => {
-    const email = buildInvitationEmail("es", { tournamentName: "Madrid Open", link: "https://app/invite?token=t", days: 14 });
-    assert.equal(email.subject, "Invitación a Madrid Open");
-    assert.match(email.text, /Te invitamos a jugar en Madrid Open\./);
-    assert.match(email.text, /Abre este enlace para aceptar/);
-    assert.match(email.text, /caduca en 14 días/);
-    assert.match(email.html, /<strong>Madrid Open<\/strong>/);
-    assert.match(email.html, />Aceptar la invitación<\/a>/);
-  });
-
-  it("builds the French and Italian emails", () => {
-    const params = { tournamentName: "Madrid Open", link: "https://app/invite?token=t", days: 14 };
-    const french = buildInvitationEmail("fr", params);
-    assert.equal(french.subject, "Invitation à Madrid Open");
-    assert.match(french.text, /expire dans 14 jours\.$/);
-    assert.match(french.html, />Accepter l'invitation<\/a>/);
-    const italian = buildInvitationEmail("it", params);
-    assert.equal(italian.subject, "Invito a Madrid Open");
-    assert.match(italian.text, /scade tra 14 giorni\.$/);
-    assert.match(italian.html, />Accetta l'invito<\/a>/);
+  it("builds the French and Italian registration emails", () => {
     const registration = { tournamentName: "Madrid Open", link: "https://app/?tournament=x" };
     assert.match(buildRegistrationEmail("fr", registration).html, /<strong>Madrid Open<\/strong>/);
     assert.match(buildRegistrationEmail("it", registration).html, /<strong>Madrid Open<\/strong>/);
@@ -112,7 +82,7 @@ describe("email texts", () => {
   });
 
   it("escapes the name of the tournament in the HTML", () => {
-    const email = buildInvitationEmail("es", { tournamentName: "A <b> & C", link: "https://app", days: 14 });
+    const email = buildRegistrationEmail("es", { tournamentName: "A <b> & C", link: "https://app" });
     assert.ok(email.html.includes("<strong>A &lt;b&gt; &amp; C</strong>"));
     assert.ok(!email.html.includes("<b>"));
   });

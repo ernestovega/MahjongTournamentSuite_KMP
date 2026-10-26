@@ -206,12 +206,8 @@ function checkPlayers(c: Collector, input: IntegrityInput, numPlayers: number): 
       c.add("warning", "players.idRange", `The slot id ${numeric} is outside 1 to ${numPlayers}.`, where);
     }
     const ema = text(data.assignedEmaId);
-    const hasNonMember = data.nonMember != null;
-    if (ema === "" && !hasNonMember) {
+    if (ema === "") {
       c.add("error", "players.unassigned", "The slot has no assigned player. ID cards and statistics need one.", where);
-    }
-    if (ema !== "" && hasNonMember) {
-      c.add("warning", "players.both", "The slot has an EMA player and a non-member player at the same time.", where);
     }
     if (text(data.name) === "") c.add("warning", "players.name", "The slot has no name.", where);
     if (ema !== "") {
@@ -225,12 +221,6 @@ function checkPlayers(c: Collector, input: IntegrityInput, numPlayers: number): 
         if (registry.country !== "" && assignedCountry !== "" && assignedCountry !== registry.country) {
           c.add("info", "players.country", `The slot country ${assignedCountry} differs from the registry country ${registry.country}.`, where);
         }
-      }
-    }
-    if (hasNonMember) {
-      const nonMember = data.nonMember as Data;
-      if (text(nonMember.firstName ?? nonMember.name) === "" && text(data.name) === "") {
-        c.add("warning", "players.nonMemberName", "The non-member player has no name.", where);
       }
     }
     const team = Number(data.team);
