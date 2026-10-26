@@ -130,6 +130,7 @@ fun TeamsScreen(
     var loading by remember { mutableStateOf(true) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
+    val exportPlayers = rememberPlayersExport(tournamentId) { error = it }
     var searchQuery by remember { mutableStateOf("") }
     var selectedCountryCodes by remember { mutableStateOf<Set<String>>(emptySet()) }
     var initialFocusApplied by remember { mutableStateOf(false) }
@@ -271,7 +272,10 @@ fun TeamsScreen(
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },
         actions = {
-            AppTopBarActions(onImportPlayers = { importDialogOpen = true })
+            AppTopBarActions(
+                onImportPlayers = { importDialogOpen = true },
+                onExportPlayers = exportPlayers,
+            )
         },
     ) {
         ScreenColumn(

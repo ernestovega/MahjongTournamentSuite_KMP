@@ -5,6 +5,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 
@@ -22,10 +23,15 @@ private val spreadsheetMimeTypes = arrayOf(
 actual fun rememberSpreadsheetPicker(
     onSelected: (SelectedSpreadsheet) -> Unit,
     onError: (UiText) -> Unit,
+    onCancelled: () -> Unit,
 ): SpreadsheetPicker {
     val context = AndroidPlatformContext.requireContext()
+    val currentOnCancelled = rememberUpdatedState(onCancelled)
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri == null) return@rememberLauncherForActivityResult
+        if (uri == null) {
+            currentOnCancelled.value()
+            return@rememberLauncherForActivityResult
+        }
         runCatching {
             val resolver = context.contentResolver
             val fileName = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->

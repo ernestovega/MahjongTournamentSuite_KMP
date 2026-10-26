@@ -15,14 +15,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowStatus
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
-import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetSaver
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -54,13 +53,7 @@ class PlayerImportDialogUiTest {
         var result: AppResult<PlayerImportResult>,
     ) : PlayerImportRepository {
         var applied: Pair<Boolean, Int>? = null
-        var exportResult: AppResult<PlayerExportFile> = AppResult.Success(PlayerExportFile("players.xlsx", byteArrayOf(7, 8)))
-        var exportedTournament: String? = null
-
-        override suspend fun export(tournamentId: String): AppResult<PlayerExportFile> {
-            exportedTournament = tournamentId
-            return exportResult
-        }
+        override suspend fun export(tournamentId: String): AppResult<PlayerExportFile> = error("Not used.")
 
         override suspend fun preview(tournamentId: String, fileName: String, bytes: ByteArray) = preview
 
@@ -87,7 +80,7 @@ class PlayerImportDialogUiTest {
         repository: PlayerImportRepository,
         onChanged: () -> Unit = {},
         onDismiss: () -> Unit = {},
-        saved: MutableList<Pair<String, List<Byte>>> = mutableListOf(),
+        pickedFile: Boolean = true,
     ) {
         java.util.Locale.setDefault(java.util.Locale.ENGLISH)
         setContent {
@@ -111,11 +104,12 @@ class PlayerImportDialogUiTest {
                             playerNameOf = { null },
                             onChanged = onChanged,
                             onDismiss = onDismiss,
-                            saverFactory = { _ ->
-                                remember { SpreadsheetSaver { fileName, bytes -> saved += fileName to bytes.toList() } }
-                            },
-                            pickerFactory = { onSelected, _ ->
-                                remember { SpreadsheetPicker { onSelected(SelectedSpreadsheet("players.csv", byteArrayOf(1))) } }
+                            pickerFactory = { onSelected, _, onCancelled ->
+                                remember {
+                                    SpreadsheetPicker {
+                                        if (pickedFile) onSelected(SelectedSpreadsheet("players.csv", byteArrayOf(1))) else onCancelled()
+                                    }
+                                }
                             },
                         )
                     }
@@ -128,12 +122,22 @@ class PlayerImportDialogUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
     @Test
-    fun introListsTheColumnsAndTheFileIsChosenFromThere() = runComposeUiTest {
+    fun theFileChooserOpensAtOnceAndShowsThePreview() = runComposeUiTest {
         showDialog(FakeImportRepository(AppResult.Success(preview(row(2, ImportRowStatus.NEW))), AppResult.Failure(AppError.Network)))
 
-        onNodeWithText("• id: the number of the player slot. This column is required.").assertExists()
-        onNodeWithText("• ema id: the EMA number of the player. This column is required.").assertExists()
-        onNodeWithText("Choose file").assertExists()
+        awaitText("Import 1 rows")
+    }
+
+    @Test
+    fun cancellingTheFileChooserClosesTheDialog() = runComposeUiTest {
+        var dismissed = false
+        showDialog(
+            FakeImportRepository(AppResult.Success(preview()), AppResult.Failure(AppError.Network)),
+            onDismiss = { dismissed = true },
+            pickedFile = false,
+        )
+
+        waitUntil(timeoutMillis = 5_000) { dismissed }
     }
 
     @Test
@@ -145,7 +149,6 @@ class PlayerImportDialogUiTest {
         var changed = false
         showDialog(repository, onChanged = { changed = true })
 
-        onNodeWithText("Choose file").performClick()
         awaitText("Import 2 rows")
         onNodeWithText("Import 2 rows").performClick()
         awaitText("Import finished")
@@ -165,7 +168,6 @@ class PlayerImportDialogUiTest {
         )
         showDialog(repository)
 
-        onNodeWithText("Choose file").performClick()
         awaitText("Import 0 rows")
         onNodeWithText("Import 0 rows").assertIsNotEnabled()
 
@@ -178,13 +180,17 @@ class PlayerImportDialogUiTest {
     }
 
     @Test
-    fun aFileErrorShowsTheErrorAndKeepsTheChooser() = runComposeUiTest {
-        showDialog(FakeImportRepository(AppResult.Failure(AppError.Conflict("Bad file")), AppResult.Failure(AppError.Network)))
+    fun aFileErrorShowsTheErrorAndClosesTheDialogOnDismiss() = runComposeUiTest {
+        var dismissed = false
+        showDialog(
+            FakeImportRepository(AppResult.Failure(AppError.Conflict("Bad file")), AppResult.Failure(AppError.Network)),
+            onDismiss = { dismissed = true },
+        )
 
-        onNodeWithText("Choose file").performClick()
         awaitText("Bad file")
+        onNodeWithText("OK").performClick()
 
-        onNodeWithText("Choose file").assertExists()
+        assertTrue(dismissed)
     }
 
     @Test
@@ -193,37 +199,8 @@ class PlayerImportDialogUiTest {
             FakeImportRepository(AppResult.Success(preview(row(2, ImportRowStatus.ERROR))), AppResult.Failure(AppError.Network)),
         )
 
-        onNodeWithText("Choose file").performClick()
         awaitText("Import 0 rows")
 
         onNodeWithText("Import 0 rows").assertIsNotEnabled()
-    }
-
-    @Test
-    fun theDownloadButtonSavesTheCurrentPlayersFile() = runComposeUiTest {
-        val repository = FakeImportRepository(AppResult.Success(preview()), AppResult.Failure(AppError.Network))
-        val saved = mutableListOf<Pair<String, List<Byte>>>()
-        showDialog(repository, saved = saved)
-
-        onNodeWithText("Download players file").performClick()
-        waitUntil(timeoutMillis = 5_000) { saved.isNotEmpty() }
-
-        assertEquals(listOf("players.xlsx" to listOf<Byte>(7, 8)), saved)
-        assertEquals("t1", repository.exportedTournament)
-        onNodeWithText("Choose file").assertExists()
-    }
-
-    @Test
-    fun aFailedDownloadShowsTheErrorAndSavesNothing() = runComposeUiTest {
-        val repository = FakeImportRepository(AppResult.Success(preview()), AppResult.Failure(AppError.Network))
-        repository.exportResult = AppResult.Failure(AppError.Conflict("Cannot export"))
-        val saved = mutableListOf<Pair<String, List<Byte>>>()
-        showDialog(repository, saved = saved)
-
-        onNodeWithText("Download players file").performClick()
-        awaitText("Cannot export")
-
-        assertTrue(saved.isEmpty())
-        assertEquals("t1", repository.exportedTournament)
     }
 }

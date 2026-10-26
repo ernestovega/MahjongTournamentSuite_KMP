@@ -10,9 +10,11 @@ import kotlin.io.encoding.Base64
 actual fun rememberSpreadsheetPicker(
     onSelected: (SelectedSpreadsheet) -> Unit,
     onError: (UiText) -> Unit,
+    onCancelled: () -> Unit,
 ): SpreadsheetPicker {
     val currentOnSelected = rememberUpdatedState(onSelected)
     val currentOnError = rememberUpdatedState(onError)
+    val currentOnCancelled = rememberUpdatedState(onCancelled)
     return remember {
         SpreadsheetPicker {
             launchBrowserSpreadsheetPicker(
@@ -22,6 +24,7 @@ actual fun rememberSpreadsheetPicker(
                         .onFailure { currentOnError.value(SpreadsheetReadError) }
                 },
                 onError = { currentOnError.value(SpreadsheetReadError) },
+                onCancelled = { currentOnCancelled.value() },
             )
         }
     }
@@ -29,13 +32,16 @@ actual fun rememberSpreadsheetPicker(
 
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 @JsFun(
-    """(onSelected, onError) => {
+    """(onSelected, onError, onCancelled) => {
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = '.csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
         input.onchange = () => {
             const file = input.files && input.files[0];
-            if (!file) return;
+            if (!file) {
+                onCancelled();
+                return;
+            }
             const reader = new FileReader();
             reader.onerror = () => onError('read');
             reader.onload = () => {
@@ -49,10 +55,12 @@ actual fun rememberSpreadsheetPicker(
             };
             reader.readAsDataURL(file);
         };
+        input.oncancel = () => onCancelled();
         input.click();
     }""",
 )
 private external fun launchBrowserSpreadsheetPicker(
     onSelected: (String, String) -> Unit,
     onError: (String) -> Unit,
+    onCancelled: () -> Unit,
 )

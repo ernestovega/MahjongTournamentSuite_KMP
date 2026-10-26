@@ -376,6 +376,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         loading = false
     }
 
+    val exportPlayers = rememberPlayersExport(tournamentId) { error = it }
+
     fun exportIdList() = scope.launch {
         val unassigned = players.filterNot { it.isAssigned }
         if (unassigned.isNotEmpty()) {
@@ -1121,6 +1123,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 onIdList = ::exportIdList,
                 onPlayerAccounts = { accountError = null; accountResults = emptyList(); loadInvitations(); bulkAccountsOpen = true },
                 onImportPlayers = { importDialogOpen = true },
+                onExportPlayers = exportPlayers,
             )
         },
     ) {

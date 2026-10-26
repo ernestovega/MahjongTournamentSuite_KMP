@@ -16,6 +16,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,7 +41,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
-import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetSaver
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetSaver
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
@@ -53,23 +53,15 @@ import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.import_apply_count
 import mahjongtournamentsuite.adminapp.generated.resources.import_applying
-import mahjongtournamentsuite.adminapp.generated.resources.import_choose_file
 import mahjongtournamentsuite.adminapp.generated.resources.import_choose_other_file
-import mahjongtournamentsuite.adminapp.generated.resources.import_column_email
-import mahjongtournamentsuite.adminapp.generated.resources.import_column_ema
-import mahjongtournamentsuite.adminapp.generated.resources.import_column_id
-import mahjongtournamentsuite.adminapp.generated.resources.import_column_team
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_errors
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_new
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_replace
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_unchanged
 import mahjongtournamentsuite.adminapp.generated.resources.import_current_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_done_title
-import mahjongtournamentsuite.adminapp.generated.resources.import_export_button
-import mahjongtournamentsuite.adminapp.generated.resources.import_export_hint
 import mahjongtournamentsuite.adminapp.generated.resources.import_email_value
 import mahjongtournamentsuite.adminapp.generated.resources.import_failure_line
-import mahjongtournamentsuite.adminapp.generated.resources.import_intro
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_slot
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_changes
@@ -87,7 +79,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_issue_team_too
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown_slot
-import mahjongtournamentsuite.adminapp.generated.resources.import_no_emails_sent
 import mahjongtournamentsuite.adminapp.generated.resources.import_players_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_reading_file
 import mahjongtournamentsuite.adminapp.generated.resources.import_replace_checkbox
@@ -119,8 +110,8 @@ private sealed interface ImportStep {
 }
 
 /**
- * Fills the player slots from a CSV or Excel file. The editor sees what the import does before it changes anything.
- * [playerNameOf] gives the name of a player in the EMA registry. [onChanged] runs when the import changed data.
+ * Fills the player slots from a CSV or Excel file. The file chooser opens at once. The editor sees what the import does
+ * before it changes anything. [playerNameOf] gives the name of a player in the EMA registry. [onChanged] runs when the import changed data.
  */
 @Composable
 fun PlayerImportDialog(
@@ -129,10 +120,11 @@ fun PlayerImportDialog(
     onChanged: () -> Unit,
     onDismiss: () -> Unit,
     /** Gives the file chooser. Tests give a chooser that picks a file at once. */
-    pickerFactory: @Composable (onSelected: (SelectedSpreadsheet) -> Unit, onError: (UiText) -> Unit) -> SpreadsheetPicker =
-        { onSelected, onError -> rememberSpreadsheetPicker(onSelected, onError) },
-    /** Gives the saver of the players file. Tests give a saver that keeps the file in memory. */
-    saverFactory: @Composable (onError: (UiText) -> Unit) -> SpreadsheetSaver = { onError -> rememberSpreadsheetSaver(onError) },
+    pickerFactory: @Composable (
+        onSelected: (SelectedSpreadsheet) -> Unit,
+        onError: (UiText) -> Unit,
+        onCancelled: () -> Unit,
+    ) -> SpreadsheetPicker = { onSelected, onError, onCancelled -> rememberSpreadsheetPicker(onSelected, onError, onCancelled) },
 ) {
     val presenter = koinInject<PlayerImportPresenter>()
     val scope = rememberCoroutineScope()
@@ -154,48 +146,27 @@ fun PlayerImportDialog(
         }
     }
 
-    val picker = pickerFactory({ file -> preview(file) }, { error = it })
-    val saver = saverFactory { error = it }
+    val picker = pickerFactory(
+        { file -> preview(file) },
+        { error = it },
+        { if (step == ImportStep.Choose) onDismiss() },
+    )
 
-    fun export() = scope.launch {
-        when (val result = presenter.export(tournamentId)) {
-            is AppResult.Success -> saver.save(result.value.fileName, result.value.bytes)
-            is AppResult.Failure -> error = result.error.toUiText()
-        }
-    }
+    // The first step has no dialog. The file chooser of the system opens at once.
+    LaunchedEffect(Unit) { picker.launch() }
 
-    error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
-
-    when (val current = step) {
-        ImportStep.Choose -> AlertDialog(
-            onDismissRequest = onDismiss,
-            modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.import_players_title)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.import_intro))
-                    Text(stringResource(Res.string.import_column_id))
-                    Text(stringResource(Res.string.import_column_ema))
-                    Text(stringResource(Res.string.import_column_email))
-                    Text(stringResource(Res.string.import_column_team))
-                    Text(
-                        stringResource(Res.string.import_no_emails_sent),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        stringResource(Res.string.import_export_hint),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
-            confirmButton = { Button(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_file)) } },
-            dismissButton = {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                    TextButton(onClick = { export() }) { Text(stringResource(Res.string.import_export_button)) }
-                }
+    error?.let {
+        AppErrorDialog(
+            message = it,
+            onDismiss = {
+                error = null
+                if (step == ImportStep.Choose) onDismiss()
             },
         )
+    }
+
+    when (val current = step) {
+        ImportStep.Choose -> Unit
 
         ImportStep.Reading, is ImportStep.Applying -> AlertDialog(
             onDismissRequest = {},
@@ -428,5 +399,21 @@ private fun ImportIssue.toUiText(): UiText {
         ImportIssueCode.EMAIL_IGNORED_LINKED -> UiText.of(Res.string.import_issue_email_linked)
         ImportIssueCode.TEAM_IGNORED -> UiText.of(Res.string.import_issue_team_ignored)
         ImportIssueCode.UNKNOWN -> UiText.of(Res.string.import_issue_unknown)
+    }
+}
+
+/** Gives the action that downloads the players file of the tournament, with no dialog. */
+@Composable
+fun rememberPlayersExport(tournamentId: String, onError: (UiText) -> Unit): () -> Unit {
+    val presenter = koinInject<PlayerImportPresenter>()
+    val scope = rememberCoroutineScope()
+    val saver = rememberSpreadsheetSaver(onError)
+    return {
+        scope.launch {
+            when (val result = presenter.export(tournamentId)) {
+                is AppResult.Success -> saver.save(result.value.fileName, result.value.bytes)
+                is AppResult.Failure -> onError(result.error.toUiText())
+            }
+        }
     }
 }
