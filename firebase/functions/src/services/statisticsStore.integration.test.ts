@@ -31,6 +31,11 @@ function saveTotals(tournamentId: string, expectedVersion: number, scores: [stri
 
 const playerDoc = (id: string) => db.collection("statsPlayers").doc(id).get();
 
+/** The points depend on the scoring rules. These tests check the place and the score. */
+function withoutPoints(standings: Awaited<ReturnType<typeof loadStandings>>) {
+  return standings.map(({ points: _points, ...rest }) => rest);
+}
+
 describe("statistics store", () => {
   before(requireEmulator);
 
@@ -58,8 +63,8 @@ describe("statistics store", () => {
     const person = await loadPersonStatistics(ema(tag, 4), null);
     assert.equal(person.tournaments.length, 1);
     assert.equal(person.tournaments[0].results[0].position, 4);
-    assert.deepEqual(await loadStandings(ema(tag, 4), [id, "other"]), [{ tournamentId: id, rank: 4, of: 4 }]);
-    assert.deepEqual(await loadStandings(ema(tag, 1), [id]), [{ tournamentId: id, rank: 1, of: 4 }]);
+    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 4), [id, "other"])), [{ tournamentId: id, rank: 4, of: 4, score: -50 }]);
+    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 1), [id])), [{ tournamentId: id, rank: 1, of: 4, score: 50 }]);
     assert.equal((await loadPersonStatistics(ema(tag, 4), new Set(["other"]))).tournaments.length, 0);
   });
 

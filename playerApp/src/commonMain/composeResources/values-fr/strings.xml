@@ -104,7 +104,6 @@
     <string name="hand_self_pick">Du mur</string>
     <string name="hand_discard">Défausse</string>
     <string name="hand_draw">Nulle</string>
-    <string name="player_ranking_summary">Place %1$d - %2$s points - score %3$d</string>
     <string name="tables_player_empty_message">Ce joueur n'a pas encore de table dans ce tournoi.</string>
     <string name="jump_to_me">Aller à moi</string>
     <string name="entry_totals_only">Les organisateurs saisissent seulement les scores finaux de cette table. Vous ne pouvez pas ajouter de mains ici.</string>

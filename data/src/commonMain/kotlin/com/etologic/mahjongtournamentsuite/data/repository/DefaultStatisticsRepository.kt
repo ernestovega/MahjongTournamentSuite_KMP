@@ -70,7 +70,7 @@ class DefaultStatisticsRepository(
                 emptyMap()
             } else {
                 backendApi.personStandings(idToken, emaId, tournamentIds).standings
-                    .associate { it.tournamentId to Standing(it.rank, it.of) }
+                    .associate { it.tournamentId to Standing(it.rank, it.of, it.points, it.score) }
             }
         }
 

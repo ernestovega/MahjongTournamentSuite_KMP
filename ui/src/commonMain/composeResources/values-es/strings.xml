@@ -126,6 +126,7 @@
     <string name="rival_player">Jugador %1$s</string>
     <string name="rival_ema">EMA %1$s</string>
     <string name="stats_totals">Totales</string>
+    <string name="stats_standing">Clasificación del torneo</string>
     <string name="stat_tournaments">Torneos</string>
     <string name="stat_tables">Mesas</string>
     <string name="stat_hands">Manos</string>

@@ -126,6 +126,7 @@
     <string name="rival_player">Player %1$s</string>
     <string name="rival_ema">EMA %1$s</string>
     <string name="stats_totals">Totals</string>
+    <string name="stats_standing">Tournament standing</string>
     <string name="stat_tournaments">Tournaments</string>
     <string name="stat_tables">Tables</string>
     <string name="stat_hands">Hands</string>

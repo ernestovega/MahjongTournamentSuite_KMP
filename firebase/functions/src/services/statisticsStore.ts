@@ -398,6 +398,9 @@ export type PersonStanding = {
   /** Place of the player in the tournament and the number of players with a result. */
   rank: number;
   of: number;
+  /** The points and the score of the player in the tournament. */
+  points: number;
+  score: number;
 };
 
 /** The final place of one player in each of the given tournaments. A tournament without a result of the player is left out. */
@@ -416,7 +419,7 @@ export async function loadStandings(emaId: string, tournamentIds: string[]): Pro
     const mine = rows.find((row) => row.slot === Number(slots.docs[0].id));
     if (mine == null) return null;
     const better = rows.filter((row) => row.points > mine.points || (row.points === mine.points && row.score > mine.score)).length;
-    return { tournamentId, rank: better + 1, of: rows.length };
+    return { tournamentId, rank: better + 1, of: rows.length, points: mine.points, score: mine.score };
   }));
   return standings.filter((standing): standing is PersonStanding => standing != null);
 }
