@@ -1181,7 +1181,7 @@ private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hig
     }
 }
 
-/** [short] is the label of the button of the ranking. It is short because the buttons share a row with the search. */
+/** [short] is the label of the tab of the ranking. It is short because the tabs share one row. */
 private enum class RankingKind(val title: StringResource, val short: StringResource) {
     PLAYERS(Res.string.scope_players, Res.string.scope_players),
     TEAMS(Res.string.ranking_teams, Res.string.ranking_teams),
@@ -1210,7 +1210,7 @@ private data class RankingRow(
 
 /** The ranking tab. A second row of tabs shows the rankings that the tournament has. */
 @Composable
-private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit) {
+internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit) {
     val rankings = view.rankings
     val kinds = buildList {
         add(RankingKind.PLAYERS)
@@ -1297,27 +1297,30 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
         rows,
         emptyText = stringResource(Res.string.ranking_empty),
         onPlayerClick = onPlayerClick,
-        controls = {
-            // One low button for each ranking: the icon over its label.
+        tabs = {
             if (kinds.size > 1) {
-                kinds.forEach { item ->
-                    val selected = item == kind
-                    val contentColor = if (selected) TabContentColor else MaterialTheme.colorScheme.onSurfaceVariant
-                    Column(
-                        Modifier.weight(1f).height(44.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (selected) tabRowColor() else Color.Transparent)
-                            .clickable { chosen = item },
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center,
+                val selectedIndex = kinds.indexOf(kind)
+                HideOnScrollTabs(kinds.size) {
+                    PrimaryTabRow(
+                        selectedTabIndex = selectedIndex,
+                        containerColor = tabRowColor(), contentColor = TabContentColor,
+                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(selectedIndex), color = TabContentColor) },
                     ) {
-                        when (item) {
-                            RankingKind.PLAYERS -> Icon(Icons.Default.People, contentDescription = null, Modifier.size(20.dp), tint = contentColor)
-                            RankingKind.TEAMS -> Icon(Icons.Default.Groups, contentDescription = null, Modifier.size(20.dp), tint = contentColor)
-                            RankingKind.CHICKEN -> ChickenIcon(size = 20.dp)
-                            RankingKind.BEST -> PositionTrophy(1, size = 20.dp)
+                        kinds.forEach { item ->
+                            CompactTab(
+                                selected = item == kind,
+                                onClick = { chosen = item },
+                                title = stringResource(item.short),
+                                icon = {
+                                    when (item) {
+                                        RankingKind.PLAYERS -> Icon(Icons.Default.People, contentDescription = null, Modifier.size(20.dp))
+                                        RankingKind.TEAMS -> Icon(Icons.Default.Groups, contentDescription = null, Modifier.size(20.dp))
+                                        RankingKind.CHICKEN -> ChickenIcon(size = 20.dp)
+                                        RankingKind.BEST -> PositionTrophy(1, size = 20.dp)
+                                    }
+                                },
+                            )
                         }
-                        Text(stringResource(item.short), style = MaterialTheme.typography.labelSmall, color = contentColor, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
             }
@@ -1325,17 +1328,17 @@ private fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit)
     )
 }
 
-/** A dropdown of the lines that the user can type in, with the list under it, and a button that scrolls to the own line. */
+/** The tabs of the rankings, then the list. The button that scrolls to the own line and the search are the first item of the list. */
 @Composable
 private fun RankingRows(
     rows: List<RankingRow>,
     emptyText: String,
     onPlayerClick: (Int) -> Unit,
-    controls: @Composable RowScope.() -> Unit,
+    tabs: @Composable () -> Unit,
 ) {
     if (rows.isEmpty()) {
-        Column(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), content = controls)
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            tabs()
             EmptyState(Icons.Default.Leaderboard, stringResource(Res.string.ranking_empty_title), emptyText)
         }
         return
@@ -1346,41 +1349,43 @@ private fun RankingRows(
     val scope = rememberCoroutineScope()
     val myIndex = visible.indexOfFirst { it.mine }
     Column {
-        // One row: the ranking buttons, then "Jump to me", then the small dropdown at the right.
-        Row(Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            controls()
-            val jumpToMe = stringResource(Res.string.jump_to_me)
-            if (myIndex >= 0) {
-                Column(
-                    Modifier.width(44.dp).height(44.dp)
-                        .clip(RoundedCornerShape(10.dp))
-                        .clickable { scope.launch { listState.animateScrollToItem(myIndex) } }
-                        .semantics { contentDescription = jumpToMe },
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Icon(Icons.Default.MyLocation, contentDescription = null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(Res.string.scope_me), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
-                }
-            }
-            // The dropdown does not filter the list. Choosing a line scrolls the list to it.
-            SearchableDropdownField<String>(
-                label = stringResource(Res.string.field_search),
-                options = options,
-                selected = null,
-                onChoose = { key ->
-                    val index = visible.indexOfFirst { it.key == key }
-                    if (index >= 0) scope.launch { listState.animateScrollToItem(index) }
-                },
-                modifier = Modifier.weight(2f),
-                compact = true,
-            )
-        }
+        tabs()
         LazyColumn(
             state = listState,
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(start = 16.dp, top = 8.dp, end = 16.dp, bottom = 12.dp),
+            contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
         ) {
+            item(key = "controls") {
+                // One row that scrolls with the list: "Jump to me", then the search.
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    val jumpToMe = stringResource(Res.string.jump_to_me)
+                    if (myIndex >= 0) {
+                        Column(
+                            Modifier.width(44.dp).height(44.dp)
+                                .clip(RoundedCornerShape(10.dp))
+                                .clickable { scope.launch { listState.animateScrollToItem(myIndex + 1) } }
+                                .semantics { contentDescription = jumpToMe },
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(Icons.Default.MyLocation, contentDescription = null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                            Text(stringResource(Res.string.scope_me), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary, maxLines = 1)
+                        }
+                    }
+                    // The dropdown does not filter the list. Choosing a line scrolls the list to it.
+                    SearchableDropdownField<String>(
+                        label = stringResource(Res.string.field_search),
+                        options = options,
+                        selected = null,
+                        onChoose = { key ->
+                            val index = visible.indexOfFirst { it.key == key }
+                            if (index >= 0) scope.launch { listState.animateScrollToItem(index + 1) }
+                        },
+                        modifier = Modifier.weight(1f),
+                        compact = true,
+                    )
+                }
+            }
             items(visible, key = { it.key }) { row ->
                 RankingCard(row, onPlayerClick)
             }

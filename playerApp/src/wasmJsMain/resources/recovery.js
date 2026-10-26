@@ -33,17 +33,34 @@
   const TRIGGER_PX = 140;
   let startY = null;
   let pulled = 0;
+  const SIZE = 48;
   const indicator = document.createElement("div");
-  indicator.style.cssText = "position:fixed;top:0;left:50%;width:36px;height:36px;margin-left:-18px;" +
-    "border-radius:50%;background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.35);z-index:10;" +
-    "display:none;pointer-events:none;align-items:center;justify-content:center;font:20px sans-serif;color:#333";
-  indicator.textContent = "↻";
-  document.addEventListener("DOMContentLoaded", () => document.body.appendChild(indicator));
+  indicator.style.cssText = "position:fixed;top:0;left:50%;width:" + SIZE + "px;height:" + SIZE + "px;" +
+    "margin-left:-" + SIZE / 2 + "px;border-radius:50%;background:#fff;box-shadow:0 3px 10px rgba(0,0,0,.5);" +
+    "z-index:2147483647;display:none;pointer-events:none;align-items:center;justify-content:center;" +
+    "font:28px sans-serif;color:#333;transition:background-color .1s,color .1s";
+  // An SVG icon is centered in its own box. The text arrow is not, so it wobbles when it turns.
+  indicator.innerHTML = '<svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor" style="display:block">' +
+    '<path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 7.73 10h-2.08A6 6 0 1 1 12 6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>';
+  const icon = indicator.firstChild;
+  // Add the indicator to the html element. The app can replace the content of the body.
+  (document.documentElement || document.body).appendChild(indicator);
 
   const hide = () => {
     indicator.style.display = "none";
     startY = null;
     pulled = 0;
+  };
+
+  const show = () => {
+    const shown = Math.min(pulled, TRIGGER_PX);
+    const ready = pulled >= TRIGGER_PX;
+    indicator.style.display = "flex";
+    indicator.style.transform = "translateY(" + (shown - SIZE + 16) + "px)";
+    icon.style.transform = "rotate(" + shown * 3 + "deg)";
+    indicator.style.opacity = String(Math.max(0.3, shown / TRIGGER_PX));
+    indicator.style.background = ready ? "#2e7d32" : "#fff";
+    indicator.style.color = ready ? "#fff" : "#333";
   };
 
   window.addEventListener("touchstart", (event) => {
@@ -56,19 +73,20 @@
     if (startY === null) return;
     pulled = event.touches[0].clientY - startY;
     if (pulled > 10) {
-      const shown = Math.min(pulled, TRIGGER_PX);
-      indicator.style.display = "flex";
-      indicator.style.transform = "translateY(" + (shown - 36) + "px) rotate(" + shown * 2 + "deg)";
-      indicator.style.opacity = String(shown / TRIGGER_PX);
+      show();
     } else {
       indicator.style.display = "none";
     }
   }, { capture: true, passive: true });
 
   window.addEventListener("touchend", () => {
-    const done = pulled >= TRIGGER_PX;
+    if (pulled >= TRIGGER_PX) {
+      // Keep the indicator visible while the page reloads.
+      indicator.style.transform = "translateY(16px)";
+      reload();
+      return;
+    }
     hide();
-    if (done) reload();
   }, { capture: true, passive: true });
   window.addEventListener("touchcancel", hide, { capture: true, passive: true });
 })();

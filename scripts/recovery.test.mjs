@@ -14,12 +14,13 @@ function load(path) {
   const listeners = { window: {}, document: {} };
   const adder = (target) => (type, handler) => ((listeners[target][type] ??= []).push(handler));
   const state = { reloads: 0, now: 1_000_000, appended: [] };
-  const indicator = { style: {}, textContent: "" };
+  const icon = { style: {} };
+  const indicator = { style: {}, firstChild: icon, set innerHTML(_) {} };
   const document = {
     visibilityState: "visible",
     addEventListener: adder("document"),
     createElement: () => indicator,
-    body: { appendChild: (node) => state.appended.push(node) },
+    documentElement: { appendChild: (node) => state.appended.push(node) },
   };
   const window = {
     location: { reload: () => state.reloads++ },
@@ -34,7 +35,7 @@ function load(path) {
   const hideTab = () => { document.visibilityState = "hidden"; fire("document", "visibilitychange"); };
   const showTab = () => { document.visibilityState = "visible"; fire("document", "visibilitychange"); };
   const touch = (y) => ({ touches: [{ clientY: y }] });
-  return { state, indicator, fire, hideTab, showTab, touch };
+  return { state, indicator, icon, fire, hideTab, showTab, touch };
 }
 
 for (const path of PATHS) {
@@ -84,9 +85,10 @@ for (const path of PATHS) {
     page.fire("window", "touchmove", page.touch(100));
     assert.equal(page.indicator.style.display, "flex");
     page.fire("window", "touchmove", page.touch(180));
+    assert.equal(page.indicator.style.background, "#2e7d32");
     page.fire("window", "touchend");
     assert.equal(page.state.reloads, 1);
-    assert.equal(page.indicator.style.display, "none");
+    assert.equal(page.indicator.style.display, "flex");
   });
 
   test(`${name}: pull to refresh ignores a short pull`, () => {
@@ -131,9 +133,25 @@ for (const path of PATHS) {
     assert.equal(page.state.reloads, 0);
   });
 
+  test(`${name}: the icon turns inside a fixed circle`, () => {
+    const page = load(path);
+    page.fire("window", "touchstart", page.touch(20));
+    page.fire("window", "touchmove", page.touch(100));
+    assert.match(page.icon.style.transform, /^rotate\(/);
+    assert.doesNotMatch(page.indicator.style.transform, /rotate/);
+  });
+
+  test(`${name}: the indicator turns green when the pull is long enough`, () => {
+    const page = load(path);
+    page.fire("window", "touchstart", page.touch(20));
+    page.fire("window", "touchmove", page.touch(100));
+    assert.equal(page.indicator.style.background, "#fff");
+    page.fire("window", "touchmove", page.touch(180));
+    assert.equal(page.indicator.style.background, "#2e7d32");
+  });
+
   test(`${name}: adds the indicator to the page`, () => {
     const page = load(path);
-    page.fire("document", "DOMContentLoaded");
     assert.equal(page.state.appended.length, 1);
   });
 }
