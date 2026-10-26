@@ -373,6 +373,7 @@ function planTournamentInfo(snapshot: TournamentSnapshot): Data {
     contactEmail: "test-statistics@example.com",
     hostCountry: "ES",
     hostCity: "Madrid",
+    timeZone: "Europe/Madrid",
     eventStartDate: start,
     eventEndDate: end,
     roundSchedules: scheduleFor(numRounds, start),

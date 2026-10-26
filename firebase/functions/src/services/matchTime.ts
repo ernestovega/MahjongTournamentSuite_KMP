@@ -17,12 +17,21 @@ export function isValidTimeZone(value: string): boolean {
   }
 }
 
-/** Validates an IANA time zone such as "Europe/Madrid". An empty value means that the tournament has none. */
+/**
+ * The zones that the admin app offers: "UTC" or a region name such as "Europe/Madrid".
+ * The technical zones "Etc/..." and "SystemV/..." are not offered.
+ */
+export function isSelectableTimeZone(value: string): boolean {
+  if (!isValidTimeZone(value)) return false;
+  return value === "UTC" || (/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)+$/.test(value) && !value.startsWith("Etc/") && !value.startsWith("SystemV/"));
+}
+
+/** Validates a time zone that the admin app offers. An empty value means that the tournament has none. */
 export function normalizeTimeZone(value: unknown): string | null {
   if (value == null) return null;
   const text = String(value).trim();
   if (text === "") return null;
-  if (!isValidTimeZone(text)) throw badRequest("timeZone must be an IANA time zone, for example Europe/Madrid");
+  if (!isSelectableTimeZone(text)) throw badRequest("timeZone must be a region time zone, for example Europe/Madrid");
   return text;
 }
 

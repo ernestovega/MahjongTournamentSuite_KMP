@@ -1,11 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,17 +11,13 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -44,10 +36,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -85,6 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentLog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentPlaceFields
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentScheduleEditor
+import com.etologic.mahjongtournamentsuite.presentation.components.CreateProgressDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.VenueTimeZoneField
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -102,6 +93,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentA
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentRoundSchedules
 import com.etologic.mahjongtournamentsuite.presentation.components.tournamentScheduleEditorError
 import com.etologic.mahjongtournamentsuite.presentation.components.venueRequiredError
+import com.etologic.mahjongtournamentsuite.presentation.components.deviceTimeZoneId
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.CreateTournamentPresenter
@@ -109,8 +101,6 @@ import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import kotlin.math.abs
-import kotlin.math.roundToLong
 import kotlin.time.Clock
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -128,15 +118,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.choose_start_date
 import mahjongtournamentsuite.adminapp.generated.resources.count_the_best_hands_and_show
 import mahjongtournamentsuite.adminapp.generated.resources.count_the_chicken_hands_and_show
 import mahjongtournamentsuite.adminapp.generated.resources.create
-import mahjongtournamentsuite.adminapp.generated.resources.create_calculating
-import mahjongtournamentsuite.adminapp.generated.resources.create_cancel_calculation
 import mahjongtournamentsuite.adminapp.generated.resources.create_heavy_info
 import mahjongtournamentsuite.adminapp.generated.resources.create_intro
 import mahjongtournamentsuite.adminapp.generated.resources.create_players_placeholder
 import mahjongtournamentsuite.adminapp.generated.resources.create_required_note
-import mahjongtournamentsuite.adminapp.generated.resources.create_saving
 import mahjongtournamentsuite.adminapp.generated.resources.create_teams_info
-import mahjongtournamentsuite.adminapp.generated.resources.create_tried
 import mahjongtournamentsuite.adminapp.generated.resources.date_to
 import mahjongtournamentsuite.adminapp.generated.resources.dd_mm_yyyy
 import mahjongtournamentsuite.adminapp.generated.resources.error_star_prefix
@@ -263,7 +249,7 @@ fun CreateTournamentDialog(
     var matchDurationText by remember { mutableStateOf(DEFAULT_MATCH_DURATION_MINUTES.toString()) }
     var finishHandInPlay by remember { mutableStateOf(false) }
     var matchExtraText by remember { mutableStateOf(DEFAULT_MATCH_EXTRA_MINUTES.toString()) }
-    var timeZoneText by remember { mutableStateOf(TimeZone.currentSystemDefault().id) }
+    var timeZoneText by remember { mutableStateOf(deviceTimeZoneId()) }
     var computeMode by remember { mutableStateOf(CreateTournamentPresenter.ComputeMode.LIGHT) }
 
     var isLoading by remember { mutableStateOf(false) }
@@ -711,6 +697,10 @@ fun CreateTournamentDialog(
                                 },
                                 countries = countries,
                                 resolveLink = presenter::resolveVenueLink,
+                                onTimeZoneFound = {
+                                    timeZoneText = it
+                                    clearError(CreateField.TIME_ZONE)
+                                },
                                 enabled = !isLoading,
                                 countryError = fieldErrors[CreateField.COUNTRY],
                                 cityError = fieldErrors[CreateField.CITY],
@@ -889,39 +879,13 @@ fun CreateTournamentDialog(
                             onDismiss = { errorMessage = null },
                         )
                     }
-
-                    if (isLoading) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                            Text(
-                                when (progress?.phase) {
-                                    CreateTournamentPresenter.Phase.CREATING -> stringResource(Res.string.create_saving)
-                                    else -> stringResource(Res.string.create_calculating)
-                                },
-                            )
-                        }
-                        progress?.let { currentProgress ->
-                            if (currentProgress.phase == CreateTournamentPresenter.Phase.CALCULATING) {
-                                Text(stringResource(Res.string.create_tried, formatWithDots(currentProgress.tried)))
-                                RunningTriesSlots(
-                                    runningTries = currentProgress.runningTries,
-                                    maxConcurrency = currentProgress.maxConcurrency,
-                                )
-                            }
-                        }
-                    }
                 }
             }
             }
         },
         confirmButton = {
-            Button(
-                onClick = if (isLoading) ::cancelCreation else ::startCreate,
-            ) {
-                Text(stringResource(if (isLoading) Res.string.create_cancel_calculation else Res.string.create))
+            Button(onClick = ::startCreate, enabled = !isLoading) {
+                Text(stringResource(Res.string.create))
             }
         },
         dismissButton = if (isLoading) {
@@ -939,6 +903,10 @@ fun CreateTournamentDialog(
             }
         },
     )
+
+    if (isLoading) {
+        CreateProgressDialog(progress = progress, startMark = calcStartMark, onCancel = ::cancelCreation)
+    }
 
     if (showDateRangePicker) {
         TournamentDateRangePickerDialog(
@@ -991,58 +959,5 @@ fun CreateTournamentDialog(
                 showLogoLibrary = false
             },
         )
-    }
-}
-
-private fun formatWithDots(value: Long): String {
-    val s = value.toString()
-    if (s.length <= 3) return s
-    val reversed = s.reversed().chunked(3).joinToString(".")
-    return reversed.reversed()
-}
-
-@Composable
-private fun RunningTriesSlots(
-    runningTries: Int,
-    maxConcurrency: Int,
-) {
-    val safeMax = maxConcurrency.coerceAtLeast(1)
-    val filled = runningTries.coerceIn(0, safeMax)
-    val shape = RoundedCornerShape(3.dp)
-    val columns = minOf(25, safeMax)
-    val slotSize = 10.dp
-    val spacing = 2.dp
-    val rows = (safeMax + columns - 1) / columns
-    val gridWidth =
-        (slotSize * columns.toFloat()) + (spacing * (columns - 1).coerceAtLeast(0).toFloat())
-    val gridHeight = (slotSize * rows.toFloat()) + (spacing * (rows - 1).coerceAtLeast(0).toFloat())
-    val maxGridHeight = 420.dp
-
-    @OptIn(ExperimentalFoundationApi::class)
-    LazyVerticalGrid(
-        columns = GridCells.Fixed(columns),
-        horizontalArrangement = Arrangement.spacedBy(spacing),
-        verticalArrangement = Arrangement.spacedBy(spacing),
-        modifier = Modifier
-            .widthIn(min = gridWidth, max = gridWidth)
-            .heightIn(max = gridHeight.coerceAtMost(maxGridHeight)),
-    ) {
-        items(count = safeMax) { index ->
-            val isFilled = index < filled
-            Box(
-                modifier = Modifier
-                    .size(slotSize)
-                    .clip(shape)
-                    .border(
-                        width = 1.dp,
-                        color = MaterialTheme.colorScheme.outlineVariant,
-                        shape = shape,
-                    )
-                    .background(
-                        color = if (isFilled) MaterialTheme.colorScheme.primary else Color.Transparent,
-                        shape = shape,
-                    ),
-            )
-        }
     }
 }

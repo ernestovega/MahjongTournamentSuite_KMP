@@ -490,7 +490,7 @@ class DefaultTournamentRepository(
             ResolvedVenueLink(
                 url = response.url,
                 place = response.place?.let { place ->
-                    VenueLinkPlace(place.name, place.address, place.city, place.countryCode)
+                    VenueLinkPlace(place.name, place.address, place.city, place.countryCode, place.timeZone)
                 },
             )
         }

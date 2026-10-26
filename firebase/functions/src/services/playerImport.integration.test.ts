@@ -3,8 +3,10 @@ import { before, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { requireEmulator, seedTournament } from "../testing/firestoreFixtures";
+import { parsePlayerImportFile } from "./playerImport";
 import {
   applyPlayerImport as applyStep,
+  exportPlayers,
   IMPORT_BATCH_SIZE,
   previewPlayerImport,
   type PlayerImportResult,
@@ -115,5 +117,66 @@ describe("player import", () => {
     assert.equal(result.assigned, 1);
     assert.equal(result.skipped, 1);
     assert.equal((await slotOf(id, 2)).get("assignedEmaId"), null);
+  });
+});
+
+describe("player export", () => {
+  before(requireEmulator);
+
+  const parse = (exported: { fileName: string; buffer: Buffer }) => parsePlayerImportFile(exported.fileName, exported.buffer);
+
+  it("writes every slot with the current EMA number, email and team name", async () => {
+    const id = await seedImportTournament(true);
+    await applyPlayerImport({
+      tournamentId: id, ...file("id,ema id,email,team\n1,1,a@b.es,Reds\n3,3,,Blues\n"), replaceExisting: false, uid: "editor",
+    });
+
+    const exported = await exportPlayers(id);
+    const parsed = await parse(exported);
+
+    assert.equal(exported.fileName, "players.xlsx");
+    assert.equal(parsed.hasTeamColumn, true);
+    assert.deepEqual(parsed.rows.map((row) => [row.id, row.emaId, row.email, row.team]), [
+      ["1", "00000001", "a@b.es", "Reds"],
+      ["2", "", "", "Reds"],
+      ["3", "00000003", "", "Blues"],
+      ["4", "", "", "Blues"],
+    ]);
+  });
+
+  it("has no team column when the tournament has no teams", async () => {
+    const id = await seedImportTournament(false);
+
+    const parsed = await parse(await exportPlayers(id));
+
+    assert.equal(parsed.hasTeamColumn, false);
+    assert.equal(parsed.rows.length, 4);
+  });
+
+  it("works as a template: importing the exported file changes nothing", async () => {
+    const id = await seedImportTournament(true);
+    await applyPlayerImport({
+      tournamentId: id, ...file("id,ema id,email,team\n1,1,a@b.es,Reds\n2,2,,Reds\n"), replaceExisting: false, uid: "editor",
+    });
+    const exported = await exportPlayers(id);
+
+    const preview = await previewPlayerImport({ tournamentId: id, ...exported });
+
+    // The two assigned slots are unchanged. The two empty slots have no EMA number yet.
+    assert.deepEqual(preview.rows.map((row) => row.status), ["UNCHANGED", "UNCHANGED", "ERROR", "ERROR"]);
+    assert.deepEqual(preview.teamRenames, []);
+  });
+
+  it("writes the EMA number of a person with a linked account and shows no email for the slot", async () => {
+    const id = await seedImportTournament(false);
+    await db.doc(`tournaments/${id}/players/2`).update({ assignedEmaId: "00000002", accountUid: "uid-2" });
+
+    const parsed = await parse(await exportPlayers(id));
+
+    assert.deepEqual(parsed.rows[1], { row: 3, id: "2", emaId: "00000002", email: "", team: "" });
+  });
+
+  it("refuses a tournament that does not exist", async () => {
+    await assert.rejects(() => exportPlayers("does-not-exist"), /not found/i);
   });
 });

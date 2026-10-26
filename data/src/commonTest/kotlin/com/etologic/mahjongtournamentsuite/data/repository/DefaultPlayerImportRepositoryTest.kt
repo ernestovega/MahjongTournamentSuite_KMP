@@ -9,6 +9,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowStatus
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -75,6 +76,57 @@ class DefaultPlayerImportRepositoryTest {
         assertEquals(ImportIssueCode.UNKNOWN, preview.rows[1].issues[0].code)
         assertEquals(listOf(4), preview.untouchedSlotIds)
         assertTrue(preview.isTeams && preview.tournamentStarted)
+    }
+
+    @Test
+    fun exportReadsTheFileFromTheExportRoute() = runTest {
+        var method = ""
+        var path = ""
+        val repository = DefaultPlayerImportRepository(
+            backendApi = mockBackendApi { request ->
+                method = request.method.value
+                path = request.url.encodedPath
+                jsonResponse("""{"fileName":"players.xlsx","dataBase64":"AQID"}""")
+            },
+            authRepository = FakeAuthRepository(),
+            logger = Logger.withTag("test"),
+            cache = RecordingCache(),
+        )
+
+        val result = repository.export("t1")
+
+        assertIs<AppResult.Success<PlayerExportFile>>(result)
+        assertEquals("GET", method)
+        assertTrue(path.endsWith("/tournaments/t1/player-import/export"))
+        assertEquals("players.xlsx", result.value.fileName)
+        assertEquals(listOf<Byte>(1, 2, 3), result.value.bytes.toList())
+    }
+
+    @Test
+    fun exportReturnsFailureWhenTheServerFails() = runTest {
+        val repository = DefaultPlayerImportRepository(
+            backendApi = mockBackendApi { respond("{}", HttpStatusCode.InternalServerError) },
+            authRepository = FakeAuthRepository(),
+            logger = Logger.withTag("test"),
+            cache = RecordingCache(),
+        )
+
+        assertIs<AppResult.Failure>(repository.export("t1"))
+    }
+
+    @Test
+    fun exportDoesNotChangeTheCache() = runTest {
+        val cache = RecordingCache()
+        val repository = DefaultPlayerImportRepository(
+            backendApi = mockBackendApi { jsonResponse("""{"fileName":"p.xlsx","dataBase64":""}""") },
+            authRepository = FakeAuthRepository(),
+            logger = Logger.withTag("test"),
+            cache = cache,
+        )
+
+        repository.export("t1")
+
+        assertTrue(cache.stale.isEmpty())
     }
 
     @Test

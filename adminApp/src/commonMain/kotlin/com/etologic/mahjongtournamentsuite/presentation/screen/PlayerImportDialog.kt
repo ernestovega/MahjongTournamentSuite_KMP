@@ -40,6 +40,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
+import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetSaver
+import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetSaver
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -63,6 +65,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_count_replace
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_unchanged
 import mahjongtournamentsuite.adminapp.generated.resources.import_current_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_done_title
+import mahjongtournamentsuite.adminapp.generated.resources.import_export_button
+import mahjongtournamentsuite.adminapp.generated.resources.import_export_hint
 import mahjongtournamentsuite.adminapp.generated.resources.import_email_value
 import mahjongtournamentsuite.adminapp.generated.resources.import_failure_line
 import mahjongtournamentsuite.adminapp.generated.resources.import_intro
@@ -127,6 +131,8 @@ fun PlayerImportDialog(
     /** Gives the file chooser. Tests give a chooser that picks a file at once. */
     pickerFactory: @Composable (onSelected: (SelectedSpreadsheet) -> Unit, onError: (UiText) -> Unit) -> SpreadsheetPicker =
         { onSelected, onError -> rememberSpreadsheetPicker(onSelected, onError) },
+    /** Gives the saver of the players file. Tests give a saver that keeps the file in memory. */
+    saverFactory: @Composable (onError: (UiText) -> Unit) -> SpreadsheetSaver = { onError -> rememberSpreadsheetSaver(onError) },
 ) {
     val presenter = koinInject<PlayerImportPresenter>()
     val scope = rememberCoroutineScope()
@@ -149,6 +155,14 @@ fun PlayerImportDialog(
     }
 
     val picker = pickerFactory({ file -> preview(file) }, { error = it })
+    val saver = saverFactory { error = it }
+
+    fun export() = scope.launch {
+        when (val result = presenter.export(tournamentId)) {
+            is AppResult.Success -> saver.save(result.value.fileName, result.value.bytes)
+            is AppResult.Failure -> error = result.error.toUiText()
+        }
+    }
 
     error?.let { AppErrorDialog(message = it, onDismiss = { error = null }) }
 
@@ -168,10 +182,19 @@ fun PlayerImportDialog(
                         stringResource(Res.string.import_no_emails_sent),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    Text(
+                        stringResource(Res.string.import_export_hint),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             },
             confirmButton = { Button(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_file)) } },
-            dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    TextButton(onClick = { export() }) { Text(stringResource(Res.string.import_export_button)) }
+                }
+            },
         )
 
         ImportStep.Reading, is ImportStep.Applying -> AlertDialog(

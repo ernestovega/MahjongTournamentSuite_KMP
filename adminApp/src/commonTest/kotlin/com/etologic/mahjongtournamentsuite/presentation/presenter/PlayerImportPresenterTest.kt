@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -19,6 +20,11 @@ class PlayerImportPresenterTest {
         val progress = mutableListOf<Pair<Int, Int>>()
         val presenter = PlayerImportPresenter(
             object : PlayerImportRepository {
+                override suspend fun export(tournamentId: String): AppResult<PlayerExportFile> {
+                    calls += "export $tournamentId"
+                    return AppResult.Success(PlayerExportFile("players.xlsx", byteArrayOf(1)))
+                }
+
                 override suspend fun preview(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<PlayerImportPreview> {
                     calls += "preview $tournamentId $fileName ${bytes.size}"
                     return AppResult.Success(preview)
@@ -45,5 +51,36 @@ class PlayerImportPresenterTest {
 
         assertEquals(listOf("preview t1 a.csv 2", "apply t1 a.csv true"), calls)
         assertEquals(listOf(5 to 10), progress)
+    }
+
+    @Test
+    fun exportsThePlayersOfTheTournament() = runTest {
+        val calls = mutableListOf<String>()
+        val presenter = PlayerImportPresenter(
+            object : PlayerImportRepository {
+                override suspend fun export(tournamentId: String): AppResult<PlayerExportFile> {
+                    calls += "export $tournamentId"
+                    return AppResult.Success(PlayerExportFile("players.xlsx", byteArrayOf(1, 2)))
+                }
+
+                override suspend fun preview(tournamentId: String, fileName: String, bytes: ByteArray) = AppResult.Success(preview)
+
+                override suspend fun apply(
+                    tournamentId: String,
+                    fileName: String,
+                    bytes: ByteArray,
+                    preview: PlayerImportPreview,
+                    replaceExisting: Boolean,
+                    onProgress: (Int, Int) -> Unit,
+                ) = AppResult.Success(result)
+            },
+            Logger.withTag("test"),
+        )
+
+        val file = (presenter.export("t9") as AppResult.Success).value
+
+        assertEquals(listOf("export t9"), calls)
+        assertEquals("players.xlsx", file.fileName)
+        assertEquals(listOf<Byte>(1, 2), file.bytes.toList())
     }
 }

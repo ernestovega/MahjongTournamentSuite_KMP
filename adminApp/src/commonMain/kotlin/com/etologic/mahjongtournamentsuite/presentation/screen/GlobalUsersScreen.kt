@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -611,6 +612,7 @@ private fun UserFilters(
                 ExposedDropdownMenu(
                     expanded = tournamentFilterExpanded,
                     onDismissRequest = { onTournamentFilterExpandedChange(false) },
+                    scrollState = rememberMenuScrollState(tournamentFilterExpanded, null),
                 ) {
                     DropdownMenuItem(text = { Text(stringResource(Res.string.all_tournaments)) }, onClick = { onTournamentSelected(null) })
                     tournaments.filter {
@@ -978,7 +980,11 @@ private fun GlobalRoleDropdown(
             enabled = enabled,
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            scrollState = rememberMenuScrollState(expanded, options.indexOf(role)),
+        ) {
             options.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(option.label()) },

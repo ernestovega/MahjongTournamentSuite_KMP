@@ -280,6 +280,7 @@ fun EmaCountryDropdown(
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = ::closeMenu,
+            scrollState = rememberMenuScrollState(expanded, filteredOptions.indexOfFirst { it.code == normalizedSelectedCode }),
         ) {
             Column(
                 modifier = Modifier

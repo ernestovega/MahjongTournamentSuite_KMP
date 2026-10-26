@@ -14,6 +14,7 @@ const found = {
         { longText: "Madrid", shortText: "Madrid", types: ["locality", "political"] },
         { longText: "Spain", shortText: "ES", types: ["country", "political"] },
       ],
+      timeZone: { id: "Europe/Madrid" },
     },
   ],
 };
@@ -46,6 +47,7 @@ describe("lookupPlace", () => {
       address: "Calle Cipriano Sancho, 36, 28002 Madrid",
       city: "Madrid",
       countryCode: "ES",
+      timeZone: "Europe/Madrid",
     });
     assert.equal(bodies[0].textQuery, "Eskalerria, Calle Cipriano Sancho 36, Madrid");
     assert.deepEqual((bodies[0].locationBias as { circle: { center: unknown } }).circle.center, {

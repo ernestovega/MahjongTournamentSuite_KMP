@@ -59,7 +59,6 @@
     <string name="select_time">Seleziona l'ora</string>
     <string name="finish_the_hand_in_play">Termina la mano in corso</string>
     <string name="when_the_time_is_over_the">Quando il tempo è finito, i giocatori possono registrare una mano in più durante il tempo supplementare.</string>
-    <string name="no_matching_time_zones">Nessun fuso orario corrispondente</string>
     <string name="the_width_and_the_height_keep">La larghezza e l'altezza mantengono la proporzione del cartellino</string>
     <string name="create_id_cards">Crea i cartellini</string>
     <string name="restore_settings">Ripristina le impostazioni</string>
@@ -537,6 +536,10 @@
     <string name="create_calculating">Calcolo del programma…</string>
     <string name="create_tried">Tentativi: %1$s</string>
     <string name="create_cancel_calculation">Annulla il calcolo</string>
+    <string name="create_progress_title">Creazione del torneo</string>
+    <string name="create_elapsed">Tempo trascorso: %1$s</string>
+    <string name="create_speed">Velocità: %1$s tentativi al secondo</string>
+    <string name="create_parallel">Tentativi in parallelo: %1$d su %2$d</string>
     <string name="create">Crea</string>
     <string name="yes">Sì</string>
     <string name="no">No</string>
@@ -738,6 +741,8 @@
     <string name="import_column_email">• email: l'email di contatto del giocatore. Questa colonna è facoltativa. L'app salva l'email e non invia nulla.</string>
     <string name="import_column_team">• team: il nome della squadra. Questa colonna è facoltativa e funziona solo nei tornei a squadre.</string>
     <string name="import_choose_file">Scegli file</string>
+    <string name="import_export_button">Scarica il file dei giocatori</string>
+    <string name="import_export_hint">Il pulsante Scarica il file dei giocatori salva un file Excel con i giocatori attuali in queste colonne. Modifica il file e importalo di nuovo, oppure usalo come modello.</string>
     <string name="import_choose_other_file">Scegli un altro file</string>
     <string name="import_reading_file">L'app sta leggendo il file.</string>
     <string name="import_applying">L'app sta importando i giocatori: %1$d righe su %2$d completate.</string>

@@ -65,3 +65,9 @@ data class PlayerImportResultDto(
     val skipped: Int,
     val failures: List<PlayerImportFailureDto> = emptyList(),
 )
+
+@Serializable
+data class PlayerExportDto(
+    val fileName: String,
+    val dataBase64: String,
+)

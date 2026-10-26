@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.ScrollState
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.dropdown_show_all
 import org.jetbrains.compose.resources.stringResource
@@ -68,4 +72,25 @@ fun OnFieldTextClick(interactionSource: InteractionSource, onClick: () -> Unit) 
     LaunchedEffect(interactionSource) {
         interactionSource.interactions.collect { if (it is PressInteraction.Release) currentOnClick() }
     }
+}
+
+/** The height of one item of a Material 3 dropdown menu. */
+private val MENU_ITEM_HEIGHT = 48.dp
+
+/**
+ * The scroll state of a dropdown menu. Each time the menu opens, it scrolls to the item at [selectedIndex].
+ * Without a selected item, it scrolls to [defaultIndex]. The default is the start of the menu.
+ */
+@Composable
+fun rememberMenuScrollState(expanded: Boolean, selectedIndex: Int?, defaultIndex: Int = 0): ScrollState {
+    val scroll = rememberScrollState()
+    val density = LocalDensity.current
+    val currentSelected by rememberUpdatedState(selectedIndex)
+    val currentDefault by rememberUpdatedState(defaultIndex)
+    LaunchedEffect(expanded) {
+        if (!expanded) return@LaunchedEffect
+        val target = currentSelected?.takeIf { it >= 0 } ?: currentDefault
+        scroll.scrollTo(with(density) { (MENU_ITEM_HEIGHT * target).roundToPx() })
+    }
+    return scroll
 }

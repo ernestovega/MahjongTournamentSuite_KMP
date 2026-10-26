@@ -61,7 +61,7 @@ import { getTournamentManifest } from "../../services/dataVersionsService";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
-import { applyPlayerImport, IMPORT_BATCH_SIZE, previewPlayerImport } from "../../services/playerImportService";
+import { applyPlayerImport, exportPlayers, IMPORT_BATCH_SIZE, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
@@ -1103,6 +1103,20 @@ export function tournamentsRouter(): Router {
     if (!dataBase64) throw badRequest("The file is required");
     return { fileName: String(value.fileName ?? "players.csv"), buffer: Buffer.from(dataBase64, "base64") };
   };
+
+  router.get(
+    "/:tournamentId/player-import/export",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const file = await exportPlayers(pathParam(req, "tournamentId"));
+        res.status(200).json({ fileName: file.fileName, dataBase64: file.buffer.toString("base64") });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
 
   router.post(
     "/:tournamentId/player-import/preview",

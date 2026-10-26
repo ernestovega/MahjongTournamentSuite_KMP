@@ -8,6 +8,7 @@ import kotlinx.browser.window
 
 @OptIn(ExperimentalComposeUiApi::class)
 fun main() {
+    loadTimeZones()
     val parameters = window.location.search
         .removePrefix("?")
         .split('&')

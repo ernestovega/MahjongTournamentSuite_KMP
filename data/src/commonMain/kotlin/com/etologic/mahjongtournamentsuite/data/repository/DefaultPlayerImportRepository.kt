@@ -13,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowStatus
 import com.etologic.mahjongtournamentsuite.domain.model.ImportSlotState
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
@@ -26,6 +27,11 @@ class DefaultPlayerImportRepository(
     private val logger: Logger,
     private val cache: RepositoryCache,
 ) : PlayerImportRepository {
+    override suspend fun export(tournamentId: String): AppResult<PlayerExportFile> =
+        request("Exporting the players") { idToken ->
+            backendApi.exportPlayers(idToken, tournamentId).let { PlayerExportFile(it.fileName, Base64.Default.decode(it.dataBase64)) }
+        }
+
     override suspend fun preview(
         tournamentId: String,
         fileName: String,

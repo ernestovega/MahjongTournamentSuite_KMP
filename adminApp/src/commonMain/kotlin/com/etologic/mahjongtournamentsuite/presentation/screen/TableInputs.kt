@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
 import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
@@ -385,6 +386,7 @@ internal fun PlayerDropdown(
                 onDismiss()
             },
             modifier = Modifier.exposedDropdownSize(),
+            scrollState = rememberMenuScrollState(expanded, options.indexOfFirst { it.value == trimmed }),
             properties = PopupProperties(focusable = false, dismissOnClickOutside = true),
         ) {
             Column(

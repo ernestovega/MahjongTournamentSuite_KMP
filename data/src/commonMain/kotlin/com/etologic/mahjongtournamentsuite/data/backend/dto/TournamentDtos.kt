@@ -358,6 +358,7 @@ data class VenueLinkPlaceDto(
     val address: String? = null,
     val city: String? = null,
     val countryCode: String? = null,
+    val timeZone: String? = null,
 )
 
 @Serializable

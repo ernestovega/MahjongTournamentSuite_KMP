@@ -539,7 +539,11 @@ fun <K> SearchableDropdownField(
                 modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth().onFocusChanged(onFocus),
             )
         }
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false; query = null; filtering = false }) {
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false; query = null; filtering = false },
+            scrollState = rememberMenuScrollState(expanded, shown.indexOfFirst { it.first == selected }),
+        ) {
             if (shown.isEmpty()) DropdownMenuItem(text = { Text(stringResource(Res.string.dropdown_no_match)) }, onClick = {}, enabled = false)
             shown.forEach { (key, name) ->
                 DropdownMenuItem(text = { Text(name) }, onClick = { expanded = false; query = null; filtering = false; onChoose(key) })

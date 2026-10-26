@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 
 import { db } from "../firebase";
+import { parsePlayerImportFile } from "../services/playerImport";
 import { seedTournament } from "../testing/firestoreFixtures";
 import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
@@ -81,5 +82,46 @@ describe("player import routes", () => {
     assert.equal((await db.doc(`tournaments/${tournamentId}/players/1`).get()).get("assignedEmaId"), "00000001");
     const log = await db.collection("activity").where("tournamentId", "==", tournamentId).where("action", "==", "player.import").get();
     assert.ok(log.size >= 1);
+  });
+
+  const exportPlayersFile = (token: string | null, id = tournamentId) =>
+    server.request("GET", `/tournaments/${id}/player-import/export`, { token });
+
+  it("lets an editor of the tournament download the players as an Excel file", async () => {
+    const { status, body } = await exportPlayersFile(editor.token);
+
+    assert.equal(status, 200);
+    const { fileName, dataBase64 } = body as { fileName: string; dataBase64: string };
+    assert.equal(fileName, "players.xlsx");
+    const parsed = await parsePlayerImportFile(fileName, Buffer.from(dataBase64, "base64"));
+    assert.equal(parsed.rows[0].id, "1");
+    assert.ok(parsed.hasEmailColumn);
+  });
+
+  it("refuses the download to no token, a player and an editor of another tournament", async () => {
+    assert.equal((await exportPlayersFile(null)).status, 401);
+    assert.equal((await exportPlayersFile(player.token)).status, 403);
+    assert.equal((await exportPlayersFile(otherEditor.token)).status, 403);
+  });
+
+  it("changes nothing and records no import activity when it exports", async () => {
+    const before = await db.collection("activity").where("tournamentId", "==", tournamentId).where("action", "==", "player.import").get();
+    const slotBefore = (await db.doc(`tournaments/${tournamentId}/players/1`).get()).data();
+
+    await exportPlayersFile(editor.token);
+
+    const after = await db.collection("activity").where("tournamentId", "==", tournamentId).where("action", "==", "player.import").get();
+    assert.equal(after.size, before.size);
+    assert.deepEqual((await db.doc(`tournaments/${tournamentId}/players/1`).get()).data(), slotBefore);
+  });
+
+  it("sends no-store and nosniff headers with the file", async () => {
+    const response = await fetch(`${server.baseUrl}/tournaments/${tournamentId}/player-import/export`, {
+      headers: { authorization: `Bearer ${editor.token}` },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get("cache-control"), "no-store");
+    assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   });
 });

@@ -306,4 +306,5 @@
     <string name="spreadsheet_chooser_title">Elegir el archivo de jugadores</string>
     <string name="spreadsheet_chooser_filter">Archivos CSV y Excel</string>
     <string name="spreadsheet_error_read">La aplicación no pudo leer el archivo. Elige un archivo CSV o Excel e inténtalo de nuevo.</string>
+    <string name="spreadsheet_error_save">La aplicación no pudo guardar el archivo. Inténtalo de nuevo.</string>
 </resources>

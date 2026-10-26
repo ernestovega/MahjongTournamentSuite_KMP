@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -10,28 +9,17 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
+import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.offsetAt
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.no_matching_time_zones
 import mahjongtournamentsuite.adminapp.generated.resources.time_zone
 import org.jetbrains.compose.resources.stringResource
-
-/** Most zone names that the menu shows at one time. The text of the field narrows the list. */
-private const val MAX_TIME_ZONE_OPTIONS = 40
 
 private val FallbackTimeZoneIds = listOf(
     "UTC",
@@ -43,26 +31,42 @@ private val FallbackTimeZoneIds = listOf(
     "Europe/Rome",
 )
 
-/** The IANA zone names that a tournament can use, in alphabetical order. */
+/** The UTC offset of a zone now, in seconds. A zone that the platform cannot read counts as 0. */
+private fun offsetSeconds(zoneId: String): Int = runCatching {
+    TimeZone.of(zoneId).offsetAt(Clock.System.now()).totalSeconds
+}.getOrDefault(0)
+
+/** The text of a menu item, for example "UTC +1 Europe/Madrid" or "UTC +5:30 Asia/Kolkata". */
+internal fun timeZoneLabel(zoneId: String): String {
+    val seconds = offsetSeconds(zoneId)
+    val sign = if (seconds < 0) "-" else "+"
+    val minutes = kotlin.math.abs(seconds) / 60
+    val minutePart = if (minutes % 60 == 0) "" else ":" + (minutes % 60).toString().padStart(2, '0')
+    return "UTC $sign${minutes / 60}$minutePart $zoneId"
+}
+
+/** The IANA zone names that a tournament can use, from the lowest UTC offset to the highest, then by name. */
 internal val SelectableTimeZoneIds: List<String> by lazy {
     runCatching { TimeZone.availableZoneIds }
         .getOrDefault(emptySet())
         .filter { id -> id == "UTC" || (id.contains('/') && !id.startsWith("Etc/") && !id.startsWith("SystemV/")) }
-        .sorted()
+        .sortedWith(compareBy({ offsetSeconds(it) }, { it }))
         .ifEmpty { fallbackTimeZoneIds() }
+}
+
+/** The zone name of the device when the list has it. Otherwise "UTC", because a browser can report "SYSTEM". */
+internal fun deviceTimeZoneId(): String {
+    val id = runCatching { TimeZone.currentSystemDefault().id }.getOrNull()
+    return id?.takeIf { it in SelectableTimeZoneIds } ?: "UTC"
 }
 
 /** The short list for a platform that cannot list the zones. It includes the zone of the device. */
 private fun fallbackTimeZoneIds(): List<String> {
     val deviceZone = runCatching { TimeZone.currentSystemDefault().id }.getOrNull()
-    return (FallbackTimeZoneIds + listOfNotNull(deviceZone)).distinct().sorted()
+    return (FallbackTimeZoneIds + listOfNotNull(deviceZone)).distinct().sortedWith(compareBy({ offsetSeconds(it) }, { it }))
 }
 
-/** The zone names that match the text of the field. A blank text matches all names. */
-internal fun matchingTimeZoneIds(query: String, zoneIds: List<String> = SelectableTimeZoneIds): List<String> =
-    zoneIds.filter { it.matchesSearch(query) }
-
-/** A text field with a menu of time zone names. The user can pick a name or type one. */
+/** A field with a menu of time zone names. The user can only pick a name from the menu. */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun TimeZoneDropdown(
@@ -76,95 +80,43 @@ fun TimeZoneDropdown(
     supportingText: String? = null,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    // The menu shows all names until the user taps the text or types. Then it shows the names that match.
-    var filtering by remember { mutableStateOf(false) }
-    var input by remember { mutableStateOf(TextFieldValue(value)) }
-    var selectAllPending by remember { mutableStateOf(false) }
-    val textInteractionSource = remember { MutableInteractionSource() }
-    LaunchedEffect(value) {
-        if (input.text.trim() != value) input = TextFieldValue(value)
-    }
-    val options = remember(value, filtering) {
-        matchingTimeZoneIds(if (filtering) value else "").take(MAX_TIME_ZONE_OPTIONS)
-    }
+    // A zone name that is not in the list (for example from an old tournament) stays in the menu, so the user can see it.
+    val options = remember(value) { if (value.isBlank() || value in SelectableTimeZoneIds) SelectableTimeZoneIds else listOf(value) + SelectableTimeZoneIds }
 
-    OnFieldTextClick(textInteractionSource) {
-        if (!enabled) return@OnFieldTextClick
-        input = TextFieldValue(input.text, TextRange(0, input.text.length))
-        selectAllPending = true
-        filtering = true
-        expanded = true
-    }
+    // Without a selected zone, the menu opens at "UTC". If the list has no "UTC", it opens at the first zone with UTC +0.
+    val menuScroll = rememberMenuScrollState(
+        expanded = expanded,
+        selectedIndex = options.indexOf(value).takeIf { it >= 0 },
+        defaultIndex = options.indexOf("UTC").takeIf { it >= 0 } ?: options.indexOfFirst { offsetSeconds(it) == 0 }.coerceAtLeast(0),
+    )
 
-    // The box ignores its own toggle. The arrow and the text decide when the menu opens.
     ExposedDropdownMenuBox(
         expanded = expanded && enabled,
-        onExpandedChange = {},
+        onExpandedChange = { expanded = it },
         modifier = modifier,
     ) {
         OutlinedTextField(
-            value = input,
-            onValueChange = {
-                if (it.text == input.text) {
-                    // A tap sets the cursor. Keep the selection of the whole text after the first tap.
-                    if (selectAllPending) selectAllPending = false else input = it
-                } else {
-                    selectAllPending = false
-                    input = it
-                    filtering = true
-                    expanded = true
-                    onValueChange(it.text.trim())
-                }
-            },
+            value = if (value.isBlank()) value else timeZoneLabel(value),
+            onValueChange = {},
+            readOnly = true,
             label = { if (required) RequiredLabel(label) else Text(label) },
-            trailingIcon = {
-                DropdownArrow(expanded && enabled, enabled) {
-                    filtering = false
-                    expanded = !expanded
-                }
-            },
-            interactionSource = textInteractionSource,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded && enabled) },
             supportingText = supportingText?.let { message -> { Text(message) } },
             isError = isError,
             enabled = enabled,
             singleLine = true,
             modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable, enabled = enabled)
-                .fillMaxWidth()
-                .onPreviewKeyEvent { event ->
-                    if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    when (event.key) {
-                        Key.Enter, Key.NumPadEnter -> {
-                            if (expanded && options.isNotEmpty()) {
-                                onValueChange(options.first())
-                                expanded = false
-                                true
-                            } else {
-                                false
-                            }
-                        }
-
-                        Key.Escape -> if (expanded) {
-                            expanded = false
-                            true
-                        } else {
-                            false
-                        }
-
-                        else -> false
-                    }
-                },
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = enabled)
+                .fillMaxWidth(),
         )
         ExposedDropdownMenu(
             expanded = expanded && enabled,
             onDismissRequest = { expanded = false },
+            scrollState = menuScroll,
         ) {
-            if (options.isEmpty()) {
-                DropdownMenuItem(text = { Text(stringResource(Res.string.no_matching_time_zones)) }, onClick = {}, enabled = false)
-            }
             options.forEach { zoneId ->
                 DropdownMenuItem(
-                    text = { Text(zoneId) },
+                    text = { Text(timeZoneLabel(zoneId)) },
                     onClick = {
                         onValueChange(zoneId)
                         expanded = false

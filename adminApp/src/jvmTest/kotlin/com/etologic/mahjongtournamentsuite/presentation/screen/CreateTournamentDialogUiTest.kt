@@ -151,7 +151,7 @@ class CreateTournamentDialogUiTest {
         waitForIdle()
 
         onNodeWithText("Time zone").assertExists()
-        onNodeWithText(kotlinx.datetime.TimeZone.currentSystemDefault().id).assertExists()
+        onNodeWithText(com.etologic.mahjongtournamentsuite.presentation.components.timeZoneLabel(com.etologic.mahjongtournamentsuite.presentation.components.deviceTimeZoneId())).assertExists()
     }
 
     private companion object {

@@ -59,7 +59,6 @@
     <string name="select_time">Elegir la hora</string>
     <string name="finish_the_hand_in_play">Terminar la mano en juego</string>
     <string name="when_the_time_is_over_the">Cuando se acaba el tiempo, los jugadores pueden anotar una mano más durante el tiempo extra.</string>
-    <string name="no_matching_time_zones">No hay zonas horarias que coincidan</string>
     <string name="the_width_and_the_height_keep">El ancho y el alto mantienen la proporción de la tarjeta</string>
     <string name="create_id_cards">Crear tarjetas de identificación</string>
     <string name="restore_settings">Restaurar ajustes</string>
@@ -537,6 +536,10 @@
     <string name="create_calculating">Calculando el calendario…</string>
     <string name="create_tried">Intentos: %1$s</string>
     <string name="create_cancel_calculation">Cancelar el cálculo</string>
+    <string name="create_progress_title">Creando el torneo</string>
+    <string name="create_elapsed">Tiempo transcurrido: %1$s</string>
+    <string name="create_speed">Velocidad: %1$s intentos por segundo</string>
+    <string name="create_parallel">Intentos en paralelo: %1$d de %2$d</string>
     <string name="create">Crear</string>
     <string name="yes">Sí</string>
     <string name="no">No</string>
@@ -738,6 +741,8 @@
     <string name="import_column_email">• email: el email de contacto del jugador. Esta columna es opcional. La aplicación guarda el email y no envía nada.</string>
     <string name="import_column_team">• team: el nombre del equipo. Esta columna es opcional y solo funciona en torneos por equipos.</string>
     <string name="import_choose_file">Elegir archivo</string>
+    <string name="import_export_button">Descargar archivo de jugadores</string>
+    <string name="import_export_hint">El botón Descargar archivo de jugadores guarda un archivo Excel con los jugadores actuales en estas columnas. Edita el archivo e impórtalo de nuevo, o úsalo como plantilla.</string>
     <string name="import_choose_other_file">Elegir otro archivo</string>
     <string name="import_reading_file">La aplicación está leyendo el archivo.</string>
     <string name="import_applying">La aplicación está importando los jugadores: %1$d de %2$d filas hechas.</string>

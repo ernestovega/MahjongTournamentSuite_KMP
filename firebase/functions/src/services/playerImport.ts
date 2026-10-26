@@ -202,6 +202,32 @@ export async function parsePlayerImportFile(fileName: string, buffer: Buffer): P
   return { rows, hasEmailColumn: emailColumn >= 0, hasTeamColumn: teamColumn >= 0 };
 }
 
+/**
+ * The rows of an export file, in the format that the import reads. The first row holds the column names.
+ * Every slot has a row, also an empty slot, so the file works as a template. The team column exists only for team tournaments.
+ */
+export function buildPlayerExportRecords(slots: SlotInfo[], isTeams: boolean, teamNames: Map<number, string>): string[][] {
+  const header = ["id", "ema id", "email", ...(isTeams ? ["team"] : [])];
+  const rows = [...slots].sort((a, b) => a.id - b.id).map((slot) => [
+    String(slot.id),
+    slot.emaId ?? "",
+    slot.invitedEmail ?? "",
+    ...(isTeams ? [teamNames.get(slot.team) ?? ""] : []),
+  ]);
+  return [header, ...rows];
+}
+
+/** Writes the records as an Excel file. Every cell is text, so Excel keeps the zeros at the start of an EMA number. */
+export async function writePlayerExportXlsx(records: string[][]): Promise<Buffer> {
+  const workbook = new ExcelJS.Workbook();
+  const sheet = workbook.addWorksheet("Players");
+  records.forEach((record) => sheet.addRow(record));
+  sheet.columns.forEach((column) => { column.width = 18; });
+  sheet.eachRow((row) => row.eachCell((cell) => { cell.numFmt = "@"; }));
+  sheet.getRow(1).font = { bold: true };
+  return Buffer.from(await workbook.xlsx.writeBuffer());
+}
+
 export type IssueCode =
   // Errors: the row is skipped.
   | "INVALID_ID"

@@ -52,18 +52,15 @@ class SearchableDropdownsTest : AdminE2eTest() {
     }
 
     @Test
-    fun timeZoneTextTapOpensKeyboardAndFilters() {
+    fun timeZoneFieldOpensTheMenuWithoutKeyboardAndOnlyPicks() {
         openForm()
         c.clickButton("Venue")
         c.field("Time zone").performScrollToNodeSafe()
-        val paris = count("Europe/Paris")
+        val others = countZones()
         pause()
         c.field("Time zone").performClick()
-        c.waitUntil(5_000) { keyboardShown() }
-        pause()
-        c.field("Time zone").performTextReplacementText("Europe/Par")
-        c.waitUntil(5_000) { count("Europe/Paris") > paris }
-        check(count("Europe/Madrid") == 0) { "The menu must show only the zones that match." }
+        c.waitUntil(5_000) { countZones() > others }
+        check(!keyboardShown()) { "The time zone field must not open the keyboard." }
         pause()
     }
 

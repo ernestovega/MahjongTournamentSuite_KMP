@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { matchPhaseAt, normalizeMatchExtraMinutes, normalizeTimeZone, zonedEpochMs } from "./matchTime";
+import { isSelectableTimeZone, matchPhaseAt, normalizeMatchExtraMinutes, normalizeTimeZone, zonedEpochMs } from "./matchTime";
 import { roundCloseTasks } from "./matchTimeTaskService";
 
 test("converts a local time to an instant, also near summer time", () => {
@@ -72,4 +72,13 @@ test("a round that ends more than 29 days ahead gets no task yet", () => {
 
   assert.deepEqual(roundCloseTasks("t1", tournament, Date.UTC(2026, 9, 23)), []);
   assert.equal(roundCloseTasks("t1", tournament, Date.UTC(2026, 10, 20)).length, 1);
+});
+
+test("only region zones and UTC are offered", () => {
+  assert.equal(isSelectableTimeZone("Europe/Madrid"), true);
+  assert.equal(isSelectableTimeZone("America/Argentina/Buenos_Aires"), true);
+  assert.equal(isSelectableTimeZone("UTC"), true);
+  assert.equal(isSelectableTimeZone("Etc/UTC"), false);
+  assert.equal(isSelectableTimeZone("Madrid"), false);
+  assert.equal(isSelectableTimeZone("EST"), false);
 });

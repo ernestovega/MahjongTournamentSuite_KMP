@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { db, firebaseProjectId } from "../firebase";
 import { globalVersionUpdate } from "../services/dataVersionsService";
+import { isSelectableTimeZone } from "../services/matchTime";
 import { handScoreTotals, tablePointsOf } from "../services/handScoring";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { drawProblem } from "../services/tournamentDraw";
@@ -125,8 +126,11 @@ const ROUND4_START = new Date(Date.now() - 15 * 60 * 1000);
 const LIVE_PAST_ROUNDS = [3, 2, 1, 0].map((back) => localSlot(new Date(ROUND4_START.getTime() - back * 160 * 60 * 1000)));
 const TODAY = LIVE_PAST_ROUNDS[0].date;
 
-/** The time zone of this computer. The seed writes round times in it. */
-const LOCAL_ZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
+/** The time zone that every seeded tournament gets when its spec has none. The admin app offers it. */
+const DEFAULT_ZONE = "Europe/Madrid";
+
+/** The time zone of this computer. The seed writes round times in it. A zone that the admin app does not offer becomes the default. */
+const LOCAL_ZONE = ((zone: string) => (isSelectableTimeZone(zone) ? zone : DEFAULT_ZONE))(Intl.DateTimeFormat().resolvedOptions().timeZone);
 
 /**
  * The match time tournaments. Round 1 started 40 minutes before the seed run and a match lasts 30 minutes, so the
@@ -1096,8 +1100,8 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       matchDurationMinutes: spec.match.durationMinutes,
       matchEndMode: spec.match.endMode,
       matchExtraMinutes: spec.match.extraMinutes,
-      timeZone: spec.match.timeZone,
     } : {}),
+    timeZone: spec.match?.timeZone ?? DEFAULT_ZONE,
     numPlayers,
     numRounds: spec.numRounds,
     roundSchedules: spec.schedule.map((entry, index) => ({

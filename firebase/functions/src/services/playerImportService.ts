@@ -2,12 +2,14 @@ import { db } from "../firebase";
 import { notFound } from "../api/httpError";
 import {
   ImportPlan,
+  buildPlayerExportRecords,
   normalizeEmaId,
   parsePlayerImportFile,
   planPlayerImport,
   type ParsedImport,
   type PlannedRow,
   type SlotInfo,
+  writePlayerExportXlsx,
 } from "./playerImport";
 import { saveContactEmails } from "./playerAccountsService";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
@@ -108,6 +110,18 @@ export async function previewPlayerImport(params: {
     hasEmailColumn: loaded.parsed.hasEmailColumn,
     hasTeamColumn: loaded.parsed.hasTeamColumn,
   };
+}
+
+/** Writes the current players of the tournament in the format of the import file. */
+export async function exportPlayers(tournamentId: string): Promise<{ fileName: string; buffer: Buffer }> {
+  const tournament = await db.collection("tournaments").doc(tournamentId).get();
+  if (!tournament.exists) throw notFound("Tournament not found");
+  const isTeams = tournament.get("isTeams") === true;
+  const [players, teams] = await Promise.all([listTournamentPlayers(tournamentId), listTournamentTeams(tournamentId)]);
+  const records = buildPlayerExportRecords(
+    players.map(slotInfoOf), isTeams, new Map(teams.map((team) => [team.id, team.name])),
+  );
+  return { fileName: "players.xlsx", buffer: await writePlayerExportXlsx(records) };
 }
 
 function messageOf(error: unknown): string {

@@ -186,16 +186,6 @@ class CreateTournamentTest : AdminE2eTest() {
     }
 
     @Test
-    fun timeZoneWithoutARegionIsRejected() {
-        openForm()
-        fillValidForm(players = "16", rounds = "2")
-        c.clickButton("Match")
-        c.field("Time zone").performTextReplacementText("Madrid")
-        c.clickButton("Create")
-        c.waitForText("Use a name like Europe/Madrid.")
-    }
-
-    @Test
     fun extraTimeZeroIsRejectedWhenTheHandIsFinished() {
         openForm()
         fillValidForm(players = "16", rounds = "2")

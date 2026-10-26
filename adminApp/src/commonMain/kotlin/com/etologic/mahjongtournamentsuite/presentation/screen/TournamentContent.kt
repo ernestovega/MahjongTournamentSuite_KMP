@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -262,7 +263,11 @@ private fun RoundTableStrip(
                     StatusIconWithTooltip(roundStatus)
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
                 }
-                DropdownMenu(expanded = roundMenuOpen, onDismissRequest = { roundMenuOpen = false }) {
+                DropdownMenu(
+                    expanded = roundMenuOpen,
+                    onDismissRequest = { roundMenuOpen = false },
+                    scrollState = rememberMenuScrollState(roundMenuOpen, rounds.indexOfFirst { it.roundId == selectedRoundId }),
+                ) {
                     rounds.forEach { round ->
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.round_n, round.roundId)) },

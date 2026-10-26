@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  buildPlayerExportRecords,
   cellText,
   declaredUnpackedBytes,
   parseCsv,
   parsePlayerImportFile,
   planPlayerImport,
+  writePlayerExportXlsx,
   type ImportRow,
   type PlanInput,
   type SlotInfo,
@@ -252,4 +254,87 @@ test("an Excel file with too many columns is refused", async () => {
   const buffer = Buffer.from(await workbook.xlsx.writeBuffer());
 
   await assert.rejects(parsePlayerImportFile("wide.xlsx", buffer), /too large/);
+});
+
+test("the export lists every slot in the format that the import reads", async () => {
+  const slots = [
+    slot(2, { team: 1 }),
+    slot(1, { team: 1, emaId: "00000001", invitedEmail: "ana@example.com" }),
+  ];
+  const records = buildPlayerExportRecords(slots, true, new Map([[1, "Dragons"]]));
+  assert.deepEqual(records, [
+    ["id", "ema id", "email", "team"],
+    ["1", "00000001", "ana@example.com", "Dragons"],
+    ["2", "", "", "Dragons"],
+  ]);
+
+  const file = await writePlayerExportXlsx(records);
+  const parsed = await parsePlayerImportFile("players.xlsx", file);
+  assert.equal(parsed.hasTeamColumn, true);
+  assert.deepEqual(parsed.rows.map((r) => [r.id, r.emaId, r.email, r.team]), [
+    ["1", "00000001", "ana@example.com", "Dragons"],
+    ["2", "", "", "Dragons"],
+  ]);
+});
+
+test("the export has no team column for a tournament without teams", () => {
+  assert.deepEqual(buildPlayerExportRecords([slot(1)], false, new Map()), [["id", "ema id", "email"], ["1", "", ""]]);
+});
+
+test("the export of a tournament without slots has only the header", () => {
+  assert.deepEqual(buildPlayerExportRecords([], false, new Map()), [["id", "ema id", "email"]]);
+  assert.deepEqual(buildPlayerExportRecords([], true, new Map()), [["id", "ema id", "email", "team"]]);
+});
+
+test("the export sorts the slots by id", () => {
+  const records = buildPlayerExportRecords([slot(10), slot(2), slot(1)], false, new Map());
+  assert.deepEqual(records.slice(1).map((record) => record[0]), ["1", "2", "10"]);
+});
+
+test("the export leaves the EMA number empty for a non-member and the team empty when it has no name", () => {
+  const records = buildPlayerExportRecords(
+    [slot(1, { team: 7, nonMemberName: "Guest One" }), slot(2, { team: 1, emaId: "00000002", accountUid: "uid" })],
+    true,
+    new Map([[1, "Reds"]]),
+  );
+  assert.deepEqual(records.slice(1), [["1", "", "", ""], ["2", "00000002", "", "Reds"]]);
+});
+
+test("the export does not write the team column when the tournament has no teams", () => {
+  const records = buildPlayerExportRecords([slot(1, { team: 1 })], false, new Map([[1, "Reds"]]));
+  assert.ok(records.every((record) => record.length === 3));
+});
+
+test("a file exported from the current players plans every assigned slot as UNCHANGED", () => {
+  const slots = [
+    slot(1, { team: 1, emaId: "00000001", invitedEmail: "a@b.es" }),
+    slot(2, { team: 1, emaId: "00000002" }),
+    slot(3, { team: 2 }),
+  ];
+  const names = new Map([[1, "Reds"], [2, "Blues"]]);
+  const records = buildPlayerExportRecords(slots, true, names);
+  const rows: ImportRow[] = records.slice(1).map((record, index) => ({
+    row: index + 2, id: record[0], emaId: record[1], email: record[2], team: record[3],
+  }));
+
+  const planned = planPlayerImport({
+    rows, slots, isTeams: true, teamNames: names,
+    registeredEmaIds: new Set(["00000001", "00000002"]), replaceExisting: false,
+  });
+
+  assert.deepEqual(planned.rows.map((planRow) => planRow.status), ["UNCHANGED", "UNCHANGED", "ERROR"]);
+  // The empty slot is the only problem. The editor fills its EMA number in the template.
+  assert.deepEqual(planned.rows[2].issues.map((issue) => issue.code), ["MISSING_EMA_ID"]);
+  assert.deepEqual(planned.teamRenames, []);
+});
+
+test("the exported Excel file keeps the leading zeros of EMA numbers and the order of the columns", async () => {
+  const file = await writePlayerExportXlsx(buildPlayerExportRecords(
+    [slot(1, { team: 1, emaId: "00000042", invitedEmail: "z@y.es" })], true, new Map([[1, "Reds"]]),
+  ));
+
+  assert.ok(file.length > 0 && file[0] === 0x50 && file[1] === 0x4b);
+  const parsed = await parsePlayerImportFile("players.xlsx", file);
+  assert.deepEqual(parsed.rows, [{ row: 2, id: "1", emaId: "00000042", email: "z@y.es", team: "Reds" }]);
+  assert.equal(parsed.hasEmailColumn, true);
 });

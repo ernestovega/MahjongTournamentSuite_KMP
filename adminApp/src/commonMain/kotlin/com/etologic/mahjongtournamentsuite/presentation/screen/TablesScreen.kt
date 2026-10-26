@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -216,6 +217,10 @@ fun TablesScreen(
                     DropdownMenu(
                         expanded = isRoundMenuOpen,
                         onDismissRequest = { isRoundMenuOpen = false },
+                        scrollState = rememberMenuScrollState(
+                            isRoundMenuOpen,
+                            if (selectedRoundId == null) 0 else rounds.indexOfFirst { it.roundId == selectedRoundId } + 1,
+                        ),
                     ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.all_rounds)) },

@@ -95,3 +95,9 @@ data class PlayerImportResult(
     val skipped: Int,
     val failures: List<PlayerImportFailure>,
 )
+
+/** An Excel file with the current players of a tournament, in the format of the import file. */
+class PlayerExportFile(
+    val fileName: String,
+    val bytes: ByteArray,
+)

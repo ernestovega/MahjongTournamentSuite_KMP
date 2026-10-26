@@ -5,19 +5,27 @@ export type VenuePlace = {
   city: string | null;
   /** Two-letter country code. */
   countryCode: string | null;
+  /** IANA time zone name of the place, for example "Europe/Madrid". */
+  timeZone: string | null;
 };
 
 type PlacesComponent = { longText?: string; shortText?: string; types?: string[] };
 type PlacesResponse = {
-  places?: { displayName?: { text?: string }; formattedAddress?: string; addressComponents?: PlacesComponent[] }[];
+  places?: {
+    displayName?: { text?: string };
+    formattedAddress?: string;
+    addressComponents?: PlacesComponent[];
+    timeZone?: { id?: string };
+  }[];
 };
 
 /** Sends the search to Places. The default sends it to Google. A test sends its own function. */
 export type PlacesSearch = (body: Record<string, unknown>, apiKey: string) => Promise<PlacesResponse>;
 
 const PLACES_SEARCH_URL = "https://places.googleapis.com/v1/places:searchText";
-const FIELD_MASK = "places.displayName,places.formattedAddress,places.addressComponents";
+const FIELD_MASK = "places.displayName,places.formattedAddress,places.addressComponents,places.timeZone";
 const REQUEST_TIMEOUT_MS = 5000;
+const timeZoneIdShape = /^(UTC|[A-Za-z_]+(\/[A-Za-z0-9_+-]+)+)$/;
 const COORDINATES = /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/;
 /** The link holds the coordinates of the place after "!3d" and "!4d", or after "@" for the map center. */
 const PLACE_COORDINATES = /!3d(-?\d+(?:\.\d+)?)!4d(-?\d+(?:\.\d+)?)/;
@@ -114,5 +122,6 @@ export async function lookupPlace(
     address: withoutCountry(place.formattedAddress, countryComponent?.longText) || null,
     city: city || null,
     countryCode: country && /^[A-Z]{2}$/.test(country) ? country : null,
+    timeZone: timeZoneIdShape.test(place.timeZone?.id ?? "") ? (place.timeZone?.id ?? null) : null,
   };
 }

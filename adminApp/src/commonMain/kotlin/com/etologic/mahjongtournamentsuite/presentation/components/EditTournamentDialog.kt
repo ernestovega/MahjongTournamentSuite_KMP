@@ -181,7 +181,7 @@ fun EditTournamentDialog(
     var settingsMatchExtraText by remember(tournament.id) { mutableStateOf(tournament.matchExtraMinutes.toString()) }
     // An old tournament has no time zone. The form suggests the zone of this device, so the server can check the time.
     var settingsTimeZone by remember(tournament.id) {
-        mutableStateOf(tournament.timeZone ?: TimeZone.currentSystemDefault().id)
+        mutableStateOf(tournament.timeZone ?: deviceTimeZoneId())
     }
     var settingsFinishHand by remember(tournament.id) { mutableStateOf(tournament.matchEndMode == MatchEndMode.FINISH_HAND) }
     var settingsRoundScheduleRows by remember(tournament.id) {
@@ -408,6 +408,7 @@ fun EditTournamentDialog(
                                     },
                                     countries = countries,
                                     resolveLink = presenter::resolveVenueLink,
+                                    onTimeZoneFound = { settingsTimeZone = it },
                                     enabled = !isLoading,
                                     countryError = if (TournamentEditField.HOST_COUNTRY in invalidEditFields) {
                                         stringResource(Res.string.field_error_country)

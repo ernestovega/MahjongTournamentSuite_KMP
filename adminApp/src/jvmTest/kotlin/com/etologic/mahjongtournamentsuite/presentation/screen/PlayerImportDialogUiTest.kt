@@ -16,11 +16,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowStatus
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
+import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetSaver
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -52,6 +54,13 @@ class PlayerImportDialogUiTest {
         var result: AppResult<PlayerImportResult>,
     ) : PlayerImportRepository {
         var applied: Pair<Boolean, Int>? = null
+        var exportResult: AppResult<PlayerExportFile> = AppResult.Success(PlayerExportFile("players.xlsx", byteArrayOf(7, 8)))
+        var exportedTournament: String? = null
+
+        override suspend fun export(tournamentId: String): AppResult<PlayerExportFile> {
+            exportedTournament = tournamentId
+            return exportResult
+        }
 
         override suspend fun preview(tournamentId: String, fileName: String, bytes: ByteArray) = preview
 
@@ -74,7 +83,12 @@ class PlayerImportDialogUiTest {
         tournamentStarted = false, hasEmailColumn = false, hasTeamColumn = false,
     )
 
-    private fun ComposeUiTest.showDialog(repository: PlayerImportRepository, onChanged: () -> Unit = {}, onDismiss: () -> Unit = {}) {
+    private fun ComposeUiTest.showDialog(
+        repository: PlayerImportRepository,
+        onChanged: () -> Unit = {},
+        onDismiss: () -> Unit = {},
+        saved: MutableList<Pair<String, List<Byte>>> = mutableListOf(),
+    ) {
         java.util.Locale.setDefault(java.util.Locale.ENGLISH)
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
@@ -97,6 +111,9 @@ class PlayerImportDialogUiTest {
                             playerNameOf = { null },
                             onChanged = onChanged,
                             onDismiss = onDismiss,
+                            saverFactory = { _ ->
+                                remember { SpreadsheetSaver { fileName, bytes -> saved += fileName to bytes.toList() } }
+                            },
                             pickerFactory = { onSelected, _ ->
                                 remember { SpreadsheetPicker { onSelected(SelectedSpreadsheet("players.csv", byteArrayOf(1))) } }
                             },
@@ -180,5 +197,33 @@ class PlayerImportDialogUiTest {
         awaitText("Import 0 rows")
 
         onNodeWithText("Import 0 rows").assertIsNotEnabled()
+    }
+
+    @Test
+    fun theDownloadButtonSavesTheCurrentPlayersFile() = runComposeUiTest {
+        val repository = FakeImportRepository(AppResult.Success(preview()), AppResult.Failure(AppError.Network))
+        val saved = mutableListOf<Pair<String, List<Byte>>>()
+        showDialog(repository, saved = saved)
+
+        onNodeWithText("Download players file").performClick()
+        waitUntil(timeoutMillis = 5_000) { saved.isNotEmpty() }
+
+        assertEquals(listOf("players.xlsx" to listOf<Byte>(7, 8)), saved)
+        assertEquals("t1", repository.exportedTournament)
+        onNodeWithText("Choose file").assertExists()
+    }
+
+    @Test
+    fun aFailedDownloadShowsTheErrorAndSavesNothing() = runComposeUiTest {
+        val repository = FakeImportRepository(AppResult.Success(preview()), AppResult.Failure(AppError.Network))
+        repository.exportResult = AppResult.Failure(AppError.Conflict("Cannot export"))
+        val saved = mutableListOf<Pair<String, List<Byte>>>()
+        showDialog(repository, saved = saved)
+
+        onNodeWithText("Download players file").performClick()
+        awaitText("Cannot export")
+
+        assertTrue(saved.isEmpty())
+        assertEquals("t1", repository.exportedTournament)
     }
 }

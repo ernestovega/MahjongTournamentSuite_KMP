@@ -139,6 +139,8 @@ data class VenueLinkPlace(
     val city: String?,
     /** Two-letter country code. */
     val countryCode: String?,
+    /** IANA time zone name of the place. */
+    val timeZone: String? = null,
 )
 
 /** A map link as the full Google Maps link, with the place when Google Places found it. */

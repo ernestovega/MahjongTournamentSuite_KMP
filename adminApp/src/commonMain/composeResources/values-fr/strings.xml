@@ -59,7 +59,6 @@
     <string name="select_time">Choisir l'heure</string>
     <string name="finish_the_hand_in_play">Terminer la main en cours</string>
     <string name="when_the_time_is_over_the">Quand le temps est écoulé, les joueurs peuvent enregistrer une main de plus pendant le temps additionnel.</string>
-    <string name="no_matching_time_zones">Aucun fuseau horaire correspondant</string>
     <string name="the_width_and_the_height_keep">La largeur et la hauteur gardent la proportion de la carte</string>
     <string name="create_id_cards">Créer les cartes d'identité</string>
     <string name="restore_settings">Rétablir les paramètres</string>
@@ -537,6 +536,10 @@
     <string name="create_calculating">Calcul du programme…</string>
     <string name="create_tried">Essais : %1$s</string>
     <string name="create_cancel_calculation">Annuler le calcul</string>
+    <string name="create_progress_title">Création du tournoi</string>
+    <string name="create_elapsed">Temps écoulé : %1$s</string>
+    <string name="create_speed">Vitesse : %1$s essais par seconde</string>
+    <string name="create_parallel">Essais en parallèle : %1$d sur %2$d</string>
     <string name="create">Créer</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
@@ -735,6 +738,8 @@
     <string name="import_column_email">• email : l'adresse e-mail de contact du joueur. Cette colonne est facultative. L'application enregistre l'adresse et n'envoie rien.</string>
     <string name="import_column_team">• team : le nom de l'équipe. Cette colonne est facultative et fonctionne seulement dans les tournois par équipes.</string>
     <string name="import_choose_file">Choisir un fichier</string>
+    <string name="import_export_button">Télécharger le fichier des joueurs</string>
+    <string name="import_export_hint">Le bouton Télécharger le fichier des joueurs enregistre un fichier Excel avec les joueurs actuels dans ces colonnes. Modifiez le fichier et importez-le de nouveau, ou utilisez-le comme modèle.</string>
     <string name="import_choose_other_file">Choisir un autre fichier</string>
     <string name="import_reading_file">L'application lit le fichier.</string>
     <string name="import_applying">L'application importe les joueurs : %1$d lignes sur %2$d terminées.</string>

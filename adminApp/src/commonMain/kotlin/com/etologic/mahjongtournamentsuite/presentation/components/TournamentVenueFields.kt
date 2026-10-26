@@ -70,7 +70,7 @@ private const val LINK_READ_DELAY_MS = 400L
  * With a link, the form reads the venue name, the address, the country and the city from Google Maps.
  * A field that the link fills is locked. A field that the link does not hold stays open for typing.
  * Without a link, the user types every field. [resolveLink] turns a short link into a full link and asks the
- * server for the place from Google Places. When the server gives no place, the form reads the text of the link.
+ * server for the place from Google Places. The place can also hold the time zone, which goes to [onTimeZoneFound]. When the server gives no place, the form reads the text of the link.
  */
 @Composable
 fun TournamentPlaceFields(
@@ -82,6 +82,7 @@ fun TournamentPlaceFields(
     onHostCityChange: (String) -> Unit,
     countries: List<Country>,
     resolveLink: suspend (String) -> AppResult<ResolvedVenueLink>,
+    onTimeZoneFound: (String) -> Unit = {},
     enabled: Boolean = true,
     countryError: String? = null,
     cityError: String? = null,
@@ -102,6 +103,7 @@ fun TournamentPlaceFields(
     val currentOnCountryChange by rememberUpdatedState(onHostCountryChange)
     val currentOnCityChange by rememberUpdatedState(onHostCityChange)
     val currentResolveLink by rememberUpdatedState(resolveLink)
+    val currentOnTimeZoneFound by rememberUpdatedState(onTimeZoneFound)
     val currentLocked by rememberUpdatedState(locked)
 
     LaunchedEffect(venue.mapUrl) {
@@ -159,6 +161,7 @@ fun TournamentPlaceFields(
         place.countryCode?.let { currentOnCountryChange(it); found += PlaceField.COUNTRY }
         place.city?.let { currentOnCityChange(it); found += PlaceField.CITY }
         currentOnVenueChange(currentVenue.copy(name = name, address = address))
+        resolved.place?.timeZone?.takeIf { it in SelectableTimeZoneIds }?.let(currentOnTimeZoneFound)
         locked = found
         val missing = PlaceField.entries.filter { it !in found }
         status = LinkStatus.Read(

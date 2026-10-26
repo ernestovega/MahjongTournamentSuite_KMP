@@ -158,15 +158,6 @@ class EditTournamentTest : AdminE2eTest() {
         c.waitForText("Branding")
     }
 
-    @Test
-    fun timeZoneWithoutARegionIsRefusedOnSave() {
-        openDialog()
-        c.clickButton("Match")
-        c.field("Time zone").performTextReplacementText("Madrid")
-        c.clickButton("Save")
-        c.waitForText("Time zone must be a name like Europe/Madrid.")
-    }
-
     /** The Match tab ends with three switches: finish the hand, best hands and chicken hands. The dialog is last in the tree. */
     private fun toggleFinishTheHand() {
         val switches = c.onAllNodes(isToggleable())

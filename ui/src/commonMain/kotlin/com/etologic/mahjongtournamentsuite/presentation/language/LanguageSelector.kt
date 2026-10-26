@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.language
 
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -43,7 +44,11 @@ fun LanguageSelector(modifier: Modifier = Modifier) {
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
         )
-        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            scrollState = rememberMenuScrollState(expanded, AppLanguage.entries.indexOf(controller.language)),
+        ) {
             AppLanguage.entries.forEach { option ->
                 DropdownMenuItem(
                     text = { Text(option.endonym) },
