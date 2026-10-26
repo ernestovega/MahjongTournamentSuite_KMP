@@ -15,9 +15,11 @@ import org.jetbrains.compose.resources.stringResource
 actual fun rememberSpreadsheetPicker(
     onSelected: (SelectedSpreadsheet) -> Unit,
     onError: (UiText) -> Unit,
+    onCancelled: () -> Unit,
 ): SpreadsheetPicker {
     val currentOnSelected = rememberUpdatedState(onSelected)
     val currentOnError = rememberUpdatedState(onError)
+    val currentOnCancelled = rememberUpdatedState(onCancelled)
     val chooserTitle = stringResource(Res.string.spreadsheet_chooser_title)
     val chooserFilter = stringResource(Res.string.spreadsheet_chooser_filter)
     return remember(chooserTitle, chooserFilter) {
@@ -33,6 +35,8 @@ actual fun rememberSpreadsheetPicker(
                     SelectedSpreadsheet(file.name, file.readBytes())
                 }.onSuccess(currentOnSelected.value)
                     .onFailure { currentOnError.value(SpreadsheetReadError) }
+            } else {
+                currentOnCancelled.value()
             }
         }
     }

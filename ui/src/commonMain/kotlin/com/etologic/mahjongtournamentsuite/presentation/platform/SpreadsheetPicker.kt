@@ -17,11 +17,12 @@ class SpreadsheetPicker(
     fun launch() = launchAction()
 }
 
-/** Opens the file chooser of the platform for CSV and Excel files. */
+/** Opens the file chooser of the platform for CSV and Excel files. [onCancelled] runs when the user closes the chooser with no file. */
 @Composable
 expect fun rememberSpreadsheetPicker(
     onSelected: (SelectedSpreadsheet) -> Unit,
     onError: (UiText) -> Unit,
+    onCancelled: () -> Unit = {},
 ): SpreadsheetPicker
 
 internal val SpreadsheetReadError: UiText = UiText.of(Res.string.spreadsheet_error_read)

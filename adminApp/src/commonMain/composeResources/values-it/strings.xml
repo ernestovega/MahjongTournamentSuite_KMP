@@ -735,14 +735,7 @@
     <string name="save_id_card_proof">Salva la bozza dei cartellini</string>
     <string name="import_players">Importa giocatori</string>
     <string name="import_players_title">Importa giocatori da un file</string>
-    <string name="import_intro">Scegli un file CSV o Excel per riempire in un solo passaggio gli slot dei giocatori di questo torneo. La prima riga del file deve contenere i nomi delle colonne:</string>
-    <string name="import_column_id">• id: il numero dello slot del giocatore. Questa colonna è obbligatoria.</string>
-    <string name="import_column_ema">• ema id: il numero EMA del giocatore. Questa colonna è obbligatoria.</string>
-    <string name="import_column_email">• email: l'email di contatto del giocatore. Questa colonna è facoltativa. L'app salva l'email e non invia nulla.</string>
-    <string name="import_column_team">• team: il nome della squadra. Questa colonna è facoltativa e funziona solo nei tornei a squadre.</string>
-    <string name="import_choose_file">Scegli file</string>
-    <string name="import_export_button">Scarica il file dei giocatori</string>
-    <string name="import_export_hint">Il pulsante Scarica il file dei giocatori salva un file Excel con i giocatori attuali in queste colonne. Modifica il file e importalo di nuovo, oppure usalo come modello.</string>
+    <string name="export_players">Esporta giocatori</string>
     <string name="import_choose_other_file">Scegli un altro file</string>
     <string name="import_reading_file">L'app sta leggendo il file.</string>
     <string name="import_applying">L'app sta importando i giocatori: %1$d righe su %2$d completate.</string>
@@ -788,5 +781,4 @@
     <string name="import_result_skipped">Righe saltate: %1$d</string>
     <string name="import_result_failures">L'importazione non ha potuto applicare queste righe:</string>
     <string name="import_failure_line">• Riga %1$s: %2$s</string>
-    <string name="import_no_emails_sent">L'importazione non invia nessuna email. Usa l'azione degli account per invitare i giocatori.</string>
 </resources>

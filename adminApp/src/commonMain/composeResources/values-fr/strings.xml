@@ -732,14 +732,7 @@
     <string name="save_ema_report">Enregistrer les résultats EMA</string>
     <string name="import_players">Importer les joueurs</string>
     <string name="import_players_title">Importer les joueurs depuis un fichier</string>
-    <string name="import_intro">Choisissez un fichier CSV ou Excel pour remplir en une fois les places de joueurs de ce tournoi. La première ligne du fichier doit contenir les noms des colonnes :</string>
-    <string name="import_column_id">• id : le numéro de la place du joueur. Cette colonne est obligatoire.</string>
-    <string name="import_column_ema">• ema id : le numéro EMA du joueur. Cette colonne est obligatoire.</string>
-    <string name="import_column_email">• email : l'adresse e-mail de contact du joueur. Cette colonne est facultative. L'application enregistre l'adresse et n'envoie rien.</string>
-    <string name="import_column_team">• team : le nom de l'équipe. Cette colonne est facultative et fonctionne seulement dans les tournois par équipes.</string>
-    <string name="import_choose_file">Choisir un fichier</string>
-    <string name="import_export_button">Télécharger le fichier des joueurs</string>
-    <string name="import_export_hint">Le bouton Télécharger le fichier des joueurs enregistre un fichier Excel avec les joueurs actuels dans ces colonnes. Modifiez le fichier et importez-le de nouveau, ou utilisez-le comme modèle.</string>
+    <string name="export_players">Exporter les joueurs</string>
     <string name="import_choose_other_file">Choisir un autre fichier</string>
     <string name="import_reading_file">L'application lit le fichier.</string>
     <string name="import_applying">L'application importe les joueurs : %1$d lignes sur %2$d terminées.</string>
@@ -785,7 +778,6 @@
     <string name="import_result_skipped">Lignes ignorées : %1$d</string>
     <string name="import_result_failures">L'import n'a pas pu appliquer ces lignes :</string>
     <string name="import_failure_line">• Ligne %1$s : %2$s</string>
-    <string name="import_no_emails_sent">L'import n'envoie aucun e-mail. Utilisez l'action des comptes pour inviter les joueurs.</string>
     <string name="save_id_cards">Enregistrer les cartes d'identité</string>
     <string name="save_id_list">Enregistrer la liste d'identité</string>
     <string name="save_id_card_proof">Enregistrer l'épreuve des cartes d'identité</string>

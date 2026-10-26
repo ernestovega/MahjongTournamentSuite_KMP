@@ -735,14 +735,7 @@
     <string name="save_id_card_proof">Save ID card proof</string>
     <string name="import_players">Import players</string>
     <string name="import_players_title">Import players from a file</string>
-    <string name="import_intro">Choose a CSV or Excel file to fill the player slots of this tournament in one step. The first line of the file must hold the column names:</string>
-    <string name="import_column_id">• id: the number of the player slot. This column is required.</string>
-    <string name="import_column_ema">• ema id: the EMA number of the player. This column is required.</string>
-    <string name="import_column_email">• email: the contact email of the player. This column is optional. The app saves the email and sends nothing.</string>
-    <string name="import_column_team">• team: the name of the team. This column is optional and works only in team tournaments.</string>
-    <string name="import_choose_file">Choose file</string>
-    <string name="import_export_button">Download players file</string>
-    <string name="import_export_hint">The button Download players file saves an Excel file with the current players in these columns. Edit the file and import it again, or use it as a template.</string>
+    <string name="export_players">Export players</string>
     <string name="import_choose_other_file">Choose another file</string>
     <string name="import_reading_file">The app is reading the file.</string>
     <string name="import_applying">The app is importing the players: %1$d of %2$d rows done.</string>
@@ -788,5 +781,4 @@
     <string name="import_result_skipped">Rows skipped: %1$d</string>
     <string name="import_result_failures">The import could not apply these rows:</string>
     <string name="import_failure_line">• Line %1$s: %2$s</string>
-    <string name="import_no_emails_sent">The import sends no email. Use the accounts action to invite the players.</string>
 </resources>
