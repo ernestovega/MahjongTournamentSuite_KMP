@@ -32,6 +32,7 @@ import { calculateTableSummary, defaultHand, HANDS_PER_TABLE } from "../services
 const applyChanges = process.argv.includes("--apply");
 const only = process.argv.find((arg) => arg.startsWith("--only="))?.split("=")[1]?.split(",");
 const onlyTesters = process.argv.includes("--testers");
+const onlyProduction = process.argv.includes("--production");
 
 const CREATED_BY_UID = "h0Hgasv0Y1VBOXDVnAoSq1X8RMQ2";
 const TEST_EDITOR_UID = "RH9PioX5AvNDulLDVa2JX45SP7H3";
@@ -42,7 +43,7 @@ type Data = Record<string, unknown>;
 
 type Guest = { firstName: string; lastName: string; country: string };
 /** A player slot. "ema" takes a member of the EMA registry, "open" stays unassigned. */
-type PlayerSpec = "ema" | "open" | Guest | { emaId: string };
+type PlayerSpec = "ema" | "open" | Guest | { emaId: string } | { fromCountry: string };
 
 type HandStyle =
   | "normal" | "draws" | "allDraws" | "penalties" | "tiePairs" | "tieTop3" | "tieBottom3"
@@ -86,6 +87,8 @@ type TournamentSpec = {
   members?: string[];
   /** Marks a tournament for the people who test the apps. It runs only with --testers or --only. */
   testers?: boolean;
+  /** Marks a tournament with realistic data for production. It runs only with --production or --only. */
+  production?: boolean;
   /** EMA ids that the random fill of "ema" slots must not use. */
   avoidEmaIds?: string[];
   /** Match time settings. Without it, the tournament uses the defaults (120 minutes, the table stops). */
@@ -140,10 +143,10 @@ const LOCAL_ZONE = ((zone: string) => (isSelectableTimeZone(zone) ? zone : DEFAU
 const MATCH_OVER_START = localSlot(new Date(Date.now() - 40 * 60 * 1000));
 
 /** Rounds are spread over the days. [perDay] rounds happen on one day. */
-function spread(numRounds: number, startDate: string, perDay = DAY_TIMES.length): Array<{ date: string; startTime: string }> {
+function spread(numRounds: number, startDate: string, perDay = DAY_TIMES.length, times = DAY_TIMES): Array<{ date: string; startTime: string }> {
   return Array.from({ length: numRounds }, (_, index) => ({
     date: addDays(startDate, Math.floor(index / perDay)),
-    startTime: DAY_TIMES[index % perDay % DAY_TIMES.length],
+    startTime: times[index % perDay % times.length],
   }));
 }
 
@@ -663,6 +666,137 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
   })),
 ];
 
+// -- Production data -------------------------------------------------------------------------
+
+/**
+ * The tournaments that stay in production. They look like real events, with real EMA players, team names by country
+ * and no "Test" in any text. The testers play in all of them. The ongoing one is a big tournament in its third
+ * day: the finished rounds are complete, the round that plays now has hands in some tables, the later rounds are empty.
+ */
+const PROD_TIMES = ["09:00", "11:30", "14:00", "16:30"];
+const PROD_ROUNDS_PER_DAY = 4;
+const PROD_DAYS = 6;
+const PROD_START = addDays(TESTER_START, -2);
+const PROD_NOW_ROUND = 2 * PROD_ROUNDS_PER_DAY + 3;
+
+/** Slots (counted from 1) of the testers. Edgar and Edu share team 1. Héctor and Raúl share team 2. */
+const PROD_TESTER_SLOTS: Record<number, string> = {
+  1: "10990026", 2: "10990020", 5: "10990018", 6: "10990043", 9: "10990039", 12: "10990051", 13: "10990133",
+};
+
+/** Players from the given countries, in blocks, so teams come from one country. The testers are Spanish and take their slots. */
+function playersByCountry(countries: Array<[string, number]>): PlayerSpec[] {
+  const queue = countries.flatMap(([country, count]) => Array.from({ length: count }, () => ({ fromCountry: country })));
+  return queue.map((pick, index) => {
+    const emaId = PROD_TESTER_SLOTS[index + 1];
+    return emaId ? { emaId } : pick;
+  });
+}
+
+const MADRID_OPEN_TEAMS = [
+  // Spain: 24 teams
+  "Dragones de Lavapiés", "Los Cuatro Vientos", "Mahjong Retiro", "Club Chamberí", "Tigres del Jarama", "Bambú Salamanca",
+  "Fénix de Atocha", "Las Tejas Doradas", "Viento del Este", "Flor de Ciruelo", "Los Doce Dragones", "Mahjong Malasaña",
+  "Grulla Blanca", "Club Mahjong Alcalá", "Perlas del Manzanares", "Los Siete Mares", "Gorriones de Vallecas", "Caballos de Jade",
+  "Mahjong Barcelona Norte", "Mahjong Valencia Centro", "Club Sevilla Mahjong", "Linterna Roja", "Las Cuatro Estaciones", "Tortugas de Chueca",
+  // France: 9 teams
+  "Les Dragons de Paris", "Mahjong Lyon", "Les Quatre Vents", "Bambou Marseille", "Club Toulouse Mahjong", "Les Grues de Bordeaux",
+  "Mahjong Lille", "Les Pivoines", "Tuiles de Nantes",
+  // Italy, Germany, Netherlands, Poland, Sweden, Finland
+  "Mahjong Roma", "I Draghi di Milano", "Torino Mahjong", "Bologna Bambù",
+  "Mahjong Berlin", "Drachen Hamburg", "München Mahjong", "Köln Bambus",
+  "Amsterdam Mahjong", "De Gouden Draken", "Utrecht Tegels",
+  "Warszawa Mahjong", "Smoki Krakowa",
+  "Stockholm Mahjong", "Göteborg Drakar",
+  "Helsinki Mahjong", "Tampere Mahjong",
+];
+
+const SPAIN_CUP_TEAMS = [
+  "Dragones de Lavapiés", "Los Cuatro Vientos", "Mahjong Retiro", "Club Chamberí", "Tigres del Jarama", "Bambú Salamanca",
+  "Fénix de Atocha", "Las Tejas Doradas", "Viento del Este", "Flor de Ciruelo", "Mahjong Barcelona Norte", "Mahjong Valencia Centro",
+  "Club Sevilla Mahjong", "Les Dragons de Paris", "Mahjong Roma", "Mahjong Berlin",
+];
+
+const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
+  {
+    id: "madrid-open-2026",
+    name: "Madrid Mahjong Open 2026",
+    shortName: "MMO 2026",
+    primaryColor: "#B71C1C",
+    startDate: PROD_START, endDate: addDays(PROD_START, PROD_DAYS - 1),
+    hostCountry: "ES", hostCity: "Madrid",
+    venue: ESKALERRIA, contactEmail: "organizacion@madridmahjongopen.example",
+    isTeams: true,
+    teamNames: MADRID_OPEN_TEAMS,
+    numRounds: PROD_ROUNDS_PER_DAY * PROD_DAYS,
+    // 96 Spanish players (24 teams) and 104 players from seven countries (26 teams).
+    players: playersByCountry([["ESP", 96], ["FRA", 36], ["ITA", 16], ["GER", 16], ["NED", 12], ["POL", 8], ["SWE", 8], ["FIN", 8]]),
+    countBestHands: true, countChickenHands: true,
+    schedule: spread(PROD_ROUNDS_PER_DAY * PROD_DAYS, PROD_START, PROD_ROUNDS_PER_DAY, PROD_TIMES),
+    agenda: [
+      { title: "Registration and welcome coffee", date: PROD_START, startTime: "08:00" },
+      ...Array.from({ length: PROD_DAYS }, (_, day) => ({ title: "Lunch break", date: addDays(PROD_START, day), startTime: "13:30" })),
+      { title: "Group dinner", date: addDays(PROD_START, 2), startTime: "21:00" },
+      { title: "Awards ceremony", date: addDays(PROD_START, PROD_DAYS - 1), startTime: "19:00" },
+    ],
+    mode: (round, table) => {
+      if (round < PROD_NOW_ROUND) return { kind: "full", style: table % 17 === 0 ? "penalties" : table % 11 === 0 ? "draws" : "normal" };
+      if (round > PROD_NOW_ROUND) return { kind: "empty" };
+      if (table <= 30) return { kind: "partial", done: cycle([3, 5, 6, 4, 7, 2], table - 1) };
+      return table <= 42 ? { kind: "seats" } : { kind: "empty" };
+    },
+    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
+    testers: true, production: true,
+    avoidEmaIds: TESTER_EMA_IDS,
+  },
+  {
+    id: "madrid-spring-open-2027",
+    name: "Madrid Spring Open 2027",
+    shortName: "MSO 2027",
+    primaryColor: "#2E7D32",
+    startDate: "2027-03-06", endDate: "2027-03-07",
+    hostCountry: "ES", hostCity: "Madrid",
+    venue: ESKALERRIA, contactEmail: "organizacion@madridspringopen.example",
+    isTeams: false, numRounds: 7,
+    players: playersByCountry([["ESP", 28], ["FRA", 8], ["ITA", 4], ["GER", 4], ["NED", 4]]),
+    countBestHands: true, countChickenHands: true,
+    schedule: spread(7, "2027-03-06", 4, PROD_TIMES),
+    agenda: [
+      { title: "Registration and welcome coffee", date: "2027-03-06", startTime: "08:00" },
+      { title: "Lunch break", date: "2027-03-06", startTime: "13:30" },
+      { title: "Lunch break", date: "2027-03-07", startTime: "13:30" },
+      { title: "Awards ceremony", date: "2027-03-07", startTime: "17:30" },
+    ],
+    mode: () => ({ kind: "empty" }),
+    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
+    testers: true, production: true,
+    avoidEmaIds: TESTER_EMA_IDS,
+  },
+  {
+    id: "spanish-team-cup-2027",
+    name: "Spanish Team Cup 2027",
+    shortName: "STC 2027",
+    primaryColor: "#1565C0",
+    startDate: "2027-05-15", endDate: "2027-05-16",
+    hostCountry: "ES", hostCity: "Madrid",
+    venue: ESKALERRIA, contactEmail: "organizacion@spanishteamcup.example",
+    isTeams: true, teamNames: SPAIN_CUP_TEAMS, numRounds: 7,
+    players: playersByCountry([["ESP", 52], ["FRA", 4], ["ITA", 4], ["GER", 4]]),
+    countBestHands: true, countChickenHands: true,
+    schedule: spread(7, "2027-05-15", 4, PROD_TIMES),
+    agenda: [
+      { title: "Registration and welcome coffee", date: "2027-05-15", startTime: "08:00" },
+      { title: "Lunch break", date: "2027-05-15", startTime: "13:30" },
+      { title: "Lunch break", date: "2027-05-16", startTime: "13:30" },
+      { title: "Awards ceremony", date: "2027-05-16", startTime: "17:30" },
+    ],
+    mode: () => ({ kind: "empty" }),
+    match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
+    testers: true, production: true,
+    avoidEmaIds: TESTER_EMA_IDS,
+  },
+];
+
 // -- Text helpers ----------------------------------------------------------------------------
 
 function hashText(value: string): number {
@@ -963,6 +1097,10 @@ function isFixedEma(entry: PlayerSpec): entry is { emaId: string } {
   return typeof entry === "object" && "emaId" in entry;
 }
 
+function isCountryPick(entry: PlayerSpec): entry is { fromCountry: string } {
+  return typeof entry === "object" && "fromCountry" in entry;
+}
+
 type Registry = Array<{ id: string; firstName: string; lastName: string; country: string }>;
 
 type Write = { path: string; data: Data };
@@ -991,9 +1129,15 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
     const playerId = index + 1;
     const team = spec.isTeams ? Math.ceil(playerId / 4) : 0;
     let data: Data;
-    if (entry === "ema" || isFixedEma(entry)) {
-      const member = entry === "ema" ? pool.shift()! : registry.find((candidate) => candidate.id === entry.emaId);
-      if (!member) throw new Error(`${spec.id}: EMA id ${entry === "ema" ? "" : entry.emaId} is not in the registry`);
+    if (entry === "ema" || isFixedEma(entry) || isCountryPick(entry)) {
+      let member: Registry[number] | undefined;
+      if (entry === "ema") member = pool.shift();
+      else if (isFixedEma(entry)) member = registry.find((candidate) => candidate.id === entry.emaId);
+      else {
+        const found = pool.findIndex((candidate) => candidate.country === entry.fromCountry);
+        member = found >= 0 ? pool.splice(found, 1)[0] : undefined;
+      }
+      if (!member) throw new Error(`${spec.id}: no EMA player for slot ${playerId}`);
       ema += 1;
       strengthKeys.set(playerId, member.id);
       const name = `${titleCase(member.firstName)} ${member.lastName}`;
@@ -1144,9 +1288,14 @@ async function main(): Promise<void> {
   console.log(`${applyChanges ? "Applying" : "Previewing"} test tournaments for ${firebaseProjectId}.`);
   const registry = await loadRegistry();
   console.log(`EMA registry: ${registry.length} players.`);
-  const everySpec = [...TOURNAMENTS, ...TESTER_TOURNAMENTS];
-  const specs = everySpec.filter((spec) => (only != null ? only.includes(spec.id) : onlyTesters ? spec.testers : !spec.testers));
-  if (specs.some((spec) => !spec.id.startsWith("test-"))) throw new Error("Test tournament ids must start with test-");
+  const everySpec = [...TOURNAMENTS, ...TESTER_TOURNAMENTS, ...PRODUCTION_TOURNAMENTS];
+  const specs = everySpec.filter((spec) => {
+    if (only != null) return only.includes(spec.id);
+    if (onlyProduction) return spec.production === true;
+    if (onlyTesters) return spec.testers === true && spec.production !== true;
+    return spec.testers !== true;
+  });
+  if (specs.some((spec) => !spec.production && !spec.id.startsWith("test-"))) throw new Error("Test tournament ids must start with test-");
   const small = specs.find((spec) => !isValidPlayerCount(spec.players.length));
   if (small) throw new Error(`Test tournament ${small.id} must have at least ${MIN_TOURNAMENT_PLAYERS} players in groups of 4`);
   let created = 0;
