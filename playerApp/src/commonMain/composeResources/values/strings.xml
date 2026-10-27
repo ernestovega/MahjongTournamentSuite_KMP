@@ -55,14 +55,8 @@
         <item quantity="one">%1$d hour</item>
         <item quantity="other">%1$d hours</item>
     </plurals>
-    <string name="sign_in_invite_description">Use the email of your invitation to sign in.</string>
-    <string name="invite_title">Accept your invitation</string>
-    <string name="invite_signed_in">You are signed in. Accept the invitation with this account.</string>
-    <string name="invite_choose_password">Choose a password for your new account. If you already have an account, sign in first.</string>
+    <string name="sign_in_player_description">Sign in with your email. If you have no password yet, use the password reset link to choose one.</string>
     <string name="field_password">Password</string>
-    <string name="field_password_repeat">Repeat password</string>
-    <string name="invite_accept">Accept invitation</string>
-    <string name="invite_have_account">I already have an account</string>
     <string name="tournaments_empty_title">No tournaments yet</string>
     <string name="tournaments_empty_message">You are not registered in any tournament yet.</string>
     <string name="status_upcoming">Upcoming</string>
@@ -78,7 +72,7 @@
     <string name="tab_tables">Tables</string>
     <string name="tab_ranking">Ranking</string>
     <string name="tab_info">Info</string>
-    <string name="tables_not_linked">Your account is not linked to a player of this tournament. Ask the organizers to send you an invitation. All tables are in the All tab.</string>
+    <string name="tables_not_linked">Your account is not linked to a player of this tournament. Ask the organizers to add you. All tables are in the All tab.</string>
     <string name="tables_mine_empty">The tables of the player show here when the organizers draw the round.</string>
     <string name="tables_all_empty">The tables show here when the organizers draw the first round.</string>
     <string name="tables_empty_title">No tables yet</string>

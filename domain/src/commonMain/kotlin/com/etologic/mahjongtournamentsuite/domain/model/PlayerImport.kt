@@ -2,7 +2,7 @@ package com.etologic.mahjongtournamentsuite.domain.model
 
 /** What an import does with one row of the file. */
 enum class ImportRowStatus {
-    /** The row adds a player, an email or a team name. */
+    /** The row adds a player, a new account or a team name. */
     NEW,
 
     /** The row puts another player in a slot that has a player. The editor must accept it. */
@@ -31,8 +31,12 @@ enum class ImportIssueCode {
     TEAM_NAME_CONFLICT,
     TEAM_NAME_IN_USE,
     REPLACES_PLAYER,
-    EMAIL_CHANGES,
-    EMAIL_IGNORED_LINKED,
+
+    /** The account of the player has another email. The account email stays and the email of the file is not saved. */
+    EMAIL_KEPT_ACCOUNT,
+
+    /** The email belongs to another account, or to an earlier row of the file. The email is not saved. */
+    EMAIL_IN_USE,
     TEAM_IGNORED,
 
     /** A code that this version of the app does not know. */
@@ -42,14 +46,14 @@ enum class ImportIssueCode {
 data class ImportIssue(
     val code: ImportIssueCode,
     val severity: ImportIssueSeverity,
-    /** Values for the text of the issue, such as the old and the new email. */
+    /** Values for the text of the issue, such as the email of the account and the email of the file. */
     val args: List<String>,
 )
 
 /** What the slot of a row holds before the import. */
 data class ImportSlotState(
     val emaId: String?,
-    val nonMemberName: String?,
+    /** The email of the account linked to the slot. */
     val email: String?,
     val teamName: String?,
 )
@@ -63,6 +67,8 @@ data class ImportRowPlan(
     val team: String?,
     val status: ImportRowStatus,
     val issues: List<ImportIssue>,
+    /** True when applying the row creates the account of the player, because the email is new. */
+    val createsAccount: Boolean = false,
     val current: ImportSlotState?,
 )
 
@@ -90,10 +96,13 @@ data class PlayerImportFailure(
 
 data class PlayerImportResult(
     val assigned: Int,
+    /** Accounts created for the new emails of the file. */
     val emailsSaved: Int,
     val teamsRenamed: Int,
     val skipped: Int,
     val failures: List<PlayerImportFailure>,
+    /** Rows whose email was not saved, because the account has another email or another account owns the email. */
+    val emailsRefused: Int = 0,
 )
 
 /** An Excel file with the current players of a tournament, in the format of the import file. */

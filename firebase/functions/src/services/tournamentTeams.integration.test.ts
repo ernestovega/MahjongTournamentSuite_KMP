@@ -15,9 +15,9 @@ async function seedTeams(): Promise<string> {
   for (const emaId of ["A", "B", "C"]) {
     await db.collection("emaPlayerRegistry").doc(emaId).set({ country: "ES" });
   }
-  await tournament.collection("players").doc("1").set({ id: 1, team: 1, assignedEmaId: null, nonMember: null, assignedCountry: "" });
-  await tournament.collection("players").doc("2").set({ id: 2, team: 1, assignedEmaId: null, nonMember: null, assignedCountry: "" });
-  await tournament.collection("players").doc("3").set({ id: 3, team: 2, assignedEmaId: null, nonMember: null, assignedCountry: "" });
+  await tournament.collection("players").doc("1").set({ id: 1, team: 1, assignedEmaId: null, assignedCountry: "" });
+  await tournament.collection("players").doc("2").set({ id: 2, team: 1, assignedEmaId: null, assignedCountry: "" });
+  await tournament.collection("players").doc("3").set({ id: 3, team: 2, assignedEmaId: null, assignedCountry: "" });
   return id;
 }
 

@@ -20,7 +20,7 @@ describe("player import routes", () => {
     tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
     const otherId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
     await db.doc("emaPlayerRegistry/00000001").set({ firstName: "Ana", lastName: "Perez", country: "ESP" });
-    await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, team: 0, assignedEmaId: null, nonMember: null });
+    await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, team: 0, assignedEmaId: null });
     editor = await createAccount({ role: "EDITOR", memberOf: [tournamentId] });
     otherEditor = await createAccount({ role: "EDITOR", memberOf: [otherId] });
     player = await createAccount({ role: "PLAYER", playerOf: [tournamentId] });

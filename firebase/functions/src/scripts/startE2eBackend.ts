@@ -151,6 +151,14 @@ async function main(): Promise<void> {
     sentEmails.push(email);
   });
 
+  // The email to choose a password goes through the Google password API, which the emulator cannot replace.
+  // The test mailbox takes it too, so tests can read it.
+  const { setPasswordResetSenderForTests } = await import("../services/firebaseAuthRest");
+  setPasswordResetSenderForTests(async (email) => {
+    if (email.startsWith("fail")) throw new Error("The test mailbox refuses this address.");
+    sentEmails.push({ to: email, subject: "Choose your password", text: "Open the link to choose your password.", html: "" });
+  });
+
   const app = buildApp();
   app.get("/__e2e/mail", (_req, res) => {
     res.status(200).json({ emails: sentEmails });

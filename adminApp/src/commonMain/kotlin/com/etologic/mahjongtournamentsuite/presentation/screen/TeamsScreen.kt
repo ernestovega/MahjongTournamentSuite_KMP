@@ -143,11 +143,10 @@ fun TeamsScreen(
             team.id to team.playerIds.map { playerId ->
                 val emaId = slotsById[playerId]?.assignedEmaId
                 val player = emaId?.let(basePlayersByEma::get)
-                val nonMember = slotsById[playerId]?.nonMember
                 TeamPlayerSummary(
                     id = playerId,
-                    name = player?.displayName ?: nonMember?.displayName,
-                    country = player?.country ?: nonMember?.country.orEmpty(),
+                    name = player?.displayName,
+                    country = player?.country.orEmpty(),
                 )
             }
         }
@@ -585,14 +584,13 @@ private fun TeamEditorDialog(
                     ) {
                         teamSlots.forEachIndexed { index, slot ->
                             val selected = selectedEmaIds.getOrNull(index)?.let(playersByEma::get)
-                            val nonMemberName = if (selected == null) slot.nonMember?.displayName else null
                             FocusedAssistChip(
                                 onClick = { playerPickerSlotIndex = index },
                                 enabled = !saving && !assignmentsLocked,
                                 focusRequester = slotFocusRequesters[index],
                                 label = {
                                     Text(
-                                        text = "${slot.id} - ${selected?.displayName ?: nonMemberName ?: stringResource(Res.string.not_assigned)}",
+                                        text = "${slot.id} - ${selected?.displayName ?: stringResource(Res.string.not_assigned)}",
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
                                     )

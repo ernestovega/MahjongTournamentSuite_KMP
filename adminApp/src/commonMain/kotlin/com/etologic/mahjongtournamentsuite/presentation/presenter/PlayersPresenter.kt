@@ -8,21 +8,20 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerInvitationRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 
 class PlayersPresenter(
     private val tournamentRepository: TournamentRepository,
     private val playerRepository: PlayerRepository,
-    private val invitationRepository: PlayerInvitationRepository,
+    private val accountRepository: PlayerAccountRepository,
     private val logger: Logger,
 ) {
     suspend fun loadPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> {
@@ -46,28 +45,23 @@ class PlayersPresenter(
     suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> =
         tournamentRepository.generateTournamentIdList(tournamentId)
 
-    suspend fun loadInvitations(tournamentId: String): AppResult<List<PlayerInvitation>> =
-        invitationRepository.listInvitations(tournamentId)
-
     suspend fun runAccountAction(
         tournamentId: String,
         action: PlayerAccountAction,
         items: List<PlayerAccountActionItem>,
-    ): AppResult<List<PlayerAccountActionResult>> = invitationRepository.runAction(tournamentId, action, items)
+    ): AppResult<List<PlayerAccountActionResult>> = accountRepository.runAction(tournamentId, action, items)
 
-    suspend fun saveAccountEmails(tournamentId: String, items: List<PlayerAccountActionItem>): AppResult<Unit> =
-        invitationRepository.saveEmails(tournamentId, items)
+    suspend fun saveAccountEmails(tournamentId: String, items: List<PlayerAccountActionItem>): AppResult<List<PlayerEmailResult>> =
+        accountRepository.saveEmails(tournamentId, items)
 
     suspend fun assignPlayer(
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-        nonMember: NonMemberPlayer? = null,
     ): AppResult<Unit> = tournamentRepository.assignTournamentPlayer(
         tournamentId,
         tournamentPlayerId,
         emaId,
-        nonMember,
     )
 
     suspend fun setSubstitution(

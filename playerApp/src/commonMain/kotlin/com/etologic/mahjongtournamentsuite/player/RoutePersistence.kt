@@ -44,7 +44,7 @@ private val savedKinds: List<RouteKind<*>> = listOf(
 
 /**
  * Saves the screens of the back stack, so that a page refresh opens the same screen again.
- * The splash, sign-in and invitation screens are not saved.
+ * The splash and sign-in screens are not saved.
  */
 internal class RoutePersistence(private val storage: SessionStateStorage) {
     private val json = Json { ignoreUnknownKeys = true }

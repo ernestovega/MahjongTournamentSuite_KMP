@@ -55,14 +55,8 @@
         <item quantity="one">%1$d hora</item>
         <item quantity="other">%1$d horas</item>
     </plurals>
-    <string name="sign_in_invite_description">Usa el correo electrónico de tu invitación para iniciar sesión.</string>
-    <string name="invite_title">Acepta tu invitación</string>
-    <string name="invite_signed_in">Has iniciado sesión. Acepta la invitación con esta cuenta.</string>
-    <string name="invite_choose_password">Elige una contraseña para tu nueva cuenta. Si ya tienes una cuenta, inicia sesión primero.</string>
+    <string name="sign_in_player_description">Entra con tu correo electrónico. Si aún no tienes contraseña, usa el enlace para restablecerla y elegir una.</string>
     <string name="field_password">Contraseña</string>
-    <string name="field_password_repeat">Repite la contraseña</string>
-    <string name="invite_accept">Aceptar invitación</string>
-    <string name="invite_have_account">Ya tengo una cuenta</string>
     <string name="tournaments_empty_title">Aún no hay torneos</string>
     <string name="tournaments_empty_message">Aún no estás inscrito en ningún torneo.</string>
     <string name="status_upcoming">Próximo</string>
@@ -78,7 +72,7 @@
     <string name="tab_tables">Mesas</string>
     <string name="tab_ranking">Clasificación</string>
     <string name="tab_info">Info</string>
-    <string name="tables_not_linked">Tu cuenta no está vinculada a un jugador de este torneo. Pide a los organizadores que te envíen una invitación. Todas las mesas están en la pestaña Todas.</string>
+    <string name="tables_not_linked">Tu cuenta no está vinculada a un jugador de este torneo. Pide a los organizadores que te añadan. Todas las mesas están en la pestaña Todas.</string>
     <string name="tables_mine_empty">Las mesas del jugador aparecen aquí cuando los organizadores sortean la ronda.</string>
     <string name="tables_all_empty">Las mesas aparecen aquí cuando los organizadores sortean la primera ronda.</string>
     <string name="tables_empty_title">Aún no hay mesas</string>

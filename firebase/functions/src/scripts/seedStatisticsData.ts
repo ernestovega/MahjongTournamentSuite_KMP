@@ -431,7 +431,6 @@ function planPlayers(snapshot: TournamentSnapshot, people: Map<string, LegacyPer
         assignedCountry: person.assignedCountry,
         name: person.name,
         country: person.country,
-        nonMember: null,
         updatedAt: FieldValue.serverTimestamp(),
       },
     });

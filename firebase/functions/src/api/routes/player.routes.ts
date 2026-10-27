@@ -1,32 +1,14 @@
 import { Router, type Request, type Response } from "express";
 
-import { auth } from "../../firebase";
 import { assertSafeDocumentId, badRequest } from "../httpError";
-import { rateLimit } from "../middleware/rateLimit";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRegisteredPlayer } from "../middleware/requireRegisteredPlayer";
-import { acceptInvitation } from "../../services/playerAccountsService";
 import { addPenalties, parseHandInput, parsePenaltyInput, previewHand, recordHand } from "../../services/playerHandService";
 import { pathParam } from "../pathParam";
 
-/** Routes for player accounts. The invitation route is public because a new player has no account yet. */
+/** Routes for signed-in player accounts. */
 export function playerRouter(): Router {
   const router = Router();
-
-  router.post("/invitations/accept", rateLimit({ windowMs: 60_000, max: 20 }), async (req, res, next) => {
-    try {
-      const token = String(req.body?.token ?? "").trim();
-      if (!token) throw badRequest("Missing token");
-      const password = typeof req.body?.password === "string" ? req.body.password : undefined;
-      const bearer = req.header("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1];
-      // An existing account signs in first. A new account sends a password instead.
-      const actorUid = bearer ? (await auth.verifyIdToken(bearer, true).catch(() => null))?.uid : undefined;
-      const result = await acceptInvitation({ token, password, actorUid });
-      res.status(200).json(result);
-    } catch (e) {
-      next(e);
-    }
-  });
 
   router.param("tournamentId", (_req, _res, next, value: string) => {
     try {

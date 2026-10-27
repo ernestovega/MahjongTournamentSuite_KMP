@@ -10,7 +10,7 @@ This page lists each scenario and the tournament that covers it. A scenario with
 | `test-min-16` | 16 | Individual | The smallest valid tournament. One round, finished. |
 | `test-draws-penalties` | 16 | Individual | Draws, all draws and penalties. Finished. |
 | `test-ties` | 16 | Individual | Ties inside tables and in the ranking. Finished. |
-| `test-guests-unicode` | 16 | Individual | Guests with accents, other alphabets, very long names and duplicate names. |
+| `test-special-names` | 16 | Individual | EMA players whose names have accents or other alphabets. |
 | `test-teams-partial` | 24 | Teams | Teams with 0 to 3 open slots, long and unicode team names. |
 | `test-totals-only` | 16 | Teams | Tables with manual totals only, and a total that does not add up to zero. |
 | `test-no-extras` | 20 | Individual | No best hands, no chicken hands, no venue, no schedule, no agenda. |
@@ -35,9 +35,8 @@ This page lists each scenario and the tournament that covers it. A scenario with
 | Running tournament | `test-live-ongoing` |
 | Not started tournament | `test-registration-open` |
 | One table left to finish | `test-last-table` |
-| EMA players, guests and open slots together | `test-teams-partial` |
-| Unicode and very long names | `test-guests-unicode`, `test-extremes` |
-| Same name twice | `test-guests-unicode` |
+| EMA players and open slots together | `test-teams-partial` |
+| Unicode and very long names | `test-special-names`, `test-extremes` |
 | Teams with missing players | `test-teams-partial` |
 | Draw hands, all draws | `test-draws-penalties` |
 | Penalties | `test-draws-penalties`, `test-extremes` |
@@ -72,5 +71,5 @@ These cases have no emulator test yet.
 
 - Entering a hand and then switching "Completed" on in the same edit. The switch stays off after a hand was typed. This needs a closer look. Switching "Completed" on without typing works and is tested.
 - Photo upload for EMA players, ID card export and EMA report export. They need a file picker or a share window.
-- Invitations by email and accepting an invitation. The local backend has no mail server.
+- Choosing a password with the password reset email. The local backend keeps the email in memory and sends no real message.
 - Warnings that the table editor shows for invalid hands (chicken hand above the limit, loser without winner).

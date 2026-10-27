@@ -4,7 +4,6 @@ import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import kotlinx.datetime.LocalDateTime
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
@@ -207,14 +206,12 @@ fun buildPlayerTournamentView(
     val byEma = registry.associateBy { it.emaId }
     val entries = slots.associate { slot ->
         val registered = slot.assignedEmaId?.let(byEma::get)
-        val name = registered?.displayName
-            ?: slot.nonMember?.let(NonMemberPlayer::displayName)
-            ?: "Player ${slot.id}"
+        val name = registered?.displayName ?: "Player ${slot.id}"
         slot.id to PlayerEntry(
             slotId = slot.id,
             name = name,
-            firstName = (registered?.firstName ?: slot.nonMember?.firstName)?.trim()?.takeIf { it.isNotEmpty() }?.uppercase() ?: name,
-            country = registered?.country ?: slot.nonMember?.country.orEmpty(),
+            firstName = registered?.firstName?.trim()?.takeIf { it.isNotEmpty() }?.uppercase() ?: name,
+            country = registered?.country.orEmpty(),
             substitution = slot.substitution,
             team = slot.team,
         )

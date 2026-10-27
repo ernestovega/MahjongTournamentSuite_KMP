@@ -181,7 +181,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.data_stale
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_message
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_title
 import mahjongtournamentsuite.playerapp.generated.resources.field_password
-import mahjongtournamentsuite.playerapp.generated.resources.field_password_repeat
 import mahjongtournamentsuite.playerapp.generated.resources.field_search
 import mahjongtournamentsuite.playerapp.generated.resources.hand_discard
 import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
@@ -191,11 +190,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.info_contact
 import mahjongtournamentsuite.playerapp.generated.resources.info_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
-import mahjongtournamentsuite.playerapp.generated.resources.invite_accept
-import mahjongtournamentsuite.playerapp.generated.resources.invite_choose_password
-import mahjongtournamentsuite.playerapp.generated.resources.invite_have_account
-import mahjongtournamentsuite.playerapp.generated.resources.invite_signed_in
-import mahjongtournamentsuite.playerapp.generated.resources.invite_title
 import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_short
@@ -213,7 +207,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
-import mahjongtournamentsuite.playerapp.generated.resources.sign_in_invite_description
+import mahjongtournamentsuite.playerapp.generated.resources.sign_in_player_description
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
 import mahjongtournamentsuite.playerapp.generated.resources.standing_place
 import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
@@ -253,7 +247,6 @@ private const val REFRESH_INTERVAL_MS = 15_000L
 @Composable
 fun SplashScreen(
     navController: NavHostController,
-    inviteToken: String?,
     openTournamentId: String?,
     /** The screens that were open before a page refresh, from the first to the last. */
     restoredRoutes: List<Any> = emptyList(),
@@ -261,7 +254,6 @@ fun SplashScreen(
     val presenter = koinInject<PlayerSessionPresenter>()
     LaunchedEffect(Unit) {
         val next: Any = when {
-            inviteToken != null -> InviteRoute(inviteToken)
             presenter.hasSession() -> TournamentsRoute
             else -> SignInRoute(openTournamentId = openTournamentId)
         }
@@ -281,7 +273,7 @@ fun SplashScreen(
 }
 
 @Composable
-fun SignInScreen(navController: NavHostController, inviteToken: String?, openTournamentId: String?) {
+fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
     val presenter = koinInject<PlayerSessionPresenter>()
     val scope = rememberCoroutineScope()
     val emailRequester = remember { FocusRequester() }
@@ -308,9 +300,8 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
             when (val result = presenter.signIn(email, password)) {
                 is AppResult.Success -> {
                     saveBrowserCredentials(email.trim(), password)
-                    val next: Any = if (inviteToken != null) InviteRoute(inviteToken) else TournamentsRoute
-                    navController.navigate(next) { popUpTo(0) }
-                    if (inviteToken == null && openTournamentId != null) {
+                    navController.navigate(TournamentsRoute) { popUpTo(0) }
+                    if (openTournamentId != null) {
                         navController.navigate(TournamentRoute(openTournamentId))
                     }
                 }
@@ -351,73 +342,8 @@ fun SignInScreen(navController: NavHostController, inviteToken: String?, openTou
         onSubmit = ::submit,
         onForgotPassword = ::requestPasswordReset,
         onErrorDismiss = { errorMessage = null },
-        description = stringResource(Res.string.sign_in_invite_description),
+        description = stringResource(Res.string.sign_in_player_description),
     )
-}
-
-@Composable
-fun InviteScreen(navController: NavHostController, token: String) {
-    val presenter = koinInject<PlayerSessionPresenter>()
-    val scope = rememberCoroutineScope()
-    var password by remember { mutableStateOf("") }
-    var confirm by remember { mutableStateOf("") }
-    var busy by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf<UiText?>(null) }
-    var hasSession by remember { mutableStateOf<Boolean?>(null) }
-    LaunchedEffect(Unit) { hasSession = presenter.hasSession() }
-
-    Column(
-        Modifier.fillMaxSize().padding(24.dp).verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterVertically),
-    ) {
-        Text(stringResource(Res.string.invite_title), style = MaterialTheme.typography.headlineMedium)
-        if (hasSession == true) {
-            Text(stringResource(Res.string.invite_signed_in))
-        } else {
-            Text(stringResource(Res.string.invite_choose_password))
-            OutlinedTextField(
-                value = password, onValueChange = { password = it }, label = { Text(stringResource(Res.string.field_password)) }, singleLine = true,
-                visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = confirm, onValueChange = { confirm = it }, label = { Text(stringResource(Res.string.field_password_repeat)) }, singleLine = true,
-                visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(),
-            )
-        }
-        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-        val passwordsOk = hasSession == true || (password.length >= 8 && password == confirm)
-        Button(
-            enabled = !busy && hasSession != null && passwordsOk,
-            onClick = {
-                scope.launch {
-                    busy = true
-                    message = null
-                    val sent = if (hasSession == true) null else password
-                    when (val result = presenter.acceptInvitation(token, sent)) {
-                        is AppResult.Success -> {
-                            if (hasSession == true) {
-                                navController.navigate(TournamentsRoute) { popUpTo(0) }
-                            } else {
-                                // The account exists now. The player signs in with the new password.
-                                when (presenter.signIn(result.value, password)) {
-                                    is AppResult.Success -> navController.navigate(TournamentsRoute) { popUpTo(0) }
-                                    is AppResult.Failure -> navController.navigate(SignInRoute()) { popUpTo(0) }
-                                }
-                            }
-                        }
-                        is AppResult.Failure -> message = result.error.toUiText()
-                    }
-                    busy = false
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-        ) { Text(stringResource(Res.string.invite_accept)) }
-        if (hasSession == false) {
-            TextButton(onClick = { navController.navigate(SignInRoute(inviteToken = token)) }) {
-                Text(stringResource(Res.string.invite_have_account))
-            }
-        }
-    }
 }
 
 @Composable

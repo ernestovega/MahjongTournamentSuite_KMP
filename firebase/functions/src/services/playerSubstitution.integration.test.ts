@@ -16,9 +16,9 @@ async function seed(tag: string) {
   const tournament = db.collection("tournaments").doc(id);
   await tournament.update({ numRounds: 3, isTeams: false });
   for (let slot = 1; slot <= 4; slot += 1) {
-    await tournament.collection("players").doc(String(slot)).set({ id: slot, assignedEmaId: `${tag}-${slot}`, nonMember: null });
+    await tournament.collection("players").doc(String(slot)).set({ id: slot, assignedEmaId: `${tag}-${slot}` });
   }
-  await tournament.collection("players").doc("9").set({ id: 9, assignedEmaId: null, nonMember: null });
+  await tournament.collection("players").doc("9").set({ id: 9, assignedEmaId: null });
   return { id, tournament };
 }
 

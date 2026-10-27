@@ -10,7 +10,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -25,7 +24,6 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsDa
 
 class PlayerSessionPresenter(
     private val authRepository: AuthRepository,
-    private val accountRepository: PlayerAccountRepository,
     private val logger: Logger,
 ) {
     suspend fun hasSession(): Boolean = authRepository.currentSession() != null
@@ -51,9 +49,6 @@ class PlayerSessionPresenter(
         logger.i { "Player signs out." }
         authRepository.signOut()
     }
-
-    suspend fun acceptInvitation(token: String, password: String?): AppResult<String> =
-        accountRepository.acceptInvitation(token, password)
 }
 
 class PlayerTournamentPresenter(

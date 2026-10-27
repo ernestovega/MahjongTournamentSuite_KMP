@@ -11,6 +11,7 @@ describe("what a player can read", () => {
   let t2 = "";
   let player: TestAccount;
   let editor: TestAccount;
+  let owner: TestAccount;
 
   before(async () => {
     requireAuthEmulator();
@@ -20,9 +21,8 @@ describe("what a player can read", () => {
     for (const emaId of ["10000001", "10000002", "10000003"]) {
       await db.doc(`emaPlayerRegistry/${emaId}`).set({ firstName: "Name", lastName: emaId, country: "ESP" });
     }
-    await db.doc(`tournaments/${t1}/players/1`).set({
-      id: 1, team: 0, assignedEmaId: "10000001", accountUid: "someone", invitationStatus: "ACCEPTED", invitedEmail: "x@example.test",
-    });
+    owner = await createAccount({ role: "PLAYER" });
+    await db.doc(`tournaments/${t1}/players/1`).set({ id: 1, team: 0, assignedEmaId: "10000001", accountUid: owner.uid });
     await db.doc(`tournaments/${t1}/players/2`).set({ id: 2, team: 0, assignedEmaId: "10000002" });
     await db.doc(`tournaments/${t2}/players/1`).set({ id: 1, team: 0, assignedEmaId: "10000003" });
     await db.doc(`tournaments/${t1}`).update({ name: "Mine" });
@@ -64,7 +64,7 @@ describe("what a player can read", () => {
     assert.equal(players.length, 2);
     for (const slot of players) {
       assert.equal(slot.accountUid, null);
-      assert.equal(slot.invitedEmail, null);
+      assert.equal(slot.email, null);
       assert.equal(slot.invitationStatus, "NONE");
     }
   });
@@ -78,8 +78,18 @@ describe("what a player can read", () => {
   it("refuses writes and editor reads in the player tournament", async () => {
     assert.equal((await server.request("PUT", `/tournaments/${t1}/tables/1/1/state`, { token: player.token, body: {} })).status, 403);
     assert.equal((await server.request("GET", `/tournaments/${t1}/members`, { token: player.token })).status, 403);
-    assert.equal((await server.request("GET", `/tournaments/${t1}/player-invitations`, { token: player.token })).status, 403);
+    assert.equal((await server.request("PUT", `/tournaments/${t1}/player-accounts/emails`, { token: player.token, body: { players: [] } })).status, 403);
     assert.equal((await server.request("GET", `/tournaments/${t2}/players`, { token: player.token })).status, 403);
+  });
+
+  it("shows an editor the email of the account of a slot, and never an email stored in the slot", async () => {
+    const reader = await createAccount({ role: "EDITOR", memberOf: [t1] });
+    await db.doc(`tournaments/${t1}/players/2`).update({ invitedEmail: "stale@example.test" });
+
+    const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: reader.token });
+    const players = (body as { players: Array<{ id: number; email: string | null; accountUid: string | null }> }).players;
+
+    assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.accountUid]), [[1, owner.email, owner.uid], [2, null, null]]);
   });
 
   it("keeps the editor view of an editor", async () => {

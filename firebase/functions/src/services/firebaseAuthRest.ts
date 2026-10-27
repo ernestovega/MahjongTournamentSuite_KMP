@@ -60,7 +60,18 @@ export async function signInWithEmailPassword(email: string, password: string): 
   };
 }
 
+/** Sends the password reset email. Tests replace it. */
+export type PasswordResetSender = (email: string) => Promise<void>;
+
+let resetOverride: PasswordResetSender | null = null;
+
+/** Replaces the call to the Google password API, for tests. Pass null to use the API again. */
+export function setPasswordResetSenderForTests(sender: PasswordResetSender | null): void {
+  resetOverride = sender;
+}
+
 export async function sendPasswordResetEmail(email: string): Promise<void> {
+  if (resetOverride != null) return resetOverride(email);
   const url = `${googleApi("identitytoolkit")}/v1/accounts:sendOobCode?key=${apiKey()}`;
   await postJson(url, {
     requestType: "PASSWORD_RESET",

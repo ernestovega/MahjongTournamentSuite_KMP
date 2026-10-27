@@ -23,7 +23,6 @@ data class ImportIssueDto(
 @Serializable
 data class ImportSlotStateDto(
     val emaId: String? = null,
-    val nonMemberName: String? = null,
     val email: String? = null,
     val teamName: String? = null,
 )
@@ -37,6 +36,7 @@ data class ImportRowPlanDto(
     val team: String? = null,
     val status: String,
     val issues: List<ImportIssueDto> = emptyList(),
+    val createsAccount: Boolean = false,
     val current: ImportSlotStateDto? = null,
 )
 
@@ -61,6 +61,7 @@ data class PlayerImportFailureDto(
 data class PlayerImportResultDto(
     val assigned: Int,
     val emailsSaved: Int,
+    val emailsRefused: Int = 0,
     val teamsRenamed: Int,
     val skipped: Int,
     val failures: List<PlayerImportFailureDto> = emptyList(),

@@ -41,9 +41,12 @@ type Data = Record<string, unknown>;
 
 // -- Specification ---------------------------------------------------------------------------
 
-type Guest = { firstName: string; lastName: string; country: string };
-/** A player slot. "ema" takes a member of the EMA registry, "open" stays unassigned. */
-type PlayerSpec = "ema" | "open" | Guest | { emaId: string } | { fromCountry: string };
+/**
+ * A player slot. "ema" takes the next member of the shuffled EMA registry, "tail" takes the last one, "special" takes
+ * a member whose name has letters outside ASCII, and "open" stays unassigned. Every assigned slot holds a registered
+ * EMA player.
+ */
+type PlayerSpec = "ema" | "tail" | "special" | "open" | { emaId: string } | { fromCountry: string };
 
 type HandStyle =
   | "normal" | "draws" | "allDraws" | "penalties" | "tiePairs" | "tieTop3" | "tieBottom3"
@@ -158,44 +161,13 @@ function standardAgenda(start: string, end: string): Agenda[] {
   ];
 }
 
-const GENERIC_GUESTS: Guest[] = [
-  { firstName: "Anna", lastName: "ROSSI", country: "ITA" },
-  { firstName: "Peter", lastName: "MULLER", country: "GER" },
-  { firstName: "Sofia", lastName: "ANDERSSON", country: "SWE" },
-  { firstName: "Jan", lastName: "KOWALSKI", country: "POL" },
-  { firstName: "Maria", lastName: "SILVA", country: "POR" },
-  { firstName: "Tom", lastName: "SMITH", country: "GBR" },
-  { firstName: "Elena", lastName: "POPESCU", country: "ROU" },
-  { firstName: "Luc", lastName: "DUBOIS", country: "FRA" },
-  { firstName: "Marta", lastName: "NOVAK", country: "CZE" },
-  { firstName: "Ivan", lastName: "HORVAT", country: "AUT" },
-];
-
-/** A list of slots where the slots at [guestEvery] steps are guests and the others are EMA members. */
-function mixedPlayers(count: number, guestEvery: number): PlayerSpec[] {
-  let guest = 0;
-  return Array.from({ length: count }, (_, index) => {
-    if ((index + 1) % guestEvery !== 0) return "ema" as const;
-    const base = GENERIC_GUESTS[guest % GENERIC_GUESTS.length];
-    guest += 1;
-    return { ...base, lastName: guest > GENERIC_GUESTS.length ? `${base.lastName} ${guest}` : base.lastName };
-  });
+/**
+ * A list of slots that hold EMA members. The slots at [tailEvery] steps take a member from the end of the shuffled list.
+ * The other slots keep the players that they had when these slots held guests.
+ */
+function emaPlayers(count: number, tailEvery: number): PlayerSpec[] {
+  return Array.from({ length: count }, (_, index) => ((index + 1) % tailEvery === 0 ? "tail" as const : "ema" as const));
 }
-
-const UNICODE_GUESTS: Guest[] = [
-  { firstName: "Ñandú", lastName: "IBÁÑEZ-O'BRIEN", country: "ESP" },
-  { firstName: "小明", lastName: "王", country: "FIN" },
-  { firstName: "Åsa", lastName: "ÖSTERGÅRD", country: "SWE" },
-  { firstName: "Дмитрий", lastName: "ИВАНОВ", country: "RUS" },
-  { firstName: "Μαρία", lastName: "ΠΑΠΑΔΟΠΟΥΛΟΥ", country: "SVK" },
-  { firstName: "Zoë", lastName: "O'CONNOR-SMITH", country: "IRL" },
-  { firstName: "Jean-Baptiste Emmanuel Maximilien", lastName: "DE LA FONTAINE-DUPONT DE MONTMORENCY", country: "FRA" },
-  { firstName: "Li", lastName: "NG", country: "NOR" },
-  { firstName: "José María", lastName: "GARCÍA", country: "ESP" },
-  { firstName: "Łukasz", lastName: "ŻÓŁTOWSKI", country: "POL" },
-  { firstName: "Hiroshi", lastName: "TANAKA", country: "DEN" },
-  { firstName: "Hiroshi", lastName: "TANAKA", country: "LAT" },
-];
 
 function cycle<T>(items: T[], index: number): T {
   return items[index % items.length];
@@ -227,7 +199,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     venue: { venueName: "Casal de Gràcia", venueAddress: "Plaça del Raspall 1, Barcelona", venueMapUrl: "" },
     contactEmail: "test-draws@example.com",
     isTeams: false, numRounds: 3,
-    players: mixedPlayers(16, 4),
+    players: emaPlayers(16, 4),
     countBestHands: true, countChickenHands: true,
     schedule: spread(3, "2026-07-04"),
     agenda: standardAgenda("2026-07-04", "2026-07-04"),
@@ -242,7 +214,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Sevilla",
     venue: ESKALERRIA, contactEmail: "test-ties@example.com",
     isTeams: false, numRounds: 4,
-    players: mixedPlayers(16, 2),
+    players: emaPlayers(16, 2),
     countBestHands: true, countChickenHands: true,
     schedule: spread(4, "2026-07-18", 2),
     agenda: standardAgenda("2026-07-18", "2026-07-19"),
@@ -252,16 +224,16 @@ const TOURNAMENTS: TournamentSpec[] = [
       : { kind: "full", style: cycle<HandStyle>(["tiePairs", "tieTop3", "tieBottom3", "normal"], round + table) }),
   },
   {
-    id: "test-guests-unicode",
-    name: "Test - Guests with special names",
-    shortName: "GUESTS",
+    id: "test-special-names",
+    name: "Test - Players with special names",
+    shortName: "SPECIAL",
     primaryColor: "#00897B",
     startDate: "2026-08-01", endDate: "2026-08-02",
     hostCountry: "ES", hostCity: "Valencia",
-    venue: ESKALERRIA, contactEmail: "test-guests@example.com",
+    venue: ESKALERRIA, contactEmail: "test-special@example.com",
     isTeams: false, numRounds: 4,
-    // The special names fill the first slots. EMA players fill the rest up to the minimum of 16.
-    players: [...UNICODE_GUESTS, ...Array.from({ length: 16 - UNICODE_GUESTS.length }, () => "ema" as const)],
+    // Members with accents and other alphabets fill the first slots. Other members fill the rest.
+    players: [...Array.from({ length: 12 }, () => "special" as const), ...emaPlayers(4, 1000)],
     countBestHands: true, countChickenHands: true,
     schedule: spread(4, "2026-08-01", 2),
     agenda: standardAgenda("2026-08-01", "2026-08-02"),
@@ -285,15 +257,15 @@ const TOURNAMENTS: TournamentSpec[] = [
       "The Last Standing Wind",
     ],
     numRounds: 4,
-    // Team 1 is full, team 2 has one open slot, team 3 has two, team 4 has three, team 5 is empty, team 6 has guests.
+    // Team 1 is full, team 2 has one open slot, team 3 has two, team 4 has three, team 5 is empty, team 6 is full.
     players: [
       "ema", "ema", "ema", "ema",
       "ema", "ema", "ema", "open",
       "ema", "ema", "open", "open",
       "open", "open", "open", "ema",
       "open", "open", "open", "open",
-      { firstName: "Sara", lastName: "LOPEZ", country: "ESP" }, "ema",
-      { firstName: "Mike", lastName: "BROWN", country: "BEL" }, "ema",
+      "tail", "ema",
+      "tail", "ema",
     ],
     countBestHands: true, countChickenHands: true,
     schedule: spread(4, "2026-08-22", 3),
@@ -309,7 +281,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Bilbao",
     venue: ESKALERRIA, contactEmail: "test-totals@example.com",
     isTeams: true, numRounds: 4,
-    players: mixedPlayers(16, 5),
+    players: emaPlayers(16, 5),
     countBestHands: true, countChickenHands: true,
     schedule: spread(4, "2026-09-05", 2),
     agenda: standardAgenda("2026-09-05", "2026-09-06"),
@@ -332,7 +304,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Valencia",
     venue: ESKALERRIA, contactEmail: "test-bare@example.com",
     isTeams: false, numRounds: 3,
-    players: mixedPlayers(20, 7),
+    players: emaPlayers(20, 7),
     countBestHands: false, countChickenHands: false,
     schedule: [null, null, null],
     agenda: [],
@@ -347,7 +319,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Zaragoza",
     venue: ESKALERRIA, contactEmail: "test-incomplete@example.com",
     isTeams: true, numRounds: 4,
-    players: mixedPlayers(16, 4),
+    players: emaPlayers(16, 4),
     countBestHands: true, countChickenHands: true,
     schedule: spread(4, "2026-09-26", 2),
     agenda: standardAgenda("2026-09-26", "2026-09-27"),
@@ -376,7 +348,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-upcoming@example.com",
     isTeams: true, numRounds: 5,
-    players: mixedPlayers(28, 6),
+    players: emaPlayers(28, 6),
     countBestHands: true, countChickenHands: true,
     schedule: spread(5, "2027-03-06", 4),
     agenda: standardAgenda("2027-03-06", "2027-03-07"),
@@ -396,7 +368,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     },
     contactEmail: "test-extremes@example.com",
     isTeams: false, numRounds: 7,
-    players: mixedPlayers(32, 8),
+    players: emaPlayers(32, 8),
     countBestHands: true, countChickenHands: true,
     schedule: [
       { date: "2026-05-29", startTime: "16:00" }, { date: "2026-05-29", startTime: "18:30" },
@@ -426,7 +398,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "test-large@example.com",
     isTeams: true, numRounds: 3,
-    players: mixedPlayers(64, 8),
+    players: emaPlayers(64, 8),
     countBestHands: true, countChickenHands: true,
     schedule: spread(3, "2026-10-03", 2),
     agenda: standardAgenda("2026-10-03", "2026-10-04"),
@@ -479,7 +451,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     venue: ESKALERRIA, contactEmail: "test-last@example.com",
     logoUrl: "https://invalid.example.test/logo.png",
     isTeams: false, numRounds: 3,
-    players: mixedPlayers(24, 6),
+    players: emaPlayers(24, 6),
     countBestHands: true, countChickenHands: false,
     schedule: spread(3, "2026-10-10"),
     agenda: standardAgenda("2026-10-10", "2026-10-10"),
@@ -497,7 +469,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     isTeams: true,
     teamNames: ["Aces", "Bamboo", "Circles", "Dragons", "East Wind", "Flowers", "Green Dragon", "Honors", "Imperial", "Jade"],
     numRounds: 6,
-    players: mixedPlayers(40, 4),
+    players: emaPlayers(40, 4),
     countBestHands: true, countChickenHands: true,
     schedule: [...LIVE_PAST_ROUNDS, ...spread(2, addDays(LIVE_PAST_ROUNDS[3].date, 2), 4)],
     agenda: standardAgenda(TODAY, addDays(LIVE_PAST_ROUNDS[3].date, 2)),
@@ -533,9 +505,9 @@ const TESTER_EMA_IDS = [...Object.keys(TESTER_ACCOUNTS), ...TESTER_NO_ACCOUNT];
 const TESTER_START = localSlot(new Date()).date;
 const TESTER_END = addDays(TESTER_START, 5);
 
-/** [mixedPlayers] with the given slots (counted from 1) replaced by the testers. */
+/** [emaPlayers] with the given slots (counted from 1) replaced by the testers. */
 function withTesters(count: number, placement: Record<number, string>): PlayerSpec[] {
-  return mixedPlayers(count, 6).map((entry, index) => {
+  return emaPlayers(count, 6).map((entry, index) => {
     const emaId = placement[index + 1];
     return emaId ? { emaId } : entry;
   });
@@ -601,7 +573,7 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     primaryColor: "#EF6C00",
     contactEmail: "test-ind-out@example.com",
     isTeams: false,
-    players: mixedPlayers(24, 6),
+    players: emaPlayers(24, 6),
     avoidEmaIds: TESTER_EMA_IDS,
   },
   {
@@ -612,7 +584,7 @@ const ONGOING_TESTER_TOURNAMENTS: TournamentSpec[] = [
     primaryColor: "#AD1457",
     contactEmail: "test-teams-out@example.com",
     isTeams: true,
-    players: mixedPlayers(28, 6),
+    players: emaPlayers(28, 6),
     avoidEmaIds: TESTER_EMA_IDS,
   },
 ];
@@ -655,7 +627,7 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
       ? withTesters(item.teams ? 28 : 24, item.teams
         ? { 1: "10990026", 2: "10990020", 5: "10990018", 6: "10990043", 9: "10990039", 12: "10990051", 13: "10990133" }
         : { 1: "10990026", 2: "10990020", 3: "10990018", 4: "10990039", 5: "10990043", 6: "10990133", 12: "10990051" })
-      : mixedPlayers(item.teams ? 28 : 24, 6),
+      : emaPlayers(item.teams ? 28 : 24, 6),
     countBestHands: true, countChickenHands: true,
     schedule: spread(item.rounds, item.start, 3),
     agenda: standardAgenda(item.start, addDays(item.start, 1)),
@@ -1108,7 +1080,7 @@ type BuiltTournament = {
   id: string;
   writes: Write[];
   tournament: Data;
-  summary: { tables: Record<string, number>; players: number; ema: number; guests: number; open: number; completed: boolean };
+  summary: { tables: Record<string, number>; players: number; ema: number; open: number; completed: boolean };
 };
 
 function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournament {
@@ -1123,16 +1095,19 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
   const pool = shuffled(registry.filter((member) => !avoid.has(member.id)), rng);
   const strengthKeys = new Map<number, string>();
   let ema = 0;
-  let guests = 0;
   let open = 0;
   spec.players.forEach((entry, index) => {
     const playerId = index + 1;
     const team = spec.isTeams ? Math.ceil(playerId / 4) : 0;
     let data: Data;
-    if (entry === "ema" || isFixedEma(entry) || isCountryPick(entry)) {
+    if (entry === "ema" || entry === "tail" || entry === "special" || isFixedEma(entry) || isCountryPick(entry)) {
       let member: Registry[number] | undefined;
       if (entry === "ema") member = pool.shift();
-      else if (isFixedEma(entry)) member = registry.find((candidate) => candidate.id === entry.emaId);
+      else if (entry === "tail") member = pool.pop();
+      else if (entry === "special") {
+        const found = pool.findIndex((candidate) => /[^\x00-\x7F]/.test(`${candidate.firstName}${candidate.lastName}`));
+        member = found >= 0 ? pool.splice(found, 1)[0] : pool.shift();
+      } else if (isFixedEma(entry)) member = registry.find((candidate) => candidate.id === entry.emaId);
       else {
         const found = pool.findIndex((candidate) => candidate.country === entry.fromCountry);
         member = found >= 0 ? pool.splice(found, 1)[0] : undefined;
@@ -1141,11 +1116,11 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       ema += 1;
       strengthKeys.set(playerId, member.id);
       const name = `${titleCase(member.firstName)} ${member.lastName}`;
-      data = { name, team, country: member.country, assignedEmaId: member.id, assignedCountry: member.country, nonMember: null };
+      data = { name, team, country: member.country, assignedEmaId: member.id, assignedCountry: member.country };
       const accountUid = TESTER_ACCOUNTS[member.id];
       if (spec.testers && accountUid) {
         // Same result as linking a known account: the slot points to the account and the account lists the tournament.
-        data = { ...data, accountUid, invitationStatus: "ACCEPTED" };
+        data = { ...data, accountUid };
         writes.push({
           path: `users/${accountUid}/playerTournaments/${spec.id}`,
           data: { playerId, emaId: member.id, tournamentId: spec.id, createdAt: FieldValue.serverTimestamp() },
@@ -1157,12 +1132,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       strengthKeys.set(playerId, `open-${spec.id}-${playerId}`);
       data = { name: `Player ${playerId}`, team, country: "", assignedCountry: "" };
     } else {
-      guests += 1;
-      strengthKeys.set(playerId, `guest-${entry.firstName}-${entry.lastName}-${entry.country}`);
-      data = {
-        name: `${entry.firstName} ${entry.lastName}`, team, country: entry.country, assignedCountry: entry.country,
-        nonMember: { firstName: entry.firstName, lastName: entry.lastName, country: entry.country },
-      };
+      throw new Error(`${spec.id}: unknown player slot ${JSON.stringify(entry)}`);
     }
     writes.push({ path: `${root}/players/${playerId}`, data: { id: playerId, ...data, ...stamp() } });
   });
@@ -1267,7 +1237,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       tableVersions,
     },
   };
-  return { id: spec.id, writes, tournament, summary: { tables: kinds, players: numPlayers, ema, guests, open, completed: allCompleted } };
+  return { id: spec.id, writes, tournament, summary: { tables: kinds, players: numPlayers, ema, open, completed: allCompleted } };
 }
 
 // -- Run -------------------------------------------------------------------------------------
@@ -1303,7 +1273,7 @@ async function main(): Promise<void> {
   for (const spec of specs) {
     const built = buildTournament(spec, registry);
     console.log(`\n${spec.id} (${spec.name})`);
-    console.log(`  players ${built.summary.players}: ${built.summary.ema} EMA, ${built.summary.guests} guests, ${built.summary.open} open`);
+    console.log(`  players ${built.summary.players}: ${built.summary.ema} EMA, ${built.summary.open} open`);
     console.log(`  tables ${JSON.stringify(built.summary.tables)}`);
     console.log(`  completed: ${built.summary.completed}; documents: ${built.writes.length + 1}`);
     if (!applyChanges) continue;

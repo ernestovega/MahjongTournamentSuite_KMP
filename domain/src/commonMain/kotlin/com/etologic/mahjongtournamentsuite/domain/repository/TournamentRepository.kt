@@ -12,7 +12,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
@@ -119,12 +118,11 @@ interface TournamentRepository {
      */
     suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink>
 
-    /** Assigns an EMA player or a tournament-only non-member. Pass both null to clear it. */
+    /** Assigns an EMA player to a slot. Pass null to clear the slot. */
     suspend fun assignTournamentPlayer(
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-        nonMember: NonMemberPlayer? = null,
     ): AppResult<Unit>
 
     /**

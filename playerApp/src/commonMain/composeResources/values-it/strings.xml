@@ -55,14 +55,8 @@
         <item quantity="one">%1$d ora</item>
         <item quantity="other">%1$d ore</item>
     </plurals>
-    <string name="sign_in_invite_description">Usa l'email del tuo invito per accedere.</string>
-    <string name="invite_title">Accetta il tuo invito</string>
-    <string name="invite_signed_in">Hai effettuato l'accesso. Accetta l'invito con questo account.</string>
-    <string name="invite_choose_password">Scegli una password per il tuo nuovo account. Se hai già un account, accedi prima.</string>
+    <string name="sign_in_player_description">Accedi con la tua email. Se non hai ancora una password, usa il link di reimpostazione per sceglierne una.</string>
     <string name="field_password">Password</string>
-    <string name="field_password_repeat">Ripeti la password</string>
-    <string name="invite_accept">Accetta l'invito</string>
-    <string name="invite_have_account">Ho già un account</string>
     <string name="tournaments_empty_title">Ancora nessun torneo</string>
     <string name="tournaments_empty_message">Non sei ancora iscritto a nessun torneo.</string>
     <string name="status_upcoming">In arrivo</string>
@@ -78,7 +72,7 @@
     <string name="tab_tables">Tavoli</string>
     <string name="tab_ranking">Classifica</string>
     <string name="tab_info">Info</string>
-    <string name="tables_not_linked">Il tuo account non è collegato a un giocatore di questo torneo. Chiedi agli organizzatori di inviarti un invito. Tutti i tavoli sono nella scheda Tutti.</string>
+    <string name="tables_not_linked">Il tuo account non è collegato a un giocatore di questo torneo. Chiedi agli organizzatori di aggiungerti. Tutti i tavoli sono nella scheda Tutti.</string>
     <string name="tables_mine_empty">I tavoli del giocatore compaiono qui quando gli organizzatori sorteggiano il turno.</string>
     <string name="tables_all_empty">I tavoli compaiono qui quando gli organizzatori sorteggiano il primo turno.</string>
     <string name="tables_empty_title">Ancora nessun tavolo</string>

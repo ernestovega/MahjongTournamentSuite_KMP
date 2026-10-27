@@ -24,23 +24,16 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun countryFiltersShowTheNumberOfPlayers() {
         openPlayers()
-        c.waitForText("SUI (5)")
-        c.waitForText("ITA (8)")
+        c.waitForText("SUI (6)")
+        c.waitForText("ITA (7)")
         c.waitForText("POR (8)")
-    }
-
-    @Test
-    fun nonMemberRowsShowNonMember() {
-        openPlayers()
-        c.waitForText("Non-member")
-        c.waitForText("ANNA ROSSI")
     }
 
     @Test
     fun searchByName() {
         openPlayers()
-        c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("ANNA ROSSI")
-        c.waitForText("ANNA ROSSI")
+        c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("CARMEN GOMEZ")
+        c.waitForText("CARMEN GOMEZ")
         c.waitForNoText("LUCIA PEREZ")
     }
 
@@ -65,7 +58,7 @@ class PlayersScreenTest : AdminE2eTest() {
         openPlayers()
         c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("zzzzzz")
         c.waitForNoText("LUCIA PEREZ")
-        c.waitForNoText("ANNA ROSSI")
+        c.waitForNoText("CARMEN GOMEZ")
     }
 
     @Test

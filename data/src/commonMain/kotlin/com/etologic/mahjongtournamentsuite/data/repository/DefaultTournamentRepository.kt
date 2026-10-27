@@ -14,7 +14,6 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeam
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundScheduleDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.NonMemberPlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRankingRowDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
@@ -32,7 +31,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.InvitationStatus
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
@@ -401,17 +399,10 @@ class DefaultTournamentRepository(
                     team = dto.team,
                     country = "",
                     assignedEmaId = dto.assignedEmaId,
-                    nonMember = dto.nonMember?.let { member ->
-                        NonMemberPlayer(
-                            firstName = member.firstName,
-                            lastName = member.lastName,
-                            country = member.country,
-                        )
-                    },
                     accountUid = dto.accountUid,
                     invitationStatus = InvitationStatus.entries.firstOrNull { it.name == dto.invitationStatus }
                         ?: InvitationStatus.NONE,
-                    invitedEmail = dto.invitedEmail,
+                    email = dto.email,
                     contactedAt = dto.contactedAt,
                     substitution = dto.substitution?.toDomain(),
                     createdAt = dto.createdAt,
@@ -506,19 +497,13 @@ class DefaultTournamentRepository(
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-        nonMember: NonMemberPlayer?,
     ): AppResult<Unit> = runCatching {
         withFreshIdToken { idToken ->
             backendApi.assignTournamentPlayer(
                 idToken = idToken,
                 tournamentId = tournamentId,
                 playerId = tournamentPlayerId,
-                request = AssignTournamentPlayerRequestDto(
-                    emaId = emaId,
-                    nonMember = nonMember?.let {
-                        NonMemberPlayerDto(it.firstName, it.lastName, it.country)
-                    },
-                ),
+                request = AssignTournamentPlayerRequestDto(emaId = emaId),
             )
             cache.markStale(
                 "tournament:$tournamentId:players",

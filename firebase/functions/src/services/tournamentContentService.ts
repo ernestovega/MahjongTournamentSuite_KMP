@@ -5,7 +5,7 @@ import { badRequest, conflict, notFound } from "../api/httpError";
 import { tablePointsOf } from "./handScoring";
 import { readSubstitution, SUBSTITUTION_REASONS, type PlayerSubstitution } from "./playerSubstitution";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
-import { linkKnownAccountToSlot, listPendingInvitationsOf } from "./playerAccountsService";
+import { linkKnownAccountToSlot, loadAccounts } from "./playerAccountsService";
 import {
   hasDuplicateEmaAssignments,
 } from "./tournamentContentRules";
@@ -17,11 +17,9 @@ import {
   tournamentVersionUpdate,
 } from "./dataVersionsService";
 
-/** The time of the last email to the player: the invitation, or the registration notice for a linked account. */
+/** The time of the last email to the player: the invitation, or the registration notice for a signed-in account. */
 function contactedAtOf(slot: FirebaseFirestore.DocumentSnapshot): string | null {
-  const value = slot.get("invitationStatus") === "INVITED"
-    ? slot.get("invitedAt")
-    : slot.get("notifiedAt") ?? slot.get("invitedAt");
+  const value = slot.get("notifiedAt");
   return value && typeof value.toDate === "function" ? (value.toDate() as Date).toISOString() : null;
 }
 
@@ -31,28 +29,21 @@ export type TournamentPlayer = {
   team: number;
   country: string;
   assignedEmaId: string | null;
-  nonMember: NonMemberPlayer | null;
   accountUid: string | null;
+  /**
+   * NONE: no account. INVITED: the account has no password yet and an email went out. ACCEPTED: the person chose a password.
+   * An account with no password that got no email yet counts as NONE.
+   */
   invitationStatus: "NONE" | "INVITED" | "ACCEPTED";
   /** When the last invitation or registration email was sent. Null when no email was sent yet. */
   contactedAt: string | null;
-  invitedEmail: string | null;
+  /** The email of the linked account. The email lives only in the account. Null when the slot has no account. */
+  email: string | null;
   /** Set when a substitute plays for this person from a round on. The substitute is not recorded. */
   substitution: PlayerSubstitution | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
-
-export type NonMemberPlayer = { firstName: string; lastName: string; country: string };
-
-function readNonMember(value: unknown): NonMemberPlayer | null {
-  if (value == null || typeof value !== "object") return null;
-  const data = value as Record<string, unknown>;
-  const firstName = String(data.firstName ?? "").trim();
-  const lastName = String(data.lastName ?? "").trim();
-  const country = String(data.country ?? "").trim().toUpperCase();
-  return firstName && lastName && country ? { firstName, lastName, country } : null;
-}
 
 async function refreshAssignmentCountries(tournamentId: string): Promise<void> {
   const players = await db.collection("tournaments").doc(tournamentId).collection("players").get();
@@ -64,8 +55,7 @@ async function refreshAssignmentCountries(tournamentId: string): Promise<void> {
   const batch = db.batch();
   players.docs.forEach((player) => {
     const emaId = typeof player.get("assignedEmaId") === "string" ? String(player.get("assignedEmaId")) : null;
-    const nonMember = readNonMember(player.get("nonMember"));
-    batch.update(player.ref, { assignedCountry: emaId == null ? nonMember?.country ?? "" : countries.get(emaId) ?? "" });
+    batch.update(player.ref, { assignedCountry: emaId == null ? "" : countries.get(emaId) ?? "" });
   });
   await batch.commit();
 }
@@ -99,48 +89,42 @@ export type TournamentTable = {
 };
 
 /**
- * Lists the slots of a tournament. Pending invitations belong to the person, so by default every slot of a person
- * with an invitation shows it. That needs a read of the pending invitations of these people. Pass
- * `withInvitations: false` when the caller needs only the slots, for example to assign players in a batch.
+ * Lists the slots of a tournament. The email and the sign-in state come from the linked account, so the list reads
+ * the accounts of the slots. Pass `withAccounts: false` when the caller needs only the slots, for example to assign
+ * players in a batch.
  */
 export async function listTournamentPlayers(
   tournamentId: string,
-  options: { withInvitations?: boolean } = {},
+  options: { withAccounts?: boolean } = {},
 ): Promise<TournamentPlayer[]> {
   const snap = await db.collection("tournaments").doc(tournamentId).collection("players").get();
-  const pending = options.withInvitations === false ? [] : await listPendingInvitationsOf(
-    snap.docs.flatMap((d) => (typeof d.get("assignedEmaId") === "string" && d.get("accountUid") == null ? [d.get("assignedEmaId")] : [])),
+  const accounts = options.withAccounts === false ? new Map() : await loadAccounts(
+    snap.docs.flatMap((d) => (typeof d.get("accountUid") === "string" ? [String(d.get("accountUid"))] : [])),
   );
-  const inviteByEmaId = new Map(pending.map((item) => [item.emaId, item]));
   return snap.docs
-    .map((d) => {
-      const player = readPlayer(d);
-      // An invitation belongs to the person. Every slot of this person without an account shows it.
-      const invite = player.accountUid == null && player.assignedEmaId != null
-        ? inviteByEmaId.get(player.assignedEmaId) : undefined;
-      return invite == null || player.invitationStatus === "INVITED" ? player : {
-        ...player,
-        invitationStatus: "INVITED" as const,
-        invitedEmail: invite.email,
-        contactedAt: invite.createdAt,
-      };
-    })
+    .map((d) => readPlayer(d, accounts))
     .sort((a, b) => a.id - b.id);
 }
 
-function readPlayer(d: FirebaseFirestore.DocumentSnapshot): TournamentPlayer {
+function readPlayer(
+  d: FirebaseFirestore.DocumentSnapshot,
+  accounts: ReadonlyMap<string, { email: string | null; hasPassword: boolean }>,
+): TournamentPlayer {
+  const accountUid = typeof d.get("accountUid") === "string" ? String(d.get("accountUid")) : null;
+  const account = accountUid == null ? undefined : accounts.get(accountUid);
+  const contactedAt = contactedAtOf(d);
   return {
     id: Number(d.get("id")),
     name: String(d.get("name") ?? ""),
     team: Number(d.get("team") ?? 0),
     country: String(d.get("country") ?? ""),
     assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
-    nonMember: readNonMember(d.get("nonMember")),
-    accountUid: typeof d.get("accountUid") === "string" ? d.get("accountUid") : null,
-    invitationStatus: (d.get("invitationStatus") === "ACCEPTED" ? "ACCEPTED"
-      : d.get("invitationStatus") === "INVITED" ? "INVITED" : "NONE") as TournamentPlayer["invitationStatus"],
-    contactedAt: contactedAtOf(d),
-    invitedEmail: typeof d.get("invitedEmail") === "string" ? d.get("invitedEmail") : null,
+    accountUid,
+    invitationStatus: accountUid == null ? "NONE"
+      : account?.hasPassword === true ? "ACCEPTED"
+      : contactedAt != null ? "INVITED" : "NONE",
+    contactedAt,
+    email: account?.email ?? null,
     substitution: readSubstitution(d.get("substitution")),
     createdAt: timestampToIso(d.get("createdAt")),
     updatedAt: timestampToIso(d.get("updatedAt")),
@@ -320,7 +304,6 @@ export async function updateTournamentTeam(params: {
       if (next != null) affectedEmaIds.add(next);
       transaction.update(player.ref, {
         assignedEmaId: next,
-        ...(next == null ? {} : { nonMember: null }),
         updatedAt: FieldValue.serverTimestamp(),
       });
     });
@@ -359,7 +342,6 @@ export async function assignTournamentPlayer(params: {
   tournamentId: string;
   playerId: number;
   emaId: string | null;
-  nonMember: NonMemberPlayer | null;
   uid?: string | null;
 }): Promise<void> {
   const playerRef = db.collection("tournaments").doc(params.tournamentId)
@@ -380,9 +362,7 @@ export async function assignTournamentPlayer(params: {
     const previousEmaId = typeof player.get("assignedEmaId") === "string"
       ? String(player.get("assignedEmaId"))
       : null;
-    const previousNonMember = readNonMember(player.get("nonMember"));
-    const assignmentChanged = previousEmaId !== params.emaId
-      || JSON.stringify(previousNonMember) !== JSON.stringify(params.nonMember);
+    const assignmentChanged = previousEmaId !== params.emaId;
     // A slot with data can change. The tables, hands and team stay on the slot number.
     // The statistics follow the EMA id of the slot, so a cleared slot adds nothing to any person.
     const nextAssignmentRef = params.emaId == null ? null : assignmentRefs.doc(params.emaId);
@@ -402,13 +382,9 @@ export async function assignTournamentPlayer(params: {
       }
     }
 
-    // A new EMA id on a slot ends its invitation and account link.
+    // A new EMA id on a slot ends the account link of the slot.
     const accountUid = typeof player.get("accountUid") === "string" ? String(player.get("accountUid")) : null;
-    const hadInvitation = player.get("invitationStatus") === "INVITED" || accountUid != null;
-    const pendingInvitations = previousEmaId !== params.emaId && hadInvitation
-      ? await transaction.get(db.collection(`tournaments/${params.tournamentId}/playerInvitations`)
-        .where("playerId", "==", params.playerId))
-      : null;
+    const endsAccountLink = previousEmaId !== params.emaId && accountUid != null;
 
     // A new person starts without the substitution of the old person.
     const hadSubstitution = assignmentChanged && player.get("substitution") != null;
@@ -416,7 +392,7 @@ export async function assignTournamentPlayer(params: {
       ? await transaction.get(tournamentRef.collection("tables").where("forcedZeroPlayerId", "==", String(params.playerId)))
       : null;
 
-    let assignedCountry = params.nonMember?.country ?? "";
+    let assignedCountry = "";
     if (params.emaId != null) {
       const registryPlayer = await transaction.get(db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.emaId));
       if (!registryPlayer.exists) throw notFound("EMA player not found");
@@ -432,39 +408,28 @@ export async function assignTournamentPlayer(params: {
         updatedAt: FieldValue.serverTimestamp(),
       });
     }
-    if (pendingInvitations != null) {
-      pendingInvitations.docs.forEach((doc) => {
-        if (doc.get("status") === "PENDING" || doc.get("status") === "ACCEPTED") {
-          transaction.update(doc.ref, { status: "REVOKED", updatedAt: FieldValue.serverTimestamp() });
-        }
-      });
-      if (accountUid != null) {
-        transaction.delete(db.doc(`users/${accountUid}/playerTournaments/${params.tournamentId}`));
-      }
+    if (endsAccountLink) {
+      transaction.delete(db.doc(`users/${accountUid}/playerTournaments/${params.tournamentId}`));
     }
     // Tables that are complete hold the EMA number of the slot in their statistics.
     statisticsChanged = previousEmaId !== params.emaId && tournamentHasProgress;
     if (assignmentChanged) {
       logPlayerChange(transaction, tournamentRef, {
-        kind: params.emaId == null && params.nonMember == null ? "clear" : "replace",
+        kind: params.emaId == null ? "clear" : "replace",
         slotId: params.playerId,
-        previous: { emaId: previousEmaId, nonMember: previousNonMember },
-        next: { emaId: params.emaId, nonMember: params.nonMember },
+        previous: { emaId: previousEmaId },
+        next: { emaId: params.emaId },
         uid: params.uid ?? null,
       });
     }
     transaction.update(playerRef, {
       assignedEmaId: params.emaId,
-      nonMember: params.nonMember,
       assignedCountry,
       updatedAt: FieldValue.serverTimestamp(),
       ...(hadSubstitution ? { substitution: FieldValue.delete() } : {}),
-      ...(pendingInvitations != null
+      ...(endsAccountLink
         ? {
-          invitationStatus: "NONE",
           accountUid: FieldValue.delete(),
-          invitedEmail: FieldValue.delete(),
-          invitedAt: FieldValue.delete(),
           notifiedAt: FieldValue.delete(),
         }
         : {}),
@@ -519,7 +484,7 @@ export async function setPlayerSubstitution(params: {
     ]);
     if (!tournament.exists) throw notFound("Tournament not found");
     if (!player.exists) throw notFound("Player not found");
-    const assigned = typeof player.get("assignedEmaId") === "string" || readNonMember(player.get("nonMember")) != null;
+    const assigned = typeof player.get("assignedEmaId") === "string";
     if (!assigned) throw conflict("Only an assigned player can be substituted");
     let targetTable: FirebaseFirestore.QueryDocumentSnapshot | null = null;
     if (next != null) {

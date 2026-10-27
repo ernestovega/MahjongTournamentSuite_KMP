@@ -28,7 +28,7 @@ import {
   type TournamentAssignment,
 } from "../../services/usersService";
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
-import { assertEmaIdAvailable, listInvitedPeople, setAccountEmaId } from "../../services/playerAccountsService";
+import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
 import { DEFAULT_USAGE_PERIOD, loadUsageReport, USAGE_PERIODS } from "../../services/usageService";
 import { pathParam } from "../pathParam";
 
@@ -96,16 +96,6 @@ export function adminRouter(): Router {
     try {
       const actor = res.locals.auth as Actor;
       res.status(200).json({ users: await listManagedUsers(await assignmentScopeFor(actor)) });
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  /** People who got an invitation and did not accept yet. An editor sees only the assigned tournaments. */
-  router.get("/invitations", requireAuth, requireEditor, async (_req, res, next) => {
-    try {
-      const actor = res.locals.auth as Actor;
-      res.status(200).json({ invitations: await listInvitedPeople(await assignmentScopeFor(actor)) });
     } catch (error) {
       next(error);
     }

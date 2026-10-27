@@ -5,12 +5,12 @@ import com.etologic.mahjongtournamentsuite.data.backend.jsonResponse
 import com.etologic.mahjongtournamentsuite.data.backend.mockBackendApi
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.InvitationStatus
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
@@ -22,36 +22,21 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlinx.coroutines.test.runTest
 
-class DefaultPlayerInvitationRepositoryTest {
-    private fun repository(cache: InvitationCache = InvitationCache(), handler: (HttpRequestData) -> String?) =
-        DefaultPlayerInvitationRepository(
+class DefaultPlayerAccountRepositoryTest {
+    private fun repository(cache: AccountCache = AccountCache(), handler: (HttpRequestData) -> String?) =
+        DefaultPlayerAccountRepository(
             backendApi = mockBackendApi { request ->
                 handler(request)?.let { jsonResponse(it) } ?: respond("{}", HttpStatusCode.InternalServerError)
             },
             authRepository = FakeAuthRepository(),
-            logger = Logger.withTag("DefaultPlayerInvitationRepositoryTest"),
+            logger = Logger.withTag("DefaultPlayerAccountRepositoryTest"),
             cache = cache,
         )
 
     @Test
-    fun listInvitationsMapsTheStatusAndFallsBackToInvited() = runTest {
-        val repository = repository {
-            """{"invitations":[
-                {"invitationId":"a","playerId":1,"email":"a@b.es","status":"ACCEPTED","expiresAt":"2026-12-01"},
-                {"invitationId":"b","playerId":2,"email":"c@b.es","status":"SOMETHING_NEW"}
-            ]}"""
-        }
-
-        val list = assertIs<AppResult.Success<List<PlayerInvitation>>>(repository.listInvitations("t1")).value
-
-        assertEquals(listOf(InvitationStatus.ACCEPTED, InvitationStatus.INVITED), list.map { it.status })
-        assertEquals("2026-12-01", list[0].expiresAt)
-    }
-
-    @Test
     fun runActionSendsTheActionInThePathMapsOutcomesAndMarksPlayersStale() = runTest {
         var request: HttpRequestData? = null
-        val cache = InvitationCache()
+        val cache = AccountCache()
         val repository = repository(cache) {
             request = it
             """{"results":[
@@ -76,26 +61,38 @@ class DefaultPlayerInvitationRepositoryTest {
     }
 
     @Test
-    fun saveEmailsPutsThePlayersAndMarksPlayersStale() = runTest {
+    fun saveEmailsPutsThePlayersMapsTheOutcomesAndMarksPlayersStale() = runTest {
         var request: HttpRequestData? = null
-        val cache = InvitationCache()
+        val cache = AccountCache()
         val repository = repository(cache) {
             request = it
-            """{"ok":true}"""
+            """{"results":[
+                {"playerId":4,"outcome":"CREATED"},
+                {"playerId":5,"outcome":"KEPT_ACCOUNT_EMAIL","message":"old@b.es"},
+                {"playerId":6,"outcome":"FAILED","message":"Email already in use"},
+                {"playerId":7,"outcome":"FROM_THE_FUTURE"}
+            ]}"""
         }
 
-        val result = repository.saveEmails("t1", listOf(PlayerAccountActionItem(4, "d@b.es")))
+        val results = assertIs<AppResult.Success<List<PlayerEmailResult>>>(
+            repository.saveEmails("t1", listOf(PlayerAccountActionItem(4, "d@b.es"))),
+        ).value
 
-        assertIs<AppResult.Success<Unit>>(result)
         assertEquals(HttpMethod.Put, request?.method)
+        assertEquals("/functions/tournaments/t1/player-accounts/emails", request?.url?.encodedPath)
         val body = (request?.body as TextContent).text
         assertEquals(true, body.contains("\"playerId\":4") && body.contains("d@b.es"))
+        assertEquals(
+            listOf(PlayerEmailOutcome.CREATED, PlayerEmailOutcome.KEPT_ACCOUNT_EMAIL, PlayerEmailOutcome.FAILED, PlayerEmailOutcome.FAILED),
+            results.map { it.outcome },
+        )
+        assertEquals("old@b.es", results[1].message)
         assertEquals(listOf("tournament:t1:players"), cache.stale)
     }
 
     @Test
     fun aBackendErrorBecomesAFailureAndTheCacheStaysValid() = runTest {
-        val cache = InvitationCache()
+        val cache = AccountCache()
         val repository = repository(cache) { null }
 
         assertIs<AppResult.Failure>(repository.runAction("t1", PlayerAccountAction.SEND, emptyList()))
@@ -104,7 +101,7 @@ class DefaultPlayerInvitationRepositoryTest {
     }
 }
 
-private class InvitationCache : RepositoryCache {
+private class AccountCache : RepositoryCache {
     val stale = mutableListOf<String>()
 
     override suspend fun <T : Any> getOrLoad(

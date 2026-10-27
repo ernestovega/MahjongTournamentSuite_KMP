@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -15,7 +14,7 @@ class PlayerTournamentViewTest {
     private val tournament = Tournament(id = "t", name = "T", isTeams = false, numPlayers = 4, numRounds = 1)
     private val slots = listOf(
         TournamentPlayer(id = 1, name = "", team = 0, assignedEmaId = "10000001"),
-        TournamentPlayer(id = 2, name = "", team = 0, nonMember = NonMemberPlayer("Ann", "Lee", "ESP")),
+        TournamentPlayer(id = 2, name = "", team = 0),
         TournamentPlayer(id = 3, name = "", team = 0),
         TournamentPlayer(id = 4, name = "", team = 0, assignedEmaId = "10000004"),
     )
@@ -31,12 +30,14 @@ class PlayerTournamentViewTest {
     )
 
     @Test
-    fun namesComeFromRegistryNonMemberOrSlotNumber() {
+    fun namesComeFromRegistryOrSlotNumber() {
         val view = buildPlayerTournamentView(tournament, slots, registry, emptyList(), rankings, myEmaId = null)
 
         assertEquals("EVA RUIZ", view.nameOf(1))
-        assertEquals("ANN LEE", view.nameOf(2))
+        assertEquals("Player 2", view.nameOf(2))
         assertEquals("Player 3", view.nameOf(3))
+        // A slot with an EMA number that the registry does not hold shows the slot number too.
+        assertEquals("Player 4", view.nameOf(4))
         assertEquals("-", view.nameOf(null))
     }
 

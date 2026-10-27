@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.domain.usecase
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.NonMemberPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
@@ -111,12 +110,6 @@ class LoadStatisticsUseCase(
             val member = slot.assignedEmaId?.let(byEma::get)
             slot.id to when {
                 member != null -> member.toProfile()
-                slot.nonMember != null -> PlayerProfile(
-                    name = slot.nonMember.displayName,
-                    emaId = "",
-                    country = slot.nonMember.country,
-                    photoUrl = null,
-                )
                 else -> PlayerProfile(
                     name = slot.name.ifBlank { "Player ${slot.id}" },
                     emaId = slot.assignedEmaId.orEmpty(),
@@ -134,7 +127,6 @@ class LoadStatisticsUseCase(
         return slots.associate { slot ->
             slot.id to (
                 slot.assignedEmaId?.let(byEma::get)?.displayName
-                    ?: slot.nonMember?.let(NonMemberPlayer::displayName)
                     ?: "Player ${slot.id}"
                 )
         }

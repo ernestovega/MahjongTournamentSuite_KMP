@@ -4,7 +4,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
-import com.etologic.mahjongtournamentsuite.domain.model.InvitedPerson
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
@@ -16,7 +16,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerInvitationRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 
@@ -62,14 +62,10 @@ internal class FakeAdminRepository(
         AppResult.Failure(com.etologic.mahjongtournamentsuite.domain.model.AppError.Unexpected("No usage report"))
 }
 
-/** Holds the invited people. A revoke removes the person. */
-internal class FakePlayerInvitationRepository(
-    var invited: List<InvitedPerson> = emptyList(),
-) : PlayerInvitationRepository {
+/** Records the account actions of the editor. */
+internal class FakePlayerAccountRepository : PlayerAccountRepository {
     val actions = mutableListOf<String>()
 
-    override suspend fun listInvitations(tournamentId: String) = AppResult.Success(emptyList<com.etologic.mahjongtournamentsuite.domain.model.PlayerInvitation>())
-    override suspend fun listInvitedPeople() = AppResult.Success(invited)
     override suspend fun runAction(
         tournamentId: String,
         action: PlayerAccountAction,
@@ -77,13 +73,11 @@ internal class FakePlayerInvitationRepository(
     ): AppResult<List<PlayerAccountActionResult>> {
         val playerId = items.single().playerId
         actions += "$action $tournamentId $playerId"
-        if (action == PlayerAccountAction.REVOKE) {
-            invited = invited.filterNot { it.tournamentId == tournamentId && it.playerId == playerId }
-        }
         val outcome = if (action == PlayerAccountAction.REVOKE) PlayerAccountOutcome.REVOKED else PlayerAccountOutcome.INVITED
         return AppResult.Success(listOf(PlayerAccountActionResult(playerId, outcome)))
     }
-    override suspend fun saveEmails(tournamentId: String, items: List<PlayerAccountActionItem>) = AppResult.Success(Unit)
+    override suspend fun saveEmails(tournamentId: String, items: List<PlayerAccountActionItem>) =
+        AppResult.Success(emptyList<PlayerEmailResult>())
 }
 
 internal class FakeSignedInAuthRepository : AuthRepository {

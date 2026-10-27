@@ -33,13 +33,13 @@ class PlayerImportPreviewUiTest {
                 status = ImportRowStatus.REPLACE,
                 issues = listOf(
                     ImportIssue(ImportIssueCode.REPLACES_PLAYER, ImportIssueSeverity.WARNING, emptyList()),
-                    ImportIssue(ImportIssueCode.EMAIL_CHANGES, ImportIssueSeverity.WARNING, listOf("old@b.es", "new@b.es")),
+                    ImportIssue(ImportIssueCode.EMAIL_KEPT_ACCOUNT, ImportIssueSeverity.WARNING, listOf("old@b.es", "new@b.es")),
                 ),
-                current = ImportSlotState("00000002", null, "old@b.es", "Team 1"),
+                current = ImportSlotState("00000002", "old@b.es", "Team 1"),
             ),
             ImportRowPlan(
                 row = 3, slotId = 2, emaId = "00000003", email = null, team = null,
-                status = ImportRowStatus.NEW, issues = emptyList(), current = ImportSlotState(null, null, null, null),
+                status = ImportRowStatus.NEW, issues = emptyList(), createsAccount = true, current = ImportSlotState(null, null, null),
             ),
             ImportRowPlan(
                 row = 4, slotId = null, emaId = null, email = null, team = null,
@@ -82,7 +82,8 @@ class PlayerImportPreviewUiTest {
 
         onNodeWithText("Rows with an error: 1. The import skips these rows.").assertExists()
         onNodeWithText("The EMA number is empty.").assertExists()
-        onNodeWithText("The saved email changes from old@b.es to new@b.es.").assertExists()
+        onNodeWithText("The account of this player has the email old@b.es. The account email stays and the email new@b.es is not saved.").assertExists()
+        onNodeWithText("The app creates the account of this player.").assertExists()
         onNodeWithText("Now in this slot: ANA PEREZ").assertExists()
         onNodeWithText("2 slots are not in the file. They stay as they are.").assertExists()
         onNodeWithText("If you do not select this box, the import skips the rows that replace a player.").assertExists()

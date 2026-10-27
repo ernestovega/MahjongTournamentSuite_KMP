@@ -53,8 +53,8 @@ class DefaultPlayerImportRepositoryTest {
                 jsonResponse(
                     """
                     {"rows":[
-                      {"row":2,"slotId":1,"emaId":"00000001","status":"REPLACE",
-                       "issues":[{"code":"EMAIL_CHANGES","severity":"WARNING","args":["a@b.es","c@b.es"]}],
+                      {"row":2,"slotId":1,"emaId":"00000001","status":"REPLACE","createsAccount":true,
+                       "issues":[{"code":"EMAIL_KEPT_ACCOUNT","severity":"WARNING","args":["a@b.es","c@b.es"]}],
                        "current":{"emaId":"00000002","email":"a@b.es"}},
                       {"row":3,"status":"ERROR","issues":[{"code":"FROM_THE_FUTURE","severity":"ERROR"}]}
                     ],"untouchedSlotIds":[4],"isTeams":true,"tournamentStarted":true}
@@ -69,10 +69,13 @@ class DefaultPlayerImportRepositoryTest {
         val preview = assertIs<AppResult.Success<PlayerImportPreview>>(repository.preview("t1", "players.csv", byteArrayOf(1))).value
 
         assertEquals(listOf(ImportRowStatus.REPLACE, ImportRowStatus.ERROR), preview.rows.map { it.status })
-        assertEquals(ImportIssueCode.EMAIL_CHANGES, preview.rows[0].issues[0].code)
+        assertEquals(ImportIssueCode.EMAIL_KEPT_ACCOUNT, preview.rows[0].issues[0].code)
         assertEquals(ImportIssueSeverity.WARNING, preview.rows[0].issues[0].severity)
         assertEquals(listOf("a@b.es", "c@b.es"), preview.rows[0].issues[0].args)
         assertEquals("00000002", preview.rows[0].current?.emaId)
+        assertEquals("a@b.es", preview.rows[0].current?.email)
+        assertTrue(preview.rows[0].createsAccount)
+        assertEquals(false, preview.rows[1].createsAccount)
         assertEquals(ImportIssueCode.UNKNOWN, preview.rows[1].issues[0].code)
         assertEquals(listOf(4), preview.untouchedSlotIds)
         assertTrue(preview.isTeams && preview.tournamentStarted)
@@ -177,7 +180,7 @@ class DefaultPlayerImportRepositoryTest {
                     when (call) {
                         2 -> """{"assigned":2,"emailsSaved":0,"teamsRenamed":0,"skipped":0,"failures":[{"row":2,"slotId":1,"message":"boom"}]}"""
                         3 -> """{"assigned":1,"emailsSaved":0,"teamsRenamed":0,"skipped":0,"failures":[]}"""
-                        4 -> """{"assigned":0,"emailsSaved":3,"teamsRenamed":2,"skipped":4,"failures":[]}"""
+                        4 -> """{"assigned":0,"emailsSaved":3,"emailsRefused":2,"teamsRenamed":2,"skipped":4,"failures":[]}"""
                         else -> resultJson
                     },
                 )
@@ -194,6 +197,7 @@ class DefaultPlayerImportRepositoryTest {
 
         assertEquals(3, value.assigned)
         assertEquals(3, value.emailsSaved)
+        assertEquals(2, value.emailsRefused)
         assertEquals(2, value.teamsRenamed)
         assertEquals(4, value.skipped)
         assertEquals("boom", value.failures.single().message)

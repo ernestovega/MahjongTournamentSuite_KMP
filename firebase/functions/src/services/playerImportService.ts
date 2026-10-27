@@ -11,7 +11,7 @@ import {
   type SlotInfo,
   writePlayerExportXlsx,
 } from "./playerImport";
-import { saveContactEmails } from "./playerAccountsService";
+import { createPlayerAccount, EMAIL_PATTERN, loadAccountsByEmail, loadAccountsByEmaId } from "./playerAccountsService";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import {
   assignTournamentPlayer,
@@ -42,14 +42,12 @@ type Loaded = {
 };
 
 function slotInfoOf(player: TournamentPlayer): SlotInfo {
-  const nonMember = player.nonMember;
   return {
     id: player.id,
     team: player.team,
     emaId: player.assignedEmaId,
-    nonMemberName: nonMember == null ? null : `${nonMember.firstName} ${nonMember.lastName}`.trim(),
     accountUid: player.accountUid,
-    invitedEmail: player.invitedEmail,
+    email: player.email,
   };
 }
 
@@ -71,24 +69,35 @@ async function load(params: {
   fileName: string;
   buffer: Buffer;
   replaceExisting: boolean;
-  /** False for the steps that only assign players. They need no invitation data. */
-  withInvitations?: boolean;
+  /** False for the steps that only assign players. They need no account data. */
+  withAccounts?: boolean;
 }): Promise<Loaded> {
   const tournament = await db.collection("tournaments").doc(params.tournamentId).get();
   if (!tournament.exists) throw notFound("Tournament not found");
   const isTeams = tournament.get("isTeams") === true;
   const parsed = await parsePlayerImportFile(params.fileName, params.buffer);
   const [players, teams] = await Promise.all([
-    listTournamentPlayers(params.tournamentId, { withInvitations: params.withInvitations }),
+    listTournamentPlayers(params.tournamentId, { withAccounts: params.withAccounts }),
     listTournamentTeams(params.tournamentId),
   ]);
   const emaIds = [...new Set(parsed.rows.map((row) => normalizeEmaId(row.emaId)).filter((id): id is string => id != null))];
+  // The accounts decide what happens with the emails of the file.
+  const accountEmailByEma = new Map<string, string | null>();
+  const emailOwners = new Map<string, string>();
+  if (params.withAccounts !== false && parsed.hasEmailColumn) {
+    const accountsByEma = await loadAccountsByEmaId(emaIds);
+    accountsByEma.forEach((account, emaId) => accountEmailByEma.set(emaId, account.email));
+    const emails = parsed.rows.map((row) => row.email.toLowerCase()).filter((email) => EMAIL_PATTERN.test(email));
+    (await loadAccountsByEmail(emails)).forEach((owner, email) => emailOwners.set(email, owner.emaId ?? ""));
+  }
   const plan = planPlayerImport({
     rows: parsed.rows,
     slots: players.map(slotInfoOf),
     isTeams,
     teamNames: new Map(teams.map((team) => [team.id, team.name])),
     registeredEmaIds: await registeredEmaIdsOf(emaIds),
+    accountEmailByEma,
+    emailOwners,
     replaceExisting: params.replaceExisting,
   });
   return { parsed, players, plan, isTeams, tournamentStarted: tournamentHasStartedTables(tournament) };
@@ -143,6 +152,8 @@ export type PlayerImportResult = {
   teamsRenamed: number;
   /** Rows with an error, and rows that replace a player when the editor did not accept it. Set by FINISH. */
   skipped: number;
+  /** Rows whose email was not saved, because the account has another email or another account owns the email. Set by FINISH. */
+  emailsRefused: number;
   failures: Array<{ row: number | null; slotId: number | null; message: string }>;
 };
 
@@ -162,9 +173,9 @@ export async function applyPlayerImport(params: {
   /** Lines of the file for ASSIGN. */
   rows?: number[];
 }): Promise<PlayerImportResult> {
-  const { plan, players } = await load({ ...params, withInvitations: params.phase === "FINISH" });
+  const { plan, players } = await load({ ...params, withAccounts: params.phase === "FINISH" });
   const slots = new Map(players.map((player) => [player.id, player]));
-  const result: PlayerImportResult = { assigned: 0, emailsSaved: 0, teamsRenamed: 0, skipped: 0, failures: [] };
+  const result: PlayerImportResult = { assigned: 0, emailsSaved: 0, emailsRefused: 0, teamsRenamed: 0, skipped: 0, failures: [] };
   const fail = (row: PlannedRow, error: unknown) => {
     result.failures.push({ row: row.row, slotId: row.slotId, message: messageOf(error) });
   };
@@ -181,7 +192,7 @@ export async function applyPlayerImport(params: {
       cleared.add(holder.id);
       try {
         await assignTournamentPlayer({
-          tournamentId: params.tournamentId, playerId: holder.id, emaId: null, nonMember: null, uid: params.uid,
+          tournamentId: params.tournamentId, playerId: holder.id, emaId: null, uid: params.uid,
         });
       } catch (error) {
         fail(row, error);
@@ -197,7 +208,7 @@ export async function applyPlayerImport(params: {
       if (slot.assignedEmaId === row.emaId) continue;
       try {
         await assignTournamentPlayer({
-          tournamentId: params.tournamentId, playerId: row.slotId!, emaId: row.emaId, nonMember: null, uid: params.uid,
+          tournamentId: params.tournamentId, playerId: row.slotId!, emaId: row.emaId, uid: params.uid,
         });
         result.assigned++;
       } catch (error) {
@@ -207,25 +218,22 @@ export async function applyPlayerImport(params: {
     return result;
   }
 
-  // FINISH. A slot with a linked account keeps the email of the account. The plan warned about it.
+  // FINISH. The email of an account never changes. A new email creates an account without a password.
   const emailRows = applicable.filter((row) => {
-    if (row.email == null) return false;
-    const slot = slots.get(row.slotId!)!;
+    if (!row.createsAccount) return false;
     // A row whose player is not in the slot failed in ASSIGN.
-    if (slot.assignedEmaId !== row.emaId) return false;
-    return slot.accountUid == null && slot.invitedEmail !== row.email;
+    return slots.get(row.slotId!)!.assignedEmaId === row.emaId;
   });
-  if (emailRows.length > 0) {
+  for (const row of emailRows) {
     try {
-      await saveContactEmails({
-        tournamentId: params.tournamentId,
-        items: emailRows.map((row) => ({ playerId: row.slotId!, email: row.email! })),
-      });
-      result.emailsSaved = emailRows.length;
+      await createPlayerAccount({ email: row.email!, emaId: row.emaId! });
+      result.emailsSaved++;
     } catch (error) {
-      emailRows.forEach((row) => fail(row, error));
+      fail(row, error);
     }
   }
+  result.emailsRefused = applicable.filter((row) =>
+    row.issues.some((issue) => issue.code === "EMAIL_KEPT_ACCOUNT" || issue.code === "EMAIL_IN_USE")).length;
 
   if (plan.teamRenames.length > 0) {
     for (const rename of plan.teamRenames) {

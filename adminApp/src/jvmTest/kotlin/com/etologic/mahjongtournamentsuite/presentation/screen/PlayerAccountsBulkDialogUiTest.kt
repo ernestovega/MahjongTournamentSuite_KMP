@@ -21,7 +21,7 @@ class PlayerAccountsBulkDialogUiTest {
         TournamentPlayer(id = 2, name = "P2", team = 0, assignedEmaId = "22", accountUid = "u2", invitationStatus = InvitationStatus.ACCEPTED),
         TournamentPlayer(
             id = 3, name = "P3", team = 0, assignedEmaId = "33",
-            invitationStatus = InvitationStatus.INVITED, invitedEmail = "p3@example.test", contactedAt = "2026-10-12T10:00:00Z",
+            invitationStatus = InvitationStatus.INVITED, email = "p3@example.test", contactedAt = "2026-10-12T10:00:00Z",
         ),
         TournamentPlayer(
             id = 4, name = "P4", team = 0, assignedEmaId = "44", accountUid = "u4",
