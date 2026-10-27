@@ -69,7 +69,6 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
@@ -115,10 +114,6 @@ import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account
-import mahjongtournamentsuite.adminapp.generated.resources.account_email_kept
-import mahjongtournamentsuite.adminapp.generated.resources.account_email_same
-import mahjongtournamentsuite.adminapp.generated.resources.account_email_saved
-import mahjongtournamentsuite.adminapp.generated.resources.action_did_not_run
 import mahjongtournamentsuite.adminapp.generated.resources.assign
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_id_list
@@ -136,6 +131,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.contact_linked
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_n
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
+import mahjongtournamentsuite.adminapp.generated.resources.remove_account_link
+import mahjongtournamentsuite.adminapp.generated.resources.resend_invitation
+import mahjongtournamentsuite.adminapp.generated.resources.send_reminder_again
+import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
+import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.first_name
 import mahjongtournamentsuite.adminapp.generated.resources.last_name
@@ -192,7 +192,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var assignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var substitutionSlotId by remember { mutableStateOf<Int?>(null) }
-    var accountSlotId by remember { mutableStateOf<Int?>(null) }
+    var inviteEmailSlotId by remember { mutableStateOf<Int?>(null) }
     var accountOutcome by remember { mutableStateOf<AccountOutcome?>(null) }
     var accountBusy by remember { mutableStateOf(false) }
     var accountError by remember { mutableStateOf<UiText?>(null) }
@@ -240,7 +240,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     fun runAccountAction(
         action: PlayerAccountAction,
         items: List<PlayerAccountActionItem>,
-        closeAccountDialog: Boolean = false,
+        showOutcome: Boolean = false,
     ) = scope.launch {
         accountBusy = true
         accountError = null
@@ -249,44 +249,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             is AppResult.Success -> {
                 accountResults = result.value
                 refresh(force = true).join()
-                if (closeAccountDialog) {
+                if (showOutcome) {
                     accountOutcome = result.value.firstOrNull()?.toOutcome()
-                    accountSlotId = null
                     accountResults = emptyList()
                 }
             }
             is AppResult.Failure -> {
-                if (closeAccountDialog) {
+                if (showOutcome) {
                     accountOutcome = AccountOutcome(result.error.toUiText(), isError = true)
-                    accountSlotId = null
                 } else {
                     accountError = result.error.toUiText()
                 }
-            }
-        }
-        accountBusy = false
-    }
-
-    fun saveAccountEmail(playerId: Int, email: String) = scope.launch {
-        accountBusy = true
-        accountError = null
-        when (val result = presenter.saveAccountEmails(tournamentId, listOf(PlayerAccountActionItem(playerId, email)))) {
-            is AppResult.Success -> {
-                refresh(force = true).join()
-                val saved = result.value.firstOrNull()
-                accountOutcome = when (saved?.outcome) {
-                    PlayerEmailOutcome.CREATED -> AccountOutcome(UiText.of(Res.string.account_email_saved), isError = false)
-                    PlayerEmailOutcome.UNCHANGED -> AccountOutcome(UiText.of(Res.string.account_email_same), isError = false)
-                    PlayerEmailOutcome.KEPT_ACCOUNT_EMAIL ->
-                        AccountOutcome(UiText.of(Res.string.account_email_kept, saved.message.orEmpty()), isError = true)
-                    PlayerEmailOutcome.FAILED, null ->
-                        AccountOutcome(saved?.message?.let { UiText.Plain(it) } ?: UiText.of(Res.string.action_did_not_run), isError = true)
-                }
-                accountSlotId = null
-            }
-            is AppResult.Failure -> {
-                accountOutcome = AccountOutcome(result.error.toUiText(), isError = true)
-                accountSlotId = null
             }
         }
         accountBusy = false
@@ -400,7 +373,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             val team = teamNamesById[slot.team] ?: teamLabel(slot.team)
             val tablesForPlayer = tableNumbersByPlayerId[slot.id].orEmpty()
             val matchesSearch = query.isEmpty() || listOf(
-                name, assigned?.emaId.orEmpty(), slot.id.toString(), team, tablesForPlayer,
+                name, assigned?.emaId.orEmpty(), slot.email.orEmpty(), slot.id.toString(), team, tablesForPlayer,
             ).any { normalizeSearchText(it).contains(query) }
             val matchesCountry = selectedCountryCodes.isEmpty() || country.trim().uppercase() in selectedCountryCodes
             matchesSearch && matchesCountry
@@ -430,16 +403,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     }
     val assignmentSlot = assignmentSlotId?.let { id -> players.firstOrNull { it.id == id } }
     val clearAssignmentSlot = clearAssignmentSlotId?.let { id -> players.firstOrNull { it.id == id } }
-    val accountSlot = accountSlotId?.let { id -> players.firstOrNull { it.id == id } }
-    accountSlot?.let { slot ->
-        PlayerAccountDialog(
-            slot = slot,
+    inviteEmailSlotId?.let { id -> players.firstOrNull { it.id == id } }?.let { slot ->
+        MissingEmailsDialog(
+            players = listOf(slot),
+            nameOf = { playerLabel(it.id) },
             busy = accountBusy,
-            onAction = { action, email ->
-                runAccountAction(action, listOf(PlayerAccountActionItem(slot.id, email)), closeAccountDialog = true)
+            confirmLabel = stringResource(Res.string.send_invitation),
+            onConfirm = { emails ->
+                inviteEmailSlotId = null
+                emails[slot.id]?.let { runAccountAction(PlayerAccountAction.SEND, listOf(PlayerAccountActionItem(slot.id, it)), showOutcome = true) }
             },
-            onSaveEmail = { email -> saveAccountEmail(slot.id, email) },
-            onDismiss = { accountSlotId = null; accountResults = emptyList() },
+            onDismiss = { inviteEmailSlotId = null },
         )
     }
     accountOutcome?.let { AccountOutcomeDialog(it, onDismiss = { accountOutcome = null }) }
@@ -1143,7 +1117,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             val playerCountry = assigned?.country.orEmpty()
                             val playerName = assigned?.displayName
                             DataTableRow(
-                                onClick = { openAssignment(slot.id) },
+                                // A slot with a player is not clickable. The editor must use the menu and Clear to change it.
+                                onClick = if (slot.isAssigned) null else ({ openAssignment(slot.id) }),
                                 clickFocusable = false,
                                 highlighted = focusedAssignRowIndex == index || focusedClearRowIndex == index,
                             ) {
@@ -1156,6 +1131,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     assigned?.emaId ?: "—",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
+                                    textAlign = TextAlign.Center,
                                 )
                                 Box(
                                     modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
@@ -1170,7 +1146,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     modifier = Modifier
                                         .width(TournamentPlayerPhotoColumnWidth)
                                         .height(TournamentPlayerPhotoSize),
-                                    contentAlignment = Alignment.CenterStart,
+                                    contentAlignment = Alignment.Center,
                                 ) {
                                     TournamentPlayerPhoto(
                                         photoUrl = assigned?.photoUrl,
@@ -1178,11 +1154,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         columnWidth = TournamentPlayerPhotoColumnWidth,
                                     )
                                 }
+                                // The first name is on the first line and the last name on the second line.
                                 Text(
-                                    (playerName ?: stringResource(Res.string.not_assigned)) + (slot.substitution?.let { " (${it.label()})" } ?: ""),
+                                    if (assigned == null) {
+                                        stringResource(Res.string.not_assigned)
+                                    } else {
+                                        assigned.firstName.trim() + "\n" + assigned.lastName.trim()
+                                    } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
                                     modifier = Modifier.weight(1.2f),
+                                    textAlign = TextAlign.Center,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
@@ -1191,6 +1173,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         text = teamNamesById[slot.team] ?: teamLabel(slot.team),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
+                                        textAlign = TextAlign.Center,
                                         maxLines = 2,
                                         overflow = TextOverflow.Ellipsis,
                                     )
@@ -1199,6 +1182,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     text = tableNumbersByPlayerId[slot.id] ?: "—",
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     modifier = Modifier.width(TournamentPlayerTablesColumnWidth),
+                                    textAlign = TextAlign.Center,
                                     maxLines = 2,
                                     overflow = TextOverflow.Ellipsis,
                                 )
@@ -1209,23 +1193,19 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     if (slot.assignedEmaId.isNullOrBlank()) {
                                         Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     } else {
-                                        TextButton(
-                                            enabled = !loading && savingId == null,
-                                            onClick = {
-                                                accountError = null
-                                                accountSlotId = slot.id
-                                            },
-                                            contentPadding = PaddingValues(horizontal = 4.dp),
-                                        ) {
+                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                             Text(
-                                                when (slot.contactState) {
-                                                    PlayerContactState.NO_EMA_ID, PlayerContactState.NOT_INVITED -> stringResource(Res.string.contact_invite)
-                                                    PlayerContactState.LINKED -> stringResource(Res.string.contact_linked)
-                                                    PlayerContactState.INVITED -> stringResource(Res.string.contact_invited)
-                                                    PlayerContactState.CONTACTED -> stringResource(Res.string.contact_contacted)
-                                                },
+                                                text = slot.contactState.label(),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 maxLines = 1,
                                                 textAlign = TextAlign.Center,
+                                            )
+                                            Text(
+                                                text = slot.email ?: "—",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
                                             )
                                         }
                                     }
@@ -1324,6 +1304,44 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                         openClearAssignment(slot.id)
                                                     },
                                                 )
+                                                val accountActionsEnabled = !accountBusy && !loading && savingId == null
+                                                fun accountAction(action: PlayerAccountAction) {
+                                                    actionsMenuOpen = false
+                                                    runAccountAction(action, listOf(PlayerAccountActionItem(slot.id)), showOutcome = true)
+                                                }
+                                                when (slot.contactState) {
+                                                    PlayerContactState.NOT_INVITED -> DropdownMenuItem(
+                                                        enabled = accountActionsEnabled,
+                                                        text = { Text(stringResource(Res.string.send_invitation)) },
+                                                        onClick = {
+                                                            actionsMenuOpen = false
+                                                            inviteEmailSlotId = slot.id
+                                                        },
+                                                    )
+                                                    PlayerContactState.LINKED -> DropdownMenuItem(
+                                                        enabled = accountActionsEnabled,
+                                                        text = { Text(stringResource(Res.string.send_reminder)) },
+                                                        onClick = { accountAction(PlayerAccountAction.SEND) },
+                                                    )
+                                                    PlayerContactState.CONTACTED -> DropdownMenuItem(
+                                                        enabled = accountActionsEnabled,
+                                                        text = { Text(stringResource(Res.string.send_reminder_again)) },
+                                                        onClick = { accountAction(PlayerAccountAction.RESEND) },
+                                                    )
+                                                    PlayerContactState.INVITED -> DropdownMenuItem(
+                                                        enabled = accountActionsEnabled,
+                                                        text = { Text(stringResource(Res.string.resend_invitation)) },
+                                                        onClick = { accountAction(PlayerAccountAction.RESEND) },
+                                                    )
+                                                    PlayerContactState.NO_EMA_ID -> Unit
+                                                }
+                                                if (slot.contactState != PlayerContactState.NOT_INVITED && slot.contactState != PlayerContactState.NO_EMA_ID) {
+                                                    DropdownMenuItem(
+                                                        enabled = accountActionsEnabled,
+                                                        text = { Text(stringResource(Res.string.remove_account_link)) },
+                                                        onClick = { accountAction(PlayerAccountAction.REVOKE) },
+                                                    )
+                                                }
                                                 if (tournamentStarted) {
                                                     DropdownMenuItem(
                                                         text = { Text(stringResource(if (slot.substitution == null) Res.string.substitute else Res.string.substitution)) },
@@ -1354,7 +1372,7 @@ private val TournamentPlayerIdColumnWidth = 48.dp
 private val TournamentPlayerEmaColumnWidth = 104.dp
 private val TournamentPlayerTeamColumnWidth = 144.dp
 private val TournamentPlayerTablesColumnWidth = 220.dp
-private val TournamentPlayerAccountColumnWidth = 140.dp
+private val TournamentPlayerAccountColumnWidth = 220.dp
 private val TournamentPlayerActionColumnWidth = 112.dp
 private val AssignmentPhotoColumnWidth = 48.dp
 private val AssignmentCountryColumnWidth = 64.dp
@@ -1364,7 +1382,7 @@ private val AssignmentEmaColumnWidth = 96.dp
 private fun TournamentPlayerHeader(
     text: String,
     modifier: Modifier,
-    textAlign: TextAlign = TextAlign.Start,
+    textAlign: TextAlign = TextAlign.Center,
 ) {
     Text(
         text = text,

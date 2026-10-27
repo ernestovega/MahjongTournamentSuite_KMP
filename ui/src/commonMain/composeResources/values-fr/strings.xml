@@ -32,10 +32,11 @@
     <string name="profile_alias">Pseudo</string>
     <string name="profile_alias_hint">Le nom que les apps affichent pour votre compte.</string>
     <string name="profile_ema_number">Numéro EMA</string>
+    <string name="profile_ema_number_info">Seul un administrateur peut modifier le numéro EMA. Il le fait dans l\'écran de gestion des utilisateurs.</string>
     <string name="photo_error_type">Choisissez une image JPEG, PNG, WebP ou GIF.</string>
     <string name="photo_error_size">Choisissez une photo de 5 Mo maximum.</string>
-    <string name="photo_change">Changer la photo</string>
-    <string name="photo_add">Ajouter une photo</string>
+    <string name="photo_edit">Modifier la photo</string>
+    <string name="photo_ema_info">Ceci est la photo de votre joueur EMA. Supprimez votre propre photo pour l\'utiliser de nouveau.</string>
     <string name="photo_remove">Supprimer la photo</string>
     <string name="photo_crop_title">Recadrer la photo</string>
     <string name="photo_crop_hint">Faites glisser l'image ou utilisez les commandes. Le cercle montre la zone affichée dans les apps.</string>

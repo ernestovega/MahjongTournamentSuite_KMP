@@ -51,7 +51,8 @@ expect fun PlatformHorizontalScrollbar(
 expect val PlatformScrollbarThickness: Dp
 
 /**
- * Displays a vertical lazy list with a scrollbar that occupies only the trailing edge.
+ * Displays a vertical lazy list with a scrollbar that floats over the trailing edge.
+ * The list uses the full width. The scrollbar takes no space from the rows.
  * The scrollbar must not fill the width because it would intercept row pointer input.
  */
 @Composable
@@ -66,9 +67,7 @@ fun LazyColumnWithScrollbar(
     Box(modifier = modifier) {
         LazyColumn(
             state = state,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(end = PlatformScrollbarThickness),
+            modifier = Modifier.fillMaxSize(),
             contentPadding = contentPadding,
             verticalArrangement = verticalArrangement,
             horizontalAlignment = horizontalAlignment,

@@ -97,7 +97,7 @@
     <string name="role">Rol</string>
     <string name="ema_id">ID EMA</string>
     <string name="status">Estado</string>
-    <string name="search_by_email">Buscar por correo electrónico</string>
+    <string name="search">Buscar</string>
     <string name="tournament">Torneo</string>
     <string name="all_tournaments">Todos los torneos</string>
     <string name="player">Jugador</string>
@@ -162,13 +162,9 @@
     <string name="previous_round">Ronda anterior</string>
     <string name="next_round">Ronda siguiente</string>
     <string name="ema_report">Informe EMA</string>
-    <string name="assign_an_ema_player_to_this">Asigna primero un jugador EMA a este puesto.</string>
-    <string name="send_an_invitation_link_to_the">Escribe el correo electrónico de este jugador. La aplicación crea la cuenta y envía un correo para elegir una contraseña. No se envía nada hasta que pulses Enviar.</string>
-    <string name="this_player_has_an_account_and">Este jugador tiene una cuenta y recibió un correo.</string>
     <string name="send_invitation">Enviar invitación</string>
     <string name="send_reminder">Enviar recordatorio</string>
     <string name="send_reminder_again">Enviar el recordatorio otra vez</string>
-    <string name="save_email_only">Guardar solo el correo electrónico</string>
     <string name="remove_account_link">Quitar el vínculo con la cuenta</string>
     <string name="set">Fijar</string>
     <string name="remaining_time">Tiempo restante</string>
@@ -260,7 +256,6 @@
     <string name="player_error_country">El país debe usar un código EMA de tres letras.</string>
     <string name="photo_error_type">Elige una imagen JPEG, PNG, WebP o GIF.</string>
     <string name="photo_error_size">Elige una foto de 5 MB o menos.</string>
-    <string name="account_email_saved">Se creó la cuenta del jugador con este correo electrónico. No se envió nada.</string>
     <string name="assign_all_before_id_cards">Asigna un jugador EMA a cada puesto del torneo antes de crear las tarjetas de identificación.</string>
     <string name="assign_all_before_id_list">Asigna un jugador EMA a cada puesto del torneo antes de crear la lista de identificación.</string>
     <string name="assign_ema_player_to_player">ASIGNAR UN JUGADOR EMA AL JUGADOR %1$d</string>
@@ -573,15 +568,9 @@
     <string name="outcome_label_invited">invitado</string>
     <string name="outcome_label_notified">avisado</string>
     <string name="outcome_label_revoked">revocado</string>
-    <string name="invitation_info">Invitar crea la cuenta del jugador con el correo electrónico y envía un correo para elegir una contraseña. Reenviar vuelve a enviar ese correo. Quitar el vínculo con la cuenta solo quita al jugador de este torneo. La cuenta se mantiene.</string>
     <string name="contact_state_not_invited">Sin invitar</string>
     <string name="contact_state_linked">Vinculado, sin recordatorio</string>
     <string name="contact_state_reminded">Vinculado, con recordatorio</string>
-    <string name="account_of_player">Cuenta del jugador %1$d</string>
-    <string name="account_exists_note">Ya existe una cuenta con este ID EMA y ve este torneo. No se envió ningún correo. Envía un recordatorio cuando estés listo.</string>
-    <string name="not_known">Desconocido</string>
-    <string name="sent">Enviado</string>
-    <string name="link_works_once">El jugador aún no tiene contraseña. Reenviar vuelve a enviar el correo para elegirla.</string>
     <string name="edit_tournament_named">Editar %1$s</string>
     <string name="no_logo_for">Sin logotipo para %1$s</string>
     <string name="tournament_color_value">Color del torneo %1$s</string>
@@ -718,8 +707,6 @@
     <string name="import_choose_other_file">Elegir otro archivo</string>
     <string name="import_reading_file">La aplicación está leyendo el archivo.</string>
     <string name="import_applying">La aplicación está importando los jugadores: %1$d de %2$d filas hechas.</string>
-    <string name="import_count_new">Filas que añaden datos: %1$d</string>
-    <string name="import_count_replace">Filas que sustituyen a un jugador: %1$d</string>
     <string name="import_count_errors">Filas con error: %1$d. La importación omite estas filas.</string>
     <string name="import_untouched_slots">%1$d huecos no están en el archivo. Se quedan como están.</string>
     <string name="import_replace_checkbox">Sustituir a los jugadores que ya están en un hueco (%1$d filas)</string>
@@ -731,8 +718,9 @@
     <string name="import_status_replace">Sustituir</string>
     <string name="import_status_unchanged">Sin cambios</string>
     <string name="import_status_error">Error</string>
-    <string name="import_team_value">Equipo: %1$s</string>
-    <string name="import_email_value">Email: %1$s</string>
+    <string name="import_field_player">Jugador</string>
+    <string name="import_field_team">Equipo</string>
+    <string name="import_field_email">Email</string>
     <string name="import_issue_invalid_id">El id no es un número entero positivo.</string>
     <string name="import_issue_unknown_slot">Este torneo no tiene el hueco %1$s.</string>
     <string name="import_issue_duplicate_slot">El hueco %1$s aparece en más de una fila.</string>
@@ -756,8 +744,6 @@
     <string name="import_result_failures">La importación no pudo aplicar estas filas:</string>
     <string name="import_failure_line">• Línea %1$s: %2$s</string>
     <string name="resend_invitation">Reenviar</string>
-    <string name="account_email_same">La cuenta de este jugador ya tiene este correo electrónico.</string>
-    <string name="account_email_kept">La cuenta de este jugador tiene el correo %1$s. El correo de la cuenta se mantiene y el correo nuevo no se guardó.</string>
     <string name="import_issue_email_kept">La cuenta de este jugador tiene el correo %1$s. El correo de la cuenta se mantiene y el correo %2$s no se guarda.</string>
     <string name="import_issue_email_in_use">Otra cuenta usa este correo. Esa cuenta es del jugador con número EMA %1$s. El correo no se guarda.</string>
     <string name="import_issue_email_in_use_no_ema">Otra cuenta usa este correo y esa cuenta no tiene número EMA. El correo no se guarda.</string>

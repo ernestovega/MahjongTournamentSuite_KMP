@@ -32,10 +32,11 @@
     <string name="profile_alias">Alias</string>
     <string name="profile_alias_hint">The name that the apps show for your account.</string>
     <string name="profile_ema_number">EMA number</string>
+    <string name="profile_ema_number_info">Only an admin can change the EMA number. The admin does this in the user management screen.</string>
     <string name="photo_error_type">Choose a JPEG, PNG, WebP, or GIF image.</string>
     <string name="photo_error_size">Choose a photo that is 5 MB or smaller.</string>
-    <string name="photo_change">Change photo</string>
-    <string name="photo_add">Add photo</string>
+    <string name="photo_edit">Edit photo</string>
+    <string name="photo_ema_info">This is the photo of your EMA player. Remove your own photo to use it again.</string>
     <string name="photo_remove">Remove photo</string>
     <string name="photo_crop_title">Crop photo</string>
     <string name="photo_crop_hint">Drag the image or use the controls. The circle shows the area that the apps show.</string>

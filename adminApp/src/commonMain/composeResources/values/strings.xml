@@ -97,7 +97,7 @@
     <string name="role">Role</string>
     <string name="ema_id">EMA ID</string>
     <string name="status">Status</string>
-    <string name="search_by_email">Search by email</string>
+    <string name="search">Search</string>
     <string name="tournament">Tournament</string>
     <string name="all_tournaments">All tournaments</string>
     <string name="player">Player</string>
@@ -162,13 +162,9 @@
     <string name="previous_round">Previous round</string>
     <string name="next_round">Next round</string>
     <string name="ema_report">EMA report</string>
-    <string name="assign_an_ema_player_to_this">Assign an EMA player to this slot first.</string>
-    <string name="send_an_invitation_link_to_the">Enter the email of this player. The app creates the account and sends an email to choose a password. Nothing is sent before you press Send.</string>
-    <string name="this_player_has_an_account_and">This player has an account and received an email.</string>
     <string name="send_invitation">Send invitation</string>
     <string name="send_reminder">Send reminder</string>
     <string name="send_reminder_again">Send reminder again</string>
-    <string name="save_email_only">Save email only</string>
     <string name="remove_account_link">Remove account link</string>
     <string name="set">Set</string>
     <string name="remaining_time">Remaining time</string>
@@ -260,7 +256,6 @@
     <string name="player_error_country">Country must use a three-letter EMA code.</string>
     <string name="photo_error_type">Choose a JPEG, PNG, WebP, or GIF image.</string>
     <string name="photo_error_size">Choose a photo that is 5 MB or smaller.</string>
-    <string name="account_email_saved">The account of the player was created with this email. Nothing was sent.</string>
     <string name="assign_all_before_id_cards">Assign an EMA player to every tournament slot before creating ID cards.</string>
     <string name="assign_all_before_id_list">Assign an EMA player to every tournament slot before creating the ID list.</string>
     <string name="assign_ema_player_to_player">ASSIGN EMA PLAYER TO PLAYER %1$d</string>
@@ -573,15 +568,9 @@
     <string name="outcome_label_invited">invited</string>
     <string name="outcome_label_notified">notified</string>
     <string name="outcome_label_revoked">revoked</string>
-    <string name="invitation_info">Invite creates the account of the player from the email and sends an email to choose a password. Resend sends that email again. Remove account link only removes the player from this tournament. The account stays.</string>
     <string name="contact_state_not_invited">Not invited</string>
     <string name="contact_state_linked">Linked, not reminded</string>
     <string name="contact_state_reminded">Linked, reminded</string>
-    <string name="account_of_player">Account of player %1$d</string>
-    <string name="account_exists_note">An account with this EMA ID already exists and sees this tournament. No email was sent. Send a reminder when you are ready.</string>
-    <string name="not_known">Not known</string>
-    <string name="sent">Sent</string>
-    <string name="link_works_once">The player has no password yet. Resend sends the email to choose a password again.</string>
     <string name="edit_tournament_named">Edit %1$s</string>
     <string name="no_logo_for">No logo for %1$s</string>
     <string name="tournament_color_value">Tournament color %1$s</string>
@@ -718,8 +707,6 @@
     <string name="import_choose_other_file">Choose another file</string>
     <string name="import_reading_file">The app is reading the file.</string>
     <string name="import_applying">The app is importing the players: %1$d of %2$d rows done.</string>
-    <string name="import_count_new">Rows that add data: %1$d</string>
-    <string name="import_count_replace">Rows that replace a player: %1$d</string>
     <string name="import_count_errors">Rows with an error: %1$d. The import skips these rows.</string>
     <string name="import_untouched_slots">%1$d slots are not in the file. They stay as they are.</string>
     <string name="import_replace_checkbox">Replace the players that are in a slot already (%1$d rows)</string>
@@ -731,8 +718,9 @@
     <string name="import_status_replace">Replace</string>
     <string name="import_status_unchanged">No change</string>
     <string name="import_status_error">Error</string>
-    <string name="import_team_value">Team: %1$s</string>
-    <string name="import_email_value">Email: %1$s</string>
+    <string name="import_field_player">Player</string>
+    <string name="import_field_team">Team</string>
+    <string name="import_field_email">Email</string>
     <string name="import_issue_invalid_id">The id is not a positive whole number.</string>
     <string name="import_issue_unknown_slot">This tournament has no slot %1$s.</string>
     <string name="import_issue_duplicate_slot">Slot %1$s appears in more than one row.</string>
@@ -756,8 +744,6 @@
     <string name="import_result_failures">The import could not apply these rows:</string>
     <string name="import_failure_line">• Line %1$s: %2$s</string>
     <string name="resend_invitation">Send again</string>
-    <string name="account_email_same">The account of this player has this email already.</string>
-    <string name="account_email_kept">The account of this player has the email %1$s. The account email stays, and the new email was not saved.</string>
     <string name="import_issue_email_kept">The account of this player has the email %1$s. The account email stays and the email %2$s is not saved.</string>
     <string name="import_issue_email_in_use">Another account uses this email. That account belongs to the player with EMA number %1$s. The email is not saved.</string>
     <string name="import_issue_email_in_use_no_ema">Another account uses this email, and that account has no EMA number. The email is not saved.</string>

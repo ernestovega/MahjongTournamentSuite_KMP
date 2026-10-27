@@ -89,8 +89,10 @@ class PlayerImportPreviewUiTest {
         onNodeWithText("Rows with an error: 1. The import skips these rows.").assertExists()
         onNodeWithText("The EMA number is empty.").assertExists()
         // A row shows only what changes: the old value and the new value.
-        onNodeWithText("ANA PEREZ · 00000002 → EMA 00000001").assertExists()
-        onNodeWithText("Team: Team 1 → Reds").assertExists()
+        onNodeWithText("ANA PEREZ · 00000002").assertExists()
+        onNodeWithText("EMA 00000001").assertExists()
+        onNodeWithText("Team 1").assertExists()
+        onNodeWithText("Reds").assertExists()
         onNodeWithText("EMA 00000003").assertExists()
         onNodeWithText("The account of this player has the email old@b.es. The account email stays and the email new@b.es is not saved.").assertExists()
         onNodeWithText("The app creates the account of this player.").assertExists()

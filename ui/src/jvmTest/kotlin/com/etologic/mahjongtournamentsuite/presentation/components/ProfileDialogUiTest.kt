@@ -119,7 +119,7 @@ class ProfileDialogUiTest {
             }
         }
 
-        onNodeWithText("Add photo").assertExists()
+        onNodeWithText("Edit photo").assertExists()
         onNodeWithText("Remove photo").assertDoesNotExist()
     }
 
@@ -138,7 +138,7 @@ class ProfileDialogUiTest {
             }
         }
 
-        onNodeWithText("Change photo").assertExists()
+        onNodeWithText("Edit photo").assertExists()
         onNodeWithText("Remove photo").assertExists()
     }
 }
