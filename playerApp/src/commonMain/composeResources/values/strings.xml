@@ -62,10 +62,9 @@
     <string name="status_upcoming">Upcoming</string>
     <string name="status_in_progress">In progress</string>
     <string name="status_finished">Finished</string>
-    <string name="standing_place">Place</string>
     <string name="tournament_logo_of">Logo of %1$s</string>
-    <string name="won_teams_ranking">Won the teams ranking</string>
-    <string name="won_best_hands_ranking">Won the best hands ranking</string>
+    <string name="standing_team">Team place</string>
+    <string name="standing_best_hand">Best hands place</string>
     <string name="contact_send_email">Send an email to the organizers</string>
     <string name="schedule_hide">Hide schedule</string>
     <string name="action_open">Open</string>

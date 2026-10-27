@@ -39,7 +39,6 @@ class DefaultPlayerRepository(
             UpdatePlayerRequestDto(player.emaId, player.firstName, player.lastName, player.country),
         )
         cache.markStale(PLAYERS_CACHE_KEY)
-        Unit
     }
 
     override suspend fun updatePlayerPhoto(

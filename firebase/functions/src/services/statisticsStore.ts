@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { seatIdsOf } from "./handScoring";
 import { readSubstitution, slotResultIgnored, substitutePlays } from "./playerSubstitution";
+import { standingOf, type PersonStanding } from "./statisticsStandings";
 import { buildTableDigest, DIGEST_VERSION, type DigestResult, type DigestTable, type TableDigest } from "./statisticsDigest";
 
 /**
@@ -11,7 +12,8 @@ import { buildTableDigest, DIGEST_VERSION, type DigestResult, type DigestTable, 
  *
  * - `statsTables/{tournamentId}_{round}_{table}`: the digest of one completed table.
  * - `statsPlayers/{emaId}`: the sums of one player over all tournaments, and the values of the leaderboards.
- * - `statsTournaments/{tournamentId}`: points and score of every slot, for the standings.
+ * - `statsTournaments/{tournamentId}`: points and score of every slot, the team of every slot, and the chicken hands
+ *   and the best hand of every slot at every table. The standings of the tournament list read only this document.
  * - `statsGlobal/overview-{n}`: sums of all tournaments, split in shards so that many saves do not wait for each other.
  */
 
@@ -154,6 +156,7 @@ export async function prepareTableStats(
   if (!completed && old == null) return null;
 
   let next: TableDigest | null = null;
+  const teamBySlot = new Map<number, number>();
   if (completed && params.table != null) {
     const slotIds = (seatIdsOf(params.table) ?? []).map(intOf);
     const emaBySlot = new Map<number, string>();
@@ -166,6 +169,8 @@ export async function prepareTableStats(
       slotSnapshots.forEach((snapshot, index) => {
         const ema = snapshot.get("assignedEmaId");
         const slotId = (slotIds as number[])[index];
+        const team = Number(snapshot.get("team"));
+        if (Number.isFinite(team)) teamBySlot.set(slotId, team);
         const substitution = readSubstitution(snapshot.get("substitution"));
         // A substitute is not recorded. So the person has no personal statistics from the rounds of the substitute.
         // An excluded player has no personal statistics at all.
@@ -245,12 +250,31 @@ export async function prepareTableStats(
         tx.set(ref, { ...stored, updatedAt: FieldValue.serverTimestamp() });
       }
       players.forEach((totals, ema) => tx.set(playersCollection().doc(ema), playerDocument(ema, totals)));
+      const tournamentChanges: Data = {};
       if (slotDelta.size > 0) {
         const totals: Record<string, { points: FieldValue; score: FieldValue }> = {};
         slotDelta.forEach((delta, slotId) => {
           totals[String(slotId)] = { points: FieldValue.increment(round6(delta.points)), score: FieldValue.increment(delta.score) };
         });
-        tx.set(tournamentsCollection().doc(params.tournamentId), { totals }, { merge: true });
+        tournamentChanges.totals = totals;
+      }
+      // The chicken hands and the best hand are set for one table and one slot, so a repeat of the same save changes nothing.
+      const tableKey = `${params.roundId}_${params.tableId}`;
+      const chicken: Record<string, Record<string, unknown>> = {};
+      const best: Record<string, Record<string, unknown>> = {};
+      oldResults.forEach((result) => {
+        chicken[String(result.slotId)] = { ...chicken[String(result.slotId)], [tableKey]: FieldValue.delete() };
+        best[String(result.slotId)] = { ...best[String(result.slotId)], [tableKey]: FieldValue.delete() };
+      });
+      newResults.filter((result) => result.countsForSlot !== false).forEach((result) => {
+        if (result.chickenHands > 0) chicken[String(result.slotId)] = { ...chicken[String(result.slotId)], [tableKey]: result.chickenHands };
+        if (result.bestHand > 0) best[String(result.slotId)] = { ...best[String(result.slotId)], [tableKey]: result.bestHand };
+      });
+      if (Object.keys(chicken).length > 0) tournamentChanges.chicken = chicken;
+      if (Object.keys(best).length > 0) tournamentChanges.best = best;
+      if (teamBySlot.size > 0) tournamentChanges.teams = Object.fromEntries([...teamBySlot].map(([slotId, team]) => [String(slotId), team]));
+      if (Object.keys(tournamentChanges).length > 0) {
+        tx.set(tournamentsCollection().doc(params.tournamentId), tournamentChanges, { merge: true });
       }
       tx.set(globalCollection().doc(`overview-${shardOf(ref.id)}`), {
         tablesCompleted: FieldValue.increment(global.tablesCompleted),
@@ -393,16 +417,6 @@ export async function loadPersonStatistics(emaId: string, allowedTournamentIds: 
 /** The most tournaments that one standings request can ask for. */
 export const MAX_STANDINGS_PER_REQUEST = 25;
 
-export type PersonStanding = {
-  tournamentId: string;
-  /** Place of the player in the tournament and the number of players with a result. */
-  rank: number;
-  of: number;
-  /** The points and the score of the player in the tournament. */
-  points: number;
-  score: number;
-};
-
 /** The final place of one player in each of the given tournaments. A tournament without a result of the player is left out. */
 export async function loadStandings(emaId: string, tournamentIds: string[]): Promise<PersonStanding[]> {
   const ids = [...new Set(tournamentIds)].slice(0, MAX_STANDINGS_PER_REQUEST);
@@ -412,14 +426,7 @@ export async function loadStandings(emaId: string, tournamentIds: string[]): Pro
       tournamentsCollection().doc(tournamentId).get(),
     ]);
     if (slots.empty) return null;
-    const totals = (totalsSnapshot.get("totals") ?? {}) as Record<string, { points?: number; score?: number }>;
-    const rows = Object.entries(totals).map(([slot, value]) => ({
-      slot: Number(slot), points: round6(Number(value.points ?? 0)), score: Number(value.score ?? 0),
-    }));
-    const mine = rows.find((row) => row.slot === Number(slots.docs[0].id));
-    if (mine == null) return null;
-    const better = rows.filter((row) => row.points > mine.points || (row.points === mine.points && row.score > mine.score)).length;
-    return { tournamentId, rank: better + 1, of: rows.length, points: mine.points, score: mine.score };
+    return standingOf(tournamentId, Number(slots.docs[0].id), totalsSnapshot.data() ?? {});
   }));
   return standings.filter((standing): standing is PersonStanding => standing != null);
 }

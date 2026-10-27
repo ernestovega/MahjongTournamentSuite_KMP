@@ -91,7 +91,6 @@
     <string name="app_usage">Utilisation de l'app</string>
     <string name="period">Période</string>
     <string name="enter_these_values_again_if_they">Saisissez à nouveau ces valeurs si elles sont toujours correctes :</string>
-    <string name="updates_paused">Mises à jour en pause</string>
     <string name="app_users">Utilisateurs</string>
     <string name="accounts">Comptes</string>
     <string name="alias">Pseudo</string>
@@ -656,9 +655,6 @@
     <string name="lost_change_line">• %1$s : %2$s</string>
     <string name="table_updated">Table mise à jour</string>
     <string name="tables_updated">Tables mises à jour</string>
-    <string name="idle_paused_message">L'app a arrêté de vérifier les changements car vous étiez absent. Continuez pour charger les dernières données avant de modifier.</string>
-    <string name="checking">Vérification…</string>
-    <string name="continue_action">Continuer</string>
     <string name="round_n">Tour %1$d</string>
     <string name="scope_by_tournaments">Par tournoi</string>
     <string name="scope_overall">Global</string>
@@ -714,15 +710,14 @@
     <string name="something_went_wrong">Une erreur s'est produite</string>
     <string name="dialog_done_title">Terminé</string>
     <string name="save_ema_report">Enregistrer les résultats EMA</string>
-    <string name="import_players">Importer les joueurs</string>
+    <string name="import_players">Importer</string>
     <string name="import_players_title">Importer les joueurs depuis un fichier</string>
-    <string name="export_players">Exporter les joueurs</string>
+    <string name="export_players">Exporter</string>
     <string name="import_choose_other_file">Choisir un autre fichier</string>
     <string name="import_reading_file">L'application lit le fichier.</string>
     <string name="import_applying">L'application importe les joueurs : %1$d lignes sur %2$d terminées.</string>
     <string name="import_count_new">Lignes qui ajoutent des données : %1$d</string>
     <string name="import_count_replace">Lignes qui remplacent un joueur : %1$d</string>
-    <string name="import_count_unchanged">Lignes sans changement : %1$d</string>
     <string name="import_count_errors">Lignes avec une erreur : %1$d. L'import ignore ces lignes.</string>
     <string name="import_untouched_slots">%1$d places ne sont pas dans le fichier. Elles restent telles quelles.</string>
     <string name="import_replace_checkbox">Remplacer les joueurs déjà présents dans une place (%1$d lignes)</string>
@@ -734,8 +729,6 @@
     <string name="import_status_replace">Remplacer</string>
     <string name="import_status_unchanged">Sans changement</string>
     <string name="import_status_error">Erreur</string>
-    <string name="import_current_player">Actuellement dans cette place : %1$s</string>
-    <string name="import_unknown_player">EMA %1$s</string>
     <string name="import_team_value">Équipe : %1$s</string>
     <string name="import_email_value">E-mail : %1$s</string>
     <string name="import_issue_invalid_id">L'id n'est pas un nombre entier positif.</string>

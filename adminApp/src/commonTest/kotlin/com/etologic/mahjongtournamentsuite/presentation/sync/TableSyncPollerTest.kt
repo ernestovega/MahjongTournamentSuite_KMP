@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.sync
 
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -35,9 +34,7 @@ class TableSyncPollerTest {
         val activity = ActivityTracker(VirtualClock { scope.currentTime })
         var hasUnsavedEdits = false
         val checkTimes = mutableListOf<Long>()
-        val idleCalls = mutableListOf<Long>()
         var checkAction: suspend () -> Unit = {}
-        var idleAction: suspend (suspend () -> Unit) -> Unit = { check -> check() }
         private val poller = TableSyncPoller(schedule, activity)
 
         fun start() {
@@ -47,10 +44,6 @@ class TableSyncPollerTest {
                     check = {
                         checkTimes += scope.currentTime
                         checkAction()
-                    },
-                    onIdle = { check ->
-                        idleCalls += scope.currentTime
-                        idleAction(check)
                     },
                 )
             }
@@ -122,56 +115,36 @@ class TableSyncPollerTest {
     }
 
     @Test
-    fun asksTheUserAfterFiveIdleMinutesAndStopsChecking() = runTest {
-        val h = Harness(this)
-        h.idleAction = { CompletableDeferred<Unit>().await() }
-        h.start()
+    fun stopsCheckingAfterFiveIdleMinutes() = runTest {
+        val h = Harness(this).also { it.start() }
 
         advance(10.minutes)
 
-        assertEquals(listOf(300_000L), h.idleCalls)
         assertEquals(270_000L, h.checkTimes.last())
     }
 
     @Test
-    fun checkRunsWhenTheUserContinuesAfterThePause() = runTest {
-        val gate = CompletableDeferred<Unit>()
-        val h = Harness(this)
-        h.idleAction = { check -> gate.await(); check() }
-        h.start()
+    fun checksAtOnceWhenTheUserComesBack() = runTest {
+        val h = Harness(this).also { it.start() }
         advance(6.minutes)
         val checksBefore = h.checkTimes.size
 
-        gate.complete(Unit)
-        runCurrent()
+        h.activity.markActive()
+        advance(1.seconds)
 
         assertEquals(checksBefore + 1, h.checkTimes.size)
-        assertEquals(360_000L, h.checkTimes.last())
+        assertEquals(361_000L, h.checkTimes.last())
     }
 
     @Test
-    fun afterThePauseTheUserCountsAsActiveAgain() = runTest {
-        val gate = CompletableDeferred<Unit>()
-        val h = Harness(this)
-        h.idleAction = { check -> gate.await(); check() }
-        h.start()
+    fun afterComingBackThePaceIsNormalAgain() = runTest {
+        val h = Harness(this).also { it.start() }
         advance(6.minutes)
 
-        gate.complete(Unit)
-        advance(11.seconds)
+        h.activity.markActive()
+        advance(12.seconds)
 
-        assertEquals(listOf(360_000L, 370_000L), h.checkTimes.takeLast(2))
-        assertEquals(1, h.idleCalls.size)
-    }
-
-    @Test
-    fun asksAgainAfterAnotherIdlePeriod() = runTest {
-        val h = Harness(this)
-        h.start()
-
-        advance(11.minutes)
-
-        assertEquals(listOf(300_000L, 600_000L), h.idleCalls)
+        assertEquals(listOf(361_000L, 371_000L), h.checkTimes.takeLast(2))
     }
 
     @Test
@@ -210,13 +183,11 @@ class TableSyncPollerTest {
             this,
             PollSchedule(slowInterval = 3.minutes, slowAfter = 1.minutes, stopAfter = 2.minutes),
         )
-        h.idleAction = { CompletableDeferred<Unit>().await() }
         h.start()
 
         advance(10.minutes)
 
         // The long wait starts at 60 s and ends at 240 s. The user is idle for too long by then.
         assertEquals(60_000L, h.checkTimes.last())
-        assertEquals(listOf(240_000L), h.idleCalls)
     }
 }

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import org.jetbrains.compose.resources.pluralStringResource
 import mahjongtournamentsuite.adminapp.generated.resources.country_players_count
@@ -152,6 +153,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val store = koinInject<AppMemoryStore>()
     val scope = rememberCoroutineScope()
     val players by store.players.collectAsState()
+    LoadMissingSession()
     val admin by store.adminStatus.collectAsState()
     val canEdit = admin?.canEditPlayers == true
     val canEditEmaNumber = admin?.isAdmin == true

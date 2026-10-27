@@ -91,7 +91,6 @@
     <string name="app_usage">Utilizzo dell'app</string>
     <string name="period">Periodo</string>
     <string name="enter_these_values_again_if_they">Inserisci di nuovo questi valori se sono ancora corretti:</string>
-    <string name="updates_paused">Aggiornamenti in pausa</string>
     <string name="app_users">Utenti</string>
     <string name="accounts">Account</string>
     <string name="alias">Alias</string>
@@ -656,9 +655,6 @@
     <string name="lost_change_line">• %1$s: %2$s</string>
     <string name="table_updated">Tavolo aggiornato</string>
     <string name="tables_updated">Tavoli aggiornati</string>
-    <string name="idle_paused_message">L'app ha smesso di controllare le modifiche perché eri assente. Continua per caricare gli ultimi dati prima di modificare.</string>
-    <string name="checking">Controllo…</string>
-    <string name="continue_action">Continua</string>
     <string name="round_n">Turno %1$d</string>
     <string name="scope_by_tournaments">Per torneo</string>
     <string name="scope_overall">Totale</string>
@@ -717,15 +713,14 @@
     <string name="save_id_cards">Salva i cartellini</string>
     <string name="save_id_list">Salva l'elenco di identificazione</string>
     <string name="save_id_card_proof">Salva la bozza dei cartellini</string>
-    <string name="import_players">Importa giocatori</string>
+    <string name="import_players">Importa</string>
     <string name="import_players_title">Importa giocatori da un file</string>
-    <string name="export_players">Esporta giocatori</string>
+    <string name="export_players">Esporta</string>
     <string name="import_choose_other_file">Scegli un altro file</string>
     <string name="import_reading_file">L'app sta leggendo il file.</string>
     <string name="import_applying">L'app sta importando i giocatori: %1$d righe su %2$d completate.</string>
     <string name="import_count_new">Righe che aggiungono dati: %1$d</string>
     <string name="import_count_replace">Righe che sostituiscono un giocatore: %1$d</string>
-    <string name="import_count_unchanged">Righe senza modifiche: %1$d</string>
     <string name="import_count_errors">Righe con un errore: %1$d. L'importazione salta queste righe.</string>
     <string name="import_untouched_slots">%1$d slot non sono nel file. Restano come sono.</string>
     <string name="import_replace_checkbox">Sostituisci i giocatori già presenti in uno slot (%1$d righe)</string>
@@ -737,8 +732,6 @@
     <string name="import_status_replace">Sostituisci</string>
     <string name="import_status_unchanged">Nessuna modifica</string>
     <string name="import_status_error">Errore</string>
-    <string name="import_current_player">Ora in questo slot: %1$s</string>
-    <string name="import_unknown_player">EMA %1$s</string>
     <string name="import_team_value">Squadra: %1$s</string>
     <string name="import_email_value">Email: %1$s</string>
     <string name="import_issue_invalid_id">L'id non è un numero intero positivo.</string>

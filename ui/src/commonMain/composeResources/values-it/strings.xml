@@ -58,6 +58,14 @@
     <string name="error_session_expired">La sessione è scaduta. Accedi di nuovo.</string>
     <string name="error_timeout">La richiesta ha impiegato troppo tempo. Riprova.</string>
     <string name="error_generic">Qualcosa è andato storto. Riprova.</string>
+    <string name="import_file_not_excel">Il file non è un file Excel valido. Scegli un file .xlsx o .csv.</string>
+    <string name="import_file_too_large">Il file Excel è troppo grande. Scegli un file più piccolo.</string>
+    <string name="import_file_no_sheet">Il file Excel non contiene nessun foglio.</string>
+    <string name="import_file_sheet_too_large">Il foglio Excel è troppo grande. Scegli un file con meno righe e colonne.</string>
+    <string name="import_file_empty">Il file è vuoto.</string>
+    <string name="import_file_missing_columns">La prima riga del file deve contenere queste colonne: %1$s.</string>
+    <string name="import_file_no_rows">Il file non contiene righe di giocatori.</string>
+    <string name="import_file_too_many_rows">Il file contiene più di %1$s righe. Dividilo in file più piccoli.</string>
     <string name="image_error_read">Non è stato possibile leggere la foto.</string>
     <string name="image_error_open">Non è stato possibile aprire la foto selezionata.</string>
     <string name="image_error_decode">Non è stato possibile decodificare il logo selezionato.</string>

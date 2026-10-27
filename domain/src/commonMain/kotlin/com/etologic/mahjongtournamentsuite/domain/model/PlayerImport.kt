@@ -43,6 +43,18 @@ enum class ImportIssueCode {
     UNKNOWN,
 }
 
+/** Why the server refused the whole file of a player import. */
+enum class ImportFileErrorCode {
+    NOT_EXCEL,
+    TOO_LARGE,
+    NO_SHEET,
+    SHEET_TOO_LARGE,
+    EMPTY,
+    MISSING_COLUMNS,
+    NO_ROWS,
+    TOO_MANY_ROWS,
+}
+
 data class ImportIssue(
     val code: ImportIssueCode,
     val severity: ImportIssueSeverity,

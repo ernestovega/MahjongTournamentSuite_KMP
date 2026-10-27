@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.util
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.ImportFileErrorCode
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.error_account_disabled
 import mahjongtournamentsuite.ui.generated.resources.error_credentials_missing
@@ -15,12 +16,30 @@ import mahjongtournamentsuite.ui.generated.resources.error_session_expired
 import mahjongtournamentsuite.ui.generated.resources.error_tournament_not_found
 import mahjongtournamentsuite.ui.generated.resources.error_timeout
 import mahjongtournamentsuite.ui.generated.resources.error_too_many_attempts
+import mahjongtournamentsuite.ui.generated.resources.import_file_not_excel
+import mahjongtournamentsuite.ui.generated.resources.import_file_too_large
+import mahjongtournamentsuite.ui.generated.resources.import_file_no_sheet
+import mahjongtournamentsuite.ui.generated.resources.import_file_sheet_too_large
+import mahjongtournamentsuite.ui.generated.resources.import_file_empty
+import mahjongtournamentsuite.ui.generated.resources.import_file_missing_columns
+import mahjongtournamentsuite.ui.generated.resources.import_file_no_rows
+import mahjongtournamentsuite.ui.generated.resources.import_file_too_many_rows
 import org.jetbrains.compose.resources.StringResource
 
 /** Gives the text for the screen. Call [asString] on it while the screen draws. */
 fun AppError.toUiText(): UiText = when (this) {
     AppError.Network -> UiText.of(Res.string.error_network)
     is AppError.Conflict -> UiText.Plain(message)
+    is AppError.ImportFile -> when (code) {
+        ImportFileErrorCode.NOT_EXCEL -> UiText.of(Res.string.import_file_not_excel)
+        ImportFileErrorCode.TOO_LARGE -> UiText.of(Res.string.import_file_too_large)
+        ImportFileErrorCode.NO_SHEET -> UiText.of(Res.string.import_file_no_sheet)
+        ImportFileErrorCode.SHEET_TOO_LARGE -> UiText.of(Res.string.import_file_sheet_too_large)
+        ImportFileErrorCode.EMPTY -> UiText.of(Res.string.import_file_empty)
+        ImportFileErrorCode.MISSING_COLUMNS -> UiText.of(Res.string.import_file_missing_columns, args.firstOrNull().orEmpty())
+        ImportFileErrorCode.NO_ROWS -> UiText.of(Res.string.import_file_no_rows)
+        ImportFileErrorCode.TOO_MANY_ROWS -> UiText.of(Res.string.import_file_too_many_rows, args.firstOrNull().orEmpty())
+    }
     is AppError.Unexpected -> UiText.of(message.toFriendlyErrorResource())
 }
 

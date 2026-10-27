@@ -14,6 +14,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
+import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingDto
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 
 class DefaultStatisticsRepository(
@@ -70,7 +71,7 @@ class DefaultStatisticsRepository(
                 emptyMap()
             } else {
                 backendApi.personStandings(idToken, emaId, tournamentIds).standings
-                    .associate { it.tournamentId to Standing(it.rank, it.of, it.points, it.score) }
+                    .associate { it.tournamentId to it.toStanding() }
             }
         }
 
@@ -126,3 +127,5 @@ class DefaultStatisticsRepository(
 }
 
 private fun Throwable.toAppError(): AppError = toRepositoryAppError()
+
+internal fun StandingDto.toStanding() = Standing(rank, of, points, score, teamRank, chickenRank, bestHandRank)

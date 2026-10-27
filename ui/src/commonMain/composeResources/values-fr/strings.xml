@@ -58,6 +58,14 @@
     <string name="error_session_expired">Votre session a expiré. Connectez-vous à nouveau.</string>
     <string name="error_timeout">La requête a pris trop de temps. Réessayez.</string>
     <string name="error_generic">Une erreur s'est produite. Veuillez réessayer.</string>
+    <string name="import_file_not_excel">Le fichier n'est pas un fichier Excel valide. Choisissez un fichier .xlsx ou .csv.</string>
+    <string name="import_file_too_large">Le fichier Excel est trop volumineux. Choisissez un fichier plus petit.</string>
+    <string name="import_file_no_sheet">Le fichier Excel ne contient aucune feuille.</string>
+    <string name="import_file_sheet_too_large">La feuille Excel est trop grande. Choisissez un fichier avec moins de lignes et de colonnes.</string>
+    <string name="import_file_empty">Le fichier est vide.</string>
+    <string name="import_file_missing_columns">La première ligne du fichier doit contenir ces colonnes : %1$s.</string>
+    <string name="import_file_no_rows">Le fichier ne contient aucune ligne de joueur.</string>
+    <string name="import_file_too_many_rows">Le fichier contient plus de %1$s lignes. Divisez-le en fichiers plus petits.</string>
     <string name="image_error_read">La photo n'a pas pu être lue.</string>
     <string name="image_error_open">La photo sélectionnée n'a pas pu être ouverte.</string>
     <string name="image_error_decode">Le logo sélectionné n'a pas pu être décodé.</string>

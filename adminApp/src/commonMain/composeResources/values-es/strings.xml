@@ -91,7 +91,6 @@
     <string name="app_usage">Uso de la app</string>
     <string name="period">Periodo</string>
     <string name="enter_these_values_again_if_they">Introduce estos valores otra vez si siguen siendo correctos:</string>
-    <string name="updates_paused">Actualizaciones en pausa</string>
     <string name="app_users">Usuarios</string>
     <string name="accounts">Cuentas</string>
     <string name="alias">Alias</string>
@@ -656,9 +655,6 @@
     <string name="lost_change_line">• %1$s: %2$s</string>
     <string name="table_updated">Mesa actualizada</string>
     <string name="tables_updated">Mesas actualizadas</string>
-    <string name="idle_paused_message">La app dejó de comprobar cambios porque no estabas. Continúa para cargar los datos más recientes antes de editar.</string>
-    <string name="checking">Comprobando…</string>
-    <string name="continue_action">Continuar</string>
     <string name="round_n">Ronda %1$d</string>
     <string name="scope_by_tournaments">Por torneos</string>
     <string name="scope_overall">General</string>
@@ -717,15 +713,14 @@
     <string name="save_id_cards">Guardar las tarjetas de identificación</string>
     <string name="save_id_list">Guardar la lista de identificación</string>
     <string name="save_id_card_proof">Guardar la prueba de la tarjeta</string>
-    <string name="import_players">Importar jugadores</string>
+    <string name="import_players">Importar</string>
     <string name="import_players_title">Importar jugadores desde un archivo</string>
-    <string name="export_players">Exportar jugadores</string>
+    <string name="export_players">Exportar</string>
     <string name="import_choose_other_file">Elegir otro archivo</string>
     <string name="import_reading_file">La aplicación está leyendo el archivo.</string>
     <string name="import_applying">La aplicación está importando los jugadores: %1$d de %2$d filas hechas.</string>
     <string name="import_count_new">Filas que añaden datos: %1$d</string>
     <string name="import_count_replace">Filas que sustituyen a un jugador: %1$d</string>
-    <string name="import_count_unchanged">Filas sin cambios: %1$d</string>
     <string name="import_count_errors">Filas con error: %1$d. La importación omite estas filas.</string>
     <string name="import_untouched_slots">%1$d huecos no están en el archivo. Se quedan como están.</string>
     <string name="import_replace_checkbox">Sustituir a los jugadores que ya están en un hueco (%1$d filas)</string>
@@ -737,8 +732,6 @@
     <string name="import_status_replace">Sustituir</string>
     <string name="import_status_unchanged">Sin cambios</string>
     <string name="import_status_error">Error</string>
-    <string name="import_current_player">Ahora en este hueco: %1$s</string>
-    <string name="import_unknown_player">EMA %1$s</string>
     <string name="import_team_value">Equipo: %1$s</string>
     <string name="import_email_value">Email: %1$s</string>
     <string name="import_issue_invalid_id">El id no es un número entero positivo.</string>

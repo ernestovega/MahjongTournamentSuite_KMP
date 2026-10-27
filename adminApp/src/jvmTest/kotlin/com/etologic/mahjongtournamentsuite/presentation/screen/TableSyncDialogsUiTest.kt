@@ -1,8 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsEnabled
-import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -81,31 +79,5 @@ class TableSyncDialogsUiTest {
         onNodeWithText("OK").performClick()
 
         assertEquals(1, dismissed)
-    }
-
-    @Test
-    fun idleDialogLetsTheUserContinue() = runComposeUiTest {
-        var continued = 0
-        setContent {
-            MtsTheme(useDarkTheme = false) {
-                IdlePauseDialog(onContinue = { continued++ }, isChecking = false)
-            }
-        }
-
-        onNodeWithText("Updates paused").assertExists()
-        onNodeWithText("Continue").assertIsEnabled().performClick()
-
-        assertEquals(1, continued)
-    }
-
-    @Test
-    fun idleDialogCannotBeUsedAgainWhileItChecks() = runComposeUiTest {
-        setContent {
-            MtsTheme(useDarkTheme = false) {
-                IdlePauseDialog(onContinue = {}, isChecking = true)
-            }
-        }
-
-        onNodeWithText("Checking…").assertIsNotEnabled()
     }
 }

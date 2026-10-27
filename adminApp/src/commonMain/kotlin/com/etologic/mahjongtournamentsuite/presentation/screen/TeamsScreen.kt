@@ -32,6 +32,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +59,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -76,6 +78,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
+import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
@@ -119,6 +122,8 @@ fun TeamsScreen(
     tournamentId: String,
 ) {
     val presenter = koinInject<TeamsPresenter>()
+    LoadMissingSession()
+    val tournaments by koinInject<AppMemoryStore>().tournaments.collectAsState()
     val scope = rememberCoroutineScope()
     var teams by remember { mutableStateOf<List<TournamentTeam>>(emptyList()) }
     var slots by remember { mutableStateOf<List<TournamentPlayer>>(emptyList()) }
@@ -267,6 +272,7 @@ fun TeamsScreen(
 
     AppScaffold(
         title = stringResource(Res.string.tournament_teams),
+        subtitle = tournaments.firstOrNull { it.id == tournamentId }?.name?.ifBlank { null },
         isLoading = loading || saving,
         showBackgroundLogo = loading && teams.isEmpty(),
         onBack = { navController.popBackStack() },

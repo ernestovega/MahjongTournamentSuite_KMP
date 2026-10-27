@@ -1,4 +1,5 @@
 import ExcelJS = require("exceljs");
+import JSZip = require("jszip");
 
 import { badRequest } from "../api/httpError";
 import { EMAIL_PATTERN } from "./playerAccountsService";
@@ -137,20 +138,53 @@ export function declaredUnpackedBytes(buffer: Buffer): number | null {
   return total;
 }
 
-async function readXlsx(buffer: Buffer): Promise<string[][]> {
-  const unpacked = declaredUnpackedBytes(buffer);
-  if (unpacked == null) throw badRequest("The file is not a valid Excel file");
-  if (unpacked > MAX_UNPACKED_BYTES) throw badRequest("The Excel file is too large");
+async function loadWorkbook(buffer: Buffer): Promise<ExcelJS.Workbook | null> {
   const workbook = new ExcelJS.Workbook();
   try {
     await workbook.xlsx.load(buffer as unknown as ExcelJS.Buffer);
+    return workbook;
   } catch (_error) {
-    throw badRequest("The file is not a valid Excel file");
+    return null;
   }
+}
+
+/**
+ * Some tools, such as the Open XML SDK, write the XML with a prefix on every tag (`<x:row>`) and with absolute paths
+ * in the relations (`/xl/worksheets/sheet1.xml`). Excel reads these files, but ExcelJS does not.
+ * This removes the prefix and makes the paths relative. It returns null when the file is not a zip file.
+ */
+async function normalizeXlsx(buffer: Buffer): Promise<Buffer | null> {
+  try {
+    const zip = await JSZip.loadAsync(buffer);
+    for (const name of Object.keys(zip.files)) {
+      if (!/\.(xml|rels)$/i.test(name)) continue;
+      const text = (await zip.file(name)!.async("string")).replace(/^\uFEFF/, "")
+        .replace(/<(\/?)x:/g, "<$1")
+        .replace(/xmlns:x=/g, "xmlns=")
+        .replace(/Target="\/xl\//g, 'Target="');
+      zip.file(name, text);
+    }
+    return await zip.generateAsync({ type: "nodebuffer" });
+  } catch (_error) {
+    return null;
+  }
+}
+
+async function readXlsx(buffer: Buffer): Promise<string[][]> {
+  const unpacked = declaredUnpackedBytes(buffer);
+  if (unpacked == null) throw badRequest("The file is not a valid Excel file", { code: "NOT_EXCEL" });
+  if (unpacked > MAX_UNPACKED_BYTES) throw badRequest("The Excel file is too large", { code: "TOO_LARGE" });
+  let workbook = await loadWorkbook(buffer);
+  // Some tools write valid files that ExcelJS does not read. Rewrite the file in the usual form and read it again.
+  if (workbook == null || workbook.worksheets.length === 0) {
+    const normalized = await normalizeXlsx(buffer);
+    workbook = normalized == null ? workbook : await loadWorkbook(normalized);
+  }
+  if (workbook == null) throw badRequest("The file is not a valid Excel file", { code: "NOT_EXCEL" });
   const sheet = workbook.worksheets[0];
-  if (sheet == null) throw badRequest("The Excel file has no sheet");
+  if (sheet == null) throw badRequest("The Excel file has no sheet", { code: "NO_SHEET" });
   if (sheet.rowCount > MAX_SHEET_ROWS || sheet.columnCount > MAX_SHEET_COLUMNS) {
-    throw badRequest("The Excel sheet is too large");
+    throw badRequest("The Excel sheet is too large", { code: "SHEET_TOO_LARGE" });
   }
   const records: string[][] = [];
   const columns = sheet.columnCount;
@@ -172,7 +206,7 @@ export async function parsePlayerImportFile(fileName: string, buffer: Buffer): P
   const records = isXlsx(fileName, buffer) ? await readXlsx(buffer) : parseCsv(buffer.toString("utf8"));
   const isBlank = (record: string[]) => record.every((value) => value.trim().length === 0);
   const headerIndex = records.findIndex((record) => !isBlank(record));
-  if (headerIndex < 0) throw badRequest("The file is empty");
+  if (headerIndex < 0) throw badRequest("The file is empty", { code: "EMPTY" });
 
   const columnOf = (key: keyof typeof HEADER_ALIASES): number => records[headerIndex]
     .findIndex((header) => HEADER_ALIASES[key].includes(normalizeHeader(header)));
@@ -182,7 +216,7 @@ export async function parsePlayerImportFile(fileName: string, buffer: Buffer): P
   const teamColumn = columnOf("team");
   const missing = [idColumn < 0 ? "id" : null, emaColumn < 0 ? "ema id" : null].filter((name) => name != null);
   if (missing.length > 0) {
-    throw badRequest(`The first line of the file needs the columns: ${missing.join(", ")}`, { missing });
+    throw badRequest(`The first line of the file needs the columns: ${missing.join(", ")}`, { code: "MISSING_COLUMNS", missing });
   }
 
   const rows: ImportRow[] = [];
@@ -197,8 +231,8 @@ export async function parsePlayerImportFile(fileName: string, buffer: Buffer): P
       team: at(teamColumn),
     });
   });
-  if (rows.length === 0) throw badRequest("The file has no player rows");
-  if (rows.length > MAX_IMPORT_ROWS) throw badRequest(`The file has more than ${MAX_IMPORT_ROWS} rows`);
+  if (rows.length === 0) throw badRequest("The file has no player rows", { code: "NO_ROWS" });
+  if (rows.length > MAX_IMPORT_ROWS) throw badRequest(`The file has more than ${MAX_IMPORT_ROWS} rows`, { code: "TOO_MANY_ROWS", max: MAX_IMPORT_ROWS });
   return { rows, hasEmailColumn: emailColumn >= 0, hasTeamColumn: teamColumn >= 0 };
 }
 

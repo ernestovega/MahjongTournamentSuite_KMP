@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -194,6 +195,24 @@ fun PositionTrophy(position: Int, size: Dp = 28.dp) {
         modifier = Modifier.size(size),
         tint = Color.Unspecified,
     )
+}
+
+/**
+ * A trophy for any rank. The first three ranks have a gold, silver or bronze trophy. The other ranks have a neutral
+ * trophy that has the color of the text, so it is white on a dark background.
+ */
+@Composable
+fun RankTrophy(rank: Int, size: Dp = 28.dp) {
+    if (rank in 1..3) {
+        PositionTrophy(rank, size)
+    } else {
+        Icon(
+            imageVector = Icons.Default.EmojiEvents,
+            contentDescription = stringResource(Res.string.position_n, rank),
+            modifier = Modifier.size(size),
+            tint = MaterialTheme.colorScheme.onSurface,
+        )
+    }
 }
 
 /** The color of the result of a position at a table. It matches the trophy. The fourth place is red. */

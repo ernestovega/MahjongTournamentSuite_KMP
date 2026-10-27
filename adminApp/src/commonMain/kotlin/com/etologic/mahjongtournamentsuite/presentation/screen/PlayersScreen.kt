@@ -82,6 +82,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.contactState
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -180,6 +181,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val scope = rememberCoroutineScope()
     val slots by store.tournamentPlayers.collectAsState()
     val basePlayers by store.players.collectAsState()
+    LoadMissingSession()
     val tournaments by store.tournaments.collectAsState()
     var loading by remember { mutableStateOf(false) }
     var savingId by remember { mutableStateOf<Int?>(null) }
@@ -1020,6 +1022,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
     AppScaffold(
         title = stringResource(Res.string.tournament_players),
+        subtitle = tournaments.firstOrNull { it.id == tournamentId }?.name?.ifBlank { null },
         isLoading = loading || savingId != null,
         showBackgroundLogo = loading && players.isEmpty(),
         onBack = { navController.popBackStack() },

@@ -58,6 +58,14 @@
     <string name="error_session_expired">Tu sesión ha caducado. Inicia sesión de nuevo.</string>
     <string name="error_timeout">La petición ha tardado demasiado. Inténtalo de nuevo.</string>
     <string name="error_generic">Algo ha ido mal. Inténtalo de nuevo.</string>
+    <string name="import_file_not_excel">El archivo no es un Excel válido. Elige un archivo .xlsx o .csv.</string>
+    <string name="import_file_too_large">El archivo Excel es demasiado grande. Elige un archivo más pequeño.</string>
+    <string name="import_file_no_sheet">El archivo Excel no tiene ninguna hoja.</string>
+    <string name="import_file_sheet_too_large">La hoja de Excel es demasiado grande. Elige un archivo con menos filas y columnas.</string>
+    <string name="import_file_empty">El archivo está vacío.</string>
+    <string name="import_file_missing_columns">La primera línea del archivo necesita estas columnas: %1$s.</string>
+    <string name="import_file_no_rows">El archivo no tiene filas de jugadores.</string>
+    <string name="import_file_too_many_rows">El archivo tiene más de %1$s filas. Divídelo en archivos más pequeños.</string>
     <string name="image_error_read">No se ha podido leer la foto.</string>
     <string name="image_error_open">No se ha podido abrir la foto elegida.</string>
     <string name="image_error_decode">No se ha podido leer la imagen elegida.</string>

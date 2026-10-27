@@ -268,28 +268,27 @@ class TournamentScreenUiTest {
     }
 
     @Test
-    fun anIdleUserGetsThePauseDialogAndContinuingChecksAgain() = runComposeUiTest {
+    fun anIdleUserSeesNoDialogAndComingBackChecksAgain() = runComposeUiTest {
         with(ScreenHarness()) {
             loadScreen()
 
             pass(32)
 
-            onNodeWithText("Updates paused").assertExistsOnScreen()
+            onAllNodesWithText("Table updated").assertCountEquals(0)
             val checksBefore = server.calls.count { it == "manifest" }
             server.otherUserSaves(1, 1, handScore = "24")
 
-            onNodeWithText("Continue").performClick()
-            waitForIdle()
-            mainClock.advanceTimeBy(1_000)
+            activity.markActive()
+            mainClock.advanceTimeBy(1_500)
             waitForIdle()
 
-            assertTrue(server.calls.count { it == "manifest" } > checksBefore, "continuing runs one check at once")
+            assertTrue(server.calls.count { it == "manifest" } > checksBefore, "coming back runs one check at once")
             onNodeWithText("Table updated").assertExistsOnScreen()
         }
     }
 
     @Test
-    fun pollingStopsWhileThePauseDialogIsOpen() = runComposeUiTest {
+    fun pollingStopsWhileTheUserIsAway() = runComposeUiTest {
         with(ScreenHarness()) {
             loadScreen()
             pass(32)
@@ -335,12 +334,30 @@ class TournamentScreenUiTest {
     fun aSecondUserSavingBetweenTwoChecksIsStillCaughtByTheNextCheck() = runComposeUiTest {
         with(ScreenHarness()) {
             loadScreen()
-            server.otherUserSaves(1, 2, handScore = "8") // a table that is not open
+            server.otherUserSaves(1, 1, handScore = "8")
 
             pass(2)
 
             onNodeWithText("Table updated").assertExistsOnScreen()
-            onNodeWithText("Round 1 · Table 2: another user changed this table. It now shows the latest data.").assertExistsOnScreen()
+            onNodeWithText("Round 1 · Table 1: another user changed this table. It now shows the latest data.").assertExistsOnScreen()
+        }
+    }
+
+    @Test
+    fun aTableThatIsNotOnScreenChangesWithoutADialog() = runComposeUiTest {
+        with(ScreenHarness()) {
+            loadScreen()
+            server.otherUserSaves(1, 2, handScore = "8")
+
+            pass(2)
+
+            onAllNodesWithText("Table updated").assertCountEquals(0)
+            onAllNodesWithText("Tables updated").assertCountEquals(0)
+            // The data is current when the user opens the table.
+            onNodeWithTag("table-chip-2").performClick()
+            waitForIdle()
+            assertTrue(server.calls.any { it == "manifest" }, "the poll saw the change")
+            onNodeWithText("Round 1 • Table 2").assertExistsOnScreen()
         }
     }
 
@@ -375,20 +392,6 @@ class TournamentScreenUiTest {
             onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
             onAllNodesWithText("Round 1 • Table 2").assertCountEquals(0)
             onNodeWithText("Table updated").assertExistsOnScreen()
-        }
-    }
-
-    @Test
-    fun thePauseDialogNeverAppearsWhileTheUserKeepsWorking() = runComposeUiTest {
-        with(ScreenHarness()) {
-            loadScreen()
-
-            repeat(8) {
-                activity.markActive()
-                pass(5)
-            }
-
-            onAllNodesWithText("Updates paused").assertCountEquals(0)
         }
     }
 

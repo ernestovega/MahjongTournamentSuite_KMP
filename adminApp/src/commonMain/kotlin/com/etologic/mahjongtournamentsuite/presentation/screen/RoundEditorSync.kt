@@ -153,7 +153,7 @@ internal class RoundEditorSync(
             }
         } finally {
             isLoading = false
-            if (notices.isNotEmpty()) updateNotices = updateNotices + notices
+            addNotices(notices)
         }
         return allSaved
     }
@@ -174,7 +174,7 @@ internal class RoundEditorSync(
             // tables here keeps that copy current. If one load fails, the rows stay old and the next check retries.
             val reads = summaryOnly.map { key -> tablePresenter.loadTableWithHands(tournamentId, key.roundId, key.tableId, true) }
             if (reads.any { it !is AppResult.Success }) {
-                if (notices.isNotEmpty()) updateNotices = updateNotices + notices
+                addNotices(notices)
                 return
             }
             val result = tablesPresenter.loadTables(tournamentId, null, true)
@@ -185,7 +185,7 @@ internal class RoundEditorSync(
                     .map { row -> openEditors[TableKey(row.roundId, row.tableId)]?.applyTo(row) ?: row }
             }
         }
-        if (notices.isNotEmpty()) updateNotices = updateNotices + notices
+        addNotices(notices)
     }
 
     /** One poll tick. It asks the server for the table versions and loads only the tables that changed. */
@@ -218,6 +218,18 @@ internal class RoundEditorSync(
         if (knownTournaments == null || manifest.tournamentsRevision == knownTournaments || reloadTournaments()) {
             knownTournamentsRevision = manifest.tournamentsRevision
         }
+    }
+
+    /**
+     * Keeps only the notices the user needs. A table that is not on screen is replaced without a notice,
+     * unless the replacement dropped typed values or refused a save.
+     */
+    private fun addNotices(notices: List<TableUpdateNotice>) {
+        val needed = notices.filter { notice ->
+            notice.saveRejected || notice.lostChanges.isNotEmpty() ||
+                (notice.key.roundId == selectedRoundId() && notice.key.tableId == selectedTableId())
+        }
+        if (needed.isNotEmpty()) updateNotices = updateNotices + needed
     }
 
     fun dismissNotices() {

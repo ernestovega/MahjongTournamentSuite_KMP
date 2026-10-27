@@ -62,10 +62,9 @@
     <string name="status_upcoming">Próximo</string>
     <string name="status_in_progress">En curso</string>
     <string name="status_finished">Terminado</string>
-    <string name="standing_place">Puesto</string>
     <string name="tournament_logo_of">Logotipo de %1$s</string>
-    <string name="won_teams_ranking">Ganó la clasificación por equipos</string>
-    <string name="won_best_hands_ranking">Ganó la clasificación de mejores manos</string>
+    <string name="standing_team">Puesto del equipo</string>
+    <string name="standing_best_hand">Puesto en mejores manos</string>
     <string name="contact_send_email">Enviar un correo a los organizadores</string>
     <string name="schedule_hide">Ocultar horario</string>
     <string name="action_open">Abrir</string>

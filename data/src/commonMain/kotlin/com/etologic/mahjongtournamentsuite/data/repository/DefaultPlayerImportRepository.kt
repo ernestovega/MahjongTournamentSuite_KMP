@@ -1,12 +1,20 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
 import co.touchlab.kermit.Logger
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ImportRowPlanDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ImportFileErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssue
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
@@ -99,9 +107,31 @@ class DefaultPlayerImportRepository(
             onSuccess = { AppResult.Success(it) },
             onFailure = { throwable ->
                 logger.w(throwable) { "$action failed." }
-                AppResult.Failure(throwable.toRepositoryAppError())
+                AppResult.Failure(throwable.toImportAppError())
             },
         )
+}
+
+/**
+ * A file the server refuses has a `code` in the `details` of the answer, such as the missing columns.
+ * The dialog writes the reason in the language of the user.
+ */
+private fun Throwable.toImportAppError(): AppError {
+    if (this is BackendHttpException && status.value == 400) {
+        val details = runCatching { Json.parseToJsonElement(responseBody).jsonObject["details"]?.jsonObject }.getOrNull()
+        val code = details?.get("code")?.jsonPrimitive?.contentOrNull
+            ?.let { name -> ImportFileErrorCode.entries.firstOrNull { it.name == name } }
+        if (code != null) {
+            val args = when (code) {
+                ImportFileErrorCode.MISSING_COLUMNS ->
+                    listOf(details["missing"]?.jsonArray?.joinToString(", ") { it.jsonPrimitive.content }.orEmpty())
+                ImportFileErrorCode.TOO_MANY_ROWS -> listOf(details["max"]?.jsonPrimitive?.content.orEmpty())
+                else -> emptyList()
+            }
+            return AppError.ImportFile(code, args)
+        }
+    }
+    return toRepositoryAppError()
 }
 
 /** The server accepts at most this many rows in one ASSIGN request. */

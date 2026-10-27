@@ -241,6 +241,10 @@ data class StandingDto(
     val of: Int = 1,
     val points: Double = 0.0,
     val score: Int = 0,
+    val teamRank: Int? = null,
+    val teamOf: Int? = null,
+    val chickenRank: Int? = null,
+    val bestHandRank: Int? = null,
 )
 
 @Serializable

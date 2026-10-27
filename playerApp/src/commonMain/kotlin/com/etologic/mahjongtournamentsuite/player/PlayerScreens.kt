@@ -70,6 +70,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -145,7 +146,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
+import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
+import com.etologic.mahjongtournamentsuite.presentation.components.RankTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
@@ -209,7 +212,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_player_description
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
-import mahjongtournamentsuite.playerapp.generated.resources.standing_place
+import mahjongtournamentsuite.playerapp.generated.resources.standing_best_hand
+import mahjongtournamentsuite.playerapp.generated.resources.standing_team
 import mahjongtournamentsuite.playerapp.generated.resources.stat_hands
 import mahjongtournamentsuite.playerapp.generated.resources.stats_round_table
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
@@ -235,8 +239,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.team_show_players
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_logo_of
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
-import mahjongtournamentsuite.playerapp.generated.resources.won_best_hands_ranking
-import mahjongtournamentsuite.playerapp.generated.resources.won_teams_ranking
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -349,6 +351,7 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
 @Composable
 fun TournamentsScreen(navController: NavHostController) {
     val tournaments = koinInject<PlayerTournamentPresenter>()
+    val statistics = koinInject<PlayerStatisticsPresenter>()
     val session = koinInject<PlayerSessionPresenter>()
     val scope = rememberCoroutineScope()
     var items by remember { mutableStateOf<List<Tournament>?>(null) }
@@ -366,23 +369,20 @@ fun TournamentsScreen(navController: NavHostController) {
         }
     }
     LaunchedEffect(items) {
-        items.orEmpty().filter { statusOf(it).let { status -> status != null && status != TournamentStatus.UPCOMING } }.forEach { tournament ->
-            val view = (tournaments.load(tournament.id) as? AppResult.Success)?.value ?: return@forEach
-            val ranking = view.rankings.players.firstOrNull { it.playerId == view.mySlotId } ?: return@forEach
-            val finished = statusOf(tournament) == TournamentStatus.FINISHED
-            val rankings = view.rankings
-            // The extra icons show only when the tournament is over and the player came first.
-            val standing = TournamentStanding(
-                position = ranking.position,
-                wonTeams = finished && tournament.isTeams &&
-                    rankings.teams.any { it.position == 1 && it.teamId == ranking.teamId },
-                wonChickenHands = finished && tournament.countChickenHands &&
-                    rankings.chickenHands.any { it.position == 1 && it.playerId == ranking.playerId },
-                wonBestHands = finished && tournament.countBestHands &&
-                    rankings.bestHands.any { it.position == 1 && it.playerId == ranking.playerId },
+        // The server keeps the places of the player. One call gets them for all tournaments that started.
+        val started = items.orEmpty().filter { statusOf(it).let { status -> status != null && status != TournamentStatus.UPCOMING } }
+        if (started.isEmpty()) return@LaunchedEffect
+        val places = statistics.standings("", started.map { it.id })
+        standings = started.mapNotNull { tournament ->
+            val place = places[tournament.id] ?: return@mapNotNull null
+            tournament.id to tournamentStandingOf(
+                place,
+                isTeams = tournament.isTeams,
+                finished = statusOf(tournament) == TournamentStatus.FINISHED,
+                countsChickenHands = tournament.countChickenHands,
+                countsBestHands = tournament.countBestHands,
             )
-            standings = standings + (tournament.id to standing)
-        }
+        }.toMap()
     }
 
     // The tab rows hide when the content scrolls down and show when it scrolls up.
@@ -447,7 +447,8 @@ fun TournamentsScreen(navController: NavHostController) {
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                         contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
                     ) {
-                        items(list, key = { it.id }) { tournament ->
+                        // The tournaments in progress come first. The sort is stable, so the other tournaments keep their order.
+                        items(list.sortedBy { if (statusOf(it) == TournamentStatus.IN_PROGRESS) 0 else 1 }, key = { it.id }) { tournament ->
                             TournamentCard(tournament, standings[tournament.id]) { navController.navigate(TournamentRoute(tournament.id)) }
                         }
                     }
@@ -469,12 +470,32 @@ private enum class TournamentStatus(val label: StringResource) {
     FINISHED(Res.string.status_finished),
 }
 
-/** The place of the player in a tournament, and the rankings that the player won. */
-private data class TournamentStanding(
+/**
+ * The place of the player in a tournament. The other ranks are null when the list does not show them.
+ * [chickenRank] and [bestHandRank] are from 1 to 3.
+ */
+internal data class TournamentStanding(
     val position: Int,
-    val wonTeams: Boolean = false,
-    val wonChickenHands: Boolean = false,
-    val wonBestHands: Boolean = false,
+    val teamRank: Int? = null,
+    val chickenRank: Int? = null,
+    val bestHandRank: Int? = null,
+)
+
+/**
+ * What the list shows for [place]. The team place shows in a tournament with teams. The prizes of the hands show only
+ * when the tournament is over, the tournament counts them and the player is in the first three.
+ */
+internal fun tournamentStandingOf(
+    place: Standing,
+    isTeams: Boolean,
+    finished: Boolean,
+    countsChickenHands: Boolean,
+    countsBestHands: Boolean,
+) = TournamentStanding(
+    position = place.rank,
+    teamRank = place.teamRank.takeIf { isTeams },
+    chickenRank = place.chickenRank.takeIf { finished && countsChickenHands && it in 1..3 },
+    bestHandRank = place.bestHandRank.takeIf { finished && countsBestHands && it in 1..3 },
 )
 
 /** The status comes from the dates. It is null when the tournament has no dates. */
@@ -504,11 +525,20 @@ private fun OutlinedTag(color: Color, content: @Composable RowScope.() -> Unit) 
     )
 }
 
+/** The blue of the upcoming tournaments. It is lighter in the dark theme, so it stays visible. */
+@Composable
+private fun upcomingBlue(): Color =
+    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) Color(0xFF4D9BFF) else Color(0xFF1565C0)
+
+/** The color of the text on the blue: white on the dark blue, black on the light blue. */
+@Composable
+private fun onUpcomingBlue(): Color = if (upcomingBlue().luminance() > 0.4f) Color.Black else Color.White
+
 @Composable
 private fun StatusChip(status: TournamentStatus) {
     val color = when (status) {
         TournamentStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
-        TournamentStatus.UPCOMING -> MaterialTheme.colorScheme.primary
+        TournamentStatus.UPCOMING -> upcomingBlue()
         TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
     }
     OutlinedTag(color) {
@@ -516,16 +546,12 @@ private fun StatusChip(status: TournamentStatus) {
     }
 }
 
-/** The place of the player: a trophy or a leaderboard icon and the number. */
+/** The place of the player: a trophy and the number. The trophy is gold, silver or bronze for the first three. */
 @Composable
 private fun StandingTag(standing: TournamentStanding) {
     val color = MaterialTheme.colorScheme.onSurface
     OutlinedTag(color) {
-        if (standing.position <= 3) {
-            PositionTrophy(standing.position, size = 18.dp)
-        } else {
-            Icon(Icons.Default.Leaderboard, contentDescription = stringResource(Res.string.standing_place), Modifier.size(18.dp), tint = color)
-        }
+        RankTrophy(standing.position, size = 18.dp)
         Text("${standing.position}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color)
     }
 }
@@ -563,6 +589,12 @@ private fun TournamentLogo(tournament: Tournament) {
 private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?, onClick: () -> Unit) {
     var expanded by remember(tournament.id) { mutableStateOf(false) }
     val status = statusOf(tournament)
+    // A tournament in progress and an upcoming tournament have an accent color. A finished tournament has none.
+    val accent = when (status) {
+        TournamentStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
+        TournamentStatus.UPCOMING -> upcomingBlue()
+        else -> null
+    }
     val uriHandler = LocalUriHandler.current
     val venueText = venueSummary(tournament)
     val mapLink = venueMapLink(tournament)
@@ -573,6 +605,8 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
         Modifier.fillMaxWidth().clickable(onClick = onClick),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+        // A tournament in progress has a border with the accent color of its status chip.
+        border = accent?.let { BorderStroke(2.dp, it) },
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -591,15 +625,26 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                         if (standing != null) {
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 StandingTag(standing)
-                                if (standing.wonTeams || standing.wonChickenHands || standing.wonBestHands) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                        if (standing.wonTeams) Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.won_teams_ranking), Modifier.size(22.dp))
-                                        if (standing.wonChickenHands) ChickenIcon(size = 22.dp)
-                                        if (standing.wonBestHands) {
-                                            // The hand tells this trophy apart from the trophy of the place.
+                                if (standing.teamRank != null || standing.chickenRank != null || standing.bestHandRank != null) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        if (standing.teamRank != null) {
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                                                Icon(Icons.Default.PanTool, contentDescription = stringResource(Res.string.won_best_hands_ranking), Modifier.size(16.dp))
-                                                PositionTrophy(1, size = 22.dp)
+                                                Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.standing_team), Modifier.size(22.dp))
+                                                RankTrophy(standing.teamRank, size = 18.dp)
+                                                Text("${standing.teamRank}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                            }
+                                        }
+                                        if (standing.chickenRank != null) {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                ChickenIcon(size = 22.dp)
+                                                PositionTrophy(standing.chickenRank, size = 18.dp)
+                                            }
+                                        }
+                                        if (standing.bestHandRank != null) {
+                                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                // The hand is the icon of the best hands. The trophy is already the icon of the place.
+                                                Icon(Icons.Default.PanTool, contentDescription = stringResource(Res.string.standing_best_hand), Modifier.size(20.dp))
+                                                PositionTrophy(standing.bestHandRank, size = 18.dp)
                                             }
                                         }
                                     }
@@ -676,6 +721,15 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                 }
                 Button(
                     onClick = onClick,
+                    // The button has the accent color of the card.
+                    colors = if (accent != null) {
+                        ButtonDefaults.buttonColors(
+                            containerColor = accent,
+                            contentColor = if (status == TournamentStatus.IN_PROGRESS) MaterialTheme.colorScheme.onTertiary else onUpcomingBlue(),
+                        )
+                    } else {
+                        ButtonDefaults.buttonColors()
+                    },
                     contentPadding = PaddingValues(horizontal = 16.dp, vertical = 6.dp),
                 ) {
                     Text(stringResource(Res.string.action_open), style = MaterialTheme.typography.labelLarge)

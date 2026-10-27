@@ -62,10 +62,9 @@
     <string name="status_upcoming">À venir</string>
     <string name="status_in_progress">En cours</string>
     <string name="status_finished">Terminé</string>
-    <string name="standing_place">Place</string>
     <string name="tournament_logo_of">Logo de %1$s</string>
-    <string name="won_teams_ranking">A gagné le classement par équipes</string>
-    <string name="won_best_hands_ranking">A gagné le classement des meilleures mains</string>
+    <string name="standing_team">Place de l'équipe</string>
+    <string name="standing_best_hand">Place aux meilleures mains</string>
     <string name="contact_send_email">Envoyer un e-mail aux organisateurs</string>
     <string name="schedule_hide">Masquer le programme</string>
     <string name="action_open">Ouvrir</string>

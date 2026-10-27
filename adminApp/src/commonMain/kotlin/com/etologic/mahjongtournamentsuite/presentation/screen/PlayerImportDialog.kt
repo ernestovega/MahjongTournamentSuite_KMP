@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetSaver
+import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -57,9 +60,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_choose_other_f
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_errors
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_new
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_replace
-import mahjongtournamentsuite.adminapp.generated.resources.import_count_unchanged
 import mahjongtournamentsuite.adminapp.generated.resources.import_creates_account
-import mahjongtournamentsuite.adminapp.generated.resources.import_current_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_done_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_email_value
 import mahjongtournamentsuite.adminapp.generated.resources.import_failure_line
@@ -98,10 +99,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_status_new
 import mahjongtournamentsuite.adminapp.generated.resources.import_status_replace
 import mahjongtournamentsuite.adminapp.generated.resources.import_status_unchanged
 import mahjongtournamentsuite.adminapp.generated.resources.import_team_value
-import mahjongtournamentsuite.adminapp.generated.resources.import_unknown_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_untouched_slots
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
 
 /** What the dialog shows now. */
 private sealed interface ImportStep {
@@ -256,12 +257,11 @@ internal fun ImportPreviewContent(
 ) {
     // Errors come first, so the editor sees the rows to fix before the list of good rows.
     val rows = remember(preview) {
-        preview.rows.sortedWith(compareBy({ it.status.sortOrder() }, { it.row }))
+        preview.rows.filter { it.status != ImportRowStatus.UNCHANGED }.sortedWith(compareBy({ it.status.sortOrder() }, { it.row }))
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(Res.string.import_count_new, preview.newCount))
         if (preview.replaceCount > 0) Text(stringResource(Res.string.import_count_replace, preview.replaceCount))
-        Text(stringResource(Res.string.import_count_unchanged, preview.unchangedCount))
         if (preview.errorCount > 0) {
             Text(stringResource(Res.string.import_count_errors, preview.errorCount), color = MaterialTheme.colorScheme.error)
         }
@@ -324,6 +324,14 @@ private fun ImportRowItem(row: ImportRowPlan, playerNameOf: (String) -> String?)
             ImportRowStatus.UNCHANGED -> Res.string.import_status_unchanged
         },
     )
+    // The row shows only what changes: the old value, if there is one, and the new value.
+    val playerLabel = { emaId: String -> playerNameOf(emaId)?.let { "$it · $emaId" } ?: "EMA $emaId" }
+    val oldPlayer = row.current?.let { current -> current.emaId?.let(playerLabel) }
+    val newPlayer = row.emaId?.takeIf { it != row.current?.emaId }?.let(playerLabel)
+    // An account that has an email keeps it. The issue list warns about a different email.
+    val email = row.email?.takeIf { row.current?.email.isNullOrBlank() }
+    val team = row.team?.takeIf { it != row.current?.teamName.orEmpty() }
+    fun change(old: String?, new: String) = if (old.isNullOrBlank()) new else "$old → $new"
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
@@ -332,25 +340,16 @@ private fun ImportRowItem(row: ImportRowPlan, playerNameOf: (String) -> String?)
             )
             Text(statusText, style = MaterialTheme.typography.labelLarge, color = statusColor)
         }
-        row.emaId?.let { emaId ->
-            Text(playerNameOf(emaId)?.let { "$it · $emaId" } ?: stringResource(Res.string.import_unknown_player, emaId))
+        if (row.status != ImportRowStatus.ERROR) {
+            newPlayer?.let { Text(change(oldPlayer, it)) }
+            team?.let { Text(stringResource(Res.string.import_team_value, change(row.current?.teamName, it)), style = MaterialTheme.typography.bodySmall) }
+            email?.let { Text(stringResource(Res.string.import_email_value, change(row.current?.email, it)), style = MaterialTheme.typography.bodySmall) }
         }
-        row.team?.let { Text(stringResource(Res.string.import_team_value, it), style = MaterialTheme.typography.bodySmall) }
-        row.email?.let { Text(stringResource(Res.string.import_email_value, it), style = MaterialTheme.typography.bodySmall) }
-        if (row.createsAccount) Text(stringResource(Res.string.import_creates_account), style = MaterialTheme.typography.bodySmall)
-        if (row.status == ImportRowStatus.REPLACE) {
-            val now = row.current?.let { current ->
-                current.emaId?.let { playerNameOf(it) ?: it }
-            }
-            now?.let {
-                Text(
-                    stringResource(Res.string.import_current_player, it),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+        if (row.status != ImportRowStatus.ERROR && row.createsAccount) {
+            Text(stringResource(Res.string.import_creates_account), style = MaterialTheme.typography.bodySmall)
         }
-        row.issues.forEach { issue ->
+        // The old and the new value show the replaced player already.
+        row.issues.filter { it.code != ImportIssueCode.REPLACES_PLAYER }.forEach { issue ->
             Text(
                 issue.toUiText().asString(),
                 style = MaterialTheme.typography.bodySmall,
@@ -414,10 +413,18 @@ fun rememberPlayersExport(tournamentId: String, onError: (UiText) -> Unit): () -
     val presenter = koinInject<PlayerImportPresenter>()
     val scope = rememberCoroutineScope()
     val saver = rememberSpreadsheetSaver(onError)
+    val store = koinInject<AppMemoryStore>()
+    val tournaments by store.tournaments.collectAsState()
     return {
         scope.launch {
             when (val result = presenter.export(tournamentId)) {
-                is AppResult.Success -> saver.save(result.value.fileName, result.value.bytes)
+                is AppResult.Success -> {
+                    // The name has the short name of the tournament and the time, like the other generated files.
+                    val tournament = tournaments.firstOrNull { it.id == tournamentId }
+                    val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
+                    val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
+                    saver.save(generatedFileName(baseName, "players", "xlsx", Clock.System.now(), year = year), result.value.bytes)
+                }
                 is AppResult.Failure -> onError(result.error.toUiText())
             }
         }

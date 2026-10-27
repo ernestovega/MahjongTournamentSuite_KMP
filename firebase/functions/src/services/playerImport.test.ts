@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
+import JSZip = require("jszip");
+
 import {
   buildPlayerExportRecords,
   cellText,
@@ -295,6 +297,21 @@ test("the export lists every slot in the format that the import reads", async ()
     ["1", "00000001", "ana@example.com", "Dragons"],
     ["2", "", "", "Dragons"],
   ]);
+});
+
+test("an Excel file with prefixed tags and absolute paths is read", async () => {
+  // This is how the Open XML SDK writes a file: `<x:row>` tags and `/xl/...` targets in the relations.
+  const zip = await JSZip.loadAsync(await writePlayerExportXlsx([["id", "ema id", "email"], ["1", "00000001", "ana@example.com"]]));
+  for (const name of Object.keys(zip.files)) {
+    if (!/\.(xml|rels)$/.test(name)) continue;
+    const text = (await zip.file(name)!.async("string"))
+      .replace(/<(\/?)([A-Za-z])/g, (_all, slash, letter) => letter === "?" ? _all : `<${slash}x:${letter}`)
+      .replace(/<(\/?)x:(Relationship|Relationships|Types|Default|Override)\b/g, "<$1$2")
+      .replace(/Target="(?!\/)/g, 'Target="/xl/');
+    zip.file(name, text);
+  }
+  const parsed = await parsePlayerImportFile("players.xlsx", await zip.generateAsync({ type: "nodebuffer" }));
+  assert.deepEqual(parsed.rows.map((r) => [r.id, r.emaId, r.email]), [["1", "00000001", "ana@example.com"]]);
 });
 
 test("the export has no team column for a tournament without teams", () => {

@@ -40,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
@@ -71,7 +72,6 @@ import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import com.etologic.mahjongtournamentsuite.presentation.util.tournamentDataRevision
 import kotlin.time.Clock
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -119,6 +119,7 @@ fun TournamentScreen(
     val scope = rememberCoroutineScope()
     val profile by store.profile.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
+    LoadMissingSession()
     val tournaments by store.tournaments.collectAsState()
     val tournament = tournaments.firstOrNull { it.id == tournamentId }
 
@@ -147,9 +148,6 @@ fun TournamentScreen(
     var playerNamesById by sync::playerNamesById
     var pendingAction by remember { mutableStateOf<RoundEditorAction?>(null) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
-    // Set while polling is paused because the user was away. The user ends the pause with the dialog.
-    var idlePause by remember { mutableStateOf<CompletableDeferred<Unit>?>(null) }
-    var isCheckingAfterIdle by remember { mutableStateOf(false) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
 
     val saveFocusRequester = remember { FocusRequester() }
@@ -294,18 +292,6 @@ fun TournamentScreen(
         poller.run(
             hasUnsavedEdits = { sync.hasUnsavedChanges },
             check = { sync.checkForChanges() },
-            onIdle = { check ->
-                val resume = CompletableDeferred<Unit>()
-                idlePause = resume
-                resume.await()
-                isCheckingAfterIdle = true
-                try {
-                    check()
-                } finally {
-                    isCheckingAfterIdle = false
-                    idlePause = null
-                }
-            },
         )
     }
 
@@ -336,8 +322,9 @@ fun TournamentScreen(
                         dialogTitle = saveEmaReportTitle,
                         // The name tells which results the file holds: the revision, and when it was made.
                         fileName = generatedFileName(
-                            tournamentName = tournament?.name ?: "tournament",
+                            tournamentName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament",
                             kind = "ema-report",
+                            year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) },
                             extension = "xlsx",
                             now = Clock.System.now(),
                             revision = snapshot.dataRevision,
@@ -420,9 +407,6 @@ fun TournamentScreen(
     }
     if (sync.updateNotices.isNotEmpty()) {
         TableUpdatesDialog(notices = sync.updateNotices, onDismiss = sync::dismissNotices)
-    }
-    idlePause?.let { pause ->
-        IdlePauseDialog(isChecking = isCheckingAfterIdle, onContinue = { pause.complete(Unit) })
     }
     errorMessage?.let { message -> AppErrorDialog(message) { errorMessage = null } }
 

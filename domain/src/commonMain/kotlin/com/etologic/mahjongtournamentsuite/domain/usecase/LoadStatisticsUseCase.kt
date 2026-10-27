@@ -51,7 +51,18 @@ data class PersonStatisticsData(
 )
 
 /** A place in a tournament ranking. [rank] is the place from 1 to [of]. Equal points and score share a place. */
-data class Standing(val rank: Int, val of: Int, val points: Double, val score: Int)
+data class Standing(
+    val rank: Int,
+    val of: Int,
+    val points: Double,
+    val score: Int,
+    /** The place of the team of the player. Null when the team is not known. */
+    val teamRank: Int? = null,
+    /** The place of the player by chicken hands. Null when the player won no chicken hand. */
+    val chickenRank: Int? = null,
+    /** The place of the best hand of the player. Null when the player won no hand. */
+    val bestHandRank: Int? = null,
+)
 
 class LoadStatisticsUseCase(
     private val tournamentRepository: TournamentRepository,

@@ -63,9 +63,61 @@ describe("statistics store", () => {
     const person = await loadPersonStatistics(ema(tag, 4), null);
     assert.equal(person.tournaments.length, 1);
     assert.equal(person.tournaments[0].results[0].position, 4);
-    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 4), [id, "other"])), [{ tournamentId: id, rank: 4, of: 4, score: -50 }]);
-    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 1), [id])), [{ tournamentId: id, rank: 1, of: 4, score: 50 }]);
+    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 4), [id, "other"])), [{ tournamentId: id, rank: 4, of: 4, score: -50, teamRank: null, teamOf: null, chickenRank: null, bestHandRank: null }]);
+    assert.deepEqual(withoutPoints(await loadStandings(ema(tag, 1), [id])), [{ tournamentId: id, rank: 1, of: 4, score: 50, teamRank: null, teamOf: null, chickenRank: null, bestHandRank: null }]);
     assert.equal((await loadPersonStatistics(ema(tag, 4), new Set(["other"]))).tournaments.length, 0);
+  });
+
+  it("stores the team, the chicken hands and the best hand, and replaces them on an edit and a reset", async () => {
+    const tag = `d${Date.now()}`;
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    // Slots 1 and 3 are in team 7. Slots 2 and 4 are in team 8.
+    for (let slot = 1; slot <= 4; slot += 1) {
+      await db.collection("tournaments").doc(id).collection("players").doc(String(slot))
+        .set({ assignedEmaId: ema(tag, slot), team: slot % 2 === 1 ? 7 : 8 });
+    }
+    const stored = async () => (await db.collection("statsTournaments").doc(id).get()).data() ?? {};
+
+    await saveTableState({
+      tournamentId: id, roundId: 1, tableId: 1, expectedVersion: 0, actor,
+      handPatches: [
+        { handId: 1, patch: { playerWinnerId: "2", playerLooserId: "3", handScore: "8", isChickenHand: true, isDone: true } },
+        { handId: 2, patch: { playerWinnerId: "1", playerLooserId: "", handScore: "64", isDone: true } },
+      ],
+      tablePatch: {
+        playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4",
+        playerEastScore: "30", playerSouthScore: "10", playerWestScore: "-10", playerNorthScore: "-30",
+        isCompleted: true,
+      },
+    });
+    const first = await stored();
+    assert.deepEqual(first.teams, { 1: 7, 2: 8, 3: 7, 4: 8 });
+    assert.deepEqual(first.chicken, { 2: { "1_1": 1 } });
+    assert.deepEqual(first.best, { 1: { "1_1": 64 }, 2: { "1_1": 8 } });
+
+    // A better hand replaces the old one. The chicken hand stays once.
+    await saveTableState({
+      tournamentId: id, roundId: 1, tableId: 1, expectedVersion: 1, actor,
+      handPatches: [{ handId: 2, patch: { handScore: "80" } }],
+      tablePatch: {},
+    });
+    const edited = await stored();
+    assert.deepEqual(edited.chicken, { 2: { "1_1": 1 } });
+    assert.deepEqual(edited.best, { 1: { "1_1": 80 }, 2: { "1_1": 8 } });
+
+    const [seat] = await loadStandings(ema(tag, 2), [id]);
+    assert.equal(seat.chickenRank, 1);
+    assert.equal(seat.bestHandRank, 2);
+    assert.notEqual(seat.teamRank, null);
+    assert.equal(seat.teamOf, 2);
+
+    await resetTable({ tournamentId: id, roundId: 1, tableId: 1, actor });
+    const cleared = await stored();
+    assert.deepEqual(cleared.chicken ?? {}, { 2: {} });
+    assert.deepEqual(cleared.best ?? {}, { 1: {}, 2: {} });
+    const [after] = await loadStandings(ema(tag, 2), [id]);
+    assert.equal(after.chickenRank, null);
+    assert.equal(after.bestHandRank, null);
   });
 
   it("takes the numbers out when the table is reset or the tournament is removed", async () => {

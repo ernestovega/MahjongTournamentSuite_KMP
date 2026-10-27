@@ -42,6 +42,11 @@ class PlayerImportPreviewUiTest {
                 status = ImportRowStatus.NEW, issues = emptyList(), createsAccount = true, current = ImportSlotState(null, null, null),
             ),
             ImportRowPlan(
+                row = 5, slotId = 3, emaId = "00000004", email = "same@b.es", team = null,
+                status = ImportRowStatus.UNCHANGED, issues = emptyList(),
+                current = ImportSlotState("00000004", "same@b.es", null),
+            ),
+            ImportRowPlan(
                 row = 4, slotId = null, emaId = null, email = null, team = null,
                 status = ImportRowStatus.ERROR,
                 issues = listOf(ImportIssue(ImportIssueCode.MISSING_EMA_ID, ImportIssueSeverity.ERROR, emptyList())),
@@ -60,6 +65,7 @@ class PlayerImportPreviewUiTest {
         assertEquals(1, preview.newCount)
         assertEquals(1, preview.replaceCount)
         assertEquals(1, preview.errorCount)
+        assertEquals(1, preview.unchangedCount)
     }
 
     @Test
@@ -82,9 +88,14 @@ class PlayerImportPreviewUiTest {
 
         onNodeWithText("Rows with an error: 1. The import skips these rows.").assertExists()
         onNodeWithText("The EMA number is empty.").assertExists()
+        // A row shows only what changes: the old value and the new value.
+        onNodeWithText("ANA PEREZ · 00000002 → EMA 00000001").assertExists()
+        onNodeWithText("Team: Team 1 → Reds").assertExists()
+        onNodeWithText("EMA 00000003").assertExists()
         onNodeWithText("The account of this player has the email old@b.es. The account email stays and the email new@b.es is not saved.").assertExists()
         onNodeWithText("The app creates the account of this player.").assertExists()
-        onNodeWithText("Now in this slot: ANA PEREZ").assertExists()
+        // The rows without change do not show.
+        onNodeWithText("Line 5 · Slot 3").assertDoesNotExist()
         onNodeWithText("2 slots are not in the file. They stay as they are.").assertExists()
         onNodeWithText("If you do not select this box, the import skips the rows that replace a player.").assertExists()
 

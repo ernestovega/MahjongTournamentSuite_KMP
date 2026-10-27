@@ -76,7 +76,7 @@ export type TableDigest = {
 };
 
 /** Change this number when the digest rules change. A stored table digest with another number counts as old. */
-export const DIGEST_VERSION = 5;
+export const DIGEST_VERSION = 6;
 
 const text = (value: unknown): string => String(value ?? "").trim();
 

@@ -9,7 +9,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.PersonAdd
-import androidx.compose.material.icons.filled.UploadFile
+import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assessment
 import androidx.compose.runtime.Composable
@@ -69,8 +69,8 @@ fun AppTopBarActions(
             AppTopBarButton(stringResource(Res.string.top_bar_id_list), Icons.AutoMirrored.Filled.FormatListBulleted, it, idListFocusRequester)
         }
         onPlayerAccounts?.let { AppTopBarButton(stringResource(Res.string.top_bar_invitations), Icons.Default.Email, it) }
-        onImportPlayers?.let { AppTopBarButton(stringResource(Res.string.import_players), Icons.Default.UploadFile, it) }
-        onExportPlayers?.let { AppTopBarButton(stringResource(Res.string.export_players), Icons.Default.FileDownload, it) }
+        onImportPlayers?.let { AppTopBarButton(stringResource(Res.string.import_players), Icons.Default.FileDownload, it) }
+        onExportPlayers?.let { AppTopBarButton(stringResource(Res.string.export_players), Icons.Default.FileUpload, it) }
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.app_users), Icons.Default.ManageAccounts, it, usersFocusRequester) }
         onStatistics?.let { AppTopBarButton(stringResource(Res.string.statistics), StatisticsIcon, it) }
         onEmaReport?.let { AppTopBarButton(stringResource(Res.string.ema_report), Icons.Outlined.Assessment, it, exportFocusRequester) }

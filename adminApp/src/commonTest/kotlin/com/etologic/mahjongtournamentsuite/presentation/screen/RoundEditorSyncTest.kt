@@ -167,7 +167,7 @@ class RoundEditorSyncTest {
     }
 
     @Test
-    fun severalChangedTablesGiveOneNoticeEach() = runTest {
+    fun onlyTheTableOnScreenGivesANotice() = runTest {
         val server = FakeTournamentRepository().withTables(1, 2, 3)
         val user = TestUser(server).also { it.open(1, 2, 3) }
         server.otherUserSaves(1, 1, handScore = "8")
@@ -175,8 +175,21 @@ class RoundEditorSyncTest {
 
         user.sync.checkForChanges()
 
-        assertEquals(setOf(TableKey(1, 1), TableKey(1, 3)), user.sync.updateNotices.map { it.key }.toSet())
+        assertEquals(listOf(TableKey(1, 1)), user.sync.updateNotices.map { it.key })
+        assertEquals("9", user.editor(3).hands.first().handScore)
         assertEquals(1L, user.editor(2).version)
+    }
+
+    @Test
+    fun aTableNotOnScreenWithUnsavedTypingGivesANoticeWithTheLostValues() = runTest {
+        val server = FakeTournamentRepository().withTables(1, 2)
+        val user = TestUser(server).also { it.open(1, 2) }
+        user.typeHandScore("16", tableId = 2)
+        server.otherUserSaves(1, 2, handScore = "9")
+
+        user.sync.checkForChanges()
+
+        assertEquals(listOf(TableKey(1, 2)), user.sync.updateNotices.map { it.key })
     }
 
     @Test

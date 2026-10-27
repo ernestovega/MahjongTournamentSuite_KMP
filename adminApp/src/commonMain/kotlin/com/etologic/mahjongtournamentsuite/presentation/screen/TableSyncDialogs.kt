@@ -23,10 +23,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.checking
-import mahjongtournamentsuite.adminapp.generated.resources.continue_action
 import mahjongtournamentsuite.adminapp.generated.resources.enter_these_values_again_if_they
-import mahjongtournamentsuite.adminapp.generated.resources.idle_paused_message
 import mahjongtournamentsuite.adminapp.generated.resources.lost_change_line
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.table_headline_latest
@@ -34,7 +31,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.table_headline_reject
 import mahjongtournamentsuite.adminapp.generated.resources.table_headline_replaced
 import mahjongtournamentsuite.adminapp.generated.resources.table_updated
 import mahjongtournamentsuite.adminapp.generated.resources.tables_updated
-import mahjongtournamentsuite.adminapp.generated.resources.updates_paused
 import org.jetbrains.compose.resources.stringResource
 
 /** The headline of one notice. The wording tells the user what happened to the typed values. */
@@ -80,30 +76,6 @@ internal fun TableUpdatesDialog(
         },
         confirmButton = {
             FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
-        },
-    )
-}
-
-/** Shown when the user was away. Polling stopped, so the data may be old until the user continues. */
-@Composable
-internal fun IdlePauseDialog(onContinue: () -> Unit, isChecking: Boolean) {
-    val continueFocusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) { continueFocusRequester.requestFocus() }
-
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        // The user must choose Continue. A tap outside the dialog must not hide it.
-        onDismissRequest = {},
-        title = { Text(stringResource(Res.string.updates_paused)) },
-        text = {
-            Text(stringResource(Res.string.idle_paused_message))
-        },
-        confirmButton = {
-            FocusedButton(
-                enabled = !isChecking,
-                onClick = onContinue,
-                focusRequester = continueFocusRequester,
-            ) { Text(stringResource(if (isChecking) Res.string.checking else Res.string.continue_action)) }
         },
     )
 }

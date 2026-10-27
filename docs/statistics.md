@@ -47,7 +47,7 @@ The update uses the table and hands that the transaction already holds. The memo
 | --- | --- |
 | `statsTables/{tournamentId}_{round}_{table}` | The digest of one completed table: the table totals and one result for each seat (`buildTableDigest` in `statisticsDigest.ts`). `emaIds` lets a query find the tables of a player. |
 | `statsPlayers/{emaId}` | The sums of one player over all tournaments. `leaderWinRate` and `leaderDealInRate` exist only with at least 8 hands, so the leaderboard queries skip other players. |
-| `statsTournaments/{tournamentId}` | Points and score of every slot, for the final place of a player. |
+| `statsTournaments/{tournamentId}` | Points and score of every slot, the team of every slot, and the chicken hands and best hand of every slot at every table. The standings read only this document. |
 | `statsGlobal/overview-{0..7}` | The sums of all tournaments, in 8 shards. A request adds the shards. |
 
 An update subtracts the stored digest of the table and adds the new one, so an edit does not count twice.
@@ -57,7 +57,7 @@ Requests (they read a fixed number of documents, or the tables of one player):
 - `GET /tournaments/statistics/overview` (administrators): the sums, the highest hand, the number of tournaments, and the players of three leaderboards (top 5 each).
 - `GET /tournaments/statistics/me` (any account): the results of the player of the account. The account sees only the tournaments that it can see in the tournament list.
 - `GET /tournaments/statistics/persons/:emaId` (every signed-in account): the same for another player. The results come only from the tournaments that the account can see. A player picks the other player from `GET /players`, which lists only the people that the player plays with.
-- `GET /tournaments/statistics/me/standings?tournaments=a,b` and `.../persons/:emaId/standings?tournaments=a,b`: the final place of the player in up to 25 tournaments. The apps ask only for the tournaments on screen.
+- `GET /tournaments/statistics/me/standings?tournaments=a,b` and `.../persons/:emaId/standings?tournaments=a,b`: the final place of the player in up to 25 tournaments, with the place of the team, the place by chicken hands and the place of the best hand. The apps ask only for the tournaments on screen.
 
 The Tournaments scope without a chosen tournament is for administrators.
 The tournament scope with one tournament loads the hands of that tournament. The person scopes use the server store in both apps and load no hands.

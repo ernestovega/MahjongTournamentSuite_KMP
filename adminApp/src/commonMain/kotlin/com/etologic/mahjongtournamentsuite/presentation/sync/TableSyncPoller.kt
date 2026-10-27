@@ -3,11 +3,12 @@ package com.etologic.mahjongtournamentsuite.presentation.sync
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Runs [check] on the pace of a [PollSchedule]. The checks never overlap, because the loop waits for each one.
- * When the user is away for too long, the loop calls [onIdle] and waits until that call returns.
- * [onIdle] gets the check, and it must call it once the user is back. The loop then counts the user as active.
+ * When the user is away for too long, the loop stops the checks and waits for new activity.
+ * When the user is back, the loop runs one check at once and goes on with the normal pace.
  */
 class TableSyncPoller(
     private val schedule: PollSchedule,
@@ -17,13 +18,12 @@ class TableSyncPoller(
     suspend fun run(
         hasUnsavedEdits: () -> Boolean,
         check: suspend () -> Unit,
-        onIdle: suspend (check: suspend () -> Unit) -> Unit,
     ): Nothing {
         while (true) {
             when (val step = schedule.nextStep(activity.idleFor(), hasUnsavedEdits())) {
                 PollStep.Stop -> {
-                    onIdle { runCheck(check) }
-                    activity.markActive()
+                    while (schedule.nextStep(activity.idleFor(), hasUnsavedEdits()) is PollStep.Stop) wait(ACTIVITY_CHECK_INTERVAL)
+                    runCheck(check)
                 }
 
                 is PollStep.Wait -> {
@@ -46,3 +46,5 @@ class TableSyncPoller(
         }
     }
 }
+
+private val ACTIVITY_CHECK_INTERVAL = 1.seconds

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -89,6 +90,7 @@ fun TablesScreen(
     val coroutineScope = rememberCoroutineScope()
 
     val playersByTournamentId by store.tournamentPlayers.collectAsState()
+    LoadMissingSession()
     val tournaments by store.tournaments.collectAsState()
     val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
     val roundsByTournamentId by store.tournamentRounds.collectAsState()
@@ -185,7 +187,7 @@ fun TablesScreen(
 
     AppScaffold(
         title = stringResource(Res.string.tables),
-        subtitle = tournamentId,
+        subtitle = tournaments.firstOrNull { it.id == tournamentId }?.name?.ifBlank { null },
         isLoading = isLoading,
         showBackgroundLogo = isLoading && tables.isEmpty(),
         onBack = { navController.popBackStack() },

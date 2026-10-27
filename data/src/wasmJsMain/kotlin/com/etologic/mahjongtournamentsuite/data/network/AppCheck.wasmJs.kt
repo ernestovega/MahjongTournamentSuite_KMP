@@ -10,5 +10,6 @@ import kotlin.js.Promise
 @JsFun("() => (typeof window.mtsAppCheckToken === 'function') ? window.mtsAppCheckToken() : Promise.resolve(null)")
 private external fun readAppCheckToken(): Promise<JsAny?>
 
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 internal actual suspend fun currentAppCheckToken(): String? =
     (readAppCheckToken().await<JsAny?>() as? JsString)?.toString()

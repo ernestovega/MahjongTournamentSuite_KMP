@@ -58,6 +58,14 @@
     <string name="error_session_expired">Your session has expired. Sign in again.</string>
     <string name="error_timeout">The request took too long. Try again.</string>
     <string name="error_generic">Something went wrong. Please try again.</string>
+    <string name="import_file_not_excel">The file is not a valid Excel file. Choose an .xlsx or .csv file.</string>
+    <string name="import_file_too_large">The Excel file is too large. Choose a smaller file.</string>
+    <string name="import_file_no_sheet">The Excel file has no sheet.</string>
+    <string name="import_file_sheet_too_large">The Excel sheet is too large. Choose a file with fewer rows and columns.</string>
+    <string name="import_file_empty">The file is empty.</string>
+    <string name="import_file_missing_columns">The first line of the file needs these columns: %1$s.</string>
+    <string name="import_file_no_rows">The file has no player rows.</string>
+    <string name="import_file_too_many_rows">The file has more than %1$s rows. Split it into smaller files.</string>
     <string name="image_error_read">The photo could not be read.</string>
     <string name="image_error_open">The selected photo could not be opened.</string>
     <string name="image_error_decode">The selected logo could not be decoded.</string>
