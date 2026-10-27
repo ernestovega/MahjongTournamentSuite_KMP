@@ -470,9 +470,12 @@ private fun UsersTable(
     }
 }
 
+/** The order of the role filter buttons. */
+internal val RoleFilterOrder = listOf(GlobalUserRole.ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
+
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun UserFilters(
+internal fun UserFilters(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
     selectedRoles: Set<GlobalUserRole>,
@@ -508,7 +511,7 @@ private fun UserFilters(
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            GlobalUserRole.entries.forEach { role ->
+            RoleFilterOrder.forEach { role ->
                 FilterChip(
                     selected = role in selectedRoles,
                     onClick = { onRoleToggle(role) },
