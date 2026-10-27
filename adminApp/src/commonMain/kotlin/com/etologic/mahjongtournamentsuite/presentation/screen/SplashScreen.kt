@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
@@ -36,9 +37,11 @@ fun SplashScreen(
 
     LaunchedEffect(authPresenter) {
         var hasSession = authPresenter.hasActiveSession()
-        if (hasSession && !authPresenter.isManager()) {
-            authPresenter.signOut()
-            hasSession = false
+        if (hasSession) {
+            // Only a loaded profile of an admin or an editor passes. When the profile cannot load, the session stays.
+            val manager = authPresenter.isManager()
+            if (manager is AppResult.Success && !manager.value) authPresenter.signOut()
+            hasSession = manager is AppResult.Success && manager.value
         }
         val nextRoute = if (hasSession) TournamentsRoute else SignInRoute
 

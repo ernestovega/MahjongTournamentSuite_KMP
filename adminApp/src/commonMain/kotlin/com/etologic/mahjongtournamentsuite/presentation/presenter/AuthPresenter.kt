@@ -26,12 +26,14 @@ class AuthPresenter(
     }
 
     /**
-     * False when the signed-in account has neither the admin role nor the editor role. This app is only for them.
-     * When the profile cannot load, this is true: the server refuses every management request of other accounts.
+     * Success(true) when the signed-in account is an admin or an editor. This app is only for them.
+     * Failure when the profile cannot load. The caller must not let the account pass then.
      */
-    suspend fun isManager(): Boolean {
-        val profile = (authRepository.getMe() as? AppResult.Success)?.value ?: return true
-        return profile.roles.any { it == GlobalUserRole.ADMIN || it == GlobalUserRole.EDITOR }
+    suspend fun isManager(): AppResult<Boolean> = when (val result = authRepository.getMe()) {
+        is AppResult.Success -> AppResult.Success(
+            result.value.roles.any { it == GlobalUserRole.ADMIN || it == GlobalUserRole.EDITOR },
+        )
+        is AppResult.Failure -> result
     }
 
     suspend fun requestPasswordReset(email: String): AppResult<Unit> {
