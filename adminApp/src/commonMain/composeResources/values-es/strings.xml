@@ -109,9 +109,7 @@
     <string name="tournament_assignments">Torneos asignados</string>
     <string name="no_tournaments_are_available">No hay torneos disponibles.</string>
     <string name="change">Cambiar</string>
-    <string name="admins_have_access_to_every_tournament">Los administradores tienen acceso a todos los torneos.</string>
-    <string name="a_player_sees_the_tournaments_where">Un jugador ve los torneos en los que juega este ID EMA.</string>
-    <string name="firebase_will_send_a_password_reset">Firebase enviará un correo para restablecer la contraseña después de crear la cuenta.</string>
+    <string name="save_and_send_password_reset">Guardar y enviar correo para restablecer la contraseña</string>
     <string name="send_password_reset_email">Enviar correo para restablecer la contraseña</string>
     <string name="global_role">Rol global</string>
     <string name="assign_tournaments">Asignar torneos</string>
@@ -320,13 +318,11 @@
     <string name="password_reset_sent_to">Se envió un correo para restablecer la contraseña a %1$s.</string>
     <string name="user_status_disabled">Desactivada</string>
     <string name="user_status_active">Activa</string>
-    <string name="password_reset_info">El enlace del correo para restablecer la contraseña funciona durante aproximadamente 1 hora. Firebase fija este tiempo y la app no puede cambiarlo. Si el enlace caduca, la persona puede pedir un correo nuevo con la opción de contraseña olvidada en la pantalla de inicio de sesión. También puedes enviar un correo nuevo desde este cuadro.</string>
     <string name="add_account">Añadir cuenta</string>
     <string name="edit_account">Editar cuenta</string>
     <string name="ema_owner_other">Otro usuario ya usa este ID EMA: %1$s.</string>
     <string name="ema_player_n">Jugador EMA: %1$s</string>
     <string name="ema_needed_for_player">Una cuenta de jugador necesita un ID EMA.</string>
-    <string name="ema_links_account">Vincula esta cuenta a un jugador EMA y a todos sus torneos.</string>
     <string name="no_tournaments_assigned">Ningún torneo asignado</string>
     <string name="tournaments_selected">%1$d torneos seleccionados</string>
     <string name="plus_more">+%1$d más</string>

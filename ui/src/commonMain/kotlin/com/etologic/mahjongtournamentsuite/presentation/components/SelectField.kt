@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.disabled
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
@@ -178,6 +179,8 @@ fun <K> SelectField(
     /** The icon in front of the text. The default is the icon of the selected option. */
     leadingIcon: (@Composable () -> Unit)? = null,
     textStyle: TextStyle = MaterialTheme.typography.bodyLarge,
+    /** The font of the text of the field and of the options. The default is the font of the theme. */
+    fontFamily: FontFamily? = null,
     searchable: Boolean = options.size > SELECT_SEARCH_THRESHOLD,
     maxShown: Int = Int.MAX_VALUE,
     /** The item that the menu shows first when nothing is selected. */
@@ -209,7 +212,7 @@ fun <K> SelectField(
             supportingText = supportingText,
             compact = compact,
             icon = icon,
-            textStyle = textStyle,
+            textStyle = if (fontFamily == null) textStyle else textStyle.copy(fontFamily = fontFamily),
             colors = colors,
             fieldModifier = fieldModifier,
             onOpen = state::open,
@@ -222,7 +225,7 @@ fun <K> SelectField(
             },
             scrollState = scroll,
         ) {
-            SelectMenuItems(options, selected, scroll, searchable, maxShown) {
+            SelectMenuItems(options, selected, scroll, searchable, maxShown, fontFamily) {
                 state.choose()
                 onSelect(it)
                 onClosed()
@@ -262,7 +265,7 @@ fun <K> SelectMenu(
 ) {
     val scroll = rememberMenuScrollState(state.expanded, options.indexOfFirst { it.key == selected }.takeIf { it >= 0 }, defaultIndex)
     DropdownMenu(expanded = state.expanded, onDismissRequest = state::close, modifier = modifier, scrollState = scroll) {
-        SelectMenuItems(options, selected, scroll, searchable, maxShown) {
+        SelectMenuItems(options, selected, scroll, searchable, maxShown, fontFamily = null) {
             state.choose()
             onSelect(it)
         }
@@ -382,6 +385,7 @@ private fun <K> ColumnScope.SelectMenuItems(
     scroll: ScrollState,
     searchable: Boolean,
     maxShown: Int,
+    fontFamily: FontFamily?,
     onSelect: (K) -> Unit,
 ) {
     // The menu content leaves the composition when the menu closes, so the query starts empty at each opening.
@@ -400,7 +404,7 @@ private fun <K> ColumnScope.SelectMenuItems(
     }
     shown.forEach { option ->
         DropdownMenuItem(
-            text = { Text(option.label) },
+            text = { if (fontFamily == null) Text(option.label) else Text(option.label, fontFamily = fontFamily) },
             leadingIcon = option.leadingIcon,
             trailingIcon = option.trailingIcon,
             enabled = option.enabled,

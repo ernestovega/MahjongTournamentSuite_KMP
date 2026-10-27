@@ -42,6 +42,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
+import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_FINISH_HAND_MINUTES
+import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
@@ -364,7 +366,13 @@ fun EditTournamentDialog(
                                     durationText = settingsMatchDurationText,
                                     onDurationChange = { settingsMatchDurationText = it },
                                     finishHand = settingsFinishHand,
-                                    onFinishHandChange = { settingsFinishHand = it },
+                                    onFinishHandChange = { finishHand ->
+                                        settingsFinishHand = finishHand
+                                        // A duration that the user did not change moves to the default of this end mode.
+                                        if (finishHand && settingsMatchDurationText == DEFAULT_MATCH_DURATION_MINUTES.toString()) {
+                                            settingsMatchDurationText = DEFAULT_MATCH_DURATION_FINISH_HAND_MINUTES.toString()
+                                        }
+                                    },
                                     extraMinutesText = settingsMatchExtraText,
                                     onExtraMinutesChange = { settingsMatchExtraText = it },
                                     enabled = !isLoading,

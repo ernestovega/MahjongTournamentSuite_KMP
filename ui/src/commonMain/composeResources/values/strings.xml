@@ -30,7 +30,6 @@
     <string name="action_logout">Logout</string>
     <string name="profile_title">Profile</string>
     <string name="profile_alias">Alias</string>
-    <string name="profile_alias_hint">The name that the apps show for your account.</string>
     <string name="profile_ema_number">EMA number</string>
     <string name="profile_ema_number_info">Only an admin can change the EMA number. The admin does this in the user management screen.</string>
     <string name="photo_error_type">Choose a JPEG, PNG, WebP, or GIF image.</string>

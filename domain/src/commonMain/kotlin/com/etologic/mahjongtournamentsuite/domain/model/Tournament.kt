@@ -71,6 +71,9 @@ data class CreateTournamentRequest(
 
 const val DEFAULT_MATCH_DURATION_MINUTES = 120
 
+/** The default duration of a match that finishes the hand in play. The extra time comes after it. */
+const val DEFAULT_MATCH_DURATION_FINISH_HAND_MINUTES = 115
+
 const val DEFAULT_MATCH_EXTRA_MINUTES = 15
 
 /** What happens to a table when the time of the match is over. */

@@ -45,7 +45,6 @@ import mahjongtournamentsuite.ui.generated.resources.action_logout
 import mahjongtournamentsuite.ui.generated.resources.action_save
 import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
-import mahjongtournamentsuite.ui.generated.resources.profile_alias_hint
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number_info
 import mahjongtournamentsuite.ui.generated.resources.profile_title
@@ -136,7 +135,7 @@ fun ProfileDialog(
                         error = null
                     },
                     label = { Text(stringResource(Res.string.profile_alias)) },
-                    supportingText = { Text(error?.asString() ?: stringResource(Res.string.profile_alias_hint)) },
+                    supportingText = error?.let { message -> { Text(message.asString()) } },
                     isError = error != null,
                     singleLine = true,
                     enabled = !saving,

@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontFamily
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import kotlin.time.Clock
@@ -27,13 +28,13 @@ private fun offsetSeconds(zoneId: String): Int = runCatching {
     TimeZone.of(zoneId).offsetAt(Clock.System.now()).totalSeconds
 }.getOrDefault(0)
 
-/** The text of a menu item, for example "UTC +1 Europe/Madrid" or "UTC +5:30 Asia/Kolkata". */
+/** The text of a menu item, for example "UTC +1 · Europe/Madrid" or "UTC +5:30 · Asia/Kolkata". */
 internal fun timeZoneLabel(zoneId: String): String {
     val seconds = offsetSeconds(zoneId)
     val sign = if (seconds < 0) "-" else "+"
     val minutes = kotlin.math.abs(seconds) / 60
     val minutePart = if (minutes % 60 == 0) "" else ":" + (minutes % 60).toString().padStart(2, '0')
-    return "UTC $sign${minutes / 60}$minutePart $zoneId"
+    return "UTC $sign${minutes / 60}$minutePart · $zoneId"
 }
 
 /** The IANA zone names that a tournament can use, from the lowest UTC offset to the highest, then by name. */
@@ -80,6 +81,7 @@ fun TimeZoneDropdown(
         selected = value.takeIf { it.isNotBlank() },
         onSelect = onValueChange,
         modifier = modifier,
+        fontFamily = FontFamily.Default,
         enabled = enabled,
         required = required,
         isError = isError,

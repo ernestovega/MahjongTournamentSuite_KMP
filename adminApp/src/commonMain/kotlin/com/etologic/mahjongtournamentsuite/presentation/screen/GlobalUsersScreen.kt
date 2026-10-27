@@ -71,7 +71,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
@@ -86,13 +85,11 @@ import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.a_player_sees_the_tournaments_where
 import mahjongtournamentsuite.adminapp.generated.resources.account_created_reset_sent
 import mahjongtournamentsuite.adminapp.generated.resources.accounts
 import mahjongtournamentsuite.adminapp.generated.resources.accounts_count_summary
 import mahjongtournamentsuite.adminapp.generated.resources.action_did_not_run
 import mahjongtournamentsuite.adminapp.generated.resources.add_account
-import mahjongtournamentsuite.adminapp.generated.resources.admins_have_access_to_every_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.alias
 import mahjongtournamentsuite.adminapp.generated.resources.all_tournaments
 import mahjongtournamentsuite.adminapp.generated.resources.another_account_already_uses_this_email
@@ -111,13 +108,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.disable_account_actio
 import mahjongtournamentsuite.adminapp.generated.resources.disable_user_message
 import mahjongtournamentsuite.adminapp.generated.resources.edit_account
 import mahjongtournamentsuite.adminapp.generated.resources.ema_id
-import mahjongtournamentsuite.adminapp.generated.resources.ema_links_account
 import mahjongtournamentsuite.adminapp.generated.resources.ema_needed_for_player
 import mahjongtournamentsuite.adminapp.generated.resources.ema_owner_other
 import mahjongtournamentsuite.adminapp.generated.resources.ema_player_n
 import mahjongtournamentsuite.adminapp.generated.resources.email
 import mahjongtournamentsuite.adminapp.generated.resources.enable_account
-import mahjongtournamentsuite.adminapp.generated.resources.firebase_will_send_a_password_reset
 import mahjongtournamentsuite.adminapp.generated.resources.global_role
 import mahjongtournamentsuite.adminapp.generated.resources.loading
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_are_available
@@ -125,7 +120,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_assign
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_match
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_selected
 import mahjongtournamentsuite.adminapp.generated.resources.optional_display_name
-import mahjongtournamentsuite.adminapp.generated.resources.password_reset_info
 import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_to
 import mahjongtournamentsuite.adminapp.generated.resources.player
 import mahjongtournamentsuite.adminapp.generated.resources.plus_more
@@ -134,6 +128,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.role_admin
 import mahjongtournamentsuite.adminapp.generated.resources.role_editor
 import mahjongtournamentsuite.adminapp.generated.resources.role_player
 import mahjongtournamentsuite.adminapp.generated.resources.save
+import mahjongtournamentsuite.adminapp.generated.resources.save_and_send_password_reset
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.search_by_name
 import mahjongtournamentsuite.adminapp.generated.resources.search_ema_players
@@ -647,14 +642,13 @@ private fun ManageUserDialog(
                         onValueChange = { emaId = it.filter(Char::isLetterOrDigit) },
                         label = { Text(stringResource(Res.string.ema_id)) },
                         supportingText = {
-                            Text(
-                                when {
-                                    emaOwner != null -> stringResource(Res.string.ema_owner_other, emaOwner.email)
-                                    emaPlayer != null -> stringResource(Res.string.ema_player_n, emaPlayer.displayName)
-                                    isPlayerRole && emaId.isBlank() -> stringResource(Res.string.ema_needed_for_player)
-                                    else -> stringResource(Res.string.ema_links_account)
-                                },
-                            )
+                            val message = when {
+                                emaOwner != null -> stringResource(Res.string.ema_owner_other, emaOwner.email)
+                                emaPlayer != null -> stringResource(Res.string.ema_player_n, emaPlayer.displayName)
+                                isPlayerRole && emaId.isBlank() -> stringResource(Res.string.ema_needed_for_player)
+                                else -> null
+                            }
+                            if (message != null) Text(message)
                         },
                         isError = emaOwner != null,
                         trailingIcon = {
@@ -735,23 +729,13 @@ private fun ManageUserDialog(
                             )
                         }
                     }
-                } else if (role == GlobalUserRole.ADMIN) {
-                    Text(stringResource(Res.string.admins_have_access_to_every_tournament))
-                } else {
-                    Text(stringResource(Res.string.a_player_sees_the_tournaments_where))
                 }
-                if (original == null) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(stringResource(Res.string.firebase_will_send_a_password_reset), modifier = Modifier.weight(1f))
-                        InfoTooltipIcon(stringResource(Res.string.password_reset_info))
-                    }
-                } else if (!isSelf) {
+                if (original != null && !isSelf) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         FocusedTextButton(
                             onClick = { onResetPassword(original.email) },
                             enabled = !saving,
                         ) { Text(stringResource(Res.string.send_password_reset_email)) }
-                        InfoTooltipIcon(stringResource(Res.string.password_reset_info))
                     }
                     if (canDisable) {
                         FocusedTextButton(
@@ -763,18 +747,20 @@ private fun ManageUserDialog(
             }
         },
         confirmButton = {
-            FocusedButton(
-                onClick = {
-                    val selectedAssignments = if (role != GlobalUserRole.EDITOR) emptyList() else {
-                        tournaments.filter { assignments[it.id] == true }
-                            .map { TournamentAssignment(it.id, it.name) }
-                    }
-                    onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
-                },
-                enabled = valid && !saving,
-                focusRequester = saveFocus,
-                buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-            ) { Text(stringResource(Res.string.save)) }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                FocusedButton(
+                    onClick = {
+                        val selectedAssignments = if (role != GlobalUserRole.EDITOR) emptyList() else {
+                            tournaments.filter { assignments[it.id] == true }
+                                .map { TournamentAssignment(it.id, it.name) }
+                        }
+                        onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
+                    },
+                    enabled = valid && !saving,
+                    focusRequester = saveFocus,
+                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
+            }
         },
         dismissButton = {
             FocusedTextButton(

@@ -109,9 +109,7 @@
     <string name="tournament_assignments">Tournament assignments</string>
     <string name="no_tournaments_are_available">No tournaments are available.</string>
     <string name="change">Change</string>
-    <string name="admins_have_access_to_every_tournament">Admins have access to every tournament.</string>
-    <string name="a_player_sees_the_tournaments_where">A player sees the tournaments where this EMA ID plays.</string>
-    <string name="firebase_will_send_a_password_reset">Firebase will send a password-reset email after creation.</string>
+    <string name="save_and_send_password_reset">Save and Send password-reset email</string>
     <string name="send_password_reset_email">Send password-reset email</string>
     <string name="global_role">Global role</string>
     <string name="assign_tournaments">Assign tournaments</string>
@@ -320,13 +318,11 @@
     <string name="password_reset_sent_to">Password-reset email sent to %1$s.</string>
     <string name="user_status_disabled">Disabled</string>
     <string name="user_status_active">Active</string>
-    <string name="password_reset_info">The link in the password-reset email works for about 1 hour. Firebase sets this time and the app cannot change it. If the link expires, the person can ask for a new email with the forgot-password option on the sign-in screen. You can also send a new email from this dialog.</string>
     <string name="add_account">Add account</string>
     <string name="edit_account">Edit account</string>
     <string name="ema_owner_other">Another User already uses this EMA ID: %1$s.</string>
     <string name="ema_player_n">EMA Player: %1$s</string>
     <string name="ema_needed_for_player">A player account needs an EMA ID.</string>
-    <string name="ema_links_account">Links this account to an EMA Player and to all their tournaments.</string>
     <string name="no_tournaments_assigned">No tournaments assigned</string>
     <string name="tournaments_selected">%1$d tournaments selected</string>
     <string name="plus_more">+%1$d more</string>

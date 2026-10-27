@@ -11,15 +11,15 @@ class TimeZoneDropdownTest {
         assertTrue("Europe/Madrid" in SelectableTimeZoneIds)
         assertTrue("UTC" in SelectableTimeZoneIds)
         assertFalse(SelectableTimeZoneIds.any { it.startsWith("Etc/") })
-        assertTrue(timeZoneLabel("UTC").startsWith("UTC +0 "))
+        assertTrue(timeZoneLabel("UTC").startsWith("UTC +0 · "))
     }
 
     @Test
     fun theLabelStartsWithTheUtcOffsetOfTheZone() {
-        assertEquals("UTC +0 UTC", timeZoneLabel("UTC"))
-        assertEquals("UTC +5:30 Asia/Kolkata", timeZoneLabel("Asia/Kolkata"))
-        assertTrue(timeZoneLabel("Europe/Madrid") in setOf("UTC +1 Europe/Madrid", "UTC +2 Europe/Madrid"))
-        assertTrue(timeZoneLabel("America/Argentina/Buenos_Aires").startsWith("UTC -3 "))
+        assertEquals("UTC +0 · UTC", timeZoneLabel("UTC"))
+        assertEquals("UTC +5:30 · Asia/Kolkata", timeZoneLabel("Asia/Kolkata"))
+        assertTrue(timeZoneLabel("Europe/Madrid") in setOf("UTC +1 · Europe/Madrid", "UTC +2 · Europe/Madrid"))
+        assertTrue(timeZoneLabel("America/Argentina/Buenos_Aires").startsWith("UTC -3 · "))
     }
 
     @Test

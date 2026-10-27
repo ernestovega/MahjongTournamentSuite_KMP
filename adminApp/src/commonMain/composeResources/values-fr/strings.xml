@@ -109,9 +109,7 @@
     <string name="tournament_assignments">Tournois attribués</string>
     <string name="no_tournaments_are_available">Aucun tournoi n'est disponible.</string>
     <string name="change">Changer</string>
-    <string name="admins_have_access_to_every_tournament">Les administrateurs ont accès à tous les tournois.</string>
-    <string name="a_player_sees_the_tournaments_where">Un joueur voit les tournois où cet ID EMA joue.</string>
-    <string name="firebase_will_send_a_password_reset">Firebase enverra un e-mail de réinitialisation du mot de passe après la création.</string>
+    <string name="save_and_send_password_reset">Enregistrer et envoyer l'e-mail de réinitialisation du mot de passe</string>
     <string name="send_password_reset_email">Envoyer l'e-mail de réinitialisation du mot de passe</string>
     <string name="global_role">Rôle global</string>
     <string name="assign_tournaments">Attribuer des tournois</string>
@@ -320,13 +318,11 @@
     <string name="password_reset_sent_to">E-mail de réinitialisation du mot de passe envoyé à %1$s.</string>
     <string name="user_status_disabled">Désactivé</string>
     <string name="user_status_active">Actif</string>
-    <string name="password_reset_info">Le lien de l'e-mail de réinitialisation du mot de passe fonctionne pendant environ 1 heure. Firebase fixe ce délai et l'app ne peut pas le changer. Si le lien expire, la personne peut demander un nouvel e-mail avec l'option mot de passe oublié de l'écran de connexion. Vous pouvez aussi envoyer un nouvel e-mail depuis cette fenêtre.</string>
     <string name="add_account">Ajouter un compte</string>
     <string name="edit_account">Modifier le compte</string>
     <string name="ema_owner_other">Un autre utilisateur utilise déjà cet ID EMA : %1$s.</string>
     <string name="ema_player_n">Joueur EMA : %1$s</string>
     <string name="ema_needed_for_player">Un compte de joueur a besoin d'un ID EMA.</string>
-    <string name="ema_links_account">Lie ce compte à un joueur EMA et à tous ses tournois.</string>
     <string name="no_tournaments_assigned">Aucun tournoi attribué</string>
     <string name="tournaments_selected">%1$d tournois sélectionnés</string>
     <string name="plus_more">+%1$d de plus</string>
