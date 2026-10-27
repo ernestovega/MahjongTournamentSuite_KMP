@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,7 +13,6 @@ import androidx.compose.material.icons.filled.People
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

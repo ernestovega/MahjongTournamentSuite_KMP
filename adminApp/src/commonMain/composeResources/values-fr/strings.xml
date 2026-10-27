@@ -74,7 +74,6 @@
     <string name="arrange_the_cards_for_printing_on">Disposer les cartes pour une impression recto verso.</string>
     <string name="create_pdf">Créer le PDF</string>
     <string name="generate_id_card_preview">Générer l'aperçu des cartes d'identité</string>
-    <string name="no_matching_countries">Aucun pays correspondant</string>
     <string name="unsaved_changes">Modifications non enregistrées</string>
     <string name="you_have_unsaved_changes_save_them">Vous avez des modifications non enregistrées. Les enregistrer avant de continuer ?</string>
     <string name="discard">Abandonner</string>

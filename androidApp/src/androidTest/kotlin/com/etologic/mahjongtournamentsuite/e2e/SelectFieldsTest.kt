@@ -11,7 +11,7 @@ import org.junit.Test
  * A tap on the field shows all options and keeps the keyboard closed. The search field of the menu filters the options.
  */
 @OptIn(ExperimentalTestApi::class)
-class SearchableDropdownsTest : AdminE2eTest() {
+class SelectFieldsTest : AdminE2eTest() {
     private fun openForm() {
         start(E2eAccounts.ADMIN, ready = "New tournament")
         c.clickButton("New tournament")

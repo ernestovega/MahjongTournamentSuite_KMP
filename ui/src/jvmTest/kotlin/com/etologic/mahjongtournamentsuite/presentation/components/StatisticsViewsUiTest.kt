@@ -10,7 +10,6 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onAllNodesWithText
@@ -21,7 +20,6 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
@@ -35,6 +33,7 @@ import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 
 @OptIn(ExperimentalTestApi::class)
 class StatisticsViewsUiTest {

@@ -74,7 +74,6 @@
     <string name="arrange_the_cards_for_printing_on">Disponi i cartellini per la stampa su entrambi i lati del foglio.</string>
     <string name="create_pdf">Crea PDF</string>
     <string name="generate_id_card_preview">Genera l'anteprima dei cartellini</string>
-    <string name="no_matching_countries">Nessun paese corrispondente</string>
     <string name="unsaved_changes">Modifiche non salvate</string>
     <string name="you_have_unsaved_changes_save_them">Hai modifiche non salvate. Salvarle prima di continuare?</string>
     <string name="discard">Scarta</string>

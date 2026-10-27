@@ -9,7 +9,7 @@ import org.junit.Test
 
 /** The search field of the ranking: a field that shows all names, and a search field in the menu that filters them. */
 @OptIn(ExperimentalTestApi::class)
-class PlayerSearchDropdownTest : PlayerE2eTest() {
+class PlayerSelectFieldTest : PlayerE2eTest() {
     private fun openRanking() {
         start(E2eAccounts.PLAYER, ready = "My tournaments")
         c.clickButton("Test - Live ongoing tournament")

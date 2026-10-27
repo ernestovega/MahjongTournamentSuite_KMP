@@ -3,104 +3,122 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertTextContains
+import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
-import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
-import androidx.compose.ui.test.assertIsEnabled
 import kotlin.test.Test
-import androidx.compose.ui.test.ComposeUiTest
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.test.assertFailsWith
 
-/** The time zone field only picks a zone from its menu. The user cannot type in it. */
+/** The time zone field only picks a zone from its menu. The search field of the menu finds a zone. */
 @OptIn(ExperimentalTestApi::class)
 class TimeZoneDropdownUiTest {
-    private fun ComposeUiTest.anyDisplayed(text: String): Boolean =
-        onAllNodesWithText(text).fetchSemanticsNodes().indices.any { onAllNodesWithText(text)[it].isDisplayed() }
+    private fun ComposeUiTest.count(text: String) = onAllNodesWithText(text).fetchSemanticsNodes().size
+    private fun ComposeUiTest.shown(text: String) = onAllNodesWithText(text).fetchSemanticsNodes().indices.any { onAllNodesWithText(text)[it].isDisplayed() }
+    private fun ComposeUiTest.item(text: String) = onNode(hasText(text) and !hasSetTextAction() and !hasTestTag(FIELD))
+    private fun ComposeUiTest.openField(probe: String, times: Int = 1) {
+        onNodeWithTag(FIELD).performClick()
+        waitUntil(timeoutMillis = 5_000) { count(probe) >= times }
+        waitForIdle()
+    }
 
     @Test
-    fun tappingTheFieldShowsTheZonesAndPickingOneSetsTheValue() = runComposeUiTest {
+    fun pickingAZoneFromTheSearchSetsTheValue() = runComposeUiTest {
         var zone by mutableStateOf("Europe/Madrid")
-        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }) }
-
-        onNodeWithText(timeZoneLabel("Europe/Madrid")).assertExists()
-        onNodeWithText(timeZoneLabel("Europe/Madrid")).performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(timeZoneLabel("Europe/Paris")).fetchSemanticsNodes().isNotEmpty() }
-        onNodeWithText(timeZoneLabel("Europe/Paris")).performScrollTo().performClick()
-
+        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }, modifier = Modifier.testTag(FIELD)) }
+        assertEquals(1, count(timeZoneLabel("Europe/Madrid")))
+        openField(timeZoneLabel("Europe/Madrid"), times = 2)
+        onNodeWithTag(SELECT_SEARCH_TAG).performTextInput("Europe/Paris")
+        waitForIdle()
+        item(timeZoneLabel("Europe/Paris")).performClick()
+        waitForIdle()
         assertEquals("Europe/Paris", zone)
-        onNodeWithText(timeZoneLabel("Europe/Paris")).assertExists()
+        assertEquals(1, count(timeZoneLabel("Europe/Paris")))
+    }
+
+    @Test
+    fun theMenuOpensAgainAfterEachSelection() = runComposeUiTest {
+        var zone by mutableStateOf("Europe/Madrid")
+        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }, modifier = Modifier.testTag(FIELD)) }
+        for (target in listOf("Europe/Paris", "Asia/Kolkata", "America/New_York", "Europe/Madrid")) {
+            openField(timeZoneLabel(zone), times = 2)
+            onNodeWithTag(SELECT_SEARCH_TAG).performTextInput(target)
+            waitForIdle()
+            item(timeZoneLabel(target)).performClick()
+            waitForIdle()
+            assertEquals(target, zone)
+        }
+    }
+
+    @Test
+    fun theMenuListsEveryZoneAndHasASearchField() = runComposeUiTest {
+        setContent { TimeZoneDropdown(value = "Europe/Madrid", onValueChange = {}, modifier = Modifier.testTag(FIELD)) }
+        openField(timeZoneLabel("Europe/Madrid"), times = 2)
+        assertEquals(1, onAllNodes(hasTestTag(SELECT_SEARCH_TAG)).fetchSemanticsNodes().size)
+        assertEquals(1, count(timeZoneLabel(SelectableTimeZoneIds.last())))
+        assertEquals(1, count(timeZoneLabel(SelectableTimeZoneIds.first())))
     }
 
     @Test
     fun theFieldRefusesTypedText() = runComposeUiTest {
         var zone by mutableStateOf("Europe/Madrid")
-        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }) }
-
-        runCatching { onNodeWithText(timeZoneLabel("Europe/Madrid")).performTextInput("xyz") }
+        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }, modifier = Modifier.testTag(FIELD)) }
+        runCatching { onNodeWithTag(FIELD).performTextInput("xyz") }
         assertEquals("Europe/Madrid", zone)
-        onNodeWithText(timeZoneLabel("Europe/Madrid")).assertExists()
+        assertEquals(0, count("xyz"))
     }
 
     @Test
     fun aZoneThatIsNotInTheListStaysVisibleAndSelectable() = runComposeUiTest {
-        var zone by mutableStateOf("Nowhere/Land")
-        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }) }
-
-        onNodeWithText(timeZoneLabel("Nowhere/Land")).assertExists()
-        onNodeWithText(timeZoneLabel("Nowhere/Land")).performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(timeZoneLabel("Nowhere/Land")).fetchSemanticsNodes().size > 1 }
+        setContent { TimeZoneDropdown(value = "Nowhere/Land", onValueChange = {}, modifier = Modifier.testTag(FIELD)) }
+        assertEquals(1, count(timeZoneLabel("Nowhere/Land")))
+        openField(timeZoneLabel("Nowhere/Land"), times = 2)
     }
 
     @Test
     fun theMenuOpensScrolledToTheSelectedZone() = runComposeUiTest {
         val last = SelectableTimeZoneIds.last()
-        val first = SelectableTimeZoneIds.first()
-        setContent { TimeZoneDropdown(value = last, onValueChange = {}) }
-
-        onNodeWithText(timeZoneLabel(last)).performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(timeZoneLabel(last)).fetchSemanticsNodes().size > 1 }
-        waitUntil(timeoutMillis = 5_000) { anyDisplayed(timeZoneLabel(last)) }
-        assertFalse(anyDisplayed(timeZoneLabel(first)))
+        setContent { TimeZoneDropdown(value = last, onValueChange = {}, modifier = Modifier.testTag(FIELD)) }
+        openField(timeZoneLabel(last), times = 2)
+        waitUntil(timeoutMillis = 5_000) { shown(timeZoneLabel(last)) }
+        assertFalse(shown(timeZoneLabel(SelectableTimeZoneIds.first())))
     }
 
     @Test
     fun withoutASelectedZoneTheMenuOpensAtUtcPlusZero() = runComposeUiTest {
-        setContent { TimeZoneDropdown(value = "", onValueChange = {}) }
-
-        onAllNodesWithText("Time zone")[0].performClick()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(timeZoneLabel("UTC")).fetchSemanticsNodes().isNotEmpty() }
-        waitUntil(timeoutMillis = 5_000) { anyDisplayed(timeZoneLabel("UTC")) }
-        assertFalse(anyDisplayed(timeZoneLabel(SelectableTimeZoneIds.first())))
+        setContent { TimeZoneDropdown(value = "", onValueChange = {}, modifier = Modifier.testTag(FIELD)) }
+        openField(timeZoneLabel("UTC"))
+        waitUntil(timeoutMillis = 5_000) { shown(timeZoneLabel("UTC")) }
+        assertFalse(shown(timeZoneLabel(SelectableTimeZoneIds.first())))
     }
-}
 
-@OptIn(ExperimentalTestApi::class)
-class TimeZoneDropdownReopenUiTest {
     @Test
-    fun theMenuOpensAgainAfterEachSelection() = runComposeUiTest {
-        var zone by mutableStateOf("Europe/Madrid")
-        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }) }
-        val targets = listOf("Europe/Paris", "Asia/Kolkata", "America/New_York", "Europe/Madrid")
-        for (target in targets) {
-            onNodeWithText(timeZoneLabel(zone)).performClick()
-            waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(timeZoneLabel(target)).fetchSemanticsNodes().isNotEmpty() && onAllNodesWithText(timeZoneLabel(zone)).fetchSemanticsNodes().size > 1 }
-            // The search field covers the top of the menu, so the test finds the zone with the search.
-            onNodeWithTag("select-search").performTextInput(target)
-            waitForIdle()
-            onNodeWithText(timeZoneLabel(target)).performClick()
-            waitForIdle()
-            assertEquals(target, zone)
-        }
+    fun aDisabledFieldDoesNotOpen() = runComposeUiTest {
+        setContent { TimeZoneDropdown(value = "Europe/Madrid", onValueChange = {}, enabled = false, modifier = Modifier.testTag(FIELD)) }
+        onNodeWithTag(FIELD).performClick()
+        waitForIdle()
+        assertEquals(1, count(timeZoneLabel("Europe/Madrid")))
+    }
+
+    @Test
+    fun theRequiredStarAndTheErrorMessageShow() = runComposeUiTest {
+        setContent { TimeZoneDropdown(value = "", onValueChange = {}, required = true, isError = true, supportingText = "Choose a zone", modifier = Modifier.testTag(FIELD)) }
+        assertEquals(1, count("Choose a zone"))
+        assertTrue(onAllNodes(hasText("*", substring = true)).fetchSemanticsNodes().isNotEmpty())
+    }
+
+    private companion object {
+        const val FIELD = "field"
     }
 }

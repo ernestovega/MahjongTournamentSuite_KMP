@@ -74,7 +74,6 @@
     <string name="arrange_the_cards_for_printing_on">Arrange the cards for printing on both sides of the paper.</string>
     <string name="create_pdf">Create PDF</string>
     <string name="generate_id_card_preview">Generate ID card preview</string>
-    <string name="no_matching_countries">No matching countries</string>
     <string name="unsaved_changes">Unsaved changes</string>
     <string name="you_have_unsaved_changes_save_them">You have unsaved changes. Save them before continuing?</string>
     <string name="discard">Discard</string>

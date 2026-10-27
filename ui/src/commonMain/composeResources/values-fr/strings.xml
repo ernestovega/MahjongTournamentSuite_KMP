@@ -304,7 +304,6 @@
     <string name="language_label">Langue</string>
     <string name="error_tournament_not_found">Le tournoi est introuvable. Il a peut-être été supprimé.</string>
     <string name="action_back">Retour</string>
-    <string name="dropdown_show_all">Afficher toutes les options</string>
     <string name="dropdown_search">Rechercher</string>
     <string name="logo_of">Logo de %1$s</string>
     <string name="app_version_label">App %1$s</string>

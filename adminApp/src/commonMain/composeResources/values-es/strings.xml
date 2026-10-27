@@ -74,7 +74,6 @@
     <string name="arrange_the_cards_for_printing_on">Ordenar las tarjetas para imprimir por las dos caras del papel.</string>
     <string name="create_pdf">Crear PDF</string>
     <string name="generate_id_card_preview">Generar la vista previa de la tarjeta</string>
-    <string name="no_matching_countries">No hay países que coincidan</string>
     <string name="unsaved_changes">Cambios sin guardar</string>
     <string name="you_have_unsaved_changes_save_them">Tienes cambios sin guardar. ¿Quieres guardarlos antes de continuar?</string>
     <string name="discard">Descartar</string>

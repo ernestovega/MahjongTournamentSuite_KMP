@@ -304,7 +304,6 @@
     <string name="language_label">Lingua</string>
     <string name="error_tournament_not_found">Il torneo non è stato trovato. Potrebbe essere stato eliminato.</string>
     <string name="action_back">Indietro</string>
-    <string name="dropdown_show_all">Mostra tutte le opzioni</string>
     <string name="dropdown_search">Cerca</string>
     <string name="logo_of">Logo di %1$s</string>
     <string name="app_version_label">App %1$s</string>

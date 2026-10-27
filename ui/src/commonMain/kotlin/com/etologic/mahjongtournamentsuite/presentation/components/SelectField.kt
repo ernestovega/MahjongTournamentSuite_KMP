@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
@@ -30,11 +31,13 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -73,6 +76,9 @@ class SelectOption<out K>(
 /** The menus show a search field as first item when they have more options than this. */
 const val SELECT_SEARCH_THRESHOLD = 8
 
+/** The test tag of the search field of a menu. */
+const val SELECT_SEARCH_TAG = "select-search"
+
 /** The most options that a menu of a very long list composes at once. The search narrows the list. */
 const val SELECT_MAX_SHOWN = 50
 
@@ -103,7 +109,7 @@ class SelectMenuState {
         expanded = false
     }
 
-    fun toggleTo(value: Boolean) = if (value) open() else close()
+    fun request(open: Boolean) = if (open) open() else close()
 
     private companion object {
         val REOPEN_GUARD = 400.milliseconds
@@ -113,8 +119,26 @@ class SelectMenuState {
 @Composable
 fun rememberSelectMenuState(): SelectMenuState = remember { SelectMenuState() }
 
-/** The height of the search row. It is the height of an outlined text field. */
-private val SEARCH_ROW_HEIGHT = 56.dp
+/** The height of one item of a Material 3 dropdown menu. */
+private val MENU_ITEM_HEIGHT = 48.dp
+
+/**
+ * The scroll state of a select menu. Each time the menu opens, it scrolls so that the item at [selectedIndex] is the first one
+ * below the search row. Without a selected item, it scrolls to [defaultIndex]. The default is the start of the menu.
+ */
+@Composable
+internal fun rememberMenuScrollState(expanded: Boolean, selectedIndex: Int?, defaultIndex: Int = 0): ScrollState {
+    val scroll = rememberScrollState()
+    val density = LocalDensity.current
+    val currentSelected by rememberUpdatedState(selectedIndex)
+    val currentDefault by rememberUpdatedState(defaultIndex)
+    LaunchedEffect(expanded) {
+        if (!expanded) return@LaunchedEffect
+        val target = currentSelected?.takeIf { it >= 0 } ?: currentDefault
+        scroll.scrollTo(with(density) { (MENU_ITEM_HEIGHT * target).roundToPx() })
+    }
+    return scroll
+}
 
 /**
  * A field that shows the chosen option and opens a menu with all options.
@@ -159,7 +183,7 @@ fun <K> SelectField(
     val canOpen = enabled || openWhenDisabled
     val expanded = state.expanded && canOpen
     val scroll = rememberMenuScrollState(expanded, options.indexOfFirst { it.key == selected }.takeIf { it >= 0 }, defaultIndex)
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (canOpen) state.toggleTo(it) }, modifier = modifier) {
+    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (canOpen) state.request(it) }, modifier = modifier) {
         val anchor = Modifier
             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = canOpen)
             .fillMaxWidth()
@@ -337,8 +361,7 @@ private fun SelectSearchRow(query: String, onQueryChange: (String) -> Unit, scro
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             modifier = Modifier
                 .fillMaxWidth()
-                .heightIn(min = SEARCH_ROW_HEIGHT - 8.dp)
-                .testTag("select-search")
+                .testTag(SELECT_SEARCH_TAG)
                 .onPreviewKeyEvent { event ->
                     if (event.type == KeyEventType.KeyDown && (event.key == Key.Enter || event.key == Key.NumPadEnter)) {
                         onEnter()
