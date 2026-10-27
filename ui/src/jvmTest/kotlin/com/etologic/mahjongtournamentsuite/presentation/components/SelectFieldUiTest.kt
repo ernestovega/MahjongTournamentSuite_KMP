@@ -1,6 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
@@ -611,6 +614,81 @@ class SelectFieldUiTest {
             }
         }
         assertEquals(onNodeWithTag("empty").getBoundsInRoot().height, onNodeWithTag("filled").getBoundsInRoot().height)
+    }
+
+    @Test
+    fun aSelectFieldLinesUpWithATextFieldInTheSameRow() = runComposeUiTest {
+        setContent {
+            Row(Modifier.size(800.dp, 200.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField("", {}, label = { Text("Search") }, modifier = Modifier.weight(1f).testTag("text"))
+                SelectField("Tournament", options(letters), null, {}, Modifier.weight(1f).testTag("select"))
+            }
+        }
+        val text = onNodeWithTag("text").getBoundsInRoot()
+        val select = onNodeWithTag("select").getBoundsInRoot()
+        assertEquals(text.top, select.top)
+        assertEquals(text.bottom, select.bottom)
+        assertEquals(text.width, select.width)
+    }
+
+    @Test
+    fun theVisibleBorderOfASelectFieldStartsBelowTheLabelSpaceLikeATextField() = runComposeUiTest {
+        setContent {
+            Row(Modifier.size(800.dp, 200.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField("", {}, label = { Text("Search") }, modifier = Modifier.weight(1f).testTag("text"))
+                SelectField("Tournament", options(letters), null, {}, Modifier.weight(1f).testTag("select"))
+            }
+        }
+        val field = onNode(isDropdown).getBoundsInRoot()
+        val select = onNodeWithTag("select").getBoundsInRoot()
+        assertEquals(select.top + 8.dp, field.top)
+        assertEquals(56.dp, field.height)
+    }
+
+    @Test
+    fun aSelectFieldAndATextFieldInARowOfCenteredItemsHaveTheSameCenter() = runComposeUiTest {
+        setContent {
+            Row(Modifier.size(800.dp, 200.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                OutlinedTextField("", {}, label = { Text("Date") }, modifier = Modifier.weight(1f).testTag("text"))
+                SelectField("Tournament", options(letters), null, {}, Modifier.weight(1f).testTag("select"))
+            }
+        }
+        assertEquals(onNodeWithTag("text").getBoundsInRoot().top, onNodeWithTag("select").getBoundsInRoot().top)
+    }
+
+    @Test
+    fun aSelectFieldWithoutALabelHasTheSizeOfATextFieldWithoutALabel() = runComposeUiTest {
+        setContent {
+            Row(Modifier.size(800.dp, 200.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField("x", {}, modifier = Modifier.weight(1f).testTag("text"))
+                SelectField(null, options(letters), "a", {}, Modifier.weight(1f).testTag("select"))
+            }
+        }
+        assertEquals(onNodeWithTag("text").getBoundsInRoot().height, onNodeWithTag("select").getBoundsInRoot().height)
+        assertEquals(onNodeWithTag("text").getBoundsInRoot().top, onNodeWithTag("select").getBoundsInRoot().top)
+    }
+
+    @Test
+    fun aSelectFieldWithASupportingTextHasTheSizeOfATextFieldWithOne() = runComposeUiTest {
+        setContent {
+            Row(Modifier.size(800.dp, 200.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField("x", {}, label = { Text("A") }, supportingText = { Text("Help") }, modifier = Modifier.weight(1f).testTag("text"))
+                SelectField("B", options(letters), "a", {}, Modifier.weight(1f).testTag("select"), supportingText = "Help")
+            }
+        }
+        assertEquals(onNodeWithTag("text").getBoundsInRoot().height, onNodeWithTag("select").getBoundsInRoot().height)
+    }
+
+    @Test
+    fun aSelectFieldAndATextFieldWithTheSameStyleHaveTheSameHeightInATableCell() = runComposeUiTest {
+        setContent {
+            val style = androidx.compose.material3.MaterialTheme.typography.bodyMedium
+            Row(Modifier.size(800.dp, 200.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField("x", {}, textStyle = style, modifier = Modifier.weight(1f).testTag("text"))
+                SelectField(null, options(letters), "a", {}, Modifier.weight(1f).testTag("select"), textStyle = style)
+            }
+        }
+        assertEquals(onNodeWithTag("text").getBoundsInRoot().height, onNodeWithTag("select").getBoundsInRoot().height)
     }
 
     private companion object {

@@ -299,6 +299,8 @@ private fun ExposedDropdownMenuBoxScope.SelectFieldBox(
             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = canOpen)
             .fillMaxWidth()
             .then(fieldModifier)
+            // An outlined text field with a label leaves this space above its border for the label. The same space keeps the two in line in a row.
+            .padding(top = if (compact || label == null) 0.dp else OUTLINED_FIELD_TOP_PADDING)
             .defaultMinSize(
                 minWidth = if (compact) 0.dp else OutlinedTextFieldDefaults.MinWidth,
                 minHeight = if (compact) COMPACT_FIELD_HEIGHT else OutlinedTextFieldDefaults.MinHeight,
@@ -357,6 +359,7 @@ private fun ExposedDropdownMenuBoxScope.SelectFieldBox(
 }
 
 private val COMPACT_FIELD_HEIGHT = 40.dp
+private val OUTLINED_FIELD_TOP_PADDING = 8.dp
 private const val DISABLED_ALPHA = 0.38f
 
 @Composable
