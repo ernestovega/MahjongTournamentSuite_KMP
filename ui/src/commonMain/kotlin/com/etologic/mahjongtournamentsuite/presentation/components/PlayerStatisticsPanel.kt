@@ -44,9 +44,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -391,8 +389,8 @@ internal fun BigNumber(label: String, value: String, modifier: Modifier = Modifi
 @OptIn(ExperimentalMaterial3Api::class)
 private fun HoverTip(text: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-        tooltip = { AppPlainTooltip(Modifier.widthIn(max = 340.dp)) { Text(text) } },
+        positionProvider = rememberAppTooltipPositionProvider(),
+        tooltip = { AppPlainTooltip { Text(text) } },
         state = rememberTooltipState(),
         modifier = modifier,
     ) { content() }
@@ -903,8 +901,8 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
             }
             skills.forEach { skill ->
                 TooltipBox(
-                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                    tooltip = { AppPlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(skill.explanation) } },
+                    positionProvider = rememberAppTooltipPositionProvider(),
+                    tooltip = { AppPlainTooltip { Text(skill.explanation) } },
                     state = rememberTooltipState(),
                 ) {
                     Column(

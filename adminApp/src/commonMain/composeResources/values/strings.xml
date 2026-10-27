@@ -140,9 +140,9 @@
     <string name="use_the_field_above_to_search">Use the field above to search a player by name or EMA number and see his/her skills.</string>
     <string name="players_results">Players &amp; results</string>
     <string name="manual_scores">Manual scores</string>
-    <string name="when_on_enter_each_player_s">When on, enter each player's final score yourself. The hands do not count (except for counting chicken and best hands).</string>
+    <string name="when_on_enter_each_player_s">When on, enter each player's final score yourself.\nThe hands do not count (except for counting chicken and best hands).</string>
     <string name="hands">Hands</string>
-    <string name="when_on_mark_the_table_complete">When on, mark the table complete and lock the hands. Every hand must be valid before you can turn it on.</string>
+    <string name="when_on_mark_the_table_complete">When on, mark the table complete and lock the hands.\nEvery hand must be valid before you can turn it on.</string>
     <string name="no_hands_yet">No hands yet</string>
     <string name="the_hands_of_this_table_show">The hands of this table show here when they are saved.</string>
     <string name="at_least_one_hand_is_invalid">At least one hand is invalid. It cannot be marked as done or completed.</string>
@@ -153,7 +153,7 @@
     <string name="penalty">Penalty</string>
     <string name="done">Done</string>
     <string name="total_scores">Total Scores</string>
-    <string name="calculated_from_hands_trophies_show_the">Calculated from hands. Trophies show the best hands of the tournament that this table holds.</string>
+    <string name="calculated_from_hands_trophies_show_the">Calculated from hands.\nTrophies show the best hands of the tournament that this table holds.</string>
     <string name="show_how_the_chicken_and_best">Show how the chicken and best hand values are calculated</string>
     <string name="save_and_next_table">Save and next table</string>
     <string name="preview_tournament">Preview Tournament</string>
@@ -497,7 +497,7 @@
     <string name="create_intro">Creates rounds, tables, and players automatically.</string>
     <string name="create_required_note">Fields marked with * are required.</string>
     <string name="create_players_placeholder">Multiple of 4, minimum %1$d</string>
-    <string name="create_teams_info">Group players into teams of four. Team members will not play together.</string>
+    <string name="create_teams_info">Group players into teams of four.\nTeam members will not play together.</string>
     <string name="create_heavy_info">Use more CPU to calculate the schedule faster.</string>
     <string name="logo_from">Logo from %1$s</string>
     <string name="logo_none">No logo</string>
@@ -556,7 +556,7 @@
     <string name="select_all_shown">Select all shown (%1$d)</string>
     <string name="no_email_saved">No email saved</string>
     <string name="sent_at">sent %1$s</string>
-    <string name="bulk_info">Invite or remind: creates the account of players that have an email and no account, and sends them an email to choose a password. It reminds players with a password that they are registered. Resend: sends the same email again. Revoke: removes the account link of this tournament. The account stays.</string>
+    <string name="bulk_info">• Invite or remind: creates the account of players that have an email and no account, and sends them an email to choose a password. It reminds players with a password that they are registered.\n• Resend: sends the same email again.\n• Revoke: removes the account link of this tournament. The account stays.</string>
     <string name="invite_or_remind_count">Invite or remind (%1$d)</string>
     <string name="resend_count">Resend (%1$d)</string>
     <string name="revoke_count">Revoke (%1$d)</string>
@@ -601,13 +601,13 @@
     <string name="edit_seats">Edit seats</string>
     <string name="table_points">Table points</string>
     <string name="score_sum_zero">The four scores add up to 0.</string>
-    <string name="score_sum_manual">The four scores add up to %1$s rather than 0. The manual scores are accepted as they are.</string>
+    <string name="score_sum_manual">The four scores add up to %1$s rather than 0.\nThe manual scores are accepted as they are.</string>
     <string name="score_target_zero">0</string>
     <string name="score_target_penalties">%1$s, the sum of the penalties</string>
     <string name="score_sum_mismatch">The four scores add up to %1$s rather than %2$s.</string>
     <string name="score_has_penalty">%1$s has a penalty of %2$s</string>
-    <string name="score_matches_penalty">The scores add up to %1$s rather than 0, but this matches the penalties. %2$s has a penalty of %3$s.</string>
-    <string name="score_matches_penalties">The scores add up to %1$s rather than 0, but this matches the penalties. %2$s.</string>
+    <string name="score_matches_penalty">The scores add up to %1$s rather than 0, but this matches the penalties.\n%2$s has a penalty of %3$s.</string>
+    <string name="score_matches_penalties">The scores add up to %1$s rather than 0, but this matches the penalties.\n%2$s.</string>
     <string name="top_bar_id_cards">ID cards</string>
     <string name="top_bar_id_list">ID list</string>
     <string name="top_bar_invitations">Invitations</string>

@@ -291,27 +291,6 @@ fun TableSeatsView(
     }
 }
 
-/**
- * Puts the tooltip above the icon with its right edge on the right edge of the icon, and keeps it inside the window.
- * The icon is at the right edge of the screen, so a centered tooltip would leave the screen.
- */
-private object EndAlignedTooltipPosition : PopupPositionProvider {
-    private const val MARGIN = 16
-
-    override fun calculatePosition(
-        anchorBounds: IntRect,
-        windowSize: IntSize,
-        layoutDirection: LayoutDirection,
-        popupContentSize: IntSize,
-    ): IntOffset {
-        val maxX = (windowSize.width - popupContentSize.width - MARGIN).coerceAtLeast(MARGIN)
-        val x = (anchorBounds.right - popupContentSize.width).coerceIn(MARGIN, maxX)
-        val above = anchorBounds.top - popupContentSize.height - MARGIN
-        val y = if (above >= 0) above else anchorBounds.bottom + MARGIN
-        return IntOffset(x, y)
-    }
-}
-
 /** An info icon. A tap, a long press or a hover shows what the differences mean. */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -320,8 +299,8 @@ private fun DiffsInfo() {
     val scope = rememberCoroutineScope()
     val diffsInfoDescription = stringResource(Res.string.diffs_about)
     TooltipBox(
-        positionProvider = remember { EndAlignedTooltipPosition },
-        tooltip = { AppPlainTooltip(Modifier.widthIn(max = 280.dp)) { Text(stringResource(Res.string.diffs_explanation)) } },
+        positionProvider = rememberAppTooltipPositionProvider(alignEnd = true),
+        tooltip = { AppPlainTooltip { Text(stringResource(Res.string.diffs_explanation)) } },
         state = state,
     ) {
         IconButton(

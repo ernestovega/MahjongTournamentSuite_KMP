@@ -8,9 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
@@ -88,7 +86,7 @@ fun HintTooltip(
     val tooltipState = rememberTooltipState()
     val coroutineScope = rememberCoroutineScope()
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        positionProvider = rememberAppTooltipPositionProvider(),
         tooltip = { AppPlainTooltip { Text(text) } },
         state = tooltipState,
         modifier = modifier,

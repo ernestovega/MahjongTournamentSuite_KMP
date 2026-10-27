@@ -40,9 +40,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -74,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -631,9 +630,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 countryName,
                             )
                             TooltipBox(
-                                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(
-                                    TooltipAnchorPosition.Above,
-                                ),
+                                positionProvider = rememberAppTooltipPositionProvider(),
                                 tooltip = {
                                     AppPlainTooltip {
                                         Text(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount))
@@ -961,7 +958,7 @@ private fun validatePlayerPhoto(image: SelectedImage): UiText? = when {
 private fun CountryFlagWithTooltip(code: String, countries: List<Country>) {
     val country = countries.firstOrNull { it.code == code }
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        positionProvider = rememberAppTooltipPositionProvider(),
         tooltip = { AppPlainTooltip { Text(country?.name ?: code) } },
         state = rememberTooltipState(),
     ) {
