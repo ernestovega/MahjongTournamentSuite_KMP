@@ -35,7 +35,11 @@ fun SplashScreen(
     val authPresenter = koinInject<AuthPresenter>()
 
     LaunchedEffect(authPresenter) {
-        val hasSession = authPresenter.hasActiveSession()
+        var hasSession = authPresenter.hasActiveSession()
+        if (hasSession && !authPresenter.isManager()) {
+            authPresenter.signOut()
+            hasSession = false
+        }
         val nextRoute = if (hasSession) TournamentsRoute else SignInRoute
 
         navController.navigate(nextRoute) {

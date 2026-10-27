@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.presenter
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
@@ -22,6 +23,15 @@ class AuthPresenter(
             email = email,
             password = password,
         )
+    }
+
+    /**
+     * False when the signed-in account has neither the admin role nor the editor role. This app is only for them.
+     * When the profile cannot load, this is true: the server refuses every management request of other accounts.
+     */
+    suspend fun isManager(): Boolean {
+        val profile = (authRepository.getMe() as? AppResult.Success)?.value ?: return true
+        return profile.roles.any { it == GlobalUserRole.ADMIN || it == GlobalUserRole.EDITOR }
     }
 
     suspend fun requestPasswordReset(email: String): AppResult<Unit> {

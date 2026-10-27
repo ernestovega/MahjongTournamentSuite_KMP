@@ -21,6 +21,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.sign_in_enter_email
+import mahjongtournamentsuite.adminapp.generated.resources.sign_in_no_manager_access
 import mahjongtournamentsuite.adminapp.generated.resources.sign_in_reset_sent
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -44,7 +45,7 @@ fun SignInScreen(
             email = savedEmail
             password = savedPassword
         }
-        if (authPresenter.hasActiveSession()) {
+        if (authPresenter.hasActiveSession() && authPresenter.isManager()) {
             navController.navigate(TournamentsRoute) {
                 popUpTo(SignInRoute) { inclusive = true }
             }
@@ -60,11 +61,14 @@ fun SignInScreen(
 
         coroutineScope.launch {
             when (val result = authPresenter.signIn(email = email.trim(), password = password)) {
-                is AppResult.Success -> {
+                is AppResult.Success -> if (authPresenter.isManager()) {
                     saveBrowserCredentials(email.trim(), password)
                     navController.navigate(TournamentsRoute) {
                         popUpTo(SignInRoute) { inclusive = true }
                     }
+                } else {
+                    authPresenter.signOut()
+                    errorMessage = UiText.of(Res.string.sign_in_no_manager_access)
                 }
                 is AppResult.Failure -> {
                     errorMessage = result.error.toUiText()
