@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
@@ -29,7 +30,21 @@ import androidx.compose.ui.test.performTextClearance
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.pressKey
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.click
+import androidx.compose.ui.test.doubleClick
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.requestFocus
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.height
+import androidx.compose.ui.unit.width
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -504,7 +519,102 @@ class SelectFieldUiTest {
         assertEquals(1, count("Beta"))
     }
 
+    @Test
+    fun theFieldIsNotATextField() = runComposeUiTest {
+        setContent { SelectField("Letter", options(letters), "a", {}, Modifier.testTag(FIELD)) }
+        onNodeWithTag(FIELD).assert(SemanticsMatcher.keyNotDefined(SemanticsActions.SetText))
+        onNodeWithTag(FIELD).assert(SemanticsMatcher.keyNotDefined(SemanticsActions.SetSelection))
+        onNodeWithTag(FIELD).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.EditableText))
+        assertEquals(0, onAllNodes(hasSetTextAction()).fetchSemanticsNodes().size)
+    }
+
+    @Test
+    fun theFieldIsADropdownListForAccessibility() = runComposeUiTest {
+        setContent { SelectField("Letter", options(letters), "a", {}, Modifier.testTag(FIELD)) }
+        onAllNodes(isDropdown).assertCountEquals(1)
+    }
+
+    @Test
+    fun aTapOnTheTextOfTheValueOpensTheMenu() = runComposeUiTest {
+        setContent { SelectField("Letter", options(letters), "a", {}, Modifier.testTag(FIELD)) }
+        onAllNodesWithText("Alpha")[0].performClick()
+        waitUntil(timeoutMillis = 5_000) { count("Beta") > 0 }
+    }
+
+    @Test
+    fun aTapOnTheLeftEdgeAndOnTheRightEdgeOfTheFieldOpensTheMenu() = runComposeUiTest {
+        setContent { SelectField("Letter", options(letters), "a", {}, Modifier.testTag(FIELD)) }
+        onNodeWithTag(FIELD).performTouchInput { click(Offset(8f, centerY)) }
+        waitUntil(timeoutMillis = 5_000) { count("Beta") > 0 }
+        onNodeWithTag(FIELD).performTouchInput { click(Offset(width - 8f, centerY)) }
+        waitForIdle()
+        Thread.sleep(450)
+        onNodeWithTag(FIELD).performTouchInput { click(Offset(width - 8f, centerY)) }
+        waitUntil(timeoutMillis = 5_000) { count("Beta") > 0 }
+    }
+
+    @Test
+    fun aLongPressOrADoubleClickOnTheValueSelectsNothing() = runComposeUiTest {
+        setContent { SelectField("Letter", options(letters), "a", {}, Modifier.testTag(FIELD)) }
+        onNodeWithTag(FIELD).performMouseInput { doubleClick() }
+        waitForIdle()
+        onNodeWithTag(FIELD).assert(SemanticsMatcher.keyNotDefined(SemanticsProperties.TextSelectionRange))
+    }
+
+    @Test
+    fun enterAndSpaceOnTheFocusedFieldOpenTheMenu() = runComposeUiTest {
+        for (key in listOf(Key.Enter, Key.Spacebar)) {
+            setContent { SelectField("Letter", options(letters), null, {}, Modifier.testTag(FIELD)) }
+            onNode(isDropdown).requestFocus()
+            onNode(isDropdown).performKeyInput { pressKey(key) }
+            waitUntil(timeoutMillis = 5_000) { count("Beta") > 0 }
+            onNodeWithTag(FIELD).performClick()
+            waitForIdle()
+            Thread.sleep(450)
+        }
+    }
+
+    @Test
+    fun enterOnADisabledFieldDoesNotOpenTheMenu() = runComposeUiTest {
+        setContent { SelectField("Letter", options(letters), null, {}, Modifier.testTag(FIELD), enabled = false) }
+        onNode(isDropdown).performKeyInput { pressKey(Key.Enter) }
+        waitForIdle()
+        assertEquals(0, count("Beta"))
+    }
+
+    @Test
+    fun aTapGivesTheFieldTheFocus() = runComposeUiTest {
+        setContent { SelectField("Letter", options(letters), "a", {}, Modifier.testTag(FIELD)) }
+        onNodeWithTag(FIELD).performClick()
+        waitUntil(timeoutMillis = 5_000) { count("Beta") > 0 }
+        onNodeWithTag(FIELD).performKeyInput { pressKey(Key.Escape) }
+        waitForIdle()
+    }
+
+    @Test
+    fun theFieldFillsTheWidthThatItGets() = runComposeUiTest {
+        setContent {
+            Box(Modifier.size(400.dp, 200.dp)) {
+                SelectField("Letter", options(letters), "a", {}, Modifier.fillMaxWidth().testTag(FIELD))
+            }
+        }
+        val width = onNode(isDropdown).getBoundsInRoot().width
+        assertEquals(400.dp, width)
+    }
+
+    @Test
+    fun anEmptyFieldAndAFilledFieldHaveTheSameSize() = runComposeUiTest {
+        setContent {
+            Column(Modifier.size(400.dp, 400.dp)) {
+                SelectField("Empty", options(letters), null, {}, Modifier.fillMaxWidth().testTag("empty"))
+                SelectField("Filled", options(letters), "a", {}, Modifier.fillMaxWidth().testTag("filled"))
+            }
+        }
+        assertEquals(onNodeWithTag("empty").getBoundsInRoot().height, onNodeWithTag("filled").getBoundsInRoot().height)
+    }
+
     private companion object {
+        val isDropdown = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
         const val FIELD = "field"
     }
 }

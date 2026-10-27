@@ -1,17 +1,18 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.DropdownMenu
@@ -19,12 +20,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuBoxScope
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
@@ -35,17 +38,27 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onKeyEvent
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
@@ -142,7 +155,8 @@ internal fun rememberMenuScrollState(expanded: Boolean, selectedIndex: Int?, def
 
 /**
  * A field that shows the chosen option and opens a menu with all options.
- * The user cannot type in the field. A menu with many options has a search field as sticky first item.
+ * The field is not a text field. The user cannot type in it, put a cursor in it or select its text.
+ * A menu with many options has a search field as sticky first item.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -157,7 +171,7 @@ fun <K> SelectField(
     supportingText: String? = null,
     /** Shows a red star after the label. */
     required: Boolean = false,
-    /** A field of 40 dp height with a magnifier icon as placeholder. The standard outlined field is 56 dp high. */
+    /** A field of 40 dp height with a magnifier icon in place of the label. The standard field is 56 dp high. */
     compact: Boolean = false,
     /** The text of the field. The default is the label of the selected option. */
     valueText: String? = null,
@@ -168,9 +182,9 @@ fun <K> SelectField(
     maxShown: Int = Int.MAX_VALUE,
     /** The item that the menu shows first when nothing is selected. */
     defaultIndex: Int = 0,
-    /** Gives the field and the menu more modifiers, for example key handling and the focus. */
+    /** Gives the field more modifiers, for example the focus and the key handling. */
     fieldModifier: Modifier = Modifier,
-    colors: androidx.compose.material3.TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
     /** True lets the user open the menu of a disabled field to read it. The caller disables the options. */
     openWhenDisabled: Boolean = false,
     /** Runs when the menu closes, with or without a choice. */
@@ -184,56 +198,22 @@ fun <K> SelectField(
     val expanded = state.expanded && canOpen
     val scroll = rememberMenuScrollState(expanded, options.indexOfFirst { it.key == selected }.takeIf { it >= 0 }, defaultIndex)
     ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (canOpen) state.request(it) }, modifier = modifier) {
-        val anchor = Modifier
-            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = canOpen)
-            .fillMaxWidth()
-            .then(fieldModifier)
-        if (compact) {
-            val interactionSource = remember { MutableInteractionSource() }
-            BasicTextField(
-                value = text,
-                onValueChange = {},
-                readOnly = true,
-                enabled = enabled,
-                singleLine = true,
-                textStyle = textStyle.copy(color = MaterialTheme.colorScheme.onSurface),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                interactionSource = interactionSource,
-                modifier = anchor.heightIn(min = 40.dp),
-                decorationBox = { innerTextField ->
-                    OutlinedTextFieldDefaults.DecorationBox(
-                        value = text,
-                        innerTextField = innerTextField,
-                        enabled = enabled,
-                        singleLine = true,
-                        visualTransformation = VisualTransformation.None,
-                        interactionSource = interactionSource,
-                        isError = isError,
-                        placeholder = { Icon(Icons.Default.Search, contentDescription = label.orEmpty(), modifier = Modifier.size(20.dp)) },
-                        leadingIcon = icon,
-                        trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                        colors = colors,
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                    )
-                },
-            )
-        } else {
-            OutlinedTextField(
-                value = text,
-                onValueChange = {},
-                readOnly = true,
-                enabled = enabled,
-                singleLine = true,
-                isError = isError,
-                textStyle = textStyle,
-                label = label?.let { { SelectLabel(it, required) } },
-                leadingIcon = icon,
-                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-                supportingText = supportingText?.let { message -> { Text(message) } },
-                colors = colors,
-                modifier = anchor,
-            )
-        }
+        SelectFieldBox(
+            label = label,
+            required = required,
+            text = text,
+            expanded = expanded,
+            enabled = enabled,
+            canOpen = canOpen,
+            isError = isError,
+            supportingText = supportingText,
+            compact = compact,
+            icon = icon,
+            textStyle = textStyle,
+            colors = colors,
+            fieldModifier = fieldModifier,
+            onOpen = state::open,
+        )
         ExposedDropdownMenu(
             expanded = expanded,
             onDismissRequest = {
@@ -288,6 +268,96 @@ fun <K> SelectMenu(
         }
     }
 }
+
+/**
+ * The box of a [SelectField]: a border, a label, the text, an icon in front and an arrow at the end.
+ * It draws the same decoration as an outlined text field, but it holds no text field, so a tap always opens the menu.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ExposedDropdownMenuBoxScope.SelectFieldBox(
+    label: String?,
+    required: Boolean,
+    text: String,
+    expanded: Boolean,
+    enabled: Boolean,
+    canOpen: Boolean,
+    isError: Boolean,
+    supportingText: String?,
+    compact: Boolean,
+    icon: (@Composable () -> Unit)?,
+    textStyle: TextStyle,
+    colors: TextFieldColors,
+    fieldModifier: Modifier,
+    onOpen: () -> Unit,
+) {
+    val interactionSource = remember { MutableInteractionSource() }
+    val focus = remember { FocusRequester() }
+    val textColor = MaterialTheme.colorScheme.onSurface.let { if (enabled) it else it.copy(alpha = DISABLED_ALPHA) }
+    Box(
+        modifier = Modifier
+            .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = canOpen)
+            .fillMaxWidth()
+            .then(fieldModifier)
+            .defaultMinSize(
+                minWidth = if (compact) 0.dp else OutlinedTextFieldDefaults.MinWidth,
+                minHeight = if (compact) COMPACT_FIELD_HEIGHT else OutlinedTextFieldDefaults.MinHeight,
+            )
+            .semantics(mergeDescendants = true) {
+                role = Role.DropdownList
+                if (!enabled) disabled()
+            }
+            .pointerHoverIcon(if (canOpen) PointerIcon.Hand else PointerIcon.Default)
+            // A tap gives the field the focus, as a tap in a text field does. The tap itself goes on to the menu anchor.
+            .pointerInput(canOpen) {
+                if (!canOpen) return@pointerInput
+                awaitPointerEventScope {
+                    while (true) {
+                        awaitPointerEvent(PointerEventPass.Initial).let { event ->
+                            if (event.changes.any { it.pressed && !it.previousPressed }) focus.requestFocus()
+                        }
+                    }
+                }
+            }
+            .onKeyEvent { event ->
+                val opens = event.key == Key.Enter || event.key == Key.NumPadEnter || event.key == Key.Spacebar
+                if (canOpen && opens && event.type == KeyEventType.KeyDown) {
+                    onOpen()
+                    true
+                } else {
+                    false
+                }
+            }
+            .focusRequester(focus)
+            .focusable(enabled = canOpen, interactionSource = interactionSource),
+    ) {
+        OutlinedTextFieldDefaults.DecorationBox(
+            value = text,
+            innerTextField = {
+                Text(text = text, style = textStyle, color = textColor, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.fillMaxWidth())
+            },
+            enabled = enabled,
+            singleLine = true,
+            visualTransformation = androidx.compose.ui.text.input.VisualTransformation.None,
+            interactionSource = interactionSource,
+            isError = isError,
+            label = if (compact || label == null) null else ({ SelectLabel(label, required) }),
+            placeholder = if (compact) ({ Icon(Icons.Default.Search, contentDescription = label.orEmpty(), modifier = Modifier.size(20.dp)) }) else null,
+            leadingIcon = icon,
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            supportingText = supportingText?.let { message -> { Text(message) } },
+            colors = colors,
+            contentPadding = if (compact) {
+                PaddingValues(horizontal = 10.dp, vertical = 6.dp)
+            } else {
+                OutlinedTextFieldDefaults.contentPadding()
+            },
+        )
+    }
+}
+
+private val COMPACT_FIELD_HEIGHT = 40.dp
+private const val DISABLED_ALPHA = 0.38f
 
 @Composable
 private fun SelectLabel(text: String, required: Boolean) {

@@ -233,6 +233,10 @@ fun ComposeTestRule.assertNoText(text: String, substring: Boolean = false) {
 /** The editable field that has this label. */
 fun ComposeTestRule.field(label: String): SemanticsNodeInteraction = onNode(hasSetTextAction() and hasText(label))
 
+/** A select field. It is not a text field, so it has the role of a dropdown list and no text action. */
+fun ComposeTestRule.selectField(label: String): SemanticsNodeInteraction =
+    onNode(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.DropdownList) and hasText(label))
+
 /** Base class of the admin app tests. */
 abstract class AdminE2eTest {
     protected val app = AdminAppRule()

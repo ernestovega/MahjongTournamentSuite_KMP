@@ -33,10 +33,10 @@ class SelectFieldsTest : AdminE2eTest() {
     fun timeZoneFieldOpensTheMenuWithoutKeyboardAndOnlyPicks() {
         openForm()
         c.clickButton("Venue")
-        c.field("Time zone").performScrollToNodeSafe()
+        c.selectField("Time zone").performScrollToNodeSafe()
         val others = countZones()
         pause()
-        c.field("Time zone").performClick()
+        c.selectField("Time zone").performClick()
         c.waitUntil(5_000) { countZones() > others }
         check(!keyboardShown()) { "The time zone field must not open the keyboard." }
         pause()
@@ -48,7 +48,7 @@ class SelectFieldsTest : AdminE2eTest() {
         c.clickButton("Venue")
         val spain = count("Spain")
         pause()
-        c.field("Host country").performClick()
+        c.selectField("Host country").performClick()
         c.waitUntil(5_000) { count("Spain") > spain && count("Italy") > 0 }
         pause()
         check(!keyboardShown()) { "The keyboard must stay closed after a tap on the field." }
@@ -59,7 +59,7 @@ class SelectFieldsTest : AdminE2eTest() {
         openForm()
         c.clickButton("Venue")
         val italy = count("Italy")
-        c.field("Host country").performClick()
+        c.selectField("Host country").performClick()
         c.waitUntil(5_000) { count("Italy") > italy }
         val spain = count("Spain")
         c.onNode(androidx.compose.ui.test.hasTestTag("select-search")).performClick()

@@ -41,7 +41,7 @@ class PlayerSelectFieldTest : PlayerE2eTest() {
         val anna = count("ANNA ROSSI")
         val luc = count("LUC DUBOIS")
         pause()
-        c.onNodeWithText("Search").performClick()
+        c.onNode(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.DropdownList)).performClick()
         c.waitUntil(5_000) { count("ANNA ROSSI") > anna && count("LUC DUBOIS") > luc }
         pause()
         check(!keyboardShown()) { "The keyboard must stay closed after a tap on the field." }
@@ -52,7 +52,7 @@ class PlayerSelectFieldTest : PlayerE2eTest() {
         openRanking()
         val anna = count("ANNA ROSSI")
         val luc = count("LUC DUBOIS")
-        c.onNodeWithText("Search").performClick()
+        c.onNode(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.DropdownList)).performClick()
         c.waitUntil(5_000) { count("LUC DUBOIS") > luc }
         c.onNode(hasTestTag("select-search")).performClick()
         c.onNode(hasTestTag("select-search")).performTextInputText("luc")
