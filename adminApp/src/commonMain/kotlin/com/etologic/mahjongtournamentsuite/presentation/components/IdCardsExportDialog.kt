@@ -33,9 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -94,9 +92,9 @@ private fun mmHeightToScalePercent(heightMm: Double): Double =
 private fun ProportionLinkIcon(originalWidthMm: Double, originalHeightMm: Double) {
     val ratio = (originalWidthMm / originalHeightMm * 100).roundToLong() / 100.0
     TooltipBox(
-        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+        positionProvider = rememberAppTooltipPositionProvider(),
         tooltip = {
-            AppPlainTooltip(modifier = Modifier.widthIn(max = 340.dp)) {
+            AppPlainTooltip {
                 Text(stringResource(Res.string.id_cards_proportion_info, ratio.toString(), originalWidthMm.oneDecimal(), originalHeightMm.oneDecimal()))
             }
         },

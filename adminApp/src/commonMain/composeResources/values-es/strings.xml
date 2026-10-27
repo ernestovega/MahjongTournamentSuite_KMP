@@ -142,9 +142,9 @@
     <string name="use_the_field_above_to_search">Usa el campo de arriba para buscar un jugador por nombre o número EMA y ver sus habilidades.</string>
     <string name="players_results">Jugadores y resultados</string>
     <string name="manual_scores">Puntuaciones manuales</string>
-    <string name="when_on_enter_each_player_s">Si está activado, introduce tú mismo la puntuación final de cada jugador. Las manos no cuentan (salvo para contar las manos de pollo y las mejores manos).</string>
+    <string name="when_on_enter_each_player_s">Si está activado, introduce tú mismo la puntuación final de cada jugador.\nLas manos no cuentan (salvo para contar las manos de pollo y las mejores manos).</string>
     <string name="hands">Manos</string>
-    <string name="when_on_mark_the_table_complete">Si está activado, marca la mesa como completa y bloquea las manos. Cada mano debe ser válida antes de poder activarlo.</string>
+    <string name="when_on_mark_the_table_complete">Si está activado, marca la mesa como completa y bloquea las manos.\nCada mano debe ser válida antes de poder activarlo.</string>
     <string name="no_hands_yet">Aún no hay manos</string>
     <string name="the_hands_of_this_table_show">Las manos de esta mesa aparecen aquí cuando se guardan.</string>
     <string name="at_least_one_hand_is_invalid">Al menos una mano no es válida. No se puede marcar como hecha ni como completada.</string>
@@ -155,7 +155,7 @@
     <string name="penalty">Penalización</string>
     <string name="done">Hecha</string>
     <string name="total_scores">Puntos</string>
-    <string name="calculated_from_hands_trophies_show_the">Calculado a partir de las manos. Los trofeos muestran las mejores manos del torneo que tiene esta mesa.</string>
+    <string name="calculated_from_hands_trophies_show_the">Calculado a partir de las manos.\nLos trofeos muestran las mejores manos del torneo que tiene esta mesa.</string>
     <string name="show_how_the_chicken_and_best">Mostrar cómo se calculan los valores de las manos de pollo y de las mejores manos</string>
     <string name="save_and_next_table">Guardar e ir a la mesa siguiente</string>
     <string name="preview_tournament">Vista previa del torneo</string>
@@ -320,7 +320,7 @@
     <string name="password_reset_sent_to">Se envió un correo para restablecer la contraseña a %1$s.</string>
     <string name="user_status_disabled">Desactivada</string>
     <string name="user_status_active">Activa</string>
-    <string name="password_reset_info">El enlace del correo para restablecer la contraseña funciona durante aproximadamente 1 hora. Firebase fija este tiempo y la app no puede cambiarlo. Si el enlace caduca, la persona puede pedir un correo nuevo con la opción de contraseña olvidada en la pantalla de inicio de sesión. También puedes enviar un correo nuevo desde este cuadro.</string>
+    <string name="password_reset_info">El enlace del correo para restablecer la contraseña funciona durante aproximadamente 1 hora.\nFirebase fija este tiempo y la app no puede cambiarlo.\nSi el enlace caduca, la persona puede pedir un correo nuevo con la opción de contraseña olvidada en la pantalla de inicio de sesión.\nTambién puedes enviar un correo nuevo desde este cuadro.</string>
     <string name="add_account">Añadir cuenta</string>
     <string name="edit_account">Editar cuenta</string>
     <string name="ema_owner_other">Otro usuario ya usa este ID EMA: %1$s.</string>
@@ -500,7 +500,7 @@
     <string name="create_intro">Crea las rondas, las mesas y los jugadores automáticamente.</string>
     <string name="create_required_note">Los campos marcados con * son obligatorios.</string>
     <string name="create_players_placeholder">Múltiplo de 4, mínimo %1$d</string>
-    <string name="create_teams_info">Agrupa a los jugadores en equipos de cuatro. Los miembros de un equipo no juegan juntos.</string>
+    <string name="create_teams_info">Agrupa a los jugadores en equipos de cuatro.\nLos miembros de un equipo no juegan juntos.</string>
     <string name="create_heavy_info">Usa más CPU para calcular el calendario más rápido.</string>
     <string name="logo_from">Logotipo de %1$s</string>
     <string name="logo_none">Sin logotipo</string>
@@ -559,7 +559,7 @@
     <string name="select_all_shown">Seleccionar todos los mostrados (%1$d)</string>
     <string name="no_email_saved">Sin correo electrónico guardado</string>
     <string name="sent_at">enviado el %1$s</string>
-    <string name="bulk_info">Invitar o recordar: crea la cuenta de los jugadores que tienen un correo electrónico y no tienen cuenta, y les envía un correo para elegir una contraseña. Recuerda a los jugadores con contraseña que están inscritos. Reenviar: envía el mismo correo otra vez. Revocar: quita el vínculo con la cuenta en este torneo. La cuenta se mantiene.</string>
+    <string name="bulk_info">• Invitar o recordar: crea la cuenta de los jugadores que tienen un correo electrónico y no tienen cuenta, y les envía un correo para elegir una contraseña. Recuerda a los jugadores con contraseña que están inscritos.\n• Reenviar: envía el mismo correo otra vez.\n• Revocar: quita el vínculo con la cuenta en este torneo. La cuenta se mantiene.</string>
     <string name="invite_or_remind_count">Invitar o recordar (%1$d)</string>
     <string name="resend_count">Reenviar (%1$d)</string>
     <string name="revoke_count">Revocar (%1$d)</string>
@@ -604,13 +604,13 @@
     <string name="edit_seats">Editar asientos</string>
     <string name="table_points">Puntos de mesa</string>
     <string name="score_sum_zero">Las cuatro puntuaciones suman 0.</string>
-    <string name="score_sum_manual">Las cuatro puntuaciones suman %1$s en lugar de 0. Las puntuaciones manuales se aceptan tal como están.</string>
+    <string name="score_sum_manual">Las cuatro puntuaciones suman %1$s en lugar de 0.\nLas puntuaciones manuales se aceptan tal como están.</string>
     <string name="score_target_zero">0</string>
     <string name="score_target_penalties">%1$s, la suma de las penalizaciones</string>
     <string name="score_sum_mismatch">Las cuatro puntuaciones suman %1$s en lugar de %2$s.</string>
     <string name="score_has_penalty">%1$s tiene una penalización de %2$s</string>
-    <string name="score_matches_penalty">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones. %2$s tiene una penalización de %3$s.</string>
-    <string name="score_matches_penalties">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones. %2$s.</string>
+    <string name="score_matches_penalty">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones.\n%2$s tiene una penalización de %3$s.</string>
+    <string name="score_matches_penalties">Las puntuaciones suman %1$s en lugar de 0, pero coincide con las penalizaciones.\n%2$s.</string>
     <string name="top_bar_id_cards">Tarjetas de Ids</string>
     <string name="top_bar_id_list">Lista de Ids</string>
     <string name="top_bar_invitations">Invitaciones</string>

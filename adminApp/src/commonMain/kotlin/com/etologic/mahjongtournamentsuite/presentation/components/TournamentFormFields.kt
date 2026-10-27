@@ -1066,7 +1066,7 @@ fun MatchTimeFields(
         )
         TournamentOptionSwitch(
             label = stringResource(Res.string.finish_the_hand_in_play),
-            description = stringResource(Res.string.when_the_time_is_over_the) + " " +
+            description = stringResource(Res.string.when_the_time_is_over_the) + "\n" +
                 stringResource(Res.string.when_the_time_is_off),
             checked = finishHand,
             enabled = enabled,
