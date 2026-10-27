@@ -9,10 +9,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -24,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
@@ -32,10 +39,10 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
-import mahjongtournamentsuite.ui.generated.resources.photo_add
-import mahjongtournamentsuite.ui.generated.resources.photo_change
 import mahjongtournamentsuite.ui.generated.resources.photo_crop_hint
 import mahjongtournamentsuite.ui.generated.resources.photo_crop_title
+import mahjongtournamentsuite.ui.generated.resources.photo_ema_info
+import mahjongtournamentsuite.ui.generated.resources.photo_edit
 import mahjongtournamentsuite.ui.generated.resources.photo_error_size
 import mahjongtournamentsuite.ui.generated.resources.photo_error_type
 import mahjongtournamentsuite.ui.generated.resources.photo_none
@@ -50,8 +57,10 @@ private val SUPPORTED_PHOTO_TYPES = setOf("image/jpeg", "image/png", "image/webp
  * The photo of an account with the buttons to change it. The user picks an image and crops it.
  * [onUpload] and [onRemove] save the change. They return an error text, or null when the save worked.
  * The caller shows the new photo through [photoUrl] after a save.
- * Without an own photo, [photoUrl] can be the photo of the EMA player. Then the remove button is hidden.
+ * Without an own photo, [photoUrl] can be the photo of the EMA player. Then an info icon explains it and the remove button is hidden.
+ * The remove button restores the photo of the EMA player.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PhotoEditor(
     photoUrl: String?,
@@ -84,10 +93,28 @@ fun PhotoEditor(
         verticalArrangement = Arrangement.spacedBy(8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        ProfilePhoto(photoUrl = photoUrl, name = name)
+        val usesEmaPhoto = !hasOwnPhoto && !photoUrl.isNullOrBlank()
+        Box {
+            ProfilePhoto(photoUrl = photoUrl, name = name)
+            if (usesEmaPhoto) {
+                TooltipBox(
+                    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                    tooltip = { AppPlainTooltip { Text(stringResource(Res.string.photo_ema_info)) } },
+                    state = rememberTooltipState(),
+                    modifier = Modifier.align(Alignment.BottomEnd),
+                ) {
+                    Icon(
+                        Icons.Outlined.Info,
+                        contentDescription = stringResource(Res.string.photo_ema_info),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
+            }
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             FocusedTextButton(enabled = !saving, onClick = { picker.launch() }) {
-                Text(stringResource(if (hasOwnPhoto) Res.string.photo_change else Res.string.photo_add))
+                Text(stringResource(Res.string.photo_edit))
             }
             if (hasOwnPhoto) {
                 FocusedTextButton(
@@ -134,8 +161,7 @@ fun PhotoEditor(
 
 /** Round photo of an account. Without a photo, it shows the same placeholder icon as the EMA players. */
 @Composable
-fun ProfilePhoto(photoUrl: String?, name: String) {
-    val size = 120.dp
+fun ProfilePhoto(photoUrl: String?, name: String, size: Dp = 120.dp) {
     Box(
         modifier = Modifier
             .size(size)

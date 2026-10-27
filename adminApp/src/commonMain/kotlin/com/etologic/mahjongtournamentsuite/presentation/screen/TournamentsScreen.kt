@@ -97,6 +97,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ProfilePhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
@@ -530,30 +531,36 @@ fun ProfileInfo(
     var showProfile by remember { mutableStateOf(false) }
     profile?.let { user ->
         Spacer(modifier = Modifier.width(16.dp))
-        Column(
+        Row(
             modifier = Modifier
                 .padding(end = 8.dp)
                 .clip(MaterialTheme.shapes.small)
                 .clickable(role = Role.Button, onClickLabel = stringResource(Res.string.open_profile)) { showProfile = true }
                 .padding(horizontal = 8.dp, vertical = 2.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = user.alias.trim().ifBlank { user.toUiName() },
-                style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                textAlign = TextAlign.Center,
-            )
-            roleLabel?.let {
+            ProfilePhoto(photoUrl = user.photoUrl, name = user.alias.ifBlank { user.email }, size = 36.dp)
+            Column(
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
                 Text(
-                    text = it,
-                    style = MaterialTheme.typography.labelSmall,
+                    text = user.alias.trim().ifBlank { user.toUiName() },
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     textAlign = TextAlign.Center,
                 )
+                roleLabel?.let {
+                    Text(
+                        text = it,
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
         // The presenter and the store load only when the dialog opens.

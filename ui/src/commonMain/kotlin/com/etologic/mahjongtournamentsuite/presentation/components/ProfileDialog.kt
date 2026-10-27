@@ -8,7 +8,15 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.TooltipAnchorPosition
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -39,6 +47,7 @@ import mahjongtournamentsuite.ui.generated.resources.field_email
 import mahjongtournamentsuite.ui.generated.resources.profile_alias
 import mahjongtournamentsuite.ui.generated.resources.profile_alias_hint
 import mahjongtournamentsuite.ui.generated.resources.profile_ema_number
+import mahjongtournamentsuite.ui.generated.resources.profile_ema_number_info
 import mahjongtournamentsuite.ui.generated.resources.profile_title
 import org.jetbrains.compose.resources.stringResource
 
@@ -52,6 +61,7 @@ const val MAX_ALIAS_LENGTH = 60
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
  * When [onSignOut] is set, the dialog shows a red Logout button at the left of the button row that calls it.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileDialog(
     profile: UserProfile,
@@ -145,13 +155,26 @@ fun ProfileDialog(
                         value = emaId,
                         onValueChange = {},
                         label = { Text(stringResource(Res.string.profile_ema_number)) },
+                        trailingIcon = {
+                            TooltipBox(
+                                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                                tooltip = { AppPlainTooltip { Text(stringResource(Res.string.profile_ema_number_info)) } },
+                                state = rememberTooltipState(),
+                            ) {
+                                Icon(
+                                    Icons.Outlined.Info,
+                                    contentDescription = stringResource(Res.string.profile_ema_number_info),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        },
                         readOnly = true,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                ThemeSelector()
                 LanguageSelector(Modifier.fillMaxWidth())
+                ThemeSelector()
             }
         },
         // Logout is at the left of the button row. Close and Save are at the right.
