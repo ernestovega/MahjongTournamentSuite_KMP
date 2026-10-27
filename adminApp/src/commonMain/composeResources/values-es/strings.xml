@@ -302,6 +302,7 @@
     <string name="wind_north">Norte</string>
     <string name="assign_all_before_export">Asigna un jugador EMA a cada puesto del torneo antes de exportar.</string>
     <string name="sign_in_enter_email">Escribe primero tu correo electrónico.</string>
+    <string name="sign_in_no_manager_access">Esta cuenta no es de administrador ni de editor. Solo los administradores y los editores pueden usar esta app.</string>
     <string name="sign_in_reset_sent">Si existe una cuenta, hemos enviado las instrucciones para restablecer la contraseña a tu correo electrónico.</string>
     <string name="data_results">Resultados %1$s</string>
     <string name="data_loaded">cargado %1$s</string>

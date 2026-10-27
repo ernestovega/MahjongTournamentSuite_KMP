@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { after, before, describe, it } from "node:test";
 
-import { auth } from "../firebase";
+import { auth, db } from "../firebase";
 import { requireAdmin } from "./middleware/requireAdmin";
 import { requireEditor } from "./middleware/requireEditor";
 import { requireRegisteredPlayer } from "./middleware/requireRegisteredPlayer";
@@ -332,6 +332,53 @@ describe("account rules", () => {
 
     assert.equal((await update(admin.token, promoted.uid, promoted.email, "ADMIN")).status, 200);
     assert.deepEqual((await auth.getUser(promoted.uid)).customClaims, { admin: true });
+  });
+
+  const updateWithEma = (token: string, uid: string, email: string, role: string, emaId?: string) =>
+    server.request("PUT", `/admin/users/${uid}`, { token, body: { email, alias: "x", role, emaId, tournamentAssignments: [] } });
+
+  it("an admin can make an editor a player, and the editor loses the editor role", async () => {
+    const demoted = await createAccount({ role: "EDITOR" });
+    await db.doc("emaPlayerRegistry/90000001").set({ firstName: "Ada", lastName: "Lovelace", country: "GB" });
+
+    assert.equal((await updateWithEma(admin.token, demoted.uid, demoted.email, "PLAYER", "90000001")).status, 200);
+    assert.deepEqual((await auth.getUser(demoted.uid)).customClaims, { player: true });
+  });
+
+  it("an admin can make an admin a player", async () => {
+    const demoted = await createAccount({ role: "ADMIN" });
+    await db.doc("emaPlayerRegistry/90000002").set({ firstName: "Grace", lastName: "Hopper", country: "US" });
+
+    assert.equal((await updateWithEma(admin.token, demoted.uid, demoted.email, "PLAYER", "90000002")).status, 200);
+    assert.deepEqual((await auth.getUser(demoted.uid)).customClaims, { player: true });
+  });
+
+  it("making an account a player needs an EMA id and changes nothing without one", async () => {
+    const target = await createAccount({ role: "EDITOR" });
+
+    assert.equal((await update(admin.token, target.uid, target.email, "PLAYER")).status, 400);
+    assert.deepEqual((await auth.getUser(target.uid)).customClaims, { editor: true });
+  });
+
+  it("an editor cannot make an account a player", async () => {
+    assert.equal((await updateWithEma(editor.token, editor.uid, editor.email, "PLAYER", "90000001")).status, 400);
+    assert.equal((await update(editor.token, otherEditor.uid, otherEditor.email, "PLAYER")).status, 400);
+    assert.deepEqual((await auth.getUser(otherEditor.uid)).customClaims, { editor: true });
+  });
+
+  it("an admin cannot make the own account a player", async () => {
+    const extraAdmin = await createAccount({ role: "ADMIN" });
+
+    assert.equal((await updateWithEma(extraAdmin.token, extraAdmin.uid, extraAdmin.email, "PLAYER", "90000001")).status, 400);
+  });
+
+  it("the tournament assignments of an editor end when an admin makes the editor a player", async () => {
+    const t = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const demoted = await createAccount({ role: "EDITOR", memberOf: [t] });
+    await db.doc("emaPlayerRegistry/90000003").set({ firstName: "Alan", lastName: "Turing", country: "GB" });
+
+    assert.equal((await updateWithEma(admin.token, demoted.uid, demoted.email, "PLAYER", "90000003")).status, 200);
+    assert.equal((await db.doc(`tournaments/${t}/members/${demoted.uid}`).get()).exists, false);
   });
 
   it("nobody can change their own role", async () => {

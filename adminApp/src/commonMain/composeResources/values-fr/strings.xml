@@ -302,6 +302,7 @@
     <string name="wind_north">Nord</string>
     <string name="assign_all_before_export">Attribuez un joueur EMA à chaque place du tournoi avant l'export.</string>
     <string name="sign_in_enter_email">Saisissez d'abord votre adresse e-mail.</string>
+    <string name="sign_in_no_manager_access">Ce compte n'est ni administrateur ni éditeur. Seuls les administrateurs et les éditeurs peuvent utiliser cette application.</string>
     <string name="sign_in_reset_sent">Si un compte existe, nous avons envoyé les instructions de réinitialisation du mot de passe à votre e-mail.</string>
     <string name="data_results">Résultats %1$s</string>
     <string name="data_loaded">chargé %1$s</string>

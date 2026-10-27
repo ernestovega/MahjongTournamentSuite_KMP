@@ -216,8 +216,8 @@ export async function updateManagedUser(params: {
   );
   await syncUserTournamentAssignments(
     params.uid,
-    params.role === "ADMIN" ? [] : params.tournamentAssignments,
-    params.role === "ADMIN" ? undefined : params.assignmentScope,
+    params.role === "EDITOR" ? params.tournamentAssignments : [],
+    params.role === "EDITOR" ? params.assignmentScope : undefined,
   );
 }
 

@@ -302,6 +302,7 @@
     <string name="wind_north">North</string>
     <string name="assign_all_before_export">Assign an EMA player to every tournament slot before export.</string>
     <string name="sign_in_enter_email">Enter your email address first.</string>
+    <string name="sign_in_no_manager_access">This account is not an admin or an editor. Only admins and editors can use this app.</string>
     <string name="sign_in_reset_sent">If an account exists, we sent password reset instructions to your email.</string>
     <string name="data_results">Results %1$s</string>
     <string name="data_loaded">loaded %1$s</string>

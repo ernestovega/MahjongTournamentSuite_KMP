@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -20,6 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
@@ -680,11 +682,12 @@ private fun ManageUserDialog(
                     role = role,
                     // A player account may be promoted. An account with no role claim also reads as a player.
                     // An editor can only choose the role of a new account, and cannot create admins.
+                    // An admin can also make an editor or an admin a player. The account loses the other role.
                     options = when {
                         original?.role == GlobalUserRole.PLAYER -> listOf(GlobalUserRole.PLAYER, GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
                         original == null && !canManageRoles -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
                         original == null -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
-                        else -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
+                        else -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
                     },
                     enabled = (canManageRoles || original == null) && !isSelf && !saving,
                     onSelect = { role = it },
@@ -730,45 +733,50 @@ private fun ManageUserDialog(
                         }
                     }
                 }
+            }
+        },
+        confirmButton = {
+            val destructive = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+            Column(modifier = Modifier.fillMaxWidth()) {
                 if (original != null && !isSelf) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         FocusedTextButton(
                             onClick = { onResetPassword(original.email) },
                             enabled = !saving,
+                            colors = destructive,
                         ) { Text(stringResource(Res.string.send_password_reset_email)) }
                     }
-                    if (canDisable) {
+                }
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    if (original != null && !isSelf && canDisable) {
                         FocusedTextButton(
                             onClick = { onChangeDisabled(original) },
                             enabled = !saving,
+                            colors = destructive,
                         ) { Text(stringResource(if (original.disabled) Res.string.enable_account else Res.string.disable_account_action)) }
                     }
+                    Spacer(Modifier.weight(1f))
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        enabled = !saving,
+                        focusRequester = cancelFocus,
+                        buttonModifier = Modifier.focusLoop(saveFocus, saveFocus),
+                    ) { Text(stringResource(Res.string.cancel)) }
+                    Spacer(Modifier.width(8.dp))
+                    FocusedButton(
+                        onClick = {
+                            val selectedAssignments = if (role != GlobalUserRole.EDITOR) emptyList() else {
+                                tournaments.filter { assignments[it.id] == true }
+                                    .map { TournamentAssignment(it.id, it.name) }
+                            }
+                            onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
+                        },
+                        enabled = valid && !saving,
+                        focusRequester = saveFocus,
+                        buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                    ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
                 }
             }
-        },
-        confirmButton = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                FocusedButton(
-                    onClick = {
-                        val selectedAssignments = if (role != GlobalUserRole.EDITOR) emptyList() else {
-                            tournaments.filter { assignments[it.id] == true }
-                                .map { TournamentAssignment(it.id, it.name) }
-                        }
-                        onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
-                    },
-                    enabled = valid && !saving,
-                    focusRequester = saveFocus,
-                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-                ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
-            }
-        },
-        dismissButton = {
-            FocusedTextButton(
-                onClick = onDismiss,
-                enabled = !saving,
-                focusRequester = cancelFocus,
-                buttonModifier = Modifier.focusLoop(saveFocus, saveFocus),
-            ) { Text(stringResource(Res.string.cancel)) }
         },
     )
     if (showEmaPicker) {
