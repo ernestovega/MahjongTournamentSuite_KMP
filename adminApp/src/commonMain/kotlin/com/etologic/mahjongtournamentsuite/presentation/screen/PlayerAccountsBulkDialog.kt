@@ -186,7 +186,6 @@ fun PlayerAccountsBulkDialog(
         title = { Text(stringResource(Res.string.invitations_and_reminders)) },
         text = {
             BoxWithConstraints(Modifier.fillMaxSize()) {
-            val wide = maxWidth >= 700.dp
             Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     AccountFilter.entries.forEach { option ->
@@ -241,26 +240,18 @@ fun PlayerAccountsBulkDialog(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 maxLines = 1,
                             )
+                            Text(nameOf(slot), Modifier.weight(1f), maxLines = 1)
                             Column(Modifier.weight(1f)) {
                                 val email = slot.email?.takeIf { it.isNotBlank() } ?: stringResource(Res.string.no_email_saved)
                                 val sent = contactTimeText(slot.contactedAt)?.let { stringResource(Res.string.sent_at, it) }
-                                if (wide) {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(nameOf(slot), maxLines = 1)
-                                        Text(
-                                            " · " + listOfNotNull(email, sent).joinToString(" · "),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            maxLines = 1,
-                                        )
-                                    }
-                                } else {
-                                    Text(nameOf(slot), maxLines = 1)
-                                    Text(
-                                        listOfNotNull(email, sent).joinToString(" · "),
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+                                Text(
+                                    email,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 1,
+                                )
+                                sent?.let {
+                                    Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                                 }
                             }
                             Text(
@@ -325,7 +316,7 @@ fun PlayerAccountsBulkDialog(
  * The result maps the player number to the typed email.
  */
 @Composable
-private fun MissingEmailsDialog(
+internal fun MissingEmailsDialog(
     players: List<TournamentPlayer>,
     nameOf: (TournamentPlayer) -> String,
     busy: Boolean,

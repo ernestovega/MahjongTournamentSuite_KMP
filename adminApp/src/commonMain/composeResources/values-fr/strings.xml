@@ -98,7 +98,7 @@
     <string name="role">Rôle</string>
     <string name="ema_id">ID EMA</string>
     <string name="status">Statut</string>
-    <string name="search_by_email">Rechercher par e-mail</string>
+    <string name="search">Rechercher</string>
     <string name="tournament">Tournoi</string>
     <string name="all_tournaments">Tous les tournois</string>
     <string name="player">Joueur</string>
@@ -163,13 +163,9 @@
     <string name="previous_round">Tour précédent</string>
     <string name="next_round">Tour suivant</string>
     <string name="ema_report">Rapport EMA</string>
-    <string name="assign_an_ema_player_to_this">Attribuez d'abord un joueur EMA à cette place.</string>
-    <string name="send_an_invitation_link_to_the">Saisissez l'e-mail de ce joueur. L'application crée le compte et envoie un e-mail pour choisir un mot de passe. Rien n'est envoyé avant d'appuyer sur Envoyer.</string>
-    <string name="this_player_has_an_account_and">Ce joueur a un compte et a reçu un e-mail.</string>
     <string name="send_invitation">Envoyer l'invitation</string>
     <string name="send_reminder">Envoyer un rappel</string>
     <string name="send_reminder_again">Renvoyer le rappel</string>
-    <string name="save_email_only">Enregistrer l'e-mail seulement</string>
     <string name="remove_account_link">Supprimer le lien avec le compte</string>
     <string name="set">Définir</string>
     <string name="remaining_time">Temps restant</string>
@@ -261,7 +257,6 @@
     <string name="player_error_country">Le pays doit utiliser un code EMA de trois lettres.</string>
     <string name="photo_error_type">Choisissez une image JPEG, PNG, WebP ou GIF.</string>
     <string name="photo_error_size">Choisissez une photo de 5 Mo maximum.</string>
-    <string name="account_email_saved">Le compte du joueur a été créé avec cet e-mail. Rien n'a été envoyé.</string>
     <string name="assign_all_before_id_cards">Attribuez un joueur EMA à chaque place du tournoi avant de créer les cartes d'identité.</string>
     <string name="assign_all_before_id_list">Attribuez un joueur EMA à chaque place du tournoi avant de créer la liste d'identité.</string>
     <string name="assign_ema_player_to_player">ATTRIBUER UN JOUEUR EMA AU JOUEUR %1$d</string>
@@ -574,15 +569,9 @@
     <string name="outcome_label_invited">invité</string>
     <string name="outcome_label_notified">rappelé</string>
     <string name="outcome_label_revoked">révoqué</string>
-    <string name="invitation_info">Inviter crée le compte du joueur avec l'e-mail et envoie un e-mail pour choisir un mot de passe. Renvoyer envoie à nouveau cet e-mail. Supprimer le lien avec le compte retire seulement le joueur de ce tournoi. Le compte reste.</string>
     <string name="contact_state_not_invited">Non invité</string>
     <string name="contact_state_linked">Lié, sans rappel</string>
     <string name="contact_state_reminded">Lié, rappelé</string>
-    <string name="account_of_player">Compte du joueur %1$d</string>
-    <string name="account_exists_note">Un compte avec cet ID EMA existe déjà et voit ce tournoi. Aucun e-mail n'a été envoyé. Envoyez un rappel quand vous serez prêt.</string>
-    <string name="not_known">Inconnu</string>
-    <string name="sent">Envoyé</string>
-    <string name="link_works_once">Le joueur n'a pas encore de mot de passe. Renvoyer envoie à nouveau l'e-mail pour en choisir un.</string>
     <string name="edit_tournament_named">Modifier %1$s</string>
     <string name="no_logo_for">Aucun logo pour %1$s</string>
     <string name="tournament_color_value">Couleur du tournoi %1$s</string>
@@ -716,8 +705,6 @@
     <string name="import_choose_other_file">Choisir un autre fichier</string>
     <string name="import_reading_file">L'application lit le fichier.</string>
     <string name="import_applying">L'application importe les joueurs : %1$d lignes sur %2$d terminées.</string>
-    <string name="import_count_new">Lignes qui ajoutent des données : %1$d</string>
-    <string name="import_count_replace">Lignes qui remplacent un joueur : %1$d</string>
     <string name="import_count_errors">Lignes avec une erreur : %1$d. L'import ignore ces lignes.</string>
     <string name="import_untouched_slots">%1$d places ne sont pas dans le fichier. Elles restent telles quelles.</string>
     <string name="import_replace_checkbox">Remplacer les joueurs déjà présents dans une place (%1$d lignes)</string>
@@ -729,8 +716,9 @@
     <string name="import_status_replace">Remplacer</string>
     <string name="import_status_unchanged">Sans changement</string>
     <string name="import_status_error">Erreur</string>
-    <string name="import_team_value">Équipe : %1$s</string>
-    <string name="import_email_value">E-mail : %1$s</string>
+    <string name="import_field_player">Joueur</string>
+    <string name="import_field_team">Équipe</string>
+    <string name="import_field_email">E-mail</string>
     <string name="import_issue_invalid_id">L'id n'est pas un nombre entier positif.</string>
     <string name="import_issue_unknown_slot">Ce tournoi n'a pas la place %1$s.</string>
     <string name="import_issue_duplicate_slot">La place %1$s apparaît dans plusieurs lignes.</string>
@@ -757,8 +745,6 @@
     <string name="save_id_list">Enregistrer la liste d'identité</string>
     <string name="save_id_card_proof">Enregistrer l'épreuve des cartes d'identité</string>
     <string name="resend_invitation">Renvoyer</string>
-    <string name="account_email_same">Le compte de ce joueur a déjà cet e-mail.</string>
-    <string name="account_email_kept">Le compte de ce joueur a l'e-mail %1$s. L'e-mail du compte reste, et le nouvel e-mail n'a pas été enregistré.</string>
     <string name="import_issue_email_kept">Le compte de ce joueur a l'e-mail %1$s. L'e-mail du compte reste et l'e-mail %2$s n'est pas enregistré.</string>
     <string name="import_issue_email_in_use">Un autre compte utilise cet e-mail. Ce compte appartient au joueur avec le numéro EMA %1$s. L'e-mail n'est pas enregistré.</string>
     <string name="import_issue_email_in_use_no_ema">Un autre compte utilise cet e-mail et ce compte n'a pas de numéro EMA. L'e-mail n'est pas enregistré.</string>

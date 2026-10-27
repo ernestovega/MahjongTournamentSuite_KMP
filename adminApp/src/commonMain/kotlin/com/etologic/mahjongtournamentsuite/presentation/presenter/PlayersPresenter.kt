@@ -8,7 +8,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
@@ -50,9 +49,6 @@ class PlayersPresenter(
         action: PlayerAccountAction,
         items: List<PlayerAccountActionItem>,
     ): AppResult<List<PlayerAccountActionResult>> = accountRepository.runAction(tournamentId, action, items)
-
-    suspend fun saveAccountEmails(tournamentId: String, items: List<PlayerAccountActionItem>): AppResult<List<PlayerEmailResult>> =
-        accountRepository.saveEmails(tournamentId, items)
 
     suspend fun assignPlayer(
         tournamentId: String,

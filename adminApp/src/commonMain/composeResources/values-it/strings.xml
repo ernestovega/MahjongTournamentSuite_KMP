@@ -98,7 +98,7 @@
     <string name="role">Ruolo</string>
     <string name="ema_id">ID EMA</string>
     <string name="status">Stato</string>
-    <string name="search_by_email">Cerca per email</string>
+    <string name="search">Cerca</string>
     <string name="tournament">Torneo</string>
     <string name="all_tournaments">Tutti i tornei</string>
     <string name="player">Giocatore</string>
@@ -163,13 +163,9 @@
     <string name="previous_round">Turno precedente</string>
     <string name="next_round">Turno successivo</string>
     <string name="ema_report">Rapporto EMA</string>
-    <string name="assign_an_ema_player_to_this">Assegna prima un giocatore EMA a questo posto.</string>
-    <string name="send_an_invitation_link_to_the">Inserisci l'email di questo giocatore. L'app crea l'account e invia un'email per scegliere una password. Non viene inviato nulla finché non premi Invia.</string>
-    <string name="this_player_has_an_account_and">Questo giocatore ha un account e ha ricevuto un'email.</string>
     <string name="send_invitation">Invia invito</string>
     <string name="send_reminder">Invia promemoria</string>
     <string name="send_reminder_again">Invia di nuovo il promemoria</string>
-    <string name="save_email_only">Salva solo l'email</string>
     <string name="remove_account_link">Rimuovi il collegamento all'account</string>
     <string name="set">Imposta</string>
     <string name="remaining_time">Tempo rimanente</string>
@@ -261,7 +257,6 @@
     <string name="player_error_country">Il paese deve usare un codice EMA di tre lettere.</string>
     <string name="photo_error_type">Scegli un'immagine JPEG, PNG, WebP o GIF.</string>
     <string name="photo_error_size">Scegli una foto di 5 MB o meno.</string>
-    <string name="account_email_saved">L'account del giocatore è stato creato con questa email. Non è stato inviato nulla.</string>
     <string name="assign_all_before_id_cards">Assegna un giocatore EMA a ogni posto del torneo prima di creare i cartellini.</string>
     <string name="assign_all_before_id_list">Assegna un giocatore EMA a ogni posto del torneo prima di creare l'elenco di identificazione.</string>
     <string name="assign_ema_player_to_player">ASSEGNA UN GIOCATORE EMA AL GIOCATORE %1$d</string>
@@ -574,15 +569,9 @@
     <string name="outcome_label_invited">invitato</string>
     <string name="outcome_label_notified">ricordato</string>
     <string name="outcome_label_revoked">revocato</string>
-    <string name="invitation_info">Invita crea l'account del giocatore con l'email e invia un'email per scegliere una password. Reinvia invia di nuovo quell'email. Rimuovi il collegamento all'account toglie solo il giocatore da questo torneo. L'account resta.</string>
     <string name="contact_state_not_invited">Non invitato</string>
     <string name="contact_state_linked">Collegato, senza promemoria</string>
     <string name="contact_state_reminded">Collegato, con promemoria</string>
-    <string name="account_of_player">Account del giocatore %1$d</string>
-    <string name="account_exists_note">Un account con questo ID EMA esiste già e vede questo torneo. Non è stata inviata nessuna email. Invia un promemoria quando sei pronto.</string>
-    <string name="not_known">Non noto</string>
-    <string name="sent">Inviato</string>
-    <string name="link_works_once">Il giocatore non ha ancora una password. Reinvia invia di nuovo l'email per sceglierla.</string>
     <string name="edit_tournament_named">Modifica %1$s</string>
     <string name="no_logo_for">Nessun logo per %1$s</string>
     <string name="tournament_color_value">Colore del torneo %1$s</string>
@@ -719,8 +708,6 @@
     <string name="import_choose_other_file">Scegli un altro file</string>
     <string name="import_reading_file">L'app sta leggendo il file.</string>
     <string name="import_applying">L'app sta importando i giocatori: %1$d righe su %2$d completate.</string>
-    <string name="import_count_new">Righe che aggiungono dati: %1$d</string>
-    <string name="import_count_replace">Righe che sostituiscono un giocatore: %1$d</string>
     <string name="import_count_errors">Righe con un errore: %1$d. L'importazione salta queste righe.</string>
     <string name="import_untouched_slots">%1$d slot non sono nel file. Restano come sono.</string>
     <string name="import_replace_checkbox">Sostituisci i giocatori già presenti in uno slot (%1$d righe)</string>
@@ -732,8 +719,9 @@
     <string name="import_status_replace">Sostituisci</string>
     <string name="import_status_unchanged">Nessuna modifica</string>
     <string name="import_status_error">Errore</string>
-    <string name="import_team_value">Squadra: %1$s</string>
-    <string name="import_email_value">Email: %1$s</string>
+    <string name="import_field_player">Giocatore</string>
+    <string name="import_field_team">Squadra</string>
+    <string name="import_field_email">Email</string>
     <string name="import_issue_invalid_id">L'id non è un numero intero positivo.</string>
     <string name="import_issue_unknown_slot">Questo torneo non ha lo slot %1$s.</string>
     <string name="import_issue_duplicate_slot">Lo slot %1$s compare in più di una riga.</string>
@@ -757,8 +745,6 @@
     <string name="import_result_failures">L'importazione non ha potuto applicare queste righe:</string>
     <string name="import_failure_line">• Riga %1$s: %2$s</string>
     <string name="resend_invitation">Reinvia</string>
-    <string name="account_email_same">L'account di questo giocatore ha già questa email.</string>
-    <string name="account_email_kept">L'account di questo giocatore ha l'email %1$s. L'email dell'account resta e la nuova email non è stata salvata.</string>
     <string name="import_issue_email_kept">L'account di questo giocatore ha l'email %1$s. L'email dell'account resta e l'email %2$s non viene salvata.</string>
     <string name="import_issue_email_in_use">Un altro account usa questa email. Quell'account appartiene al giocatore con numero EMA %1$s. L'email non viene salvata.</string>
     <string name="import_issue_email_in_use_no_ema">Un altro account usa questa email e quell'account non ha un numero EMA. L'email non viene salvata.</string>

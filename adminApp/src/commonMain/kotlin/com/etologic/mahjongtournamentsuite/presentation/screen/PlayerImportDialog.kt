@@ -1,5 +1,35 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Email
+import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.PersonAdd
+import androidx.compose.material.icons.filled.SkipNext
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,7 +42,6 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -58,12 +87,12 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_apply_count
 import mahjongtournamentsuite.adminapp.generated.resources.import_applying
 import mahjongtournamentsuite.adminapp.generated.resources.import_choose_other_file
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_errors
-import mahjongtournamentsuite.adminapp.generated.resources.import_count_new
-import mahjongtournamentsuite.adminapp.generated.resources.import_count_replace
 import mahjongtournamentsuite.adminapp.generated.resources.import_creates_account
 import mahjongtournamentsuite.adminapp.generated.resources.import_done_title
-import mahjongtournamentsuite.adminapp.generated.resources.import_email_value
 import mahjongtournamentsuite.adminapp.generated.resources.import_failure_line
+import mahjongtournamentsuite.adminapp.generated.resources.import_field_email
+import mahjongtournamentsuite.adminapp.generated.resources.import_field_player
+import mahjongtournamentsuite.adminapp.generated.resources.import_field_team
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_slot
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_in_use
@@ -98,8 +127,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_status_error
 import mahjongtournamentsuite.adminapp.generated.resources.import_status_new
 import mahjongtournamentsuite.adminapp.generated.resources.import_status_replace
 import mahjongtournamentsuite.adminapp.generated.resources.import_status_unchanged
-import mahjongtournamentsuite.adminapp.generated.resources.import_team_value
 import mahjongtournamentsuite.adminapp.generated.resources.import_untouched_slots
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -255,46 +284,47 @@ internal fun ImportPreviewContent(
     onReplaceExistingChange: (Boolean) -> Unit,
     playerNameOf: (String) -> String?,
 ) {
+    // A tap on a summary tile shows only the rows of that status. A second tap shows all rows again.
+    var filter by remember(preview) { mutableStateOf<ImportRowStatus?>(null) }
     // Errors come first, so the editor sees the rows to fix before the list of good rows.
-    val rows = remember(preview) {
-        preview.rows.filter { it.status != ImportRowStatus.UNCHANGED }.sortedWith(compareBy({ it.status.sortOrder() }, { it.row }))
+    val rows = remember(preview, filter) {
+        preview.rows
+            .filter { it.status != ImportRowStatus.UNCHANGED && (filter == null || it.status == filter) }
+            .sortedWith(compareBy({ it.status.sortOrder() }, { it.row }))
     }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(Res.string.import_count_new, preview.newCount))
-        if (preview.replaceCount > 0) Text(stringResource(Res.string.import_count_replace, preview.replaceCount))
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(
+                ImportRowStatus.NEW to preview.newCount,
+                ImportRowStatus.REPLACE to preview.replaceCount,
+                ImportRowStatus.ERROR to preview.errorCount,
+            ).forEach { (status, count) ->
+                ImportSummaryTile(
+                    status = status,
+                    count = count,
+                    selected = filter == status,
+                    onClick = { filter = if (filter == status) null else status },
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                )
+            }
+        }
         if (preview.errorCount > 0) {
-            Text(stringResource(Res.string.import_count_errors, preview.errorCount), color = MaterialTheme.colorScheme.error)
+            ImportNote(
+                icon = Icons.Filled.ErrorOutline,
+                text = stringResource(Res.string.import_count_errors, preview.errorCount),
+                color = MaterialTheme.colorScheme.error,
+            )
         }
         if (preview.untouchedSlotIds.isNotEmpty()) {
-            Text(
-                stringResource(Res.string.import_untouched_slots, preview.untouchedSlotIds.size),
+            ImportNote(
+                icon = Icons.Filled.Info,
+                text = stringResource(Res.string.import_untouched_slots, preview.untouchedSlotIds.size),
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         if (preview.replaceCount > 0) {
-            if (preview.tournamentStarted) {
-                Text(stringResource(Res.string.import_started_warning), color = MaterialTheme.colorScheme.error)
-            }
-            Row(
-                modifier = Modifier.toggleable(
-                    value = replaceExisting,
-                    role = Role.Checkbox,
-                    onValueChange = onReplaceExistingChange,
-                ),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = replaceExisting, onCheckedChange = null)
-                Text(stringResource(Res.string.import_replace_checkbox, preview.replaceCount))
-            }
-            if (!replaceExisting) {
-                Text(
-                    stringResource(Res.string.import_replace_hint),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
+            ImportReplaceChoice(preview, replaceExisting, onReplaceExistingChange)
         }
-        HorizontalDivider()
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(rows, key = { it.row }) { row -> ImportRowItem(row, playerNameOf) }
         }
@@ -308,54 +338,167 @@ private fun ImportRowStatus.sortOrder() = when (this) {
     ImportRowStatus.UNCHANGED -> 3
 }
 
+private class StatusStyle(val icon: ImageVector, val color: Color, val container: Color, val label: StringResource)
+
+@Composable
+private fun ImportRowStatus.style(): StatusStyle {
+    val colors = MaterialTheme.colorScheme
+    return when (this) {
+        ImportRowStatus.ERROR -> StatusStyle(Icons.Filled.ErrorOutline, colors.error, colors.errorContainer, Res.string.import_status_error)
+        ImportRowStatus.REPLACE -> StatusStyle(Icons.Filled.SwapHoriz, colors.tertiary, colors.tertiaryContainer, Res.string.import_status_replace)
+        ImportRowStatus.NEW -> StatusStyle(Icons.Filled.PersonAdd, colors.primary, colors.primaryContainer, Res.string.import_status_new)
+        ImportRowStatus.UNCHANGED -> StatusStyle(Icons.Filled.Check, colors.onSurfaceVariant, colors.surfaceVariant, Res.string.import_status_unchanged)
+    }
+}
+
+/** A big count with the name of a status. It filters the list of rows. */
+@Composable
+private fun ImportSummaryTile(
+    status: ImportRowStatus,
+    count: Int,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val style = status.style()
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        modifier = modifier
+            .clip(shape)
+            .background(if (count > 0) style.container else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
+            .border(if (selected) 2.dp else 0.dp, style.color, shape)
+            .selectable(selected = selected, enabled = count > 0, role = Role.Button, onClick = onClick)
+            .padding(horizontal = 8.dp, vertical = 10.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        val tint = if (count > 0) style.color else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+        Icon(style.icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
+        Text(count.toString(), style = MaterialTheme.typography.headlineSmall, color = tint)
+        Text(stringResource(style.label), style = MaterialTheme.typography.labelMedium, color = tint, textAlign = TextAlign.Center)
+    }
+}
+
+@Composable
+private fun ImportNote(icon: ImageVector, text: String, color: Color) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
+        Text(text, style = MaterialTheme.typography.bodySmall, color = color)
+    }
+}
+
+@Composable
+private fun ImportReplaceChoice(preview: PlayerImportPreview, replaceExisting: Boolean, onChange: (Boolean) -> Unit) {
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        if (preview.tournamentStarted) {
+            ImportNote(Icons.Filled.Warning, stringResource(Res.string.import_started_warning), MaterialTheme.colorScheme.error)
+        }
+        Row(
+            modifier = Modifier.toggleable(value = replaceExisting, role = Role.Checkbox, onValueChange = onChange),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Checkbox(checked = replaceExisting, onCheckedChange = null)
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(Res.string.import_replace_checkbox, preview.replaceCount))
+        }
+        if (!replaceExisting) {
+            Text(
+                stringResource(Res.string.import_replace_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
 @Composable
 private fun ImportRowItem(row: ImportRowPlan, playerNameOf: (String) -> String?) {
-    val statusColor = when (row.status) {
-        ImportRowStatus.ERROR -> MaterialTheme.colorScheme.error
-        ImportRowStatus.REPLACE -> MaterialTheme.colorScheme.tertiary
-        ImportRowStatus.NEW -> MaterialTheme.colorScheme.primary
-        ImportRowStatus.UNCHANGED -> MaterialTheme.colorScheme.onSurfaceVariant
-    }
-    val statusText = stringResource(
-        when (row.status) {
-            ImportRowStatus.ERROR -> Res.string.import_status_error
-            ImportRowStatus.REPLACE -> Res.string.import_status_replace
-            ImportRowStatus.NEW -> Res.string.import_status_new
-            ImportRowStatus.UNCHANGED -> Res.string.import_status_unchanged
-        },
-    )
-    // The row shows only what changes: the old value, if there is one, and the new value.
+    val style = row.status.style()
+    val isError = row.status == ImportRowStatus.ERROR
     val playerLabel = { emaId: String -> playerNameOf(emaId)?.let { "$it · $emaId" } ?: "EMA $emaId" }
-    val oldPlayer = row.current?.let { current -> current.emaId?.let(playerLabel) }
-    val newPlayer = row.emaId?.takeIf { it != row.current?.emaId }?.let(playerLabel)
+    // The row shows only what changes: the old value, if there is one, and the new value.
+    // An error row shows the values of the file, so the editor finds the line to fix.
+    val oldPlayer = row.current?.emaId?.takeUnless { isError }?.let(playerLabel)
+    val newPlayer = row.emaId?.takeIf { isError || it != row.current?.emaId }?.let(playerLabel)
     // An account that has an email keeps it. The issue list warns about a different email.
-    val email = row.email?.takeIf { row.current?.email.isNullOrBlank() }
-    val team = row.team?.takeIf { it != row.current?.teamName.orEmpty() }
-    fun change(old: String?, new: String) = if (old.isNullOrBlank()) new else "$old → $new"
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-                stringResource(Res.string.import_row_title, row.row, row.slotId?.toString() ?: "?"),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            Text(statusText, style = MaterialTheme.typography.labelLarge, color = statusColor)
+    val email = row.email?.takeIf { isError || row.current?.email.isNullOrBlank() }
+    val team = row.team?.takeIf { isError || it != row.current?.teamName.orEmpty() }
+    val oldTeam = row.current?.teamName?.takeUnless { isError }
+    val oldEmail = row.current?.email?.takeUnless { isError }
+    val shape = RoundedCornerShape(12.dp)
+    Row(
+        Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
+    ) {
+        Box(Modifier.width(4.dp).fillMaxHeight().background(style.color))
+        Column(Modifier.weight(1f).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    stringResource(Res.string.import_row_title, row.row, row.slotId?.toString() ?: "?"),
+                    style = MaterialTheme.typography.labelLarge,
+                    modifier = Modifier.weight(1f),
+                )
+                Row(
+                    Modifier.clip(RoundedCornerShape(50)).background(style.container).padding(horizontal = 8.dp, vertical = 2.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(style.icon, contentDescription = null, tint = style.color, modifier = Modifier.size(14.dp))
+                    Text(stringResource(style.label), style = MaterialTheme.typography.labelMedium, color = style.color)
+                }
+            }
+            newPlayer?.let { ImportFieldChange(Res.string.import_field_player, oldPlayer, it) }
+            team?.let { ImportFieldChange(Res.string.import_field_team, oldTeam, it) }
+            email?.let { ImportFieldChange(Res.string.import_field_email, oldEmail, it) }
+            if (!isError && row.createsAccount) {
+                ImportNote(Icons.Filled.PersonAdd, stringResource(Res.string.import_creates_account), MaterialTheme.colorScheme.primary)
+            }
+            // The old and the new value show the replaced player already.
+            row.issues.filter { it.code != ImportIssueCode.REPLACES_PLAYER }.forEach { issue ->
+                val isIssueError = issue.severity == ImportIssueSeverity.ERROR
+                ImportNote(
+                    icon = if (isIssueError) Icons.Filled.ErrorOutline else Icons.Filled.Warning,
+                    text = issue.toUiText().asString(),
+                    color = if (isIssueError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
-        if (row.status != ImportRowStatus.ERROR) {
-            newPlayer?.let { Text(change(oldPlayer, it)) }
-            team?.let { Text(stringResource(Res.string.import_team_value, change(row.current?.teamName, it)), style = MaterialTheme.typography.bodySmall) }
-            email?.let { Text(stringResource(Res.string.import_email_value, change(row.current?.email, it)), style = MaterialTheme.typography.bodySmall) }
-        }
-        if (row.status != ImportRowStatus.ERROR && row.createsAccount) {
-            Text(stringResource(Res.string.import_creates_account), style = MaterialTheme.typography.bodySmall)
-        }
-        // The old and the new value show the replaced player already.
-        row.issues.filter { it.code != ImportIssueCode.REPLACES_PLAYER }.forEach { issue ->
-            Text(
-                issue.toUiText().asString(),
-                style = MaterialTheme.typography.bodySmall,
-                color = if (issue.severity == ImportIssueSeverity.ERROR) MaterialTheme.colorScheme.error else Color.Unspecified,
-                modifier = Modifier.padding(start = 8.dp),
-            )
+    }
+}
+
+/** A field with its name, the old value in grey and struck out, an arrow and the new value. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ImportFieldChange(label: StringResource, old: String?, new: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
+        Text(
+            stringResource(label),
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.width(56.dp).padding(top = 3.dp),
+        )
+        FlowRow(
+            modifier = Modifier.weight(1f),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (!old.isNullOrBlank()) {
+                Text(
+                    old,
+                    style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.LineThrough),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(14.dp),
+                )
+            }
+            Text(new, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
         }
     }
 }
@@ -363,22 +506,38 @@ private fun ImportRowItem(row: ImportRowPlan, playerNameOf: (String) -> String?)
 @Composable
 private fun ImportResultContent(result: PlayerImportResult) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(Res.string.import_result_assigned, result.assigned))
-        Text(stringResource(Res.string.import_result_emails, result.emailsSaved))
-        if (result.emailsRefused > 0) Text(stringResource(Res.string.import_result_emails_refused, result.emailsRefused))
-        Text(stringResource(Res.string.import_result_teams, result.teamsRenamed))
-        Text(stringResource(Res.string.import_result_skipped, result.skipped))
+        ImportResultLine(Icons.Filled.PersonAdd, stringResource(Res.string.import_result_assigned, result.assigned), MaterialTheme.colorScheme.primary)
+        ImportResultLine(Icons.Filled.Email, stringResource(Res.string.import_result_emails, result.emailsSaved), MaterialTheme.colorScheme.primary)
+        if (result.emailsRefused > 0) {
+            ImportResultLine(Icons.Filled.Warning, stringResource(Res.string.import_result_emails_refused, result.emailsRefused), MaterialTheme.colorScheme.tertiary)
+        }
+        ImportResultLine(Icons.Filled.Groups, stringResource(Res.string.import_result_teams, result.teamsRenamed), MaterialTheme.colorScheme.primary)
+        ImportResultLine(Icons.Filled.SkipNext, stringResource(Res.string.import_result_skipped, result.skipped), MaterialTheme.colorScheme.onSurfaceVariant)
         if (result.failures.isNotEmpty()) {
-            Text(stringResource(Res.string.import_result_failures), color = MaterialTheme.colorScheme.error)
-            LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                items(result.failures) { failure ->
-                    Text(
-                        stringResource(Res.string.import_failure_line, failure.row?.toString() ?: "?", failure.message),
-                        style = MaterialTheme.typography.bodySmall,
-                    )
+            val shape = RoundedCornerShape(12.dp)
+            Column(
+                Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.errorContainer).padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                ImportNote(Icons.Filled.ErrorOutline, stringResource(Res.string.import_result_failures), MaterialTheme.colorScheme.error)
+                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
+                    items(result.failures) { failure ->
+                        Text(
+                            stringResource(Res.string.import_failure_line, failure.row?.toString() ?: "?", failure.message),
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ImportResultLine(icon: ImageVector, text: String, color: Color) {
+    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+        Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(20.dp))
+        Text(text)
     }
 }
 

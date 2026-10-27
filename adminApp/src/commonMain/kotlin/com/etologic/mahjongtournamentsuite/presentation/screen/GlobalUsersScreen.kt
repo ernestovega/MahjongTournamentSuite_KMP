@@ -47,11 +47,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -142,7 +137,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.role_admin
 import mahjongtournamentsuite.adminapp.generated.resources.role_editor
 import mahjongtournamentsuite.adminapp.generated.resources.role_player
 import mahjongtournamentsuite.adminapp.generated.resources.save
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_email
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.search_by_name
 import mahjongtournamentsuite.adminapp.generated.resources.search_ema_players
 import mahjongtournamentsuite.adminapp.generated.resources.select_results
@@ -176,7 +171,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
     var editingUser by remember { mutableStateOf<ManagedUser?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
     var pendingDisabledUser by remember { mutableStateOf<ManagedUser?>(null) }
-    var emailFilter by rememberSaveable { mutableStateOf("") }
+    var searchQuery by rememberSaveable { mutableStateOf("") }
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
     var tournamentFilterText by rememberSaveable { mutableStateOf("") }
     var selectedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -186,8 +181,20 @@ fun GlobalUsersScreen(navController: NavHostController) {
     val rowFocusRequesters = remember(users.map(ManagedUser::uid)) {
         users.associate { it.uid to FocusRequester() }
     }
+    // The search looks in every field of the list: country, alias, email, roles, EMA number and status.
+    val roleLabels = GlobalUserRole.entries.associateWith { it.label() }
+    val activeLabel = stringResource(Res.string.user_status_active)
+    val disabledLabel = stringResource(Res.string.user_status_disabled)
+    val countryByEmaId = emaPlayers.associate { it.emaId to it.country }
     val filteredUsers = users.filter { user ->
-        user.email.matchesSearch(emailFilter) &&
+        listOf(
+            user.emaId?.let(countryByEmaId::get).orEmpty(),
+            user.alias,
+            user.email,
+            (user.roles.sorted().map { roleLabels.getValue(it) }.ifEmpty { listOf(roleLabels.getValue(user.role)) }).joinToString(" + "),
+            user.emaId.orEmpty(),
+            if (user.disabled) disabledLabel else activeLabel,
+        ).any { it.matchesSearch(searchQuery) } &&
             (selectedRoles.isEmpty() || user.role in selectedRoles) &&
             (selectedTournamentId == null || user.role == GlobalUserRole.ADMIN || user.tournamentAssignments.any {
                 it.tournamentId == selectedTournamentId
@@ -317,19 +324,14 @@ fun GlobalUsersScreen(navController: NavHostController) {
             }
             notice?.let { AppSuccessDialog(it, onDismiss = { notice = null }) }
             UserFilters(
-                emailFilter = emailFilter,
-                onEmailFilterChange = { emailFilter = it },
+                searchQuery = searchQuery,
+                onSearchChange = { searchQuery = it },
                 selectedRoles = selectedRoles,
                 onRoleToggle = { role ->
                     selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
                 },
                 tournaments = tournaments,
                 tournamentFilterText = tournamentFilterText,
-                onTournamentFilterTextChange = {
-                    tournamentFilterText = it
-                    selectedTournamentId = null
-                    tournamentFilterExpanded = true
-                },
                 tournamentFilterExpanded = tournamentFilterExpanded,
                 onTournamentFilterExpandedChange = { tournamentFilterExpanded = it },
                 onTournamentSelected = { tournament ->
@@ -482,13 +484,12 @@ private fun UsersTable(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun UserFilters(
-    emailFilter: String,
-    onEmailFilterChange: (String) -> Unit,
+    searchQuery: String,
+    onSearchChange: (String) -> Unit,
     selectedRoles: Set<GlobalUserRole>,
     onRoleToggle: (GlobalUserRole) -> Unit,
     tournaments: List<Tournament>,
     tournamentFilterText: String,
-    onTournamentFilterTextChange: (String) -> Unit,
     tournamentFilterExpanded: Boolean,
     onTournamentFilterExpandedChange: (Boolean) -> Unit,
     onTournamentSelected: (Tournament?) -> Unit,
@@ -496,13 +497,13 @@ private fun UserFilters(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
-                value = emailFilter,
-                onValueChange = onEmailFilterChange,
-                label = { Text(stringResource(Res.string.search_by_email)) },
+                value = searchQuery,
+                onValueChange = onSearchChange,
+                label = { Text(stringResource(Res.string.search)) },
                 singleLine = true,
                 trailingIcon = {
-                    if (emailFilter.isNotEmpty()) {
-                        IconButton(onClick = { onEmailFilterChange("") }) { Text("×") }
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = { onSearchChange("") }) { Text("×") }
                     }
                 },
                 modifier = Modifier.weight(1f),
@@ -522,22 +523,7 @@ private fun UserFilters(
                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(tournamentFilterExpanded) },
                     modifier = Modifier
                         .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth()
-                        .onPreviewKeyEvent { event ->
-                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                            val character = event.key.typeaheadCharacter()
-                            when {
-                                character != null -> {
-                                    onTournamentFilterTextChange(tournamentFilterText + character)
-                                    true
-                                }
-                                event.key == Key.Backspace && tournamentFilterText.isNotEmpty() -> {
-                                    onTournamentFilterTextChange(tournamentFilterText.dropLast(1))
-                                    true
-                                }
-                                else -> false
-                            }
-                        },
+                        .fillMaxWidth(),
                 )
                 ExposedDropdownMenu(
                     expanded = tournamentFilterExpanded,
@@ -545,9 +531,7 @@ private fun UserFilters(
                     scrollState = rememberMenuScrollState(tournamentFilterExpanded, null),
                 ) {
                     DropdownMenuItem(text = { Text(stringResource(Res.string.all_tournaments)) }, onClick = { onTournamentSelected(null) })
-                    tournaments.filter {
-                        tournamentFilterText.isBlank() || it.name.matchesSearch(tournamentFilterText)
-                    }.forEach { tournament ->
+                    tournaments.forEach { tournament ->
                         DropdownMenuItem(text = { Text(tournament.name) }, onClick = { onTournamentSelected(tournament) })
                     }
                 }
@@ -1078,32 +1062,3 @@ private fun GlobalUserRole.label(): String = stringResource(
     },
 )
 
-private fun Key.typeaheadCharacter(): Char? = when (this) {
-    Key.A -> 'a'
-    Key.B -> 'b'
-    Key.C -> 'c'
-    Key.D -> 'd'
-    Key.E -> 'e'
-    Key.F -> 'f'
-    Key.G -> 'g'
-    Key.H -> 'h'
-    Key.I -> 'i'
-    Key.J -> 'j'
-    Key.K -> 'k'
-    Key.L -> 'l'
-    Key.M -> 'm'
-    Key.N -> 'n'
-    Key.O -> 'o'
-    Key.P -> 'p'
-    Key.Q -> 'q'
-    Key.R -> 'r'
-    Key.S -> 's'
-    Key.T -> 't'
-    Key.U -> 'u'
-    Key.V -> 'v'
-    Key.W -> 'w'
-    Key.X -> 'x'
-    Key.Y -> 'y'
-    Key.Z -> 'z'
-    else -> null
-}
