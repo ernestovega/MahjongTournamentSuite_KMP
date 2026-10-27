@@ -11,7 +11,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material3.DropdownMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -103,7 +105,7 @@ fun TablesScreen(
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
 
     var selectedRoundId by remember { mutableStateOf<Int?>(null) }
-    var isRoundMenuOpen by remember { mutableStateOf(false) }
+    val roundMenu = rememberSelectMenuState()
 
     val tablesKey = selectedRoundId?.toString() ?: "all"
     val tables = tablesByTournamentId[tournamentId]?.get(tablesKey) ?: emptyList()
@@ -210,39 +212,24 @@ fun TablesScreen(
                 actions = {
                     AppTextButton(
                         enabled = !isLoading,
-                        onClick = { isRoundMenuOpen = true },
+                        onClick = roundMenu::open,
                     ) {
                         Text(stringResource(Res.string.filter))
                     }
                 },
                 content = {
-                    DropdownMenu(
-                        expanded = isRoundMenuOpen,
-                        onDismissRequest = { isRoundMenuOpen = false },
-                        scrollState = rememberMenuScrollState(
-                            isRoundMenuOpen,
-                            if (selectedRoundId == null) 0 else rounds.indexOfFirst { it.roundId == selectedRoundId } + 1,
-                        ),
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.all_rounds)) },
-                            onClick = {
-                                selectedRoundId = null
-                                isRoundMenuOpen = false
-                                refreshTables(roundId = null)
-                            },
-                        )
-                        rounds.forEach { round ->
-                            DropdownMenuItem(
-                                text = { Text(stringResource(Res.string.round_n, round.roundId)) },
-                                onClick = {
-                                    selectedRoundId = round.roundId
-                                    isRoundMenuOpen = false
-                                    refreshTables(roundId = round.roundId)
-                                },
-                            )
-                        }
-                    }
+                    val allRounds = stringResource(Res.string.all_rounds)
+                    val roundOptions = listOf(SelectOption<Int?>(null, allRounds)) +
+                        rounds.map { round -> SelectOption(round.roundId, stringResource(Res.string.round_n, round.roundId)) }
+                    SelectMenu(
+                        state = roundMenu,
+                        options = roundOptions,
+                        selected = selectedRoundId,
+                        onSelect = { roundId ->
+                            selectedRoundId = roundId
+                            refreshTables(roundId = roundId)
+                        },
+                    )
 
                     when {
                         isLoading -> {

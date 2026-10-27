@@ -1,18 +1,14 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onFirst
-import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import org.junit.Test
 
 /**
  * The host country and time zone fields of the new tournament form.
- * The arrow shows all options and keeps the keyboard closed. A tap on the text shows the matching options.
+ * A tap on the field shows all options and keeps the keyboard closed. The search field of the menu filters the options.
  */
 @OptIn(ExperimentalTestApi::class)
 class SearchableDropdownsTest : AdminE2eTest() {
@@ -33,24 +29,6 @@ class SearchableDropdownsTest : AdminE2eTest() {
 
     private fun pause() = Thread.sleep(1_500)
 
-    private fun arrows() = c.onAllNodes(androidx.compose.ui.test.hasContentDescription("Show all options"), useUnmergedTree = true)
-
-    @Test
-    fun timeZoneArrowShowsAllZonesWithoutKeyboard() {
-        openForm()
-        c.clickButton("Venue")
-        val zone = java.util.TimeZone.getDefault().id
-        c.field("Time zone").performScrollToNodeSafe()
-        val others = countZones()
-        pause()
-        // The time zone field is the last field with an arrow in the form.
-        arrows().onLast().performClick()
-        c.waitUntil(5_000) { countZones() > others }
-        pause()
-        check(!keyboardShown()) { "The keyboard must stay closed after a tap on the arrow." }
-        check(countZones() > others && zone.isNotEmpty())
-    }
-
     @Test
     fun timeZoneFieldOpensTheMenuWithoutKeyboardAndOnlyPicks() {
         openForm()
@@ -65,15 +43,29 @@ class SearchableDropdownsTest : AdminE2eTest() {
     }
 
     @Test
-    fun countryArrowShowsAllCountriesWithoutKeyboard() {
+    fun countryFieldShowsAllCountriesWithoutKeyboard() {
         openForm()
         c.clickButton("Venue")
         val spain = count("Spain")
         pause()
-        arrows().onFirst().performClick()
+        c.field("Host country").performClick()
         c.waitUntil(5_000) { count("Spain") > spain && count("Italy") > 0 }
         pause()
-        check(!keyboardShown()) { "The keyboard must stay closed after a tap on the arrow." }
+        check(!keyboardShown()) { "The keyboard must stay closed after a tap on the field." }
+    }
+
+    @Test
+    fun countrySearchFieldFiltersTheMenu() {
+        openForm()
+        c.clickButton("Venue")
+        val italy = count("Italy")
+        c.field("Host country").performClick()
+        c.waitUntil(5_000) { count("Italy") > italy }
+        val spain = count("Spain")
+        c.onNode(androidx.compose.ui.test.hasTestTag("select-search")).performClick()
+        c.onNode(androidx.compose.ui.test.hasTestTag("select-search")).performTextInputText("ita")
+        c.waitUntil(5_000) { count("Spain") < spain }
+        pause()
     }
 }
 

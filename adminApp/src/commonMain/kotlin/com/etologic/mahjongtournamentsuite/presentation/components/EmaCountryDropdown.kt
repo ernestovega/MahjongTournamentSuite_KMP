@@ -1,47 +1,13 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
-import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEvent
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
-import androidx.compose.ui.text.TextRange
-import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Country
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.host_country
-import mahjongtournamentsuite.adminapp.generated.resources.no_matching_countries
 import org.jetbrains.compose.resources.stringResource
 
 private data class EmaCountryOption(
@@ -81,8 +47,8 @@ fun emaCountryFlagCode(code: String): String? =
     code.trim().uppercase().takeIf { it.length == 2 }
         ?: EmaHostCountries.firstOrNull { it.code == code.trim().uppercase() }?.flagCode
 
+/** A field with a menu of countries. The search field of the menu finds a country by its name or its code. */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun EmaCountryDropdown(
     selectedCode: String,
     onCountrySelected: (String) -> Unit,
@@ -95,11 +61,6 @@ fun EmaCountryDropdown(
     label: String = stringResource(Res.string.host_country),
     required: Boolean = false,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var hasFocus by remember { mutableStateOf(false) }
-    var moveFocusToMenu by remember { mutableStateOf(false) }
-    val anchorFocusRequester = remember { FocusRequester() }
-    val menuFocusRequester = remember { FocusRequester() }
     val countryNameOf = rememberCountryNames()
     val options = remember(countries, countryNameOf) {
         countries
@@ -119,235 +80,28 @@ fun EmaCountryDropdown(
     val normalizedSelectedCode = selectedCode.trim().uppercase()
     val selected = options.firstOrNull { it.code == normalizedSelectedCode }
         ?: EmaHostCountries.firstOrNull { it.code == normalizedSelectedCode }?.let { it.copy(name = countryNameOf(it.flagCode, it.name)) }
-    val selectedName = selected?.name ?: selectedCode
-    var input by remember { mutableStateOf(TextFieldValue(selectedName)) }
-    // The menu shows all countries until the user taps the text or types. Then it shows the matching ones.
-    var filtering by remember { mutableStateOf(false) }
-    var selectAllPending by remember { mutableStateOf(false) }
-    val query = if (hasFocus && filtering) input.text.trim() else ""
-    val textInteractionSource = remember { MutableInteractionSource() }
-    val filteredOptions = remember(options, query) {
-        if (query.isEmpty()) {
-            options
-        } else {
-            options.filter { option ->
-                option.name.matchesSearch(query) || option.code.matchesSearch(query)
-            }
+    val selectOptions = remember(options) {
+        options.map { option ->
+            SelectOption(
+                key = option.code,
+                label = option.name,
+                searchText = option.code,
+                leadingIcon = { CountryFlag(code = option.flagCode, contentDescription = option.name) },
+            )
         }
     }
-    val selectedOptionIndex = filteredOptions.indexOfFirst { it.code == normalizedSelectedCode }
-        .takeIf { it >= 0 }
-        ?: 0
-    var activeOptionIndex by remember(filteredOptions) { mutableStateOf(selectedOptionIndex) }
-
-    fun closeMenu() {
-        expanded = false
-        filtering = false
-        moveFocusToMenu = false
-    }
-
-    fun selectOption(index: Int) {
-        val option = filteredOptions.getOrNull(index) ?: return
-        input = TextFieldValue(option.name)
-        closeMenu()
-        onCountrySelected(option.code)
-        anchorFocusRequester.requestFocus()
-    }
-
-    fun openMenu(moveFocus: Boolean) {
-        if (!enabled || filteredOptions.isEmpty()) return
-        activeOptionIndex = selectedOptionIndex.coerceIn(0, filteredOptions.lastIndex)
-        expanded = true
-        moveFocusToMenu = moveFocus
-    }
-
-    fun moveActiveOption(delta: Int) {
-        if (filteredOptions.isEmpty()) return
-        activeOptionIndex = (activeOptionIndex + delta).coerceIn(0, filteredOptions.lastIndex)
-    }
-
-    LaunchedEffect(selectedName) {
-        if (!hasFocus) input = TextFieldValue(selectedName)
-    }
-
-    LaunchedEffect(expanded, moveFocusToMenu) {
-        if (expanded && moveFocusToMenu) {
-            menuFocusRequester.requestFocus()
-            moveFocusToMenu = false
-        }
-    }
-
-    OnFieldTextClick(textInteractionSource) {
-        if (!enabled) return@OnFieldTextClick
-        if (input.text == selectedName) {
-            input = TextFieldValue(selectedName, TextRange(0, selectedName.length))
-            selectAllPending = true
-        }
-        filtering = true
-        expanded = true
-        moveFocusToMenu = false
-    }
-
-    // The box ignores its own toggle. The arrow and the text decide when the menu opens.
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = {},
+    SelectField(
+        label = label,
+        options = selectOptions,
+        selected = normalizedSelectedCode,
+        onSelect = onCountrySelected,
         modifier = modifier,
-    ) {
-        OutlinedTextField(
-            value = input,
-            onValueChange = {
-                if (it.text == input.text) {
-                    // A tap sets the cursor. Keep the selection of the whole text after the first tap.
-                    if (selectAllPending) selectAllPending = false else input = it
-                } else {
-                    selectAllPending = false
-                    input = it
-                    filtering = true
-                    expanded = enabled
-                }
-            },
-            label = { if (required) RequiredLabel(label) else Text(label) },
-            leadingIcon = selected?.let { option ->
-                { CountryFlag(code = option.flagCode, contentDescription = option.name) }
-            },
-            trailingIcon = {
-                DropdownArrow(expanded, enabled) {
-                    filtering = false
-                    moveFocusToMenu = false
-                    expanded = !expanded
-                }
-            },
-            interactionSource = textInteractionSource,
-            enabled = enabled,
-            isError = isError,
-            supportingText = errorMessage?.let { message -> { Text(message) } },
-            singleLine = true,
-            modifier = Modifier
-                .menuAnchor(
-                    type = ExposedDropdownMenuAnchorType.PrimaryEditable,
-                    enabled = true,
-                )
-                .then(focusRequester?.let(Modifier::focusRequester) ?: Modifier)
-                .focusRequester(anchorFocusRequester)
-                .onFocusChanged { focusState ->
-                    if (focusState.isFocused && !hasFocus) {
-                        input = TextFieldValue(
-                            text = selectedName,
-                            selection = TextRange(0, selectedName.length),
-                        )
-                    } else if (!focusState.isFocused && hasFocus) {
-                        input = TextFieldValue(selectedName)
-                        filtering = false
-                        selectAllPending = false
-                    }
-                    hasFocus = focusState.isFocused
-                }
-                .onPreviewKeyEvent { event: KeyEvent ->
-                    if (!enabled || event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    when (event.key) {
-                        Key.DirectionDown -> {
-                            if (expanded) moveActiveOption(1) else openMenu(moveFocus = true)
-                            if (expanded) moveFocusToMenu = true
-                            true
-                        }
-
-                        Key.DirectionUp -> {
-                            if (expanded) moveActiveOption(-1) else openMenu(moveFocus = true)
-                            if (expanded) moveFocusToMenu = true
-                            true
-                        }
-
-                        Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
-                            if (expanded) selectOption(activeOptionIndex) else openMenu(moveFocus = true)
-                            true
-                        }
-
-                        Key.Escape -> {
-                            if (expanded) {
-                                closeMenu()
-                                true
-                            } else {
-                                false
-                            }
-                        }
-
-                        else -> false
-                    }
-                }
-                .fillMaxWidth(),
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = ::closeMenu,
-            scrollState = rememberMenuScrollState(expanded, filteredOptions.indexOfFirst { it.code == normalizedSelectedCode }),
-        ) {
-            Column(
-                modifier = Modifier
-                    .focusRequester(menuFocusRequester)
-                    .focusable()
-                    .onPreviewKeyEvent { event ->
-                        if (!enabled || !expanded || event.type != KeyEventType.KeyDown) {
-                            return@onPreviewKeyEvent false
-                        }
-                        when (event.key) {
-                            Key.DirectionDown -> {
-                                moveActiveOption(1)
-                                true
-                            }
-
-                            Key.DirectionUp -> {
-                                moveActiveOption(-1)
-                                true
-                            }
-
-                            Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
-                                selectOption(activeOptionIndex)
-                                true
-                            }
-
-                            Key.Escape -> {
-                                closeMenu()
-                                anchorFocusRequester.requestFocus()
-                                true
-                            }
-
-                            else -> false
-                        }
-                    },
-            ) {
-                filteredOptions.forEachIndexed { index, option ->
-                    DropdownMenuItem(
-                        modifier = Modifier.background(
-                            if (index == activeOptionIndex) {
-                                MaterialTheme.colorScheme.secondaryContainer
-                            } else {
-                                Color.Transparent
-                            },
-                        ),
-                        text = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                CountryFlag(code = option.flagCode, contentDescription = option.name)
-                                Text(option.name)
-                            }
-                        },
-                        onClick = {
-                            activeOptionIndex = index
-                            selectOption(index)
-                        },
-                    )
-                }
-                if (filteredOptions.isEmpty()) {
-                    DropdownMenuItem(
-                        text = { Text(stringResource(Res.string.no_matching_countries)) },
-                        onClick = {},
-                        enabled = false,
-                    )
-                }
-            }
-        }
-    }
+        enabled = enabled,
+        required = required,
+        isError = isError,
+        supportingText = errorMessage,
+        valueText = selected?.name ?: selectedCode,
+        leadingIcon = selected?.let { option -> { CountryFlag(code = option.flagCode, contentDescription = option.name) } },
+        fieldModifier = focusRequester?.let(Modifier::focusRequester) ?: Modifier,
+    )
 }

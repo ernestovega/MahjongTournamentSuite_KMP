@@ -25,7 +25,8 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -178,9 +179,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
     var pendingDisabledUser by remember { mutableStateOf<ManagedUser?>(null) }
     var emailFilter by rememberSaveable { mutableStateOf("") }
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
-    var tournamentFilterText by rememberSaveable { mutableStateOf("") }
     var selectedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
-    var tournamentFilterExpanded by remember { mutableStateOf(false) }
     var restoreUid by rememberSaveable { mutableStateOf<String?>(null) }
     val addFocusRequester = remember { FocusRequester() }
     val rowFocusRequesters = remember(users.map(ManagedUser::uid)) {
@@ -324,19 +323,8 @@ fun GlobalUsersScreen(navController: NavHostController) {
                     selectedRoles = if (role in selectedRoles) selectedRoles - role else selectedRoles + role
                 },
                 tournaments = tournaments,
-                tournamentFilterText = tournamentFilterText,
-                onTournamentFilterTextChange = {
-                    tournamentFilterText = it
-                    selectedTournamentId = null
-                    tournamentFilterExpanded = true
-                },
-                tournamentFilterExpanded = tournamentFilterExpanded,
-                onTournamentFilterExpandedChange = { tournamentFilterExpanded = it },
-                onTournamentSelected = { tournament ->
-                    selectedTournamentId = tournament?.id
-                    tournamentFilterText = tournament?.name.orEmpty()
-                    tournamentFilterExpanded = false
-                },
+                selectedTournamentId = selectedTournamentId,
+                onTournamentSelected = { selectedTournamentId = it },
             )
             SectionCard(
                 title = stringResource(Res.string.accounts),
@@ -487,11 +475,8 @@ private fun UserFilters(
     selectedRoles: Set<GlobalUserRole>,
     onRoleToggle: (GlobalUserRole) -> Unit,
     tournaments: List<Tournament>,
-    tournamentFilterText: String,
-    onTournamentFilterTextChange: (String) -> Unit,
-    tournamentFilterExpanded: Boolean,
-    onTournamentFilterExpandedChange: (Boolean) -> Unit,
-    onTournamentSelected: (Tournament?) -> Unit,
+    selectedTournamentId: String?,
+    onTournamentSelected: (String?) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -507,51 +492,17 @@ private fun UserFilters(
                 },
                 modifier = Modifier.weight(1f),
             )
-            ExposedDropdownMenuBox(
-                expanded = tournamentFilterExpanded,
-                onExpandedChange = onTournamentFilterExpandedChange,
-                modifier = Modifier.weight(1f),
-            ) {
-                OutlinedTextField(
-                    value = tournamentFilterText,
-                    onValueChange = {},
-                    label = { Text(stringResource(Res.string.tournament)) },
-                    placeholder = { Text(stringResource(Res.string.all_tournaments)) },
-                    singleLine = true,
-                    readOnly = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(tournamentFilterExpanded) },
-                    modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                        .fillMaxWidth()
-                        .onPreviewKeyEvent { event ->
-                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                            val character = event.key.typeaheadCharacter()
-                            when {
-                                character != null -> {
-                                    onTournamentFilterTextChange(tournamentFilterText + character)
-                                    true
-                                }
-                                event.key == Key.Backspace && tournamentFilterText.isNotEmpty() -> {
-                                    onTournamentFilterTextChange(tournamentFilterText.dropLast(1))
-                                    true
-                                }
-                                else -> false
-                            }
-                        },
-                )
-                ExposedDropdownMenu(
-                    expanded = tournamentFilterExpanded,
-                    onDismissRequest = { onTournamentFilterExpandedChange(false) },
-                    scrollState = rememberMenuScrollState(tournamentFilterExpanded, null),
-                ) {
-                    DropdownMenuItem(text = { Text(stringResource(Res.string.all_tournaments)) }, onClick = { onTournamentSelected(null) })
-                    tournaments.filter {
-                        tournamentFilterText.isBlank() || it.name.matchesSearch(tournamentFilterText)
-                    }.forEach { tournament ->
-                        DropdownMenuItem(text = { Text(tournament.name) }, onClick = { onTournamentSelected(tournament) })
-                    }
-                }
+            val allTournaments = stringResource(Res.string.all_tournaments)
+            val options = remember(tournaments, allTournaments) {
+                listOf(SelectOption<String?>(null, allTournaments)) + tournaments.map { SelectOption(it.id, it.name) }
             }
+            SelectField(
+                label = stringResource(Res.string.tournament),
+                options = options,
+                selected = selectedTournamentId,
+                onSelect = onTournamentSelected,
+                modifier = Modifier.weight(1f),
+            )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             GlobalUserRole.entries.forEach { role ->
@@ -840,40 +791,19 @@ private fun ManageUserDialog(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun GlobalRoleDropdown(
     role: GlobalUserRole,
     options: List<GlobalUserRole>,
     enabled: Boolean,
     onSelect: (GlobalUserRole) -> Unit,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { if (enabled) expanded = it }) {
-        OutlinedTextField(
-            value = role.label(),
-            onValueChange = {},
-            readOnly = true,
-            label = { Text(stringResource(Res.string.global_role)) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
-            enabled = enabled,
-            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            scrollState = rememberMenuScrollState(expanded, options.indexOf(role)),
-        ) {
-            options.forEach { option ->
-                DropdownMenuItem(
-                    text = { Text(option.label()) },
-                    onClick = {
-                        expanded = false
-                        onSelect(option)
-                    },
-                )
-            }
-        }
-    }
+    SelectField(
+        label = stringResource(Res.string.global_role),
+        options = options.map { SelectOption(it, it.label()) },
+        selected = role,
+        onSelect = onSelect,
+        enabled = enabled,
+    )
 }
 
 @Composable
@@ -1077,33 +1007,3 @@ private fun GlobalUserRole.label(): String = stringResource(
         GlobalUserRole.PLAYER -> Res.string.role_player
     },
 )
-
-private fun Key.typeaheadCharacter(): Char? = when (this) {
-    Key.A -> 'a'
-    Key.B -> 'b'
-    Key.C -> 'c'
-    Key.D -> 'd'
-    Key.E -> 'e'
-    Key.F -> 'f'
-    Key.G -> 'g'
-    Key.H -> 'h'
-    Key.I -> 'i'
-    Key.J -> 'j'
-    Key.K -> 'k'
-    Key.L -> 'l'
-    Key.M -> 'm'
-    Key.N -> 'n'
-    Key.O -> 'o'
-    Key.P -> 'p'
-    Key.Q -> 'q'
-    Key.R -> 'r'
-    Key.S -> 's'
-    Key.T -> 't'
-    Key.U -> 'u'
-    Key.V -> 'v'
-    Key.W -> 'w'
-    Key.X -> 'x'
-    Key.Y -> 'y'
-    Key.Z -> 'z'
-    else -> null
-}

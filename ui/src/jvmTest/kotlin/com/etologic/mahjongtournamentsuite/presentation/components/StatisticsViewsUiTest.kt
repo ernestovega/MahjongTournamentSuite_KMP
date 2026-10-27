@@ -11,7 +11,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
@@ -176,14 +176,17 @@ class StatisticsViewsUiTest {
         setContent {
             MtsTheme(useDarkTheme = false) {
                 Column(Modifier.width(600.dp).padding(16.dp)) {
-                    SearchableDropdownField(
-                        "Player", listOf("a" to "María José", "b" to "Pedro", "c" to "O'Brien"), null, { chosen = it },
+                    SelectField(
+                        "Player",
+                        listOf("a" to "María José", "b" to "Pedro", "c" to "O'Brien") + (1..9).map { "n$it" to "Name $it" },
+                        null, { chosen = it },
                     )
                 }
             }
         }
-        onNode(hasSetTextAction()).performClick()
-        onNode(hasSetTextAction()).performTextInput("jose")
+        onNodeWithText("Player").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Pedro").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithTag("select-search").performTextInput("jose")
         waitForIdle()
         onNodeWithText("María José").assertExists()
         onNodeWithText("Pedro").assertDoesNotExist()
@@ -207,7 +210,7 @@ class StatisticsViewsUiTest {
             }
         }
         waitForIdle()
-        onNode(hasSetTextAction() and hasText("")).performClick()
+        onNodeWithText("Tournament").performClick()
         waitForIdle()
         onAllNodesWithText("Open 1")[onAllNodesWithText("Open 1").fetchSemanticsNodes().size - 1].performClick()
         waitForIdle()
@@ -233,7 +236,7 @@ class StatisticsViewsUiTest {
             }
         }
         waitForIdle()
-        onNode(hasSetTextAction() and hasText("")).performClick()
+        onNodeWithText("Tournament").performClick()
         waitForIdle()
     }
 }

@@ -12,7 +12,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import androidx.compose.material.icons.filled.Edit
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
-import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import androidx.compose.foundation.clickable
@@ -1352,11 +1352,11 @@ private fun RankingRows(
                         }
                     }
                     // The dropdown does not filter the list. Choosing a line scrolls the list to it.
-                    SearchableDropdownField<String>(
+                    SelectField<String>(
                         label = stringResource(Res.string.field_search),
                         options = options,
                         selected = null,
-                        onChoose = { key ->
+                        onSelect = { key ->
                             val index = visible.indexOfFirst { it.key == key }
                             if (index >= 0) scope.launch { listState.animateScrollToItem(index + 1) }
                         },

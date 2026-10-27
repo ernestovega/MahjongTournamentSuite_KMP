@@ -1159,7 +1159,7 @@ fun PlayerTournamentsSection(
                 itemVerticalAlignment = Alignment.CenterVertically,
             ) {
                 val options = remember(sorted) { sorted.map { it.first.id to it.first.name } }
-                SearchableDropdownField(
+                SelectField(
                     stringResource(Res.string.field_tournament), options, selectedId, { selectedId = it },
                     Modifier.widthIn(min = 240.dp).weight(1f),
                 )

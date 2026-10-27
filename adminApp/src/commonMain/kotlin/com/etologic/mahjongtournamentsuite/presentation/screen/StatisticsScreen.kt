@@ -65,7 +65,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatist
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
 import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
@@ -300,7 +300,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    SearchableDropdownField(
+                                    SelectField(
                                         stringResource(Res.string.tournament), options, tournamentId,
                                         { tournamentId = it; changingTournament = false },
                                         Modifier.weight(1f),
@@ -338,7 +338,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    SearchableDropdownField(
+                                    SelectField(
                                         stringResource(Res.string.stats_player_field), options, personEma,
                                         { emaId = it; changingPlayer = false },
                                         Modifier.weight(1f),

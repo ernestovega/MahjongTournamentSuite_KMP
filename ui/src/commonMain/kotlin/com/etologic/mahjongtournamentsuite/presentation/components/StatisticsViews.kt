@@ -438,122 +438,6 @@ private fun HeaderCard(modifier: Modifier, fillWidth: Boolean, action: (@Composa
     }
 }
 
-/** A dropdown that the user can type in. The typed text filters the [options]. The key of the chosen option goes to [onChoose]. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun <K> SearchableDropdownField(
-    label: String,
-    options: List<Pair<K, String>>,
-    selected: K?,
-    onChoose: (K) -> Unit,
-    modifier: Modifier = Modifier,
-    /** A field of 40 dp height with a magnifier icon as placeholder. The standard outlined field is 56 dp high. */
-    compact: Boolean = false,
-) {
-    var expanded by remember { mutableStateOf(false) }
-    // Null while the user does not type. Then the field shows the chosen option.
-    var query by remember { mutableStateOf<String?>(null) }
-    // The menu shows all options until the user taps the text or types. Then it shows the matching options.
-    var filtering by remember { mutableStateOf(false) }
-    val selectedLabel = options.firstOrNull { it.first == selected }?.second ?: ""
-    // The whole text is selected when the field gets the focus, so it is easy to delete.
-    var selection by remember { mutableStateOf(TextRange.Zero) }
-    var selectAllPending by remember { mutableStateOf(false) }
-    val currentText = query ?: selectedLabel
-    val fieldValue = TextFieldValue(currentText, selection.coerceIn(0, currentText.length))
-    val onFieldChange: (TextFieldValue) -> Unit = { new ->
-        if (new.text == currentText) {
-            // A tap sets the cursor. Keep the selection of the whole text after the first tap.
-            if (selectAllPending) selectAllPending = false else selection = new.selection
-        } else {
-            selectAllPending = false
-            selection = new.selection
-            query = new.text
-            filtering = true
-            expanded = true
-        }
-    }
-    val onTextClick: () -> Unit = {
-        if (query == null) {
-            selection = TextRange(0, currentText.length)
-            selectAllPending = true
-        }
-        filtering = true
-        expanded = true
-    }
-    val onArrowClick: () -> Unit = {
-        query = null
-        filtering = false
-        expanded = !expanded
-    }
-    val onFocus: (FocusState) -> Unit = { state ->
-        if (state.isFocused) {
-            selection = TextRange(0, currentText.length)
-            selectAllPending = true
-        } else {
-            selectAllPending = false
-        }
-    }
-    val shown = remember(query, filtering, options, selectedLabel) {
-        val text = if (filtering) (query ?: selectedLabel).trim() else ""
-        (if (text.isEmpty()) options else options.filter { it.second.matchesSearch(text) }).take(MAX_DROPDOWN_OPTIONS)
-    }
-    // The box ignores its own toggle. The arrow and the text decide when the menu opens.
-    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = {}, modifier = modifier) {
-        if (compact) {
-            val interactionSource = remember { MutableInteractionSource() }
-            val text = query ?: selectedLabel
-            OnFieldTextClick(interactionSource, onTextClick)
-            BasicTextField(
-                value = fieldValue,
-                onValueChange = onFieldChange,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                interactionSource = interactionSource,
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth().heightIn(min = 40.dp).onFocusChanged(onFocus),
-                decorationBox = { innerTextField ->
-                    OutlinedTextFieldDefaults.DecorationBox(
-                        value = text,
-                        innerTextField = innerTextField,
-                        enabled = true,
-                        singleLine = true,
-                        visualTransformation = VisualTransformation.None,
-                        interactionSource = interactionSource,
-                        placeholder = { Icon(Icons.Default.Search, contentDescription = label, modifier = Modifier.size(20.dp)) },
-                        trailingIcon = { DropdownArrow(expanded, onClick = onArrowClick) },
-                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 6.dp),
-                    )
-                },
-            )
-        } else {
-            val interactionSource = remember { MutableInteractionSource() }
-            OnFieldTextClick(interactionSource, onTextClick)
-            OutlinedTextField(
-                value = fieldValue,
-                onValueChange = onFieldChange,
-                singleLine = true,
-                label = { Text(label) },
-                trailingIcon = { DropdownArrow(expanded, onClick = onArrowClick) },
-                interactionSource = interactionSource,
-                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable).fillMaxWidth().onFocusChanged(onFocus),
-            )
-        }
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false; query = null; filtering = false },
-            scrollState = rememberMenuScrollState(expanded, shown.indexOfFirst { it.first == selected }),
-        ) {
-            if (shown.isEmpty()) DropdownMenuItem(text = { Text(stringResource(Res.string.dropdown_no_match)) }, onClick = {}, enabled = false)
-            shown.forEach { (key, name) ->
-                DropdownMenuItem(text = { Text(name) }, onClick = { expanded = false; query = null; filtering = false; onChoose(key) })
-            }
-        }
-    }
-}
-
-private const val MAX_DROPDOWN_OPTIONS = 50
-
 /** The player dropdown of one tournament. The names come sorted by name. */
 @Composable
 fun PlayerDropdownField(
@@ -563,5 +447,5 @@ fun PlayerDropdownField(
     modifier: Modifier = Modifier,
 ) {
     val options = remember(names) { names.entries.sortedBy { it.value }.map { it.key to it.value } }
-    SearchableDropdownField(stringResource(Res.string.column_player), options, selectedId, onChoose, modifier)
+    SelectField(stringResource(Res.string.column_player), options, selectedId, onChoose, modifier)
 }

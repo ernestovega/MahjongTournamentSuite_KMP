@@ -29,51 +29,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 
-/**
- * The arrow of a dropdown field that the user can also type in.
- * A tap on the arrow only opens or closes the full menu.
- * It does not give the focus to the text, so the keyboard stays closed and the text is not selected.
- */
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun DropdownArrow(expanded: Boolean, enabled: Boolean = true, onClick: () -> Unit) {
-    val focusManager = LocalFocusManager.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    val scope = rememberCoroutineScope()
-    val showAll = stringResource(Res.string.dropdown_show_all)
-    val currentOnClick by rememberUpdatedState(onClick)
-    Box(
-        modifier = Modifier
-            .semantics { contentDescription = showAll }
-            .padding(horizontal = 6.dp)
-            .pointerInput(enabled) {
-                if (enabled) {
-                    detectTapGestures {
-                        currentOnClick()
-                        // The text field also sees the tap and asks for the focus after this handler. Take it back.
-                        scope.launch {
-                            repeat(3) { withFrameNanos { } }
-                            focusManager.clearFocus()
-                            keyboard?.hide()
-                        }
-                    }
-                }
-            },
-    ) {
-        ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-    }
-}
-
-/** Calls [onClick] each time the user taps the text area of a field. A tap on the arrow does not count. */
-@Composable
-fun OnFieldTextClick(interactionSource: InteractionSource, onClick: () -> Unit) {
-    val scope = rememberCoroutineScope()
-    val currentOnClick by rememberUpdatedState(onClick)
-    LaunchedEffect(interactionSource) {
-        interactionSource.interactions.collect { if (it is PressInteraction.Release) currentOnClick() }
-    }
-}
-
 /** The height of one item of a Material 3 dropdown menu. */
 private val MENU_ITEM_HEIGHT = 48.dp
 

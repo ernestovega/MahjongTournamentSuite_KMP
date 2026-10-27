@@ -28,7 +28,9 @@ import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.DropdownMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -239,7 +241,7 @@ private fun RoundTableStrip(
     val tables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
     val roundIndex = rounds.indexOfFirst { it.roundId == selectedRoundId }
     val chipsState = rememberLazyListState()
-    var roundMenuOpen by remember { mutableStateOf(false) }
+    val roundMenu = rememberSelectMenuState()
     val roundStatus = roundCompletionStatus(tables)
     Card(modifier = Modifier.fillMaxWidth().appFocusGroup(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Row(
@@ -254,7 +256,7 @@ private fun RoundTableStrip(
             ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = stringResource(Res.string.previous_round)) }
             Box {
                 FocusedOutlinedButton(
-                    onClick = { roundMenuOpen = true },
+                    onClick = roundMenu::open,
                     enabled = enabled,
                     focusRequester = roundFocusRequester,
                 ) {
@@ -263,24 +265,14 @@ private fun RoundTableStrip(
                     StatusIconWithTooltip(roundStatus)
                     Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
                 }
-                DropdownMenu(
-                    expanded = roundMenuOpen,
-                    onDismissRequest = { roundMenuOpen = false },
-                    scrollState = rememberMenuScrollState(roundMenuOpen, rounds.indexOfFirst { it.roundId == selectedRoundId }),
-                ) {
-                    rounds.forEach { round ->
-                        DropdownMenuItem(
-                            text = { Text(stringResource(Res.string.round_n, round.roundId)) },
-                            trailingIcon = {
-                                StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId }))
-                            },
-                            onClick = {
-                                roundMenuOpen = false
-                                onSelectRound(round.roundId)
-                            },
-                        )
-                    }
+                val roundOptions = rounds.map { round ->
+                    SelectOption(
+                        key = round.roundId,
+                        label = stringResource(Res.string.round_n, round.roundId),
+                        trailingIcon = { StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId })) },
+                    )
                 }
+                SelectMenu(roundMenu, roundOptions, selectedRoundId, onSelectRound)
             }
             FocusedIconButton(
                 onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },

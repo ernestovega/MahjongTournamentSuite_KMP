@@ -1,13 +1,13 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
-import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import org.junit.Test
 
-/** The search field of the ranking: a magnifier, an arrow that shows all names, and a text that filters. */
+/** The search field of the ranking: a field that shows all names, and a search field in the menu that filters them. */
 @OptIn(ExperimentalTestApi::class)
 class PlayerSearchDropdownTest : PlayerE2eTest() {
     private fun openRanking() {
@@ -36,33 +36,27 @@ class PlayerSearchDropdownTest : PlayerE2eTest() {
     private fun count(name: String) = c.onAllNodes(hasText(name)).fetchSemanticsNodes().size
 
     @Test
-    fun arrowShowsAllNamesWithoutKeyboard() {
+    fun fieldShowsAllNamesWithoutKeyboard() {
         openRanking()
         val anna = count("ANNA ROSSI")
         val luc = count("LUC DUBOIS")
         pause()
-        c.onNodeWithContentDescription("Show all options", useUnmergedTree = true).performClick()
+        c.onNodeWithText("Search").performClick()
         c.waitUntil(5_000) { count("ANNA ROSSI") > anna && count("LUC DUBOIS") > luc }
         pause()
-        check(!keyboardShown()) { "The keyboard must stay closed after a tap on the arrow." }
-        // A second tap closes the menu.
-        c.onNodeWithContentDescription("Show all options", useUnmergedTree = true).performClick()
-        c.waitUntil(5_000) { count("ANNA ROSSI") == anna }
-        pause()
+        check(!keyboardShown()) { "The keyboard must stay closed after a tap on the field." }
     }
 
     @Test
-    fun textTapOpensKeyboardAndTypingFilters() {
+    fun searchFieldOfTheMenuFilters() {
         openRanking()
         val anna = count("ANNA ROSSI")
         val luc = count("LUC DUBOIS")
-        pause()
-        c.onNode(hasSetTextAction()).performClick()
-        c.waitUntil(5_000) { keyboardShown() }
-        pause()
-        c.onNode(hasSetTextAction()).performTextInputText("luc")
+        c.onNodeWithText("Search").performClick()
         c.waitUntil(5_000) { count("LUC DUBOIS") > luc }
-        check(count("ANNA ROSSI") == anna) { "The menu must show only the names that match." }
+        c.onNode(hasTestTag("select-search")).performClick()
+        c.onNode(hasTestTag("select-search")).performTextInputText("luc")
+        c.waitUntil(5_000) { count("ANNA ROSSI") == anna }
         pause()
     }
 }

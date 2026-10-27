@@ -7,6 +7,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextContains
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.isDisplayed
 import androidx.compose.ui.test.performClick
@@ -81,5 +82,25 @@ class TimeZoneDropdownUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(timeZoneLabel("UTC")).fetchSemanticsNodes().isNotEmpty() }
         waitUntil(timeoutMillis = 5_000) { anyDisplayed(timeZoneLabel("UTC")) }
         assertFalse(anyDisplayed(timeZoneLabel(SelectableTimeZoneIds.first())))
+    }
+}
+
+@OptIn(ExperimentalTestApi::class)
+class TimeZoneDropdownReopenUiTest {
+    @Test
+    fun theMenuOpensAgainAfterEachSelection() = runComposeUiTest {
+        var zone by mutableStateOf("Europe/Madrid")
+        setContent { TimeZoneDropdown(value = zone, onValueChange = { zone = it }) }
+        val targets = listOf("Europe/Paris", "Asia/Kolkata", "America/New_York", "Europe/Madrid")
+        for (target in targets) {
+            onNodeWithText(timeZoneLabel(zone)).performClick()
+            waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(timeZoneLabel(target)).fetchSemanticsNodes().isNotEmpty() && onAllNodesWithText(timeZoneLabel(zone)).fetchSemanticsNodes().size > 1 }
+            // The search field covers the top of the menu, so the test finds the zone with the search.
+            onNodeWithTag("select-search").performTextInput(target)
+            waitForIdle()
+            onNodeWithText(timeZoneLabel(target)).performClick()
+            waitForIdle()
+            assertEquals(target, zone)
+        }
     }
 }

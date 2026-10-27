@@ -83,7 +83,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandin
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
-import com.etologic.mahjongtournamentsuite.presentation.components.SearchableDropdownField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
 import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
@@ -576,7 +576,7 @@ private fun OthersStatistics(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    SearchableDropdownField(
+                    SelectField(
                         stringResource(Res.string.stats_player_field), options, emaId,
                         { onEmaIdChange(it); changing = false },
                         Modifier.weight(1f),

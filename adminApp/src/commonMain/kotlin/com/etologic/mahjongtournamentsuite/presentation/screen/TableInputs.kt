@@ -1,9 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberMenuScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import androidx.compose.foundation.background
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,11 +15,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -49,13 +46,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.PopupProperties
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
-import kotlin.time.Duration.Companion.milliseconds
-import kotlin.time.Duration.Companion.seconds
-import kotlin.time.TimeMark
-import kotlin.time.TimeSource
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.player_n
 import mahjongtournamentsuite.adminapp.generated.resources.show_info_for
@@ -185,8 +177,11 @@ internal fun HandToggleControl(
 
 internal fun SeatTextValues?.orZero(): SeatTextValues = this ?: SeatTextValues.ZERO
 
+/**
+ * A player menu in a table cell. When the menu is closed, the arrow keys move the focus to the next cell.
+ * The Enter key and the space key open the menu.
+ */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 internal fun PlayerDropdown(
     modifier: Modifier = Modifier,
     label: String?,
@@ -209,15 +204,7 @@ internal fun PlayerDropdown(
     onNavigateUp: (() -> Boolean)? = null,
     onNavigateDown: (() -> Boolean)? = null,
 ) {
-    var expanded by remember { mutableStateOf(false) }
-    var lastDismissMark by remember { mutableStateOf<TimeMark?>(null) }
-    val anchorFocusRequester = remember { FocusRequester() }
-    data class DropdownOption(
-        val value: String,
-        val label: String,
-        val onSelect: () -> Unit,
-    )
-
+    val menu = rememberSelectMenuState()
     val trimmed = value.trim()
     val selectedId = trimmed.toIntOrNull()
     val playerN = rememberTemplate(Res.string.player_n)
@@ -230,223 +217,53 @@ internal fun PlayerDropdown(
         selectedId == null -> trimmed
         else -> playerLabel(selectedId)
     }
+    // The menu of a disabled field stays readable. Its options are disabled.
     val options = buildList {
-        emptyOptionLabel?.let { emptyLabel ->
-            add(
-                DropdownOption(
-                    value = emptyLabel,
-                    label = emptyLabel,
-                    onSelect = {
-                        expanded = false
-                        onChange(emptyLabel)
-                        onDismiss()
-                    },
-                ),
-            )
-        }
+        emptyOptionLabel?.let { emptyLabel -> add(SelectOption(emptyLabel, emptyLabel, enabled = enabled)) }
         playerIds.forEach { id ->
             if (id in excludedPlayerIds) return@forEach
             val suffix = optionSuffixById[id]
             val base = playerLabel(id)
-            add(
-                DropdownOption(
-                    value = id.toString(),
-                    label = if (suffix.isNullOrBlank()) base else "$base ($suffix)",
-                    onSelect = {
-                        expanded = false
-                        onChange(id.toString())
-                        onDismiss()
-                    },
-                ),
-            )
+            add(SelectOption(id.toString(), if (suffix.isNullOrBlank()) base else "$base ($suffix)", enabled = enabled))
         }
     }
-    val selectedOptionIndex = options.indexOfFirst { it.value == trimmed }.takeIf { it >= 0 } ?: 0
-    var activeOptionIndex by remember { mutableStateOf(selectedOptionIndex) }
-
-    fun openMenu() {
-        activeOptionIndex = selectedOptionIndex
-        expanded = true
-        anchorFocusRequester.requestFocus()
-    }
-
-    fun moveActive(delta: Int) {
-        if (options.isEmpty()) return
-        val nextIndex = (activeOptionIndex + delta).coerceIn(0, options.lastIndex)
-        activeOptionIndex = nextIndex
-    }
-
-    fun moveAway(key: Key): Boolean {
-        if (expanded) expanded = false
-        return when (key) {
-            Key.DirectionLeft -> onNavigateLeft?.invoke() ?: false
-            Key.DirectionRight -> onNavigateRight?.invoke() ?: false
-            Key.DirectionUp -> onNavigateUp?.invoke() ?: false
-            Key.DirectionDown -> onNavigateDown?.invoke() ?: false
-            else -> false
-        }
-    }
-
-    LaunchedEffect(expanded, selectedOptionIndex, options.size) {
-        if (!expanded) {
-            activeOptionIndex = selectedOptionIndex
-        } else {
-            activeOptionIndex = activeOptionIndex.coerceIn(0, options.lastIndex.coerceAtLeast(0))
-        }
-    }
-
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        // The menu remains inspectable when the field is disabled. Its options stay disabled below.
-        onExpandedChange = { shouldExpand ->
-            // The popup closes on the press and the anchor toggles on the release.
-            // Ignore that release so a click on the open anchor does not reopen the menu.
-            if (shouldExpand && (lastDismissMark?.elapsedNow() ?: 1.seconds) < 400.milliseconds) {
-                return@ExposedDropdownMenuBox
-            }
-            expanded = shouldExpand
-        },
-        modifier = modifier,
-    ) {
-        CompactOutlinedTextField(
-            modifier = Modifier
-                .menuAnchor(
-                    type = ExposedDropdownMenuAnchorType.PrimaryNotEditable,
-                    enabled = true,
-                )
-                .then(focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
-                .focusRequester(anchorFocusRequester)
-                .onFocusChanged { if (!it.isFocused) onFocusLost() }
-                .onPreviewKeyEvent { e: KeyEvent ->
-                    if (!enabled || e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                    when (e.key) {
-                        Key.DirectionDown -> if (expanded) {
-                            moveActive(1)
-                            true
-                        } else {
-                            openMenu()
-                            true
-                        }
-
-                        Key.DirectionUp -> if (expanded) {
-                            moveActive(-1)
-                            true
-                        } else {
-                            openMenu()
-                            true
-                        }
-
-                        Key.DirectionLeft, Key.DirectionRight -> moveAway(e.key)
-
-                        Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
-                            if (expanded) {
-                                options.getOrNull(activeOptionIndex)?.onSelect()
-                            } else {
-                                openMenu()
-                            }
-                            true
-                        }
-                        Key.Escape -> {
-                            if (expanded) {
-                                expanded = false
-                                true
-                            } else {
-                                false
-                            }
-                        }
-                        else -> false
-                    }
-                }
-                .fillMaxWidth(),
-            value = displayValue,
-            onValueChange = {},
-            readOnly = true,
-            enabled = enabled,
-            label = label?.let { { Text(it) } },
-            textStyle = textStyle,
-            singleLine = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-        colors = if (enabled && isChanged) {
-            androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedLabelColor = MaterialTheme.colorScheme.tertiary,
-            )
-        } else {
-            ExposedDropdownMenuDefaults.outlinedTextFieldColors()
-        },
+    val colors = if (enabled && isChanged) {
+        OutlinedTextFieldDefaults.colors(
+            unfocusedBorderColor = MaterialTheme.colorScheme.tertiary,
+            focusedBorderColor = MaterialTheme.colorScheme.primary,
+            unfocusedLabelColor = MaterialTheme.colorScheme.tertiary,
         )
-        // A non-focusable popup lets the click reach another dropdown below it.
-        // A focusable popup would swallow that click and need a second one.
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = {
-                lastDismissMark = TimeSource.Monotonic.markNow()
-                expanded = false
-                onDismiss()
-            },
-            modifier = Modifier.exposedDropdownSize(),
-            scrollState = rememberMenuScrollState(expanded, options.indexOfFirst { it.value == trimmed }),
-            properties = PopupProperties(focusable = false, dismissOnClickOutside = true),
-        ) {
-            Column(
-                modifier = Modifier
-                    .onPreviewKeyEvent { e ->
-                        if (!enabled || !expanded || e.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                        when (e.key) {
-                            Key.DirectionDown -> {
-                                if (activeOptionIndex < options.lastIndex) {
-                                    moveActive(1)
-                                    true
-                                } else {
-                                    moveAway(Key.DirectionDown)
-                                }
-                            }
-
-                            Key.DirectionUp -> {
-                                if (activeOptionIndex > 0) {
-                                    moveActive(-1)
-                                    true
-                                } else {
-                                    moveAway(Key.DirectionUp)
-                                }
-                            }
-
-                            Key.DirectionLeft, Key.DirectionRight -> moveAway(e.key)
-                            Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
-                                options.getOrNull(activeOptionIndex)?.onSelect()
-                                true
-                            }
-
-                            Key.Escape -> {
-                                expanded = false
-                                true
-                            }
-
-                            else -> false
-                        }
-                    },
-            ) {
-                options.forEachIndexed { index, option ->
-                    DropdownMenuItem(
-                        modifier = Modifier.background(
-                            if (index == activeOptionIndex) {
-                                MaterialTheme.colorScheme.secondaryContainer
-                            } else {
-                                Color.Transparent
-                            },
-                        ),
-                        text = { Text(option.label) },
-                        enabled = enabled,
-                        onClick = {
-                            activeOptionIndex = index
-                            option.onSelect()
-                            anchorFocusRequester.requestFocus()
-                        },
-                        contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    )
-                }
-            }
-        }
+    } else {
+        OutlinedTextFieldDefaults.colors()
     }
+    SelectField(
+        label = label,
+        options = options,
+        selected = trimmed,
+        onSelect = onChange,
+        modifier = modifier,
+        enabled = enabled,
+        openWhenDisabled = true,
+        valueText = displayValue,
+        textStyle = textStyle,
+        colors = colors,
+        onClosed = onDismiss,
+        state = menu,
+        fieldModifier = (focusRequester?.let { Modifier.focusRequester(it) } ?: Modifier)
+            .onFocusChanged { if (!it.isFocused) onFocusLost() }
+            .onPreviewKeyEvent { event: KeyEvent ->
+                if (!enabled || event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                when (event.key) {
+                    Key.Enter, Key.NumPadEnter, Key.Spacebar -> {
+                        menu.open()
+                        true
+                    }
+                    Key.DirectionUp -> onNavigateUp?.invoke() ?: false
+                    Key.DirectionDown -> onNavigateDown?.invoke() ?: false
+                    Key.DirectionLeft -> onNavigateLeft?.invoke() ?: false
+                    Key.DirectionRight -> onNavigateRight?.invoke() ?: false
+                    else -> false
+                }
+            },
+    )
 }

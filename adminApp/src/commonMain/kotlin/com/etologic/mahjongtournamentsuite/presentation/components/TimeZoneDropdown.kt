@@ -1,19 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.offsetAt
@@ -68,7 +59,6 @@ private fun fallbackTimeZoneIds(): List<String> {
 
 /** A field with a menu of time zone names. The user can only pick a name from the menu. */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun TimeZoneDropdown(
     value: String,
     onValueChange: (String) -> Unit,
@@ -79,50 +69,23 @@ fun TimeZoneDropdown(
     isError: Boolean = false,
     supportingText: String? = null,
 ) {
-    var expanded by remember { mutableStateOf(false) }
     // A zone name that is not in the list (for example from an old tournament) stays in the menu, so the user can see it.
-    val options = remember(value) { if (value.isBlank() || value in SelectableTimeZoneIds) SelectableTimeZoneIds else listOf(value) + SelectableTimeZoneIds }
-
-    // Without a selected zone, the menu opens at "UTC". If the list has no "UTC", it opens at the first zone with UTC +0.
-    val menuScroll = rememberMenuScrollState(
-        expanded = expanded,
-        selectedIndex = options.indexOf(value).takeIf { it >= 0 },
-        defaultIndex = options.indexOf("UTC").takeIf { it >= 0 } ?: options.indexOfFirst { offsetSeconds(it) == 0 }.coerceAtLeast(0),
-    )
-
-    ExposedDropdownMenuBox(
-        expanded = expanded && enabled,
-        onExpandedChange = { expanded = it },
-        modifier = modifier,
-    ) {
-        OutlinedTextField(
-            value = if (value.isBlank()) value else timeZoneLabel(value),
-            onValueChange = {},
-            readOnly = true,
-            label = { if (required) RequiredLabel(label) else Text(label) },
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded && enabled) },
-            supportingText = supportingText?.let { message -> { Text(message) } },
-            isError = isError,
-            enabled = enabled,
-            singleLine = true,
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = enabled)
-                .fillMaxWidth(),
-        )
-        ExposedDropdownMenu(
-            expanded = expanded && enabled,
-            onDismissRequest = { expanded = false },
-            scrollState = menuScroll,
-        ) {
-            options.forEach { zoneId ->
-                DropdownMenuItem(
-                    text = { Text(timeZoneLabel(zoneId)) },
-                    onClick = {
-                        onValueChange(zoneId)
-                        expanded = false
-                    },
-                )
-            }
-        }
+    val options = remember(value) {
+        val ids = if (value.isBlank() || value in SelectableTimeZoneIds) SelectableTimeZoneIds else listOf(value) + SelectableTimeZoneIds
+        ids.map { id -> SelectOption(id, timeZoneLabel(id)) }
     }
+    SelectField(
+        label = label,
+        options = options,
+        selected = value.takeIf { it.isNotBlank() },
+        onSelect = onValueChange,
+        modifier = modifier,
+        enabled = enabled,
+        required = required,
+        isError = isError,
+        supportingText = supportingText,
+        // Without a selected zone, the menu opens at "UTC". If the list has no "UTC", it opens at the first zone with UTC +0.
+        defaultIndex = options.indexOfFirst { it.key == "UTC" }.takeIf { it >= 0 }
+            ?: options.indexOfFirst { offsetSeconds(it.key) == 0 }.coerceAtLeast(0),
+    )
 }
