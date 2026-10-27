@@ -7,6 +7,7 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -221,6 +222,39 @@ class RoleGatingUiTest {
         waitForIdle()
 
         onNodeWithText("Disable account").assertExists()
+    }
+
+    @Test
+    fun theDisableButtonIsInTheRowOfCancelAndSaveAndTheResetButtonIsAboveIt() = runComposeUiTest {
+        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("ed@example.test")
+        onNodeWithText("ed@example.test").performClick()
+        waitForIdle()
+
+        val reset = onNodeWithText("Send password-reset email").getUnclippedBoundsInRoot()
+        val disable = onNodeWithText("Disable account").getUnclippedBoundsInRoot()
+        val cancel = onNodeWithText("Cancel").getUnclippedBoundsInRoot()
+        val save = onNodeWithText("Save").getUnclippedBoundsInRoot()
+        assertEquals(disable.top, cancel.top)
+        assertEquals(disable.top, save.top)
+        assertTrue(disable.left < cancel.left)
+        assertTrue(cancel.left < save.left)
+        assertTrue(reset.bottom <= disable.top)
+        assertEquals(disable.left, reset.left)
+    }
+
+    @Test
+    fun anAdminCanChooseThePlayerRoleForAnEditorAccount() = runComposeUiTest {
+        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
+
+        awaitText("ed@example.test")
+        onNodeWithText("ed@example.test").performClick()
+        waitForIdle()
+        onNodeWithText("Global role").performClick()
+        waitForIdle()
+
+        onAllNodesWithText("Player").onFirst().assertExists()
     }
 
     @Test
