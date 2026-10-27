@@ -154,9 +154,9 @@ export function adminRouter(): Router {
     try {
       const actor = res.locals.auth as Actor;
       const current = await getManagedUser(pathParam(req, "uid"));
-      // A player-only account may keep its role. Management cannot create players or demote editors to players.
+      // A player-only account may keep its role. Only an admin demotes an editor or an admin to a player.
       const role = parseGlobalUserRole(req.body?.role)
-        ?? (req.body?.role === "PLAYER" && current.role === "PLAYER" ? "PLAYER" as const : null);
+        ?? (req.body?.role === "PLAYER" && (current.role === "PLAYER" || hasAdminClaim(actor)) ? "PLAYER" as const : null);
       if (!role) throw badRequest("Invalid role");
       if (!hasAdminClaim(actor) && (current.role === "ADMIN" || role === "ADMIN")) {
         throw forbidden("Editors cannot modify admin accounts");
@@ -175,12 +175,15 @@ export function adminRouter(): Router {
       }
       const alias = String(req.body?.alias ?? "").trim();
       const assignmentScope = await assignmentScopeFor(actor);
-      const tournamentAssignments = role === "ADMIN" ? [] : parseTournamentAssignments(req.body?.tournamentAssignments);
+      const tournamentAssignments = role === "EDITOR" ? parseTournamentAssignments(req.body?.tournamentAssignments) : [];
       await assertAdminRemainsEnabled(current.role, current.disabled, role, current.disabled);
       await assertEmailAvailable(email, current.uid);
       // Check the EMA id before any change, so a refusal leaves the account as it was.
       const nextEmaId = typeof req.body?.emaId === "string" ? req.body.emaId.trim() || null : undefined;
       const emaIdChanges = nextEmaId !== undefined && nextEmaId !== (current.emaId ?? null);
+      if (role === "PLAYER" && (nextEmaId === undefined ? current.emaId : nextEmaId) == null) {
+        throw badRequest("A player account needs an EMA id");
+      }
       if (emaIdChanges) {
         if (role !== "PLAYER" && !hasAdminClaim(actor)) throw forbidden("Only an admin can change the EMA id of an editor account");
         if (nextEmaId != null) await assertEmaIdAvailable(nextEmaId, current.uid);
