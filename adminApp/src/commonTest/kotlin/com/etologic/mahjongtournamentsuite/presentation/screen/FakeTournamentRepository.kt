@@ -38,7 +38,9 @@ internal class FakeTournamentRepository : TournamentRepository {
             playerIds = table.playerIds,
             isCompleted = table.isCompleted,
             useTotalsOnly = table.useTotalsOnly,
-            hasProgress = hands.any { it.handScore.isNotBlank() },
+            // Like the server: seats, scores, hands or a completed table count as progress.
+            hasProgress = listOf(table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId).any { it.isNotBlank() } ||
+                hands.any { it.handScore.isNotBlank() } || table.isCompleted,
             version = table.version,
         )
     }

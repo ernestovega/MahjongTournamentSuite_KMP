@@ -128,7 +128,7 @@ class PlayersScreenAccountsUiTest {
 
         openMenu(0)
 
-        onAllNodesWithText("Send reminder").assertCountEquals(1)
+        onAllNodesWithText("Remind").assertCountEquals(1)
     }
 
     @Test
@@ -137,7 +137,7 @@ class PlayersScreenAccountsUiTest {
 
         openMenu(0)
 
-        onAllNodesWithText("Send reminder").assertCountEquals(1)
+        onAllNodesWithText("Remind").assertCountEquals(1)
     }
 
     @Test
@@ -147,7 +147,7 @@ class PlayersScreenAccountsUiTest {
         show(world)
 
         openMenu(0)
-        onNodeWithText("Send reminder").performClick()
+        onNodeWithText("Remind").performClick()
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The reminder was sent.").fetchSemanticsNodes().isNotEmpty() }
 
         assertEquals(listOf(listOf(1)), world.accounts.sent)
@@ -159,7 +159,7 @@ class PlayersScreenAccountsUiTest {
 
         openMenu(0)
 
-        onAllNodesWithText("Send reminder").assertCountEquals(0)
+        onAllNodesWithText("Remind").assertCountEquals(0)
     }
 
     @Test

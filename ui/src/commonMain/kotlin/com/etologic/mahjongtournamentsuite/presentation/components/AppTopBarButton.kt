@@ -36,8 +36,14 @@ fun AppTopBarButton(
     iconContent: (@Composable () -> Unit)? = null,
     /** When false, the button shows only the icon. The text stays as the description and in the menu. */
     showLabel: Boolean = true,
+    /**
+     * The button looks disabled but still takes the click. The caller then explains why the action is not possible.
+     * A plain disabled button gives no click, so the user would not learn the reason.
+     */
+    looksDisabled: Boolean = false,
 ) {
     val buttonEnabled = enabled && LocalAppButtonsEnabled.current
+    val dim = if (looksDisabled) Modifier.alpha(DisabledTopBarButtonAlpha) else Modifier
     val menu = LocalTopBarMenu.current
     val labelVisible = showLabel && LocalTopBarLabels.current
     if (menu != null) {
@@ -45,6 +51,7 @@ fun AppTopBarButton(
             text = { Text(text) },
             leadingIcon = { if (iconContent == null) Icon(imageVector = icon, contentDescription = null) else iconContent() },
             enabled = buttonEnabled,
+            modifier = dim,
             onClick = {
                 menu.dismiss()
                 onClick()
@@ -57,7 +64,7 @@ fun AppTopBarButton(
         IconButton(
             onClick = onClick,
             enabled = buttonEnabled,
-            modifier = if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester),
+            modifier = (if (focusRequester == null) Modifier else Modifier.focusRequester(focusRequester)).then(dim),
         ) {
             if (iconContent == null) {
                 Icon(imageVector = icon, contentDescription = text, tint = textColor)
@@ -73,7 +80,7 @@ fun AppTopBarButton(
         focusRequester = focusRequester,
     ) {
         Column(
-            modifier = Modifier.alpha(if (buttonEnabled) 1f else DisabledTopBarButtonAlpha),
+            modifier = Modifier.alpha(if (buttonEnabled) 1f else DisabledTopBarButtonAlpha).then(dim),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {

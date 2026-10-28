@@ -76,7 +76,8 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 | An email that an account of another EMA number, or with none, owns | Error `EMAIL_OWNED_BY_OTHER_ACCOUNT`. | "refuses an email that an account of another EMA number owns, and accepts the account of the same number" |
 | An email that the account of the same EMA number owns | Accepted. The account email wins. | same as above |
 | An empty email | Accepted. The slot has no pending email. | "an empty email is allowed and a valid email is saved in lower case" |
-| A tournament with table data | The preview shows `tournamentStarted`. The apply step refuses with `TOURNAMENT_STARTED`. | "refuses a tournament with table data and says so in the preview" |
+| A tournament with table data (one assigned seat in one table is enough, as is a score, a hand or a completed table) | The preview shows `tournamentStarted`. The apply step refuses with `TOURNAMENT_STARTED`. | "refuses a tournament with table data and says so in the preview" |
+| The same tournament in the app | The Import button of the Players and Teams screens looks disabled. A click opens a dialog that says the tournament has data and why the import is closed. Export stays open. | `ImportLockedUiTest` |
 | A team column | Every team gets the name of the file, or `Team N` when the file does not name it. Without the column, the names stay. | "keeps the team names when the file has no team column…" |
 | A file with up to 1000 rows | The server writes in batches of 400 documents. | "writes a big file in several batches" |
 | Export | The email column holds the account email, or the pending email. Only admins get it. | "writes the account email, or the pending email when the slot has no account, for admins", "leaves the email column empty for the callers that are not admins" |
@@ -88,7 +89,7 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 |---|---|---|
 | `send` | "Invite" in the menu of a row | A slot with an EMA id and no account. If the slot has no email, a dialog asks for it first, saves it and then invites. |
 | `PUT …/player-emails` | "Edit email" in the menu of a row | Sets or removes the pending email. Admins see the saved email. Editors see an empty field and a note. |
-| `send` | "Send reminder" in the menu of a row | A slot with an account. Sends the reminder. |
+| `send` | "Remind" in the menu of a row | A slot with an account. Sends the reminder. |
 | (none) | "Edit account" in the menu of a row (admins) | Opens the edit dialog of the account. It has "Send password reset email". |
 | `send` for many players | "Send (n)" in the Invitations dialog | Invites the selected players with no account and sends a reminder to the selected players with an account. Selected players with no account and no email get a dialog that asks for their emails. A player left blank is skipped. |
 

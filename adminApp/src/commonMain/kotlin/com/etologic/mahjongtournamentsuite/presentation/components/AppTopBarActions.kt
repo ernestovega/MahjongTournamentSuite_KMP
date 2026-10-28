@@ -12,7 +12,17 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.compose.material.icons.outlined.AddBox
 import androidx.compose.material.icons.outlined.Assessment
+import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -21,9 +31,12 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_users
 import mahjongtournamentsuite.adminapp.generated.resources.ema_report
 import mahjongtournamentsuite.adminapp.generated.resources.export_players
+import mahjongtournamentsuite.adminapp.generated.resources.import_locked_text
+import mahjongtournamentsuite.adminapp.generated.resources.import_locked_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_players
 import mahjongtournamentsuite.adminapp.generated.resources.new_player
 import mahjongtournamentsuite.adminapp.generated.resources.new_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.statistics
 import mahjongtournamentsuite.adminapp.generated.resources.teams
@@ -42,6 +55,8 @@ fun AppTopBarActions(
     onIdList: (() -> Unit)? = null,
     onPlayerAccounts: (() -> Unit)? = null,
     onImportPlayers: (() -> Unit)? = null,
+    /** True when the tournament has data. The import button then looks disabled and explains why it cannot run. */
+    importLocked: Boolean = false,
     onExportPlayers: (() -> Unit)? = null,
     onPlayerBase: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
@@ -61,6 +76,17 @@ fun AppTopBarActions(
     newPlayerFocusRequester: FocusRequester? = null,
     newUserFocusRequester: FocusRequester? = null,
 ) {
+    var lockedInfoOpen by remember { mutableStateOf(false) }
+    if (lockedInfoOpen) {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { lockedInfoOpen = false },
+            icon = { Icon(Icons.Default.Info, contentDescription = null) },
+            title = { Text(stringResource(Res.string.import_locked_title)) },
+            text = { Text(stringResource(Res.string.import_locked_text)) },
+            confirmButton = { Button(onClick = { lockedInfoOpen = false }) { Text(stringResource(Res.string.ok)) } },
+        )
+    }
     TopBarButtonsLayout {
         onTeams?.let { AppTopBarButton(stringResource(Res.string.teams), Icons.Default.Groups, it, teamsFocusRequester) }
         onPlayers?.let { AppTopBarButton(stringResource(Res.string.players), Icons.Default.People, it, playersFocusRequester) }
@@ -69,7 +95,14 @@ fun AppTopBarActions(
             AppTopBarButton(stringResource(Res.string.top_bar_id_list), Icons.AutoMirrored.Filled.FormatListBulleted, it, idListFocusRequester)
         }
         onPlayerAccounts?.let { AppTopBarButton(stringResource(Res.string.top_bar_invitations), Icons.Default.Email, it) }
-        onImportPlayers?.let { AppTopBarButton(stringResource(Res.string.import_players), Icons.Default.FileDownload, it) }
+        onImportPlayers?.let {
+            AppTopBarButton(
+                stringResource(Res.string.import_players),
+                Icons.Default.FileDownload,
+                onClick = if (importLocked) ({ lockedInfoOpen = true }) else it,
+                looksDisabled = importLocked,
+            )
+        }
         onExportPlayers?.let { AppTopBarButton(stringResource(Res.string.export_players), Icons.Default.FileUpload, it) }
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.app_users), Icons.Default.ManageAccounts, it, usersFocusRequester) }
         onStatistics?.let { AppTopBarButton(stringResource(Res.string.statistics), StatisticsIcon, it) }

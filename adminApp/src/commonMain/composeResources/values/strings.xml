@@ -719,7 +719,7 @@
     <string name="invitations_and_reminders">Invitations and reminders</string>
     <string name="outcome_reminded">The reminder was sent.</string>
     <string name="outcome_label_reminded">Reminder sent</string>
-    <string name="send_reminder">Send reminder</string>
+    <string name="send_reminder">Remind</string>
     <string name="send_password_reset_count">Send password reset (%1$d)</string>
     <string name="password_resets_confirm_title">Send password reset emails?</string>
     <string name="password_resets_confirm_text">The app sends an email to %1$d accounts. Each person gets a link to choose a new password.</string>
@@ -730,4 +730,6 @@
     <string name="reset_failure_disabled">The account is disabled.</string>
     <string name="reset_failure_email_failed">The email could not be sent.</string>
     <string name="reset_failure_unknown">The email was not sent. Try again.</string>
+    <string name="import_locked_title">The tournament has data</string>
+    <string name="import_locked_text">You cannot import players because a table already has data: seats or results. The import replaces all players, and that would change results that exist. To change one player, use the options in the row of the player.</string>
 </resources>

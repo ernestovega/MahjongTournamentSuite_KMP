@@ -279,6 +279,7 @@ fun TeamsScreen(
         actions = {
             AppTopBarActions(
                 onImportPlayers = { importDialogOpen = true },
+                importLocked = tables.any { it.hasProgress },
                 onExportPlayers = exportPlayers,
             )
         },

@@ -1043,6 +1043,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 onIdList = ::exportIdList,
                 onPlayerAccounts = { accountError = null; accountResults = emptyList(); bulkAccountsOpen = true },
                 onImportPlayers = { importDialogOpen = true },
+                importLocked = tournamentStarted,
                 onExportPlayers = exportPlayers,
             )
         },
