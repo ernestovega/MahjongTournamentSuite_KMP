@@ -98,7 +98,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicat
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_in_use
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_in_use_no_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_kept
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_ema_elsewhere
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_email
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_id
@@ -552,7 +551,6 @@ private fun ImportIssue.toUiText(): UiText {
         ImportIssueCode.INVALID_EMA_ID -> UiText.of(Res.string.import_issue_invalid_ema, first)
         ImportIssueCode.UNKNOWN_EMA_ID -> UiText.of(Res.string.import_issue_unknown_ema, first)
         ImportIssueCode.DUPLICATE_EMA_ID -> UiText.of(Res.string.import_issue_duplicate_ema, first)
-        ImportIssueCode.EMA_ASSIGNED_ELSEWHERE -> UiText.of(Res.string.import_issue_ema_elsewhere, first)
         ImportIssueCode.INVALID_EMAIL -> UiText.of(Res.string.import_issue_invalid_email, first)
         ImportIssueCode.TEAM_NAME_TOO_LONG -> UiText.of(Res.string.import_issue_team_too_long)
         ImportIssueCode.TEAM_NAME_CONFLICT -> UiText.of(Res.string.import_issue_team_conflict)

@@ -14,10 +14,11 @@ Tests: `firebase/functions/src/api/playerAccounts.integration.test.ts`, `firebas
 - **The email of an account always wins.** A different email in an import or in a send is refused and the account email stays.
 - A slot holds a registered EMA player or nothing. There are no non-member players and no provisional EMA ids.
 - Roles add up. One account can be editor and player at the same time.
-- An account sees a tournament as a player when a slot of that tournament links to the account.
-- Linking never sends an email. An editor sends every email by hand.
-- Giving an account an EMA id links it to **all** tournaments that hold this EMA id.
-- Taking the EMA id away unlinks all of them.
+- **The EMA id is the link.** The account of a slot is the account that owns the EMA id of the slot. The server computes it on each read, so no stored link can go wrong.
+- An account sees a tournament as a player when a slot of that tournament holds the EMA id of the account.
+- Giving an account an EMA id never sends an email. An editor sends every email by hand.
+- Giving an account an EMA id gives it access to **all** tournaments that hold this EMA id.
+- Taking the EMA id away removes that access in all of them.
 - A player account made from an email has **no password**. The person chooses one with the password reset email that "Invite" sends.
 
 ## Who can do what with accounts
@@ -41,21 +42,21 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 
 | Id | Situation | Result | Email | Options after | Test |
 |---|---|---|---|---|---|
-| A | Create a player account (EMA id required) | Account with the player role. Linked to all tournaments with this EMA id. | Password reset only | Remind with `send`. Unlink with `revoke`. | "links the slots of an EMA number when an admin sets the EMA number of an account" |
+| A | Create a player account (EMA id required) | Account with the player role. Linked to all tournaments with this EMA id. | Password reset only | Remind with `send`. | "links the slots of an EMA number when an admin sets the EMA number of an account" |
 | B | Create an editor or admin account with an EMA id (admin only) | Same as A, and the account also has the editor or admin role. | Password reset only | Same as A | same as A |
 | C | Create an editor or admin account without an EMA id | No player role. Sees no tournament as a player. | Password reset only | An EMA id can be set later (case D). | "C: an account with no EMA number sees no tournament" |
 | D | Set, change or clear the EMA id of an account | New EMA id: links all its tournaments. Old EMA id: unlinks all its tournaments and frees the id. | None | Same as A | "D: changing the EMA number of an account releases…" |
-| E | Assign an EMA id to a slot, and the account exists | Linked at once. | None | `send` reminds. `revoke` unlinks. | "E: assigning an EMA number to a slot links the existing account…" |
-| F | Assign an EMA id to a slot, and no account exists | Slot stays unlinked. Nobody sees it. | None | `send` with an email makes the account (case G). | "F: assigning an EMA number with no account…" |
-| G | `send` with an email to a slot with no account | The server creates the account **without a password**, with the EMA name as alias, and links all tournaments of the EMA id. | Password reset email | `resend` sends it again. `revoke` unlinks this tournament. | "creates the account without a password, links it, and sends the password reset email", "links every tournament of the EMA number when the account is created" |
-| H | `send` with an email that an account owns already (another EMA id, or none) | Refused (`FAILED`). The slot stays unlinked and the other account does not change. Several people can share one email, so the email never links an account. | None | Use another email, or leave the player without an account. | "never gives an account an EMA number because of an email…", "never gives an EMA number to an editor account because of an email", "two players cannot share one email…" |
+| E | Assign an EMA id to a slot, and the account exists | Linked at once. | None | `send` reminds. | "E: assigning an EMA number to a slot links the existing account…" |
+| F | Assign an EMA id to a slot, and no account exists | The slot has no account. Nobody sees it. | None | `send` with an email makes the account (case G). | "F: assigning an EMA number with no account…" |
+| G | `send` with an email to a slot with no account | The server creates the account **without a password**, with the EMA name as alias, and gives access to all tournaments of the EMA id. | Password reset email | `resend` sends it again. | "creates the account without a password, links it, and sends the password reset email", "links every tournament of the EMA number when the account is created" |
+| H | `send` with an email that an account owns already (another EMA id, or none) | Refused (`FAILED`). The slot keeps no account and the other account does not change. Several people can share one email, so the email never links an account. | None | Use another email, or leave the player without an account. | "never gives an account an EMA number because of an email…", "never gives an EMA number to an editor account because of an email", "two players cannot share one email…" |
 | H2 | `send` with an email that differs from the email of the linked account | Refused (`FAILED`). The account email stays. | None | Send without an email. | "refuses a different email for a linked slot and changes nothing" |
 | I | `send` to a linked slot of an account **with a password** | First time: reminder. Later: skipped as already reminded. | One reminder | `resend` sends the reminder again. | "I: a linked slot of an account with a password gets one reminder with send…" |
 | I2 | `send` to a linked slot of an account **without a password** | The password reset email, so the person can choose a password. | Password reset email | `resend` sends it again. | "a linked slot of an account with no password gets the password reset email, not the reminder" |
 | J | The person chooses a password and signs in | `invitationStatus` becomes `ACCEPTED`. | None | Same as A | "after the person chooses a password, the slot shows the player as accepted and send is skipped" |
 | K | The email cannot be sent | `FAILED` for that player. The account and the link stay. | None | `resend` | "keeps the account when the reset email fails, and resend sends it again", "keeps the link and lets the editor repeat when the reminder cannot be sent" |
-| L | `revoke` | Only this tournament: the slot loses the account link. The account and its EMA id stay. | None | `send` or a new assignment links it again. To keep the player out, remove the EMA id from the slot. | "L: revoke unlinks only that tournament…" |
-| M | Change the EMA id of a slot | The old account link of the slot is removed. | None | New EMA id follows case E or F. | "M: clears the account link when the EMA number of the slot changes" |
+| L | `revoke` | Only this tournament: the slot forgets that the player got an email. The account stays linked, because the EMA id links it. | None | `send` tells the player again. To keep the player out, remove the EMA id from the slot. | "L: revoke only forgets the email…" |
+| M | Change the EMA id of a slot | The slot shows the account of the new EMA id, or none. The time of the last email is cleared. | None | New EMA id follows case E or F. | "M: a slot with another EMA number has no account…" |
 | N | The EMA id belongs to another account | Error 409. Nothing changes. | None | Choose another EMA id. | "refuses an EMA number that belongs to another account", "an account cannot use two EMA numbers", "refuses an EMA number and an email that belong to another account" |
 | O | `send` to a slot with no EMA id | Refused. | None | Assign an EMA id first. | "refuses a slot without an EMA id" |
 | P | Save emails without sending (`PUT …/emails`) | A player with no account gets an account without a password (`CREATED`). An account with the same email: `UNCHANGED`. An account with another email: `KEPT_ACCOUNT_EMAIL`. A refused email: `FAILED`. | None | `send` | "creates an account for a player with none, keeps the email of an account, and refuses an email that others own" |
@@ -71,6 +72,8 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 | A row without an email | The account and its email stay. | "a row without an email leaves the account and its email as they are" |
 | A second import of the same file | Nothing changes. | "a second import of the same file changes nothing…" |
 | Export | The email column holds the email of the linked account, also when the account was linked outside the import. | "writes the email of an account that was linked outside the import…" |
+| Players move to other slots | No warning and no approval. The account follows the EMA number. | "moves the players to new positions with no acceptance, and each account follows its player" |
+| A player is in a slot and in no row of the file | The row that takes the slot is `REPLACE` with a warning. It needs approval. Rows that depend on it wait too. | "the preview lists the player that the file drops…", "a blocked move does not remove a player…" |
 | Import of an exported file | Every assigned row is `UNCHANGED` and has no warning. | "works as a template: importing the exported file changes nothing and warns about nothing" |
 
 ## Names in the app
@@ -82,4 +85,4 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 | `resend` | "Send again" | Linked slots of an account that has no password |
 | `resend` | "Send reminder again" | Linked slots that got a reminder |
 | `send` or `resend` on many players | "Invite or remind (n)", "Resend (n)" | Invitations and reminders dialog |
-| `revoke` | "Remove account link" | Unlinks the tournament |
+| `revoke` | "Mark as not notified" | Forgets the email that went out |

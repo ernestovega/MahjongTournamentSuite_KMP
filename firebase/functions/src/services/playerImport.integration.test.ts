@@ -3,11 +3,11 @@ import { randomUUID } from "node:crypto";
 import { after, before, describe, it } from "node:test";
 
 import { auth, db } from "../firebase";
-import { createAccount, requireAuthEmulator } from "../testing/authFixtures";
+import { createAccount, linkedAccountUid, requireAuthEmulator } from "../testing/authFixtures";
 import { seedTournament } from "../testing/firestoreFixtures";
 import { setMailTransportForTests, type OutgoingEmail } from "./mailService";
 import { setPasswordResetSenderForTests } from "./firebaseAuthRest";
-import { loadAccounts, setAccountEmaId } from "./playerAccountsService";
+import { getPlayerRegistration, loadAccounts, setAccountEmaId } from "./playerAccountsService";
 import { parsePlayerImportFile } from "./playerImport";
 import {
   applyPlayerImport as applyStep,
@@ -104,13 +104,13 @@ describe("player import", () => {
 
     // The email lives in the account. The slot holds no email, and the account is linked to the slot.
     const account = await auth.getUserByEmail(a);
-    assert.equal((await slotOf(id, 1)).get("accountUid"), account.uid);
+    assert.equal(await linkedAccountUid(id, 1), account.uid);
     assert.equal((await slotOf(id, 1)).get("invitedEmail"), undefined);
     assert.equal((await db.doc(`users/${account.uid}`).get()).get("emaId"), emas[0]);
     assert.equal((await db.doc(`emaIdIndex/${emas[0]}`).get()).get("uid"), account.uid);
     assert.deepEqual(account.customClaims, { player: true });
-    assert.equal((await auth.getUserByEmail(c.toLowerCase())).uid, (await slotOf(id, 3)).get("accountUid"));
-    assert.equal((await slotOf(id, 2)).get("accountUid"), undefined);
+    assert.equal((await auth.getUserByEmail(c.toLowerCase())).uid, await linkedAccountUid(id, 3));
+    assert.equal(await linkedAccountUid(id, 2), null);
     // The account has no password and the import sends no email.
     assert.ok(!account.passwordHash);
     assert.equal((await loadAccounts([account.uid])).get(account.uid)?.hasPassword, false);
@@ -134,7 +134,7 @@ describe("player import", () => {
 
     assert.deepEqual(result, { assigned: 1, emailsSaved: 0, emailsRefused: 1, teamsRenamed: 1, skipped: 0, failures: [] });
     assert.equal((await auth.getUser(owner.uid)).email, owner.email);
-    assert.equal((await slotOf(id, 1)).get("accountUid"), owner.uid);
+    assert.equal(await linkedAccountUid(id, 1), owner.uid);
     assert.equal((await db.doc(`tournaments/${id}/teams/1`).get()).get("name"), "Reds");
   });
 
@@ -153,7 +153,7 @@ describe("player import", () => {
     assert.equal(result.emailsSaved, 0);
     assert.equal(result.emailsRefused, 1);
     assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
-    assert.equal((await slotOf(id, 1)).get("accountUid"), undefined);
+    assert.equal(await linkedAccountUid(id, 1), null);
     assert.equal((await db.doc(`users/${owner.uid}`).get()).get("emaId"), emas[3]);
     assert.equal((await db.doc(`emaIdIndex/${emas[0]}`).get()).exists, false);
   });
@@ -168,7 +168,7 @@ describe("player import", () => {
 
     assert.equal(result.emailsRefused, 1);
     assert.equal((await db.doc(`users/${editor.uid}`).get()).get("emaId"), undefined);
-    assert.equal((await slotOf(id, 1)).get("accountUid"), undefined);
+    assert.equal(await linkedAccountUid(id, 1), null);
   });
 
   it("gives a shared email to the first player of the file only", async () => {
@@ -182,8 +182,8 @@ describe("player import", () => {
 
     assert.deepEqual(result, { assigned: 2, emailsSaved: 1, emailsRefused: 1, teamsRenamed: 0, skipped: 0, failures: [] });
     const account = await auth.getUserByEmail(shared);
-    assert.equal((await slotOf(id, 1)).get("accountUid"), account.uid);
-    assert.equal((await slotOf(id, 2)).get("accountUid"), undefined);
+    assert.equal(await linkedAccountUid(id, 1), account.uid);
+    assert.equal(await linkedAccountUid(id, 2), null);
     assert.equal((await db.doc(`users/${account.uid}`).get()).get("emaId"), emas[0]);
   });
 
@@ -199,9 +199,9 @@ describe("player import", () => {
     });
 
     const account = await auth.getUserByEmail(email);
-    assert.equal((await slotOf(id, 1)).get("accountUid"), account.uid);
-    assert.equal((await db.doc(`tournaments/${other}/players/7`).get()).get("accountUid"), account.uid);
-    assert.ok((await db.doc(`users/${account.uid}/playerTournaments/${other}`).get()).exists);
+    assert.equal(await linkedAccountUid(id, 1), account.uid);
+    assert.equal(await linkedAccountUid(other, 7), account.uid);
+    assert.equal((await getPlayerRegistration(account.uid, other))?.playerId, 7);
   });
 
   it("a second import of the same file changes nothing and creates no second account", async () => {
@@ -229,7 +229,7 @@ describe("player import", () => {
 
     assert.equal(result.assigned, 1);
     assert.equal((await auth.getUser(owner.uid)).email, owner.email);
-    assert.equal((await slotOf(id, 1)).get("accountUid"), owner.uid);
+    assert.equal(await linkedAccountUid(id, 1), owner.uid);
   });
 
   it("keeps players that are in a slot unless the editor accepts the replacement", async () => {
@@ -255,12 +255,12 @@ describe("player import", () => {
     await setAccountEmaId({ uid: first.uid, emaId: emas[0] });
     await setAccountEmaId({ uid: second.uid, emaId: emas[1] });
     await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n`), replaceExisting: false, uid: "editor" });
-    assert.equal((await slotOf(id, 1)).get("accountUid"), first.uid);
+    assert.equal(await linkedAccountUid(id, 1), first.uid);
 
     await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[1]}\n`), replaceExisting: true, uid: "editor" });
 
-    assert.equal((await slotOf(id, 1)).get("accountUid"), second.uid);
-    assert.equal((await db.doc(`users/${first.uid}/playerTournaments/${id}`).get()).exists, false);
+    assert.equal(await linkedAccountUid(id, 1), second.uid);
+    assert.equal(await getPlayerRegistration(first.uid, id), null);
   });
 
   it("swaps two players between slots", async () => {
@@ -270,12 +270,89 @@ describe("player import", () => {
     });
 
     const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[1]}\n2,${emas[0]}\n`), replaceExisting: true, uid: "editor",
+      tournamentId: id, ...file(`id,ema id\n1,${emas[1]}\n2,${emas[0]}\n`), replaceExisting: false, uid: "editor",
     });
 
     assert.deepEqual(result.failures, []);
+    assert.equal(result.skipped, 0);
     assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[1]);
     assert.equal((await slotOf(id, 2)).get("assignedEmaId"), emas[0]);
+  });
+
+  it("moves the players to new positions with no acceptance, and each account follows its player", async () => {
+    const { id, emas } = await seedImportTournament(false);
+    const first = await createAccount({ role: "PLAYER" });
+    await setAccountEmaId({ uid: first.uid, emaId: emas[0] });
+    await applyPlayerImport({
+      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,${emas[1]}\n`), replaceExisting: false, uid: "editor",
+    });
+    assert.equal(await linkedAccountUid(id, 1), first.uid);
+
+    // The two current players go to slots 3 and 4. New players take slots 1 and 2.
+    const csv = `id,ema id\n1,${emas[2]}\n2,${emas[3]}\n3,${emas[0]}\n4,${emas[1]}\n`;
+    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
+    assert.deepEqual(preview.rows.map((row) => row.status), ["NEW", "NEW", "NEW", "NEW"]);
+    assert.deepEqual(preview.rows.flatMap((row) => row.issues), []);
+    const result = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
+
+    assert.deepEqual(result.failures, []);
+    assert.equal(result.assigned, 4);
+    assert.equal(result.skipped, 0);
+    for (const [slot, ema] of [[1, emas[2]], [2, emas[3]], [3, emas[0]], [4, emas[1]]] as const) {
+      assert.equal((await slotOf(id, slot)).get("assignedEmaId"), ema);
+    }
+    assert.equal(await linkedAccountUid(id, 3), first.uid);
+    assert.equal(await linkedAccountUid(id, 1), null);
+    assert.equal((await getPlayerRegistration(first.uid, id))?.playerId, 3);
+  });
+
+  it("moves a player out of a slot that the file does not name", async () => {
+    const { id, emas } = await seedImportTournament(false);
+    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n`), replaceExisting: false, uid: "editor" });
+
+    const result = await applyPlayerImport({
+      tournamentId: id, ...file(`id,ema id\n4,${emas[0]}\n`), replaceExisting: false, uid: "editor",
+    });
+
+    assert.deepEqual(result.failures, []);
+    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), null);
+    assert.equal((await slotOf(id, 4)).get("assignedEmaId"), emas[0]);
+    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[0]}`).get()).get("playerId"), 4);
+  });
+
+  it("the preview lists the player that the file drops, and without the acceptance that player and its row stay", async () => {
+    const { id, emas } = await seedImportTournament(false);
+    await applyPlayerImport({
+      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,${emas[1]}\n`), replaceExisting: false, uid: "editor",
+    });
+    // Slot 1 gets player 3. Player 0 is in no row, so the file drops it. Player 1 only moves.
+    const csv = `id,ema id\n1,${emas[2]}\n3,${emas[1]}\n`;
+
+    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
+    assert.deepEqual(preview.rows.map((row) => [row.status, row.issues.map((issue) => issue.code)]), [
+      ["REPLACE", ["REPLACES_PLAYER"]], ["NEW", []],
+    ]);
+    const kept = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
+
+    assert.equal(kept.skipped, 1);
+    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
+    assert.equal((await slotOf(id, 3)).get("assignedEmaId"), emas[1]);
+  });
+
+  it("a blocked move does not remove a player: nothing is cleared without the acceptance", async () => {
+    const { id, emas } = await seedImportTournament(false);
+    await applyPlayerImport({
+      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,${emas[2]}\n`), replaceExisting: false, uid: "editor",
+    });
+    // Player 0 would move to slot 2 and drop player 2. Player 1 would take slot 1. Both rows wait for the acceptance.
+    const csv = `id,ema id\n1,${emas[1]}\n2,${emas[0]}\n`;
+
+    const kept = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
+
+    assert.equal(kept.assigned, 0);
+    assert.equal(kept.skipped, 2);
+    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
+    assert.equal((await slotOf(id, 2)).get("assignedEmaId"), emas[2]);
   });
 
   it("skips rows with errors and applies the others", async () => {
@@ -302,7 +379,7 @@ describe("player import", () => {
     assert.equal(result.assigned, 1);
     assert.equal(result.emailsSaved, 1);
     assert.equal(result.skipped, 1);
-    assert.equal((await slotOf(id, 2)).get("accountUid"), (await auth.getUserByEmail(email)).uid);
+    assert.equal(await linkedAccountUid(id, 2), (await auth.getUserByEmail(email)).uid);
   });
 
   it("the CLEAR and ASSIGN steps read no account data", async () => {

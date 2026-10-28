@@ -637,7 +637,7 @@ function parseMillis(value: string | undefined): number | null {
 
 /** Reads the logs, the tournaments and the accounts and builds the usage report for the last [days] days. */
 export async function loadUsageReport(days = DEFAULT_USAGE_PERIOD, now = new Date()): Promise<UsageReport> {
-  const [tournaments, changes, activities, tables, slots, profiles] = await Promise.all([
+  const [tournaments, changes, activities, tables, slots, emaIdIndex, profiles] = await Promise.all([
     db.collection("tournaments").select(
       "name", "hostCountry", "eventStartDate", "eventEndDate", "timeZone", "createdAt", "numPlayers", "isTeams",
       "matchDurationMinutes", "agendaItems", "venueMapUrl", "associationLogoUrl",
@@ -645,9 +645,11 @@ export async function loadUsageReport(days = DEFAULT_USAGE_PERIOD, now = new Dat
     db.collectionGroup("changes").select("kind", "source", "uid", "name", "roundId", "tableId", "handChangeCount", "at").get(),
     db.collection("activity").select("action", "uid", "name", "tournamentId", "at").get(),
     db.collectionGroup("tables").select("isCompleted", "useTotalsOnly", "hasValidManualTotals", "hasProgress").get(),
-    db.collectionGroup("players").select("accountUid", "notifiedAt", "assignedEmaId").get(),
+    db.collectionGroup("players").select("notifiedAt", "assignedEmaId").get(),
+    db.collection("emaIdIndex").select("uid").get(),
     db.collection("users").select("alias").get(),
   ]);
+  const uidByEmaId = new Map(emaIdIndex.docs.map((doc) => [doc.id, text(doc.get("uid"))]));
   const aliasByUid = new Map(profiles.docs.map((doc) => [doc.id, text(doc.get("alias"))]));
   const accounts: UsageAccount[] = [];
   const withPasswordUids = new Set<string>();
@@ -722,15 +724,19 @@ export async function loadUsageReport(days = DEFAULT_USAGE_PERIOD, now = new Dat
       hasValidManualTotals: Boolean(data.hasValidManualTotals),
       hasProgress: Boolean(data.hasProgress),
     })),
-    slots: read(slots.docs, (tournamentId, data) => ({
-      tournamentId,
-      // An account with a password accepted. An account without one is invited once an email went out.
-      invitationStatus: text(data.accountUid) === "" ? "NONE"
-        : withPasswordUids.has(text(data.accountUid)) ? "ACCEPTED"
-        : data.notifiedAt != null ? "INVITED" : "NONE",
-      hasAccount: text(data.accountUid) !== "",
-      isAssigned: text(data.assignedEmaId) !== "",
-    })),
+    slots: read(slots.docs, (tournamentId, data) => {
+      // The account of a slot is the account that owns the EMA id of the slot.
+      const accountUid = uidByEmaId.get(text(data.assignedEmaId)) ?? "";
+      return {
+        tournamentId,
+        // An account with a password accepted. An account without one is invited once an email went out.
+        invitationStatus: accountUid === "" ? "NONE"
+          : withPasswordUids.has(accountUid) ? "ACCEPTED"
+          : data.notifiedAt != null ? "INVITED" : "NONE",
+        hasAccount: accountUid !== "",
+        isAssigned: text(data.assignedEmaId) !== "",
+      };
+    }),
     accounts,
   });
 }

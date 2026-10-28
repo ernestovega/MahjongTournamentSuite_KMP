@@ -122,8 +122,8 @@ async function loadFor(
     read.get(tableRef),
     readAll(Array.from({ length: HANDS_PER_TABLE }, (_, i) => tableRef.collection("hands").doc(String(i + 1)))),
   ]);
-  // The registration must still match the slot. A slot that holds another person gives this account no access.
-  if (!slotSnap.exists || slotSnap.get("accountUid") !== uid || slotSnap.get("assignedEmaId") !== registration.emaId) {
+  // The slot must still hold the EMA id of the account. A slot that holds another person gives this account no access.
+  if (!slotSnap.exists || slotSnap.get("assignedEmaId") !== registration.emaId) {
     throw forbidden("You are not registered in this tournament");
   }
   if (!tableSnap.exists) throw notFound("Table not found");

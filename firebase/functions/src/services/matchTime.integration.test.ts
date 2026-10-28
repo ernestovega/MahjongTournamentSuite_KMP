@@ -3,6 +3,7 @@ import { before, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
+import { giveEmaIdToAccount, seatEmaId } from "../testing/authFixtures";
 import { readChanges, readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
 import { closeRoundTables } from "./matchTimeCloseService";
 import { parseHandInput, recordHand } from "./playerHandService";
@@ -30,8 +31,8 @@ async function seedTimedTable(startedMinutesAgo: number, mode: Mode, doneHands =
     });
   }
   const uid = `u-${tournamentId}-1`;
-  await db.doc(`users/${uid}/playerTournaments/${tournamentId}`).set({ playerId: 1, emaId: "E1" });
-  await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, assignedEmaId: "E1", accountUid: uid });
+  await giveEmaIdToAccount(uid, "E1");
+  await seatEmaId(tournamentId, 1, "E1");
   return { tournamentId, uid };
 }
 

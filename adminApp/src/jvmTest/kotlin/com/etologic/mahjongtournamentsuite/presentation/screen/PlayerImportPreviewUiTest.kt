@@ -99,9 +99,9 @@ class PlayerImportPreviewUiTest {
         // The rows without change do not show.
         onNodeWithText("Line 5 · Slot 3").assertDoesNotExist()
         onNodeWithText("2 slots are not in the file. They stay as they are.").assertExists()
-        onNodeWithText("If you do not select this box, the import skips the rows that replace a player.").assertExists()
+        onNodeWithText("If you do not select this box, the import skips the rows that remove a player.").assertExists()
 
-        onNodeWithText("Replace the players that are in a slot already (1 rows)").performClick()
+        onNodeWithText("Remove the players that the file does not include (1 rows)").performClick()
         assertTrue(replace)
     }
 }

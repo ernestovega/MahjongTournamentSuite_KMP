@@ -71,7 +71,7 @@ Clients should refresh tokens when receiving `401 unauthenticated`.
 - Capabilities: `ADMIN`, `EDITOR` and `PLAYER`. An account can have more than one.
 - Firebase custom claims: `admin: true`, `editor: true` and `player: true`. An account with no claim has no capability.
 - Per-tournament editor assignment: `tournaments/{tournamentId}/members/{uid}`
-- Per-tournament player registration: `users/{uid}/playerTournaments/{tournamentId}`
+- Player access: the account owns an EMA id (`users/{uid}.emaId`, `emaIdIndex/{emaId}`). The account plays in every tournament that holds this EMA id in a slot. No other link is stored.
 
 Admins manage all tournaments, the EMA registry and all editor accounts. Editors manage content and player accounts of assigned tournaments. An editor edits only the own editor account and cannot add or remove editors.
 Only admins can create, delete, rename, or configure tournaments. Disabling an account keeps its profile and history.
@@ -85,34 +85,35 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 ## Player accounts
 
 - **The email lives only in the account.** A slot holds no email. The players list of a tournament (`GET /tournaments/:id/players`) adds `email`, the email of the linked account. A player who reads the list gets `email: null`.
-- Assigning a player sends no email. If an account already owns the EMA id, the assignment links the slot to that account at once (`accountUid`). The player then sees the tournament, but nobody told the player.
-- An admin can set the EMA id of an existing account (`PUT /admin/users/:uid` with `emaId`, an empty text clears it). `POST /admin/users` also accepts `emaId`. Both routes check the EMA player and the owner first. An EMA id that belongs to another account returns `409`, and nothing changes. Every tournament that has this EMA id in a slot links to the account at once. No email is sent.
+- Assigning a player sends no email. The account of a slot is the account that owns the EMA id of the slot. The server computes it on each read and stores no link (`accountUid` in the players list is computed). If an account owns the EMA id, the player sees the tournament at once, but nobody told the player.
+- An admin can set the EMA id of an existing account (`PUT /admin/users/:uid` with `emaId`, an empty text clears it). `POST /admin/users` also accepts `emaId`. Both routes check the EMA player and the owner first. An EMA id that belongs to another account returns `409`, and nothing changes. Every tournament that has this EMA id in a slot shows the account at once. No email is sent.
 - **An email never links an account to an EMA id.** Several people can share one email, for example a couple or a team that one person registers. An email that an account owns already is refused for any other player.
-- **A player with no account gets one from an email.** The server creates the account without a password (`createPlayerAccount`): the player role, the EMA id, the EMA name as alias, a link to every tournament that holds the EMA id. The server sends no email at this step.
+- **A player with no account gets one from an email.** The server creates the account without a password (`createPlayerAccount`): the player role, the EMA id, the EMA name as alias, and access to every tournament that holds the EMA id. The server sends no email at this step.
 - **Invite** sends the password reset email of Firebase to an account that has no password yet. The person chooses a password with it. There is no invitation token, no accept route and no list of invitations.
 - An editor starts every email by hand. The actions work for one player or for many. The body lists the players: `{ players: [{ playerId, email? }] }`. The answer has one result per player (`INVITED`, `NOTIFIED`, `REVOKED`, `SKIPPED`, `FAILED`).
   - `POST /tournaments/:id/player-accounts/send`: for a slot with no account, it needs an `email`, creates the account and sends the password reset email (`INVITED`). For an account with no password, it sends the password reset email (`INVITED`). For an account with a password, it sends the "you are registered" email with a link to the tournament (`NOTIFIED`). It skips players that were contacted already. An `email` that differs from the email of the account returns `FAILED`, and the account email stays.
   - `POST /tournaments/:id/player-accounts/resend`: the same, also for players that were contacted.
-  - `POST /tournaments/:id/player-accounts/revoke`: removes the link between the slot and the account in this tournament. The account and its EMA id stay.
+  - `POST /tournaments/:id/player-accounts/revoke`: forgets that the slot got an email (`notifiedAt`). The account stays linked, because the EMA id links it. To keep a player out, remove the EMA id from the slot.
   - `PUT /tournaments/:id/player-accounts/emails`: saves emails without sending anything. A player with no account gets an account without a password. The answer has one result per item: `CREATED`, `UNCHANGED`, `KEPT_ACCOUNT_EMAIL` (the account has another email and keeps it) or `FAILED`.
   - `GET /tournaments/:id/player-import/export`: writes the players as an Excel file with the columns `id`, `ema id`, `email` and `team`. The email is the email of the linked account.
   - `POST /tournaments/:id/player-import/preview`: reads a CSV or Excel file (`fileName`, `dataBase64`) and returns what an import would do. It changes nothing.
-  - `POST /tournaments/:id/player-import/apply`: reads the same file again and runs one step of the import. It needs `replaceExisting: true` to replace a player that is in a slot already.
+  - `POST /tournaments/:id/player-import/apply`: reads the same file again and runs one step of the import. It needs `replaceExisting: true` to remove a player that is in a slot and in no row of the file.
     - The app runs the steps in order, so that no request lasts long: `phase: "CLEAR"` once (empties the slots whose player moves), `phase: "ASSIGN"` with up to 25 `rows` (line numbers) for each batch, and `phase: "FINISH"` once (creates the accounts of the new emails and renames the teams).
     - The first line of the file names the columns. Required: `id` (the slot number) and `ema id`. Optional: `email` and `team`.
     - The delimiter of a CSV file can be a comma, a semicolon or a tab. Excel files use the first sheet.
     - A row has an error when the slot or the EMA number is unknown, when a slot or an EMA number appears twice, or when the email or the team name is wrong. The import skips these rows and applies the others.
-    - Players can move between slots in one file. The server clears the slots that give up a player first, so an EMA number is never in two slots.
+    - **The file decides the positions.** A player can move to any slot, also to a slot that another player leaves in the same file, and also from a slot that the file does not name. The preview does not mention moves. The server clears the slots that give up a player first, so an EMA number is never in two slots. An account follows its EMA number, so it follows the player to the new slot.
+    - **Only a lost player needs approval.** A player that is in a slot now and in no row of the file is lost. The row that takes the slot has the status `REPLACE` and the warning `REPLACES_PLAYER`. Without `replaceExisting: true`, the import skips that row and every row that depends on it. Slots that the file does not name keep their player.
     - **Emails.** The email of the account always wins. If the account of the player has another email, the import does not save the new email and the preview warns (`EMAIL_KEPT_ACCOUNT`). If another account owns the email, or an earlier row of the file uses it, the import does not save it and the preview warns (`EMAIL_IN_USE`). In both cases the rest of the row applies. A new email for a player with no account creates the account. The import sends no message.
     - The team name renames the team of the slot. Team members stay in their fixed slots.
-- The slot keeps `accountUid` and the time of the last email (`notifiedAt`, `contactedAt` in the players list). `invitationStatus` in the players list is computed: `NONE` (no account, or an account with no password that got no email), `INVITED` (no password yet and an email went out) or `ACCEPTED` (the account has a password). The editor app uses it to filter "not invited yet", "invited, waiting" and "contacted".
-- Linking registers the tournament for the account (`users/{uid}/playerTournaments/{tournamentId}`) and reserves the EMA id (`emaIdIndex/{emaId}`). One account owns one EMA id.
+- The slot keeps the time of the last email (`notifiedAt`, `contactedAt` in the players list). `invitationStatus` in the players list is computed: `NONE` (no account, or an account with no password that got no email), `INVITED` (no password yet and an email went out) or `ACCEPTED` (the account has a password). The editor app uses it to filter "not invited yet", "invited, waiting" and "contacted".
+- Giving an account an EMA id reserves it (`emaIdIndex/{emaId}`). One account owns one EMA id. `npm run audit:ema-ids` checks that the profiles and the index agree.
 - A new account gets the full EMA name of the player (first name and last name) as its alias. The user can change the alias later with `PUT /auth/me`.
-- Changing the EMA id of a slot ends its account link.
+- Changing the EMA id of a slot gives the slot the account of the new EMA id, and clears the time of the last email.
 - The registration email goes out through `nodemailer` and the SMTP mailbox of the project (`mailService.ts`). The password reset email goes out through the Google password API (`firebaseAuthRest.ts`). The secret `MTS_SMTP_URI` holds the SMTP address. `MAIL_FROM` and `PLAYER_APP_URL` are in `firebase/functions/.env`. If an email fails, the account and the link stay. The result of that player is `FAILED` and the editor presses "Resend".
 - A player sees only the tournaments where the account is registered. `GET /tournaments` and `GET /ema-player-registry` return only that scope to a player-only account. The players list of a tournament hides accounts and emails for players.
 - A slot holds a registered EMA player or nothing. There are no non-member players and no provisional EMA ids.
-- **Cleanup of old data.** `npm run cleanup:emails-and-guests` previews, and `npm run cleanup:emails-and-guests:apply` removes the retired data: `nonMember` (the slot becomes an open slot), `invitedEmail`, `invitationStatus` and `invitedAt` of slots, and every `playerInvitations` document.
+- **Cleanup of old data.** `npm run cleanup:emails-and-guests` previews, and `npm run cleanup:emails-and-guests:apply` removes the retired data: `nonMember` (the slot becomes an open slot), `invitedEmail`, `invitationStatus` and `invitedAt` of slots, and every `playerInvitations` document. `npm run cleanup:account-links` previews, and `npm run cleanup:account-links:apply` removes the stored account links: `accountUid` of slots and every `users/{uid}/playerTournaments` document.
 
 
 ## Firestore data model
@@ -122,8 +123,7 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 - `countries/{countryCode}` with `{ code, name }`, for example `ES` and `Spain`
 - `tournaments/{tournamentId}`
 - `tournaments/{tournamentId}/members/{uid}`
-- `tournaments/{tournamentId}/players/{playerId}` with `accountUid` and `notifiedAt` after the player is linked to an account
-- `users/{uid}/playerTournaments/{tournamentId}` with `{ playerId, emaId }`
+- `tournaments/{tournamentId}/players/{playerId}` with `notifiedAt` after the player got an email
 - `emaIdIndex/{emaId}` with `{ uid }`
 - `tournaments/{tournamentId}/teams/{teamId}`
 - `tournaments/{tournamentId}/tables/{tableKey}` (tableKey: `{roundId}_{tableId}`)

@@ -17,7 +17,7 @@ import {
 } from "./playerImport";
 
 function slot(id: number, overrides: Partial<SlotInfo> = {}): SlotInfo {
-  return { id, team: Math.ceil(id / 4), emaId: null, accountUid: null, email: null, ...overrides };
+  return { id, team: Math.ceil(id / 4), emaId: null, email: null, ...overrides };
 }
 
 function row(line: number, id: string, emaId: string, extra: Partial<ImportRow> = {}): ImportRow {
@@ -97,27 +97,87 @@ test("a repeated slot or EMA number marks every row that uses it", () => {
   assert.deepEqual(codes(result, 3), ["DUPLICATE_EMA_ID"]);
 });
 
-test("a player cannot go to a slot while another slot that stays keeps the player", () => {
+test("a player moves to another slot when the file leaves the old slot out", () => {
   const result = plan([row(2, "2", "1")], { slots: [slot(1, { emaId: "00000001" }), slot(2)] });
-  assert.deepEqual(codes(result, 0), ["EMA_ASSIGNED_ELSEWHERE"]);
+  assert.equal(result.rows[0].status, "NEW");
+  assert.deepEqual(result.rows[0].issues, []);
+  assert.deepEqual(result.untouchedSlotIds, [1]);
 });
 
-test("players can swap slots when the file names both slots", () => {
+test("players swap slots with no warning and no acceptance", () => {
   const result = plan([row(2, "1", "2"), row(3, "2", "1")], {
     slots: [slot(1, { emaId: "00000001" }), slot(2, { emaId: "00000002" })],
+    replaceExisting: false,
   });
-  assert.deepEqual(result.rows.map((item) => item.status), ["REPLACE", "REPLACE"]);
-  assert.deepEqual(result.rows.map((item) => item.issues.some((issue) => issue.severity === "ERROR")), [false, false]);
+  assert.deepEqual(result.rows.map((item) => item.status), ["NEW", "NEW"]);
+  assert.deepEqual(result.rows.map((item) => item.issues), [[], []]);
 });
 
-test("without the replace choice, a swap is blocked and nothing moves", () => {
+test("players shift in a circle with no warning", () => {
+  const result = plan([row(2, "1", "3"), row(3, "2", "1"), row(4, "3", "2")], {
+    slots: [slot(1, { emaId: "00000001" }), slot(2, { emaId: "00000002" }), slot(3, { emaId: "00000003" })],
+    replaceExisting: false,
+  });
+  assert.deepEqual(result.rows.map((item) => item.status), ["NEW", "NEW", "NEW"]);
+});
+
+test("a file that reorders the current players and adds new ones loses nobody", () => {
+  // Two players are in slots 1 and 2. The file puts them in slots 3 and 4 and fills slots 1 and 2 with new players.
+  const result = plan([row(2, "1", "3"), row(3, "2", "4"), row(4, "3", "1"), row(5, "4", "2")], {
+    slots: [slot(1, { emaId: "00000001" }), slot(2, { emaId: "00000002" }), slot(3), slot(4)],
+    replaceExisting: false,
+  });
+  assert.deepEqual(result.rows.map((item) => item.status), ["NEW", "NEW", "NEW", "NEW"]);
+  assert.ok(result.rows.every((item) => item.issues.length === 0));
+});
+
+test("a player that the file places nowhere is lost: the row is REPLACE with a warning", () => {
+  const result = plan([row(2, "1", "2"), row(3, "2", "3")], {
+    slots: [slot(1, { emaId: "00000001" }), slot(2)],
+    replaceExisting: false,
+  });
+  assert.equal(result.rows[0].status, "REPLACE");
+  assert.deepEqual(codes(result, 0), ["REPLACES_PLAYER"]);
+  assert.equal(result.rows[1].status, "NEW");
+});
+
+test("without the acceptance, only the rows that lose nobody are applied", () => {
   const result = plan([row(2, "2", "1"), row(3, "3", "2")], {
     slots: [slot(1, { emaId: "00000001" }), slot(2, { emaId: "00000003" }), slot(3)],
     replaceExisting: false,
   });
-  // Slot 2 is not replaced, so player 1 stays in slot 1 and cannot go to slot 2.
-  assert.equal(result.rows[1].status, "NEW");
+  // Slot 2 holds player 3, and the file does not place player 3. The move of player 1 to slot 2 waits.
   assert.equal(result.rows[0].status, "REPLACE");
+  assert.equal(result.rows[1].status, "NEW");
+});
+
+test("a row that depends on a blocked move waits too, without a warning of its own", () => {
+  // Player 1 moves from slot 1 to slot 2 and removes player 3. Without the acceptance player 1 stays in slot 1,
+  // so the new player 2 cannot take slot 1 without removing player 1.
+  const result = plan([row(2, "1", "2"), row(3, "2", "1")], {
+    slots: [slot(1, { emaId: "00000001" }), slot(2, { emaId: "00000003" })],
+    replaceExisting: false,
+  });
+  assert.deepEqual(result.rows.map((item) => item.status), ["REPLACE", "REPLACE"]);
+  assert.deepEqual(codes(result, 0), []);
+  assert.deepEqual(codes(result, 1), ["REPLACES_PLAYER"]);
+});
+
+test("with the acceptance, every valid row is applied and the lost players are only warned", () => {
+  const result = plan([row(2, "1", "2"), row(3, "2", "1")], {
+    slots: [slot(1, { emaId: "00000001" }), slot(2, { emaId: "00000003" })],
+    replaceExisting: true,
+  });
+  assert.equal(result.rows[1].status, "REPLACE");
+  assert.ok(result.rows.every((item) => item.issues.every((issue) => issue.severity === "WARNING")));
+});
+
+test("a row with an error does not move a player, so the player counts as lost", () => {
+  const result = plan([row(2, "1", "2"), row(3, "2", "99")], {
+    slots: [slot(1, { emaId: "00000001" }), slot(2)],
+  });
+  assert.equal(result.rows[0].status, "REPLACE");
+  assert.deepEqual(codes(result, 0), ["REPLACES_PLAYER"]);
 });
 
 test("a new email for a player with no account creates the account", () => {
@@ -136,7 +196,7 @@ test("a row without an email creates no account", () => {
 
 test("an email that differs from the email of the account is refused with a warning and the account email stays", () => {
   const result = plan([row(2, "1", "1", { email: "New@B.es" })], {
-    slots: [slot(1, { emaId: "00000001", accountUid: "uid", email: "old@b.es" })],
+    slots: [slot(1, { emaId: "00000001", email: "old@b.es" })],
     accountEmailByEma: new Map([["00000001", "old@b.es"]]),
   });
   assert.deepEqual(result.rows[0].issues, [{ code: "EMAIL_KEPT_ACCOUNT", severity: "WARNING", args: ["old@b.es", "new@b.es"] }]);
@@ -147,7 +207,7 @@ test("an email that differs from the email of the account is refused with a warn
 
 test("an email that matches the email of the account gives no warning and changes nothing", () => {
   const result = plan([row(2, "1", "1", { email: "OLD@b.es" })], {
-    slots: [slot(1, { emaId: "00000001", accountUid: "uid", email: "old@b.es" })],
+    slots: [slot(1, { emaId: "00000001", email: "old@b.es" })],
     accountEmailByEma: new Map([["00000001", "old@b.es"]]),
   });
   assert.deepEqual(result.rows[0].issues, []);
@@ -159,7 +219,7 @@ test("a refused email does not block the other parts of the row", () => {
   const result = plan([row(2, "1", "1", { email: "other@b.es", team: "Blues" })], {
     isTeams: true,
     teamNames: new Map([[1, "Reds"]]),
-    slots: [slot(1, { emaId: "00000001", accountUid: "uid", email: "old@b.es" })],
+    slots: [slot(1, { emaId: "00000001", email: "old@b.es" })],
     accountEmailByEma: new Map([["00000001", "old@b.es"]]),
   });
   assert.deepEqual(codes(result, 0), ["EMAIL_KEPT_ACCOUNT"]);
@@ -169,10 +229,10 @@ test("a refused email does not block the other parts of the row", () => {
 
 test("an account that exists for the EMA number decides, also when the player moves to an empty slot", () => {
   const result = plan([row(2, "2", "1", { email: "file@b.es" }), row(3, "1", "2")], {
-    slots: [slot(1, { emaId: "00000001", accountUid: "uid", email: "old@b.es" }), slot(2, { emaId: "00000002" })],
+    slots: [slot(1, { emaId: "00000001", email: "old@b.es" }), slot(2, { emaId: "00000002" })],
     accountEmailByEma: new Map([["00000001", "old@b.es"]]),
   });
-  assert.deepEqual(codes(result, 0), ["REPLACES_PLAYER", "EMAIL_KEPT_ACCOUNT"]);
+  assert.deepEqual(codes(result, 0), ["EMAIL_KEPT_ACCOUNT"]);
   assert.equal(result.rows[0].createsAccount, false);
 });
 
@@ -236,14 +296,6 @@ test("parseCsv keeps new lines inside quotes and reads tab separated text", () =
 test("a team name over 80 characters is an error", () => {
   const result = plan([row(2, "1", "1", { team: "x".repeat(81) })], { isTeams: true, teamNames: new Map([[1, "Team 1"]]) });
   assert.deepEqual(codes(result, 0), ["TEAM_NAME_TOO_LONG"]);
-});
-
-test("an EMA number held by a slot outside the file blocks the row", () => {
-  const result = plan([row(2, "2", "1")], {
-    slots: [slot(1, { emaId: "00000001" }), slot(2), slot(3)],
-  });
-  assert.deepEqual(codes(result, 0), ["EMA_ASSIGNED_ELSEWHERE"]);
-  assert.deepEqual(result.rows[0].issues[0].args, ["1"]);
 });
 
 test("declaredUnpackedBytes adds the sizes of a real xlsx and refuses text", async () => {
@@ -330,7 +382,7 @@ test("the export sorts the slots by id", () => {
 
 test("the export leaves the EMA number empty for an empty slot and the team empty when it has no name", () => {
   const records = buildPlayerExportRecords(
-    [slot(1, { team: 7 }), slot(2, { team: 1, emaId: "00000002", accountUid: "uid" })],
+    [slot(1, { team: 7 }), slot(2, { team: 1, emaId: "00000002" })],
     true,
     new Map([[1, "Reds"]]),
   );
@@ -344,7 +396,7 @@ test("the export does not write the team column when the tournament has no teams
 
 test("a file exported from the current players plans every assigned slot as UNCHANGED", () => {
   const slots = [
-    slot(1, { team: 1, emaId: "00000001", accountUid: "uid", email: "a@b.es" }),
+    slot(1, { team: 1, emaId: "00000001", email: "a@b.es" }),
     slot(2, { team: 1, emaId: "00000002" }),
     slot(3, { team: 2 }),
   ];
@@ -369,7 +421,7 @@ test("a file exported from the current players plans every assigned slot as UNCH
 
 test("the exported Excel file keeps the leading zeros of EMA numbers and the order of the columns", async () => {
   const file = await writePlayerExportXlsx(buildPlayerExportRecords(
-    [slot(1, { team: 1, emaId: "00000042", accountUid: "uid", email: "z@y.es" })], true, new Map([[1, "Reds"]]),
+    [slot(1, { team: 1, emaId: "00000042", email: "z@y.es" })], true, new Map([[1, "Reds"]]),
   ));
 
   assert.ok(file.length > 0 && file[0] === 0x50 && file[1] === 0x4b);
@@ -380,7 +432,7 @@ test("the exported Excel file keeps the leading zeros of EMA numbers and the ord
 
 test("the export writes the email of the linked account and leaves it empty for a slot with no account", () => {
   const records = buildPlayerExportRecords(
-    [slot(1, { emaId: "00000001", accountUid: "uid", email: "ana@example.com" }), slot(2, { emaId: "00000002" })],
+    [slot(1, { emaId: "00000001", email: "ana@example.com" }), slot(2, { emaId: "00000002" })],
     false,
     new Map(),
   );
@@ -389,8 +441,8 @@ test("the export writes the email of the linked account and leaves it empty for 
 
 test("a file exported with the emails of the accounts plans a second import as UNCHANGED", () => {
   const slots = [
-    slot(1, { emaId: "00000001", accountUid: "uid1", email: "ana@example.com" }),
-    slot(2, { emaId: "00000002", accountUid: "uid2", email: "bob@example.com" }),
+    slot(1, { emaId: "00000001", email: "ana@example.com" }),
+    slot(2, { emaId: "00000002", email: "bob@example.com" }),
   ];
   const rows: ImportRow[] = buildPlayerExportRecords(slots, false, new Map()).slice(1).map((record, index) => ({
     row: index + 2, id: record[0], emaId: record[1], email: record[2], team: "",
@@ -406,7 +458,7 @@ test("a file exported with the emails of the accounts plans a second import as U
 });
 
 test("players with an account keep the email of the account when the file has other emails (case of 2026-10-26)", () => {
-  const slots = [1, 2, 5, 9].map((id) => slot(id, { emaId: `0000000${id}`, accountUid: `uid${id}`, email: `account${id}@b.es` }));
+  const slots = [1, 2, 5, 9].map((id) => slot(id, { emaId: `0000000${id}`, email: `account${id}@b.es` }));
   const result = plan(slots.map((item, index) => row(index + 2, String(item.id), item.emaId!, { email: `file${item.id}@b.es` })), {
     slots: [...slots, slot(3), slot(4), slot(6), slot(7), slot(8)],
     registeredEmaIds: new Set(slots.map((item) => item.emaId!)),

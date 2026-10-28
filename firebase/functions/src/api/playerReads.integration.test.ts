@@ -3,7 +3,7 @@ import { after, before, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { seedTournament } from "../testing/firestoreFixtures";
-import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
+import { createAccount, giveEmaIdToAccount, requireAuthEmulator, seatEmaId, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
 describe("what a player can read", () => {
   let server: TestServer;
@@ -12,22 +12,30 @@ describe("what a player can read", () => {
   let player: TestAccount;
   let editor: TestAccount;
   let owner: TestAccount;
+  let both: TestAccount;
 
   before(async () => {
     requireAuthEmulator();
     server = await startServer();
     t1 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
     t2 = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
-    for (const emaId of ["10000001", "10000002", "10000003"]) {
+    for (const emaId of ["10000001", "10000002", "10000003", "10000004", "10000005"]) {
       await db.doc(`emaPlayerRegistry/${emaId}`).set({ firstName: "Name", lastName: emaId, country: "ESP" });
     }
     owner = await createAccount({ role: "PLAYER" });
-    await db.doc(`tournaments/${t1}/players/1`).set({ id: 1, team: 0, assignedEmaId: "10000001", accountUid: owner.uid });
+    await giveEmaIdToAccount(owner.uid, "10000001");
+    await seatEmaId(t1, 1, "10000001");
     await db.doc(`tournaments/${t1}/players/2`).set({ id: 2, team: 0, assignedEmaId: "10000002" });
     await db.doc(`tournaments/${t2}/players/1`).set({ id: 1, team: 0, assignedEmaId: "10000003" });
     await db.doc(`tournaments/${t1}`).update({ name: "Mine" });
     await db.doc(`tournaments/${t2}`).update({ name: "Other" });
-    player = await createAccount({ role: "PLAYER", playerOf: [t1] });
+    // Two more people play in t1: a player-only account in slot 3 and an editor of t2 in slot 4.
+    player = await createAccount({ role: "PLAYER" });
+    await giveEmaIdToAccount(player.uid, "10000004");
+    await seatEmaId(t1, 3, "10000004");
+    both = await createAccount({ role: "EDITOR", memberOf: [t2] });
+    await giveEmaIdToAccount(both.uid, "10000005");
+    await seatEmaId(t1, 4, "10000005");
     editor = await createAccount({ role: "EDITOR", memberOf: [t2] });
   });
   after(async () => { await server.close(); });
@@ -51,7 +59,6 @@ describe("what a player can read", () => {
   });
 
   it("lists only the player tournaments for an editor who sends scope=player", async () => {
-    const both = await createAccount({ role: "EDITOR", memberOf: [t2], playerOf: [t1] });
     const { body } = await server.request("GET", "/tournaments?scope=player", { token: both.token });
 
     assert.deepEqual((body as { tournaments: Array<{ id: string }> }).tournaments.map((t) => t.id), [t1]);
@@ -61,7 +68,7 @@ describe("what a player can read", () => {
     const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: player.token });
     const players = (body as { players: Array<Record<string, unknown>> }).players;
 
-    assert.equal(players.length, 2);
+    assert.equal(players.length, 4);
     for (const slot of players) {
       assert.equal(slot.accountUid, null);
       assert.equal(slot.email, null);
@@ -72,7 +79,7 @@ describe("what a player can read", () => {
   it("lists registry players only from the tournaments of the player", async () => {
     const { body } = await server.request("GET", "/ema-player-registry", { token: player.token });
 
-    assert.deepEqual((body as { players: Array<{ emaId: string }> }).players.map((p) => p.emaId).sort(), ["10000001", "10000002"]);
+    assert.deepEqual((body as { players: Array<{ emaId: string }> }).players.map((p) => p.emaId).sort(), ["10000001", "10000002", "10000004", "10000005"]);
   });
 
   it("refuses writes and editor reads in the player tournament", async () => {
@@ -89,7 +96,9 @@ describe("what a player can read", () => {
     const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: reader.token });
     const players = (body as { players: Array<{ id: number; email: string | null; accountUid: string | null }> }).players;
 
-    assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.accountUid]), [[1, owner.email, owner.uid], [2, null, null]]);
+    assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.accountUid]), [
+      [1, owner.email, owner.uid], [2, null, null], [3, player.email, player.uid], [4, both.email, both.uid],
+    ]);
   });
 
   it("keeps the editor view of an editor", async () => {

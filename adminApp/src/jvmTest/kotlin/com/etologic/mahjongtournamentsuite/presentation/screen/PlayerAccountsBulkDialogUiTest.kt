@@ -73,7 +73,7 @@ class PlayerAccountsBulkDialogUiTest {
 
         onNodeWithText("Contacted (2)").performClick()
         onNodeWithText("Select all shown (2)").performClick()
-        onNodeWithText("Revoke (2)").performClick()
+        onNodeWithText("Mark as not notified (2)").performClick()
         assertEquals(PlayerAccountAction.REVOKE, action)
         assertEquals(listOf(3, 4), items.map { it.playerId })
     }

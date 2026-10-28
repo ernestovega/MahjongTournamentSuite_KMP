@@ -120,7 +120,7 @@ class InvitationsTest : AdminE2eTest() {
         c.clickButton("Invited, waiting (1)")
         c.onAllNodes(rowCheckbox).onLast().performClick()
         c.waitForText("1 selected")
-        c.clickButton("Revoke (1)")
+        c.clickButton("Mark as not notified (1)")
         c.waitForText("Invited, waiting (0)")
         c.waitForText("Not invited yet (40)")
     }

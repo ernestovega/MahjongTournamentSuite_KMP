@@ -5,7 +5,7 @@ enum class ImportRowStatus {
     /** The row adds a player, a new account or a team name. */
     NEW,
 
-    /** The row puts another player in a slot that has a player. The editor must accept it. */
+    /** The row removes a player that the file places nowhere, or depends on a row that does. The editor must accept it. */
     REPLACE,
 
     /** The slot holds this data already. */
@@ -25,7 +25,6 @@ enum class ImportIssueCode {
     INVALID_EMA_ID,
     UNKNOWN_EMA_ID,
     DUPLICATE_EMA_ID,
-    EMA_ASSIGNED_ELSEWHERE,
     INVALID_EMAIL,
     TEAM_NAME_TOO_LONG,
     TEAM_NAME_CONFLICT,

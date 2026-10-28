@@ -34,14 +34,9 @@ async function main(): Promise<void> {
   writeFileSync(file, JSON.stringify(removed.map((doc) => ({ id: doc.id, ...doc.data() })), null, 2));
   console.log(`Backup of the tournament documents: ${file}`);
 
-  // The id of a link document is the id of its tournament, so no index is needed.
-  const userRefs = (await db.collection("users").select().get()).docs.map((user) => user.ref);
   for (const doc of removed) {
     await deleteTournament(doc.id);
-    const links = await Promise.all(userRefs.map((user) => user.collection("playerTournaments").doc(doc.id).get()));
-    const existing = links.filter((link) => link.exists);
-    await Promise.all(existing.map((link) => link.ref.delete()));
-    console.log(`  deleted ${doc.id} (${existing.length} account links)`);
+    console.log(`  deleted ${doc.id}`);
   }
 }
 

@@ -4,9 +4,9 @@ import { after, before, describe, it } from "node:test";
 
 import { auth, db } from "../firebase";
 import { seedTournament } from "../testing/firestoreFixtures";
-import { createAccount, requireAuthEmulator, signInTestAccount, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
+import { createAccount, linkedAccountUid, requireAuthEmulator, signInTestAccount, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 import { assignTournamentPlayer, listTournamentPlayers } from "../services/tournamentContentService";
-import { createPlayerAccount, setAccountEmaId } from "../services/playerAccountsService";
+import { createPlayerAccount, getPlayerRegistration, listPlayerTournamentIds, setAccountEmaId } from "../services/playerAccountsService";
 import { setMailTransportForTests, type OutgoingEmail } from "../services/mailService";
 import { setPasswordResetSenderForTests } from "../services/firebaseAuthRest";
 
@@ -28,6 +28,7 @@ describe("player accounts", () => {
     }
   }
 
+  const accountOf = (playerId: number) => linkedAccountUid(tournamentId, playerId);
   const sent: OutgoingEmail[] = [];
   const resets: string[] = [];
   let failNextMail = false;
@@ -111,10 +112,13 @@ describe("player accounts", () => {
       assert.equal((await db.doc(`users/${user.uid}`).get()).get("emaId"), ema);
       assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).get("uid"), user.uid);
       const slot = await slotOf(1);
-      assert.equal(slot.get("accountUid"), user.uid);
+      assert.equal(await accountOf(1), user.uid);
       assert.ok(slot.get("notifiedAt") != null);
       assert.equal(slot.get("invitedEmail"), undefined);
-      assert.ok((await db.doc(`users/${user.uid}/playerTournaments/${tournamentId}`).get()).exists);
+      assert.equal((await getPlayerRegistration(user.uid, tournamentId))?.playerId, 1);
+      // No link is stored: the EMA number is the link.
+      assert.equal(slot.get("accountUid"), undefined);
+      assert.equal((await db.collection(`users/${user.uid}/playerTournaments`).get()).size, 0);
       assert.deepEqual(resets.filter((address) => address === email), [email]);
       assert.equal(sent.length, mailsBefore, "the registration email is not sent to an account without a password");
 
@@ -171,9 +175,25 @@ describe("player accounts", () => {
       assert.equal((await run("send", 20, email)).outcome, "INVITED");
 
       const user = await auth.getUserByEmail(email);
-      assert.equal((await slotOf(20)).get("accountUid"), user.uid);
-      assert.equal((await db.doc(`tournaments/${otherTournamentId}/players/5`).get()).get("accountUid"), user.uid);
-      assert.ok((await db.doc(`users/${user.uid}/playerTournaments/${otherTournamentId}`).get()).exists);
+      assert.equal(await accountOf(20), user.uid);
+      assert.equal(await linkedAccountUid(otherTournamentId, 5), user.uid);
+      assert.deepEqual((await listPlayerTournamentIds(user.uid)).sort(), [tournamentId, otherTournamentId].sort());
+    });
+
+    it("shows the account of a slot that was assigned before the account existed, and shows none after the account loses the EMA number", async () => {
+      const ema = newEma();
+      await seedSlot(64, ema);
+      assert.equal(await accountOf(64), null);
+
+      const account = await accountWith(ema);
+
+      assert.equal(await accountOf(64), account.uid);
+      assert.equal((await getPlayerRegistration(account.uid, tournamentId))?.playerId, 64);
+
+      await setAccountEmaId({ uid: account.uid, emaId: null });
+
+      assert.equal(await accountOf(64), null);
+      assert.equal(await getPlayerRegistration(account.uid, tournamentId), null);
     });
 
     it("keeps the account when the reset email fails, and resend sends it again", async () => {
@@ -185,7 +205,7 @@ describe("player accounts", () => {
 
       assert.equal(failed.outcome, "FAILED");
       const user = await auth.getUserByEmail(email);
-      assert.equal((await slotOf(7)).get("accountUid"), user.uid);
+      assert.equal(await accountOf(7), user.uid);
       assert.equal((await slotOf(7)).get("notifiedAt"), undefined);
       assert.equal((await run("resend", 7)).outcome, "INVITED");
       assert.ok(resets.includes(email));
@@ -201,7 +221,7 @@ describe("player accounts", () => {
 
       assert.equal(result.outcome, "FAILED");
       assert.match(result.message ?? "", /already in use/i);
-      assert.equal((await slotOf(42)).get("accountUid"), undefined);
+      assert.equal(await accountOf(42), null);
       assert.equal((await db.doc(`users/${owner.uid}`).get()).get("emaId"), ownerEma);
       assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).exists, false);
     });
@@ -224,15 +244,15 @@ describe("player accounts", () => {
       assert.equal((await run("send", 44, shared)).outcome, "INVITED");
       assert.equal((await run("send", 45, shared)).outcome, "FAILED");
 
-      assert.notEqual((await slotOf(44)).get("accountUid"), undefined);
-      assert.equal((await slotOf(45)).get("accountUid"), undefined);
+      assert.notEqual(await accountOf(44), null);
+      assert.equal(await accountOf(45), null);
     });
 
     it("refuses an invalid email", async () => {
       await seedSlot(46, newEma());
       const result = await run("send", 46, "not-an-email");
       assert.equal(result.outcome, "FAILED");
-      assert.equal((await slotOf(46)).get("accountUid"), undefined);
+      assert.equal(await accountOf(46), null);
     });
 
     it("rolls back the new account when the EMA number cannot be claimed", async () => {
@@ -282,7 +302,7 @@ describe("player accounts", () => {
 
       await seedSlot(49, ema);
 
-      assert.equal((await slotOf(49)).get("accountUid"), account.uid);
+      assert.equal(await accountOf(49), account.uid);
       assert.equal(sent.length, mails);
     });
 
@@ -292,7 +312,7 @@ describe("player accounts", () => {
 
       await seedSlot(50, newEma());
 
-      assert.equal((await slotOf(50)).get("accountUid"), undefined);
+      assert.equal(await accountOf(50), null);
       assert.equal(sent.length, mails);
       assert.equal(resets.length, reset);
     });
@@ -337,7 +357,7 @@ describe("player accounts", () => {
       const failed = await run("send", 53);
 
       assert.equal(failed.outcome, "FAILED");
-      assert.equal((await slotOf(53)).get("accountUid"), account.uid);
+      assert.equal(await accountOf(53), account.uid);
       assert.equal((await run("resend", 53)).outcome, "NOTIFIED");
     });
 
@@ -358,40 +378,41 @@ describe("player accounts", () => {
       assert.match(sent.filter((mail) => mail.to === english.email).pop()!.subject, /^You are registered in /);
     });
 
-    it("L: revoke unlinks only that tournament, keeps the account and its EMA number, and send links again", async () => {
+    it("L: revoke only forgets the email, the account follows the EMA number, and send tells the player again", async () => {
       const ema = newEma();
       const account = await accountWith(ema);
       await activate(account.email);
       await seedSlot(56, ema);
+      assert.equal((await run("send", 56)).outcome, "NOTIFIED");
 
       assert.equal((await run("revoke", 56)).outcome, "REVOKED");
 
       const slot = await slotOf(56);
-      assert.equal(slot.get("accountUid"), undefined);
       assert.equal(slot.get("notifiedAt"), undefined);
-      assert.equal((await db.doc(`users/${account.uid}/playerTournaments/${tournamentId}`).get()).exists, false);
+      assert.equal(await accountOf(56), account.uid, "the account stays linked, because the EMA number links it");
+      assert.equal((await getPlayerRegistration(account.uid, tournamentId))?.playerId, 56);
       assert.equal((await db.doc(`users/${account.uid}`).get()).get("emaId"), ema);
       assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).get("uid"), account.uid);
       assert.equal((await run("revoke", 56)).outcome, "SKIPPED");
 
       assert.equal((await run("send", 56)).outcome, "NOTIFIED");
-      assert.equal((await slotOf(56)).get("accountUid"), account.uid);
+      assert.equal(await accountOf(56), account.uid);
     });
 
-    it("M: clears the account link when the EMA number of the slot changes", async () => {
+    it("M: a slot with another EMA number has no account, and the new person got no email yet", async () => {
       const ema = newEma();
       const account = await accountWith(ema);
       await seedSlot(57, ema);
-      assert.equal((await slotOf(57)).get("accountUid"), account.uid);
+      assert.equal((await run("send", 57)).outcome, "NOTIFIED");
+      assert.equal(await accountOf(57), account.uid);
       const other = newEma();
       await db.doc(`emaPlayerRegistry/${other}`).set({ country: "ES" });
 
       await assignTournamentPlayer({ tournamentId, playerId: 57, emaId: other });
 
-      const changed = await slotOf(57);
-      assert.equal(changed.get("accountUid"), undefined);
-      assert.equal(changed.get("notifiedAt"), undefined);
-      assert.equal((await db.doc(`users/${account.uid}/playerTournaments/${tournamentId}`).get()).exists, false);
+      assert.equal(await accountOf(57), null);
+      assert.equal((await slotOf(57)).get("notifiedAt"), undefined);
+      assert.equal(await getPlayerRegistration(account.uid, tournamentId), null);
     });
 
     it("an account cannot use two EMA numbers", async () => {
@@ -403,7 +424,7 @@ describe("player accounts", () => {
       const second = await run("send", 59, email);
 
       assert.equal(second.outcome, "FAILED");
-      assert.equal((await slotOf(59)).get("accountUid"), undefined);
+      assert.equal(await accountOf(59), null);
     });
   });
 
@@ -436,8 +457,8 @@ describe("player accounts", () => {
 
       assert.equal(response.status, 200);
       assert.deepEqual(outcomes(response), ["CREATED", "UNCHANGED", "CREATED", "KEPT_ACCOUNT_EMAIL", "FAILED", "FAILED", "FAILED"]);
-      assert.equal((await slotOf(60)).get("accountUid"), (await auth.getUserByEmail(email)).uid);
-      assert.equal((await slotOf(63)).get("accountUid"), undefined);
+      assert.equal(await accountOf(60), (await auth.getUserByEmail(email)).uid);
+      assert.equal(await accountOf(63), null);
       assert.equal(sent.length, mails);
       assert.equal(resets.length, reset);
     });
@@ -460,13 +481,13 @@ describe("player accounts", () => {
 
       await setAccountEmaId({ uid: account.uid, emaId: ema });
 
-      assert.equal((await slotOf(13)).get("accountUid"), account.uid);
+      assert.equal(await accountOf(13), account.uid);
       assert.equal(sent.length, before, "no email is sent");
       assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).get("uid"), account.uid);
 
       await setAccountEmaId({ uid: account.uid, emaId: null });
 
-      assert.equal((await slotOf(13)).get("accountUid"), undefined);
+      assert.equal(await accountOf(13), null);
       assert.equal((await slotOf(13)).get("notifiedAt"), undefined);
       assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).exists, false);
     });
@@ -477,12 +498,12 @@ describe("player accounts", () => {
       const account = await accountWith(first);
       await seedSlot(36, first);
       await seedSlot(37, second);
-      assert.equal((await slotOf(36)).get("accountUid"), account.uid);
+      assert.equal(await accountOf(36), account.uid);
 
       await setAccountEmaId({ uid: account.uid, emaId: second });
 
-      assert.equal((await slotOf(36)).get("accountUid"), undefined);
-      assert.equal((await slotOf(37)).get("accountUid"), account.uid);
+      assert.equal(await accountOf(36), null);
+      assert.equal(await accountOf(37), account.uid);
       assert.equal((await db.doc(`emaIdIndex/${first}`).get()).exists, false);
     });
 
@@ -499,7 +520,8 @@ describe("player accounts", () => {
     it("C: an account with no EMA number sees no tournament", async () => {
       const account = await createAccount({ role: "EDITOR" });
 
-      assert.equal((await db.collection(`users/${account.uid}/playerTournaments`).get()).size, 0);
+      assert.deepEqual(await listPlayerTournamentIds(account.uid), []);
+      assert.equal(await getPlayerRegistration(account.uid, tournamentId), null);
     });
   });
 
@@ -556,7 +578,7 @@ describe("player accounts", () => {
       assert.equal((await put(player, "PLAYER")).status, 200);
 
       assert.equal((await db.doc(`users/${player.uid}`).get()).get("emaId"), ema);
-      assert.equal((await slotOf(22)).get("accountUid"), player.uid);
+      assert.equal(await accountOf(22), player.uid);
     });
 
     it("lets an admin promote a player-only account to editor and keeps its player access", async () => {

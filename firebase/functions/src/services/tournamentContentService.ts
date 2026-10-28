@@ -5,7 +5,7 @@ import { badRequest, conflict, notFound } from "../api/httpError";
 import { tablePointsOf } from "./handScoring";
 import { readSubstitution, SUBSTITUTION_REASONS, type PlayerSubstitution } from "./playerSubstitution";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
-import { linkKnownAccountToSlot, loadAccounts } from "./playerAccountsService";
+import { loadAccountsByEmaId, type AccountInfo } from "./playerAccountsService";
 import {
   hasDuplicateEmaAssignments,
 } from "./tournamentContentRules";
@@ -98,8 +98,9 @@ export async function listTournamentPlayers(
   options: { withAccounts?: boolean } = {},
 ): Promise<TournamentPlayer[]> {
   const snap = await db.collection("tournaments").doc(tournamentId).collection("players").get();
-  const accounts = options.withAccounts === false ? new Map() : await loadAccounts(
-    snap.docs.flatMap((d) => (typeof d.get("accountUid") === "string" ? [String(d.get("accountUid"))] : [])),
+  // The account of a slot is the account that owns the EMA id of the slot.
+  const accounts = options.withAccounts === false ? new Map<string, AccountInfo>() : await loadAccountsByEmaId(
+    snap.docs.flatMap((d) => (typeof d.get("assignedEmaId") === "string" ? [String(d.get("assignedEmaId"))] : [])),
   );
   return snap.docs
     .map((d) => readPlayer(d, accounts))
@@ -108,17 +109,18 @@ export async function listTournamentPlayers(
 
 function readPlayer(
   d: FirebaseFirestore.DocumentSnapshot,
-  accounts: ReadonlyMap<string, { email: string | null; hasPassword: boolean }>,
+  accountsByEmaId: ReadonlyMap<string, AccountInfo>,
 ): TournamentPlayer {
-  const accountUid = typeof d.get("accountUid") === "string" ? String(d.get("accountUid")) : null;
-  const account = accountUid == null ? undefined : accounts.get(accountUid);
+  const assignedEmaId = typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null;
+  const account = assignedEmaId == null ? undefined : accountsByEmaId.get(assignedEmaId);
+  const accountUid = account?.uid ?? null;
   const contactedAt = contactedAtOf(d);
   return {
     id: Number(d.get("id")),
     name: String(d.get("name") ?? ""),
     team: Number(d.get("team") ?? 0),
     country: String(d.get("country") ?? ""),
-    assignedEmaId: typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null,
+    assignedEmaId,
     accountUid,
     invitationStatus: accountUid == null ? "NONE"
       : account?.hasPassword === true ? "ACCEPTED"
@@ -382,10 +384,6 @@ export async function assignTournamentPlayer(params: {
       }
     }
 
-    // A new EMA id on a slot ends the account link of the slot.
-    const accountUid = typeof player.get("accountUid") === "string" ? String(player.get("accountUid")) : null;
-    const endsAccountLink = previousEmaId !== params.emaId && accountUid != null;
-
     // A new person starts without the substitution of the old person.
     const hadSubstitution = assignmentChanged && player.get("substitution") != null;
     const forcedTables = hadSubstitution
@@ -408,9 +406,6 @@ export async function assignTournamentPlayer(params: {
         updatedAt: FieldValue.serverTimestamp(),
       });
     }
-    if (endsAccountLink) {
-      transaction.delete(db.doc(`users/${accountUid}/playerTournaments/${params.tournamentId}`));
-    }
     // Tables that are complete hold the EMA number of the slot in their statistics.
     statisticsChanged = previousEmaId !== params.emaId && tournamentHasProgress;
     if (assignmentChanged) {
@@ -427,12 +422,8 @@ export async function assignTournamentPlayer(params: {
       assignedCountry,
       updatedAt: FieldValue.serverTimestamp(),
       ...(hadSubstitution ? { substitution: FieldValue.delete() } : {}),
-      ...(endsAccountLink
-        ? {
-          accountUid: FieldValue.delete(),
-          notifiedAt: FieldValue.delete(),
-        }
-        : {}),
+      // A new person got no email yet. The account of the slot follows the EMA id, so nothing else changes.
+      ...(assignmentChanged ? { notifiedAt: FieldValue.delete() } : {}),
     });
     const tableVersions: Record<string, unknown> = {};
     forcedTables?.docs.forEach((table) => {
@@ -448,8 +439,6 @@ export async function assignTournamentPlayer(params: {
     bumpTournamentDataVersion(params.tournamentId, "players"),
     bumpGlobalDataVersion("tournaments"),
   ]);
-  // An account that already owns this EMA id sees the tournament at once. No email is sent here.
-  if (params.emaId != null) await linkKnownAccountToSlot(params.tournamentId, params.playerId);
 }
 
 /**

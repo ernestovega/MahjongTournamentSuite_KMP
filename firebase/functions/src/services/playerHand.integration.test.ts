@@ -3,6 +3,7 @@ import { before, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
+import { giveEmaIdToAccount, seatEmaId } from "../testing/authFixtures";
 import { readChanges, readHand, readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
 import { getTournamentManifest } from "./dataVersionsService";
 import { addPenalties, parseHandInput, parsePenaltyInput, previewHand, recordHand } from "./playerHandService";
@@ -32,10 +33,10 @@ async function seedTable(options: { totalsOnly?: boolean; seats?: boolean; start
   });
   const uid = `u-${tournamentId}-1`;
   const otherUid = `u-${tournamentId}-9`;
-  await db.doc(`users/${uid}/playerTournaments/${tournamentId}`).set({ playerId: 1, emaId: "E1" });
-  await db.doc(`users/${otherUid}/playerTournaments/${tournamentId}`).set({ playerId: 9, emaId: "E9" });
-  await db.doc(`tournaments/${tournamentId}/players/1`).set({ id: 1, assignedEmaId: "E1", accountUid: uid });
-  await db.doc(`tournaments/${tournamentId}/players/9`).set({ id: 9, assignedEmaId: "E9", accountUid: otherUid });
+  await giveEmaIdToAccount(uid, "E1");
+  await giveEmaIdToAccount(otherUid, "E9");
+  await seatEmaId(tournamentId, 1, "E1");
+  await seatEmaId(tournamentId, 9, "E9");
   return { tournamentId, uid, otherUid };
 }
 
@@ -131,11 +132,12 @@ describe("hand entry by a player", () => {
     }
   });
 
-  it("refuses an account whose registration no longer matches the slot", async () => {
+  it("refuses an account whose EMA number no longer matches the slot", async () => {
     const otherPerson = await seedTable();
     const otherAccount = await seedTable();
+    // The slot holds another person now, or the account owns another EMA number now.
     await db.doc(`tournaments/${otherPerson.tournamentId}/players/1`).update({ assignedEmaId: "E77" });
-    await db.doc(`tournaments/${otherAccount.tournamentId}/players/1`).update({ accountUid: "someone-else" });
+    await db.doc(`users/${otherAccount.uid}`).update({ emaId: "E99" });
 
     for (const fixture of [otherPerson, otherAccount]) {
       await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 403);

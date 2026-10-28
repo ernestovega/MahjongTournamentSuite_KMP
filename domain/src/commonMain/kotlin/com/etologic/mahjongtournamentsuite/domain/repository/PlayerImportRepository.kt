@@ -15,7 +15,7 @@ interface PlayerImportRepository {
 
     /**
      * Applies the rows of [preview] without errors, in several requests so that none lasts long.
-     * A row that replaces a player is applied only when [replaceExisting] is true.
+     * A row that removes a player is applied only when [replaceExisting] is true.
      * It saves emails as contact emails and sends none.
      * [onProgress] gets the number of rows done and the number of rows to do.
      */

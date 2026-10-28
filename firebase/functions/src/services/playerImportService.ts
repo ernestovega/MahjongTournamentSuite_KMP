@@ -46,7 +46,6 @@ function slotInfoOf(player: TournamentPlayer): SlotInfo {
     id: player.id,
     team: player.team,
     emaId: player.assignedEmaId,
-    accountUid: player.accountUid,
     email: player.email,
   };
 }
@@ -159,7 +158,8 @@ export type PlayerImportResult = {
 
 /**
  * Runs one step of the import and returns its part of the result.
- * CLEAR empties the slots whose player moves to another slot, so an EMA number is never in two slots.
+ * CLEAR empties every slot whose player the file puts in another slot, so an EMA number is never in two slots.
+ * The file decides the positions: a player may move to any slot. Only a player that the file places nowhere is lost.
  * ASSIGN puts the players of the rows in `rows` in their slots. FINISH saves the emails and renames the teams.
  * One failed row does not stop the others.
  */
@@ -184,11 +184,10 @@ export async function applyPlayerImport(params: {
     row.status === "NEW" || row.status === "UNCHANGED" || (row.status === "REPLACE" && params.replaceExisting));
 
   if (params.phase === "CLEAR") {
-    const applicableSlotIds = new Set(applicable.map((row) => row.slotId));
     const cleared = new Set<number>();
     for (const row of applicable) {
       const holder = players.find((player) => player.assignedEmaId === row.emaId && player.id !== row.slotId);
-      if (holder == null || !applicableSlotIds.has(holder.id) || cleared.has(holder.id)) continue;
+      if (holder == null || cleared.has(holder.id)) continue;
       cleared.add(holder.id);
       try {
         await assignTournamentPlayer({

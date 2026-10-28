@@ -14,10 +14,6 @@ function playerAppUrl(): string {
   return (process.env.PLAYER_APP_URL ?? "https://mtsplayer.mahjongmadrid.com").replace(/\/$/, "");
 }
 
-function playerTournamentRef(uid: string, tournamentId: string) {
-  return db.doc(`users/${uid}/playerTournaments/${tournamentId}`);
-}
-
 /** The data of an account that the tournament screens need. The email lives only in the account. */
 export type AccountInfo = {
   uid: string;
@@ -88,19 +84,41 @@ export async function loadAccountsByEmaId(emaIds: string[]): Promise<Map<string,
   return result;
 }
 
-/** Returns the slot of the player account in a tournament, or null when the account is not registered there. */
+/** Reads the EMA id that an account owns, or null when it owns none. */
+async function emaIdOfAccount(uid: string): Promise<string | null> {
+  const emaId = (await db.doc(`users/${uid}`).get()).get("emaId");
+  return typeof emaId === "string" && emaId.length > 0 ? emaId : null;
+}
+
+/**
+ * Returns the slot of the player account in a tournament, or null when the account is not registered there.
+ * The slot is the one that holds the EMA id of the account, so no stored link can go wrong.
+ */
 export async function getPlayerRegistration(
   uid: string,
   tournamentId: string,
 ): Promise<{ playerId: number; emaId: string } | null> {
-  const snap = await playerTournamentRef(uid, tournamentId).get();
-  if (!snap.exists) return null;
-  return { playerId: Number(snap.get("playerId")), emaId: String(snap.get("emaId") ?? "") };
+  const emaId = await emaIdOfAccount(uid);
+  if (emaId == null) return null;
+  const assignment = await db.doc(`tournaments/${tournamentId}/emaPlayerAssignments/${emaId}`).get();
+  if (!assignment.exists) return null;
+  return { playerId: Number(assignment.get("playerId")), emaId };
+}
+
+/** The ids of the tournaments that hold an EMA id in a slot. */
+async function tournamentIdsOfEmaId(emaId: string): Promise<string[]> {
+  const slots = await db.collectionGroup("players").where("assignedEmaId", "==", emaId).get();
+  return slots.docs.flatMap((slot) => (slot.ref.parent.parent == null ? [] : [slot.ref.parent.parent.id]));
 }
 
 export async function listPlayerTournamentIds(uid: string): Promise<string[]> {
-  const snapshot = await db.collection(`users/${uid}/playerTournaments`).get();
-  return snapshot.docs.map((doc) => doc.id);
+  const emaId = await emaIdOfAccount(uid);
+  return emaId == null ? [] : tournamentIdsOfEmaId(emaId);
+}
+
+/** Tells the clients that the accounts of the slots with this EMA id changed. */
+async function bumpTournamentsOfEmaId(emaId: string): Promise<void> {
+  for (const tournamentId of await tournamentIdsOfEmaId(emaId)) await bumpTournamentDataVersion(tournamentId, "players");
 }
 
 /**
@@ -121,30 +139,13 @@ async function claimEmaId(uid: string, emaId: string): Promise<void> {
   });
 }
 
-/** Removes the account link of every slot that points to the account, and releases its EMA id. */
+/** Releases the EMA id of the account. The slots that hold the id stay, and they have no account any more. */
 async function releaseEmaId(uid: string): Promise<void> {
-  const registrations = await db.collection(`users/${uid}/playerTournaments`).get();
-  for (const registration of registrations.docs) {
-    const playerId = Number(registration.get("playerId"));
-    const slotRef = db.doc(`tournaments/${registration.id}/players/${playerId}`);
-    const batch = db.batch();
-    if ((await slotRef.get()).exists) {
-      batch.update(slotRef, {
-        accountUid: FieldValue.delete(),
-        notifiedAt: FieldValue.delete(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-    }
-    batch.delete(registration.ref);
-    await batch.commit();
-    await bumpTournamentDataVersion(registration.id, "players");
-  }
-  const profile = await db.doc(`users/${uid}`).get();
-  const emaId = profile.get("emaId");
-  if (typeof emaId === "string" && emaId.length > 0) {
-    await db.doc(`emaIdIndex/${emaId}`).delete();
-    await db.doc(`users/${uid}`).update({ emaId: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
-  }
+  const emaId = await emaIdOfAccount(uid);
+  if (emaId == null) return;
+  await db.doc(`emaIdIndex/${emaId}`).delete();
+  await db.doc(`users/${uid}`).update({ emaId: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
+  await bumpTournamentsOfEmaId(emaId);
 }
 
 /**
@@ -160,7 +161,7 @@ export async function assertEmaIdAvailable(emaId: string, ownUid?: string): Prom
 
 /**
  * Sets the EMA id of an existing account, or clears it with null.
- * Every tournament that has this EMA id in a slot links to the account at once. No email is sent.
+ * Every slot that holds this EMA id shows the account at once, because the link is the EMA id. No email is sent.
  */
 export async function setAccountEmaId(params: { uid: string; emaId: string | null }): Promise<void> {
   const profile = await db.doc(`users/${params.uid}`).get();
@@ -171,45 +172,7 @@ export async function setAccountEmaId(params: { uid: string; emaId: string | nul
   if (params.emaId == null) return;
   await claimEmaId(params.uid, params.emaId);
   await grantPlayerCapability(params.uid);
-  await linkAccountToAllSlots(params.emaId);
-}
-
-/** Links every tournament slot that holds the EMA id to the account that owns the id. Sends no email. */
-async function linkAccountToAllSlots(emaId: string): Promise<void> {
-  const tournaments = await db.collection("tournaments").get();
-  for (const tournament of tournaments.docs) {
-    const assignment = await db.doc(`tournaments/${tournament.id}/emaPlayerAssignments/${emaId}`).get();
-    if (assignment.exists) await linkKnownAccountToSlot(tournament.id, Number(assignment.get("playerId")));
-  }
-}
-
-/** Links a slot to the account that already owns the EMA id of the slot. Sends no email. */
-export async function linkKnownAccountToSlot(tournamentId: string, playerId: number): Promise<string | null> {
-  const slotRef = db.doc(`tournaments/${tournamentId}/players/${playerId}`);
-  const slotSnap = await slotRef.get();
-  const emaId = slotSnap.get("assignedEmaId");
-  if (!slotSnap.exists || typeof emaId !== "string" || emaId.length === 0) return null;
-  if (typeof slotSnap.get("accountUid") === "string") return String(slotSnap.get("accountUid"));
-  const indexSnap = await db.doc(`emaIdIndex/${emaId}`).get();
-  const uid = indexSnap.exists ? String(indexSnap.get("uid")) : null;
-  if (!uid) return null;
-  const account = await auth.getUser(uid).catch(() => null);
-  if (!account || account.disabled) return null;
-
-  const linked = await db.runTransaction(async (transaction) => {
-    const slot = await transaction.get(slotRef);
-    if (slot.get("assignedEmaId") !== emaId || typeof slot.get("accountUid") === "string") return false;
-    transaction.update(slotRef, {
-      accountUid: uid,
-      updatedAt: FieldValue.serverTimestamp(),
-    });
-    transaction.set(playerTournamentRef(uid, tournamentId), {
-      playerId, emaId, tournamentId, createdAt: FieldValue.serverTimestamp(),
-    });
-    return true;
-  });
-  if (linked) await bumpTournamentDataVersion(tournamentId, "players");
-  return linked ? uid : null;
+  await bumpTournamentsOfEmaId(params.emaId);
 }
 
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -291,30 +254,24 @@ async function runOne(
   const hasEma = typeof emaId === "string" && emaId.length > 0;
   const email = (item.email ?? "").trim().toLowerCase();
   if (email && !EMAIL_PATTERN.test(email)) return { playerId, outcome: "FAILED", message: "Invalid email" };
-  let accountUid = typeof slot.get("accountUid") === "string" ? String(slot.get("accountUid")) : null;
+  const ownedAccount = hasEma ? (await loadAccountsByEmaId([emaId])).get(emaId) : undefined;
 
   if (action === "revoke") {
-    if (accountUid == null) return { playerId, outcome: "SKIPPED", message: "Nothing to revoke" };
-    await db.runTransaction(async (transaction) => {
-      transaction.update(slotRef, {
-        accountUid: FieldValue.delete(),
-        notifiedAt: FieldValue.delete(),
-        updatedAt: FieldValue.serverTimestamp(),
-      });
-      transaction.delete(playerTournamentRef(accountUid!, tournamentId));
-    });
+    // The account belongs to the EMA id, so the revoke only forgets that the player got an email.
+    if (slot.get("notifiedAt") == null) return { playerId, outcome: "SKIPPED", message: "Nothing to revoke" };
+    await slotRef.update({ notifiedAt: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
     await bumpTournamentDataVersion(tournamentId, "players");
     return { playerId, outcome: "REVOKED" };
   }
 
   if (!hasEma) return { playerId, outcome: "FAILED", message: "The player has no EMA id" };
   try {
-    if (accountUid == null) accountUid = await linkKnownAccountToSlot(tournamentId, playerId);
+    let accountUid = ownedAccount?.uid ?? null;
     if (accountUid == null) {
       if (!email) return { playerId, outcome: "FAILED", message: "No email for this player" };
       accountUid = await createPlayerAccount({ email, emaId: String(emaId) });
     }
-    const account = (await loadAccounts([accountUid])).get(accountUid);
+    const account = ownedAccount ?? (await loadAccounts([accountUid])).get(accountUid);
     if (account?.email == null) return { playerId, outcome: "FAILED", message: "The account of this player has no email" };
     // The email of the account always wins. A different email does not change the account.
     if (email && email !== account.email) {
@@ -393,14 +350,12 @@ export async function saveAccountEmails(params: {
       if (!slot.exists) throw notFound("Player not found");
       const emaId = slot.get("assignedEmaId");
       if (typeof emaId !== "string" || emaId.length === 0) throw badRequest("The player has no EMA id");
-      let uid = typeof slot.get("accountUid") === "string" ? String(slot.get("accountUid")) : null;
-      uid ??= await linkKnownAccountToSlot(params.tournamentId, item.playerId);
-      if (uid == null) {
+      const account = (await loadAccountsByEmaId([emaId])).get(emaId);
+      if (account == null) {
         await createPlayerAccount({ email, emaId });
         results.push({ playerId: item.playerId, outcome: "CREATED" });
         continue;
       }
-      const account = (await loadAccounts([uid])).get(uid);
       if (account?.email === email) results.push({ playerId: item.playerId, outcome: "UNCHANGED" });
       else results.push({ playerId: item.playerId, outcome: "KEPT_ACCOUNT_EMAIL", message: account?.email ?? "" });
     } catch (error) {

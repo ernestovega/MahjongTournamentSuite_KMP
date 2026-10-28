@@ -271,12 +271,12 @@ export type IssueCode =
   | "INVALID_EMA_ID"
   | "UNKNOWN_EMA_ID"
   | "DUPLICATE_EMA_ID"
-  | "EMA_ASSIGNED_ELSEWHERE"
   | "INVALID_EMAIL"
   | "TEAM_NAME_TOO_LONG"
   | "TEAM_NAME_CONFLICT"
   | "TEAM_NAME_IN_USE"
   // Warnings: the row is applied.
+  /** The slot holds a player that the file does not place in any slot. Applying the row removes that player. */
   | "REPLACES_PLAYER"
   /** The account of the player has another email. The account email stays and the email of the file is not saved. */
   | "EMAIL_KEPT_ACCOUNT"
@@ -291,13 +291,13 @@ export type RowIssue = {
   args: string[];
 };
 
+/** REPLACE: the row needs the acceptance of the editor, because it removes a player or depends on a row that does. */
 export type RowStatus = "NEW" | "REPLACE" | "UNCHANGED" | "ERROR";
 
 export type SlotInfo = {
   id: number;
   team: number;
   emaId: string | null;
-  accountUid: string | null;
   /** The email of the account linked to the slot. The email lives only in the account. */
   email: string | null;
 };
@@ -334,7 +334,7 @@ export type PlanInput = {
   accountEmailByEma: ReadonlyMap<string, string | null>;
   /** The accounts that own an email, by email in lower case. The value is the EMA id of the account, or "" when it has none. */
   emailOwners: ReadonlyMap<string, string>;
-  /** True when the editor accepts to replace players that are in a slot already. */
+  /** True when the editor accepts to remove the players that the file does not place in any slot. */
   replaceExisting: boolean;
 };
 
@@ -444,33 +444,25 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     if (clash) rows.forEach((row) => addIssue(row.row, "TEAM_NAME_IN_USE", "ERROR", [teamOf.get(row.row)!]));
   });
 
-  const replacesPlayer = (row: ImportRow): boolean => {
+  // The file decides the position of every player. A player may move to another slot, also to a slot that
+  // another player leaves in the same file. Only a player that the file does not place anywhere is lost.
+  const placed = (rows: ImportRow[]) => new Set(rows.flatMap((row) => (emaOf.has(row.row) ? [emaOf.get(row.row)!] : [])));
+  const loses = (row: ImportRow, rows: ImportRow[]): boolean => {
     const slot = slotsById.get(slotIdOf.get(row.row)!)!;
     const emaId = emaOf.get(row.row);
-    return emaId != null && slot.emaId != null && slot.emaId !== emaId;
+    return emaId != null && slot.emaId != null && slot.emaId !== emaId && !placed(rows).has(slot.emaId);
   };
-  // A row is applied when it has no error, and when it replaces a player only if the editor accepted it.
-  const isActive = (row: ImportRow) => !hasError(row.row) && (input.replaceExisting || !replacesPlayer(row));
-
-  // An EMA number cannot end in two slots. The slots that no active row changes keep their player.
-  let changed = true;
-  while (changed) {
-    changed = false;
-    const finalBySlot = new Map<number, string | null>(input.slots.map((slot) => [slot.id, slot.emaId]));
-    for (const row of input.rows) {
-      if (slotIdOf.has(row.row) && emaOf.has(row.row) && isActive(row)) finalBySlot.set(slotIdOf.get(row.row)!, emaOf.get(row.row)!);
-    }
-    for (const row of input.rows) {
-      if (!slotIdOf.has(row.row) || !emaOf.has(row.row) || !isActive(row)) continue;
-      const slotId = slotIdOf.get(row.row)!;
-      const emaId = emaOf.get(row.row)!;
-      const holder = [...finalBySlot.entries()].find(([otherSlot, otherEma]) => otherSlot !== slotId && otherEma === emaId);
-      if (holder != null) {
-        addIssue(row.row, "EMA_ASSIGNED_ELSEWHERE", "ERROR", [String(holder[0])]);
-        changed = true;
-      }
-    }
+  const validRows = input.rows.filter((row) => slotIdOf.has(row.row) && emaOf.has(row.row) && !hasError(row.row));
+  // The rows that need no acceptance. A row that loses a player is out, and then the players that it would have
+  // moved are lost too, so the check runs again until nothing changes.
+  let safeRows = validRows;
+  for (;;) {
+    const next = safeRows.filter((row) => !loses(row, safeRows));
+    if (next.length === safeRows.length) break;
+    safeRows = next;
   }
+  const safeSet = new Set(safeRows.map((row) => row.row));
+  const isActive = (row: ImportRow) => !hasError(row.row) && (input.replaceExisting || safeSet.has(row.row));
 
   // The email of an account never changes here. A new email creates an account only when no account owns the email.
   const emailsToCreate = new Map<string, string>();
@@ -487,7 +479,7 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     };
     let createsAccount = false;
     if (slot != null && !hasError(row.row)) {
-      if (replacesPlayer(row)) addIssue(row.row, "REPLACES_PLAYER", "WARNING");
+      if (loses(row, validRows)) addIssue(row.row, "REPLACES_PLAYER", "WARNING");
       if (email != null && emaId != null && isActive(row)) {
         const accountEmail = input.accountEmailByEma.get(emaId);
         const owner = input.emailOwners.get(email);
@@ -508,7 +500,7 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     let status: RowStatus;
     if (issues.some((issue) => issue.severity === "ERROR")) {
       status = "ERROR";
-    } else if (replacesPlayer(row)) {
+    } else if (!safeSet.has(row.row)) {
       status = "REPLACE";
     } else {
       const teamChanges = team != null && input.isTeams && !sameText(team, input.teamNames.get(slot!.team) ?? "");

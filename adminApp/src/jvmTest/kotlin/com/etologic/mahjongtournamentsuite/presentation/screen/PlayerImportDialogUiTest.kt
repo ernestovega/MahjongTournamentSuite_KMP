@@ -189,7 +189,7 @@ class PlayerImportDialogUiTest {
         awaitText("Import 0 rows")
         onNodeWithText("Import 0 rows").assertIsNotEnabled()
 
-        onNodeWithText("Replace the players that are in a slot already (1 rows)").performClick()
+        onNodeWithText("Remove the players that the file does not include (1 rows)").performClick()
         onNodeWithText("Import 1 rows").assertIsEnabled()
         onNodeWithText("Import 1 rows").performClick()
         awaitText("Import finished")
