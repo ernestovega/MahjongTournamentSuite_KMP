@@ -298,14 +298,36 @@ export type SlotInfo = {
   emaId: string | null;
 };
 
+/** The values of a row as the file holds them, so the app can show an erroneous value. */
+export type FileValues = { id: string; emaId: string; email: string; team: string };
+
 export type PlannedRow = {
   row: number;
+  file: FileValues;
   slotId: number | null;
   emaId: string | null;
   email: string | null;
   team: string | null;
   issues: RowIssue[];
 };
+
+/** The data of a row that differs from what the slot holds now. The app colours these cells. */
+export type ChangedField = "PLAYER" | "EMAIL" | "TEAM";
+
+export type CurrentSlot = { emaId: string | null; email: string | null; teamName: string | null };
+
+/**
+ * Says which data of a row the import changes. It compares the row with the slot now. The slot email is the
+ * pending email, and the app never receives it: only the fact that it changes.
+ * The team counts only when the file has a team column, because without one the team names stay.
+ */
+export function changedFields(row: PlannedRow, current: CurrentSlot, options: { isTeams: boolean; hasTeamColumn: boolean }): ChangedField[] {
+  const changes: ChangedField[] = [];
+  if (row.emaId != null && row.emaId !== current.emaId) changes.push("PLAYER");
+  if ((row.email ?? null) !== (current.email ?? null)) changes.push("EMAIL");
+  if (options.isTeams && options.hasTeamColumn && row.team != null && !sameText(row.team, current.teamName ?? "")) changes.push("TEAM");
+  return changes;
+}
 
 export type ImportPlan = {
   rows: PlannedRow[];
@@ -442,6 +464,7 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
 
   const planned: PlannedRow[] = input.rows.map((row) => ({
     row: row.row,
+    file: { id: row.id, emaId: row.emaId, email: row.email, team: row.team },
     slotId: slotIdOf.get(row.row) ?? null,
     emaId: emaOf.get(row.row) ?? null,
     email: emailOf.get(row.row) ?? null,

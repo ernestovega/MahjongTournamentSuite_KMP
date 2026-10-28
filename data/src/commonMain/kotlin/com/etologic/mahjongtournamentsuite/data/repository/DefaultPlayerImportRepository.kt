@@ -15,9 +15,12 @@ import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ImportFileErrorCode
+import com.etologic.mahjongtournamentsuite.domain.model.ImportField
+import com.etologic.mahjongtournamentsuite.domain.model.ImportFileValues
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssue
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
+import com.etologic.mahjongtournamentsuite.domain.model.ImportRemovedPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
@@ -99,6 +102,7 @@ private fun Throwable.toImportAppError(): AppError {
 
 private fun PlayerImportPreviewDto.toDomain() = PlayerImportPreview(
     rows = rows.map { it.toDomain() },
+    removed = removed.map { ImportRemovedPlayer(it.slotId, it.emaId) },
     valid = valid,
     isTeams = isTeams,
     tournamentStarted = tournamentStarted,
@@ -110,6 +114,7 @@ private fun PlayerImportPreviewDto.toDomain() = PlayerImportPreview(
 
 private fun ImportRowPlanDto.toDomain() = ImportRowPlan(
     row = row,
+    file = ImportFileValues(file.id, file.emaId, file.email, file.team),
     slotId = slotId,
     emaId = emaId,
     email = email,
@@ -121,4 +126,6 @@ private fun ImportRowPlanDto.toDomain() = ImportRowPlan(
             args = issue.args,
         )
     },
+    // An unknown name from a newer server is dropped: the cell then shows no change colour.
+    changes = changes.mapNotNull { name -> ImportField.entries.firstOrNull { it.name == name } }.toSet(),
 )

@@ -665,9 +665,7 @@
     <string name="import_choose_other_file">Choose another file</string>
     <string name="import_reading_file">The app is reading the file.</string>
     <string name="import_applying">The app is saving the players.</string>
-    <string name="import_count_errors">Rows with an error: %1$d. Fix them and choose the file again.</string>
     <string name="import_apply_count">Import (%1$d)</string>
-    <string name="import_row_title">Line %1$d · Slot %2$s</string>
     <string name="import_issue_invalid_id">The id is not a positive whole number.</string>
     <string name="import_issue_unknown_slot">This tournament has no slot %1$s.</string>
     <string name="import_issue_duplicate_slot">Slot %1$s appears in more than one row.</string>
@@ -683,8 +681,6 @@
     <string name="import_issue_unknown">This row has a problem that this version of the app does not know.</string>
     <string name="import_done_title">Import finished</string>
     <string name="import_started_blocked">This tournament has table results, so its players cannot change. Use the substitution of a player instead.</string>
-    <string name="import_summary_players">Players in the file: %1$d</string>
-    <string name="import_existing_players">Players in the tournament now: %1$d. The import replaces them with the players of the file.</string>
     <string name="import_confirm_title">Replace all players?</string>
     <string name="import_confirm_text">The import replaces all players of the tournament (now: %1$d) and all team names with the data of the file (players: %2$d). You cannot undo this.</string>
     <string name="import_confirm_button">Replace</string>
@@ -738,4 +734,15 @@
     <string name="send_result_reminded">Reminders sent: %1$d</string>
     <string name="send_result_failed">Not sent: %1$d</string>
     <string name="send_failure_line">• %1$s: %2$s</string>
+    <string name="import_summary_line">Players: %1$d · Changed: %2$d · Errors: %3$d · Removed: %4$d</string>
+    <string name="import_legend_changed">New or changed</string>
+    <string name="import_legend_error">Error</string>
+    <string name="import_legend_warning">Warning or removed</string>
+    <string name="import_tip_changed">This data changes.</string>
+    <string name="import_tip_removed">The file does not list this slot, so the import removes this player.</string>
+    <string name="import_state_changed">Changed</string>
+    <string name="import_state_error">Error</string>
+    <string name="import_state_warning">Warning</string>
+    <string name="import_state_removed">Removed</string>
+    <string name="import_state_unchanged">No change</string>
 </resources>

@@ -122,6 +122,31 @@ describe("player import", () => {
     assert.equal(log.size, 3);
   });
 
+  it("tells which data of each row changes and which players the file removes, without showing any saved email", async () => {
+    const { id, emas } = await seedImportTournament({ isTeams: true });
+    const players = db.collection("tournaments").doc(id).collection("players");
+    await players.doc("1").update({ assignedEmaId: emas[0], email: "old@example.test" });
+    await players.doc("3").update({ assignedEmaId: emas[2] });
+    await players.doc("4").update({ assignedEmaId: emas[3], email: "gone@example.test" });
+    await db.doc(`tournaments/${id}/teams/1`).set({ id: 1, name: "Reds" });
+    const csv = `id,ema id,email,team\n1,${emas[0]},new@example.test,Reds\n2,${emas[1]},,Blues\n3,${emas[2]},,Team 2\n`;
+
+    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
+
+    assert.deepEqual(preview.rows.map((row) => [row.slotId, row.changes]), [[1, ["EMAIL"]], [2, ["PLAYER", "TEAM"]], [3, []]]);
+    assert.deepEqual(preview.removed, [{ slotId: 4, emaId: emas[3] }]);
+    assert.equal(JSON.stringify(preview).includes("old@example.test"), false, "the preview never holds a saved email");
+    assert.equal(JSON.stringify(preview).includes("gone@example.test"), false);
+  });
+
+  it("marks every row of the first import as a change and removes nobody", async () => {
+    const { id, emas } = await seedImportTournament();
+    const preview = await previewPlayerImport({ tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},a@example.test\n2,${emas[1]},\n`) });
+
+    assert.deepEqual(preview.rows.map((row) => row.changes), [["PLAYER", "EMAIL"], ["PLAYER"]]);
+    assert.deepEqual(preview.removed, []);
+  });
+
   it("changes nothing when the same file is applied again", async () => {
     const { id, emas } = await seedImportTournament();
     const csv = `id,ema id,email\n1,${emas[0]},${uniqueEmail()}\n2,${emas[1]},\n`;

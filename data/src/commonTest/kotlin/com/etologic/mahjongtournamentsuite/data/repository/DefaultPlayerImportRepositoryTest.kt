@@ -7,7 +7,10 @@ import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ImportFileErrorCode
+import com.etologic.mahjongtournamentsuite.domain.model.ImportField
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
+import com.etologic.mahjongtournamentsuite.domain.model.ImportRemovedPlayer
+import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
@@ -68,6 +71,40 @@ class DefaultPlayerImportRepositoryTest {
         assertEquals(3, preview.importedPlayers)
         assertTrue(preview.isTeams && preview.hasEmailColumn && preview.hasTeamColumn)
         assertFalse(preview.canApply)
+    }
+
+    @Test
+    fun previewMapsTheChangedDataAndTheRemovedPlayers() = runTest {
+        val repository = repository {
+            jsonResponse(
+                """
+                {"rows":[
+                  {"row":2,"slotId":1,"emaId":"00000001","changes":["PLAYER","EMAIL"]},
+                  {"row":3,"slotId":2,"emaId":"00000002","changes":["TEAM","FROM_THE_FUTURE"]},
+                  {"row":4,"slotId":3,"emaId":"00000003"}
+                ],"removed":[{"slotId":5,"emaId":"00000009"}],"valid":true}
+                """.trimIndent(),
+            )
+        }
+
+        val preview = assertIs<AppResult.Success<PlayerImportPreview>>(repository.preview("t1", "p.csv", byteArrayOf(1))).value
+
+        assertEquals(setOf(ImportField.PLAYER, ImportField.EMAIL), preview.rows[0].changes)
+        assertEquals(setOf(ImportField.TEAM), preview.rows[1].changes)
+        assertEquals(emptySet(), preview.rows[2].changes)
+        assertEquals(listOf(ImportRemovedPlayer(5, "00000009")), preview.removed)
+    }
+
+    @Test
+    fun everyIssueCodeBelongsToOneCell() {
+        val byField = ImportIssueCode.entries.groupBy { it.field }
+        assertEquals(
+            setOf(ImportIssueCode.INVALID_ID, ImportIssueCode.UNKNOWN_SLOT, ImportIssueCode.DUPLICATE_SLOT),
+            byField.getValue(ImportField.ID).toSet(),
+        )
+        assertEquals(true, ImportIssueCode.DUPLICATE_EMAIL.field == ImportField.EMAIL && ImportIssueCode.EMAIL_OWNED_BY_OTHER_ACCOUNT.field == ImportField.EMAIL)
+        assertEquals(ImportField.TEAM, ImportIssueCode.TEAM_IGNORED.field)
+        assertEquals(ImportField.PLAYER, ImportIssueCode.UNKNOWN_EMA_ID.field)
     }
 
     @Test

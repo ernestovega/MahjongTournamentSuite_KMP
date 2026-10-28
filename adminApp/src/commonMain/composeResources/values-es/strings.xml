@@ -665,9 +665,7 @@
     <string name="import_choose_other_file">Elegir otro archivo</string>
     <string name="import_reading_file">La aplicación está leyendo el archivo.</string>
     <string name="import_applying">La app está guardando los jugadores.</string>
-    <string name="import_count_errors">Filas con error: %1$d. Corrígelas y elige el archivo otra vez.</string>
     <string name="import_apply_count">Importar (%1$d)</string>
-    <string name="import_row_title">Línea %1$d · Hueco %2$s</string>
     <string name="import_issue_invalid_id">El id no es un número entero positivo.</string>
     <string name="import_issue_unknown_slot">Este torneo no tiene el hueco %1$s.</string>
     <string name="import_issue_duplicate_slot">El hueco %1$s aparece en más de una fila.</string>
@@ -683,8 +681,6 @@
     <string name="import_issue_unknown">Esta fila tiene un problema que esta versión de la aplicación no conoce.</string>
     <string name="import_done_title">Importación terminada</string>
     <string name="import_started_blocked">Este torneo ya tiene resultados de mesas, así que sus jugadores no se pueden cambiar. Usa la sustitución de un jugador.</string>
-    <string name="import_summary_players">Jugadores en el archivo: %1$d</string>
-    <string name="import_existing_players">Jugadores en el torneo ahora: %1$d. La importación los sustituye por los jugadores del archivo.</string>
     <string name="import_confirm_title">¿Sustituir todos los jugadores?</string>
     <string name="import_confirm_text">La importación sustituye a todos los jugadores del torneo (ahora: %1$d) y todos los nombres de equipo por los datos del archivo (jugadores: %2$d). No se puede deshacer.</string>
     <string name="import_confirm_button">Sustituir</string>
@@ -738,4 +734,15 @@
     <string name="send_result_reminded">Recordatorios enviados: %1$d</string>
     <string name="send_result_failed">No enviados: %1$d</string>
     <string name="send_failure_line">• %1$s: %2$s</string>
+    <string name="import_summary_line">Jugadores: %1$d · Cambian: %2$d · Errores: %3$d · Se quitan: %4$d</string>
+    <string name="import_legend_changed">Nuevo o cambia</string>
+    <string name="import_legend_error">Error</string>
+    <string name="import_legend_warning">Aviso o se quita</string>
+    <string name="import_tip_changed">Este dato cambia.</string>
+    <string name="import_tip_removed">El archivo no incluye esta plaza, así que la importación quita a este jugador.</string>
+    <string name="import_state_changed">Cambia</string>
+    <string name="import_state_error">Error</string>
+    <string name="import_state_warning">Aviso</string>
+    <string name="import_state_removed">Se quita</string>
+    <string name="import_state_unchanged">Sin cambio</string>
 </resources>

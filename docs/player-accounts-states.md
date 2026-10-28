@@ -72,6 +72,7 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 | A new person in a slot | The substitution of the old person goes away. The `playerLog` records the change. | same as above |
 | The same file twice | The second import changes no slot. | "changes nothing when the same file is applied again" |
 | A file with any error | The whole file is refused. The preview lists every error with its line. Nothing is written. | "writes nothing when one row has an error, and the preview lists the error" |
+| The preview in the app | A table of the data of the file: id, player, email and (with teams) team. A green cell is data that the import changes, a red cell is an error, an amber cell is a warning or a player that the file removes (the rows of removed players are at the end, struck through). A tooltip on a coloured cell says why. Rows with errors come first. A line above the table counts players, changes, errors and removed players. | `PlayerImportDialogUiTest`, "tells which data of each row changes and which players the file removes…" |
 | Two rows with the same email, in any letter case | Error `DUPLICATE_EMAIL` on both rows. | "refuses two rows with the same email" |
 | An email that an account of another EMA number, or with none, owns | Error `EMAIL_OWNED_BY_OTHER_ACCOUNT`. | "refuses an email that an account of another EMA number owns, and accepts the account of the same number" |
 | An email that the account of the same EMA number owns | Accepted. The account email wins. | same as above |

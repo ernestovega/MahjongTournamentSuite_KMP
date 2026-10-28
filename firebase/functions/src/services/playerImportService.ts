@@ -3,10 +3,12 @@ import { conflict, notFound } from "../api/httpError";
 import {
   ImportPlan,
   buildPlayerExportRecords,
+  changedFields,
   normalizeEmaId,
   parsePlayerImportFile,
   planPlayerImport,
   type ParsedImport,
+  type ChangedField,
   type PlannedRow,
   writePlayerExportXlsx,
 } from "./playerImport";
@@ -17,10 +19,16 @@ import {
   listTournamentTeams,
   overwriteTournamentPlayers,
   tournamentHasStartedTables,
+  type TournamentPlayer,
 } from "./tournamentContentService";
 
+/** A row of the preview: the data of the file, its problems, and which data the import changes. */
+export type PreviewRow = PlannedRow & { changes: ChangedField[] };
+
 export type PlayerImportPreview = {
-  rows: PlannedRow[];
+  rows: PreviewRow[];
+  /** Players that sit in a slot now and that the file leaves out. The import removes them. */
+  removed: Array<{ slotId: number; emaId: string }>;
   /** True when no row has an error. */
   valid: boolean;
   isTeams: boolean;
@@ -35,6 +43,8 @@ export type PlayerImportPreview = {
 };
 
 type Loaded = {
+  players: TournamentPlayer[];
+  teamNames: Map<number, string>;
   parsed: ParsedImport;
   plan: ImportPlan;
   isTeams: boolean;
@@ -66,6 +76,7 @@ async function load(params: { tournamentId: string; fileName: string; buffer: Bu
   const emailOwners = new Map<string, string>();
   const emails = parsed.rows.map((row) => row.email.toLowerCase()).filter((email) => EMAIL_PATTERN.test(email));
   (await loadAccountsByEmail(emails)).forEach((owner, email) => emailOwners.set(email, owner.emaId ?? ""));
+  const teamNames = new Map((await listTournamentTeams(params.tournamentId)).map((team) => [team.id, team.name]));
   const plan = planPlayerImport({
     rows: parsed.rows,
     slots: players.map((player) => ({ id: player.id, team: player.team, emaId: player.assignedEmaId })),
@@ -75,6 +86,8 @@ async function load(params: { tournamentId: string; fileName: string; buffer: Bu
     emailOwners,
   });
   return {
+    players,
+    teamNames,
     parsed,
     plan,
     isTeams,
@@ -90,8 +103,21 @@ export async function previewPlayerImport(params: {
   buffer: Buffer;
 }): Promise<PlayerImportPreview> {
   const loaded = await load(params);
+  const slots = new Map(loaded.players.map((player) => [player.id, player]));
+  const rows = loaded.plan.rows.map((row): PreviewRow => {
+    const slot = row.slotId == null ? undefined : slots.get(row.slotId);
+    if (slot == null) return { ...row, changes: [] };
+    const current = { emaId: slot.assignedEmaId, email: slot.email, teamName: loaded.isTeams ? loaded.teamNames.get(slot.team) ?? null : null };
+    return {
+      ...row,
+      changes: changedFields(row, current, { isTeams: loaded.isTeams, hasTeamColumn: loaded.parsed.hasTeamColumn }),
+    };
+  });
+  const emptied = new Set(loaded.plan.emptiedSlotIds);
   return {
-    rows: loaded.plan.rows,
+    rows,
+    removed: loaded.players.flatMap((player) => (emptied.has(player.id) && player.assignedEmaId != null
+      ? [{ slotId: player.id, emaId: player.assignedEmaId }] : [])),
     valid: loaded.plan.valid,
     isTeams: loaded.isTeams,
     tournamentStarted: loaded.tournamentStarted,

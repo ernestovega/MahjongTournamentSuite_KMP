@@ -662,9 +662,7 @@
     <string name="import_choose_other_file">Choisir un autre fichier</string>
     <string name="import_reading_file">L'application lit le fichier.</string>
     <string name="import_applying">L'app enregistre les joueurs.</string>
-    <string name="import_count_errors">Lignes avec une erreur : %1$d. Corrigez-les et choisissez à nouveau le fichier.</string>
     <string name="import_apply_count">Importer (%1$d)</string>
-    <string name="import_row_title">Ligne %1$d · Place %2$s</string>
     <string name="import_issue_invalid_id">L'id n'est pas un nombre entier positif.</string>
     <string name="import_issue_unknown_slot">Ce tournoi n'a pas la place %1$s.</string>
     <string name="import_issue_duplicate_slot">La place %1$s apparaît dans plusieurs lignes.</string>
@@ -683,8 +681,6 @@
     <string name="save_id_list">Enregistrer la liste d'identité</string>
     <string name="save_id_card_proof">Enregistrer l'épreuve des cartes d'identité</string>
     <string name="import_started_blocked">Ce tournoi a déjà des résultats de tables, donc ses joueurs ne peuvent pas changer. Utilisez le remplacement d'un joueur.</string>
-    <string name="import_summary_players">Joueurs dans le fichier : %1$d</string>
-    <string name="import_existing_players">Joueurs dans le tournoi maintenant : %1$d. L'import les remplace par les joueurs du fichier.</string>
     <string name="import_confirm_title">Remplacer tous les joueurs ?</string>
     <string name="import_confirm_text">L'import remplace tous les joueurs du tournoi (maintenant : %1$d) et tous les noms d'équipe par les données du fichier (joueurs : %2$d). Vous ne pouvez pas annuler.</string>
     <string name="import_confirm_button">Remplacer</string>
@@ -738,4 +734,15 @@
     <string name="send_result_reminded">Rappels envoyés : %1$d</string>
     <string name="send_result_failed">Non envoyés : %1$d</string>
     <string name="send_failure_line">• %1$s : %2$s</string>
+    <string name="import_summary_line">Joueurs : %1$d · Modifiés : %2$d · Erreurs : %3$d · Retirés : %4$d</string>
+    <string name="import_legend_changed">Nouveau ou modifié</string>
+    <string name="import_legend_error">Erreur</string>
+    <string name="import_legend_warning">Avertissement ou retiré</string>
+    <string name="import_tip_changed">Cette donnée change.</string>
+    <string name="import_tip_removed">Le fichier ne contient pas cette place, donc l\'import retire ce joueur.</string>
+    <string name="import_state_changed">Modifié</string>
+    <string name="import_state_error">Erreur</string>
+    <string name="import_state_warning">Avertissement</string>
+    <string name="import_state_removed">Retiré</string>
+    <string name="import_state_unchanged">Aucun changement</string>
 </resources>

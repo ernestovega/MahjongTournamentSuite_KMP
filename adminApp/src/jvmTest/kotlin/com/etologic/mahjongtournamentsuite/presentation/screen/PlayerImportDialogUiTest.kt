@@ -4,7 +4,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.moveTo
+import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.onAllNodesWithText
@@ -15,7 +20,10 @@ import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ImportField
 import com.etologic.mahjongtournamentsuite.domain.model.ImportFileErrorCode
+import com.etologic.mahjongtournamentsuite.domain.model.ImportFileValues
+import com.etologic.mahjongtournamentsuite.domain.model.ImportRemovedPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssue
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
@@ -47,8 +55,10 @@ class PlayerImportDialogUiTest {
     @AfterTest
     fun restoreLocale() = java.util.Locale.setDefault(originalLocale)
 
-    private fun row(line: Int, vararg issues: ImportIssue) = ImportRowPlan(
-        row = line, slotId = line, emaId = "0000000$line", email = null, team = null, issues = issues.toList(),
+    private fun row(line: Int, vararg issues: ImportIssue, changes: Set<ImportField> = emptySet(), email: String = "", team: String = "") = ImportRowPlan(
+        row = line, slotId = line, emaId = "0000000$line", email = email.ifBlank { null }, team = team.ifBlank { null },
+        issues = issues.toList(), changes = changes,
+        file = ImportFileValues(id = line.toString(), emaId = "0000000$line", email = email, team = team),
     )
 
     private fun error(code: ImportIssueCode, vararg args: String) = ImportIssue(code, ImportIssueSeverity.ERROR, args.toList())
@@ -73,15 +83,18 @@ class PlayerImportDialogUiTest {
         existingPlayers: Int = 0,
         importedPlayers: Int = rows.size,
         tournamentStarted: Boolean = false,
+        removed: List<ImportRemovedPlayer> = emptyList(),
+        isTeams: Boolean = false,
     ) = PlayerImportPreview(
         rows = rows.toList(),
+        removed = removed,
         valid = rows.none { it.hasError },
-        isTeams = false,
+        isTeams = isTeams,
         tournamentStarted = tournamentStarted,
         existingPlayers = existingPlayers,
         importedPlayers = importedPlayers,
         hasEmailColumn = false,
-        hasTeamColumn = false,
+        hasTeamColumn = isTeams,
     )
 
     private val noResult = AppResult.Failure(AppError.Network)
@@ -137,8 +150,7 @@ class PlayerImportDialogUiTest {
 
         awaitText("Import (2)")
 
-        onNodeWithText("Players in the file: 2").assertExists()
-        onAllNodesWithText("Rows with an error", substring = true).assertCountEquals(0)
+        onNodeWithText("Players: 2 · Changed: 0 · Errors: 0 · Removed: 0").assertExists()
     }
 
     @Test
@@ -195,7 +207,6 @@ class PlayerImportDialogUiTest {
         showDialog(repository)
 
         awaitText("Import (2)")
-        onNodeWithText("Players in the tournament now: 4. The import replaces them with the players of the file.").assertExists()
         onNodeWithText("Import (2)").performClick()
         awaitText("Replace all players?")
 
@@ -225,13 +236,63 @@ class PlayerImportDialogUiTest {
         assertEquals(0, repository.applyCalls)
     }
 
+    /** The text of the state of a cell: "Error: ...", "Changed: ...", "Warning: ...", "Removed: ...". */
+    private fun hasState(text: String) = SemanticsMatcher.expectValue(SemanticsProperties.StateDescription, text)
+
+    private fun stateStartsWith(prefix: String) =
+        SemanticsMatcher("state starts with $prefix") { node ->
+            node.config.getOrNull(SemanticsProperties.StateDescription)?.startsWith(prefix) == true
+        }
+
     @Test
-    fun aFileWithErrorsListsEveryErrorAndCannotBeImported() = runComposeUiTest {
+    fun theTableShowsTheDataOfTheFileOfEveryRow() = runComposeUiTest {
+        showDialog(FakeImportRepository(AppResult.Success(preview(row(2, email = "a@b.es"), row(3, email = "c@b.es"))), noResult))
+
+        awaitText("Import (2)")
+
+        listOf("ID", "Player", "Email").forEach { onNodeWithText(it).assertExists() }
+        listOf("a@b.es", "c@b.es", "00000002", "00000003").forEach { onNodeWithText(it).assertExists() }
+        onAllNodesWithText("Team").assertCountEquals(0)
+    }
+
+    @Test
+    fun aTeamTournamentAddsTheTeamColumn() = runComposeUiTest {
+        showDialog(FakeImportRepository(AppResult.Success(preview(row(2, team = "Dragons"), isTeams = true)), noResult))
+
+        awaitText("Import (1)")
+
+        onNodeWithText("Team").assertExists()
+        onNodeWithText("Dragons").assertExists()
+    }
+
+    @Test
+    fun theCellsThatChangeAreMarkedAsChangedAndTheOthersAreNot() = runComposeUiTest {
+        showDialog(
+            FakeImportRepository(
+                AppResult.Success(
+                    preview(
+                        row(2, email = "a@b.es", changes = setOf(ImportField.PLAYER, ImportField.EMAIL)),
+                        row(3, email = "c@b.es"),
+                    ),
+                ),
+                noResult,
+            ),
+        )
+
+        awaitText("Import (2)")
+
+        onAllNodes(stateStartsWith("Changed: ")).assertCountEquals(2)
+        onNodeWithText("Players: 2 · Changed: 1 · Errors: 0 · Removed: 0").assertExists()
+        onAllNodes(hasState("Changed: This data changes.")).assertCountEquals(2)
+    }
+
+    @Test
+    fun aFileWithErrorsMarksTheWrongCellsAndExplainsEachOneAndCannotBeImported() = runComposeUiTest {
         val repository = FakeImportRepository(
             AppResult.Success(
                 preview(
-                    row(2, error(ImportIssueCode.DUPLICATE_EMAIL, "a@b.es")),
-                    row(3, error(ImportIssueCode.UNKNOWN_EMA_ID, "00000099"), error(ImportIssueCode.INVALID_EMAIL, "oops")),
+                    row(2, error(ImportIssueCode.DUPLICATE_EMAIL, "a@b.es"), email = "a@b.es"),
+                    row(3, error(ImportIssueCode.UNKNOWN_EMA_ID, "00000099"), error(ImportIssueCode.INVALID_EMAIL, "oops"), email = "oops"),
                     row(4),
                 ),
             ),
@@ -242,14 +303,71 @@ class PlayerImportDialogUiTest {
         awaitText("Import (3)")
 
         onNodeWithText("Import (3)").assertIsNotEnabled()
-        onNodeWithText("Rows with an error: 2. Fix them and choose the file again.").assertExists()
-        onNodeWithText("Line 2 · Slot 2").assertExists()
-        onNodeWithText("Line 3 · Slot 3").assertExists()
-        onNodeWithText("The email a@b.es appears in more than one row. One email belongs to one account.").assertExists()
-        onNodeWithText("The EMA registry has no player with the number 00000099.").assertExists()
-        onNodeWithText("The email oops is not valid.").assertExists()
-        onAllNodesWithText("Line 4", substring = true).assertCountEquals(0)
+        onNodeWithText("Players: 3 · Changed: 0 · Errors: 2 · Removed: 0").assertExists()
+        onAllNodes(stateStartsWith("Error: ")).assertCountEquals(3)
+        onAllNodes(hasState("Error: The email a@b.es appears in more than one row. One email belongs to one account.")).assertCountEquals(1)
+        onAllNodes(hasState("Error: The EMA registry has no player with the number 00000099.")).assertCountEquals(1)
+        onAllNodes(hasState("Error: The email oops is not valid.")).assertCountEquals(1)
+        // The wrong value shows as the file holds it.
+        onNodeWithText("oops").assertExists()
         assertEquals(0, repository.applyCalls)
+    }
+
+    @Test
+    fun theRowsWithErrorsComeFirst() = runComposeUiTest {
+        showDialog(
+            FakeImportRepository(
+                AppResult.Success(preview(row(2), row(3), row(4, error(ImportIssueCode.INVALID_EMAIL, "x"), email = "x"))),
+                noResult,
+            ),
+        )
+
+        awaitText("Import (3)")
+
+        val tops = listOf("00000002", "00000003", "00000004").map { ema ->
+            onNodeWithText(ema).fetchSemanticsNode().boundsInRoot.top
+        }
+        assertTrue(tops[2] < tops[0] && tops[2] < tops[1], "The row of the error is above the other rows: $tops")
+    }
+
+    @Test
+    fun aPlayerThatTheFileLeavesOutShowsAsRemovedWithAnExplanation() = runComposeUiTest {
+        showDialog(
+            FakeImportRepository(
+                AppResult.Success(preview(row(2), removed = listOf(ImportRemovedPlayer(slotId = 9, emaId = "00000077")))),
+                noResult,
+            ),
+        )
+
+        awaitText("Import (1)")
+
+        onNodeWithText("Players: 1 · Changed: 0 · Errors: 0 · Removed: 1").assertExists()
+        onAllNodes(hasState("Removed: The file does not list this slot, so the import removes this player.")).assertCountEquals(3)
+        onNodeWithText("00000077").assertExists()
+    }
+
+    @Test
+    fun theLegendNamesTheColours() = runComposeUiTest {
+        showDialog(FakeImportRepository(AppResult.Success(preview(row(2))), noResult))
+
+        awaitText("Import (1)")
+
+        listOf("New or changed", "Error", "Warning or removed").forEach { onNodeWithText(it).assertExists() }
+    }
+
+    @Test
+    fun aTooltipShowsTheExplanationOnHover() = runComposeUiTest {
+        showDialog(
+            FakeImportRepository(
+                AppResult.Success(preview(row(2, error(ImportIssueCode.INVALID_EMAIL, "oops"), email = "oops"))),
+                noResult,
+            ),
+        )
+        awaitText("Import (1)")
+
+        onNodeWithText("oops").performMouseInput { moveTo(center) }
+
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The email oops is not valid.").fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
@@ -264,18 +382,17 @@ class PlayerImportDialogUiTest {
 
         onNodeWithText("Import (1)").assertIsNotEnabled()
         onNodeWithText("This tournament has table results, so its players cannot change. Use the substitution of a player instead.").assertExists()
-        onAllNodesWithText("Players in the tournament now", substring = true).assertCountEquals(0)
     }
 
     @Test
-    fun aWarningDoesNotBlockTheImport() = runComposeUiTest {
+    fun aWarningDoesNotBlockTheImportAndIsMarkedAsAWarning() = runComposeUiTest {
         val warning = ImportIssue(ImportIssueCode.TEAM_IGNORED, ImportIssueSeverity.WARNING, emptyList())
-        showDialog(FakeImportRepository(AppResult.Success(preview(row(2, warning))), noResult))
+        showDialog(FakeImportRepository(AppResult.Success(preview(row(2, warning, team = "Reds"), isTeams = true)), noResult))
 
         awaitText("Import (1)")
 
         onNodeWithText("Import (1)").assertIsEnabled()
-        onNodeWithText("This tournament has no teams. The app ignores the team name.").assertExists()
+        onAllNodes(hasState("Warning: This tournament has no teams. The app ignores the team name.")).assertCountEquals(1)
     }
 
     @Test

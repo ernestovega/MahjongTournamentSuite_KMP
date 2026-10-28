@@ -1,6 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.border
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,6 +28,9 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -39,17 +46,27 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ImportField
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssue
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
+import com.etologic.mahjongtournamentsuite.domain.model.ImportRemovedPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
+import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -65,6 +82,21 @@ import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.team
+import mahjongtournamentsuite.adminapp.generated.resources.email
+import mahjongtournamentsuite.adminapp.generated.resources.player
+import mahjongtournamentsuite.adminapp.generated.resources.id
+import mahjongtournamentsuite.adminapp.generated.resources.import_tip_removed
+import mahjongtournamentsuite.adminapp.generated.resources.import_tip_changed
+import mahjongtournamentsuite.adminapp.generated.resources.import_summary_line
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_warning
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_unchanged
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_removed
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_error
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_changed
+import mahjongtournamentsuite.adminapp.generated.resources.import_legend_warning
+import mahjongtournamentsuite.adminapp.generated.resources.import_legend_error
+import mahjongtournamentsuite.adminapp.generated.resources.import_legend_changed
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.import_apply_count
@@ -73,9 +105,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_choose_other_f
 import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_button
 import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_text
 import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_title
-import mahjongtournamentsuite.adminapp.generated.resources.import_count_errors
 import mahjongtournamentsuite.adminapp.generated.resources.import_done_title
-import mahjongtournamentsuite.adminapp.generated.resources.import_existing_players
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_email
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_slot
@@ -97,9 +127,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_result_changed
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_emptied
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_no_accounts
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_players
-import mahjongtournamentsuite.adminapp.generated.resources.import_row_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_started_blocked
-import mahjongtournamentsuite.adminapp.generated.resources.import_summary_players
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -241,29 +270,182 @@ fun PlayerImportDialog(
     }
 }
 
-/** The check of the file: what the import saves, what it overwrites, and every row with a problem. */
+/** What a cell of the preview shows. The colour and the tooltip follow it. */
+internal enum class ImportCellState { NORMAL, CHANGED, WARNING, ERROR, REMOVED }
+
+private val ChangedColor = Color(0xFF2E7D32)
+private val WarningColor = Color(0xFFB26A00)
+
+@Composable
+private fun ImportCellState.color(): Color = when (this) {
+    ImportCellState.NORMAL -> MaterialTheme.colorScheme.onSurface
+    ImportCellState.CHANGED -> ChangedColor
+    ImportCellState.WARNING, ImportCellState.REMOVED -> WarningColor
+    ImportCellState.ERROR -> MaterialTheme.colorScheme.error
+}
+
+@Composable
+private fun ImportCellState.label(): String = stringResource(
+    when (this) {
+        ImportCellState.NORMAL -> Res.string.import_state_unchanged
+        ImportCellState.CHANGED -> Res.string.import_state_changed
+        ImportCellState.WARNING -> Res.string.import_state_warning
+        ImportCellState.ERROR -> Res.string.import_state_error
+        ImportCellState.REMOVED -> Res.string.import_state_removed
+    },
+)
+
+private val IdColumnWidth = 44.dp
+
+/**
+ * The check of the file as a table of the new data. A cell is green when the import changes it, red when it is wrong,
+ * and amber for a warning or a removed player. A tooltip on a coloured cell says why. Rows with errors come first.
+ */
+@OptIn(ExperimentalFoundationApi::class, ExperimentalLayoutApi::class)
 @Composable
 internal fun ImportPreviewContent(
     preview: PlayerImportPreview,
     playerNameOf: (String) -> String?,
 ) {
-    // Errors come first, so the editor sees the rows to fix before the warnings.
-    val rows = remember(preview) {
-        preview.rows.filter { it.issues.isNotEmpty() }.sortedWith(compareBy({ !it.hasError }, { it.row }))
-    }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val rows = remember(preview) { preview.rows.sortedWith(compareBy({ !it.hasError }, { it.row })) }
+    val changedRows = preview.rows.count { it.changes.isNotEmpty() }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (preview.tournamentStarted) {
             ImportNote(Icons.Filled.ErrorOutline, stringResource(Res.string.import_started_blocked), MaterialTheme.colorScheme.error)
         }
-        ImportNote(Icons.Filled.Info, stringResource(Res.string.import_summary_players, preview.importedPlayers), MaterialTheme.colorScheme.onSurfaceVariant)
-        if (preview.errorCount > 0) {
-            ImportNote(Icons.Filled.ErrorOutline, stringResource(Res.string.import_count_errors, preview.errorCount), MaterialTheme.colorScheme.error)
-        } else if (preview.existingPlayers > 0 && !preview.tournamentStarted) {
-            ImportNote(Icons.Filled.Warning, stringResource(Res.string.import_existing_players, preview.existingPlayers), MaterialTheme.colorScheme.tertiary)
+        Text(
+            stringResource(Res.string.import_summary_line, preview.importedPlayers, changedRows, preview.errorCount, preview.removed.size),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            LegendItem(ImportCellState.CHANGED, stringResource(Res.string.import_legend_changed))
+            LegendItem(ImportCellState.ERROR, stringResource(Res.string.import_legend_error))
+            LegendItem(ImportCellState.WARNING, stringResource(Res.string.import_legend_warning))
         }
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(rows, key = { it.row }) { row -> ImportRowItem(row, playerNameOf) }
+        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).testTag("import_table"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            stickyHeader { ImportTableHeader(showTeam = preview.isTeams && preview.hasTeamColumn) }
+            items(rows, key = { it.row }) { row -> ImportRowLine(row, preview, playerNameOf) }
+            items(preview.removed, key = { "removed-${it.slotId}" }) { removed ->
+                ImportRemovedLine(removed, showTeam = preview.isTeams && preview.hasTeamColumn, playerNameOf = playerNameOf)
+            }
         }
+    }
+}
+
+@Composable
+private fun LegendItem(state: ImportCellState, text: String) {
+    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(state.color().copy(alpha = 0.35f)).border(1.dp, state.color(), RoundedCornerShape(3.dp)))
+        Text(text, style = MaterialTheme.typography.labelMedium)
+    }
+}
+
+@Composable
+private fun ImportTableHeader(showTeam: Boolean) {
+    Row(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        @Composable
+        fun Title(textRes: StringResource, modifier: Modifier) = Text(
+            stringResource(textRes), modifier.padding(horizontal = 6.dp),
+            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+        )
+        Title(Res.string.id, Modifier.width(IdColumnWidth))
+        Title(Res.string.player, Modifier.weight(1.3f))
+        Title(Res.string.email, Modifier.weight(1.3f))
+        if (showTeam) Title(Res.string.team, Modifier.weight(1f))
+    }
+}
+
+/** The state of one cell, and the text of its tooltip. The issues of the cell come first, then the change. */
+private data class CellInfo(val state: ImportCellState, val tip: List<UiText>)
+
+private fun cellInfo(row: ImportRowPlan, field: ImportField): CellInfo {
+    val issues = row.issues.filter { it.code.field == field }
+    return when {
+        issues.any { it.severity == ImportIssueSeverity.ERROR } -> CellInfo(ImportCellState.ERROR, issues.map { it.toUiText() })
+        issues.isNotEmpty() -> CellInfo(ImportCellState.WARNING, issues.map { it.toUiText() })
+        field in row.changes -> CellInfo(ImportCellState.CHANGED, listOf(UiText.of(Res.string.import_tip_changed)))
+        else -> CellInfo(ImportCellState.NORMAL, emptyList())
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ImportCell(info: CellInfo, modifier: Modifier, content: @Composable () -> Unit) {
+    val stateLabel = info.state.label()
+    val tipText = info.tip.map { it.asString() }.joinToString("\n")
+    val cell = @Composable {
+        Box(
+            modifier
+                .clip(RoundedCornerShape(6.dp))
+                .background(info.state.color().copy(alpha = if (info.state == ImportCellState.NORMAL) 0f else 0.14f))
+                .padding(horizontal = 6.dp, vertical = 4.dp)
+                .semantics(mergeDescendants = true) {
+                    if (info.state != ImportCellState.NORMAL) stateDescription = "$stateLabel: $tipText"
+                },
+        ) { content() }
+    }
+    if (info.state == ImportCellState.NORMAL) {
+        cell()
+    } else {
+        TooltipBox(
+            positionProvider = rememberAppTooltipPositionProvider(),
+            tooltip = { AppPlainTooltip { Text(tipText) } },
+            state = rememberTooltipState(),
+            modifier = modifier,
+        ) { cell() }
+    }
+}
+
+@Composable
+private fun CellText(text: String, state: ImportCellState, secondary: String? = null, strike: Boolean = false) {
+    Column {
+        Text(
+            text.ifBlank { "—" },
+            color = state.color(),
+            style = MaterialTheme.typography.bodyMedium.copy(textDecoration = if (strike) TextDecoration.LineThrough else TextDecoration.None),
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+        secondary?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1) }
+    }
+}
+
+@Composable
+private fun ImportRowLine(row: ImportRowPlan, preview: PlayerImportPreview, playerNameOf: (String) -> String?) {
+    val showTeam = preview.isTeams && preview.hasTeamColumn
+    // A valid EMA number shows with the name of the player. A wrong one shows as the file holds it.
+    val ema = row.emaId ?: row.file.emaId
+    val name = row.emaId?.let(playerNameOf)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        val idInfo = cellInfo(row, ImportField.ID)
+        ImportCell(idInfo, Modifier.width(IdColumnWidth)) { CellText(row.slotId?.toString() ?: row.file.id, idInfo.state) }
+        val playerInfo = cellInfo(row, ImportField.PLAYER)
+        ImportCell(playerInfo, Modifier.weight(1.3f)) {
+            CellText(name ?: ema, playerInfo.state, secondary = if (name != null) ema else null)
+        }
+        val emailInfo = cellInfo(row, ImportField.EMAIL)
+        ImportCell(emailInfo, Modifier.weight(1.3f)) { CellText(row.file.email, emailInfo.state) }
+        if (showTeam) {
+            val teamInfo = cellInfo(row, ImportField.TEAM)
+            ImportCell(teamInfo, Modifier.weight(1f)) { CellText(row.file.team, teamInfo.state) }
+        }
+    }
+}
+
+/** A player that the file leaves out. The import removes the player, and the cells are amber with a tooltip. */
+@Composable
+private fun ImportRemovedLine(removed: ImportRemovedPlayer, showTeam: Boolean, playerNameOf: (String) -> String?) {
+    val info = CellInfo(ImportCellState.REMOVED, listOf(UiText.of(Res.string.import_tip_removed)))
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+        ImportCell(info, Modifier.width(IdColumnWidth)) { CellText(removed.slotId.toString(), info.state, strike = true) }
+        ImportCell(info, Modifier.weight(1.3f)) {
+            CellText(playerNameOf(removed.emaId) ?: removed.emaId, info.state, secondary = removed.emaId.takeIf { playerNameOf(removed.emaId) != null }, strike = true)
+        }
+        ImportCell(info, Modifier.weight(1.3f)) { CellText("", info.state) }
+        if (showTeam) ImportCell(info, Modifier.weight(1f)) { CellText("", info.state) }
     }
 }
 
@@ -272,38 +454,6 @@ private fun ImportNote(icon: ImageVector, text: String, color: Color) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
         Icon(icon, contentDescription = null, tint = color, modifier = Modifier.size(18.dp))
         Text(text, style = MaterialTheme.typography.bodySmall, color = color)
-    }
-}
-
-/** A row of the file with a problem. It shows the values of the file, so the editor finds the line to fix. */
-@Composable
-private fun ImportRowItem(row: ImportRowPlan, playerNameOf: (String) -> String?) {
-    val color = if (row.hasError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
-    val shape = RoundedCornerShape(12.dp)
-    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
-        Box(Modifier.width(4.dp).fillMaxHeight().background(color))
-        Column(Modifier.weight(1f).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Text(
-                stringResource(Res.string.import_row_title, row.row, row.slotId?.toString() ?: "?"),
-                style = MaterialTheme.typography.labelLarge,
-            )
-            val values = listOfNotNull(
-                row.emaId?.let { emaId -> playerNameOf(emaId)?.let { "$it · $emaId" } ?: "EMA $emaId" },
-                row.team,
-                row.email,
-            )
-            if (values.isNotEmpty()) {
-                Text(values.joinToString(" · "), style = MaterialTheme.typography.bodyMedium)
-            }
-            row.issues.forEach { issue ->
-                val isError = issue.severity == ImportIssueSeverity.ERROR
-                ImportNote(
-                    icon = if (isError) Icons.Filled.ErrorOutline else Icons.Filled.Warning,
-                    text = issue.toUiText().asString(),
-                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        }
     }
 }
 

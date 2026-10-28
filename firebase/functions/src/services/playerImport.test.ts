@@ -6,6 +6,7 @@ import JSZip = require("jszip");
 import {
   buildPlayerExportRecords,
   cellText,
+  changedFields,
   declaredUnpackedBytes,
   parseCsv,
   parsePlayerImportFile,
@@ -313,4 +314,50 @@ test("a file exported with empty slots is valid and keeps them empty", () => {
   const result = plan(rows, { slots });
   assert.equal(result.valid, true);
   assert.deepEqual(result.emptiedSlotIds, [2]);
+});
+
+// ---------------------------------------------------------------- which data a row changes
+
+function plannedRow(overrides: Partial<{ emaId: string | null; email: string | null; team: string | null }> = {}) {
+  return { row: 2, file: { id: "1", emaId: "1", email: "", team: "" }, slotId: 1, emaId: "00000001", email: null, team: null, issues: [], ...overrides };
+}
+const noTeams = { isTeams: false, hasTeamColumn: false };
+const withTeams = { isTeams: true, hasTeamColumn: true };
+
+test("a row for an empty slot changes the player", () => {
+  assert.deepEqual(changedFields(plannedRow(), { emaId: null, email: null, teamName: null }, noTeams), ["PLAYER"]);
+});
+
+test("a row that repeats the slot changes nothing", () => {
+  const current = { emaId: "00000001", email: "a@b.es", teamName: "Reds" };
+  assert.deepEqual(changedFields(plannedRow({ email: "a@b.es", team: "Reds" }), current, withTeams), []);
+});
+
+test("another player or another email is a change, in any combination", () => {
+  const current = { emaId: "00000001", email: "a@b.es", teamName: null };
+  assert.deepEqual(changedFields(plannedRow({ emaId: "00000002", email: "a@b.es" }), current, noTeams), ["PLAYER"]);
+  assert.deepEqual(changedFields(plannedRow({ email: "c@b.es" }), current, noTeams), ["EMAIL"]);
+  assert.deepEqual(changedFields(plannedRow({ emaId: "00000002", email: null }), current, noTeams), ["PLAYER", "EMAIL"]);
+});
+
+test("a row without an email over a slot with one is a change of the email, because the import clears it", () => {
+  assert.deepEqual(changedFields(plannedRow({ email: null }), { emaId: "00000001", email: "a@b.es", teamName: null }, noTeams), ["EMAIL"]);
+});
+
+test("the team is a change only when the file has a team column and the name differs, in any letter case", () => {
+  const current = { emaId: "00000001", email: null, teamName: "Reds" };
+  assert.deepEqual(changedFields(plannedRow({ team: "reds" }), current, withTeams), []);
+  assert.deepEqual(changedFields(plannedRow({ team: "Blues" }), current, withTeams), ["TEAM"]);
+  assert.deepEqual(changedFields(plannedRow({ team: "Blues" }), current, { isTeams: true, hasTeamColumn: false }), []);
+  assert.deepEqual(changedFields(plannedRow({ team: "Blues" }), current, noTeams), []);
+});
+
+test("a row without an EMA number (an error row) reports no player change", () => {
+  assert.deepEqual(changedFields(plannedRow({ emaId: null }), { emaId: "00000001", email: null, teamName: null }, noTeams), []);
+});
+
+test("a row keeps the values of the file, also when they are wrong", () => {
+  const result = plan([row(2, "x", "abc", { email: "bad", team: "Reds" })]);
+  assert.deepEqual(result.rows[0].file, { id: "x", emaId: "abc", email: "bad", team: "Reds" });
+  assert.equal(result.rows[0].emaId, null);
 });

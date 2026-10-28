@@ -51,6 +51,23 @@ data class ImportIssue(
     val args: List<String>,
 )
 
+/** The data cells of a row of the file. */
+enum class ImportField { ID, PLAYER, EMAIL, TEAM }
+
+/** The cell where the app shows an issue. Every code belongs to one cell. */
+val ImportIssueCode.field: ImportField
+    get() = when (this) {
+        ImportIssueCode.INVALID_ID, ImportIssueCode.UNKNOWN_SLOT, ImportIssueCode.DUPLICATE_SLOT -> ImportField.ID
+        ImportIssueCode.MISSING_EMA_ID, ImportIssueCode.INVALID_EMA_ID, ImportIssueCode.UNKNOWN_EMA_ID,
+        ImportIssueCode.DUPLICATE_EMA_ID, ImportIssueCode.UNKNOWN -> ImportField.PLAYER
+        ImportIssueCode.INVALID_EMAIL, ImportIssueCode.DUPLICATE_EMAIL, ImportIssueCode.EMAIL_OWNED_BY_OTHER_ACCOUNT -> ImportField.EMAIL
+        ImportIssueCode.TEAM_NAME_TOO_LONG, ImportIssueCode.TEAM_NAME_CONFLICT, ImportIssueCode.TEAM_NAME_IN_USE,
+        ImportIssueCode.TEAM_IGNORED -> ImportField.TEAM
+    }
+
+/** The values of a row as the file holds them. The app shows them, also when they are wrong. */
+data class ImportFileValues(val id: String = "", val emaId: String = "", val email: String = "", val team: String = "")
+
 data class ImportRowPlan(
     /** The line of the file, counted from 1. */
     val row: Int,
@@ -59,12 +76,20 @@ data class ImportRowPlan(
     val email: String?,
     val team: String?,
     val issues: List<ImportIssue>,
+    val file: ImportFileValues = ImportFileValues(),
+    /** The data (player, email, team) that the import changes in the slot. */
+    val changes: Set<ImportField> = emptySet(),
 ) {
     val hasError: Boolean get() = issues.any { it.severity == ImportIssueSeverity.ERROR }
 }
 
+/** A player who sits in a slot now and whom the file leaves out. */
+data class ImportRemovedPlayer(val slotId: Int, val emaId: String)
+
 data class PlayerImportPreview(
     val rows: List<ImportRowPlan>,
+    /** The players that the import removes. */
+    val removed: List<ImportRemovedPlayer> = emptyList(),
     /** True when no row has an error. Only then can the import apply. */
     val valid: Boolean,
     val isTeams: Boolean,
