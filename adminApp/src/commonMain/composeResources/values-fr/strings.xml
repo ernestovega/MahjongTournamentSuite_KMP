@@ -732,4 +732,10 @@
     <string name="reset_failure_unknown">L'e-mail n'a pas été envoyé. Réessayez.</string>
     <string name="import_locked_title">Le tournoi a déjà des données</string>
     <string name="import_locked_text">Vous ne pouvez pas importer de joueurs, car une table a déjà des données : places ou résultats. L'import remplace tous les joueurs et modifierait des résultats existants. Pour changer un joueur, utilisez les options de sa ligne.</string>
+    <string name="sending_title">Envoi en cours</string>
+    <string name="sending_text">L'app envoie les e-mails. Attendez la fin de l'envoi.</string>
+    <string name="send_result_invited">Comptes créés et invitations envoyées : %1$d</string>
+    <string name="send_result_reminded">Rappels envoyés : %1$d</string>
+    <string name="send_result_failed">Non envoyés : %1$d</string>
+    <string name="send_failure_line">• %1$s : %2$s</string>
 </resources>

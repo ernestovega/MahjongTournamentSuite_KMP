@@ -732,4 +732,10 @@
     <string name="reset_failure_unknown">L'email non è stata inviata. Riprova.</string>
     <string name="import_locked_title">Il torneo ha già dei dati</string>
     <string name="import_locked_text">Non puoi importare giocatori perché un tavolo ha già dei dati: posti o risultati. L'importazione sostituisce tutti i giocatori e cambierebbe risultati già esistenti. Per cambiare un giocatore, usa le opzioni della sua riga.</string>
+    <string name="sending_title">Invio in corso</string>
+    <string name="sending_text">L'app sta inviando le email. Attendi che finisca.</string>
+    <string name="send_result_invited">Account creati e inviti inviati: %1$d</string>
+    <string name="send_result_reminded">Promemoria inviati: %1$d</string>
+    <string name="send_result_failed">Non inviati: %1$d</string>
+    <string name="send_failure_line">• %1$s: %2$s</string>
 </resources>

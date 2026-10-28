@@ -296,6 +296,26 @@ class PlayersScreenAccountsUiTest {
     }
 
     @Test
+    fun aLoadingDialogShowsWhileTheInvitationGoesOutAndTheResultReplacesIt() = runComposeUiTest {
+        val world = World(GlobalUserRole.ADMIN, listOf(withoutAccount))
+        val gate = kotlinx.coroutines.CompletableDeferred<Unit>()
+        world.accounts.sendGate = gate
+        show(world)
+
+        openMenu(0)
+        onNodeWithText("Invite").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The app is sending the emails. Wait until it finishes.").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("Sending").assertExists()
+        assertEquals(emptyList(), world.accounts.sent)
+        gate.complete(Unit)
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodesWithText("The account was created and the email to choose a password was sent.").fetchSemanticsNodes().isNotEmpty()
+        }
+
+        onAllNodesWithText("Sending").assertCountEquals(0)
+    }
+
+    @Test
     fun aFailedInviteShowsTheReason() = runComposeUiTest {
         val world = World(GlobalUserRole.ADMIN, listOf(withoutAccount))
         world.accounts.results[2] = PlayerAccountActionResult(2, PlayerAccountOutcome.FAILED, PlayerAccountFailure.EMAIL_IN_USE)

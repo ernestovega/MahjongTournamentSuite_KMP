@@ -732,4 +732,10 @@
     <string name="reset_failure_unknown">The email was not sent. Try again.</string>
     <string name="import_locked_title">The tournament has data</string>
     <string name="import_locked_text">You cannot import players because a table already has data: seats or results. The import replaces all players, and that would change results that exist. To change one player, use the options in the row of the player.</string>
+    <string name="sending_title">Sending</string>
+    <string name="sending_text">The app is sending the emails. Wait until it finishes.</string>
+    <string name="send_result_invited">Accounts created and invitations sent: %1$d</string>
+    <string name="send_result_reminded">Reminders sent: %1$d</string>
+    <string name="send_result_failed">Not sent: %1$d</string>
+    <string name="send_failure_line">• %1$s: %2$s</string>
 </resources>

@@ -732,4 +732,10 @@
     <string name="reset_failure_unknown">No se envió el email. Inténtalo de nuevo.</string>
     <string name="import_locked_title">El torneo ya tiene datos</string>
     <string name="import_locked_text">No se pueden importar jugadores porque una mesa ya tiene datos: asientos o resultados. La importación sustituye a todos los jugadores y cambiaría resultados que ya existen. Para cambiar un jugador, usa las opciones de su fila.</string>
+    <string name="sending_title">Enviando</string>
+    <string name="sending_text">La app está enviando los emails. Espera a que termine.</string>
+    <string name="send_result_invited">Cuentas creadas e invitaciones enviadas: %1$d</string>
+    <string name="send_result_reminded">Recordatorios enviados: %1$d</string>
+    <string name="send_result_failed">No enviados: %1$d</string>
+    <string name="send_failure_line">• %1$s: %2$s</string>
 </resources>

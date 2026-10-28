@@ -80,6 +80,7 @@ The player screens use shared components from the `:ui` module. The design follo
 - For a player with an account, an admin opens "Edit account" from the menu of the row. The dialog has the button to send the password reset email.
 - The "Invitations" dialog lists every player with a filter (All, No account, Has account). One button, "Send", invites the selected players with no account (new account and password reset email) and sends a reminder to the selected players with an account. A reminder is an email with a link to the tournament. It never asks the person to change the password.
 - A row menu has "Remind" for a player with an account.
+- While the emails go out, a loading dialog ("Sending") blocks the screen. When a send for many players ends, a summary dialog shows how many accounts, invitations and reminders went out, and one line for each player that failed.
 - When a table has any data (one assigned seat is enough), the Import button looks disabled. A click explains that the import is closed because the tournament has data.
 - An admin sends the password reset email to many accounts in App users: select accounts, confirm, read the result.
 - An account with an EMA ID (set by an admin in the accounts screen, or created by an invitation) sees every tournament where that EMA ID is assigned.

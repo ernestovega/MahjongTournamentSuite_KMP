@@ -86,7 +86,11 @@ internal class FakePlayerAccountRepository : PlayerAccountRepository {
     /** The result of a saved email by player. A player with no entry gets SAVED. */
     val emailResults = mutableMapOf<Int, PlayerEmailResult>()
 
+    /** A test sets a gate to hold the send until it completes the gate, so it can look at the screen meanwhile. */
+    var sendGate: kotlinx.coroutines.CompletableDeferred<Unit>? = null
+
     override suspend fun send(tournamentId: String, playerIds: List<Int>): AppResult<List<PlayerAccountActionResult>> {
+        sendGate?.await()
         sent += playerIds
         return AppResult.Success(playerIds.map { results[it] ?: PlayerAccountActionResult(it, PlayerAccountOutcome.INVITED) })
     }

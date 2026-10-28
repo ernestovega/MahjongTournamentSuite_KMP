@@ -453,6 +453,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             onDismiss = { emailSlotId = null },
         )
     }
+    // The Invitations dialog shows its own loading dialog.
+    if (accountBusy && !bulkAccountsOpen) SendingDialog()
     accountOutcome?.let { AccountOutcomeDialog(it, onDismiss = { accountOutcome = null }) }
     if (bulkAccountsOpen) {
         val registry = basePlayers.associateBy { it.emaId }

@@ -35,6 +35,7 @@ import androidx.compose.material3.Text
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -140,6 +141,13 @@ fun PlayerAccountsBulkDialog(
     val shown = players.filter { it.matches(filter) && it.matchesQuery(query, nameOf(it), emaIdOf(it), countryOf(it), countryNameOf(countryOf(it))) }
     val chosen = shown.filter { it.id in selected }
     var askingEmails by remember { mutableStateOf(false) }
+    // While the emails go out the dialog shows a loading dialog. When the send ends it shows what happened.
+    var summary by remember { mutableStateOf<List<PlayerAccountActionResult>?>(null) }
+    var wasBusy by remember { mutableStateOf(false) }
+    LaunchedEffect(busy) {
+        if (wasBusy && !busy && results.isNotEmpty()) summary = results
+        wasBusy = busy
+    }
     /** Players with no account and no email. They need an email before the server can invite them. */
     val missingEmail = chosen.filter { !it.hasAccount && !it.hasEmail }
 
@@ -261,6 +269,9 @@ fun PlayerAccountsBulkDialog(
             }
         },
     )
+    // These dialogs come after the main dialog, so they are drawn above it.
+    if (busy) SendingDialog()
+    summary?.let { SendSummaryDialog(it, nameOf = { id -> players.firstOrNull { p -> p.id == id }?.let { p -> "$id · ${nameOf(p)}" } ?: id.toString() }, onDismiss = { summary = null }) }
 }
 
 private val CheckboxColumnWidth = 24.dp
