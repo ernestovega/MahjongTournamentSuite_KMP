@@ -494,16 +494,18 @@ const TOURNAMENTS: TournamentSpec[] = [
 // -- Tester tournaments ----------------------------------------------------------------------
 
 /**
- * The people who test the apps. The first four have an account that owns the EMA id, so every slot with that EMA id
- * shows the account. The seed makes the accounts own their EMA id (`linkTesterAccounts`) and writes no link. The last three have none, to test invitations.
+ * The people who test the apps. The first six have an account that owns the EMA id, so every slot with that EMA id
+ * shows the account. The seed makes the accounts own their EMA id (`linkTesterAccounts`) and writes no link. The last one has none, to test invitations.
  */
 const TESTER_ACCOUNTS: Record<string, string> = {
   "10990026": "takw7aMVudQWwoM4M20iG5argmr1", // Edgar
   "10990020": "UMpmHUF1kXNHwoQS7hFU2tMrWw63", // Edu
   "10990018": "4hHTIL9w9bV8slRrA8N1R50YM3N2", // Héctor
   "10990039": "h0Hgasv0Y1VBOXDVnAoSq1X8RMQ2", // Ernesto
+  "10990043": "1w95GRW3sLhKtWsqayKmEyFUEMu1", // Raúl Ríos Navarro
+  "10990051": "BUfTR8yc5PUtsb4cBseN91oOfg83", // Marcos San Antonio Serrano
 };
-const TESTER_NO_ACCOUNT = ["10990043", "10990133", "10990051"]; // Raúl Ríos Navarro, Cintia Horcajo Jerez, Marcos San Antonio Serrano
+const TESTER_NO_ACCOUNT = ["10990133"]; // Cintia Horcajo Jerez
 const TESTER_EMA_IDS = [...Object.keys(TESTER_ACCOUNTS), ...TESTER_NO_ACCOUNT];
 
 const TESTER_START = localSlot(new Date()).date;
