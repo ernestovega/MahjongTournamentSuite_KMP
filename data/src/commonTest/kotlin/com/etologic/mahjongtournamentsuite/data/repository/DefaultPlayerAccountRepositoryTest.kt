@@ -42,7 +42,7 @@ class DefaultPlayerAccountRepositoryTest {
             request = it
             """{"results":[
                 {"playerId":1,"outcome":"INVITED"},
-                {"playerId":2,"outcome":"RESET_SENT"},
+                {"playerId":2,"outcome":"REMINDED"},
                 {"playerId":3,"outcome":"FAILED","reason":"NO_EMAIL"},
                 {"playerId":4,"outcome":"FAILED","reason":"FROM_THE_FUTURE"},
                 {"playerId":5,"outcome":"FROM_THE_FUTURE"}
@@ -57,7 +57,7 @@ class DefaultPlayerAccountRepositoryTest {
         assertEquals(listOf(1, 2, 3, 4, 5), Regex("\"playerId\":(\\d+)").findAll(body).map { it.groupValues[1].toInt() }.toList())
         assertEquals(
             listOf(
-                PlayerAccountOutcome.INVITED, PlayerAccountOutcome.RESET_SENT, PlayerAccountOutcome.FAILED,
+                PlayerAccountOutcome.INVITED, PlayerAccountOutcome.REMINDED, PlayerAccountOutcome.FAILED,
                 PlayerAccountOutcome.FAILED, PlayerAccountOutcome.FAILED,
             ),
             results.map { it.outcome },

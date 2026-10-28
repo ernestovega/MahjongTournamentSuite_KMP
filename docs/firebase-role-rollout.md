@@ -137,4 +137,4 @@ The API now has the `PLAYER` capability next to `EDITOR` and `ADMIN`. See `playe
 - Management routes need the `admin` or `editor` claim. An account with no claim is refused.
 - Accounts saved before this change have no `editor` claim. Save each of them once in the accounts screen, or recreate them.
 - `npm run verify:roles` now also creates a player-only account and expects `403` on the editor routes.
-- Create the player hosting site before the first invitation. The server sends only the password reset email, through the Google password API.
+- Create the SMTP secret `MTS_SMTP_URI` and the player hosting site before the first reminder.

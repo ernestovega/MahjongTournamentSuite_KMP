@@ -143,9 +143,15 @@ async function main(): Promise<void> {
   }
 
   // No mail server runs here. The backend keeps the emails in memory, so tests can read them.
-  // The email to choose a password goes through the Google password API, which the emulator cannot replace.
-  // The test mailbox takes it, so tests can read it. An address that starts with "fail" makes the send fail.
+  // An address that starts with "fail" makes the send fail, to test the error message.
   const sentEmails: { to: string; subject: string; text: string; html: string }[] = [];
+  const { setMailTransportForTests } = await import("../services/mailService");
+  setMailTransportForTests(async (email) => {
+    if (email.to.startsWith("fail")) throw new Error("The test mailbox refuses this address.");
+    sentEmails.push(email);
+  });
+  // The email to choose a password goes through the Google password API, which the emulator cannot replace.
+  // The test mailbox takes it too, so tests can read it.
   const { setPasswordResetSenderForTests } = await import("../services/firebaseAuthRest");
   setPasswordResetSenderForTests(async (email) => {
     if (email.startsWith("fail")) throw new Error("The test mailbox refuses this address.");

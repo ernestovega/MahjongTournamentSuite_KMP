@@ -8,6 +8,7 @@ import { createAccount, linkedAccountUid, requireAuthEmulator, signInTestAccount
 import { assignTournamentPlayer, listTournamentPlayers } from "../services/tournamentContentService";
 import { createPlayerAccount, getPlayerRegistration, listPlayerTournamentIds, setAccountEmaId } from "../services/playerAccountsService";
 import { setPasswordResetSenderForTests } from "../services/firebaseAuthRest";
+import { setMailTransportForTests, type OutgoingEmail } from "../services/mailService";
 
 type ActionBody = { results: Array<{ playerId: number; outcome: string; reason?: string }> };
 
@@ -31,11 +32,20 @@ describe("player accounts", () => {
 
   const accountOf = (playerId: number) => linkedAccountUid(tournamentId, playerId);
   const resets: string[] = [];
+  const sent: OutgoingEmail[] = [];
   let failNextReset = false;
+  let failNextMail = false;
   const uniqueEmail = () => `${randomUUID()}@example.test`;
   const newEma = () => `EMA-${randomUUID()}`;
 
   before(async () => {
+    setMailTransportForTests(async (email) => {
+      if (failNextMail) {
+        failNextMail = false;
+        throw new Error("SMTP down");
+      }
+      sent.push(email);
+    });
     setPasswordResetSenderForTests(async (email) => {
       if (failNextReset) {
         failNextReset = false;
@@ -50,12 +60,13 @@ describe("player accounts", () => {
     await seedSlot(3, null);
   });
   after(async () => {
+    setMailTransportForTests(null);
     setPasswordResetSenderForTests(null);
     await server.close();
   });
 
-  const act = (players: Array<{ playerId: number }>, token: string | null = editor.token) =>
-    server.request("POST", `/tournaments/${tournamentId}/player-accounts/send`, { token, body: { players } });
+  const act = (players: Array<{ playerId: number }>, token: string | null = editor.token, headers?: Record<string, string>) =>
+    server.request("POST", `/tournaments/${tournamentId}/player-accounts/send`, { token, body: { players }, headers });
   /** Runs the action for one player and returns its outcome and reason. */
   const run = async (playerId: number) => {
     const response = await act([{ playerId }]);
@@ -134,7 +145,7 @@ describe("player accounts", () => {
       assert.deepEqual((await listPlayerTournamentIds(uid)).sort(), [tournamentId, otherTournamentId].sort());
     });
 
-    it("keeps the account when the reset email fails, and the next send resets the password", async () => {
+    it("keeps the account when the reset email fails, and the next send is a reminder (a mass reset in App Users sends the password email)", async () => {
       const email = uniqueEmail();
       await seedSlot(7, newEma(), { email });
       failNextReset = true;
@@ -143,8 +154,8 @@ describe("player accounts", () => {
       const user = await auth.getUserByEmail(email);
       assert.equal(await accountOf(7), user.uid);
 
-      assert.equal((await run(7)).outcome, "RESET_SENT");
-      assert.ok(resets.includes(email));
+      assert.equal((await run(7)).outcome, "REMINDED");
+      assert.ok(sent.some((mail) => mail.to === email));
     });
 
     it("fails with EMAIL_IN_USE when an account owns the email, and never links that account to the EMA number", async () => {
@@ -203,40 +214,62 @@ describe("player accounts", () => {
     });
   });
 
-  describe("send to a slot with an account: reset the password", () => {
-    it("sends the password reset email to the email of the account, and ignores the pending email", async () => {
+  describe("send to a slot with an account: reminder", () => {
+    it("sends the reminder with a link to the tournament to the email of the account, and no password reset", async () => {
       const ema = newEma();
       const account = await accountWith(ema);
       await seedSlot(47, ema, { email: uniqueEmail() });
-      const before = resets.length;
+      const mails = sent.length;
+      const resetsBefore = resets.length;
 
-      assert.deepEqual(await run(47), { status: 200, outcome: "RESET_SENT", reason: undefined });
+      assert.deepEqual(await run(47), { status: 200, outcome: "REMINDED", reason: undefined });
 
-      assert.deepEqual(resets.slice(before), [account.email.toLowerCase()]);
+      assert.equal(sent.length - mails, 1);
+      const mail = sent[sent.length - 1];
+      assert.equal(mail.to, account.email.toLowerCase());
+      assert.ok(mail.text.includes(`tournament=${encodeURIComponent(tournamentId)}`), "the reminder links to the tournament");
+      assert.equal(resets.length, resetsBefore, "a reminder is not a password reset");
       assert.equal((await auth.getUser(account.uid)).email, account.email);
     });
 
-    it("sends it again every time, also when the person has a password", async () => {
-      const ema = newEma();
-      const account = await accountWith(ema);
-      await activate(account.email);
-      await seedSlot(48, ema);
-      const before = resets.length;
+    it("sends a reminder every time, also to a person who chose a password and to one who did not", async () => {
+      const withPasswordEma = newEma();
+      const withPassword = await accountWith(withPasswordEma);
+      await activate(withPassword.email);
+      await seedSlot(48, withPasswordEma);
+      const noPasswordEma = newEma();
+      await accountWith(noPasswordEma);
+      await seedSlot(52, noPasswordEma);
+      const mails = sent.length;
 
-      assert.equal((await run(48)).outcome, "RESET_SENT");
-      assert.equal((await run(48)).outcome, "RESET_SENT");
+      assert.equal((await run(48)).outcome, "REMINDED");
+      assert.equal((await run(48)).outcome, "REMINDED");
+      assert.equal((await run(52)).outcome, "REMINDED");
 
-      assert.equal(resets.length - before, 2);
+      assert.equal(sent.length - mails, 3);
     });
 
-    it("fails with EMAIL_FAILED when the reset email cannot be sent, and the account stays", async () => {
+    it("writes the reminder in Spanish when the app asks for Spanish, and in English otherwise", async () => {
+      const ema = newEma();
+      await accountWith(ema);
+      await seedSlot(53, ema);
+
+      await act([{ playerId: 53 }], editor.token, { "accept-language": "es-ES,es;q=0.9" });
+      await act([{ playerId: 53 }]);
+
+      assert.match(sent[sent.length - 2].subject, /inscrito/i);
+      assert.match(sent[sent.length - 1].subject, /registered/i);
+    });
+
+    it("fails with EMAIL_FAILED when the reminder cannot be sent, and the account stays", async () => {
       const ema = newEma();
       const account = await accountWith(ema);
       await seedSlot(49, ema);
-      failNextReset = true;
+      failNextMail = true;
 
       assert.equal((await run(49)).reason, "EMAIL_FAILED");
       assert.equal(await accountOf(49), account.uid);
+      assert.equal((await run(49)).outcome, "REMINDED");
     });
 
     it("E: assigning an EMA number to a slot links the existing account at once and sends no email", async () => {
@@ -294,18 +327,20 @@ describe("player accounts", () => {
       await seedSlot(72, newEma());
       await seedSlot(73, null);
       const before = resets.length;
+      const mailsBefore = sent.length;
 
       const response = await act([{ playerId: 70 }, { playerId: 71 }, { playerId: 72 }, { playerId: 73 }, { playerId: 999 }]);
 
       assert.equal(response.status, 200);
       assert.deepEqual((response.body as ActionBody).results.map((item) => [item.playerId, item.outcome, item.reason]), [
-        [70, "RESET_SENT", undefined],
+        [70, "REMINDED", undefined],
         [71, "INVITED", undefined],
         [72, "FAILED", "NO_EMAIL"],
         [73, "FAILED", "NO_EMA_ID"],
         [999, "FAILED", "PLAYER_NOT_FOUND"],
       ]);
-      assert.equal(resets.length - before, 2);
+      assert.equal(resets.length - before, 1, "one invitation sends the password reset email");
+      assert.equal(sent.length - mailsBefore, 1, "one reminder goes by the mailbox");
       assert.equal(await accountOf(70), account.uid);
     });
 

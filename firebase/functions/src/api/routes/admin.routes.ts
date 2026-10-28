@@ -19,6 +19,7 @@ import {
   getUserProfile,
   listAssignedTournamentIds,
   listManagedUsers,
+  sendPasswordResets,
   setGlobalUserRole,
   setManagedUserDisabled,
   setUserPhoto,
@@ -232,6 +233,23 @@ export function adminRouter(): Router {
         action: "user.photo.remove", actor: actorFromToken(res.locals.auth), target: pathParam(req, "uid"), details: {},
       });
       res.status(200).json(await getManagedUser(pathParam(req, "uid")));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  // Sends the password reset email to many accounts at once. Only admins do this.
+  router.post("/users/password-resets", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const raw = Array.isArray(req.body?.uids) ? req.body.uids as unknown[] : [];
+      const uids = raw.map((value) => String(value ?? "").trim());
+      if (uids.some((uid) => uid === "")) throw badRequest("uids must be non-empty texts");
+      const results = await sendPasswordResets(uids);
+      await recordActivity({
+        action: "user.passwordReset", actor: actorFromToken(res.locals.auth), target: `${results.length} users`,
+        details: { uids: results.map((result) => result.uid), sent: results.filter((result) => result.outcome === "SENT").length },
+      });
+      res.status(200).json({ results });
     } catch (error) {
       next(error);
     }

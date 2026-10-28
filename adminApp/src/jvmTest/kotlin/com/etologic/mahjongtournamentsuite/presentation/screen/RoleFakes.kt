@@ -5,6 +5,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
@@ -56,6 +58,20 @@ internal class FakeAdminRepository(
     override suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> {
         calls += "remove photo $uid"
         return AppResult.Success(users.first { it.uid == uid }.copy(photoUrl = null, hasOwnPhoto = false))
+    }
+
+    /** The result of a reset by uid. An account with no entry gets SENT. */
+    val resetResults = mutableMapOf<String, PasswordResetResult>()
+
+    /** The request (counted from 1) that fails with a network error, and every request after it. */
+    var failResetsFromRequest: Int = Int.MAX_VALUE
+    val resetRequests = mutableListOf<List<String>>()
+
+    override suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> {
+        resetRequests += uids
+        calls += "reset ${uids.joinToString(",")}"
+        if (resetRequests.size >= failResetsFromRequest) return AppResult.Failure(com.etologic.mahjongtournamentsuite.domain.model.AppError.Network)
+        return AppResult.Success(uids.map { resetResults[it] ?: PasswordResetResult(it, PasswordResetOutcome.SENT) })
     }
 
     override suspend fun loadUsageReport(days: Int): AppResult<com.etologic.mahjongtournamentsuite.domain.model.UsageReport> =

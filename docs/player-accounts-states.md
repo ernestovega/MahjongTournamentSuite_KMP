@@ -17,6 +17,7 @@ Tests: `firebase/functions/src/api/playerAccounts.integration.test.ts`, `firebas
 - **The EMA id is the link.** The account of a slot is the account that owns the EMA id of the slot. The server computes it on each read, so no stored link can go wrong.
 - An account sees a tournament as a player when a slot of that tournament holds the EMA id of the account.
 - The import and the assignment of a player never create an account and never send an email.
+- **A reminder is not a password reset.** The Invitations dialog sends a reminder to accounts and an invitation (new account and password reset email) to slots with no account. Password resets for many accounts live in App users.
 - Giving an account an EMA id gives it access to **all** tournaments that hold this EMA id. Taking the EMA id away removes that access in all of them.
 - The app shows only "Has account" or "No account" for each player. There are no other states.
 - A new player account has **no password and no alias**. The person chooses a password with the password reset email and an alias in the profile.
@@ -54,12 +55,13 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 | H3 | Set an email that is not valid, that an account of another EMA id owns, or that another slot holds | `FAILED` (`INVALID_EMAIL` or `EMAIL_IN_USE`). The old email stays. | None | "refuses an invalid email and keeps the old one", "refuses an email that an account of another EMA number owns", "refuses an email that another slot of the tournament holds…" |
 | H4 | Set an email for a slot with an account, with no EMA id, or that does not exist | `FAILED` (`HAS_ACCOUNT`, `NO_EMA_ID`, `PLAYER_NOT_FOUND`). | None | "refuses a slot with an account…", "refuses a slot with no EMA number and a player that does not exist" |
 | I | `send` to a slot whose pending email an account owns already | `FAILED` with `EMAIL_IN_USE`. The other account does not change. | None | "fails with EMAIL_IN_USE when an account owns the email…", "never gives an EMA number to an editor account because of an email" |
-| J | `send` to a slot with an account | The server sends the password reset email to the account email. Result `RESET_SENT`. The pending email is ignored. Also for a person who has a password. | Password reset | "sends the password reset email to the email of the account…", "sends it again every time…" |
-| K | The email cannot be sent | `FAILED` with `EMAIL_FAILED`. The account stays. The next `send` resets the password. | None | "keeps the account when the reset email fails…" |
+| J | `send` to a slot with an account | The server sends the reminder (an email with a link to the tournament) to the account email. Result `REMINDED`. The pending email is ignored. It never sends a password reset, also when the person has no password yet. | Reminder | "sends the reminder with a link to the tournament…", "sends a reminder every time…", "writes the reminder in Spanish…" |
+| K | The email cannot be sent | `FAILED` with `EMAIL_FAILED`. The account stays. The next `send` is a reminder. For a password, use the mass reset in App users. | None | "keeps the account when the reset email fails…", "fails with EMAIL_FAILED when the reminder cannot be sent…" |
 | L | Change the EMA id of a slot | The slot shows the account of the new EMA id, or none. The pending email goes away with the old person. | None | "M: a slot with another EMA number has no account…" |
 | M | The EMA id belongs to another account | Error 409. Nothing changes. | None | "refuses an EMA number that belongs to another account", "refuses an EMA number and an email that belong to another account" |
 | N | `send` to a slot with no EMA id | `FAILED` with `NO_EMA_ID`. | None | "fails for a slot without an EMA number" |
-| O | `send` to many players with both states | One result for each player. The server picks the action for each. Up to 200 players. | Password reset | "handles each player by its state in one request" |
+| O | `send` to many players with both states | One result for each player. The server picks the action for each. Up to 200 players. | Password reset (invitations), reminder (accounts) | "handles each player by its state in one request" |
+| Q | Password reset for many accounts (`POST /admin/users/password-resets`, App users, admins only) | One result per account. A disabled, unknown or email-less account fails alone. Up to 200 accounts per request. | Password reset | "sends the password reset email to every account of the list", "gives a failure to an unknown, a disabled and an account without email…", "is for admins only" |
 
 ## Import
 
@@ -86,7 +88,10 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 |---|---|---|
 | `send` | "Invite" in the menu of a row | A slot with an EMA id and no account. If the slot has no email, a dialog asks for it first, saves it and then invites. |
 | `PUT …/player-emails` | "Edit email" in the menu of a row | Sets or removes the pending email. Admins see the saved email. Editors see an empty field and a note. |
-| `send` | "Edit account" in the menu of a row (admins) | Opens the edit dialog of the account. It has "Send password reset email". |
-| `send` for many players | "Send (n)" in the Invitations dialog | Invites the selected players with no account and resets the password of the selected players with an account. Selected players with no account and no email get a dialog that asks for their emails. A player left blank is skipped. |
+| `send` | "Send reminder" in the menu of a row | A slot with an account. Sends the reminder. |
+| (none) | "Edit account" in the menu of a row (admins) | Opens the edit dialog of the account. It has "Send password reset email". |
+| `send` for many players | "Send (n)" in the Invitations dialog | Invites the selected players with no account and sends a reminder to the selected players with an account. Selected players with no account and no email get a dialog that asks for their emails. A player left blank is skipped. |
+
+| `POST /admin/users/password-resets` | "Send password reset (n)" in App users (admins) | Select accounts with the checkboxes, confirm, and read the result. |
 
 The list of the Invitations dialog has sticky column titles. Each player shows a check (has an account) or a cross (no account) instead of text.

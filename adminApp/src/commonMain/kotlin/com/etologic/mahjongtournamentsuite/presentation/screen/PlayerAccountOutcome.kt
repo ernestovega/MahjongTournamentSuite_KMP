@@ -33,7 +33,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.failure_player_not_fo
 import mahjongtournamentsuite.adminapp.generated.resources.failure_unexpected
 import mahjongtournamentsuite.adminapp.generated.resources.ok
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_invited
-import mahjongtournamentsuite.adminapp.generated.resources.outcome_reset_sent
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_reminded
 import mahjongtournamentsuite.adminapp.generated.resources.something_went_wrong
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -78,7 +78,7 @@ internal fun PlayerEmailResult.toFailedAction(): PlayerAccountActionResult = Pla
 /** The plain sentence for the result of one account action on one slot. */
 internal fun PlayerAccountActionResult.toOutcome(): AccountOutcome = when (outcome) {
     PlayerAccountOutcome.INVITED -> AccountOutcome(UiText.of(Res.string.outcome_invited), isError = false)
-    PlayerAccountOutcome.RESET_SENT -> AccountOutcome(UiText.of(Res.string.outcome_reset_sent), isError = false)
+    PlayerAccountOutcome.REMINDED -> AccountOutcome(UiText.of(Res.string.outcome_reminded), isError = false)
     PlayerAccountOutcome.FAILED -> AccountOutcome(
         UiText.of((reason ?: PlayerAccountFailure.UNEXPECTED).textRes()),
         isError = true,

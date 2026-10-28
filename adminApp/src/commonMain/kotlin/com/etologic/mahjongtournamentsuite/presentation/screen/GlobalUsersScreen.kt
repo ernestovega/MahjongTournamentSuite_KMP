@@ -47,6 +47,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -56,6 +58,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
@@ -168,6 +171,10 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
     var selectedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
     var restoreUid by rememberSaveable { mutableStateOf<String?>(null) }
+    // Admins select accounts and send them the password reset email in one go.
+    var selectedUids by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var confirmResetOpen by remember { mutableStateOf(false) }
+    var resetResults by remember { mutableStateOf<List<PasswordResetResult>?>(null) }
     var editUidHandled by rememberSaveable { mutableStateOf(false) }
     val addFocusRequester = remember { FocusRequester() }
     val rowFocusRequesters = remember(users.map(ManagedUser::uid)) {
@@ -200,6 +207,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             editUidHandled = true
         }
     }
+
+    // Only the accounts that the list shows are sent. A selected account that a filter hides stays out.
+    val chosenUids = filteredUsers.map { it.uid }.filter { it in selectedUids }
 
     fun refresh(force: Boolean = false) {
         scope.launch {
@@ -334,12 +344,26 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 selectedTournamentId = selectedTournamentId,
                 onTournamentSelected = { selectedTournamentId = it },
             )
+            val canReset = access?.isAdmin == true
             SectionCard(
                 title = stringResource(Res.string.accounts),
                 subtitle = if (loading) stringResource(Res.string.loading) else stringResource(Res.string.accounts_count_summary, filteredUsers.size, users.size),
             ) {
+                if (canReset) {
+                    PasswordResetBar(
+                        shownCount = filteredUsers.size,
+                        selectedCount = chosenUids.size,
+                        busy = saving || loading,
+                        onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
+                        onClear = { selectedUids = emptySet() },
+                        onSend = { confirmResetOpen = true },
+                    )
+                }
                 UsersTable(
                     users = filteredUsers,
+                    selectable = canReset,
+                    selectedUids = selectedUids,
+                    onToggleSelected = { uid -> selectedUids = if (uid in selectedUids) selectedUids - uid else selectedUids + uid },
                     countryByEmaId = emaPlayers.associate { it.emaId to it.country },
                     enabled = !loading && !saving,
                     canEditAdmins = access?.isAdmin == true,
@@ -402,6 +426,31 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         )
     }
 
+    if (confirmResetOpen) {
+        val uids = chosenUids
+        PasswordResetsConfirmDialog(
+            count = uids.size,
+            busy = saving,
+            onDismiss = { confirmResetOpen = false },
+            onConfirm = {
+                scope.launch {
+                    saving = true
+                    error = null
+                    when (val result = presenter.sendPasswordResets(uids)) {
+                        is AppResult.Success -> {
+                            resetResults = result.value
+                            selectedUids = emptySet()
+                        }
+                        is AppResult.Failure -> error = result.error.toUiText()
+                    }
+                    confirmResetOpen = false
+                    saving = false
+                }
+            },
+        )
+    }
+    resetResults?.let { PasswordResetsResultDialog(it, users, onDismiss = { resetResults = null }) }
+
     pendingDisabledUser?.let { user ->
         DisableUserDialog(
             user = user,
@@ -413,6 +462,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
 }
 
 private val UserCountryColumnWidth = 64.dp
+private val UserCheckboxColumnWidth = 48.dp
 
 @Composable
 private fun UsersTable(
@@ -422,6 +472,9 @@ private fun UsersTable(
     canEditAdmins: Boolean,
     selfUid: String?,
     rowFocusRequesters: Map<String, FocusRequester>,
+    selectable: Boolean,
+    selectedUids: Set<String>,
+    onToggleSelected: (String) -> Unit,
     onEdit: (ManagedUser) -> Unit,
 ) {
     LazyColumnWithScrollbar(
@@ -430,6 +483,7 @@ private fun UsersTable(
     ) {
         item {
             DataTableHeaderRow {
+                if (selectable) Spacer(Modifier.width(UserCheckboxColumnWidth))
                 Text(
                     stringResource(Res.string.country),
                     modifier = Modifier.width(UserCountryColumnWidth),
@@ -452,6 +506,14 @@ private fun UsersTable(
                 onClick = { if (canEdit) onEdit(user) },
                 clickFocusable = canEdit,
             ) {
+                if (selectable) {
+                    Checkbox(
+                        checked = user.uid in selectedUids,
+                        onCheckedChange = { onToggleSelected(user.uid) },
+                        enabled = enabled,
+                        modifier = Modifier.width(UserCheckboxColumnWidth).semantics { contentDescription = user.email },
+                    )
+                }
                 val country = user.emaId?.let(countryByEmaId::get).orEmpty()
                 Box(modifier = Modifier.width(UserCountryColumnWidth), contentAlignment = Alignment.Center) {
                     if (country.isBlank()) {

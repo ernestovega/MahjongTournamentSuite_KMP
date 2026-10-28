@@ -36,7 +36,7 @@ class ToolsDialogsTest : AdminE2eTest() {
     fun invitationsDialogCountsPlayersByState() {
         openPlayers()
         c.clickButton("Invitations")
-        c.waitForText("Invitations and password resets")
+        c.waitForText("Invitations and reminders")
         c.waitForText("All (40)")
         c.waitForText("No account (", substring = true)
         c.waitForText("Has account (", substring = true)

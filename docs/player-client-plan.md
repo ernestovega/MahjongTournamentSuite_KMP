@@ -42,9 +42,11 @@ No new libraries were added.
 
 1. Create the hosting site: `firebase hosting:sites:create mahjong-tournament-suite-player`.
 2. Connect the domain `mtsplayer.mahjongmadrid.com` to that site (Firebase console, Hosting, Add custom domain) and add the DNS records in cPanel.
-3. Deploy the functions. Then deploy hosting for both sites.
-4. Save each existing editor account once in the accounts screen so it gets the `editor` claim.
-5. Run `npm run verify:roles` (see `firebase-role-rollout.md`).
+3. Create a mailbox for the sender and store its SMTP address as the secret `MTS_SMTP_URI`:
+   `npx -y firebase-tools@latest functions:secrets:set MTS_SMTP_URI --project mahjong-tournament-suite`.
+4. `PLAYER_APP_URL` and `MAIL_FROM` are set in `firebase/functions/.env`. Deploy the functions. Then deploy hosting for both sites.
+5. Save each existing editor account once in the accounts screen so it gets the `editor` claim.
+6. Run `npm run verify:roles` (see `firebase-role-rollout.md`).
 
 ## Phase 3: schedules and notifications
 
@@ -76,7 +78,9 @@ The player screens use shared components from the `:ui` module. The design follo
 - "Invite" asks for the email when the slot has none, and saves it. "Edit email" in the row menu sets or removes it, also after the tournament started.
 - "Invite" creates the account of a player with no account, without a password and without an alias. It uses the EMA ID and the pending email of the slot, and sends the password reset email. The person chooses a password and signs in on the player app.
 - For a player with an account, an admin opens "Edit account" from the menu of the row. The dialog has the button to send the password reset email.
-- The "Invitations" dialog lists every player with a filter (All, No account, Has account). One button, "Send", invites the selected players with no account and resets the password of the selected players with an account.
+- The "Invitations" dialog lists every player with a filter (All, No account, Has account). One button, "Send", invites the selected players with no account (new account and password reset email) and sends a reminder to the selected players with an account. A reminder is an email with a link to the tournament. It never asks the person to change the password.
+- A row menu has "Send reminder" for a player with an account.
+- An admin sends the password reset email to many accounts in App users: select accounts, confirm, read the result.
 - An account with an EMA ID (set by an admin in the accounts screen, or created by an invitation) sees every tournament where that EMA ID is assigned.
 
 ## Table screen rules

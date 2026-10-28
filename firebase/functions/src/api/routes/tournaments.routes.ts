@@ -1,4 +1,5 @@
 import { NextFunction, Request, Response, Router } from "express";
+import { parseAcceptLanguage } from "../../services/i18n";
 import { recordActivity, tournamentNameOf } from "../../services/activityLog";
 
 import { auth, db } from "../../firebase";
@@ -1016,7 +1017,9 @@ export function tournamentsRouter(): Router {
           if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
           return { playerId };
         });
-        const results = await runAccountAction({ tournamentId: pathParam(req, "tournamentId"), items });
+        const results = await runAccountAction({
+          tournamentId: pathParam(req, "tournamentId"), items, language: parseAcceptLanguage(req.headers["accept-language"]),
+        });
         await recordActivity({
           action: "account.send", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },

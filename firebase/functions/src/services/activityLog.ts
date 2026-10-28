@@ -15,7 +15,7 @@ export type ActivityAction =
   | "player.assign" | "player.import" | "player.substitute" | "player.clearSubstitution"
   | "team.update" | "member.add" | "member.remove"
   | "account.send" | "player.email"
-  | "user.create" | "user.update" | "user.disable" | "user.enable" | "user.photo" | "user.photo.remove"
+  | "user.create" | "user.passwordReset" | "user.update" | "user.disable" | "user.enable" | "user.photo" | "user.photo.remove"
   | "registry.create" | "registry.update" | "registry.photo";
 
 export type ActivityEntry = {

@@ -527,7 +527,7 @@
     <string name="extra_time_hint">I giocatori possono registrare la mano in corso per questa durata dopo l'ora di fine.</string>
     <string name="filter_all">Tutti</string>
     <string name="select_all_shown">Seleziona tutti i visualizzati (%1$d)</string>
-    <string name="bulk_info">• Un giocatore senza account riceve un account con l'email dell'importazione e un'email per scegliere una password.\n• Un giocatore con un account riceve un'email per reimpostare la password.\n• L'app sceglie l'azione per ogni giocatore, quindi puoi selezionare insieme i due gruppi.</string>
+    <string name="bulk_info">• Un giocatore senza account riceve un account con l'email dell'importazione e un'email per scegliere una password.\n• Un giocatore con un account riceve un promemoria: un'email con un link al torneo.\n• L'app sceglie l'azione per ogni giocatore, quindi puoi selezionare insieme i due gruppi.\n• Per inviare una reimpostazione della password a molti account, usa Utenti dell'app.</string>
     <string name="outcome_label_invited">Invitato</string>
     <string name="edit_tournament_named">Modifica %1$s</string>
     <string name="no_logo_for">Nessun logo per %1$s</string>
@@ -696,12 +696,9 @@
     <string name="import_issue_email_owned">Un account con un altro numero EMA, o senza numero, usa già l'email %1$s.</string>
     <string name="account_has">Ha un account</string>
     <string name="account_none">Senza account</string>
-    <string name="invitations_and_resets">Inviti e reimpostazione della password</string>
     <string name="send_count">Invia (%1$d)</string>
-    <string name="send_summary">Nuovi account: %1$d · Reimpostazioni password: %2$d</string>
+    <string name="send_summary">Nuovi account: %1$d · Promemoria: %2$d</string>
     <string name="no_email_warning">Senza email</string>
-    <string name="outcome_reset_sent">L'email per reimpostare la password è stata inviata.</string>
-    <string name="outcome_label_reset_sent">Reimpostazione inviata</string>
     <string name="failure_no_ema_id">Il giocatore non ha un numero EMA.</string>
     <string name="failure_no_email">Il giocatore non ha email. Aggiungi un'email e riprova.</string>
     <string name="failure_email_in_use">Un altro account o un altro giocatore usa già questa email.</string>
@@ -719,4 +716,18 @@
     <string name="edit_email">Modifica l'email</string>
     <string name="send_count_label">Invia</string>
     <string name="failure_invalid_email">L'email non è valida.</string>
+    <string name="invitations_and_reminders">Inviti e promemoria</string>
+    <string name="outcome_reminded">Il promemoria è stato inviato.</string>
+    <string name="outcome_label_reminded">Promemoria inviato</string>
+    <string name="send_reminder">Invia promemoria</string>
+    <string name="send_password_reset_count">Invia reimpostazione password (%1$d)</string>
+    <string name="password_resets_confirm_title">Inviare le email di reimpostazione password?</string>
+    <string name="password_resets_confirm_text">L'app invia un'email a %1$d account. Ogni persona riceve un link per scegliere una nuova password.</string>
+    <string name="password_resets_summary">Email inviate: %1$d. Non riuscite: %2$d.</string>
+    <string name="reset_failure_line">• %1$s: %2$s</string>
+    <string name="reset_failure_not_found">L'account non esiste.</string>
+    <string name="reset_failure_no_email">L'account non ha email.</string>
+    <string name="reset_failure_disabled">L'account è disattivato.</string>
+    <string name="reset_failure_email_failed">Non è stato possibile inviare l'email.</string>
+    <string name="reset_failure_unknown">L'email non è stata inviata. Riprova.</string>
 </resources>

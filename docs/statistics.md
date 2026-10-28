@@ -81,7 +81,7 @@ Every number comes in two periods: the current one and the one of the same lengt
 
 Sources:
 - The change log (`tournaments/{id}/changes`): table saves, resets and refused saves (`conflict`). Entries have `source` (`player` or `editor`), `uid`, `at` and `handChangeCount`. Entries of the server (`system`) do not count as work. Entries without a source count as editor saves.
-- The activity log (`activity`): setup work like settings, players, teams, invitations and password resets, and accounts.
+- The activity log (`activity`): setup work like settings, players, teams, invitations, reminders, password resets, and accounts.
 - Firebase Authentication: role, creation date and last sign-in of each account.
 - The tournaments, tables and player slots: settings, data entry modes and whether the account of a player has a password.
 

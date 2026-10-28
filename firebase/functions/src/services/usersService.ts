@@ -3,6 +3,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { auth, db, storage } from "../firebase";
 import { badRequest, conflict, forbidden, notFound } from "../api/httpError";
 import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsService";
+import { sendPasswordResetEmail } from "./firebaseAuthRest";
 import { EMA_PLAYER_REGISTRY_COLLECTION, storePhotoFile, toPlayer } from "./playersService";
 import { getGlobalUserRole, getGlobalUserRoles, type GlobalUserRole } from "../models/globalRole";
 
@@ -377,4 +378,47 @@ export async function revokePlayerCapability(uid: string): Promise<void> {
   const claims: Record<string, unknown> = { ...(user.customClaims ?? {}) };
   delete claims.player;
   await auth.setCustomUserClaims(uid, claims);
+}
+
+export type PasswordResetFailure = "NOT_FOUND" | "NO_EMAIL" | "DISABLED" | "EMAIL_FAILED";
+export type PasswordResetResult = { uid: string; outcome: "SENT" | "FAILED"; reason?: PasswordResetFailure };
+
+export const MAX_PASSWORD_RESETS = 200;
+const PASSWORD_RESET_CONCURRENCY = 5;
+
+/**
+ * Sends the password reset email to many accounts. Every account has its own result: a disabled account, an account
+ * with no email or an unknown account fails alone, and the others still get the email.
+ */
+export async function sendPasswordResets(uids: string[]): Promise<PasswordResetResult[]> {
+  const unique = [...new Set(uids)];
+  if (unique.length === 0) throw badRequest("Choose at least one account");
+  if (unique.length > MAX_PASSWORD_RESETS) throw badRequest(`At most ${MAX_PASSWORD_RESETS} accounts per request`);
+  const results: PasswordResetResult[] = new Array(unique.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < unique.length) {
+      const index = next++;
+      const uid = unique[index];
+      const fail = (reason: PasswordResetFailure): PasswordResetResult => ({ uid, outcome: "FAILED", reason });
+      try {
+        const user = await auth.getUser(uid).catch((error: { code?: string }) => {
+          if (error.code === "auth/user-not-found") return null;
+          throw error;
+        });
+        if (user == null) results[index] = fail("NOT_FOUND");
+        else if (user.disabled) results[index] = fail("DISABLED");
+        else if (!user.email) results[index] = fail("NO_EMAIL");
+        else {
+          await sendPasswordResetEmail(user.email);
+          results[index] = { uid, outcome: "SENT" };
+        }
+      } catch (error) {
+        console.error("Password reset email failed", { uid, error });
+        results[index] = fail("EMAIL_FAILED");
+      }
+    }
+  };
+  await Promise.all(Array.from({ length: Math.min(PASSWORD_RESET_CONCURRENCY, unique.length) }, worker));
+  return results;
 }

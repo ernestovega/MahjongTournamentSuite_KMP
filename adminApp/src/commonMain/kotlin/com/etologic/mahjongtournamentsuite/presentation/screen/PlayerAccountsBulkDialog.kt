@@ -70,12 +70,12 @@ import mahjongtournamentsuite.adminapp.generated.resources.bulk_info
 import mahjongtournamentsuite.adminapp.generated.resources.clear
 import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.filter_all
-import mahjongtournamentsuite.adminapp.generated.resources.invitations_and_resets
+import mahjongtournamentsuite.adminapp.generated.resources.invitations_and_reminders
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_email_warning
 import mahjongtournamentsuite.adminapp.generated.resources.no_players_in_this_group
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_label_invited
-import mahjongtournamentsuite.adminapp.generated.resources.outcome_label_reset_sent
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_label_reminded
 import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_number_email_ema
 import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
@@ -163,7 +163,7 @@ fun PlayerAccountsBulkDialog(
         modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
         properties = DialogProperties(usePlatformDefaultWidth = false),
         onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.invitations_and_resets)) },
+        title = { Text(stringResource(Res.string.invitations_and_reminders)) },
         text = {
             BoxWithConstraints(Modifier.fillMaxSize()) {
                 Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -329,7 +329,7 @@ private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult
     }
     val text = when {
         result.outcome == PlayerAccountOutcome.INVITED -> stringResource(Res.string.outcome_label_invited)
-        result.outcome == PlayerAccountOutcome.RESET_SENT -> stringResource(Res.string.outcome_label_reset_sent)
+        result.outcome == PlayerAccountOutcome.REMINDED -> stringResource(Res.string.outcome_label_reminded)
         else -> stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())
     }
     Text(

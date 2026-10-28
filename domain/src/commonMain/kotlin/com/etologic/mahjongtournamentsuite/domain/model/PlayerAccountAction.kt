@@ -5,8 +5,8 @@ enum class PlayerAccountOutcome {
     /** The slot had no account. The server created it and sent the password reset email. */
     INVITED,
 
-    /** The slot had an account. The server sent the password reset email. */
-    RESET_SENT,
+    /** The slot had an account. The server sent the reminder: an email with a link to the tournament. */
+    REMINDED,
 
     FAILED,
 }

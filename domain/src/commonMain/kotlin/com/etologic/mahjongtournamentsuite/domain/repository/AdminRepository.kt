@@ -4,6 +4,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UsageReport
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -33,6 +34,12 @@ interface AdminRepository {
 
     /** Removes the own photo of another account. Only admins can do this. */
     suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser>
+
+    /**
+     * Sends the password reset email to many accounts at once. Only admins can do this.
+     * Every account has its own result, so a disabled account fails alone.
+     */
+    suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>>
 
     /** Usage analytics for the last [days] days (7, 30 or 90). Only an administrator can load it. Never cached. */
     suspend fun loadUsageReport(days: Int): AppResult<UsageReport>

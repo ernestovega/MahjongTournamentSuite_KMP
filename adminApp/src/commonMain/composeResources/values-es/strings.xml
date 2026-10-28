@@ -527,7 +527,7 @@
     <string name="extra_time_hint">Los jugadores pueden anotar la mano en juego durante este tiempo después de la hora de fin.</string>
     <string name="filter_all">Todos</string>
     <string name="select_all_shown">Seleccionar todos los mostrados (%1$d)</string>
-    <string name="bulk_info">• Un jugador sin cuenta recibe una cuenta con el email de la importación y un email para elegir una contraseña.\n• Un jugador con cuenta recibe un email para restablecer la contraseña.\n• La app elige la acción para cada jugador, así que puedes seleccionar los dos grupos a la vez.</string>
+    <string name="bulk_info">• Un jugador sin cuenta recibe una cuenta con el email de la importación y un email para elegir una contraseña.\n• Un jugador con cuenta recibe un recordatorio: un email con un enlace al torneo.\n• La app elige la acción para cada jugador, así que puedes seleccionar los dos grupos a la vez.\n• Para enviar un restablecimiento de contraseña a muchas cuentas, usa Usuarios de la app.</string>
     <string name="outcome_label_invited">Invitado</string>
     <string name="edit_tournament_named">Editar %1$s</string>
     <string name="no_logo_for">Sin logotipo para %1$s</string>
@@ -696,12 +696,9 @@
     <string name="import_issue_email_owned">Una cuenta con otro número EMA, o sin número, ya usa el email %1$s.</string>
     <string name="account_has">Tiene cuenta</string>
     <string name="account_none">Sin cuenta</string>
-    <string name="invitations_and_resets">Invitaciones y restablecimiento de contraseña</string>
     <string name="send_count">Enviar (%1$d)</string>
-    <string name="send_summary">Cuentas nuevas: %1$d · Restablecimientos de contraseña: %2$d</string>
+    <string name="send_summary">Cuentas nuevas: %1$d · Recordatorios: %2$d</string>
     <string name="no_email_warning">Sin email</string>
-    <string name="outcome_reset_sent">Se envió el email para restablecer la contraseña.</string>
-    <string name="outcome_label_reset_sent">Restablecimiento enviado</string>
     <string name="failure_no_ema_id">El jugador no tiene número EMA.</string>
     <string name="failure_no_email">El jugador no tiene email. Añade un email e inténtalo de nuevo.</string>
     <string name="failure_email_in_use">Otra cuenta u otro jugador ya usa este email.</string>
@@ -719,4 +716,18 @@
     <string name="edit_email">Editar email</string>
     <string name="send_count_label">Enviar</string>
     <string name="failure_invalid_email">El email no es válido.</string>
+    <string name="invitations_and_reminders">Invitaciones y recordatorios</string>
+    <string name="outcome_reminded">Se envió el recordatorio.</string>
+    <string name="outcome_label_reminded">Recordatorio enviado</string>
+    <string name="send_reminder">Enviar recordatorio</string>
+    <string name="send_password_reset_count">Enviar restablecimiento de contraseña (%1$d)</string>
+    <string name="password_resets_confirm_title">¿Enviar emails de restablecimiento de contraseña?</string>
+    <string name="password_resets_confirm_text">La app envía un email a %1$d cuentas. Cada persona recibe un enlace para elegir una contraseña nueva.</string>
+    <string name="password_resets_summary">Emails enviados: %1$d. Fallidos: %2$d.</string>
+    <string name="reset_failure_line">• %1$s: %2$s</string>
+    <string name="reset_failure_not_found">La cuenta no existe.</string>
+    <string name="reset_failure_no_email">La cuenta no tiene email.</string>
+    <string name="reset_failure_disabled">La cuenta está desactivada.</string>
+    <string name="reset_failure_email_failed">No se pudo enviar el email.</string>
+    <string name="reset_failure_unknown">No se envió el email. Inténtalo de nuevo.</string>
 </resources>

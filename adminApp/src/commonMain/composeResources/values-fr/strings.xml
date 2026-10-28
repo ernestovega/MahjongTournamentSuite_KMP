@@ -527,7 +527,7 @@
     <string name="extra_time_hint">Les joueurs peuvent enregistrer la main en cours pendant cette durée après l'heure de fin.</string>
     <string name="filter_all">Tous</string>
     <string name="select_all_shown">Sélectionner tout ce qui est affiché (%1$d)</string>
-    <string name="bulk_info">• Un joueur sans compte reçoit un compte avec l'adresse e-mail de l'import et un e-mail pour choisir un mot de passe.\n• Un joueur avec un compte reçoit un e-mail pour réinitialiser le mot de passe.\n• L'app choisit l'action pour chaque joueur, donc vous pouvez sélectionner les deux groupes ensemble.</string>
+    <string name="bulk_info">• Un joueur sans compte reçoit un compte avec l'adresse e-mail de l'import et un e-mail pour choisir un mot de passe.\n• Un joueur avec un compte reçoit un rappel : un e-mail avec un lien vers le tournoi.\n• L'app choisit l'action pour chaque joueur, donc vous pouvez sélectionner les deux groupes ensemble.\n• Pour envoyer une réinitialisation du mot de passe à plusieurs comptes, utilisez Utilisateurs de l'app.</string>
     <string name="outcome_label_invited">Invité</string>
     <string name="edit_tournament_named">Modifier %1$s</string>
     <string name="no_logo_for">Aucun logo pour %1$s</string>
@@ -696,12 +696,9 @@
     <string name="import_issue_email_owned">Un compte avec un autre numéro EMA, ou sans numéro, utilise déjà l'adresse e-mail %1$s.</string>
     <string name="account_has">A un compte</string>
     <string name="account_none">Sans compte</string>
-    <string name="invitations_and_resets">Invitations et réinitialisation du mot de passe</string>
     <string name="send_count">Envoyer (%1$d)</string>
-    <string name="send_summary">Nouveaux comptes : %1$d · Réinitialisations : %2$d</string>
+    <string name="send_summary">Nouveaux comptes : %1$d · Rappels : %2$d</string>
     <string name="no_email_warning">Sans e-mail</string>
-    <string name="outcome_reset_sent">L'e-mail de réinitialisation du mot de passe a été envoyé.</string>
-    <string name="outcome_label_reset_sent">Réinitialisation envoyée</string>
     <string name="failure_no_ema_id">Le joueur n'a pas de numéro EMA.</string>
     <string name="failure_no_email">Le joueur n'a pas d'adresse e-mail. Ajoutez une adresse et réessayez.</string>
     <string name="failure_email_in_use">Un autre compte ou un autre joueur utilise déjà cette adresse e-mail.</string>
@@ -719,4 +716,18 @@
     <string name="edit_email">Modifier l'e-mail</string>
     <string name="send_count_label">Envoyer</string>
     <string name="failure_invalid_email">L'adresse e-mail n'est pas valide.</string>
+    <string name="invitations_and_reminders">Invitations et rappels</string>
+    <string name="outcome_reminded">Le rappel a été envoyé.</string>
+    <string name="outcome_label_reminded">Rappel envoyé</string>
+    <string name="send_reminder">Envoyer un rappel</string>
+    <string name="send_password_reset_count">Envoyer la réinitialisation du mot de passe (%1$d)</string>
+    <string name="password_resets_confirm_title">Envoyer les e-mails de réinitialisation du mot de passe ?</string>
+    <string name="password_resets_confirm_text">L'app envoie un e-mail à %1$d comptes. Chaque personne reçoit un lien pour choisir un nouveau mot de passe.</string>
+    <string name="password_resets_summary">E-mails envoyés : %1$d. Échecs : %2$d.</string>
+    <string name="reset_failure_line">• %1$s : %2$s</string>
+    <string name="reset_failure_not_found">Le compte n'existe pas.</string>
+    <string name="reset_failure_no_email">Le compte n'a pas d'adresse e-mail.</string>
+    <string name="reset_failure_disabled">Le compte est désactivé.</string>
+    <string name="reset_failure_email_failed">L'e-mail n'a pas pu être envoyé.</string>
+    <string name="reset_failure_unknown">L'e-mail n'a pas été envoyé. Réessayez.</string>
 </resources>

@@ -130,6 +130,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.edit_account
 import mahjongtournamentsuite.adminapp.generated.resources.edit_email
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
+import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
@@ -1358,6 +1359,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                             actionsMenuOpen = false
                                                             emailThenInvite = false
                                                             emailSlotId = slot.id
+                                                        },
+                                                    )
+                                                }
+                                                // A player with an account gets a reminder: an email with a link to the tournament.
+                                                if (slot.hasAccount) {
+                                                    DropdownMenuItem(
+                                                        enabled = accountActionsEnabled,
+                                                        text = { Text(stringResource(Res.string.send_reminder)) },
+                                                        onClick = {
+                                                            actionsMenuOpen = false
+                                                            sendToPlayers(listOf(slot.id), showOutcome = true)
                                                         },
                                                     )
                                                 }

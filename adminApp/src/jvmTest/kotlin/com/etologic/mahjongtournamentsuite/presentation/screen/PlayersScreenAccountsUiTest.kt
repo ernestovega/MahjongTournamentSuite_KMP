@@ -123,6 +123,46 @@ class PlayersScreenAccountsUiTest {
     }
 
     @Test
+    fun aPlayerWithAnAccountOffersSendReminderToAnAdmin() = runComposeUiTest {
+        show(World(GlobalUserRole.ADMIN, listOf(withAccount)))
+
+        openMenu(0)
+
+        onAllNodesWithText("Send reminder").assertCountEquals(1)
+    }
+
+    @Test
+    fun aPlayerWithAnAccountOffersSendReminderToAnEditorToo() = runComposeUiTest {
+        show(World(GlobalUserRole.EDITOR, listOf(withAccount)))
+
+        openMenu(0)
+
+        onAllNodesWithText("Send reminder").assertCountEquals(1)
+    }
+
+    @Test
+    fun sendReminderSendsToThePlayerAndShowsTheResult() = runComposeUiTest {
+        val world = World(GlobalUserRole.EDITOR, listOf(withAccount))
+        world.accounts.results[1] = PlayerAccountActionResult(1, PlayerAccountOutcome.REMINDED)
+        show(world)
+
+        openMenu(0)
+        onNodeWithText("Send reminder").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("The reminder was sent.").fetchSemanticsNodes().isNotEmpty() }
+
+        assertEquals(listOf(listOf(1)), world.accounts.sent)
+    }
+
+    @Test
+    fun aPlayerWithNoAccountOffersNoReminder() = runComposeUiTest {
+        show(World(GlobalUserRole.ADMIN, listOf(withoutAccount)))
+
+        openMenu(0)
+
+        onAllNodesWithText("Send reminder").assertCountEquals(0)
+    }
+
+    @Test
     fun anAdminSeesTheEditOptionForAPlayerWithAnAccountAndNotTheInviteOption() = runComposeUiTest {
         show(World(GlobalUserRole.ADMIN, listOf(withAccount, withoutAccount)))
 

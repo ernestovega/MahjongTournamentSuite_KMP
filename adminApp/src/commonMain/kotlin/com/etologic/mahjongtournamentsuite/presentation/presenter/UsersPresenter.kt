@@ -1,6 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
@@ -48,6 +51,23 @@ class UsersPresenter(
     suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> =
         adminRepository.setUserDisabled(uid, disabled)
 
+    /** Sends the password reset email to many accounts. Only admins call it. */
+    suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> {
+        // The server takes up to 200 accounts in one request, so a longer list goes in several requests.
+        val results = mutableListOf<PasswordResetResult>()
+        for (chunk in uids.chunked(MAX_PASSWORD_RESETS_PER_REQUEST)) {
+            when (val result = adminRepository.sendPasswordResets(chunk)) {
+                is AppResult.Success -> results += result.value
+                // A request that fails after others went out must not hide them. Its accounts show as failed.
+                is AppResult.Failure -> {
+                    if (results.isEmpty()) return result
+                    results += chunk.map { PasswordResetResult(it, PasswordResetOutcome.FAILED, PasswordResetFailure.UNKNOWN) }
+                }
+            }
+        }
+        return AppResult.Success(results)
+    }
+
     suspend fun requestPasswordReset(email: String): AppResult<Unit> =
         authRepository.requestPasswordReset(email)
 
@@ -55,3 +75,6 @@ class UsersPresenter(
 }
 
 private fun Boolean.mode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED
+
+/** The server takes up to 200 accounts in one password reset request. */
+internal const val MAX_PASSWORD_RESETS_PER_REQUEST = 200

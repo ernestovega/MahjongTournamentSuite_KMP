@@ -31,7 +31,7 @@ class InvitationsTest : AdminE2eTest() {
         c.clickButton("Players")
         c.waitForText("Tournament players")
         c.clickButton("Invitations")
-        c.waitForText("Invitations and password resets")
+        c.waitForText("Invitations and reminders")
         c.onAllNodes(rowCheckbox).onLast().performClick()
         c.waitForText("1 selected")
     }
@@ -62,7 +62,7 @@ class InvitationsTest : AdminE2eTest() {
     fun aPlayerWithAnEmailGetsTheAccountAndTheResetEmail() {
         E2eApi.setSlotEmails("test-live-ongoing")
         openDialogWithOnePlayerSelected()
-        c.waitForText("New accounts: 1 · Password resets: 0")
+        c.waitForText("New accounts: 1 · Reminders: 0")
         c.clickButton("Send (1)")
         c.waitForText("Invited")
         val mails = E2eApi.sentEmails()

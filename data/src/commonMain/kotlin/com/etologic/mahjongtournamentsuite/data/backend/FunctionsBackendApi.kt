@@ -28,6 +28,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkResp
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
@@ -174,6 +176,15 @@ class FunctionsBackendApi(
     ): ManagedUserDto = put(
         path = "/admin/users/$uid/disabled",
         requestBody = SetUserDisabledRequestDto(disabled),
+        idToken = idToken,
+    )
+
+    suspend fun sendPasswordResets(
+        idToken: String,
+        request: PasswordResetsRequestDto,
+    ): PasswordResetsResponseDto = post(
+        path = "/admin/users/password-resets",
+        requestBody = request,
         idToken = idToken,
     )
 

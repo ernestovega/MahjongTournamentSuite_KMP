@@ -4,7 +4,14 @@ import { auth, db } from "../firebase";
 import { badRequest, conflict, notFound } from "../api/httpError";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 import { sendPasswordResetEmail } from "./firebaseAuthRest";
+import { sendEmail } from "./mailService";
+import { buildRegistrationEmail, DEFAULT_LANGUAGE, type Language } from "./i18n";
 import { assertEmailAvailable, createUserProfile, grantPlayerCapability, revokePlayerCapability } from "./usersService";
+
+/** Where a player opens the tournament after the reminder. Set PLAYER_APP_URL to the player web site. */
+function playerAppUrl(): string {
+  return (process.env.PLAYER_APP_URL ?? "https://mtsplayer.mahjongmadrid.com").replace(/\/$/, "");
+}
 
 /** The data of an account that the tournament screens need. The email lives only in the account. */
 export type AccountInfo = {
@@ -200,8 +207,11 @@ export async function createPlayerAccount(params: { email: string; emaId: string
 
 /** Why an action failed for a player. The client turns the reason into a text for the editor. */
 export type AccountFailure = "PLAYER_NOT_FOUND" | "NO_EMA_ID" | "NO_EMAIL" | "EMAIL_IN_USE" | "EMAIL_FAILED" | "UNEXPECTED";
-/** INVITED: the server made the account and sent the password reset email. RESET_SENT: the account existed already. */
-export type AccountOutcome = "INVITED" | "RESET_SENT" | "FAILED";
+/**
+ * INVITED: the slot had no account. The server made it and sent the password reset email.
+ * REMINDED: the slot had an account. The server sent the reminder, an email with a link to the tournament.
+ */
+export type AccountOutcome = "INVITED" | "REMINDED" | "FAILED";
 export type AccountActionItem = { playerId: number };
 export type AccountActionResult = { playerId: number; outcome: AccountOutcome; reason?: AccountFailure };
 
@@ -210,29 +220,50 @@ const BULK_CONCURRENCY = 5;
 
 const failed = (playerId: number, reason: AccountFailure): AccountActionResult => ({ playerId, outcome: "FAILED", reason });
 
-/** Sends the password reset email. A failed email gives the reason, and the account stays for a new try. */
-async function sendReset(playerId: number, email: string, outcome: AccountOutcome): Promise<AccountActionResult> {
+/** Sends the password reset email of an invitation. A failed email gives the reason, and the account stays for a new try. */
+async function sendInvitationEmail(playerId: number, email: string): Promise<AccountActionResult> {
   try {
     await sendPasswordResetEmail(email);
-    return { playerId, outcome };
+    return { playerId, outcome: "INVITED" };
   } catch (error) {
     console.error("Password reset email failed", { playerId, error });
     return failed(playerId, "EMAIL_FAILED");
   }
 }
 
+/** Sends the reminder: the player is registered in the tournament, with a link to open it. */
+async function sendReminder(params: {
+  tournamentId: string;
+  playerId: number;
+  email: string;
+  language: Language;
+}): Promise<AccountActionResult> {
+  try {
+    const tournament = await db.doc(`tournaments/${params.tournamentId}`).get();
+    const link = `${playerAppUrl()}/?tournament=${encodeURIComponent(params.tournamentId)}`;
+    await sendEmail({
+      to: params.email,
+      ...buildRegistrationEmail(params.language, { tournamentName: String(tournament.get("name") ?? ""), link }),
+    });
+    return { playerId: params.playerId, outcome: "REMINDED" };
+  } catch (error) {
+    console.error("Reminder email failed", { playerId: params.playerId, error });
+    return failed(params.playerId, "EMAIL_FAILED");
+  }
+}
+
 /**
  * Handles one player by the state of the slot. A slot with no account gets one, made from the pending email of the
- * import, and the password reset email. A slot with an account gets the password reset email.
+ * import, and the password reset email. A slot with an account gets a reminder.
  */
-async function runOne(tournamentId: string, playerId: number): Promise<AccountActionResult> {
+async function runOne(tournamentId: string, playerId: number, language: Language): Promise<AccountActionResult> {
   const slot = await db.doc(`tournaments/${tournamentId}/players/${playerId}`).get();
   if (!slot.exists) return failed(playerId, "PLAYER_NOT_FOUND");
   const emaId = slot.get("assignedEmaId");
   if (typeof emaId !== "string" || emaId.length === 0) return failed(playerId, "NO_EMA_ID");
   const account = (await loadAccountsByEmaId([emaId])).get(emaId);
   if (account != null) {
-    return account.email == null ? failed(playerId, "NO_EMAIL") : sendReset(playerId, account.email, "RESET_SENT");
+    return account.email == null ? failed(playerId, "NO_EMAIL") : sendReminder({ tournamentId, playerId, email: account.email, language });
   }
   const pending = slot.get("email");
   if (typeof pending !== "string" || pending === "") return failed(playerId, "NO_EMAIL");
@@ -242,16 +273,18 @@ async function runOne(tournamentId: string, playerId: number): Promise<AccountAc
     if ((error as { status?: number }).status === 409) return failed(playerId, "EMAIL_IN_USE");
     throw error;
   }
-  return sendReset(playerId, pending.trim().toLowerCase(), "INVITED");
+  return sendInvitationEmail(playerId, pending.trim().toLowerCase());
 }
 
 /**
- * Sends the action that fits each player: invite when the slot has no account, password reset when it has one.
+ * Sends the action that fits each player: invite when the slot has no account, reminder when it has one.
  * Every player gets its own result. Editors start this by hand. Importing or assigning a player never sends an email.
  */
 export async function runAccountAction(params: {
   tournamentId: string;
   items: AccountActionItem[];
+  /** The language of the reminder. The default is English. */
+  language?: Language;
 }): Promise<AccountActionResult[]> {
   if (params.items.length === 0) throw badRequest("Choose at least one player");
   if (params.items.length > MAX_BULK_PLAYERS) throw badRequest(`At most ${MAX_BULK_PLAYERS} players per request`);
@@ -262,7 +295,7 @@ export async function runAccountAction(params: {
       const index = next++;
       const item = params.items[index];
       try {
-        results[index] = await runOne(params.tournamentId, item.playerId);
+        results[index] = await runOne(params.tournamentId, item.playerId, params.language ?? DEFAULT_LANGUAGE);
       } catch (error) {
         console.error("Account action failed", { playerId: item.playerId, error });
         results[index] = failed(item.playerId, "UNEXPECTED");

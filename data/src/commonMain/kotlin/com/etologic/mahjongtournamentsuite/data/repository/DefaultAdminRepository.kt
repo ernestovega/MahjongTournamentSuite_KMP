@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.data.repository
 
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.GlobalUserRoleDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
@@ -14,6 +15,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UsageReport
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -121,6 +125,17 @@ class DefaultAdminRepository(
         managedUserRequest(if (disabled) "Disabling user" else "Enabling user") { idToken ->
             backendApi.setUserDisabled(idToken, uid, disabled).toDomain()
                 .also { cache.markStale(USERS_CACHE_KEY, WHO_AM_I_CACHE_KEY) }
+        }
+
+    override suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> =
+        managedUserRequest("Sending password resets") { idToken ->
+            backendApi.sendPasswordResets(idToken, PasswordResetsRequestDto(uids)).results.map { dto ->
+                PasswordResetResult(
+                    uid = dto.uid,
+                    outcome = PasswordResetOutcome.entries.firstOrNull { it.name == dto.outcome } ?: PasswordResetOutcome.FAILED,
+                    reason = dto.reason?.let { name -> PasswordResetFailure.entries.firstOrNull { it.name == name } ?: PasswordResetFailure.UNKNOWN },
+                )
+            }
         }
 
     override suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser> =

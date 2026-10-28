@@ -52,6 +52,23 @@ data class SaveManagedUserRequestDto(
 )
 
 @Serializable
+data class PasswordResetsRequestDto(
+    val uids: List<String>,
+)
+
+@Serializable
+data class PasswordResetResultDto(
+    val uid: String,
+    val outcome: String,
+    val reason: String? = null,
+)
+
+@Serializable
+data class PasswordResetsResponseDto(
+    val results: List<PasswordResetResultDto> = emptyList(),
+)
+
+@Serializable
 data class SetUserDisabledRequestDto(
     val disabled: Boolean,
 )
