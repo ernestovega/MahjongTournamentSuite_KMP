@@ -43,6 +43,7 @@ class DefaultPlayerAccountRepository(
                     reason = dto.reason?.let { name ->
                         PlayerAccountFailure.entries.firstOrNull { it.name == name } ?: PlayerAccountFailure.UNEXPECTED
                     },
+                    sentAt = dto.sentAt,
                 )
             }
         }

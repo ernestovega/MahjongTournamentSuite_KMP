@@ -23,6 +23,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
@@ -253,6 +254,40 @@ class PlayerAccountsBulkDialogUiTest {
 
         onNodeWithText("Invited").assertIsDisplayed()
         onNodeWithText("The player has no email. Add an email and try again.").assertIsDisplayed()
+    }
+
+    @Test
+    fun aReminderAndAnInvitationShowTheDateAndTimeOfTheEmail() = runComposeUiTest {
+        val reminderAt = "2026-10-28T13:05:00.000Z"
+        val invitationAt = "2026-10-29T08:30:00.000Z"
+        show(
+            results = listOf(
+                PlayerAccountActionResult(2, PlayerAccountOutcome.REMINDED, sentAt = reminderAt),
+                PlayerAccountActionResult(1, PlayerAccountOutcome.INVITED, sentAt = invitationAt),
+            ),
+            list = players.take(2),
+        )
+
+        onNodeWithText("All (2)").performClick()
+
+        onNodeWithText("Reminder sent").assertIsDisplayed()
+        onNodeWithText(localizedDateTimeOrNull(reminderAt)!!).assertIsDisplayed()
+        onNodeWithText("Invited").assertIsDisplayed()
+        onNodeWithText(localizedDateTimeOrNull(invitationAt)!!).assertIsDisplayed()
+    }
+
+    @Test
+    fun aFailureShowsNoDateAndNeitherDoesAResultWithoutTime() = runComposeUiTest {
+        show(
+            results = listOf(
+                PlayerAccountActionResult(1, PlayerAccountOutcome.FAILED, PlayerAccountFailure.NO_EMAIL, sentAt = "2026-10-28T13:05:00.000Z"),
+                PlayerAccountActionResult(3, PlayerAccountOutcome.INVITED),
+            ),
+        )
+
+        onNodeWithText("The player has no email. Add an email and try again.").assertIsDisplayed()
+        onNodeWithText("Invited").assertIsDisplayed()
+        onAllNodesWithText(localizedDateTimeOrNull("2026-10-28T13:05:00.000Z")!!).assertCountEquals(0)
     }
 
     @Test

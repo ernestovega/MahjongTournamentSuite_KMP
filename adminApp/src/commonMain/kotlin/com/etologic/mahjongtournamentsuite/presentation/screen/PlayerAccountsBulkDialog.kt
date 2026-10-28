@@ -57,6 +57,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account
@@ -331,7 +332,10 @@ private fun EmailCell(slot: TournamentPlayer, modifier: Modifier) {
     }
 }
 
-/** The result of the last send for the slot, or the account state when nothing was sent. */
+/**
+ * The result of the last send for the slot, or the account state when nothing was sent.
+ * A send that went out shows the date and time of the email under the text.
+ */
 @Composable
 private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult?) {
     if (result == null) {
@@ -343,14 +347,12 @@ private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult
         result.outcome == PlayerAccountOutcome.REMINDED -> stringResource(Res.string.outcome_label_reminded)
         else -> stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())
     }
-    Text(
-        text,
-        modifier = Modifier.width(ResultColumnWidth),
-        textAlign = TextAlign.Center,
-        color = when {
-            result.outcome == PlayerAccountOutcome.FAILED -> MaterialTheme.colorScheme.error
-            else -> MaterialTheme.colorScheme.primary
-        },
-        style = MaterialTheme.typography.labelMedium,
-    )
+    val color = if (result.outcome == PlayerAccountOutcome.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
+    Column(Modifier.width(ResultColumnWidth), horizontalAlignment = Alignment.CenterHorizontally) {
+        Text(text, color = color, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+        // Only an email that went out has a time. A failure shows its reason alone.
+        localizedDateTimeOrNull(result.sentAt).takeIf { result.outcome != PlayerAccountOutcome.FAILED }?.let {
+            Text(it, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center)
+        }
+    }
 }

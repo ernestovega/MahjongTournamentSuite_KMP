@@ -1,7 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.util
 
-internal actual fun platformFormatDate(year: Int, month: Int, day: Int, withWeekday: Boolean, withYear: Boolean): String =
+internal actual fun platformFormatDate(year: Int, month: Int, day: Int, withWeekday: Boolean, withYear: Boolean, fullNames: Boolean): String =
     when {
+        fullNames -> browserFullDate(year, month, day, withWeekday, withYear)
         withWeekday && withYear -> browserDateWithWeekday(year, month, day)
         withWeekday -> browserDateWithWeekdayNoYear(year, month, day)
         withYear -> browserDate(year, month, day)
@@ -23,3 +24,7 @@ private fun browserDateWithWeekdayNoYear(year: Int, month: Int, day: Int): Strin
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
 private fun browserDateWithWeekday(year: Int, month: Int, day: Int): String =
     js("new Date(year, month - 1, day).toLocaleDateString(navigator.language, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })")
+
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+private fun browserFullDate(year: Int, month: Int, day: Int, withWeekday: Boolean, withYear: Boolean): String =
+    js("new Date(year, month - 1, day).toLocaleDateString(navigator.language, { weekday: withWeekday ? 'long' : undefined, day: 'numeric', month: 'long', year: withYear ? 'numeric' : undefined })")

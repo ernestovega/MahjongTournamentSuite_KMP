@@ -195,6 +195,7 @@ data class PlayerAccountResultDto(
     val playerId: Int,
     val outcome: String,
     val reason: String? = null,
+    val sentAt: String? = null,
 )
 
 @Serializable

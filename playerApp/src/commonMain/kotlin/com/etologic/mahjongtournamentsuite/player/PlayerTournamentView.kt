@@ -182,12 +182,12 @@ data class PlayerTournamentView(
             table.seatsAssigned && isOngoing(table, now)
     }
 
-    /** Date and start time of the round (for example "Mon, 12 Oct 10:00", in the device language), or null when none is configured. */
+    /** Date and start time of the round (for example "Monday, 12 October 10:00", in the device language), or null when none is configured. */
     fun roundStartOf(roundId: Int): String? =
         tournament.roundSchedules.firstOrNull { it.roundId == roundId }
             ?.let {
                 listOfNotNull(
-                    it.date?.ifBlank { null }?.let { date -> formatLocalizedDate(date, withWeekday = true, withYear = false) },
+                    it.date?.ifBlank { null }?.let { date -> formatLocalizedDate(date, withWeekday = true, withYear = false, fullNames = true) },
                     it.startTime?.ifBlank { null }?.let(::formatLocalizedTime),
                 ).joinToString(" ")
             }

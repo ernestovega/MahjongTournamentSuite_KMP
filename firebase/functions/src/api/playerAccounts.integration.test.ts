@@ -232,6 +232,26 @@ describe("player accounts", () => {
       assert.equal((await auth.getUser(account.uid)).email, account.email);
     });
 
+    it("gives the time of the email with an invitation and a reminder, and none with a failure", async () => {
+      const ema = newEma();
+      await accountWith(ema);
+      await seedSlot(54, ema);
+      await seedSlot(55, newEma(), { email: uniqueEmail() });
+      await seedSlot(56, newEma());
+      const before = Date.now();
+
+      const response = await act([{ playerId: 54 }, { playerId: 55 }, { playerId: 56 }]);
+
+      const results = (response.body as { results: Array<{ playerId: number; outcome: string; sentAt?: string }> }).results;
+      assert.deepEqual(results.map((item) => [item.playerId, item.outcome]), [[54, "REMINDED"], [55, "INVITED"], [56, "FAILED"]]);
+      for (const item of results.slice(0, 2)) {
+        const at = Date.parse(item.sentAt ?? "");
+        assert.ok(at >= before && at <= Date.now(), `the time ${item.sentAt} is the time of the send`);
+        assert.equal(new Date(at).toISOString(), item.sentAt);
+      }
+      assert.equal(results[2].sentAt, undefined);
+    });
+
     it("sends a reminder every time, also to a person who chose a password and to one who did not", async () => {
       const withPasswordEma = newEma();
       const withPassword = await accountWith(withPasswordEma);

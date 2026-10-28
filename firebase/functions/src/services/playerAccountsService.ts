@@ -213,7 +213,8 @@ export type AccountFailure = "PLAYER_NOT_FOUND" | "NO_EMA_ID" | "NO_EMAIL" | "EM
  */
 export type AccountOutcome = "INVITED" | "REMINDED" | "FAILED";
 export type AccountActionItem = { playerId: number };
-export type AccountActionResult = { playerId: number; outcome: AccountOutcome; reason?: AccountFailure };
+/** [sentAt] is the time of the email, in ISO 8601, for an invitation or a reminder that went out. */
+export type AccountActionResult = { playerId: number; outcome: AccountOutcome; reason?: AccountFailure; sentAt?: string };
 
 const MAX_BULK_PLAYERS = 200;
 const BULK_CONCURRENCY = 5;
@@ -224,7 +225,7 @@ const failed = (playerId: number, reason: AccountFailure): AccountActionResult =
 async function sendInvitationEmail(playerId: number, email: string): Promise<AccountActionResult> {
   try {
     await sendPasswordResetEmail(email);
-    return { playerId, outcome: "INVITED" };
+    return { playerId, outcome: "INVITED", sentAt: new Date().toISOString() };
   } catch (error) {
     console.error("Password reset email failed", { playerId, error });
     return failed(playerId, "EMAIL_FAILED");
@@ -245,7 +246,7 @@ async function sendReminder(params: {
       to: params.email,
       ...buildRegistrationEmail(params.language, { tournamentName: String(tournament.get("name") ?? ""), link }),
     });
-    return { playerId: params.playerId, outcome: "REMINDED" };
+    return { playerId: params.playerId, outcome: "REMINDED", sentAt: new Date().toISOString() };
   } catch (error) {
     console.error("Reminder email failed", { playerId: params.playerId, error });
     return failed(params.playerId, "EMAIL_FAILED");

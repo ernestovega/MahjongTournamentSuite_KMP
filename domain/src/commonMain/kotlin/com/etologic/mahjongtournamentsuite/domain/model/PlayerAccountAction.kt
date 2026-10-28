@@ -26,6 +26,8 @@ data class PlayerAccountActionResult(
     val playerId: Int,
     val outcome: PlayerAccountOutcome,
     val reason: PlayerAccountFailure? = null,
+    /** The time of the email (ISO 8601) for an invitation or a reminder that went out. */
+    val sentAt: String? = null,
 )
 
 data class PlayerEmailItem(val playerId: Int, val email: String)

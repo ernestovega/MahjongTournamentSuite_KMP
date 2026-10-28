@@ -41,7 +41,7 @@ class DefaultPlayerAccountRepositoryTest {
         val repository = repository(cache) {
             request = it
             """{"results":[
-                {"playerId":1,"outcome":"INVITED"},
+                {"playerId":1,"outcome":"INVITED","sentAt":"2026-10-28T13:05:00.000Z"},
                 {"playerId":2,"outcome":"REMINDED"},
                 {"playerId":3,"outcome":"FAILED","reason":"NO_EMAIL"},
                 {"playerId":4,"outcome":"FAILED","reason":"FROM_THE_FUTURE"},
@@ -63,6 +63,7 @@ class DefaultPlayerAccountRepositoryTest {
             results.map { it.outcome },
         )
         assertEquals(listOf(null, null, PlayerAccountFailure.NO_EMAIL, PlayerAccountFailure.UNEXPECTED, null), results.map { it.reason })
+        assertEquals(listOf("2026-10-28T13:05:00.000Z", null, null, null, null), results.map { it.sentAt })
         assertEquals(listOf("tournament:t1:players"), cache.stale)
     }
 
