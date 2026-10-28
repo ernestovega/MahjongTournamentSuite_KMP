@@ -494,8 +494,8 @@ const TOURNAMENTS: TournamentSpec[] = [
 // -- Tester tournaments ----------------------------------------------------------------------
 
 /**
- * The people who test the apps. The first six have an account that owns the EMA id, so every slot with that EMA id
- * shows the account. The seed makes the accounts own their EMA id (`linkTesterAccounts`) and writes no link. The last one has none, to test invitations.
+ * The people who test the apps. Every tester has an account that owns the EMA id, so every slot with that EMA id
+ * shows the account. The seed makes the accounts own their EMA id (`linkTesterAccounts`) and writes no link.
  */
 const TESTER_ACCOUNTS: Record<string, string> = {
   "10990026": "takw7aMVudQWwoM4M20iG5argmr1", // Edgar
@@ -504,9 +504,9 @@ const TESTER_ACCOUNTS: Record<string, string> = {
   "10990039": "h0Hgasv0Y1VBOXDVnAoSq1X8RMQ2", // Ernesto
   "10990043": "1w95GRW3sLhKtWsqayKmEyFUEMu1", // Raúl Ríos Navarro
   "10990051": "BUfTR8yc5PUtsb4cBseN91oOfg83", // Marcos San Antonio Serrano
+  "10990133": "X4g8yg5moHVD21w1BtwlIFeE7E93", // Cintia Horcajo Jerez
 };
-const TESTER_NO_ACCOUNT = ["10990133"]; // Cintia Horcajo Jerez
-const TESTER_EMA_IDS = [...Object.keys(TESTER_ACCOUNTS), ...TESTER_NO_ACCOUNT];
+const TESTER_EMA_IDS = Object.keys(TESTER_ACCOUNTS);
 
 const TESTER_START = localSlot(new Date()).date;
 const TESTER_END = addDays(TESTER_START, 5);
