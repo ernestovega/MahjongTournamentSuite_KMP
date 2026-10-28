@@ -75,6 +75,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
@@ -124,9 +126,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_n
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
-import mahjongtournamentsuite.adminapp.generated.resources.account_has
-import mahjongtournamentsuite.adminapp.generated.resources.account_none
 import mahjongtournamentsuite.adminapp.generated.resources.edit_account
+import mahjongtournamentsuite.adminapp.generated.resources.edit_email
+import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.name
@@ -182,6 +184,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     var clearAssignmentSlotId by remember { mutableStateOf<Int?>(null) }
     var substitutionSlotId by remember { mutableStateOf<Int?>(null) }
     var accountOutcome by remember { mutableStateOf<AccountOutcome?>(null) }
+    var emailSlotId by remember { mutableStateOf<Int?>(null) }
+    var emailThenInvite by remember { mutableStateOf(false) }
     var accountBusy by remember { mutableStateOf(false) }
     var accountError by remember { mutableStateOf<UiText?>(null) }
     var accountResults by remember { mutableStateOf<List<PlayerAccountActionResult>>(emptyList()) }
@@ -225,19 +229,45 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
         loading = false
     }
 
+    /**
+     * Saves the typed emails first, then sends to the players whose email was saved or that had one already.
+     * A refused email shows as the failed result of its player, and that player gets no send.
+     */
     fun sendToPlayers(
         playerIds: List<Int>,
         showOutcome: Boolean = false,
+        emails: Map<Int, String> = emptyMap(),
     ) = scope.launch {
         accountBusy = true
         accountError = null
         accountResults = emptyList()
-        when (val result = presenter.sendToPlayers(tournamentId, playerIds)) {
+        var refused = emptyList<PlayerAccountActionResult>()
+        if (emails.isNotEmpty()) {
+            when (val saved = presenter.saveEmails(tournamentId, emails.map { PlayerEmailItem(it.key, it.value) })) {
+                is AppResult.Success -> refused = saved.value.filter { it.outcome == PlayerEmailOutcome.FAILED }.map { it.toFailedAction() }
+                is AppResult.Failure -> {
+                    if (showOutcome) accountOutcome = AccountOutcome(saved.error.toUiText(), isError = true) else accountError = saved.error.toUiText()
+                    accountBusy = false
+                    return@launch
+                }
+            }
+        }
+        val toSend = playerIds.filter { id -> refused.none { it.playerId == id } }
+        if (toSend.isEmpty()) {
+            accountResults = refused
+            if (showOutcome) {
+                accountOutcome = refused.firstOrNull()?.toOutcome()
+                accountResults = emptyList()
+            }
+            accountBusy = false
+            return@launch
+        }
+        when (val result = presenter.sendToPlayers(tournamentId, toSend)) {
             is AppResult.Success -> {
-                accountResults = result.value
+                accountResults = refused + result.value
                 refresh(force = true).join()
                 if (showOutcome) {
-                    accountOutcome = result.value.firstOrNull()?.toOutcome()
+                    accountOutcome = (refused + result.value).firstOrNull()?.toOutcome()
                     accountResults = emptyList()
                 }
             }
@@ -250,6 +280,26 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             }
         }
         accountBusy = false
+    }
+
+    /** Sets or clears the pending email of one slot, and invites the player when [thenInvite] is true. */
+    fun saveSlotEmail(slotId: Int, email: String, thenInvite: Boolean) {
+        emailSlotId = null
+        if (thenInvite) {
+            sendToPlayers(listOf(slotId), showOutcome = true, emails = mapOf(slotId to email))
+            return
+        }
+        scope.launch {
+            accountBusy = true
+            when (val saved = presenter.saveEmails(tournamentId, listOf(PlayerEmailItem(slotId, email)))) {
+                is AppResult.Success -> {
+                    refresh(force = true).join()
+                    saved.value.firstOrNull { it.outcome == PlayerEmailOutcome.FAILED }?.let { accountOutcome = it.toFailedAction().toOutcome() }
+                }
+                is AppResult.Failure -> accountOutcome = AccountOutcome(saved.error.toUiText(), isError = true)
+            }
+            accountBusy = false
+        }
     }
 
     fun assign(slotId: Int, player: Player?) = scope.launch {
@@ -390,6 +440,18 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     }
     val assignmentSlot = assignmentSlotId?.let { id -> players.firstOrNull { it.id == id } }
     val clearAssignmentSlot = clearAssignmentSlotId?.let { id -> players.firstOrNull { it.id == id } }
+    emailSlotId?.let { id -> players.firstOrNull { it.id == id } }?.let { slot ->
+        SlotEmailDialog(
+            playerName = slot.assignedEmaId?.let { emaId -> basePlayers.firstOrNull { it.emaId == emaId }?.displayName } ?: playerLabel(slot.id),
+            currentEmail = slot.email,
+            hasEmail = slot.hasEmail,
+            confirmLabel = stringResource(if (emailThenInvite) Res.string.send_invitation else Res.string.save),
+            busy = accountBusy,
+            onSave = { email -> saveSlotEmail(slot.id, email, thenInvite = emailThenInvite) },
+            onRemove = { saveSlotEmail(slot.id, "", thenInvite = false) },
+            onDismiss = { emailSlotId = null },
+        )
+    }
     accountOutcome?.let { AccountOutcomeDialog(it, onDismiss = { accountOutcome = null }) }
     if (bulkAccountsOpen) {
         val registry = basePlayers.associateBy { it.emaId }
@@ -407,7 +469,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             results = accountResults,
             busy = accountBusy,
             errorMessage = accountError,
-            onSend = { playerIds -> sendToPlayers(playerIds) },
+            onSend = { playerIds, emails -> sendToPlayers(playerIds, emails = emails) },
             onDismiss = { bulkAccountsOpen = false; accountResults = emptyList(); accountError = null },
         )
     }
@@ -1168,12 +1230,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     } else {
                                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            Text(
-                                                text = stringResource(if (slot.hasAccount) Res.string.account_has else Res.string.account_none),
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                textAlign = TextAlign.Center,
-                                            )
+                                            AccountStateIcon(slot.hasAccount)
                                             Text(
                                                 text = slot.email ?: "",
                                                 style = MaterialTheme.typography.bodySmall,
@@ -1285,7 +1342,22 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                         text = { Text(stringResource(Res.string.send_invitation)) },
                                                         onClick = {
                                                             actionsMenuOpen = false
-                                                            sendToPlayers(listOf(slot.id), showOutcome = true)
+                                                            // A slot with no email needs one first. The dialog then invites.
+                                                            if (slot.hasEmail) {
+                                                                sendToPlayers(listOf(slot.id), showOutcome = true)
+                                                            } else {
+                                                                emailThenInvite = true
+                                                                emailSlotId = slot.id
+                                                            }
+                                                        },
+                                                    )
+                                                    DropdownMenuItem(
+                                                        enabled = accountActionsEnabled,
+                                                        text = { Text(stringResource(Res.string.edit_email)) },
+                                                        onClick = {
+                                                            actionsMenuOpen = false
+                                                            emailThenInvite = false
+                                                            emailSlotId = slot.id
                                                         },
                                                     )
                                                 }

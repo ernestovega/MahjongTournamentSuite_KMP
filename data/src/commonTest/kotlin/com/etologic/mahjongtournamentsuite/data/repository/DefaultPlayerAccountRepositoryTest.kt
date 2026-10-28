@@ -8,6 +8,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.request.HttpRequestData
@@ -63,11 +67,43 @@ class DefaultPlayerAccountRepositoryTest {
     }
 
     @Test
+    fun saveEmailsPutsThePlayersMapsOutcomesAndReasonsAndMarksPlayersStale() = runTest {
+        var request: HttpRequestData? = null
+        val cache = AccountCache()
+        val repository = repository(cache) {
+            request = it
+            """{"results":[
+                {"playerId":1,"outcome":"SAVED"},
+                {"playerId":2,"outcome":"CLEARED"},
+                {"playerId":3,"outcome":"FAILED","reason":"EMAIL_IN_USE"},
+                {"playerId":4,"outcome":"FAILED","reason":"FROM_THE_FUTURE"},
+                {"playerId":5,"outcome":"FROM_THE_FUTURE"}
+            ]}"""
+        }
+
+        val results = assertIs<AppResult.Success<List<PlayerEmailResult>>>(
+            repository.saveEmails("t1", listOf(PlayerEmailItem(1, "a@b.es"), PlayerEmailItem(2, ""))),
+        ).value
+
+        assertEquals("/functions/tournaments/t1/player-emails", request?.url?.encodedPath)
+        assertEquals(HttpMethod.Put, request?.method)
+        val body = (request?.body as TextContent).text
+        assertEquals(true, body.contains("\"playerId\":1") && body.contains("a@b.es") && body.contains("\"email\":\"\""))
+        assertEquals(
+            listOf(PlayerEmailOutcome.SAVED, PlayerEmailOutcome.CLEARED, PlayerEmailOutcome.FAILED, PlayerEmailOutcome.FAILED, PlayerEmailOutcome.FAILED),
+            results.map { it.outcome },
+        )
+        assertEquals(listOf(null, null, PlayerEmailFailure.EMAIL_IN_USE, null, null), results.map { it.reason })
+        assertEquals(listOf("tournament:t1:players"), cache.stale)
+    }
+
+    @Test
     fun aBackendErrorBecomesAFailureAndTheCacheStaysValid() = runTest {
         val cache = AccountCache()
         val repository = repository(cache) { null }
 
         assertIs<AppResult.Failure>(repository.send("t1", listOf(1)))
+        assertIs<AppResult.Failure>(repository.saveEmails("t1", listOf(PlayerEmailItem(1, "a@b.es"))))
         assertEquals(emptyList(), cache.stale)
     }
 }

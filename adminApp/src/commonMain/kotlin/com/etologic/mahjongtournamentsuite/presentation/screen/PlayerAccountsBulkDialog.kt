@@ -1,6 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -39,6 +42,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
@@ -52,7 +58,13 @@ import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.account
 import mahjongtournamentsuite.adminapp.generated.resources.account_has
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.ema_id
+import mahjongtournamentsuite.adminapp.generated.resources.email
+import mahjongtournamentsuite.adminapp.generated.resources.id
+import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.account_none
 import mahjongtournamentsuite.adminapp.generated.resources.bulk_info
 import mahjongtournamentsuite.adminapp.generated.resources.clear
@@ -68,6 +80,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_number
 import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_count
+import mahjongtournamentsuite.adminapp.generated.resources.send_count_label
 import mahjongtournamentsuite.adminapp.generated.resources.send_summary
 import mahjongtournamentsuite.adminapp.generated.resources.usage_filter_chip
 import org.jetbrains.compose.resources.StringResource
@@ -106,7 +119,7 @@ internal fun TournamentPlayer.matchesQuery(
  * The editor filters the list, selects players and starts the action by hand. The server picks the action for each
  * player by its state, so a mixed selection works.
  */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun PlayerAccountsBulkDialog(
     players: List<TournamentPlayer>,
@@ -117,7 +130,8 @@ fun PlayerAccountsBulkDialog(
     results: List<PlayerAccountActionResult>,
     busy: Boolean,
     errorMessage: UiText?,
-    onSend: (List<Int>) -> Unit,
+    /** [emails] holds the emails typed for players that had none. The screen saves them before it sends. */
+    onSend: (playerIds: List<Int>, emails: Map<Int, String>) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var filter by remember { mutableStateOf(AccountFilter.NO_ACCOUNT) }
@@ -125,6 +139,25 @@ fun PlayerAccountsBulkDialog(
     var query by remember { mutableStateOf("") }
     val shown = players.filter { it.matches(filter) && it.matchesQuery(query, nameOf(it), emaIdOf(it), countryOf(it), countryNameOf(countryOf(it))) }
     val chosen = shown.filter { it.id in selected }
+    var askingEmails by remember { mutableStateOf(false) }
+    /** Players with no account and no email. They need an email before the server can invite them. */
+    val missingEmail = chosen.filter { !it.hasAccount && !it.hasEmail }
+
+    if (askingEmails) {
+        MissingEmailsDialog(
+            players = missingEmail,
+            nameOf = nameOf,
+            busy = busy,
+            confirmLabel = stringResource(Res.string.send_count_label),
+            onConfirm = { emails ->
+                askingEmails = false
+                // A player left blank is skipped: it gets no email, so it cannot get an account.
+                val skipped = missingEmail.map { it.id }.toSet() - emails.keys
+                onSend(chosen.map { it.id }.filter { it !in skipped }, emails)
+            },
+            onDismiss = { askingEmails = false },
+        )
+    }
 
     AlertDialog(
         modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
@@ -162,7 +195,9 @@ fun PlayerAccountsBulkDialog(
                         }
                         Text(stringResource(Res.string.selected_count, chosen.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    LazyColumn(Modifier.fillMaxWidth().weight(1f)) {
+                    LazyColumn(Modifier.fillMaxWidth().weight(1f).testTag("account_list")) {
+                        // The titles stay at the top while the rows scroll under them.
+                        stickyHeader { ColumnTitles() }
                         items(shown, key = { it.id }) { slot ->
                             val result = results.firstOrNull { it.playerId == slot.id }
                             Row(
@@ -177,12 +212,14 @@ fun PlayerAccountsBulkDialog(
                                         onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
                                     )
                                 }
-                                Text(slot.id.toString(), Modifier.width(36.dp))
+                                Text(slot.id.toString(), Modifier.width(IdColumnWidth))
                                 val country = countryOf(slot)
-                                CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
+                                Box(Modifier.width(FlagColumnWidth), contentAlignment = Alignment.Center) {
+                                    CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
+                                }
                                 Text(
                                     emaIdOf(slot) ?: "—",
-                                    Modifier.width(68.dp),
+                                    Modifier.width(EmaColumnWidth),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     maxLines = 1,
@@ -215,7 +252,7 @@ fun PlayerAccountsBulkDialog(
                 TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
                 Button(
                     enabled = chosen.isNotEmpty() && !busy,
-                    onClick = { onSend(chosen.map { it.id }) },
+                    onClick = { if (missingEmail.isNotEmpty()) askingEmails = true else onSend(chosen.map { it.id }, emptyMap()) },
                 ) {
                     Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
@@ -224,6 +261,40 @@ fun PlayerAccountsBulkDialog(
             }
         },
     )
+}
+
+private val CheckboxColumnWidth = 24.dp
+private val IdColumnWidth = 36.dp
+private val FlagColumnWidth = 32.dp
+private val EmaColumnWidth = 68.dp
+private val ResultColumnWidth = 120.dp
+
+/** The titles of the columns of the list. They use the same widths as the rows, so each title sits over its column. */
+@Composable
+private fun ColumnTitles() {
+    Row(
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        @Composable
+        fun Title(textRes: StringResource, modifier: Modifier, align: TextAlign = TextAlign.Start) = Text(
+            stringResource(textRes),
+            modifier,
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = align,
+        )
+        Spacer(Modifier.width(CheckboxColumnWidth))
+        Title(Res.string.id, Modifier.width(IdColumnWidth))
+        Title(Res.string.country, Modifier.width(FlagColumnWidth), TextAlign.Center)
+        Title(Res.string.ema_id, Modifier.width(EmaColumnWidth))
+        Title(Res.string.name, Modifier.weight(1f))
+        Title(Res.string.email, Modifier.weight(1f))
+        Title(Res.string.account, Modifier.width(ResultColumnWidth), TextAlign.Center)
+    }
 }
 
 /** The email of the slot when the user may read it. A slot with no account and no email shows a warning. */
@@ -252,16 +323,20 @@ private fun EmailCell(slot: TournamentPlayer, modifier: Modifier) {
 /** The result of the last send for the slot, or the account state when nothing was sent. */
 @Composable
 private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult?) {
+    if (result == null) {
+        Box(Modifier.width(ResultColumnWidth), contentAlignment = Alignment.Center) { AccountStateIcon(slot.hasAccount) }
+        return
+    }
     val text = when {
-        result == null -> stringResource(if (slot.hasAccount) Res.string.account_has else Res.string.account_none)
         result.outcome == PlayerAccountOutcome.INVITED -> stringResource(Res.string.outcome_label_invited)
         result.outcome == PlayerAccountOutcome.RESET_SENT -> stringResource(Res.string.outcome_label_reset_sent)
         else -> stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())
     }
     Text(
         text,
+        modifier = Modifier.width(ResultColumnWidth),
+        textAlign = TextAlign.Center,
         color = when {
-            result == null -> MaterialTheme.colorScheme.onSurfaceVariant
             result.outcome == PlayerAccountOutcome.FAILED -> MaterialTheme.colorScheme.error
             else -> MaterialTheme.colorScheme.primary
         },

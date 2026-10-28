@@ -297,7 +297,6 @@
     <string name="hand_score">Hand score</string>
     <string name="rows_count">%1$d rows</string>
     <string name="seconds_short">%1$d s</string>
-    <string name="action_did_not_run">The action did not run.</string>
     <string name="account_created_reset_sent">Account created. Firebase sent a password-reset email to %1$s.</string>
     <string name="user_disabled">%1$s is disabled.</string>
     <string name="user_enabled">%1$s is enabled.</string>
@@ -704,11 +703,20 @@
     <string name="outcome_reset_sent">The email to reset the password was sent.</string>
     <string name="outcome_label_reset_sent">Password reset sent</string>
     <string name="failure_no_ema_id">The player has no EMA number.</string>
-    <string name="failure_no_email">The player has no email. Import a file with the email.</string>
-    <string name="failure_email_in_use">Another account already uses this email.</string>
+    <string name="failure_no_email">The player has no email. Add an email and try again.</string>
+    <string name="failure_email_in_use">Another account or another player already uses this email.</string>
     <string name="failure_email_failed">The email could not be sent. Try again.</string>
     <string name="failure_unexpected">Something went wrong. Try again.</string>
     <string name="failure_player_not_found">The player does not exist.</string>
     <string name="usage_row_with_password">Players with a password</string>
     <string name="insight_accounts_with_password">%1$s of the player accounts have a password (%2$d of %3$d).</string>
+    <string name="email_dialog_title">Email of %1$s</string>
+    <string name="email_dialog_hidden_hint">The app does not show saved emails to editors. The saved email stays until you save a new one.</string>
+    <string name="email_invalid">Use a valid email address.</string>
+    <string name="emails_are_missing">Emails are missing</string>
+    <string name="these_players_have_no_email">These players have no account and no email. Type an email for each player. The app saves it and creates the account. Players left blank are skipped.</string>
+    <string name="remove_email">Remove email</string>
+    <string name="edit_email">Edit email</string>
+    <string name="send_count_label">Send</string>
+    <string name="failure_invalid_email">The email is not valid.</string>
 </resources>

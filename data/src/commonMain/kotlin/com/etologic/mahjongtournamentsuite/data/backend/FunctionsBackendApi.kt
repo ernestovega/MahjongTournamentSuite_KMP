@@ -12,6 +12,9 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailItemDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerExportDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportPreviewDto
@@ -479,6 +482,16 @@ class FunctionsBackendApi(
         request: PlayerAccountActionRequestDto,
     ): PlayerAccountActionResponseDto = post(
         path = "/tournaments/$tournamentId/player-accounts/send",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun savePlayerEmails(
+        idToken: String,
+        tournamentId: String,
+        request: PlayerEmailsRequestDto,
+    ): PlayerEmailsResponseDto = put(
+        path = "/tournaments/$tournamentId/player-emails",
         requestBody = request,
         idToken = idToken,
     )

@@ -198,6 +198,29 @@ data class PlayerAccountResultDto(
 )
 
 @Serializable
+data class PlayerEmailItemDto(
+    val playerId: Int,
+    val email: String,
+)
+
+@Serializable
+data class PlayerEmailsRequestDto(
+    val players: List<PlayerEmailItemDto>,
+)
+
+@Serializable
+data class PlayerEmailResultDto(
+    val playerId: Int,
+    val outcome: String,
+    val reason: String? = null,
+)
+
+@Serializable
+data class PlayerEmailsResponseDto(
+    val results: List<PlayerEmailResultDto> = emptyList(),
+)
+
+@Serializable
 data class PlayerAccountActionResponseDto(
     val results: List<PlayerAccountResultDto> = emptyList(),
 )

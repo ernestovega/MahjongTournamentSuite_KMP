@@ -72,7 +72,8 @@ The player screens use shared components from the `:ui` module. The design follo
 
 - The import overwrites all players and teams of a tournament and creates no account. It saves the email of the file on the slot as a pending email. Only admins read that email.
 - Assigning a player never sends an email. If an account owns the EMA ID, the slot shows that account and the player sees the tournament. No link is stored: the EMA ID is the link.
-- The players screen shows only "Has account" or "No account" for each player.
+- The players screen shows only a check (has an account) or a cross (no account) for each player.
+- "Invite" asks for the email when the slot has none, and saves it. "Edit email" in the row menu sets or removes it, also after the tournament started.
 - "Invite" creates the account of a player with no account, without a password and without an alias. It uses the EMA ID and the pending email of the slot, and sends the password reset email. The person chooses a password and signs in on the player app.
 - For a player with an account, an admin opens "Edit account" from the menu of the row. The dialog has the button to send the password reset email.
 - The "Invitations" dialog lists every player with a filter (All, No account, Has account). One button, "Send", invites the selected players with no account and resets the password of the selected players with an account.

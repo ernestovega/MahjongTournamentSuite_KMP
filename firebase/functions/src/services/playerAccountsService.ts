@@ -272,3 +272,58 @@ export async function runAccountAction(params: {
   await Promise.all(Array.from({ length: Math.min(BULK_CONCURRENCY, params.items.length) }, worker));
   return results;
 }
+
+/** Why a pending email was not saved. */
+export type EmailFailure = "PLAYER_NOT_FOUND" | "NO_EMA_ID" | "HAS_ACCOUNT" | "INVALID_EMAIL" | "EMAIL_IN_USE";
+export type EmailItem = { playerId: number; email: string };
+export type EmailResult = { playerId: number; outcome: "SAVED" | "CLEARED" | "FAILED"; reason?: EmailFailure };
+
+/**
+ * Sets the pending email of slots, for the "Invite" action. An empty email clears it.
+ * A slot with an account keeps the email of the account, so it refuses a change. The email must be valid and unique:
+ * no account of another EMA id and no other slot of the tournament may hold it. It changes nothing for a refused slot.
+ */
+export async function savePendingEmails(params: { tournamentId: string; items: EmailItem[] }): Promise<EmailResult[]> {
+  if (params.items.length === 0) throw badRequest("Choose at least one player");
+  if (params.items.length > MAX_BULK_PLAYERS) throw badRequest(`At most ${MAX_BULK_PLAYERS} players per request`);
+  const slots = await db.collection(`tournaments/${params.tournamentId}/players`).get();
+  const slotsById = new Map(slots.docs.map((slot) => [Number(slot.get("id") ?? slot.id), slot]));
+  // The email of every slot now. Saving an item updates this map, so two items of one request cannot clash.
+  const pendingOf = new Map<number, string>();
+  slots.docs.forEach((slot) => {
+    const email = slot.get("email");
+    if (typeof email === "string" && email !== "") pendingOf.set(Number(slot.get("id") ?? slot.id), email.toLowerCase());
+  });
+  const emaIds = slots.docs.flatMap((slot) => (typeof slot.get("assignedEmaId") === "string" ? [String(slot.get("assignedEmaId"))] : []));
+  const accountsByEma = await loadAccountsByEmaId(emaIds);
+  const wanted = params.items.map((item) => item.email.trim().toLowerCase()).filter((email) => EMAIL_PATTERN.test(email));
+  const owners = await loadAccountsByEmail(wanted);
+
+  const results: EmailResult[] = [];
+  const writes: Array<() => Promise<unknown>> = [];
+  for (const item of params.items) {
+    const fail = (reason: EmailFailure): void => { results.push({ playerId: item.playerId, outcome: "FAILED", reason }); };
+    const slot = slotsById.get(item.playerId);
+    if (slot == null) { fail("PLAYER_NOT_FOUND"); continue; }
+    const emaId = slot.get("assignedEmaId");
+    if (typeof emaId !== "string" || emaId === "") { fail("NO_EMA_ID"); continue; }
+    if (accountsByEma.has(emaId)) { fail("HAS_ACCOUNT"); continue; }
+    const email = item.email.trim().toLowerCase();
+    if (email === "") {
+      pendingOf.delete(item.playerId);
+      writes.push(() => slot.ref.update({ email: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }));
+      results.push({ playerId: item.playerId, outcome: "CLEARED" });
+      continue;
+    }
+    if (!EMAIL_PATTERN.test(email)) { fail("INVALID_EMAIL"); continue; }
+    const owner = owners.get(email);
+    const usedBySlot = [...pendingOf.entries()].some(([playerId, other]) => playerId !== item.playerId && other === email);
+    if (owner != null || usedBySlot) { fail("EMAIL_IN_USE"); continue; }
+    pendingOf.set(item.playerId, email);
+    writes.push(() => slot.ref.update({ email, updatedAt: FieldValue.serverTimestamp() }));
+    results.push({ playerId: item.playerId, outcome: "SAVED" });
+  }
+  await Promise.all(writes.map((write) => write()));
+  if (writes.length > 0) await bumpTournamentDataVersion(params.tournamentId, "players");
+  return results;
+}

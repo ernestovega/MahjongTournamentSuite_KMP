@@ -297,7 +297,6 @@
     <string name="hand_score">Punteggio della mano</string>
     <string name="rows_count">%1$d righe</string>
     <string name="seconds_short">%1$d s</string>
-    <string name="action_did_not_run">L'azione non è stata eseguita.</string>
     <string name="account_created_reset_sent">Account creato. Firebase ha inviato un'email di reimpostazione della password a %1$s.</string>
     <string name="user_disabled">%1$s è disattivato.</string>
     <string name="user_enabled">%1$s è attivato.</string>
@@ -704,11 +703,20 @@
     <string name="outcome_reset_sent">L'email per reimpostare la password è stata inviata.</string>
     <string name="outcome_label_reset_sent">Reimpostazione inviata</string>
     <string name="failure_no_ema_id">Il giocatore non ha un numero EMA.</string>
-    <string name="failure_no_email">Il giocatore non ha email. Importa un file con l'email.</string>
-    <string name="failure_email_in_use">Un altro account usa già questa email.</string>
+    <string name="failure_no_email">Il giocatore non ha email. Aggiungi un'email e riprova.</string>
+    <string name="failure_email_in_use">Un altro account o un altro giocatore usa già questa email.</string>
     <string name="failure_email_failed">Non è stato possibile inviare l'email. Riprova.</string>
     <string name="failure_unexpected">Qualcosa è andato storto. Riprova.</string>
     <string name="failure_player_not_found">Il giocatore non esiste.</string>
     <string name="usage_row_with_password">Giocatori con password</string>
     <string name="insight_accounts_with_password">Il %1$s degli account dei giocatori ha una password (%2$d su %3$d).</string>
+    <string name="email_dialog_title">Email di %1$s</string>
+    <string name="email_dialog_hidden_hint">L'app non mostra le email salvate agli editor. L'email salvata resta finché non ne salvi una nuova.</string>
+    <string name="email_invalid">Usa un indirizzo email valido.</string>
+    <string name="emails_are_missing">Mancano delle email</string>
+    <string name="these_players_have_no_email">Questi giocatori non hanno né account né email. Scrivi un'email per ogni giocatore. L'app la salva e crea l'account. I giocatori lasciati vuoti vengono saltati.</string>
+    <string name="remove_email">Rimuovi l'email</string>
+    <string name="edit_email">Modifica l'email</string>
+    <string name="send_count_label">Invia</string>
+    <string name="failure_invalid_email">L'email non è valida.</string>
 </resources>

@@ -331,6 +331,119 @@ describe("player accounts", () => {
     });
   });
 
+  describe("set the pending email of slots", () => {
+    type EmailBody = { results: Array<{ playerId: number; outcome: string; reason?: string }> };
+    const save = (players: Array<{ playerId: number; email: string }>, token: string | null = editor.token) =>
+      server.request("PUT", `/tournaments/${tournamentId}/player-emails`, { token, body: { players } });
+    const resultOf = async (playerId: number, email: string) => {
+      const response = await save([{ playerId, email }]);
+      const result = (response.body as EmailBody).results?.find((item) => item.playerId === playerId);
+      return { status: response.status, outcome: result?.outcome, reason: result?.reason };
+    };
+
+    it("saves a valid email in lower case, so Invite can use it", async () => {
+      await seedSlot(90, newEma());
+      const email = uniqueEmail();
+
+      assert.deepEqual(await resultOf(90, email.toUpperCase()), { status: 200, outcome: "SAVED", reason: undefined });
+
+      assert.equal((await slotOf(90)).get("email"), email);
+      assert.equal((await run(90)).outcome, "INVITED");
+    });
+
+    it("replaces the email of a slot and clears it with an empty text", async () => {
+      await seedSlot(91, newEma(), { email: uniqueEmail() });
+      const next = uniqueEmail();
+
+      assert.equal((await resultOf(91, next)).outcome, "SAVED");
+      assert.equal((await slotOf(91)).get("email"), next);
+      assert.equal((await resultOf(91, "  ")).outcome, "CLEARED");
+      assert.equal((await slotOf(91)).get("email"), undefined);
+    });
+
+    it("refuses an invalid email and keeps the old one", async () => {
+      const old = uniqueEmail();
+      await seedSlot(92, newEma(), { email: old });
+
+      assert.equal((await resultOf(92, "not-an-email")).reason, "INVALID_EMAIL");
+      assert.equal((await slotOf(92)).get("email"), old);
+    });
+
+    it("refuses an email that an account of another EMA number owns", async () => {
+      const owner = await accountWith(newEma());
+      await seedSlot(93, newEma());
+
+      assert.equal((await resultOf(93, owner.email)).reason, "EMAIL_IN_USE");
+      assert.equal((await slotOf(93)).get("email"), undefined);
+    });
+
+    it("refuses an email that another slot of the tournament holds, in any letter case", async () => {
+      const shared = uniqueEmail();
+      await seedSlot(94, newEma(), { email: shared });
+      await seedSlot(95, newEma());
+
+      assert.equal((await resultOf(95, shared.toUpperCase())).reason, "EMAIL_IN_USE");
+      assert.equal((await resultOf(94, shared)).outcome, "SAVED");
+    });
+
+    it("refuses a slot with an account, because the email of the account wins", async () => {
+      const ema = newEma();
+      await accountWith(ema);
+      await seedSlot(96, ema);
+
+      assert.equal((await resultOf(96, uniqueEmail())).reason, "HAS_ACCOUNT");
+      assert.equal((await slotOf(96)).get("email"), undefined);
+    });
+
+    it("refuses a slot with no EMA number and a player that does not exist", async () => {
+      await seedSlot(97, null);
+
+      assert.equal((await resultOf(97, uniqueEmail())).reason, "NO_EMA_ID");
+      assert.equal((await resultOf(998, uniqueEmail())).reason, "PLAYER_NOT_FOUND");
+    });
+
+    it("handles each item of a list on its own, and two items with the same email in one list clash", async () => {
+      await seedSlot(98, newEma());
+      await seedSlot(99, newEma());
+      await seedSlot(100, newEma());
+      const same = uniqueEmail();
+
+      const response = await save([
+        { playerId: 98, email: same }, { playerId: 99, email: same }, { playerId: 100, email: uniqueEmail() }, { playerId: 98, email: "bad" },
+      ]);
+
+      assert.deepEqual((response.body as EmailBody).results.map((item) => [item.playerId, item.outcome, item.reason]), [
+        [98, "SAVED", undefined], [99, "FAILED", "EMAIL_IN_USE"], [100, "SAVED", undefined], [98, "FAILED", "INVALID_EMAIL"],
+      ]);
+    });
+
+    it("works after the tournament started, which is the point of the route", async () => {
+      await db.doc(`tournaments/${tournamentId}`).update({ tablesWithProgress: 1 });
+      await seedSlot(101, newEma());
+
+      assert.equal((await resultOf(101, uniqueEmail())).outcome, "SAVED");
+
+      await db.doc(`tournaments/${tournamentId}`).update({ tablesWithProgress: 0 });
+    });
+
+    it("refuses an empty list, a list over 200 players and a bad player id", async () => {
+      assert.equal((await save([])).status, 400);
+      assert.equal((await save(Array.from({ length: 201 }, (_, index) => ({ playerId: index + 1, email: "a@b.es" })))).status, 400);
+      assert.equal((await save([{ playerId: 0, email: "a@b.es" }])).status, 400);
+    });
+
+    it("needs an editor of the tournament and records the activity", async () => {
+      const outsider = await createAccount({ role: "EDITOR" });
+      const player = await createAccount({ role: "PLAYER" });
+
+      assert.equal((await save([{ playerId: 1, email: "a@b.es" }], outsider.token)).status, 403);
+      assert.equal((await save([{ playerId: 1, email: "a@b.es" }], player.token)).status, 403);
+      assert.equal((await save([{ playerId: 1, email: "a@b.es" }], null)).status, 401);
+      const log = await db.collection("activity").where("tournamentId", "==", tournamentId).where("action", "==", "player.email").get();
+      assert.ok(log.size >= 1);
+    });
+  });
+
   describe("who reads the emails", () => {
     it("shows the email to an admin only, and whether a slot has an account to editors", async () => {
       const admin = await createAccount({ role: "ADMIN" });

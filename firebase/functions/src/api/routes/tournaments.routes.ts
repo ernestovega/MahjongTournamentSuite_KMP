@@ -7,7 +7,7 @@ import { requireEditor } from "../middleware/requireEditor";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
 import { requireTournamentReader } from "../middleware/requireTournamentReader";
-import { runAccountAction } from "../../services/playerAccountsService";
+import { runAccountAction, savePendingEmails } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
 import { hasAdminClaim } from "../../models/globalRole";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
@@ -1019,6 +1019,32 @@ export function tournamentsRouter(): Router {
         const results = await runAccountAction({ tournamentId: pathParam(req, "tournamentId"), items });
         await recordActivity({
           action: "account.send", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
+          target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
+        });
+        res.status(200).json({ results });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  // Sets the pending email of slots, so "Invite" can create their accounts. An empty email clears it.
+  router.put(
+    "/:tournamentId/player-emails",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const raw = Array.isArray(req.body?.players) ? req.body.players as unknown[] : [];
+        const items = raw.map((entry) => {
+          const value = entry as { playerId?: unknown; email?: unknown };
+          const playerId = Number(value.playerId);
+          if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
+          return { playerId, email: String(value.email ?? "") };
+        });
+        const results = await savePendingEmails({ tournamentId: pathParam(req, "tournamentId"), items });
+        await recordActivity({
+          action: "player.email", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
         });
         res.status(200).json({ results });

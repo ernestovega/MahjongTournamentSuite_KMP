@@ -8,6 +8,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -63,10 +66,18 @@ internal class FakeAdminRepository(
 internal class FakePlayerAccountRepository : PlayerAccountRepository {
     val sent = mutableListOf<List<Int>>()
     val results = mutableMapOf<Int, PlayerAccountActionResult>()
+    val savedEmails = mutableListOf<List<PlayerEmailItem>>()
+    /** The result of a saved email by player. A player with no entry gets SAVED. */
+    val emailResults = mutableMapOf<Int, PlayerEmailResult>()
 
     override suspend fun send(tournamentId: String, playerIds: List<Int>): AppResult<List<PlayerAccountActionResult>> {
         sent += playerIds
         return AppResult.Success(playerIds.map { results[it] ?: PlayerAccountActionResult(it, PlayerAccountOutcome.INVITED) })
+    }
+
+    override suspend fun saveEmails(tournamentId: String, items: List<PlayerEmailItem>): AppResult<List<PlayerEmailResult>> {
+        savedEmails += items
+        return AppResult.Success(items.map { emailResults[it.playerId] ?: PlayerEmailResult(it.playerId, PlayerEmailOutcome.SAVED) })
     }
 }
 

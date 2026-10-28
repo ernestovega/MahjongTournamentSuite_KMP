@@ -5,6 +5,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -36,12 +37,25 @@ class InvitationsTest : AdminE2eTest() {
     }
 
     @Test
-    fun aPlayerWithoutEmailShowsAWarningAndTheSendFailsWithTheReason() {
+    fun aPlayerWithoutEmailShowsAWarningAndTheSendAsksForTheEmail() {
         openDialogWithOnePlayerSelected()
         c.waitForText("No email", substring = true)
         c.clickButton("Send (1)")
-        c.waitForText("The player has no email. Import a file with the email.")
+        c.waitForText("Emails are missing")
         check(E2eApi.sentEmails().isEmpty()) { "An email left although the player has no email." }
+    }
+
+    @Test
+    fun theTypedEmailIsSavedAndTheInvitationGoesOut() {
+        openDialogWithOnePlayerSelected()
+        c.clickButton("Send (1)")
+        c.waitForText("Emails are missing")
+        c.onAllNodes(androidx.compose.ui.test.hasSetTextAction() and androidx.compose.ui.test.hasText("")).onLast()
+            .performTextInput("typed.guest@example.test")
+        c.clickLastButton("Send (1)")
+        c.waitForText("Invited")
+        val mails = E2eApi.sentEmails()
+        check(mails.size == 1 && mails[0].getString("to") == "typed.guest@example.test") { "Unexpected emails: $mails" }
     }
 
     @Test

@@ -49,7 +49,10 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 | E | Assign an EMA id to a slot, and the account exists | The slot shows the account at once. | None | "E: assigning an EMA number to a slot links the existing account…" |
 | F | Assign an EMA id to a slot, and no account exists | The slot has no account. | None | "F: assigning an EMA number with no account…" |
 | G | `send` to a slot with no account and a pending email | The server creates the account with no password and no alias, links all tournaments of the EMA id, and sends the password reset email. Result `INVITED`. | Password reset | "creates the account with no password and no alias…", "links every tournament of the EMA number when the account is created" |
-| H | `send` to a slot with no account and no pending email | `FAILED` with `NO_EMAIL`. Nothing is created. | None | "fails for a slot with no pending email and creates nothing" |
+| H | `send` to a slot with no account and no pending email | `FAILED` with `NO_EMAIL`. Nothing is created. The app asks for the email before it sends, so this is a safety net. | None | "fails for a slot with no pending email and creates nothing" |
+| H2 | Set the pending email of a slot (`PUT …/player-emails`) | `SAVED` in lower case, or `CLEARED` for an empty text. Allowed after the tournament started. | None | "saves a valid email in lower case, so Invite can use it", "replaces the email of a slot and clears it with an empty text", "works after the tournament started…" |
+| H3 | Set an email that is not valid, that an account of another EMA id owns, or that another slot holds | `FAILED` (`INVALID_EMAIL` or `EMAIL_IN_USE`). The old email stays. | None | "refuses an invalid email and keeps the old one", "refuses an email that an account of another EMA number owns", "refuses an email that another slot of the tournament holds…" |
+| H4 | Set an email for a slot with an account, with no EMA id, or that does not exist | `FAILED` (`HAS_ACCOUNT`, `NO_EMA_ID`, `PLAYER_NOT_FOUND`). | None | "refuses a slot with an account…", "refuses a slot with no EMA number and a player that does not exist" |
 | I | `send` to a slot whose pending email an account owns already | `FAILED` with `EMAIL_IN_USE`. The other account does not change. | None | "fails with EMAIL_IN_USE when an account owns the email…", "never gives an EMA number to an editor account because of an email" |
 | J | `send` to a slot with an account | The server sends the password reset email to the account email. Result `RESET_SENT`. The pending email is ignored. Also for a person who has a password. | Password reset | "sends the password reset email to the email of the account…", "sends it again every time…" |
 | K | The email cannot be sent | `FAILED` with `EMAIL_FAILED`. The account stays. The next `send` resets the password. | None | "keeps the account when the reset email fails…" |
@@ -81,6 +84,9 @@ The tests replace the call to the password API (`setPasswordResetSenderForTests`
 
 | Server action | Button in the app | Used for |
 |---|---|---|
-| `send` | "Invite" in the menu of a row | A slot with an EMA id and no account |
+| `send` | "Invite" in the menu of a row | A slot with an EMA id and no account. If the slot has no email, a dialog asks for it first, saves it and then invites. |
+| `PUT …/player-emails` | "Edit email" in the menu of a row | Sets or removes the pending email. Admins see the saved email. Editors see an empty field and a note. |
 | `send` | "Edit account" in the menu of a row (admins) | Opens the edit dialog of the account. It has "Send password reset email". |
-| `send` for many players | "Send (n)" in the Invitations dialog | Invites the selected players with no account and resets the password of the selected players with an account |
+| `send` for many players | "Send (n)" in the Invitations dialog | Invites the selected players with no account and resets the password of the selected players with an account. Selected players with no account and no email get a dialog that asks for their emails. A player left blank is skipped. |
+
+The list of the Invitations dialog has sticky column titles. Each player shows a check (has an account) or a cross (no account) instead of text.

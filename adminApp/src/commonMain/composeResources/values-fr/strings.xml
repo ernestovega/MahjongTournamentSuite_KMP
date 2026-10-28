@@ -297,7 +297,6 @@
     <string name="hand_score">Score de la main</string>
     <string name="rows_count">%1$d lignes</string>
     <string name="seconds_short">%1$d s</string>
-    <string name="action_did_not_run">L'action ne s'est pas exécutée.</string>
     <string name="account_created_reset_sent">Compte créé. Firebase a envoyé un e-mail de réinitialisation du mot de passe à %1$s.</string>
     <string name="user_disabled">%1$s est désactivé.</string>
     <string name="user_enabled">%1$s est activé.</string>
@@ -704,11 +703,20 @@
     <string name="outcome_reset_sent">L'e-mail de réinitialisation du mot de passe a été envoyé.</string>
     <string name="outcome_label_reset_sent">Réinitialisation envoyée</string>
     <string name="failure_no_ema_id">Le joueur n'a pas de numéro EMA.</string>
-    <string name="failure_no_email">Le joueur n'a pas d'adresse e-mail. Importez un fichier avec l'adresse.</string>
-    <string name="failure_email_in_use">Un autre compte utilise déjà cette adresse e-mail.</string>
+    <string name="failure_no_email">Le joueur n'a pas d'adresse e-mail. Ajoutez une adresse et réessayez.</string>
+    <string name="failure_email_in_use">Un autre compte ou un autre joueur utilise déjà cette adresse e-mail.</string>
     <string name="failure_email_failed">L'e-mail n'a pas pu être envoyé. Réessayez.</string>
     <string name="failure_unexpected">Un problème est survenu. Réessayez.</string>
     <string name="failure_player_not_found">Le joueur n'existe pas.</string>
     <string name="usage_row_with_password">Joueurs avec mot de passe</string>
     <string name="insight_accounts_with_password">%1$s des comptes de joueurs ont un mot de passe (%2$d sur %3$d).</string>
+    <string name="email_dialog_title">E-mail de %1$s</string>
+    <string name="email_dialog_hidden_hint">L'app ne montre pas les e-mails enregistrés aux éditeurs. L'e-mail enregistré reste jusqu'à ce que vous en enregistriez un nouveau.</string>
+    <string name="email_invalid">Utilisez une adresse e-mail valide.</string>
+    <string name="emails_are_missing">Adresses e-mail manquantes</string>
+    <string name="these_players_have_no_email">Ces joueurs n'ont ni compte ni adresse e-mail. Saisissez une adresse pour chaque joueur. L'app l'enregistre et crée le compte. Les joueurs laissés vides sont ignorés.</string>
+    <string name="remove_email">Supprimer l'e-mail</string>
+    <string name="edit_email">Modifier l'e-mail</string>
+    <string name="send_count_label">Envoyer</string>
+    <string name="failure_invalid_email">L'adresse e-mail n'est pas valide.</string>
 </resources>
