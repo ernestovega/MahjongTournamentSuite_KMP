@@ -179,6 +179,15 @@ Apply these rules to every new or changed dialog:
 - Test list changes with mouse hover, mouse click, wheel scrolling, and keyboard navigation.
 - For desktop regression tests, use coordinate-based mouse input. A semantics click can bypass pointer interception.
 
+## Buttons
+
+- Every button ignores a second press within 500 ms. A double click or a double tap must never run an action twice.
+- Use the `Focused*` buttons (`FocusedButton`, `FocusedTextButton`, `FocusedOutlinedButton`, `FocusedIconButton`, `FocusedAssistChip`) when the button needs the focus halo.
+- Use the `Debounced*` buttons (`DebouncedButton`, `DebouncedTextButton`, `DebouncedOutlinedButton`, `DebouncedIconButton`, `DebouncedExtendedFloatingActionButton`) for the same look and layout as the Material button.
+- Import them with an alias, for example `import ...components.DebouncedButton as Button`.
+- Never import a raw Material button. `ButtonConventionTest` fails when a source file does.
+- Menu items, chips that toggle a filter, checkboxes and switches have no threshold on purpose. They must stay fast to use.
+
 ## Tournament Player Presentation
 
 - Treat tournament player records as schedule slots.

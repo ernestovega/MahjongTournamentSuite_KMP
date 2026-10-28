@@ -30,7 +30,7 @@ import androidx.compose.material3.CardDefaults
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
-import androidx.compose.material3.ExtendedFloatingActionButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme

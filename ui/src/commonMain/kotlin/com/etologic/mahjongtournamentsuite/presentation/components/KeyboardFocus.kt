@@ -60,7 +60,7 @@ private val ButtonPressThreshold = 500.milliseconds
 val LocalAppButtonsEnabled = staticCompositionLocalOf { true }
 
 @Composable
-private fun rememberThresholdOnClick(onClick: () -> Unit): () -> Unit {
+internal fun rememberThresholdOnClick(onClick: () -> Unit): () -> Unit {
     val currentOnClick by rememberUpdatedState(onClick)
     return remember {
         var lastPress: TimeMark? = null
