@@ -737,6 +737,7 @@
     <string name="import_summary_line">Joueurs : %1$d · Modifiés : %2$d · Erreurs : %3$d · Retirés : %4$d</string>
     <string name="import_legend_changed">Nouveau ou modifié</string>
     <string name="import_legend_error">Erreur</string>
+    <string name="import_column_player">Joueur/ID EMA</string>
     <string name="import_legend_warning">Avertissement ou retiré</string>
     <string name="import_tip_changed">Cette donnée change.</string>
     <string name="import_tip_removed">Le fichier ne contient pas cette place, donc l\'import retire ce joueur.</string>

@@ -737,6 +737,7 @@
     <string name="import_summary_line">Players: %1$d · Changed: %2$d · Errors: %3$d · Removed: %4$d</string>
     <string name="import_legend_changed">New or changed</string>
     <string name="import_legend_error">Error</string>
+    <string name="import_column_player">Player/EMA ID</string>
     <string name="import_legend_warning">Warning or removed</string>
     <string name="import_tip_changed">This data changes.</string>
     <string name="import_tip_removed">The file does not list this slot, so the import removes this player.</string>

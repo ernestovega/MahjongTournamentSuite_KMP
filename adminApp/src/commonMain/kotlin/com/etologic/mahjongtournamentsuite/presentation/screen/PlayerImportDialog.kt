@@ -11,9 +11,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -28,6 +29,8 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Surface
+import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.rememberTooltipState
@@ -54,6 +57,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ImportField
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssue
@@ -95,6 +100,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_state_removed
 import mahjongtournamentsuite.adminapp.generated.resources.import_state_error
 import mahjongtournamentsuite.adminapp.generated.resources.import_state_changed
 import mahjongtournamentsuite.adminapp.generated.resources.import_legend_warning
+import mahjongtournamentsuite.adminapp.generated.resources.import_column_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_legend_error
 import mahjongtournamentsuite.adminapp.generated.resources.import_legend_changed
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -229,24 +235,27 @@ fun PlayerImportDialog(
 
         is ImportStep.Preview -> {
             val preview = current.preview
-            AlertDialog(
-                onDismissRequest = onDismiss,
-                modifier = Modifier.appFocusGroup(),
-                title = { Text(stringResource(Res.string.import_players_title)) },
-                text = { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) },
-                confirmButton = {
-                    Button(
-                        enabled = preview.canApply,
-                        onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
-                    ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
-                },
-                dismissButton = {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                        TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
+            Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                Surface(
+                    modifier = Modifier.appFocusGroup().widthIn(max = 1100.dp).fillMaxWidth(0.92f).fillMaxHeight(0.94f),
+                    shape = AlertDialogDefaults.shape,
+                    color = AlertDialogDefaults.containerColor,
+                    tonalElevation = AlertDialogDefaults.TonalElevation,
+                ) {
+                    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        Text(stringResource(Res.string.import_players_title), style = MaterialTheme.typography.headlineSmall)
+                        Box(Modifier.weight(1f)) { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                            TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
+                            Button(
+                                enabled = preview.canApply,
+                                onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
+                            ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
+                        }
                     }
-                },
-            )
+                }
+            }
             if (confirming) {
                 AlertDialog(
                     onDismissRequest = { confirming = false },
@@ -309,20 +318,28 @@ internal fun ImportPreviewContent(
 ) {
     val rows = remember(preview) { preview.rows.sortedWith(compareBy({ !it.hasError }, { it.row })) }
     val changedRows = preview.rows.count { it.changes.isNotEmpty() }
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (preview.tournamentStarted) {
             ImportNote(Icons.Filled.ErrorOutline, stringResource(Res.string.import_started_blocked), MaterialTheme.colorScheme.error)
         }
-        Text(
-            stringResource(Res.string.import_summary_line, preview.importedPlayers, changedRows, preview.errorCount, preview.removed.size),
-            style = MaterialTheme.typography.bodyMedium,
-        )
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            LegendItem(ImportCellState.CHANGED, stringResource(Res.string.import_legend_changed))
-            LegendItem(ImportCellState.ERROR, stringResource(Res.string.import_legend_error))
-            LegendItem(ImportCellState.WARNING, stringResource(Res.string.import_legend_warning))
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            itemVerticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                stringResource(Res.string.import_summary_line, preview.importedPlayers, changedRows, preview.errorCount, preview.removed.size),
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                LegendItem(ImportCellState.CHANGED, stringResource(Res.string.import_legend_changed))
+                LegendItem(ImportCellState.ERROR, stringResource(Res.string.import_legend_error))
+                LegendItem(ImportCellState.WARNING, stringResource(Res.string.import_legend_warning))
+            }
         }
-        LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp).testTag("import_table"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        LazyColumn(Modifier.fillMaxWidth().weight(1f).padding(top = 8.dp).testTag("import_table"), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             stickyHeader { ImportTableHeader(showTeam = preview.isTeams && preview.hasTeamColumn) }
             items(rows, key = { it.row }) { row -> ImportRowLine(row, preview, playerNameOf) }
             items(preview.removed, key = { "removed-${it.slotId}" }) { removed ->
@@ -352,7 +369,7 @@ private fun ImportTableHeader(showTeam: Boolean) {
             style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
         )
         Title(Res.string.id, Modifier.width(IdColumnWidth))
-        Title(Res.string.player, Modifier.weight(1.3f))
+        Title(Res.string.import_column_player, Modifier.weight(1.3f))
         Title(Res.string.email, Modifier.weight(1.3f))
         if (showTeam) Title(Res.string.team, Modifier.weight(1f))
     }
@@ -376,9 +393,9 @@ private fun cellInfo(row: ImportRowPlan, field: ImportField): CellInfo {
 private fun ImportCell(info: CellInfo, modifier: Modifier, content: @Composable () -> Unit) {
     val stateLabel = info.state.label()
     val tipText = info.tip.map { it.asString() }.joinToString("\n")
-    val cell = @Composable {
+    val cell = @Composable { cellModifier: Modifier ->
         Box(
-            modifier
+            cellModifier
                 .clip(RoundedCornerShape(6.dp))
                 .background(info.state.color().copy(alpha = if (info.state == ImportCellState.NORMAL) 0f else 0.14f))
                 .padding(horizontal = 6.dp, vertical = 4.dp)
@@ -387,15 +404,18 @@ private fun ImportCell(info: CellInfo, modifier: Modifier, content: @Composable 
                 },
         ) { content() }
     }
-    if (info.state == ImportCellState.NORMAL) {
-        cell()
-    } else {
-        TooltipBox(
-            positionProvider = rememberAppTooltipPositionProvider(),
-            tooltip = { AppPlainTooltip { Text(tipText) } },
-            state = rememberTooltipState(),
-            modifier = modifier,
-        ) { cell() }
+    // The weight or width of the column goes on the outer box, which is the direct child of the row.
+    Box(modifier) {
+        if (info.state == ImportCellState.NORMAL) {
+            cell(Modifier.fillMaxWidth())
+        } else {
+            TooltipBox(
+                positionProvider = rememberAppTooltipPositionProvider(),
+                tooltip = { AppPlainTooltip { Text(tipText) } },
+                state = rememberTooltipState(),
+                modifier = Modifier.fillMaxWidth(),
+            ) { cell(Modifier.fillMaxWidth()) }
+        }
     }
 }
 

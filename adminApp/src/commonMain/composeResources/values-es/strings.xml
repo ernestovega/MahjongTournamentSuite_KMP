@@ -737,6 +737,7 @@
     <string name="import_summary_line">Jugadores: %1$d · Cambian: %2$d · Errores: %3$d · Se quitan: %4$d</string>
     <string name="import_legend_changed">Nuevo o cambia</string>
     <string name="import_legend_error">Error</string>
+    <string name="import_column_player">Jugador/ID EMA</string>
     <string name="import_legend_warning">Aviso o se quita</string>
     <string name="import_tip_changed">Este dato cambia.</string>
     <string name="import_tip_removed">El archivo no incluye esta plaza, así que la importación quita a este jugador.</string>
