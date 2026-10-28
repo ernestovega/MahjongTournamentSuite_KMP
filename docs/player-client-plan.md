@@ -72,9 +72,9 @@ The player screens use shared components from the `:ui` module. The design follo
 
 ## Invitations and registration emails
 
-- Assigning a player never sends an email. If an account already owns the EMA ID, the slot links to it and the player sees the tournament.
+- Assigning a player never sends an email. If an account owns the EMA ID, the slot shows that account and the player sees the tournament. No link is stored: the EMA ID is the link.
 - The email of a player lives only in the account. A player with no account gets an account without a password when an editor saves or imports the email.
-- An editor sends, resends or revokes by hand, for one player or for many (button "Invitations" on the players screen).
+- An editor sends, resends or marks as not notified by hand, for one player or for many (button "Invitations" on the players screen).
 - The list tracks who was contacted. Editors filter by "Not invited yet", "Invited, waiting", "Contacted" or "No EMA ID" and run the action on the selected players.
 - "Invite" sends the password reset email to an account that has no password yet. The person chooses a password and signs in on the player app.
 - A player with a password gets a "you are registered" email with a link to the tournament (`/?tournament=<id>`). The player app opens that tournament after sign-in.
