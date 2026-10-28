@@ -3,464 +3,253 @@ import { randomUUID } from "node:crypto";
 import { after, before, describe, it } from "node:test";
 
 import { auth, db } from "../firebase";
-import { createAccount, linkedAccountUid, requireAuthEmulator } from "../testing/authFixtures";
+import { createAccount, requireAuthEmulator } from "../testing/authFixtures";
 import { seedTournament } from "../testing/firestoreFixtures";
-import { setMailTransportForTests, type OutgoingEmail } from "./mailService";
 import { setPasswordResetSenderForTests } from "./firebaseAuthRest";
-import { getPlayerRegistration, loadAccounts, setAccountEmaId } from "./playerAccountsService";
+import { setAccountEmaId } from "./playerAccountsService";
 import { parsePlayerImportFile } from "./playerImport";
-import {
-  applyPlayerImport as applyStep,
-  exportPlayers,
-  IMPORT_BATCH_SIZE,
-  previewPlayerImport,
-  type PlayerImportResult,
-} from "./playerImportService";
-
-/** Runs the steps like the app: CLEAR, ASSIGN in batches, FINISH. */
-async function applyPlayerImport(params: {
-  tournamentId: string; fileName: string; buffer: Buffer; replaceExisting: boolean; uid: string;
-}): Promise<PlayerImportResult> {
-  const preview = await previewPlayerImport(params);
-  const total: PlayerImportResult = { assigned: 0, emailsSaved: 0, emailsRefused: 0, teamsRenamed: 0, skipped: 0, failures: [] };
-  const add = (part: PlayerImportResult) => {
-    total.assigned += part.assigned;
-    total.failures.push(...part.failures);
-    total.emailsSaved += part.emailsSaved;
-    total.emailsRefused += part.emailsRefused;
-    total.teamsRenamed += part.teamsRenamed;
-    total.skipped += part.skipped;
-  };
-  add(await applyStep({ ...params, phase: "CLEAR" }));
-  const lines = preview.rows.filter((row) => row.status === "NEW" || row.status === "REPLACE").map((row) => row.row);
-  for (let start = 0; start < lines.length; start += IMPORT_BATCH_SIZE) {
-    add(await applyStep({ ...params, phase: "ASSIGN", rows: lines.slice(start, start + IMPORT_BATCH_SIZE) }));
-  }
-  add(await applyStep({ ...params, phase: "FINISH" }));
-  return total;
-}
+import { applyPlayerImport, exportPlayers, previewPlayerImport } from "./playerImportService";
 
 /** Every test gets its own EMA numbers, because an account keeps its EMA number for all tournaments. */
-function newEmaIds(): string[] {
-  const prefix = String(Math.floor(Math.random() * 9_000_000) + 1_000_000);
-  return [1, 2, 3, 4].map((n) => `${prefix}${n}`);
+function newEmaIds(count = 4): string[] {
+  const prefix = String(Math.floor(Math.random() * 90_000) + 10_000);
+  return Array.from({ length: count }, (_, index) => `${prefix}${String(index + 1).padStart(3, "0")}`);
 }
 
-async function seedImportTournament(isTeams: boolean): Promise<{ id: string; emas: string[] }> {
+async function registerEmaIds(emaIds: string[]): Promise<void> {
+  const writer = db.bulkWriter();
+  emaIds.forEach((emaId) => { void writer.set(db.doc(`emaPlayerRegistry/${emaId}`), { firstName: "Name", lastName: emaId, country: "ESP" }); });
+  await writer.close();
+}
+
+async function seedImportTournament(options: { isTeams: boolean; slots?: number } = { isTeams: false }): Promise<{ id: string; emas: string[] }> {
   const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
-  const emas = newEmaIds();
+  const slots = options.slots ?? 4;
+  const emas = newEmaIds(Math.max(4, slots));
+  await registerEmaIds(emas);
   const tournament = db.collection("tournaments").doc(id);
-  await tournament.update({ isTeams });
-  for (const emaId of emas) {
-    await db.collection("emaPlayerRegistry").doc(emaId).set({ firstName: "Name", lastName: emaId, country: "ESP" });
-  }
-  for (let slot = 1; slot <= 4; slot++) {
-    await tournament.collection("players").doc(String(slot)).set({
-      id: slot, team: slot <= 2 ? 1 : 2, assignedEmaId: null, assignedCountry: "",
+  await tournament.update({ isTeams: options.isTeams });
+  const writer = db.bulkWriter();
+  for (let slot = 1; slot <= slots; slot++) {
+    void writer.set(tournament.collection("players").doc(String(slot)), {
+      id: slot, team: Math.ceil(slot / 2), assignedEmaId: null, assignedCountry: "",
     });
   }
+  await writer.close();
   return { id, emas };
 }
 
 const file = (text: string) => ({ fileName: "players.csv", buffer: Buffer.from(text) });
-const slotOf = async (tournamentId: string, slot: number) =>
-  (await db.doc(`tournaments/${tournamentId}/players/${slot}`).get());
+const slotOf = async (tournamentId: string, slot: number) => (await db.doc(`tournaments/${tournamentId}/players/${slot}`).get());
 const uniqueEmail = () => `${randomUUID()}@example.test`;
+const errorOf = async (promise: Promise<unknown>): Promise<{ status?: number; details?: { code?: string } }> => {
+  try {
+    await promise;
+  } catch (error) {
+    return error as { status?: number; details?: { code?: string } };
+  }
+  throw new Error("Expected the call to fail");
+};
 
 describe("player import", () => {
-  const sent: OutgoingEmail[] = [];
   const resets: string[] = [];
   before(() => {
     requireAuthEmulator();
-    setMailTransportForTests(async (email) => { sent.push(email); });
     setPasswordResetSenderForTests(async (email) => { resets.push(email); });
   });
-  after(() => {
-    setMailTransportForTests(null);
-    setPasswordResetSenderForTests(null);
+  after(() => setPasswordResetSenderForTests(null));
+
+  it("previews without changing anything", async () => {
+    const { id, emas } = await seedImportTournament();
+    const preview = await previewPlayerImport({ tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},${uniqueEmail()}\n2,${emas[1]},\n`) });
+
+    assert.equal(preview.valid, true);
+    assert.equal(preview.importedPlayers, 2);
+    assert.equal(preview.existingPlayers, 0);
+    assert.equal(preview.tournamentStarted, false);
+    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), null);
+    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[0]}`).get()).exists, false);
   });
 
-  it("assigns players, creates the accounts of the emails and names the teams", async () => {
-    const { id, emas } = await seedImportTournament(true);
+  it("writes the players, the pending emails and the teams, and creates no account and sends no email", async () => {
+    const { id, emas } = await seedImportTournament({ isTeams: true });
     const [a, c] = [uniqueEmail(), uniqueEmail()];
     const csv = `id;ema id;email;team\n1;${emas[0]};${a};Reds\n2;${emas[1]};;Reds\n3;${emas[2]};${c.toUpperCase()};Blues\n`;
+    const sentBefore = resets.length;
 
-    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
-    assert.deepEqual(preview.rows.map((row) => row.status), ["NEW", "NEW", "NEW"]);
-    assert.deepEqual(preview.rows.map((row) => row.createsAccount), [true, false, true]);
-    assert.deepEqual(preview.untouchedSlotIds, [4]);
-    // The preview changes nothing: no slot, no account.
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), null);
-    await assert.rejects(auth.getUserByEmail(a));
+    const result = await applyPlayerImport({ tournamentId: id, ...file(csv), uid: "editor" });
 
-    const before = { mails: sent.length, resets: resets.length };
-    const result = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
-
-    assert.deepEqual(result, { assigned: 3, emailsSaved: 2, emailsRefused: 0, teamsRenamed: 2, skipped: 0, failures: [] });
+    assert.deepEqual(result, { players: 3, changedSlots: 3, emptiedSlots: 1 });
     assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
-    assert.equal((await slotOf(id, 3)).get("assignedEmaId"), emas[2]);
+    assert.equal((await slotOf(id, 1)).get("assignedCountry"), "ESP");
+    assert.equal((await slotOf(id, 1)).get("email"), a);
+    assert.equal((await slotOf(id, 2)).get("email"), undefined);
+    assert.equal((await slotOf(id, 3)).get("email"), c.toLowerCase());
+    assert.equal((await slotOf(id, 4)).get("assignedEmaId"), null);
+    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[0]}`).get()).get("playerId"), 1);
     assert.equal((await db.doc(`tournaments/${id}/teams/1`).get()).get("name"), "Reds");
     assert.equal((await db.doc(`tournaments/${id}/teams/2`).get()).get("name"), "Blues");
-
-    // The email lives in the account. The slot holds no email, and the account is linked to the slot.
-    const account = await auth.getUserByEmail(a);
-    assert.equal(await linkedAccountUid(id, 1), account.uid);
-    assert.equal((await slotOf(id, 1)).get("invitedEmail"), undefined);
-    assert.equal((await db.doc(`users/${account.uid}`).get()).get("emaId"), emas[0]);
-    assert.equal((await db.doc(`emaIdIndex/${emas[0]}`).get()).get("uid"), account.uid);
-    assert.deepEqual(account.customClaims, { player: true });
-    assert.equal((await auth.getUserByEmail(c.toLowerCase())).uid, await linkedAccountUid(id, 3));
-    assert.equal(await linkedAccountUid(id, 2), null);
-    // The account has no password and the import sends no email.
-    assert.ok(!account.passwordHash);
-    assert.equal((await loadAccounts([account.uid])).get(account.uid)?.hasPassword, false);
-    assert.deepEqual({ mails: sent.length, resets: resets.length }, before);
-  });
-
-  it("keeps the email of an account that has one, warns, and applies the rest of the row", async () => {
-    const { id, emas } = await seedImportTournament(true);
-    const owner = await createAccount({ role: "PLAYER" });
-    await setAccountEmaId({ uid: owner.uid, emaId: emas[0] });
-    const csv = `id,ema id,email,team\n1,${emas[0]},${uniqueEmail()},Reds\n`;
-
-    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
-    assert.deepEqual(preview.rows[0].issues.map((issue) => [issue.code, issue.severity, issue.args[0]]), [
-      ["EMAIL_KEPT_ACCOUNT", "WARNING", owner.email],
-    ]);
-    assert.equal(preview.rows[0].status, "NEW");
-    assert.equal(preview.rows[0].createsAccount, false);
-
-    const result = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
-
-    assert.deepEqual(result, { assigned: 1, emailsSaved: 0, emailsRefused: 1, teamsRenamed: 1, skipped: 0, failures: [] });
-    assert.equal((await auth.getUser(owner.uid)).email, owner.email);
-    assert.equal(await linkedAccountUid(id, 1), owner.uid);
-    assert.equal((await db.doc(`tournaments/${id}/teams/1`).get()).get("name"), "Reds");
-  });
-
-  it("never links an account to an EMA number because of an email: an email of another player is refused", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const owner = await createAccount({ role: "PLAYER" });
-    await setAccountEmaId({ uid: owner.uid, emaId: emas[3] });
-    const csv = `id,ema id,email\n1,${emas[0]},${owner.email}\n`;
-
-    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
-    assert.deepEqual(preview.rows[0].issues.map((issue) => [issue.code, issue.args[0]]), [["EMAIL_IN_USE", emas[3]]]);
-
-    const result = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
-
-    assert.equal(result.assigned, 1);
-    assert.equal(result.emailsSaved, 0);
-    assert.equal(result.emailsRefused, 1);
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
-    assert.equal(await linkedAccountUid(id, 1), null);
-    assert.equal((await db.doc(`users/${owner.uid}`).get()).get("emaId"), emas[3]);
+    // The import creates no account and sends nothing.
+    await assert.rejects(auth.getUserByEmail(a));
+    assert.equal(resets.length, sentBefore);
     assert.equal((await db.doc(`emaIdIndex/${emas[0]}`).get()).exists, false);
   });
 
-  it("refuses the email of an account that has no EMA number and does not give it one", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const editor = await createAccount({ role: "EDITOR" });
-
-    const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},${editor.email}\n`), replaceExisting: false, uid: "editor",
-    });
-
-    assert.equal(result.emailsRefused, 1);
-    assert.equal((await db.doc(`users/${editor.uid}`).get()).get("emaId"), undefined);
-    assert.equal(await linkedAccountUid(id, 1), null);
-  });
-
-  it("gives a shared email to the first player of the file only", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const shared = uniqueEmail();
-
-    const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},${shared}\n2,${emas[1]},${shared}\n`),
-      replaceExisting: false, uid: "editor",
-    });
-
-    assert.deepEqual(result, { assigned: 2, emailsSaved: 1, emailsRefused: 1, teamsRenamed: 0, skipped: 0, failures: [] });
-    const account = await auth.getUserByEmail(shared);
-    assert.equal(await linkedAccountUid(id, 1), account.uid);
-    assert.equal(await linkedAccountUid(id, 2), null);
-    assert.equal((await db.doc(`users/${account.uid}`).get()).get("emaId"), emas[0]);
-  });
-
-  it("links the account to every tournament that holds the EMA number", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const other = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
-    await db.doc(`tournaments/${other}/players/7`).set({ id: 7, team: 0, assignedEmaId: emas[0], assignedCountry: "ESP" });
-    await db.doc(`tournaments/${other}/emaPlayerAssignments/${emas[0]}`).set({ playerId: 7 });
-    const email = uniqueEmail();
-
-    await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},${email}\n`), replaceExisting: false, uid: "editor",
-    });
-
-    const account = await auth.getUserByEmail(email);
-    assert.equal(await linkedAccountUid(id, 1), account.uid);
-    assert.equal(await linkedAccountUid(other, 7), account.uid);
-    assert.equal((await getPlayerRegistration(account.uid, other))?.playerId, 7);
-  });
-
-  it("a second import of the same file changes nothing and creates no second account", async () => {
-    const { id, emas } = await seedImportTournament(true);
-    const email = uniqueEmail();
-    const csv = `id,ema id,email,team\n1,${emas[0]},${email},Reds\n`;
-    await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
-
-    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
-    const again = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
-
-    assert.deepEqual(preview.rows.map((row) => row.status), ["UNCHANGED"]);
-    assert.deepEqual(preview.rows[0].issues, []);
-    assert.deepEqual(again, { assigned: 0, emailsSaved: 0, emailsRefused: 0, teamsRenamed: 0, skipped: 0, failures: [] });
-  });
-
-  it("a row without an email leaves the account and its email as they are", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const owner = await createAccount({ role: "PLAYER" });
-    await setAccountEmaId({ uid: owner.uid, emaId: emas[0] });
-
-    const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n`), replaceExisting: false, uid: "editor",
-    });
-
-    assert.equal(result.assigned, 1);
-    assert.equal((await auth.getUser(owner.uid)).email, owner.email);
-    assert.equal(await linkedAccountUid(id, 1), owner.uid);
-  });
-
-  it("keeps players that are in a slot unless the editor accepts the replacement", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n`), replaceExisting: false, uid: "editor" });
-    const csv = `id,ema id\n1,${emas[1]}\n2,${emas[2]}\n`;
-
-    const kept = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
-    assert.equal(kept.assigned, 1);
-    assert.equal(kept.skipped, 1);
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
-    assert.equal((await slotOf(id, 2)).get("assignedEmaId"), emas[2]);
-
-    const replaced = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: true, uid: "editor" });
-    assert.equal(replaced.assigned, 1);
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[1]);
-  });
-
-  it("a replaced player takes the account link with it and the new player gets the account of the new EMA number", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const first = await createAccount({ role: "PLAYER" });
-    const second = await createAccount({ role: "PLAYER" });
-    await setAccountEmaId({ uid: first.uid, emaId: emas[0] });
-    await setAccountEmaId({ uid: second.uid, emaId: emas[1] });
-    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n`), replaceExisting: false, uid: "editor" });
-    assert.equal(await linkedAccountUid(id, 1), first.uid);
-
-    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[1]}\n`), replaceExisting: true, uid: "editor" });
-
-    assert.equal(await linkedAccountUid(id, 1), second.uid);
-    assert.equal(await getPlayerRegistration(first.uid, id), null);
-  });
-
-  it("swaps two players between slots", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,${emas[1]}\n`), replaceExisting: false, uid: "editor",
-    });
-
-    const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[1]}\n2,${emas[0]}\n`), replaceExisting: false, uid: "editor",
-    });
-
-    assert.deepEqual(result.failures, []);
-    assert.equal(result.skipped, 0);
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[1]);
-    assert.equal((await slotOf(id, 2)).get("assignedEmaId"), emas[0]);
-  });
-
-  it("moves the players to new positions with no acceptance, and each account follows its player", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const first = await createAccount({ role: "PLAYER" });
-    await setAccountEmaId({ uid: first.uid, emaId: emas[0] });
-    await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,${emas[1]}\n`), replaceExisting: false, uid: "editor",
-    });
-    assert.equal(await linkedAccountUid(id, 1), first.uid);
-
-    // The two current players go to slots 3 and 4. New players take slots 1 and 2.
-    const csv = `id,ema id\n1,${emas[2]}\n2,${emas[3]}\n3,${emas[0]}\n4,${emas[1]}\n`;
-    const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
-    assert.deepEqual(preview.rows.map((row) => row.status), ["NEW", "NEW", "NEW", "NEW"]);
-    assert.deepEqual(preview.rows.flatMap((row) => row.issues), []);
-    const result = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
-
-    assert.deepEqual(result.failures, []);
-    assert.equal(result.assigned, 4);
-    assert.equal(result.skipped, 0);
-    for (const [slot, ema] of [[1, emas[2]], [2, emas[3]], [3, emas[0]], [4, emas[1]]] as const) {
-      assert.equal((await slotOf(id, slot)).get("assignedEmaId"), ema);
+  it("overwrites every slot: moved players, omitted players, old emails and old substitutions", async () => {
+    const { id, emas } = await seedImportTournament();
+    const players = db.collection("tournaments").doc(id).collection("players");
+    await players.doc("1").update({ assignedEmaId: emas[0], email: "old1@example.test", substitution: { reason: "LATE", fromRound: 1 } });
+    await players.doc("2").update({ assignedEmaId: emas[1], email: "old2@example.test" });
+    await players.doc("4").update({ assignedEmaId: emas[3], email: "old4@example.test" });
+    for (const [slot, emaId] of [[1, emas[0]], [2, emas[1]], [4, emas[3]]] as const) {
+      await db.doc(`tournaments/${id}/emaPlayerAssignments/${emaId}`).set({ playerId: slot });
     }
-    assert.equal(await linkedAccountUid(id, 3), first.uid);
-    assert.equal(await linkedAccountUid(id, 1), null);
-    assert.equal((await getPlayerRegistration(first.uid, id))?.playerId, 3);
+
+    // Slot 1 gets another player, slot 2 gets the player of slot 1, slot 4 is not in the file.
+    const result = await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[2]}\n2,${emas[0]}\n`), uid: "editor" });
+
+    assert.deepEqual(result, { players: 2, changedSlots: 3, emptiedSlots: 2 });
+    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[2]);
+    assert.equal((await slotOf(id, 2)).get("assignedEmaId"), emas[0]);
+    assert.equal((await slotOf(id, 4)).get("assignedEmaId"), null);
+    for (const slot of [1, 2, 4]) assert.equal((await slotOf(id, slot)).get("email"), undefined);
+    assert.equal((await slotOf(id, 1)).get("substitution"), undefined);
+    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[1]}`).get()).exists, false);
+    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[3]}`).get()).exists, false);
+    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[0]}`).get()).get("playerId"), 2);
+    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[2]}`).get()).get("playerId"), 1);
+    const log = await db.collection(`tournaments/${id}/playerLog`).get();
+    assert.equal(log.size, 3);
   });
 
-  it("moves a player out of a slot that the file does not name", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n`), replaceExisting: false, uid: "editor" });
+  it("changes nothing when the same file is applied again", async () => {
+    const { id, emas } = await seedImportTournament();
+    const csv = `id,ema id,email\n1,${emas[0]},${uniqueEmail()}\n2,${emas[1]},\n`;
+    await applyPlayerImport({ tournamentId: id, ...file(csv), uid: "editor" });
 
-    const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n4,${emas[0]}\n`), replaceExisting: false, uid: "editor",
-    });
+    const again = await applyPlayerImport({ tournamentId: id, ...file(csv), uid: "editor" });
 
-    assert.deepEqual(result.failures, []);
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), null);
-    assert.equal((await slotOf(id, 4)).get("assignedEmaId"), emas[0]);
-    assert.equal((await db.doc(`tournaments/${id}/emaPlayerAssignments/${emas[0]}`).get()).get("playerId"), 4);
+    assert.deepEqual(again, { players: 2, changedSlots: 0, emptiedSlots: 2 });
   });
 
-  it("the preview lists the player that the file drops, and without the acceptance that player and its row stay", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,${emas[1]}\n`), replaceExisting: false, uid: "editor",
-    });
-    // Slot 1 gets player 3. Player 0 is in no row, so the file drops it. Player 1 only moves.
-    const csv = `id,ema id\n1,${emas[2]}\n3,${emas[1]}\n`;
+  it("writes nothing when one row has an error, and the preview lists the error", async () => {
+    const { id, emas } = await seedImportTournament();
+    const csv = `id,ema id\n1,${emas[0]}\n2,99999999\n`;
 
     const preview = await previewPlayerImport({ tournamentId: id, ...file(csv) });
-    assert.deepEqual(preview.rows.map((row) => [row.status, row.issues.map((issue) => issue.code)]), [
-      ["REPLACE", ["REPLACES_PLAYER"]], ["NEW", []],
-    ]);
-    const kept = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
+    assert.equal(preview.valid, false);
+    assert.deepEqual(preview.rows[1].issues.map((issue) => issue.code), ["UNKNOWN_EMA_ID"]);
+    const failure = await errorOf(applyPlayerImport({ tournamentId: id, ...file(csv), uid: "editor" }));
 
-    assert.equal(kept.skipped, 1);
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
-    assert.equal((await slotOf(id, 3)).get("assignedEmaId"), emas[1]);
+    assert.equal(failure.status, 409);
+    assert.equal(failure.details?.code, "FILE_HAS_ERRORS");
+    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), null);
   });
 
-  it("a blocked move does not remove a player: nothing is cleared without the acceptance", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,${emas[2]}\n`), replaceExisting: false, uid: "editor",
-    });
-    // Player 0 would move to slot 2 and drop player 2. Player 1 would take slot 1. Both rows wait for the acceptance.
-    const csv = `id,ema id\n1,${emas[1]}\n2,${emas[0]}\n`;
+  it("refuses a tournament with table data and says so in the preview", async () => {
+    const { id, emas } = await seedImportTournament();
+    await db.doc(`tournaments/${id}`).update({ tablesWithProgress: 1 });
+    const csv = `id,ema id\n1,${emas[0]}\n`;
 
-    const kept = await applyPlayerImport({ tournamentId: id, ...file(csv), replaceExisting: false, uid: "editor" });
+    assert.equal((await previewPlayerImport({ tournamentId: id, ...file(csv) })).tournamentStarted, true);
+    const failure = await errorOf(applyPlayerImport({ tournamentId: id, ...file(csv), uid: "editor" }));
 
-    assert.equal(kept.assigned, 0);
-    assert.equal(kept.skipped, 2);
-    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), emas[0]);
-    assert.equal((await slotOf(id, 2)).get("assignedEmaId"), emas[2]);
+    assert.equal(failure.status, 409);
+    assert.equal(failure.details?.code, "TOURNAMENT_STARTED");
+    assert.equal((await slotOf(id, 1)).get("assignedEmaId"), null);
   });
 
-  it("skips rows with errors and applies the others", async () => {
-    const { id, emas } = await seedImportTournament(false);
-
-    const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n2,99999999\n`), replaceExisting: false, uid: "editor",
-    });
-
-    assert.equal(result.assigned, 1);
-    assert.equal(result.skipped, 1);
-    assert.equal((await slotOf(id, 2)).get("assignedEmaId"), null);
-  });
-
-  it("an error in the email of one row does not stop the others", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const email = uniqueEmail();
-
-    const result = await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},not-an-email\n2,${emas[1]},${email}\n`),
-      replaceExisting: false, uid: "editor",
-    });
-
-    assert.equal(result.assigned, 1);
-    assert.equal(result.emailsSaved, 1);
-    assert.equal(result.skipped, 1);
-    assert.equal(await linkedAccountUid(id, 2), (await auth.getUserByEmail(email)).uid);
-  });
-
-  it("the CLEAR and ASSIGN steps read no account data", async () => {
-    const { id, emas } = await seedImportTournament(false);
-    const owner = await createAccount({ role: "PLAYER" });
-
-    const result = await applyStep({
-      tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},${owner.email}\n`), replaceExisting: false, uid: "editor",
-      phase: "ASSIGN", rows: [2],
-    });
-
-    assert.equal(result.assigned, 1);
-    assert.equal(result.emailsSaved, 0);
-    assert.equal(result.emailsRefused, 0);
-  });
-});
-
-describe("player export", () => {
-  before(requireAuthEmulator);
-
-  const parse = (exported: { fileName: string; buffer: Buffer }) => parsePlayerImportFile(exported.fileName, exported.buffer);
-
-  it("writes every slot with the current EMA number, the email of the account and the team name", async () => {
-    const { id, emas } = await seedImportTournament(true);
-    const email = uniqueEmail();
-    await applyPlayerImport({
-      tournamentId: id, ...file(`id,ema id,email,team\n1,${emas[0]},${email},Reds\n3,${emas[2]},,Blues\n`),
-      replaceExisting: false, uid: "editor",
-    });
-
-    const exported = await exportPlayers(id);
-    const parsed = await parse(exported);
-
-    assert.equal(exported.fileName, "players.xlsx");
-    assert.equal(parsed.hasTeamColumn, true);
-    assert.deepEqual(parsed.rows.map((row) => [row.id, row.emaId, row.email, row.team]), [
-      ["1", emas[0], email, "Reds"],
-      ["2", "", "", "Reds"],
-      ["3", emas[2], "", "Blues"],
-      ["4", "", "", "Blues"],
-    ]);
-  });
-
-  it("writes the email of an account that was linked outside the import (the case of 2026-10-26)", async () => {
-    const { id, emas } = await seedImportTournament(false);
+  it("refuses an email that an account of another EMA number owns, and accepts the account of the same number", async () => {
+    const { id, emas } = await seedImportTournament();
     const owner = await createAccount({ role: "PLAYER" });
     await setAccountEmaId({ uid: owner.uid, emaId: emas[1] });
-    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n2,${emas[1]}\n`), replaceExisting: false, uid: "editor" });
 
-    const parsed = await parse(await exportPlayers(id));
+    const other = await previewPlayerImport({ tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},${owner.email}\n`) });
+    assert.deepEqual(other.rows[0].issues.map((issue) => issue.code), ["EMAIL_OWNED_BY_OTHER_ACCOUNT"]);
+    assert.equal(other.valid, false);
 
-    assert.deepEqual(parsed.rows[1], { row: 3, id: "2", emaId: emas[1], email: owner.email, team: "" });
+    const same = await previewPlayerImport({ tournamentId: id, ...file(`id,ema id,email\n1,${emas[1]},${owner.email}\n`) });
+    assert.equal(same.valid, true);
   });
 
-  it("has no team column when the tournament has no teams", async () => {
-    const { id } = await seedImportTournament(false);
-
-    const parsed = await parse(await exportPlayers(id));
-
-    assert.equal(parsed.hasTeamColumn, false);
-    assert.equal(parsed.rows.length, 4);
+  it("refuses two rows with the same email", async () => {
+    const { id, emas } = await seedImportTournament();
+    const email = uniqueEmail();
+    const preview = await previewPlayerImport({ tournamentId: id, ...file(`id,ema id,email\n1,${emas[0]},${email}\n2,${emas[1]},${email.toUpperCase()}\n`) });
+    assert.equal(preview.valid, false);
+    assert.deepEqual(preview.rows.map((row) => row.issues.map((issue) => issue.code)), [["DUPLICATE_EMAIL"], ["DUPLICATE_EMAIL"]]);
   });
 
-  it("works as a template: importing the exported file changes nothing and warns about nothing", async () => {
-    const { id, emas } = await seedImportTournament(true);
-    await applyPlayerImport({
-      tournamentId: id,
-      ...file(`id,ema id,email,team\n1,${emas[0]},${uniqueEmail()},Reds\n2,${emas[1]},${uniqueEmail()},Reds\n`),
-      replaceExisting: false, uid: "editor",
+  it("keeps the team names when the file has no team column, and resets the unnamed teams when it has one", async () => {
+    const { id, emas } = await seedImportTournament({ isTeams: true });
+    await db.doc(`tournaments/${id}/teams/1`).set({ id: 1, name: "Old one" });
+    await db.doc(`tournaments/${id}/teams/2`).set({ id: 2, name: "Old two" });
+
+    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id\n1,${emas[0]}\n`), uid: "editor" });
+    assert.equal((await db.doc(`tournaments/${id}/teams/1`).get()).get("name"), "Old one");
+
+    await applyPlayerImport({ tournamentId: id, ...file(`id,ema id,team\n1,${emas[0]},Reds\n`), uid: "editor" });
+    assert.equal((await db.doc(`tournaments/${id}/teams/1`).get()).get("name"), "Reds");
+    assert.equal((await db.doc(`tournaments/${id}/teams/2`).get()).get("name"), "Team 2");
+  });
+
+  it("writes a big file in several batches", async () => {
+    const slots = 450;
+    const { id, emas } = await seedImportTournament({ isTeams: false, slots });
+    const csv = `id,ema id\n${emas.map((emaId, index) => `${index + 1},${emaId}`).join("\n")}\n`;
+
+    const result = await applyPlayerImport({ tournamentId: id, ...file(csv), uid: "editor" });
+
+    assert.deepEqual(result, { players: slots, changedSlots: slots, emptiedSlots: 0 });
+    assert.equal((await db.collection(`tournaments/${id}/emaPlayerAssignments`).get()).size, slots);
+    assert.equal((await slotOf(id, slots)).get("assignedEmaId"), emas[slots - 1]);
+  });
+
+  it("refuses an unknown tournament", async () => {
+    const failure = await errorOf(previewPlayerImport({ tournamentId: "missing", ...file("id,ema id\n1,1\n") }));
+    assert.equal(failure.status, 404);
+  });
+
+  describe("export", () => {
+    it("writes the account email, or the pending email when the slot has no account, for admins", async () => {
+      const { id, emas } = await seedImportTournament();
+      const owner = await createAccount({ role: "PLAYER" });
+      await setAccountEmaId({ uid: owner.uid, emaId: emas[0] });
+      const pending = uniqueEmail();
+      await db.doc(`tournaments/${id}/players/1`).update({ assignedEmaId: emas[0], email: `ignored-${pending}` });
+      await db.doc(`tournaments/${id}/players/2`).update({ assignedEmaId: emas[1], email: pending });
+
+      const exported = await exportPlayers(id, { includeEmails: true });
+      const parsed = await parsePlayerImportFile(exported.fileName, exported.buffer);
+
+      assert.deepEqual(parsed.rows.map((row) => [row.id, row.emaId, row.email]), [
+        ["1", emas[0], owner.email.toLowerCase()],
+        ["2", emas[1], pending],
+        ["3", "", ""],
+        ["4", "", ""],
+      ]);
     });
-    const exported = await exportPlayers(id);
 
-    const preview = await previewPlayerImport({ tournamentId: id, ...exported });
+    it("leaves the email column empty for the callers that are not admins", async () => {
+      const { id, emas } = await seedImportTournament();
+      await db.doc(`tournaments/${id}/players/1`).update({ assignedEmaId: emas[0], email: uniqueEmail() });
 
-    // The two assigned slots are unchanged. The two empty slots have no EMA number yet.
-    assert.deepEqual(preview.rows.map((row) => row.status), ["UNCHANGED", "UNCHANGED", "ERROR", "ERROR"]);
-    assert.deepEqual(preview.rows.slice(0, 2).flatMap((row) => row.issues), []);
-    assert.deepEqual(preview.teamRenames, []);
-  });
+      const exported = await exportPlayers(id, { includeEmails: false });
+      const parsed = await parsePlayerImportFile(exported.fileName, exported.buffer);
 
-  it("refuses a tournament that does not exist", async () => {
-    await assert.rejects(() => exportPlayers("does-not-exist"), /not found/i);
+      assert.equal(parsed.rows[0].emaId, emas[0]);
+      assert.equal(parsed.rows[0].email, "");
+    });
+
+    it("writes a file that the import accepts again", async () => {
+      const { id, emas } = await seedImportTournament({ isTeams: true });
+      await applyPlayerImport({ tournamentId: id, ...file(`id,ema id,email,team\n1,${emas[0]},${uniqueEmail()},Reds\n2,${emas[1]},,Reds\n3,${emas[2]},,Blues\n`), uid: "editor" });
+
+      const exported = await exportPlayers(id, { includeEmails: true });
+      const preview = await previewPlayerImport({ tournamentId: id, fileName: exported.fileName, buffer: exported.buffer });
+
+      assert.equal(preview.valid, true);
+      assert.equal(preview.importedPlayers, 3);
+    });
   });
 });

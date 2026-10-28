@@ -72,7 +72,7 @@ describe("what a player can read", () => {
     for (const slot of players) {
       assert.equal(slot.accountUid, null);
       assert.equal(slot.email, null);
-      assert.equal(slot.invitationStatus, "NONE");
+      assert.equal(slot.hasAccount, false);
     }
   });
 
@@ -85,19 +85,30 @@ describe("what a player can read", () => {
   it("refuses writes and editor reads in the player tournament", async () => {
     assert.equal((await server.request("PUT", `/tournaments/${t1}/tables/1/1/state`, { token: player.token, body: {} })).status, 403);
     assert.equal((await server.request("GET", `/tournaments/${t1}/members`, { token: player.token })).status, 403);
-    assert.equal((await server.request("PUT", `/tournaments/${t1}/player-accounts/emails`, { token: player.token, body: { players: [] } })).status, 403);
+    assert.equal((await server.request("POST", `/tournaments/${t1}/player-accounts/send`, { token: player.token, body: { players: [{ playerId: 1 }] } })).status, 403);
     assert.equal((await server.request("GET", `/tournaments/${t2}/players`, { token: player.token })).status, 403);
   });
 
-  it("shows an editor the email of the account of a slot, and never an email stored in the slot", async () => {
+  it("shows an editor whether a slot has an account, and never an email", async () => {
     const reader = await createAccount({ role: "EDITOR", memberOf: [t1] });
-    await db.doc(`tournaments/${t1}/players/2`).update({ invitedEmail: "stale@example.test" });
+    await db.doc(`tournaments/${t1}/players/2`).update({ email: "pending@example.test" });
 
     const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: reader.token });
+    const players = (body as { players: Array<{ id: number; email: string | null; hasAccount: boolean }> }).players;
+
+    assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.hasAccount]), [
+      [1, null, true], [2, null, false], [3, null, true], [4, null, true],
+    ]);
+  });
+
+  it("shows an admin the email of the account, or the pending email of a slot with no account", async () => {
+    const admin = await createAccount({ role: "ADMIN" });
+
+    const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: admin.token });
     const players = (body as { players: Array<{ id: number; email: string | null; accountUid: string | null }> }).players;
 
     assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.accountUid]), [
-      [1, owner.email, owner.uid], [2, null, null], [3, player.email, player.uid], [4, both.email, both.uid],
+      [1, owner.email, owner.uid], [2, "pending@example.test", null], [3, player.email, player.uid], [4, both.email, both.uid],
     ]);
   });
 

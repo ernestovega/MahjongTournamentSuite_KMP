@@ -53,8 +53,8 @@ test("report counts saves by source, conflicts and resets", () => {
       { tournamentId: "t1", isCompleted: true, useTotalsOnly: true, hasValidManualTotals: true, hasProgress: false },
     ],
     slots: [
-      { tournamentId: "t1", invitationStatus: "ACCEPTED", hasAccount: true, isAssigned: true },
-      { tournamentId: "t1", invitationStatus: "NONE", hasAccount: false, isAssigned: false },
+      { tournamentId: "t1", hasAccount: true, hasPassword: true, isAssigned: true },
+      { tournamentId: "t1", hasAccount: false, hasPassword: false, isAssigned: false },
     ],
   });
 
@@ -75,8 +75,7 @@ test("report counts saves by source, conflicts and resets", () => {
   assert.equal(item.totalsOnlyTables, 1);
   assert.equal(item.manualTotalsTables, 1);
   assert.equal(item.slotsWithAccount, 1);
-  assert.equal(item.invitationsSent, 1);
-  assert.equal(item.invitationsAccepted, 1);
+  assert.equal(item.slotsWithPassword, 1);
 });
 
 test("a change without a source counts as an editor save", () => {
@@ -164,10 +163,10 @@ test("the funnel counts tournaments that reach each step", () => {
     tournaments: [tournament(), tournament({ id: "t2" })],
     changes: [change({})],
     tables: [{ tournamentId: "t1", isCompleted: true, useTotalsOnly: false, hasValidManualTotals: false, hasProgress: true }],
-    slots: [{ tournamentId: "t1", invitationStatus: "INVITED", hasAccount: false, isAssigned: true }],
+    slots: [{ tournamentId: "t1", hasAccount: false, hasPassword: false, isAssigned: true }],
   });
   const counts = Object.fromEntries(report.funnel.map((step) => [step.key, step.count]));
-  assert.deepEqual(counts, { created: 2, assigned: 1, invited: 1, accounts: 0, data: 1, completed: 1 });
+  assert.deepEqual(counts, { created: 2, assigned: 1, accounts: 0, data: 1, completed: 1 });
 });
 
 test("countries group the tournaments", () => {

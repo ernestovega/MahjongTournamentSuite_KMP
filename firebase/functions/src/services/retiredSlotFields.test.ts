@@ -28,18 +28,19 @@ test("a slot with an empty non-member field only loses the field and keeps its n
 test("the retired invitation fields are removed from a slot", () => {
   const update = slotCleanupOf({
     id: 1, assignedEmaId: "00000001", accountUid: "uid", invitedEmail: "a@b.es", invitationStatus: "INVITED", invitedAt: new Date(),
+    notifiedAt: new Date(), email: "pending@b.es",
   }, 1)!;
 
   assert.ok(isDelete(update.invitedEmail));
   assert.ok(isDelete(update.invitationStatus));
   assert.ok(isDelete(update.invitedAt));
-  // The account link, the EMA number and the time of the last email stay.
-  assert.equal(update.accountUid, undefined);
+  assert.ok(isDelete(update.notifiedAt));
+  // The EMA number and the pending email of the import stay.
   assert.equal(update.assignedEmaId, undefined);
-  assert.equal("notifiedAt" in update, false);
+  assert.equal("email" in update, false);
 });
 
 test("a clean slot needs no update, so a second run changes nothing", () => {
-  assert.equal(slotCleanupOf({ id: 1, name: "Ana", assignedEmaId: "00000001", accountUid: "uid", notifiedAt: new Date() }, 1), null);
+  assert.equal(slotCleanupOf({ id: 1, name: "Ana", assignedEmaId: "00000001", accountUid: "uid", email: "a@b.es" }, 1), null);
   assert.equal(slotCleanupOf({ id: 2, name: "Player 2", country: "", assignedCountry: "" }, 2), null);
 });

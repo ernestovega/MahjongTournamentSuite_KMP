@@ -1,5 +1,4 @@
 import { NextFunction, Request, Response, Router } from "express";
-import { parseAcceptLanguage } from "../../services/i18n";
 import { recordActivity, tournamentNameOf } from "../../services/activityLog";
 
 import { auth, db } from "../../firebase";
@@ -8,11 +7,7 @@ import { requireEditor } from "../middleware/requireEditor";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
 import { requireTournamentReader } from "../middleware/requireTournamentReader";
-import {
-  runAccountAction,
-  saveAccountEmails,
-  type AccountAction,
-} from "../../services/playerAccountsService";
+import { runAccountAction } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
 import { hasAdminClaim } from "../../models/globalRole";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
@@ -60,7 +55,7 @@ import { getTournamentManifest } from "../../services/dataVersionsService";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
-import { applyPlayerImport, exportPlayers, IMPORT_BATCH_SIZE, previewPlayerImport } from "../../services/playerImportService";
+import { applyPlayerImport, exportPlayers, previewPlayerImport } from "../../services/playerImportService";
 import { runTournamentIntegrityCheck } from "../../services/tournamentIntegrityService";
 
 /** Reads the optional A4 sheet layout of the ID cards. No `layout=sheet` value means one card per page. */
@@ -790,13 +785,13 @@ export function tournamentsRouter(): Router {
         if (res.locals.reader === "PLAYER") {
           // Players see who plays and where, never the accounts or emails of other players.
           res.status(200).json({
-            players: players.map((player) => ({
-              ...player, accountUid: null, invitationStatus: "NONE", email: null,
-            })),
+            players: players.map((player) => ({ ...player, accountUid: null, hasAccount: false, email: null })),
           });
           return;
         }
-        res.status(200).json({ players });
+        // Only admins read emails. Editors see whether a slot has an account.
+        const isAdmin = hasAdminClaim(res.locals.auth);
+        res.status(200).json({ players: players.map((player) => (isAdmin ? player : { ...player, email: null })) });
       } catch (e) {
         next(e);
       }
@@ -1008,53 +1003,22 @@ export function tournamentsRouter(): Router {
     },
   );
 
-  // Send, resend and revoke work for one player or for many. The body always lists the players.
-  for (const action of ["send", "resend", "revoke"] as AccountAction[]) {
-    router.post(
-      `/:tournamentId/player-accounts/${action}`,
-      requireAuth,
-      requireTournamentEditor,
-      async (req, res, next) => {
-        try {
-          const raw = Array.isArray(req.body?.players) ? req.body.players as unknown[] : [];
-          const items = raw.map((entry) => {
-            const value = entry as { playerId?: unknown; email?: unknown };
-            const playerId = Number(value.playerId);
-            if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
-            return { playerId, email: typeof value.email === "string" ? value.email : undefined };
-          });
-          const results = await runAccountAction({
-            tournamentId: pathParam(req, "tournamentId"), action, items,
-            language: parseAcceptLanguage(req.headers["accept-language"]),
-          });
-          await recordActivity({
-            action: `account.${action}`, actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
-            target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
-          });
-          res.status(200).json({ results });
-        } catch (e) {
-          next(e);
-        }
-      },
-    );
-  }
-
-  router.put(
-    "/:tournamentId/player-accounts/emails",
+  // One action for one player or for many. The server invites the players with no account and resets the others.
+  router.post(
+    "/:tournamentId/player-accounts/send",
     requireAuth,
     requireTournamentEditor,
     async (req, res, next) => {
       try {
         const raw = Array.isArray(req.body?.players) ? req.body.players as unknown[] : [];
         const items = raw.map((entry) => {
-          const value = entry as { playerId?: unknown; email?: unknown };
-          const playerId = Number(value.playerId);
+          const playerId = Number((entry as { playerId?: unknown }).playerId);
           if (!Number.isInteger(playerId) || playerId <= 0) throw badRequest("playerId must be a positive integer");
-          return { playerId, email: String(value.email ?? "") };
+          return { playerId };
         });
-        const results = await saveAccountEmails({ tournamentId: pathParam(req, "tournamentId"), items });
+        const results = await runAccountAction({ tournamentId: pathParam(req, "tournamentId"), items });
         await recordActivity({
-          action: "account.saveEmails", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
+          action: "account.send", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
           target: `${items.length} players`, details: { playerIds: items.map((item) => item.playerId) },
         });
         res.status(200).json({ results });
@@ -1078,7 +1042,7 @@ export function tournamentsRouter(): Router {
     requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const file = await exportPlayers(pathParam(req, "tournamentId"));
+        const file = await exportPlayers(pathParam(req, "tournamentId"), { includeEmails: hasAdminClaim(res.locals.auth) });
         res.status(200).json({ fileName: file.fileName, dataBase64: file.buffer.toString("base64") });
       } catch (e) {
         next(e);
@@ -1107,21 +1071,11 @@ export function tournamentsRouter(): Router {
     async (req, res, next) => {
       try {
         const file = readImportFile(req.body);
-        const replaceExisting = req.body?.replaceExisting === true;
         const uid = (res.locals.auth as { uid: string }).uid;
-        const phase = req.body?.phase;
-        if (phase !== "CLEAR" && phase !== "ASSIGN" && phase !== "FINISH") throw badRequest("phase must be CLEAR, ASSIGN or FINISH");
-        const rows = Array.isArray(req.body?.rows) ? (req.body.rows as unknown[]).map(Number) : [];
-        if (rows.length > IMPORT_BATCH_SIZE || rows.some((row) => !Number.isInteger(row) || row <= 0)) {
-          throw badRequest(`At most ${IMPORT_BATCH_SIZE} rows per request`);
-        }
-        const result = await applyPlayerImport({
-          tournamentId: pathParam(req, "tournamentId"), ...file, replaceExisting, uid, phase, rows,
-        });
+        const result = await applyPlayerImport({ tournamentId: pathParam(req, "tournamentId"), ...file, uid });
         await recordActivity({
           action: "player.import", actor: actorFromToken(res.locals.auth), tournamentId: pathParam(req, "tournamentId"),
-          target: `${result.assigned} players`,
-          details: { phase, ...result, failures: result.failures.length, replaceExisting },
+          target: `${result.players} players`, details: { ...result },
         });
         res.status(200).json(result);
       } catch (e) {

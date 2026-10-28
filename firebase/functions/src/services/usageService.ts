@@ -39,8 +39,9 @@ export type UsageTable = {
 
 export type UsageSlot = {
   tournamentId: string;
-  invitationStatus: string;
   hasAccount: boolean;
+  /** True when the account of the slot has a password, so the person can sign in. */
+  hasPassword: boolean;
   isAssigned: boolean;
 };
 
@@ -168,9 +169,7 @@ export type TournamentUsage = {
   slots: number;
   assignedSlots: number;
   slotsWithAccount: number;
-  invitationsSent: number;
-  invitationsAccepted: number;
-  invitationsPending: number;
+  slotsWithPassword: number;
 };
 
 export type UsageReport = {
@@ -315,7 +314,7 @@ export function buildUsageReport(params: {
         endDate: known?.endDate ?? "", status: "DONE", tables: 0, completedTables: 0, handsTables: 0, totalsOnlyTables: 0,
         manualTotalsTables: 0, saves: 0, savesInPeriod: 0, playerSaves: 0, editorSaves: 0, resets: 0, conflicts: 0,
         tablesTouched: 0, savesPerTouchedTable: null, activeHours: null, lastActivityDaysAgo: null, slots: 0,
-        assignedSlots: 0, slotsWithAccount: 0, invitationsSent: 0, invitationsAccepted: 0, invitationsPending: 0,
+        assignedSlots: 0, slotsWithAccount: 0, slotsWithPassword: 0,
       };
       perTournament.set(id, item);
     }
@@ -344,9 +343,7 @@ export function buildUsageReport(params: {
     item.slots += 1;
     if (slot.isAssigned) item.assignedSlots += 1;
     if (slot.hasAccount) item.slotsWithAccount += 1;
-    if (slot.invitationStatus !== "NONE") item.invitationsSent += 1;
-    if (slot.invitationStatus === "ACCEPTED") item.invitationsAccepted += 1;
-    if (slot.invitationStatus === "INVITED" || slot.invitationStatus === "PENDING") item.invitationsPending += 1;
+    if (slot.hasPassword) item.slotsWithPassword += 1;
   }
 
   const lastActivityOf = new Map<string, number>();
@@ -583,7 +580,6 @@ export function buildUsageReport(params: {
   const funnel: FunnelStep[] = [
     { key: "created", label: "Tournaments created", count: rows.length },
     { key: "assigned", label: "With players assigned", count: rows.filter((item) => item.assignedSlots > 0).length },
-    { key: "invited", label: "With invitations sent", count: rows.filter((item) => item.invitationsSent > 0).length },
     { key: "accounts", label: "With player accounts", count: rows.filter((item) => item.slotsWithAccount > 0).length },
     { key: "data", label: "With match data", count: rows.filter((item) => item.saves > 0 || item.tablesTouched > 0).length },
     { key: "completed", label: "Fully completed", count: rows.filter((item) => item.tables > 0 && item.completedTables === item.tables).length },
@@ -645,7 +641,7 @@ export async function loadUsageReport(days = DEFAULT_USAGE_PERIOD, now = new Dat
     db.collectionGroup("changes").select("kind", "source", "uid", "name", "roundId", "tableId", "handChangeCount", "at").get(),
     db.collection("activity").select("action", "uid", "name", "tournamentId", "at").get(),
     db.collectionGroup("tables").select("isCompleted", "useTotalsOnly", "hasValidManualTotals", "hasProgress").get(),
-    db.collectionGroup("players").select("notifiedAt", "assignedEmaId").get(),
+    db.collectionGroup("players").select("assignedEmaId").get(),
     db.collection("emaIdIndex").select("uid").get(),
     db.collection("users").select("alias").get(),
   ]);
@@ -729,11 +725,8 @@ export async function loadUsageReport(days = DEFAULT_USAGE_PERIOD, now = new Dat
       const accountUid = uidByEmaId.get(text(data.assignedEmaId)) ?? "";
       return {
         tournamentId,
-        // An account with a password accepted. An account without one is invited once an email went out.
-        invitationStatus: accountUid === "" ? "NONE"
-          : withPasswordUids.has(accountUid) ? "ACCEPTED"
-          : data.notifiedAt != null ? "INVITED" : "NONE",
         hasAccount: accountUid !== "",
+        hasPassword: withPasswordUids.has(accountUid),
         isAssigned: text(data.assignedEmaId) !== "",
       };
     }),

@@ -1,7 +1,10 @@
 import { FieldValue } from "firebase-admin/firestore";
 
-/** Fields of a slot that the email and account rules retired. The email now lives only in the account. */
-const RETIRED_SLOT_FIELDS = ["invitedEmail", "invitationStatus", "invitedAt"] as const;
+/**
+ * Fields of a slot that the account rules retired. The slot keeps only a pending `email`, which the import writes.
+ * `notifiedAt` went away with the invitation states.
+ */
+const RETIRED_SLOT_FIELDS = ["invitedEmail", "invitationStatus", "invitedAt", "notifiedAt"] as const;
 
 type Data = Record<string, unknown>;
 

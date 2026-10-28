@@ -11,7 +11,7 @@ const RETIRED_TEST_TOURNAMENT = "test-guests-unicode";
 /**
  * Removes the retired models from the stored data:
  * - the `nonMember` data of slots (the slot becomes an open slot),
- * - the `invitedEmail`, `invitationStatus` and `invitedAt` fields of slots,
+ * - the `invitedEmail`, `invitationStatus`, `invitedAt` and `notifiedAt` fields of slots,
  * - every document of the `playerInvitations` collections,
  * - the retired test tournament `test-guests-unicode`.
  * It previews by default. Add --apply to write.

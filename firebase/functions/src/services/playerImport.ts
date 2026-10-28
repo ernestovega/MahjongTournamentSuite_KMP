@@ -236,11 +236,14 @@ export async function parsePlayerImportFile(fileName: string, buffer: Buffer): P
   return { rows, hasEmailColumn: emailColumn >= 0, hasTeamColumn: teamColumn >= 0 };
 }
 
+/** A slot as the export writes it. The email is empty when the caller may not read emails. */
+export type ExportSlot = SlotInfo & { email: string | null };
+
 /**
  * The rows of an export file, in the format that the import reads. The first row holds the column names.
  * Every slot has a row, also an empty slot, so the file works as a template. The team column exists only for team tournaments.
  */
-export function buildPlayerExportRecords(slots: SlotInfo[], isTeams: boolean, teamNames: Map<number, string>): string[][] {
+export function buildPlayerExportRecords(slots: ExportSlot[], isTeams: boolean, teamNames: Map<number, string>): string[][] {
   const header = ["id", "ema id", "email", ...(isTeams ? ["team"] : [])];
   const rows = [...slots].sort((a, b) => a.id - b.id).map((slot) => [
     String(slot.id),
@@ -263,7 +266,7 @@ export async function writePlayerExportXlsx(records: string[][]): Promise<Buffer
 }
 
 export type IssueCode =
-  // Errors: the row is skipped.
+  // Errors: the file cannot be applied.
   | "INVALID_ID"
   | "UNKNOWN_SLOT"
   | "DUPLICATE_SLOT"
@@ -272,34 +275,27 @@ export type IssueCode =
   | "UNKNOWN_EMA_ID"
   | "DUPLICATE_EMA_ID"
   | "INVALID_EMAIL"
+  /** Two rows have the same email. One email belongs to one account. */
+  | "DUPLICATE_EMAIL"
+  /** An account owns the email, and the account has another EMA id or none. */
+  | "EMAIL_OWNED_BY_OTHER_ACCOUNT"
   | "TEAM_NAME_TOO_LONG"
   | "TEAM_NAME_CONFLICT"
   | "TEAM_NAME_IN_USE"
   // Warnings: the row is applied.
-  /** The slot holds a player that the file does not place in any slot. Applying the row removes that player. */
-  | "REPLACES_PLAYER"
-  /** The account of the player has another email. The account email stays and the email of the file is not saved. */
-  | "EMAIL_KEPT_ACCOUNT"
-  /** The email belongs to another account, or to an earlier row of the file. The email is not saved. */
-  | "EMAIL_IN_USE"
   | "TEAM_IGNORED";
 
 export type RowIssue = {
   code: IssueCode;
   severity: "ERROR" | "WARNING";
-  /** Values for the text of the issue, such as the old and the new email. */
+  /** Values for the text of the issue, such as the email or the slot number. */
   args: string[];
 };
-
-/** REPLACE: the row needs the acceptance of the editor, because it removes a player or depends on a row that does. */
-export type RowStatus = "NEW" | "REPLACE" | "UNCHANGED" | "ERROR";
 
 export type SlotInfo = {
   id: number;
   team: number;
   emaId: string | null;
-  /** The email of the account linked to the slot. The email lives only in the account. */
-  email: string | null;
 };
 
 export type PlannedRow = {
@@ -308,34 +304,28 @@ export type PlannedRow = {
   emaId: string | null;
   email: string | null;
   team: string | null;
-  status: RowStatus;
   issues: RowIssue[];
-  /** True when applying the row creates the account of the player, because the email is new. */
-  createsAccount: boolean;
-  /** What the slot holds now. Null when the slot does not exist. */
-  current: { emaId: string | null; email: string | null; teamName: string | null } | null;
 };
 
 export type ImportPlan = {
   rows: PlannedRow[];
-  /** Slots that no row of the file names. They stay as they are. */
-  untouchedSlotIds: number[];
-  /** New team names by team id. Only teams whose name changes. */
-  teamRenames: Array<{ teamId: number; name: string }>;
+  /** True when no row has an error. Only then can the import apply. */
+  valid: boolean;
+  /** Slots that the file leaves without a player. The import empties them. */
+  emptiedSlotIds: number[];
+  /** The final name of every team, by team id. Empty when the file has no team column or the tournament has no teams. */
+  teamNames: Array<{ teamId: number; name: string }>;
 };
 
 export type PlanInput = {
   rows: ImportRow[];
   slots: SlotInfo[];
   isTeams: boolean;
-  teamNames: Map<number, string>;
+  /** True when the file has a team column. Without it, the team names stay as they are. */
+  hasTeamColumn: boolean;
   registeredEmaIds: ReadonlySet<string>;
-  /** The email of the account that owns each EMA id. An EMA id with no account is missing. */
-  accountEmailByEma: ReadonlyMap<string, string | null>;
   /** The accounts that own an email, by email in lower case. The value is the EMA id of the account, or "" when it has none. */
   emailOwners: ReadonlyMap<string, string>;
-  /** True when the editor accepts to remove the players that the file does not place in any slot. */
-  replaceExisting: boolean;
 };
 
 /** An EMA number as the server stores it: digits only, 8 digits long. Null when the text is not a number. */
@@ -350,8 +340,9 @@ function sameText(left: string, right: string): boolean {
 }
 
 /**
- * Checks every row of the file against the tournament and says what the import would do.
- * It changes nothing. The apply step uses the same plan, so the preview and the result agree.
+ * Checks every row of the file against the tournament. It changes nothing.
+ * The import overwrites all players and teams, so any error means that the whole file is refused.
+ * The apply step uses the same plan, so the preview and the result agree.
  */
 export function planPlayerImport(input: PlanInput): ImportPlan {
   const slotsById = new Map(input.slots.map((slot) => [slot.id, slot]));
@@ -361,7 +352,6 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     if (!issues.some((issue) => issue.code === code)) issues.push({ code, severity, args });
     issuesByRow.set(row, issues);
   };
-  const hasError = (row: number) => (issuesByRow.get(row) ?? []).some((issue) => issue.severity === "ERROR");
 
   const slotIdOf = new Map<number, number>();
   const emaOf = new Map<number, string>();
@@ -378,7 +368,8 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     }
 
     if (row.emaId.length === 0) {
-      addIssue(row.row, "MISSING_EMA_ID", "ERROR");
+      // A row with an id and nothing else is an empty slot, as in the template of the export.
+      if (row.email.length > 0) addIssue(row.row, "MISSING_EMA_ID", "ERROR");
     } else {
       const emaId = normalizeEmaId(row.emaId);
       if (emaId == null) addIssue(row.row, "INVALID_EMA_ID", "ERROR", [row.emaId]);
@@ -399,131 +390,69 @@ export function planPlayerImport(input: PlanInput): ImportPlan {
     }
   }
 
-  const rowsBySlot = new Map<number, ImportRow[]>();
-  const rowsByEma = new Map<string, ImportRow[]>();
-  for (const row of input.rows) {
-    const slotId = slotIdOf.get(row.row);
-    if (slotId != null) rowsBySlot.set(slotId, [...(rowsBySlot.get(slotId) ?? []), row]);
-    const emaId = emaOf.get(row.row);
-    if (emaId != null) rowsByEma.set(emaId, [...(rowsByEma.get(emaId) ?? []), row]);
-  }
-  rowsBySlot.forEach((rows, slotId) => {
+  const rowsBy = <K>(keyOf: (row: ImportRow) => K | undefined): Map<K, ImportRow[]> => {
+    const groups = new Map<K, ImportRow[]>();
+    for (const row of input.rows) {
+      const key = keyOf(row);
+      if (key !== undefined) groups.set(key, [...(groups.get(key) ?? []), row]);
+    }
+    return groups;
+  };
+  rowsBy((row) => slotIdOf.get(row.row)).forEach((rows, slotId) => {
     if (rows.length > 1) rows.forEach((row) => addIssue(row.row, "DUPLICATE_SLOT", "ERROR", [String(slotId)]));
   });
-  rowsByEma.forEach((rows, emaId) => {
+  rowsBy((row) => emaOf.get(row.row)).forEach((rows, emaId) => {
     if (rows.length > 1) rows.forEach((row) => addIssue(row.row, "DUPLICATE_EMA_ID", "ERROR", [emaId]));
   });
+  rowsBy((row) => emailOf.get(row.row)).forEach((rows, email) => {
+    if (rows.length > 1) rows.forEach((row) => addIssue(row.row, "DUPLICATE_EMAIL", "ERROR", [email]));
+  });
+  // An account that owns the email must own the EMA id of the row too. Then the email is the email of that player.
+  for (const row of input.rows) {
+    const email = emailOf.get(row.row);
+    const emaId = emaOf.get(row.row);
+    const owner = email == null ? undefined : input.emailOwners.get(email);
+    if (email != null && owner !== undefined && owner !== emaId) addIssue(row.row, "EMAIL_OWNED_BY_OTHER_ACCOUNT", "ERROR", [email]);
+  }
 
   // The rows of one team must agree on its name.
-  const rowsByTeam = new Map<number, ImportRow[]>();
-  for (const row of input.rows) {
+  const rowsByTeam = rowsBy((row) => {
     const slotId = slotIdOf.get(row.row);
-    if (slotId == null || !teamOf.has(row.row)) continue;
-    const teamId = slotsById.get(slotId)!.team;
-    rowsByTeam.set(teamId, [...(rowsByTeam.get(teamId) ?? []), row]);
-  }
-  rowsByTeam.forEach((rows) => {
+    return slotId == null || !teamOf.has(row.row) ? undefined : slotsById.get(slotId)!.team;
+  });
+  const namedTeams = new Map<number, string>();
+  rowsByTeam.forEach((rows, teamId) => {
     const first = teamOf.get(rows[0].row)!;
     if (rows.some((row) => !sameText(teamOf.get(row.row)!, first))) {
       rows.forEach((row) => addIssue(row.row, "TEAM_NAME_CONFLICT", "ERROR"));
-    }
-  });
-  // No two teams can end with the same name.
-  const finalTeamNames = () => {
-    const names = new Map(input.teamNames);
-    rowsByTeam.forEach((rows, teamId) => {
-      const active = rows.filter((row) => !hasError(row.row));
-      if (active.length > 0) names.set(teamId, teamOf.get(active[0].row)!);
-    });
-    return names;
-  };
-  const names = finalTeamNames();
-  rowsByTeam.forEach((rows, teamId) => {
-    const name = names.get(teamId) ?? "";
-    const clash = [...names.entries()].some(([otherId, otherName]) => otherId !== teamId && sameText(otherName, name));
-    if (clash) rows.forEach((row) => addIssue(row.row, "TEAM_NAME_IN_USE", "ERROR", [teamOf.get(row.row)!]));
-  });
-
-  // The file decides the position of every player. A player may move to another slot, also to a slot that
-  // another player leaves in the same file. Only a player that the file does not place anywhere is lost.
-  const placed = (rows: ImportRow[]) => new Set(rows.flatMap((row) => (emaOf.has(row.row) ? [emaOf.get(row.row)!] : [])));
-  const loses = (row: ImportRow, rows: ImportRow[]): boolean => {
-    const slot = slotsById.get(slotIdOf.get(row.row)!)!;
-    const emaId = emaOf.get(row.row);
-    return emaId != null && slot.emaId != null && slot.emaId !== emaId && !placed(rows).has(slot.emaId);
-  };
-  const validRows = input.rows.filter((row) => slotIdOf.has(row.row) && emaOf.has(row.row) && !hasError(row.row));
-  // The rows that need no acceptance. A row that loses a player is out, and then the players that it would have
-  // moved are lost too, so the check runs again until nothing changes.
-  let safeRows = validRows;
-  for (;;) {
-    const next = safeRows.filter((row) => !loses(row, safeRows));
-    if (next.length === safeRows.length) break;
-    safeRows = next;
-  }
-  const safeSet = new Set(safeRows.map((row) => row.row));
-  const isActive = (row: ImportRow) => !hasError(row.row) && (input.replaceExisting || safeSet.has(row.row));
-
-  // The email of an account never changes here. A new email creates an account only when no account owns the email.
-  const emailsToCreate = new Map<string, string>();
-  const planned: PlannedRow[] = input.rows.map((row) => {
-    const slotId = slotIdOf.get(row.row) ?? null;
-    const slot = slotId == null ? null : slotsById.get(slotId)!;
-    const emaId = emaOf.get(row.row) ?? null;
-    const email = emailOf.get(row.row) ?? null;
-    const team = teamOf.get(row.row) ?? null;
-    const current = slot == null ? null : {
-      emaId: slot.emaId,
-      email: slot.email,
-      teamName: input.isTeams ? input.teamNames.get(slot.team) ?? null : null,
-    };
-    let createsAccount = false;
-    if (slot != null && !hasError(row.row)) {
-      if (loses(row, validRows)) addIssue(row.row, "REPLACES_PLAYER", "WARNING");
-      if (email != null && emaId != null && isActive(row)) {
-        const accountEmail = input.accountEmailByEma.get(emaId);
-        const owner = input.emailOwners.get(email);
-        const earlier = emailsToCreate.get(email);
-        if (accountEmail !== undefined) {
-          if (accountEmail !== email) addIssue(row.row, "EMAIL_KEPT_ACCOUNT", "WARNING", [accountEmail ?? "", email]);
-        } else if (owner !== undefined) {
-          addIssue(row.row, "EMAIL_IN_USE", "WARNING", [owner]);
-        } else if (earlier !== undefined) {
-          addIssue(row.row, "EMAIL_IN_USE", "WARNING", [earlier]);
-        } else {
-          emailsToCreate.set(email, emaId);
-          createsAccount = true;
-        }
-      }
-    }
-    const issues = issuesByRow.get(row.row) ?? [];
-    let status: RowStatus;
-    if (issues.some((issue) => issue.severity === "ERROR")) {
-      status = "ERROR";
-    } else if (!safeSet.has(row.row)) {
-      status = "REPLACE";
     } else {
-      const teamChanges = team != null && input.isTeams && !sameText(team, input.teamNames.get(slot!.team) ?? "");
-      status = slot!.emaId !== emaId || createsAccount || teamChanges ? "NEW" : "UNCHANGED";
+      namedTeams.set(teamId, first);
     }
-    return { row: row.row, slotId, emaId, email, team, status, issues, createsAccount, current };
   });
+  // No two teams can end with the same name. A team that the file does not name gets the default name.
+  const finalNames = new Map<number, string>();
+  if (input.isTeams && input.hasTeamColumn) {
+    new Set(input.slots.map((slot) => slot.team)).forEach((teamId) => finalNames.set(teamId, namedTeams.get(teamId) ?? `Team ${teamId}`));
+    rowsByTeam.forEach((rows, teamId) => {
+      const name = finalNames.get(teamId)!;
+      const clash = [...finalNames.entries()].some(([otherId, otherName]) => otherId !== teamId && sameText(otherName, name));
+      if (clash) rows.forEach((row) => addIssue(row.row, "TEAM_NAME_IN_USE", "ERROR", [teamOf.get(row.row)!]));
+    });
+  }
 
-  const finalNames = finalTeamNames();
-  const activeTeamIds = new Set<number>();
-  input.rows.forEach((row) => {
-    const slotId = slotIdOf.get(row.row);
-    if (slotId != null && teamOf.has(row.row) && isActive(row)) activeTeamIds.add(slotsById.get(slotId)!.team);
-  });
-  const teamRenames = [...activeTeamIds]
-    .filter((teamId) => !sameText(finalNames.get(teamId) ?? "", input.teamNames.get(teamId) ?? ""))
-    .sort((left, right) => left - right)
-    .map((teamId) => ({ teamId, name: finalNames.get(teamId)! }));
-
-  const namedSlots = new Set(slotIdOf.values());
+  const planned: PlannedRow[] = input.rows.map((row) => ({
+    row: row.row,
+    slotId: slotIdOf.get(row.row) ?? null,
+    emaId: emaOf.get(row.row) ?? null,
+    email: emailOf.get(row.row) ?? null,
+    team: teamOf.get(row.row) ?? null,
+    issues: issuesByRow.get(row.row) ?? [],
+  }));
+  const filledSlots = new Set(input.rows.flatMap((row) => (slotIdOf.has(row.row) && emaOf.has(row.row) ? [slotIdOf.get(row.row)!] : [])));
   return {
     rows: planned,
-    untouchedSlotIds: input.slots.map((slot) => slot.id).filter((id) => !namedSlots.has(id)).sort((a, b) => a - b),
-    teamRenames,
+    valid: !planned.some((row) => row.issues.some((issue) => issue.severity === "ERROR")),
+    emptiedSlotIds: input.slots.map((slot) => slot.id).filter((id) => !filledSlots.has(id)).sort((a, b) => a - b),
+    teamNames: [...finalNames.entries()].sort((a, b) => a[0] - b[0]).map(([teamId, name]) => ({ teamId, name })),
   };
 }

@@ -4,15 +4,7 @@ import { auth, db } from "../firebase";
 import { badRequest, conflict, notFound } from "../api/httpError";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 import { sendPasswordResetEmail } from "./firebaseAuthRest";
-import { sendEmail } from "./mailService";
-import { buildRegistrationEmail, DEFAULT_LANGUAGE, type Language } from "./i18n";
-import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer } from "./playersService";
 import { assertEmailAvailable, createUserProfile, grantPlayerCapability, revokePlayerCapability } from "./usersService";
-
-/** Where a player opens the tournament after the registration email. Set PLAYER_APP_URL to the player web site. */
-function playerAppUrl(): string {
-  return (process.env.PLAYER_APP_URL ?? "https://mtsplayer.mahjongmadrid.com").replace(/\/$/, "");
-}
 
 /** The data of an account that the tournament screens need. The email lives only in the account. */
 export type AccountInfo = {
@@ -182,17 +174,9 @@ export async function setAccountEmaId(params: { uid: string; emaId: string | nul
 
 export const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-/** The full EMA name of a player. A new account uses it as its first alias. Returns "" when the player is unknown. */
-async function emaFullName(emaId: string): Promise<string> {
-  const snap = await db.doc(`${EMA_PLAYER_REGISTRY_COLLECTION}/${emaId}`).get();
-  if (!snap.exists) return "";
-  const player = toPlayer(emaId, snap.data() ?? {});
-  return `${player.firstName} ${player.lastName}`.trim();
-}
-
 /**
- * Creates the account of an EMA player from an email. The account has no password and the server sends no email.
- * The person chooses a password later, with the password reset email that "Invite" sends.
+ * Creates the account of an EMA player from an email. The account has no password and no alias, and this function
+ * sends no email. The person chooses a password later, with the password reset email that "Invite" sends.
  * The account links to every tournament that holds the EMA id. The email never links an existing account to an EMA id:
  * an email that an account owns already is refused, because several people can share one email.
  */
@@ -203,7 +187,7 @@ export async function createPlayerAccount(params: { email: string; emaId: string
   await assertEmailAvailable(email);
   const user = await auth.createUser({ email, disabled: false });
   try {
-    await createUserProfile(user.uid, email, await emaFullName(params.emaId));
+    await createUserProfile(user.uid, email);
     await setAccountEmaId({ uid: user.uid, emaId: params.emaId });
   } catch (error) {
     await setAccountEmaId({ uid: user.uid, emaId: null }).catch(() => undefined);
@@ -214,103 +198,60 @@ export async function createPlayerAccount(params: { email: string; emaId: string
   return user.uid;
 }
 
-export type AccountAction = "send" | "resend" | "revoke";
-export type AccountOutcome = "INVITED" | "NOTIFIED" | "REVOKED" | "SKIPPED" | "FAILED";
-export type AccountActionItem = { playerId: number; email?: string };
-export type AccountActionResult = { playerId: number; outcome: AccountOutcome; message?: string };
+/** Why an action failed for a player. The client turns the reason into a text for the editor. */
+export type AccountFailure = "PLAYER_NOT_FOUND" | "NO_EMA_ID" | "NO_EMAIL" | "EMAIL_IN_USE" | "EMAIL_FAILED" | "UNEXPECTED";
+/** INVITED: the server made the account and sent the password reset email. RESET_SENT: the account existed already. */
+export type AccountOutcome = "INVITED" | "RESET_SENT" | "FAILED";
+export type AccountActionItem = { playerId: number };
+export type AccountActionResult = { playerId: number; outcome: AccountOutcome; reason?: AccountFailure };
 
 const MAX_BULK_PLAYERS = 200;
 const BULK_CONCURRENCY = 5;
 
-async function markNotified(tournamentId: string, playerId: number): Promise<void> {
-  await db.doc(`tournaments/${tournamentId}/players/${playerId}`)
-    .update({ notifiedAt: FieldValue.serverTimestamp() });
-  await bumpTournamentDataVersion(tournamentId, "players");
-}
+const failed = (playerId: number, reason: AccountFailure): AccountActionResult => ({ playerId, outcome: "FAILED", reason });
 
-/** Tells a player who has a password that the registration exists. */
-async function notifyRegistration(params: { tournamentId: string; playerId: number; email: string; language: Language }): Promise<void> {
-  const tournament = await db.doc(`tournaments/${params.tournamentId}`).get();
-  const name = String(tournament.get("name") ?? "");
-  const link = `${playerAppUrl()}/?tournament=${encodeURIComponent(params.tournamentId)}`;
-  await sendEmail({ to: params.email, ...buildRegistrationEmail(params.language, { tournamentName: name, link }) });
-  await markNotified(params.tournamentId, params.playerId);
-}
-
-/** The reasons why an email cannot be saved for a player. The text goes to the editor. */
-function emailRefusal(error: unknown): string | null {
-  if (error && typeof error === "object" && "status" in error && "message" in error) {
-    return String((error as { message: unknown }).message);
-  }
-  return null;
-}
-
-async function runOne(
-  tournamentId: string,
-  action: AccountAction,
-  item: AccountActionItem,
-  language: Language,
-): Promise<AccountActionResult> {
-  const { playerId } = item;
-  const slotRef = db.doc(`tournaments/${tournamentId}/players/${playerId}`);
-  const slot = await slotRef.get();
-  if (!slot.exists) return { playerId, outcome: "FAILED", message: "Player not found" };
-  const emaId = slot.get("assignedEmaId");
-  const hasEma = typeof emaId === "string" && emaId.length > 0;
-  const email = (item.email ?? "").trim().toLowerCase();
-  if (email && !EMAIL_PATTERN.test(email)) return { playerId, outcome: "FAILED", message: "Invalid email" };
-  const ownedAccount = hasEma ? (await loadAccountsByEmaId([emaId])).get(emaId) : undefined;
-
-  if (action === "revoke") {
-    // The account belongs to the EMA id, so the revoke only forgets that the player got an email.
-    if (slot.get("notifiedAt") == null) return { playerId, outcome: "SKIPPED", message: "Nothing to revoke" };
-    await slotRef.update({ notifiedAt: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() });
-    await bumpTournamentDataVersion(tournamentId, "players");
-    return { playerId, outcome: "REVOKED" };
-  }
-
-  if (!hasEma) return { playerId, outcome: "FAILED", message: "The player has no EMA id" };
+/** Sends the password reset email. A failed email gives the reason, and the account stays for a new try. */
+async function sendReset(playerId: number, email: string, outcome: AccountOutcome): Promise<AccountActionResult> {
   try {
-    let accountUid = ownedAccount?.uid ?? null;
-    if (accountUid == null) {
-      if (!email) return { playerId, outcome: "FAILED", message: "No email for this player" };
-      accountUid = await createPlayerAccount({ email, emaId: String(emaId) });
-    }
-    const account = ownedAccount ?? (await loadAccounts([accountUid])).get(accountUid);
-    if (account?.email == null) return { playerId, outcome: "FAILED", message: "The account of this player has no email" };
-    // The email of the account always wins. A different email does not change the account.
-    if (email && email !== account.email) {
-      return { playerId, outcome: "FAILED", message: `The account of this player has the email ${account.email}. The account email stays.` };
-    }
-    if (action === "send" && slot.get("notifiedAt") != null) return { playerId, outcome: "SKIPPED", message: "Already notified" };
-    if (!account.hasPassword) {
-      // The account has no password yet. The password reset email lets the person choose one.
-      await sendPasswordResetEmail(account.email);
-      await markNotified(tournamentId, playerId);
-      return { playerId, outcome: "INVITED" };
-    }
-    await notifyRegistration({ tournamentId, playerId, email: account.email, language });
-    return { playerId, outcome: "NOTIFIED" };
+    await sendPasswordResetEmail(email);
+    return { playerId, outcome };
   } catch (error) {
-    if ((error as { code?: string }).code === "email_failed") {
-      return { playerId, outcome: "FAILED", message: "The email could not be sent. Use Resend." };
-    }
-    const message = emailRefusal(error);
-    if (message != null) return { playerId, outcome: "FAILED", message };
-    throw error;
+    console.error("Password reset email failed", { playerId, error });
+    return failed(playerId, "EMAIL_FAILED");
   }
 }
 
 /**
- * Runs one action for one player or for many. Every player gets its own result.
- * Editors start these actions by hand. Assigning a player never sends an email.
+ * Handles one player by the state of the slot. A slot with no account gets one, made from the pending email of the
+ * import, and the password reset email. A slot with an account gets the password reset email.
+ */
+async function runOne(tournamentId: string, playerId: number): Promise<AccountActionResult> {
+  const slot = await db.doc(`tournaments/${tournamentId}/players/${playerId}`).get();
+  if (!slot.exists) return failed(playerId, "PLAYER_NOT_FOUND");
+  const emaId = slot.get("assignedEmaId");
+  if (typeof emaId !== "string" || emaId.length === 0) return failed(playerId, "NO_EMA_ID");
+  const account = (await loadAccountsByEmaId([emaId])).get(emaId);
+  if (account != null) {
+    return account.email == null ? failed(playerId, "NO_EMAIL") : sendReset(playerId, account.email, "RESET_SENT");
+  }
+  const pending = slot.get("email");
+  if (typeof pending !== "string" || pending === "") return failed(playerId, "NO_EMAIL");
+  try {
+    await createPlayerAccount({ email: pending, emaId });
+  } catch (error) {
+    if ((error as { status?: number }).status === 409) return failed(playerId, "EMAIL_IN_USE");
+    throw error;
+  }
+  return sendReset(playerId, pending.trim().toLowerCase(), "INVITED");
+}
+
+/**
+ * Sends the action that fits each player: invite when the slot has no account, password reset when it has one.
+ * Every player gets its own result. Editors start this by hand. Importing or assigning a player never sends an email.
  */
 export async function runAccountAction(params: {
   tournamentId: string;
-  action: AccountAction;
   items: AccountActionItem[];
-  /** The language of the emails. The default is English. */
-  language?: Language;
 }): Promise<AccountActionResult[]> {
   if (params.items.length === 0) throw badRequest("Choose at least one player");
   if (params.items.length > MAX_BULK_PLAYERS) throw badRequest(`At most ${MAX_BULK_PLAYERS} players per request`);
@@ -321,53 +262,13 @@ export async function runAccountAction(params: {
       const index = next++;
       const item = params.items[index];
       try {
-        results[index] = await runOne(params.tournamentId, params.action, item, params.language ?? DEFAULT_LANGUAGE);
+        results[index] = await runOne(params.tournamentId, item.playerId);
       } catch (error) {
-        results[index] = {
-          playerId: item.playerId,
-          outcome: "FAILED",
-          message: error instanceof Error ? error.message : "Unexpected error",
-        };
+        console.error("Account action failed", { playerId: item.playerId, error });
+        results[index] = failed(item.playerId, "UNEXPECTED");
       }
     }
   };
   await Promise.all(Array.from({ length: Math.min(BULK_CONCURRENCY, params.items.length) }, worker));
-  return results;
-}
-
-export type EmailOutcome = "CREATED" | "UNCHANGED" | "KEPT_ACCOUNT_EMAIL" | "FAILED";
-export type EmailResult = { playerId: number; outcome: EmailOutcome; message?: string };
-
-/**
- * Saves the email of players in their accounts. A player with no account gets a new account without a password.
- * An account that has an email keeps it: a different email is refused. No email is sent.
- */
-export async function saveAccountEmails(params: {
-  tournamentId: string;
-  items: Array<{ playerId: number; email: string }>;
-}): Promise<EmailResult[]> {
-  const results: EmailResult[] = [];
-  for (const item of params.items) {
-    const email = item.email.trim().toLowerCase();
-    try {
-      if (!EMAIL_PATTERN.test(email)) throw badRequest(`Invalid email for player ${item.playerId}`);
-      const slot = await db.doc(`tournaments/${params.tournamentId}/players/${item.playerId}`).get();
-      if (!slot.exists) throw notFound("Player not found");
-      const emaId = slot.get("assignedEmaId");
-      if (typeof emaId !== "string" || emaId.length === 0) throw badRequest("The player has no EMA id");
-      const account = (await loadAccountsByEmaId([emaId])).get(emaId);
-      if (account == null) {
-        await createPlayerAccount({ email, emaId });
-        results.push({ playerId: item.playerId, outcome: "CREATED" });
-        continue;
-      }
-      if (account?.email === email) results.push({ playerId: item.playerId, outcome: "UNCHANGED" });
-      else results.push({ playerId: item.playerId, outcome: "KEPT_ACCOUNT_EMAIL", message: account?.email ?? "" });
-    } catch (error) {
-      const message = emailRefusal(error);
-      if (message == null) throw error;
-      results.push({ playerId: item.playerId, outcome: "FAILED", message });
-    }
-  }
   return results;
 }

@@ -36,7 +36,7 @@ describe("player import routes", () => {
     const { status, body } = await preview(editor.token, file("id,ema id\n1,1\n"));
 
     assert.equal(status, 200);
-    assert.equal((body as { rows: Array<{ status: string }> }).rows[0].status, "NEW");
+    assert.equal((body as { valid: boolean }).valid, true);
     assert.equal((await db.doc(`tournaments/${tournamentId}/players/1`).get()).get("assignedEmaId"), null);
   });
 
@@ -44,7 +44,7 @@ describe("player import routes", () => {
     assert.equal((await preview(null, file("id,ema id\n1,1\n"))).status, 401);
     assert.equal((await preview(player.token, file("id,ema id\n1,1\n"))).status, 403);
     assert.equal((await preview(otherEditor.token, file("id,ema id\n1,1\n"))).status, 403);
-    assert.equal((await apply(otherEditor.token, { ...file("id,ema id\n1,1\n"), phase: "ASSIGN", rows: [2] })).status, 403);
+    assert.equal((await apply(otherEditor.token, file("id,ema id\n1,1\n"))).status, 403);
     assert.equal((await db.doc(`tournaments/${tournamentId}/players/1`).get()).get("assignedEmaId"), null);
   });
 
@@ -64,24 +64,38 @@ describe("player import routes", () => {
   it("refuses a request without a file or with a file that is not a table", async () => {
     assert.equal((await preview(editor.token, {})).status, 400);
     assert.equal((await preview(editor.token, file("name,email\nAna,a@b.es"))).status, 400);
+    assert.equal((await apply(editor.token, {})).status, 400);
   });
 
-  it("refuses an unknown step and too many rows in one step", async () => {
-    assert.equal((await apply(editor.token, { ...file("id,ema id\n1,1\n"), phase: "NOW" })).status, 400);
-    assert.equal((await apply(editor.token, { ...file("id,ema id\n1,1\n") })).status, 400);
-    const rows = Array.from({ length: 26 }, (_, index) => index + 2);
-    assert.equal((await apply(editor.token, { ...file("id,ema id\n1,1\n"), phase: "ASSIGN", rows })).status, 400);
-    assert.equal((await apply(editor.token, { ...file("id,ema id\n1,1\n"), phase: "ASSIGN", rows: ["x"] })).status, 400);
+  it("refuses a file with errors in the apply step and changes nothing", async () => {
+    const { status, body } = await apply(editor.token, file("id,ema id\n1,99999999\n"));
+
+    assert.equal(status, 409);
+    assert.equal((body as { details?: { code?: string } }).details?.code, "FILE_HAS_ERRORS");
+    assert.equal((await db.doc(`tournaments/${tournamentId}/players/1`).get()).get("assignedEmaId"), null);
   });
 
-  it("assigns the player in the ASSIGN step and records the activity", async () => {
-    const { status, body } = await apply(editor.token, { ...file("id,ema id\n1,1\n"), phase: "ASSIGN", rows: [2] });
+  it("overwrites the players in one request and records the activity", async () => {
+    const { status, body } = await apply(editor.token, file("id,ema id,email\n1,1,ana@example.test\n"));
 
     assert.equal(status, 200);
-    assert.equal((body as { assigned: number }).assigned, 1);
-    assert.equal((await db.doc(`tournaments/${tournamentId}/players/1`).get()).get("assignedEmaId"), "00000001");
+    // The seat of the player account (slot 1000) is not in the file, so the import empties it.
+    assert.deepEqual(body, { players: 1, changedSlots: 2, emptiedSlots: 1 });
+    const slot = await db.doc(`tournaments/${tournamentId}/players/1`).get();
+    assert.equal(slot.get("assignedEmaId"), "00000001");
+    assert.equal(slot.get("email"), "ana@example.test");
     const log = await db.collection("activity").where("tournamentId", "==", tournamentId).where("action", "==", "player.import").get();
-    assert.ok(log.size >= 1);
+    assert.equal(log.size, 1);
+  });
+
+  it("refuses the apply step once the tournament has table data", async () => {
+    await db.doc(`tournaments/${tournamentId}`).update({ tablesWithProgress: 1 });
+
+    const { status, body } = await apply(editor.token, file("id,ema id\n1,1\n"));
+
+    assert.equal(status, 409);
+    assert.equal((body as { details?: { code?: string } }).details?.code, "TOURNAMENT_STARTED");
+    await db.doc(`tournaments/${tournamentId}`).update({ tablesWithProgress: 0 });
   });
 
   const exportPlayersFile = (token: string | null, id = tournamentId) =>
@@ -96,6 +110,18 @@ describe("player import routes", () => {
     const parsed = await parsePlayerImportFile(fileName, Buffer.from(dataBase64, "base64"));
     assert.equal(parsed.rows[0].id, "1");
     assert.ok(parsed.hasEmailColumn);
+  });
+
+  it("gives the emails to an admin and an empty email column to an editor", async () => {
+    const admin = await createAccount({ role: "ADMIN" });
+    const read = async (token: string) => {
+      const { body } = await exportPlayersFile(token);
+      const { fileName, dataBase64 } = body as { fileName: string; dataBase64: string };
+      return (await parsePlayerImportFile(fileName, Buffer.from(dataBase64, "base64"))).rows[0].email;
+    };
+
+    assert.equal(await read(admin.token), "ana@example.test");
+    assert.equal(await read(editor.token), "");
   });
 
   it("refuses the download to no token, a player and an editor of another tournament", async () => {

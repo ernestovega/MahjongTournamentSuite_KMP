@@ -17,12 +17,6 @@ import {
   tournamentVersionUpdate,
 } from "./dataVersionsService";
 
-/** The time of the last email to the player: the invitation, or the registration notice for a signed-in account. */
-function contactedAtOf(slot: FirebaseFirestore.DocumentSnapshot): string | null {
-  const value = slot.get("notifiedAt");
-  return value && typeof value.toDate === "function" ? (value.toDate() as Date).toISOString() : null;
-}
-
 export type TournamentPlayer = {
   id: number;
   name: string;
@@ -30,14 +24,12 @@ export type TournamentPlayer = {
   country: string;
   assignedEmaId: string | null;
   accountUid: string | null;
+  /** True when an account owns the EMA id of the slot. */
+  hasAccount: boolean;
   /**
-   * NONE: no account. INVITED: the account has no password yet and an email went out. ACCEPTED: the person chose a password.
-   * An account with no password that got no email yet counts as NONE.
+   * The email of the account when the slot has one. Otherwise the pending email of the import, which "Invite" uses
+   * to create the account. Only admins read it: the routes hide it from everyone else.
    */
-  invitationStatus: "NONE" | "INVITED" | "ACCEPTED";
-  /** When the last invitation or registration email was sent. Null when no email was sent yet. */
-  contactedAt: string | null;
-  /** The email of the linked account. The email lives only in the account. Null when the slot has no account. */
   email: string | null;
   /** Set when a substitute plays for this person from a round on. The substitute is not recorded. */
   substitution: PlayerSubstitution | null;
@@ -89,7 +81,7 @@ export type TournamentTable = {
 };
 
 /**
- * Lists the slots of a tournament. The email and the sign-in state come from the linked account, so the list reads
+ * Lists the slots of a tournament. Whether a slot has an account comes from the accounts, so the list reads
  * the accounts of the slots. Pass `withAccounts: false` when the caller needs only the slots, for example to assign
  * players in a batch.
  */
@@ -114,7 +106,7 @@ function readPlayer(
   const assignedEmaId = typeof d.get("assignedEmaId") === "string" ? d.get("assignedEmaId") : null;
   const account = assignedEmaId == null ? undefined : accountsByEmaId.get(assignedEmaId);
   const accountUid = account?.uid ?? null;
-  const contactedAt = contactedAtOf(d);
+  const pendingEmail = typeof d.get("email") === "string" && d.get("email") !== "" ? String(d.get("email")) : null;
   return {
     id: Number(d.get("id")),
     name: String(d.get("name") ?? ""),
@@ -122,11 +114,8 @@ function readPlayer(
     country: String(d.get("country") ?? ""),
     assignedEmaId,
     accountUid,
-    invitationStatus: accountUid == null ? "NONE"
-      : account?.hasPassword === true ? "ACCEPTED"
-      : contactedAt != null ? "INVITED" : "NONE",
-    contactedAt,
-    email: account?.email ?? null,
+    hasAccount: accountUid != null,
+    email: account?.email ?? pendingEmail,
     substitution: readSubstitution(d.get("substitution")),
     createdAt: timestampToIso(d.get("createdAt")),
     updatedAt: timestampToIso(d.get("updatedAt")),
@@ -297,6 +286,13 @@ export async function updateTournamentTeam(params: {
     });
     if (duplicateName) throw conflict("Team name is already in use");
 
+    // The pending email travels with the person, so a player who moves to another slot keeps it.
+    const pendingEmailByEma = new Map<string, string>();
+    playerDocs.forEach((player) => {
+      const emaId = currentByRef.get(player.ref.path);
+      const email = player.get("email");
+      if (emaId != null && typeof email === "string" && email !== "") pendingEmailByEma.set(emaId, email);
+    });
     const affectedEmaIds = new Set<string>();
     playerDocs.forEach((player) => {
       const previous = currentByRef.get(player.ref.path) ?? null;
@@ -306,6 +302,7 @@ export async function updateTournamentTeam(params: {
       if (next != null) affectedEmaIds.add(next);
       transaction.update(player.ref, {
         assignedEmaId: next,
+        email: (next == null ? undefined : pendingEmailByEma.get(next)) ?? FieldValue.delete(),
         updatedAt: FieldValue.serverTimestamp(),
       });
     });
@@ -422,8 +419,8 @@ export async function assignTournamentPlayer(params: {
       assignedCountry,
       updatedAt: FieldValue.serverTimestamp(),
       ...(hadSubstitution ? { substitution: FieldValue.delete() } : {}),
-      // A new person got no email yet. The account of the slot follows the EMA id, so nothing else changes.
-      ...(assignmentChanged ? { notifiedAt: FieldValue.delete() } : {}),
+      // The pending email belongs to the old person. The account of the slot follows the EMA id.
+      ...(assignmentChanged ? { email: FieldValue.delete() } : {}),
     });
     const tableVersions: Record<string, unknown> = {};
     forcedTables?.docs.forEach((table) => {
@@ -439,6 +436,107 @@ export async function assignTournamentPlayer(params: {
     bumpTournamentDataVersion(params.tournamentId, "players"),
     bumpGlobalDataVersion("tournaments"),
   ]);
+}
+
+export type SlotOverwrite = { slotId: number; emaId: string | null; email: string | null };
+
+const WRITES_PER_BATCH = 400;
+
+/**
+ * Overwrites the person of every slot, and the names of the teams. The import uses it.
+ * Every slot must be in `slots`: a slot with no EMA id becomes empty. A slot that does not change is not written.
+ * A new person starts with no substitution. `teamNames` is empty when the team names stay as they are.
+ * It refuses a tournament with table data, because the tables, hands and statistics belong to the people of the slots.
+ * The writes go in batches, so the caller must validate the data before. The same call again finishes a stopped import.
+ */
+export async function overwriteTournamentPlayers(params: {
+  tournamentId: string;
+  slots: SlotOverwrite[];
+  teamNames: Array<{ teamId: number; name: string }>;
+  uid: string | null;
+}): Promise<{ changedSlots: number }> {
+  const tournamentRef = db.collection("tournaments").doc(params.tournamentId);
+  const [tournament, slotDocs, assignmentDocs] = await Promise.all([
+    tournamentRef.get(),
+    tournamentRef.collection("players").get(),
+    tournamentRef.collection("emaPlayerAssignments").get(),
+  ]);
+  if (!tournament.exists) throw notFound("Tournament not found");
+  if (tournamentHasStartedTables(tournament)) {
+    throw conflict("The tournament has table data", { code: "TOURNAMENT_STARTED" });
+  }
+  const wanted = new Map(params.slots.map((slot) => [slot.slotId, slot]));
+  const emaIds = [...new Set(params.slots.flatMap((slot) => (slot.emaId == null ? [] : [slot.emaId])))];
+  const registry = await Promise.all(emaIds.map((emaId) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(emaId).get()));
+  const countries = new Map(registry.filter((player) => player.exists)
+    .map((player) => [player.id, String(player.get("country") ?? "").trim().toUpperCase()]));
+  if (emaIds.some((emaId) => !countries.has(emaId))) throw notFound("EMA player not found");
+
+  const writes: Array<(batch: FirebaseFirestore.WriteBatch) => void> = [];
+  let changedSlots = 0;
+  const finalOwner = new Map<string, number>();
+  slotDocs.docs.forEach((slot) => {
+    const slotId = Number(slot.get("id") ?? slot.id);
+    const next = wanted.get(slotId) ?? { slotId, emaId: null, email: null };
+    if (next.emaId != null) finalOwner.set(next.emaId, slotId);
+    const previousEmaId = typeof slot.get("assignedEmaId") === "string" ? String(slot.get("assignedEmaId")) : null;
+    const previousEmail = typeof slot.get("email") === "string" && slot.get("email") !== "" ? String(slot.get("email")) : null;
+    if (previousEmaId === next.emaId && previousEmail === next.email) return;
+    changedSlots++;
+    const personChanged = previousEmaId !== next.emaId;
+    writes.push((batch) => {
+      batch.update(slot.ref, {
+        assignedEmaId: next.emaId,
+        assignedCountry: next.emaId == null ? "" : countries.get(next.emaId) ?? "",
+        email: next.email ?? FieldValue.delete(),
+        updatedAt: FieldValue.serverTimestamp(),
+        ...(personChanged ? { substitution: FieldValue.delete() } : {}),
+      });
+      if (personChanged) {
+        batch.set(tournamentRef.collection("playerLog").doc(), {
+          kind: next.emaId == null ? "clear" : "replace",
+          slotId,
+          previous: { emaId: previousEmaId },
+          next: { emaId: next.emaId },
+          uid: params.uid,
+          at: FieldValue.serverTimestamp(),
+        });
+      }
+    });
+  });
+  assignmentDocs.docs.forEach((assignment) => {
+    if (!finalOwner.has(assignment.id)) writes.push((batch) => batch.delete(assignment.ref));
+  });
+  finalOwner.forEach((slotId, emaId) => {
+    const current = assignmentDocs.docs.find((assignment) => assignment.id === emaId);
+    if (current != null && Number(current.get("playerId")) === slotId) return;
+    writes.push((batch) => batch.set(tournamentRef.collection("emaPlayerAssignments").doc(emaId), {
+      playerId: slotId,
+      updatedAt: FieldValue.serverTimestamp(),
+    }));
+  });
+  params.teamNames.forEach((team) => {
+    writes.push((batch) => batch.set(tournamentRef.collection("teams").doc(String(team.teamId)), {
+      id: team.teamId,
+      name: team.name,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true }));
+  });
+  writes.push((batch) => batch.update(tournamentRef, {
+    ...tournamentVersionUpdate("players"),
+    ...(params.teamNames.length > 0 ? tournamentVersionUpdate("teams") : {}),
+  }));
+  for (let start = 0; start < writes.length; start += WRITES_PER_BATCH) {
+    const batch = db.batch();
+    writes.slice(start, start + WRITES_PER_BATCH).forEach((write) => write(batch));
+    await batch.commit();
+  }
+  await Promise.all([
+    bumpTournamentDataVersion(params.tournamentId, "players"),
+    ...(params.teamNames.length > 0 ? [bumpTournamentDataVersion(params.tournamentId, "teams")] : []),
+    bumpGlobalDataVersion("tournaments"),
+  ]);
+  return { changedSlots };
 }
 
 /**
