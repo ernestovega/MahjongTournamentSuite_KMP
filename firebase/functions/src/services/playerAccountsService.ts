@@ -7,7 +7,7 @@ import { sendPasswordResetEmail } from "./firebaseAuthRest";
 import { sendEmail } from "./mailService";
 import { buildRegistrationEmail, DEFAULT_LANGUAGE, type Language } from "./i18n";
 import { EMA_PLAYER_REGISTRY_COLLECTION, toPlayer } from "./playersService";
-import { assertEmailAvailable, createUserProfile, grantPlayerCapability } from "./usersService";
+import { assertEmailAvailable, createUserProfile, grantPlayerCapability, revokePlayerCapability } from "./usersService";
 
 /** Where a player opens the tournament after the registration email. Set PLAYER_APP_URL to the player web site. */
 function playerAppUrl(): string {
@@ -160,7 +160,8 @@ export async function assertEmaIdAvailable(emaId: string, ownUid?: string): Prom
 }
 
 /**
- * Sets the EMA id of an existing account, or clears it with null.
+ * Sets the EMA id of an existing account, or clears it with null. An EMA id gives the player capability, and clearing
+ * the EMA id takes it away.
  * Every slot that holds this EMA id shows the account at once, because the link is the EMA id. No email is sent.
  */
 export async function setAccountEmaId(params: { uid: string; emaId: string | null }): Promise<void> {
@@ -169,7 +170,11 @@ export async function setAccountEmaId(params: { uid: string; emaId: string | nul
   if (current === params.emaId) return;
   if (params.emaId != null) await assertEmaIdAvailable(params.emaId, params.uid);
   if (current != null) await releaseEmaId(params.uid);
-  if (params.emaId == null) return;
+  // The player capability exists only with an EMA id.
+  if (params.emaId == null) {
+    await revokePlayerCapability(params.uid);
+    return;
+  }
   await claimEmaId(params.uid, params.emaId);
   await grantPlayerCapability(params.uid);
   await bumpTournamentsOfEmaId(params.emaId);

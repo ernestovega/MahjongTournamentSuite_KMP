@@ -9,6 +9,7 @@ Tests: `firebase/functions/src/api/playerAccounts.integration.test.ts`, `firebas
 ## Base rules
 
 - One account has at most one EMA id. One EMA id has at most one account.
+- **The player capability exists only with an EMA id.** Giving an EMA id to an account adds the capability. Taking the EMA id away removes it. A player account cannot exist without an EMA id. `npm run audit:ema-ids` checks it, and `npm run cleanup:player-claims` fixes accounts that broke the rule.
 - **The email lives only in the account.** A slot, an import file row or an invitation holds no email of its own.
 - **An email never links an account to an EMA id.** Several people can share one email. A player gets an account only from an email that no account owns.
 - **The email of an account always wins.** A different email in an import or in a send is refused and the account email stays.

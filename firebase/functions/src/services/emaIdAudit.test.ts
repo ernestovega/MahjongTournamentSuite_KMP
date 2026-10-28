@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { findEmaIdProblems } from "./emaIdAudit";
+import { findEmaIdProblems, findPlayerClaimProblems } from "./emaIdAudit";
 
 test("accounts and index that agree have no problem", () => {
   assert.deepEqual(findEmaIdProblems({
@@ -30,5 +30,17 @@ test("a missing or different index document is a mismatch", () => {
 test("an index document of an EMA id that no profile holds is an orphan", () => {
   assert.deepEqual(findEmaIdProblems({ profiles: [{ uid: "a", emaId: null }], index: [{ emaId: "9", uid: "a" }] }), [
     { code: "ORPHAN_INDEX", emaId: "9", indexUid: "a" },
+  ]);
+});
+
+test("the player capability and the EMA id must go together", () => {
+  assert.deepEqual(findPlayerClaimProblems([
+    { uid: "ok", hasPlayerClaim: true, emaId: "1" },
+    { uid: "none", hasPlayerClaim: false, emaId: null },
+    { uid: "editor", hasPlayerClaim: true, emaId: null },
+    { uid: "late", hasPlayerClaim: false, emaId: "2" },
+  ]), [
+    { code: "PLAYER_WITHOUT_EMA_ID", uid: "editor" },
+    { code: "EMA_ID_WITHOUT_PLAYER", uid: "late" },
   ]);
 });

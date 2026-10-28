@@ -1,8 +1,9 @@
-import { db, firebaseProjectId } from "../firebase";
-import { findEmaIdProblems } from "../services/emaIdAudit";
+import { auth, db, firebaseProjectId } from "../firebase";
+import { findEmaIdProblems, findPlayerClaimProblems } from "../services/emaIdAudit";
 
 /**
- * Checks that every EMA id belongs to one account and that the index agrees with the profiles. It only reads.
+ * Checks that every EMA id belongs to one account, that the index agrees with the profiles, and that the player
+ * capability goes with the EMA id. It only reads.
  * Usage: npm run audit:ema-ids. The exit code is 2 when it finds a problem.
  */
 async function main(): Promise<void> {
@@ -11,10 +12,24 @@ async function main(): Promise<void> {
     profiles: users.docs.map((doc) => ({ uid: doc.id, emaId: typeof doc.get("emaId") === "string" && doc.get("emaId") !== "" ? doc.get("emaId") : null })),
     index: index.docs.map((doc) => ({ emaId: doc.id, uid: String(doc.get("uid")) })),
   });
+  const emaIdOf = new Map(users.docs.map((doc) => [doc.id, typeof doc.get("emaId") === "string" && doc.get("emaId") !== "" ? String(doc.get("emaId")) : null]));
+  const accounts: Array<{ uid: string; hasPlayerClaim: boolean; emaId: string | null }> = [];
+  let pageToken: string | undefined;
+  do {
+    const page = await auth.listUsers(1_000, pageToken);
+    page.users.forEach((user) => accounts.push({
+      uid: user.uid,
+      hasPlayerClaim: (user.customClaims as { player?: boolean } | undefined)?.player === true,
+      emaId: emaIdOf.get(user.uid) ?? null,
+    }));
+    pageToken = page.pageToken;
+  } while (pageToken);
+  const claimProblems = findPlayerClaimProblems(accounts);
   console.log(`Checked ${users.size} accounts and ${index.size} index documents in ${firebaseProjectId}.`);
-  problems.forEach((problem) => console.log(JSON.stringify(problem)));
-  console.log(problems.length === 0 ? "Every EMA id belongs to one account." : `${problems.length} problems found.`);
-  if (problems.length > 0) process.exitCode = 2;
+  [...problems, ...claimProblems].forEach((problem) => console.log(JSON.stringify(problem)));
+  const total = problems.length + claimProblems.length;
+  console.log(total === 0 ? "Every EMA id belongs to one account and the player capability goes with it." : `${total} problems found.`);
+  if (total > 0) process.exitCode = 2;
 }
 
 main().catch((error) => {

@@ -31,3 +31,18 @@ export function findEmaIdProblems(input: {
   });
   return problems.sort((a, b) => a.emaId.localeCompare(b.emaId));
 }
+
+export type PlayerClaimProblem =
+  /** The account has the player capability but owns no EMA id. */
+  | { code: "PLAYER_WITHOUT_EMA_ID"; uid: string }
+  /** The account owns an EMA id but has no player capability. */
+  | { code: "EMA_ID_WITHOUT_PLAYER"; uid: string };
+
+/** The player capability and the EMA id go together: an account has one only when it has the other. */
+export function findPlayerClaimProblems(accounts: Array<{ uid: string; hasPlayerClaim: boolean; emaId: string | null }>): PlayerClaimProblem[] {
+  return accounts.flatMap((account): PlayerClaimProblem[] => {
+    if (account.hasPlayerClaim && !account.emaId) return [{ code: "PLAYER_WITHOUT_EMA_ID", uid: account.uid }];
+    if (!account.hasPlayerClaim && account.emaId) return [{ code: "EMA_ID_WITHOUT_PLAYER", uid: account.uid }];
+    return [];
+  });
+}

@@ -370,3 +370,11 @@ export async function grantPlayerCapability(uid: string): Promise<void> {
   const user = await auth.getUser(uid);
   await auth.setCustomUserClaims(uid, { ...(user.customClaims ?? {}), player: true });
 }
+
+/** Removes the player capability from an account and keeps the other claims. */
+export async function revokePlayerCapability(uid: string): Promise<void> {
+  const user = await auth.getUser(uid);
+  const claims: Record<string, unknown> = { ...(user.customClaims ?? {}) };
+  delete claims.player;
+  await auth.setCustomUserClaims(uid, claims);
+}

@@ -479,14 +479,18 @@ describe("player accounts", () => {
       await seedSlot(13, ema);
       const before = sent.length;
 
+      assert.deepEqual((await auth.getUser(account.uid)).customClaims, { editor: true });
+
       await setAccountEmaId({ uid: account.uid, emaId: ema });
 
+      assert.deepEqual((await auth.getUser(account.uid)).customClaims, { editor: true, player: true });
       assert.equal(await accountOf(13), account.uid);
       assert.equal(sent.length, before, "no email is sent");
       assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).get("uid"), account.uid);
 
       await setAccountEmaId({ uid: account.uid, emaId: null });
 
+      assert.deepEqual((await auth.getUser(account.uid)).customClaims, { editor: true }, "no EMA number, no player capability");
       assert.equal(await accountOf(13), null);
       assert.equal((await slotOf(13)).get("notifiedAt"), undefined);
       assert.equal((await db.doc(`emaIdIndex/${ema}`).get()).exists, false);
