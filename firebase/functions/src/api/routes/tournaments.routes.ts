@@ -785,7 +785,7 @@ export function tournamentsRouter(): Router {
         if (res.locals.reader === "PLAYER") {
           // Players see who plays and where, never the accounts or emails of other players.
           res.status(200).json({
-            players: players.map((player) => ({ ...player, accountUid: null, hasAccount: false, email: null })),
+            players: players.map((player) => ({ ...player, accountUid: null, hasAccount: false, email: null, hasEmail: false })),
           });
           return;
         }

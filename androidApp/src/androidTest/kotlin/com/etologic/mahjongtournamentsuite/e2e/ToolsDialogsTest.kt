@@ -36,8 +36,10 @@ class ToolsDialogsTest : AdminE2eTest() {
     fun invitationsDialogCountsPlayersByState() {
         openPlayers()
         c.clickButton("Invitations")
-        c.waitForText("Invitations and reminders")
-        listOf("All (40)", "Not invited yet (40)", "Invited, waiting (0)", "Contacted (0)", "No EMA ID (0)").forEach { c.waitForText(it) }
+        c.waitForText("Invitations and password resets")
+        c.waitForText("All (40)")
+        c.waitForText("No account (", substring = true)
+        c.waitForText("Has account (", substring = true)
     }
 
     @Test
@@ -45,18 +47,10 @@ class ToolsDialogsTest : AdminE2eTest() {
         openPlayers()
         c.clickButton("Invitations")
         c.waitForText("0 selected")
+        c.clickButton("All (40)")
         c.clickButton("Select all shown (40)")
         c.waitForText("40 selected")
         c.clickLastButton("Clear")
         c.waitForText("0 selected")
-    }
-
-    @Test
-    fun noEmaIdFilterShowsThePlayersWithoutAnEmaNumber() {
-        // Ten slots of this tournament are open. A slot holds a registered EMA player or nothing.
-        openPlayers("Test - Teams with missing players")
-        c.clickButton("Invitations")
-        c.clickButton("No EMA ID (10)")
-        c.waitForText("Select all shown (10)")
     }
 }

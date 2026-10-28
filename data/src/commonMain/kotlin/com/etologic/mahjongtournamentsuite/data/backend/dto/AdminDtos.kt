@@ -161,9 +161,7 @@ data class TournamentUsageDto(
     val slots: Int = 0,
     val assignedSlots: Int = 0,
     val slotsWithAccount: Int = 0,
-    val invitationsSent: Int = 0,
-    val invitationsAccepted: Int = 0,
-    val invitationsPending: Int = 0,
+    val slotsWithPassword: Int = 0,
 )
 
 @Serializable

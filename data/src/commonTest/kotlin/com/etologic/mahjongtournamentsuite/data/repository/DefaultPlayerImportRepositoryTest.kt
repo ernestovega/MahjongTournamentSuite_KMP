@@ -4,97 +4,170 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.jsonResponse
 import com.etologic.mahjongtournamentsuite.data.backend.mockBackendApi
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ImportFileErrorCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
-import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
-import com.etologic.mahjongtournamentsuite.domain.model.ImportRowStatus
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.request.HttpRequestData
+import io.ktor.client.request.HttpResponseData
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.TextContent
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertTrue
 import kotlinx.coroutines.test.runTest
 
 class DefaultPlayerImportRepositoryTest {
-    private val resultJson = """{"assigned":0,"emailsSaved":0,"teamsRenamed":0,"skipped":0,"failures":[]}"""
-
-    private fun row(line: Int, status: ImportRowStatus) = ImportRowPlan(
-        row = line, slotId = line, emaId = "0000000$line", email = null, team = null,
-        status = status, issues = emptyList(), current = null,
-    )
-
-    private fun preview(rows: List<ImportRowPlan>) = PlayerImportPreview(
-        rows = rows, untouchedSlotIds = emptyList(), isTeams = false,
-        tournamentStarted = false, hasEmailColumn = false, hasTeamColumn = false,
-    )
-
-    private fun repository(cache: RepositoryCache, bodies: MutableList<String>, paths: MutableList<String>) =
+    private fun repository(
+        cache: RepositoryCache = RecordingCache(),
+        handler: MockRequestHandleScope.(HttpRequestData) -> HttpResponseData,
+    ) =
         DefaultPlayerImportRepository(
-            backendApi = mockBackendApi { request ->
-                paths += request.url.encodedPath
-                bodies += (request.body as io.ktor.http.content.TextContent).text
-                jsonResponse(if (request.url.encodedPath.endsWith("/preview")) """{"rows":[]}""" else resultJson)
-            },
+            backendApi = mockBackendApi { handler(it) },
             authRepository = FakeAuthRepository(),
             logger = Logger.withTag("DefaultPlayerImportRepositoryTest"),
             cache = cache,
         )
 
     @Test
-    fun previewMapsRowsIssuesAndUnknownCodes() = runTest {
-        val repository = DefaultPlayerImportRepository(
-            backendApi = mockBackendApi {
-                jsonResponse(
-                    """
-                    {"rows":[
-                      {"row":2,"slotId":1,"emaId":"00000001","status":"REPLACE","createsAccount":true,
-                       "issues":[{"code":"EMAIL_KEPT_ACCOUNT","severity":"WARNING","args":["a@b.es","c@b.es"]}],
-                       "current":{"emaId":"00000002","email":"a@b.es"}},
-                      {"row":3,"status":"ERROR","issues":[{"code":"FROM_THE_FUTURE","severity":"ERROR"}]}
-                    ],"untouchedSlotIds":[4],"isTeams":true,"tournamentStarted":true}
-                    """.trimIndent(),
-                )
-            },
-            authRepository = FakeAuthRepository(),
-            logger = Logger.withTag("test"),
-            cache = RecordingCache(),
-        )
+    fun previewMapsRowsIssuesCountsAndUnknownCodes() = runTest {
+        val repository = repository {
+            jsonResponse(
+                """
+                {"rows":[
+                  {"row":2,"slotId":1,"emaId":"00000001","email":"a@b.es",
+                   "issues":[{"code":"DUPLICATE_EMAIL","severity":"ERROR","args":["a@b.es"]}]},
+                  {"row":3,"slotId":2,"emaId":"00000002","issues":[{"code":"TEAM_IGNORED","severity":"WARNING"}]},
+                  {"row":4,"issues":[{"code":"FROM_THE_FUTURE","severity":"ERROR"}]},
+                  {"row":5,"slotId":3,"emaId":"00000003"}
+                ],"valid":false,"isTeams":true,"tournamentStarted":false,"existingPlayers":7,"importedPlayers":3,
+                  "hasEmailColumn":true,"hasTeamColumn":true}
+                """.trimIndent(),
+            )
+        }
 
         val preview = assertIs<AppResult.Success<PlayerImportPreview>>(repository.preview("t1", "players.csv", byteArrayOf(1))).value
 
-        assertEquals(listOf(ImportRowStatus.REPLACE, ImportRowStatus.ERROR), preview.rows.map { it.status })
-        assertEquals(ImportIssueCode.EMAIL_KEPT_ACCOUNT, preview.rows[0].issues[0].code)
-        assertEquals(ImportIssueSeverity.WARNING, preview.rows[0].issues[0].severity)
-        assertEquals(listOf("a@b.es", "c@b.es"), preview.rows[0].issues[0].args)
-        assertEquals("00000002", preview.rows[0].current?.emaId)
-        assertEquals("a@b.es", preview.rows[0].current?.email)
-        assertTrue(preview.rows[0].createsAccount)
-        assertEquals(false, preview.rows[1].createsAccount)
-        assertEquals(ImportIssueCode.UNKNOWN, preview.rows[1].issues[0].code)
-        assertEquals(listOf(4), preview.untouchedSlotIds)
-        assertTrue(preview.isTeams && preview.tournamentStarted)
+        assertEquals(ImportIssueCode.DUPLICATE_EMAIL, preview.rows[0].issues[0].code)
+        assertEquals(ImportIssueSeverity.ERROR, preview.rows[0].issues[0].severity)
+        assertEquals(listOf("a@b.es"), preview.rows[0].issues[0].args)
+        assertEquals(ImportIssueSeverity.WARNING, preview.rows[1].issues[0].severity)
+        assertEquals(ImportIssueCode.UNKNOWN, preview.rows[2].issues[0].code)
+        assertEquals(listOf(true, false, true, false), preview.rows.map { it.hasError })
+        assertEquals(2, preview.errorCount)
+        assertEquals(7, preview.existingPlayers)
+        assertEquals(3, preview.importedPlayers)
+        assertTrue(preview.isTeams && preview.hasEmailColumn && preview.hasTeamColumn)
+        assertFalse(preview.canApply)
+    }
+
+    @Test
+    fun aValidFileOfAnotherTournamentCanApplyOnlyWhenNoTableHasData() = runTest {
+        val valid = repository { jsonResponse("""{"rows":[],"valid":true,"tournamentStarted":false}""") }
+        val started = repository { jsonResponse("""{"rows":[],"valid":true,"tournamentStarted":true}""") }
+
+        assertTrue(assertIs<AppResult.Success<PlayerImportPreview>>(valid.preview("t1", "p.csv", byteArrayOf(1))).value.canApply)
+        assertFalse(assertIs<AppResult.Success<PlayerImportPreview>>(started.preview("t1", "p.csv", byteArrayOf(1))).value.canApply)
+    }
+
+    @Test
+    fun previewSendsTheFileAndChangesNothingInTheCache() = runTest {
+        var request: HttpRequestData? = null
+        val cache = RecordingCache()
+        val repository = repository(cache) {
+            request = it
+            jsonResponse("""{"rows":[]}""")
+        }
+
+        repository.preview("t1", "players.csv", byteArrayOf(1, 2, 3))
+
+        assertTrue(request?.url?.encodedPath?.endsWith("/tournaments/t1/player-import/preview") == true)
+        val body = (request?.body as TextContent).text
+        assertTrue(body.contains("\"fileName\":\"players.csv\"") && body.contains("\"dataBase64\":\"AQID\""))
+        assertFalse(body.contains("phase") || body.contains("replaceExisting"))
+        assertTrue(cache.stale.isEmpty())
+    }
+
+    @Test
+    fun applyMakesOneRequestMapsTheResultAndMarksPlayersTeamsAndTournamentsStale() = runTest {
+        val paths = mutableListOf<String>()
+        val cache = RecordingCache()
+        val repository = repository(cache) {
+            paths += it.url.encodedPath
+            jsonResponse("""{"players":12,"changedSlots":9,"emptiedSlots":3}""")
+        }
+
+        val result = assertIs<AppResult.Success<PlayerImportResult>>(repository.apply("t1", "players.csv", byteArrayOf(1))).value
+
+        assertEquals(1, paths.size)
+        assertTrue(paths.single().endsWith("/tournaments/t1/player-import/apply"))
+        assertEquals(PlayerImportResult(players = 12, changedSlots = 9, emptiedSlots = 3), result)
+        assertEquals(listOf("tournament:t1:players", "tournament:t1:teams", "global:tournaments"), cache.stale)
+    }
+
+    @Test
+    fun applyReturnsFailureAndStillMarksTheCacheStaleWhenTheServerFails() = runTest {
+        val cache = RecordingCache()
+        val repository = repository(cache) { respond("{}", HttpStatusCode.InternalServerError) }
+
+        assertIs<AppResult.Failure>(repository.apply("t1", "players.csv", byteArrayOf(1)))
+
+        assertEquals(listOf("tournament:t1:players", "tournament:t1:teams", "global:tournaments"), cache.stale)
+    }
+
+    @Test
+    fun theServerRefusalOfAStartedTournamentAndOfAFileWithErrorsBecomeFileErrors() = runTest {
+        suspend fun codeOf(body: String): ImportFileErrorCode {
+            val repository = repository { respond(body, HttpStatusCode.Conflict, io.ktor.http.headersOf("Content-Type", "application/json")) }
+            val failure = assertIs<AppResult.Failure>(repository.apply("t1", "p.csv", byteArrayOf(1)))
+            return assertIs<AppError.ImportFile>(failure.error).code
+        }
+
+        assertEquals(
+            ImportFileErrorCode.TOURNAMENT_STARTED,
+            codeOf("""{"error":{"message":"x","details":{"code":"TOURNAMENT_STARTED"}},"details":{"code":"TOURNAMENT_STARTED"}}"""),
+        )
+        assertEquals(
+            ImportFileErrorCode.FILE_HAS_ERRORS,
+            codeOf("""{"error":{"message":"x","details":{"code":"FILE_HAS_ERRORS"}},"details":{"code":"FILE_HAS_ERRORS"}}"""),
+        )
+    }
+
+    @Test
+    fun aMissingColumnsErrorKeepsTheColumnNames() = runTest {
+        val repository = repository {
+            respond(
+                """{"details":{"code":"MISSING_COLUMNS","missing":["id","ema id"]}}""",
+                HttpStatusCode.BadRequest,
+                io.ktor.http.headersOf("Content-Type", "application/json"),
+            )
+        }
+
+        val failure = assertIs<AppResult.Failure>(repository.preview("t1", "p.csv", byteArrayOf(1)))
+
+        val error = assertIs<AppError.ImportFile>(failure.error)
+        assertEquals(ImportFileErrorCode.MISSING_COLUMNS, error.code)
+        assertEquals(listOf("id, ema id"), error.args)
     }
 
     @Test
     fun exportReadsTheFileFromTheExportRoute() = runTest {
         var method = ""
         var path = ""
-        val repository = DefaultPlayerImportRepository(
-            backendApi = mockBackendApi { request ->
-                method = request.method.value
-                path = request.url.encodedPath
-                jsonResponse("""{"fileName":"players.xlsx","dataBase64":"AQID"}""")
-            },
-            authRepository = FakeAuthRepository(),
-            logger = Logger.withTag("test"),
-            cache = RecordingCache(),
-        )
+        val repository = repository {
+            method = it.method.value
+            path = it.url.encodedPath
+            jsonResponse("""{"fileName":"players.xlsx","dataBase64":"AQID"}""")
+        }
 
         val result = repository.export("t1")
 
@@ -107,12 +180,7 @@ class DefaultPlayerImportRepositoryTest {
 
     @Test
     fun exportReturnsFailureWhenTheServerFails() = runTest {
-        val repository = DefaultPlayerImportRepository(
-            backendApi = mockBackendApi { respond("{}", HttpStatusCode.InternalServerError) },
-            authRepository = FakeAuthRepository(),
-            logger = Logger.withTag("test"),
-            cache = RecordingCache(),
-        )
+        val repository = repository { respond("{}", HttpStatusCode.InternalServerError) }
 
         assertIs<AppResult.Failure>(repository.export("t1"))
     }
@@ -120,107 +188,11 @@ class DefaultPlayerImportRepositoryTest {
     @Test
     fun exportDoesNotChangeTheCache() = runTest {
         val cache = RecordingCache()
-        val repository = DefaultPlayerImportRepository(
-            backendApi = mockBackendApi { jsonResponse("""{"fileName":"p.xlsx","dataBase64":""}""") },
-            authRepository = FakeAuthRepository(),
-            logger = Logger.withTag("test"),
-            cache = cache,
-        )
+        val repository = repository(cache) { jsonResponse("""{"fileName":"p.xlsx","dataBase64":""}""") }
 
         repository.export("t1")
 
         assertTrue(cache.stale.isEmpty())
-    }
-
-    @Test
-    fun applyRunsClearThenBatchesOf25ThenFinish() = runTest {
-        val bodies = mutableListOf<String>()
-        val paths = mutableListOf<String>()
-        val cache = RecordingCache()
-        val rows = (1..60).map { row(it, ImportRowStatus.NEW) } + row(61, ImportRowStatus.ERROR)
-        val progress = mutableListOf<Pair<Int, Int>>()
-
-        val result = repository(cache, bodies, paths)
-            .apply("t1", "players.csv", byteArrayOf(1), preview(rows), replaceExisting = false) { done, total ->
-                progress += done to total
-            }
-
-        assertIs<AppResult.Success<PlayerImportResult>>(result)
-        assertTrue(paths.all { it.endsWith("/tournaments/t1/player-import/apply") })
-        val phases = bodies.map { Regex("\"phase\":\"(\\w+)\"").find(it)!!.groupValues[1] }
-        assertEquals(listOf("CLEAR", "ASSIGN", "ASSIGN", "ASSIGN", "FINISH"), phases)
-        assertTrue(bodies[1].contains("\"rows\":[1,2,3"))
-        assertEquals(0 to 60, progress.first())
-        assertEquals(60 to 60, progress.last())
-        assertEquals(listOf("tournament:t1:players", "tournament:t1:teams", "global:tournaments"), cache.stale)
-    }
-
-    @Test
-    fun applySkipsReplaceRowsUntilTheEditorAcceptsThem() = runTest {
-        val bodies = mutableListOf<String>()
-        val rows = listOf(row(1, ImportRowStatus.NEW), row(2, ImportRowStatus.REPLACE), row(3, ImportRowStatus.UNCHANGED))
-
-        repository(RecordingCache(), bodies, mutableListOf())
-            .apply("t1", "p.csv", byteArrayOf(1), preview(rows), replaceExisting = false)
-        assertTrue(bodies[1].contains("\"rows\":[1]"))
-
-        bodies.clear()
-        repository(RecordingCache(), bodies, mutableListOf())
-            .apply("t1", "p.csv", byteArrayOf(1), preview(rows), replaceExisting = true)
-        assertTrue(bodies[1].contains("\"rows\":[1,2]"))
-    }
-
-    @Test
-    fun applySumsAssignedAndKeepsFailuresOfEveryStep() = runTest {
-        var call = 0
-        val repository = DefaultPlayerImportRepository(
-            backendApi = mockBackendApi {
-                call++
-                jsonResponse(
-                    when (call) {
-                        2 -> """{"assigned":2,"emailsSaved":0,"teamsRenamed":0,"skipped":0,"failures":[{"row":2,"slotId":1,"message":"boom"}]}"""
-                        3 -> """{"assigned":1,"emailsSaved":0,"teamsRenamed":0,"skipped":0,"failures":[]}"""
-                        4 -> """{"assigned":0,"emailsSaved":3,"emailsRefused":2,"teamsRenamed":2,"skipped":4,"failures":[]}"""
-                        else -> resultJson
-                    },
-                )
-            },
-            authRepository = FakeAuthRepository(),
-            logger = Logger.withTag("test"),
-            cache = RecordingCache(),
-        )
-        val rows = (1..30).map { row(it, ImportRowStatus.NEW) }
-
-        val value = assertIs<AppResult.Success<PlayerImportResult>>(
-            repository.apply("t1", "p.csv", byteArrayOf(1), preview(rows), replaceExisting = false),
-        ).value
-
-        assertEquals(3, value.assigned)
-        assertEquals(3, value.emailsSaved)
-        assertEquals(2, value.emailsRefused)
-        assertEquals(2, value.teamsRenamed)
-        assertEquals(4, value.skipped)
-        assertEquals("boom", value.failures.single().message)
-    }
-
-    @Test
-    fun applyReturnsFailureAndStillInvalidatesTheCacheWhenAStepFails() = runTest {
-        var call = 0
-        val cache = RecordingCache()
-        val repository = DefaultPlayerImportRepository(
-            backendApi = mockBackendApi {
-                call++
-                if (call == 2) respond("{}", HttpStatusCode.InternalServerError) else jsonResponse(resultJson)
-            },
-            authRepository = FakeAuthRepository(),
-            logger = Logger.withTag("test"),
-            cache = cache,
-        )
-
-        val result = repository.apply("t1", "p.csv", byteArrayOf(1), preview(listOf(row(1, ImportRowStatus.NEW))), false)
-
-        assertIs<AppResult.Failure>(result)
-        assertEquals(3, cache.stale.size)
     }
 }
 

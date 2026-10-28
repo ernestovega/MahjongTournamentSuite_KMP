@@ -31,6 +31,8 @@ export type TournamentPlayer = {
    * to create the account. Only admins read it: the routes hide it from everyone else.
    */
   email: string | null;
+  /** True when the slot has an email, so editors know that an invitation can go out without reading the email. */
+  hasEmail: boolean;
   /** Set when a substitute plays for this person from a round on. The substitute is not recorded. */
   substitution: PlayerSubstitution | null;
   createdAt: string | null;
@@ -116,6 +118,7 @@ function readPlayer(
     accountUid,
     hasAccount: accountUid != null,
     email: account?.email ?? pendingEmail,
+    hasEmail: (account?.email ?? pendingEmail) != null,
     substitution: readSubstitution(d.get("substitution")),
     createdAt: timestampToIso(d.get("createdAt")),
     updatedAt: timestampToIso(d.get("updatedAt")),

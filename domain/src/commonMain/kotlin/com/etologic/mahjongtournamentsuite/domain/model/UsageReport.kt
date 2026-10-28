@@ -145,7 +145,6 @@ data class TournamentUsage(
     val slots: Int,
     val assignedSlots: Int,
     val slotsWithAccount: Int,
-    val invitationsSent: Int,
-    val invitationsAccepted: Int,
-    val invitationsPending: Int,
+    /** Slots whose account has a password, so the person can sign in. */
+    val slotsWithPassword: Int,
 )

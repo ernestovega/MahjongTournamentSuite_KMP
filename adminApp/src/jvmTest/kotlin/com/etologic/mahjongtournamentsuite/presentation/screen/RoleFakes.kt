@@ -4,11 +4,8 @@ import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
@@ -62,22 +59,15 @@ internal class FakeAdminRepository(
         AppResult.Failure(com.etologic.mahjongtournamentsuite.domain.model.AppError.Unexpected("No usage report"))
 }
 
-/** Records the account actions of the editor. */
+/** Records what the editor sends to players. A test can set the result of a player. */
 internal class FakePlayerAccountRepository : PlayerAccountRepository {
-    val actions = mutableListOf<String>()
+    val sent = mutableListOf<List<Int>>()
+    val results = mutableMapOf<Int, PlayerAccountActionResult>()
 
-    override suspend fun runAction(
-        tournamentId: String,
-        action: PlayerAccountAction,
-        items: List<PlayerAccountActionItem>,
-    ): AppResult<List<PlayerAccountActionResult>> {
-        val playerId = items.single().playerId
-        actions += "$action $tournamentId $playerId"
-        val outcome = if (action == PlayerAccountAction.REVOKE) PlayerAccountOutcome.REVOKED else PlayerAccountOutcome.INVITED
-        return AppResult.Success(listOf(PlayerAccountActionResult(playerId, outcome)))
+    override suspend fun send(tournamentId: String, playerIds: List<Int>): AppResult<List<PlayerAccountActionResult>> {
+        sent += playerIds
+        return AppResult.Success(playerIds.map { results[it] ?: PlayerAccountActionResult(it, PlayerAccountOutcome.INVITED) })
     }
-    override suspend fun saveEmails(tournamentId: String, items: List<PlayerAccountActionItem>) =
-        AppResult.Success(emptyList<PlayerEmailResult>())
 }
 
 internal class FakeSignedInAuthRepository : AuthRepository {

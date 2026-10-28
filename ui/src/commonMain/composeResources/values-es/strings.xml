@@ -66,6 +66,8 @@
     <string name="import_file_missing_columns">La primera línea del archivo necesita estas columnas: %1$s.</string>
     <string name="import_file_no_rows">El archivo no tiene filas de jugadores.</string>
     <string name="import_file_too_many_rows">El archivo tiene más de %1$s filas. Divídelo en archivos más pequeños.</string>
+    <string name="import_file_tournament_started">El torneo ya tiene datos de mesas, así que sus jugadores no se pueden cambiar. Usa la sustitución de un jugador.</string>
+    <string name="import_file_has_errors">El archivo tiene errores. Corrígelos y elige el archivo otra vez.</string>
     <string name="image_error_read">No se ha podido leer la foto.</string>
     <string name="image_error_open">No se ha podido abrir la foto elegida.</string>
     <string name="image_error_decode">No se ha podido leer la imagen elegida.</string>

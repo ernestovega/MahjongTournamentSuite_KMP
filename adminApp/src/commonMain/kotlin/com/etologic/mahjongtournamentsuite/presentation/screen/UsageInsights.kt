@@ -10,7 +10,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.insight_busiest_time
 import mahjongtournamentsuite.adminapp.generated.resources.insight_conflicts
 import mahjongtournamentsuite.adminapp.generated.resources.insight_dormant
 import mahjongtournamentsuite.adminapp.generated.resources.insight_empty_tournaments
-import mahjongtournamentsuite.adminapp.generated.resources.insight_invitations_accepted
+import mahjongtournamentsuite.adminapp.generated.resources.insight_accounts_with_password
 import mahjongtournamentsuite.adminapp.generated.resources.insight_never_signed_in
 import mahjongtournamentsuite.adminapp.generated.resources.insight_no_saves
 import mahjongtournamentsuite.adminapp.generated.resources.insight_player_share
@@ -84,13 +84,13 @@ internal fun usageInsights(report: UsageReport): List<Insight> {
         insights += Insight(InsightLevel.INFO, UiText.of(Res.string.insight_dormant, accounts.dormant, days))
     }
 
-    val sent = report.tournaments.sumOf { it.invitationsSent }
-    val accepted = report.tournaments.sumOf { it.invitationsAccepted }
-    if (sent > 0) {
-        val rate = accepted.toDouble() / sent
+    val withAccount = report.tournaments.sumOf { it.slotsWithAccount }
+    val withPassword = report.tournaments.sumOf { it.slotsWithPassword }
+    if (withAccount > 0) {
+        val rate = withPassword.toDouble() / withAccount
         insights += Insight(
             if (rate < 0.5) InsightLevel.WARNING else InsightLevel.INFO,
-            UiText.of(Res.string.insight_invitations_accepted, rate.percentText(), accepted, sent),
+            UiText.of(Res.string.insight_accounts_with_password, rate.percentText(), withPassword, withAccount),
         )
     }
     current.playerShare?.let {

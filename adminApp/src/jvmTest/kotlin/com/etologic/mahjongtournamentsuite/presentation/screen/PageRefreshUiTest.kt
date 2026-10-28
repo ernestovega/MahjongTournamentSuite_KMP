@@ -122,12 +122,6 @@ private class UnusedImportRepository : PlayerImportRepository {
     override suspend fun preview(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<PlayerImportPreview> =
         error("Not used.")
 
-    override suspend fun apply(
-        tournamentId: String,
-        fileName: String,
-        bytes: ByteArray,
-        preview: PlayerImportPreview,
-        replaceExisting: Boolean,
-        onProgress: (done: Int, total: Int) -> Unit,
-    ): AppResult<PlayerImportResult> = error("Not used.")
+    override suspend fun apply(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<PlayerImportResult> =
+        error("Not used.")
 }

@@ -1,54 +1,28 @@
 package com.etologic.mahjongtournamentsuite.domain.model
 
-enum class PlayerAccountAction {
-    /**
-     * Invite a player whose account has no password yet (the password reset email), or tell a player with a password
-     * that the registration exists. A player with no account needs an email, and the server creates the account.
-     */
-    SEND,
+/** What the server did for one player. The server picks the action by the state of the slot. */
+enum class PlayerAccountOutcome {
+    /** The slot had no account. The server created it and sent the password reset email. */
+    INVITED,
 
-    /** Send again. */
-    RESEND,
+    /** The slot had an account. The server sent the password reset email. */
+    RESET_SENT,
 
-    /** Remove the link between the slot and the account of this tournament. The account stays. */
-    REVOKE,
+    FAILED,
 }
 
-data class PlayerAccountActionItem(
-    val playerId: Int,
-    val email: String? = null,
-)
-
-enum class PlayerAccountOutcome {
-    INVITED,
-    NOTIFIED,
-    REVOKED,
-    SKIPPED,
-    FAILED,
+/** Why an action failed for a player. */
+enum class PlayerAccountFailure {
+    PLAYER_NOT_FOUND,
+    NO_EMA_ID,
+    NO_EMAIL,
+    EMAIL_IN_USE,
+    EMAIL_FAILED,
+    UNEXPECTED,
 }
 
 data class PlayerAccountActionResult(
     val playerId: Int,
     val outcome: PlayerAccountOutcome,
-    val message: String? = null,
-)
-
-enum class PlayerEmailOutcome {
-    /** The server created the account of the player with this email. */
-    CREATED,
-
-    /** The account has this email already. */
-    UNCHANGED,
-
-    /** The account has another email, and the account email stays. [PlayerEmailResult.message] holds it. */
-    KEPT_ACCOUNT_EMAIL,
-
-    /** The server refused the email. [PlayerEmailResult.message] holds the reason. */
-    FAILED,
-}
-
-data class PlayerEmailResult(
-    val playerId: Int,
-    val outcome: PlayerEmailOutcome,
-    val message: String? = null,
+    val reason: PlayerAccountFailure? = null,
 )

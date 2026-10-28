@@ -1123,6 +1123,9 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       strengthKeys.set(playerId, member.id);
       const name = `${titleCase(member.firstName)} ${member.lastName}`;
       data = { name, team, country: member.country, assignedEmaId: member.id, assignedCountry: member.country };
+      // The tester tournaments hold the pending email that an import writes, so the testers can try "Invite". The
+      // production seed never writes one, because an invitation would create a real account for a made-up address.
+      if (spec.testers === true && spec.production !== true) data.email = `ema-${member.id}@seed.example.test`;
       writes.push({ path: `${root}/emaPlayerAssignments/${member.id}`, data: { playerId, updatedAt: FieldValue.serverTimestamp() } });
     } else if (entry === "open") {
       open += 1;

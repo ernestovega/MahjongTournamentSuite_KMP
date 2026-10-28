@@ -24,6 +24,8 @@ import mahjongtournamentsuite.ui.generated.resources.import_file_empty
 import mahjongtournamentsuite.ui.generated.resources.import_file_missing_columns
 import mahjongtournamentsuite.ui.generated.resources.import_file_no_rows
 import mahjongtournamentsuite.ui.generated.resources.import_file_too_many_rows
+import mahjongtournamentsuite.ui.generated.resources.import_file_tournament_started
+import mahjongtournamentsuite.ui.generated.resources.import_file_has_errors
 import org.jetbrains.compose.resources.StringResource
 
 /** Gives the text for the screen. Call [asString] on it while the screen draws. */
@@ -39,6 +41,8 @@ fun AppError.toUiText(): UiText = when (this) {
         ImportFileErrorCode.MISSING_COLUMNS -> UiText.of(Res.string.import_file_missing_columns, args.firstOrNull().orEmpty())
         ImportFileErrorCode.NO_ROWS -> UiText.of(Res.string.import_file_no_rows)
         ImportFileErrorCode.TOO_MANY_ROWS -> UiText.of(Res.string.import_file_too_many_rows, args.firstOrNull().orEmpty())
+        ImportFileErrorCode.TOURNAMENT_STARTED -> UiText.of(Res.string.import_file_tournament_started)
+        ImportFileErrorCode.FILE_HAS_ERRORS -> UiText.of(Res.string.import_file_has_errors)
     }
     is AppError.Unexpected -> UiText.of(message.toFriendlyErrorResource())
 }

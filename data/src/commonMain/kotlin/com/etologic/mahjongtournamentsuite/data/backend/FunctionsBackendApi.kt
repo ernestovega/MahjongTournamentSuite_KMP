@@ -13,7 +13,6 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerExportDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportRequestDto
@@ -474,14 +473,12 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    /** [action] is send, resend or revoke. */
-    suspend fun runPlayerAccountAction(
+    suspend fun sendPlayerAccounts(
         idToken: String,
         tournamentId: String,
-        action: String,
         request: PlayerAccountActionRequestDto,
     ): PlayerAccountActionResponseDto = post(
-        path = "/tournaments/$tournamentId/player-accounts/$action",
+        path = "/tournaments/$tournamentId/player-accounts/send",
         requestBody = request,
         idToken = idToken,
     )
@@ -510,16 +507,6 @@ class FunctionsBackendApi(
         request: PlayerImportRequestDto,
     ): PlayerImportResultDto = post(
         path = "/tournaments/$tournamentId/player-import/apply",
-        requestBody = request,
-        idToken = idToken,
-    )
-
-    suspend fun savePlayerAccountEmails(
-        idToken: String,
-        tournamentId: String,
-        request: PlayerAccountActionRequestDto,
-    ): PlayerEmailsResponseDto = put(
-        path = "/tournaments/$tournamentId/player-accounts/emails",
         requestBody = request,
         idToken = idToken,
     )

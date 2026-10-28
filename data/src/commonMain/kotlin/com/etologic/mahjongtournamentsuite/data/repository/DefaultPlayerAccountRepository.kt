@@ -6,12 +6,9 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionR
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountItemDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 
@@ -21,57 +18,33 @@ class DefaultPlayerAccountRepository(
     private val logger: Logger,
     private val cache: RepositoryCache,
 ) : PlayerAccountRepository {
-    override suspend fun runAction(
+    override suspend fun send(
         tournamentId: String,
-        action: PlayerAccountAction,
-        items: List<PlayerAccountActionItem>,
-    ): AppResult<List<PlayerAccountActionResult>> = request("Running player account action") { idToken ->
-        val response = backendApi.runPlayerAccountAction(
-            idToken = idToken,
-            tournamentId = tournamentId,
-            action = action.name.lowercase(),
-            request = PlayerAccountActionRequestDto(items.map { PlayerAccountItemDto(it.playerId, it.email) }),
-        )
-        markPlayersStale(tournamentId)
-        response.results.map { dto ->
-            PlayerAccountActionResult(
-                playerId = dto.playerId,
-                outcome = PlayerAccountOutcome.entries.firstOrNull { it.name == dto.outcome }
-                    ?: PlayerAccountOutcome.FAILED,
-                message = dto.message,
+        playerIds: List<Int>,
+    ): AppResult<List<PlayerAccountActionResult>> = runCatching {
+        authRepository.withFreshIdToken { idToken ->
+            val response = backendApi.sendPlayerAccounts(
+                idToken = idToken,
+                tournamentId = tournamentId,
+                request = PlayerAccountActionRequestDto(playerIds.map { PlayerAccountItemDto(it) }),
             )
+            // New accounts change who has an account, so the player list is stale.
+            cache.markStale("tournament:$tournamentId:players")
+            response.results.map { dto ->
+                PlayerAccountActionResult(
+                    playerId = dto.playerId,
+                    outcome = PlayerAccountOutcome.entries.firstOrNull { it.name == dto.outcome } ?: PlayerAccountOutcome.FAILED,
+                    reason = dto.reason?.let { name ->
+                        PlayerAccountFailure.entries.firstOrNull { it.name == name } ?: PlayerAccountFailure.UNEXPECTED
+                    },
+                )
+            }
         }
-    }
-
-    override suspend fun saveEmails(
-        tournamentId: String,
-        items: List<PlayerAccountActionItem>,
-    ): AppResult<List<PlayerEmailResult>> = request("Saving player emails") { idToken ->
-        val response = backendApi.savePlayerAccountEmails(
-            idToken,
-            tournamentId,
-            PlayerAccountActionRequestDto(items.map { PlayerAccountItemDto(it.playerId, it.email) }),
-        )
-        markPlayersStale(tournamentId)
-        response.results.map { dto ->
-            PlayerEmailResult(
-                playerId = dto.playerId,
-                outcome = PlayerEmailOutcome.entries.firstOrNull { it.name == dto.outcome } ?: PlayerEmailOutcome.FAILED,
-                message = dto.message,
-            )
-        }
-    }
-
-    private suspend fun markPlayersStale(tournamentId: String) {
-        cache.markStale("tournament:$tournamentId:players")
-    }
-
-    private suspend fun <T : Any> request(action: String, block: suspend (String) -> T): AppResult<T> =
-        runCatching { authRepository.withFreshIdToken(block) }.fold(
-            onSuccess = { AppResult.Success(it) },
-            onFailure = { throwable ->
-                logger.w(throwable) { "$action failed." }
-                AppResult.Failure(throwable.toRepositoryAppError())
-            },
-        )
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Sending to the players failed." }
+            AppResult.Failure(throwable.toRepositoryAppError())
+        },
+    )
 }

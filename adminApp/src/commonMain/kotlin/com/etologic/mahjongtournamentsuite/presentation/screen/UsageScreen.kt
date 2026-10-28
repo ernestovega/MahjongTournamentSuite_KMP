@@ -104,9 +104,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.usage_players_saves
 import mahjongtournamentsuite.adminapp.generated.resources.usage_row_conflicts
 import mahjongtournamentsuite.adminapp.generated.resources.usage_row_dates
 import mahjongtournamentsuite.adminapp.generated.resources.usage_row_hours
-import mahjongtournamentsuite.adminapp.generated.resources.usage_row_inv_accepted
-import mahjongtournamentsuite.adminapp.generated.resources.usage_row_inv_pending
-import mahjongtournamentsuite.adminapp.generated.resources.usage_row_inv_sent
+import mahjongtournamentsuite.adminapp.generated.resources.usage_row_with_password
 import mahjongtournamentsuite.adminapp.generated.resources.usage_row_resets
 import mahjongtournamentsuite.adminapp.generated.resources.usage_row_saves_editors
 import mahjongtournamentsuite.adminapp.generated.resources.usage_row_saves_per_table
@@ -716,9 +714,7 @@ private fun TournamentRow(item: TournamentUsage, days: Int) {
                 StatRow(stringResource(Res.string.usage_row_conflicts), item.conflicts.toString())
                 StatRow(stringResource(Res.string.usage_row_resets), item.resets.toString())
                 StatRow(stringResource(Res.string.usage_row_with_account), item.slotsWithAccount.toString())
-                StatRow(stringResource(Res.string.usage_row_inv_sent), item.invitationsSent.toString())
-                StatRow(stringResource(Res.string.usage_row_inv_accepted), item.invitationsAccepted.toString())
-                StatRow(stringResource(Res.string.usage_row_inv_pending), item.invitationsPending.toString())
+                StatRow(stringResource(Res.string.usage_row_with_password), item.slotsWithPassword.toString())
             }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)

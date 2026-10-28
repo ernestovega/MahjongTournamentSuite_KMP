@@ -142,7 +142,7 @@ test("features show what is used and what is not", () => {
     now,
     days: 30,
     tournaments: [tournament(), tournament({ id: "t2", hasMatchTimer: false, isTeams: true })],
-    activities: [activity({}), activity({ action: "account.resend", uid: "u2" }), activity({ action: "team.update", at: base - 60 * DAY })],
+    activities: [activity({}), activity({ action: "account.send", uid: "u2" }), activity({ action: "team.update", at: base - 60 * DAY })],
   });
   const byKey = Object.fromEntries(report.features.map((feature) => [feature.key, feature]));
   assert.equal(byKey.invitations.uses, 2);

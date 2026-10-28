@@ -5,8 +5,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountAction
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionItem
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
@@ -44,11 +42,9 @@ class PlayersPresenter(
     suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> =
         tournamentRepository.generateTournamentIdList(tournamentId)
 
-    suspend fun runAccountAction(
-        tournamentId: String,
-        action: PlayerAccountAction,
-        items: List<PlayerAccountActionItem>,
-    ): AppResult<List<PlayerAccountActionResult>> = accountRepository.runAction(tournamentId, action, items)
+    /** Invites the players with no account and resets the password of the others. */
+    suspend fun sendToPlayers(tournamentId: String, playerIds: List<Int>): AppResult<List<PlayerAccountActionResult>> =
+        accountRepository.send(tournamentId, playerIds)
 
     suspend fun assignPlayer(
         tournamentId: String,

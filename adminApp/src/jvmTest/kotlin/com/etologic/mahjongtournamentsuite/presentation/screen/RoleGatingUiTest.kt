@@ -187,6 +187,25 @@ class RoleGatingUiTest {
     // ---------------------------------------------------------------- accounts
 
     @Test
+    fun theUsersScreenOpensTheEditDialogOfTheAccountThatTheCallerNames() = runComposeUiTest {
+        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController(), editUid = "e1") }
+
+        awaitText("Edit account")
+
+        onNodeWithText("Edit account").assertExists()
+        onNodeWithText("Save").assertExists()
+    }
+
+    @Test
+    fun theUsersScreenOpensNoDialogForAnUnknownAccount() = runComposeUiTest {
+        show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController(), editUid = "nobody") }
+
+        awaitText("boss@example.test")
+
+        onAllNodesWithText("Edit account").assertCountEquals(0)
+    }
+
+    @Test
     fun adminCanOpenAdminAndEditorAccounts() = runComposeUiTest {
         show(World(GlobalUserRole.ADMIN, listOf(boss, ed))) { GlobalUsersScreen(rememberNavController()) }
 

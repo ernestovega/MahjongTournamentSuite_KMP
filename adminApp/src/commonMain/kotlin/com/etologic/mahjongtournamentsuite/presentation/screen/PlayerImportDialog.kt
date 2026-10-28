@@ -1,47 +1,31 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SkipNext
-import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Icon
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,15 +38,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssue
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
-import com.etologic.mahjongtournamentsuite.domain.model.ImportRowStatus
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -71,13 +55,13 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
-import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetSaver
-import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
-import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
+import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetSaver
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
+import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
+import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -86,23 +70,20 @@ import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.import_apply_count
 import mahjongtournamentsuite.adminapp.generated.resources.import_applying
 import mahjongtournamentsuite.adminapp.generated.resources.import_choose_other_file
+import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_button
+import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_text
+import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_count_errors
-import mahjongtournamentsuite.adminapp.generated.resources.import_creates_account
 import mahjongtournamentsuite.adminapp.generated.resources.import_done_title
-import mahjongtournamentsuite.adminapp.generated.resources.import_failure_line
-import mahjongtournamentsuite.adminapp.generated.resources.import_field_email
-import mahjongtournamentsuite.adminapp.generated.resources.import_field_player
-import mahjongtournamentsuite.adminapp.generated.resources.import_field_team
+import mahjongtournamentsuite.adminapp.generated.resources.import_existing_players
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_ema
+import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_email
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_duplicate_slot
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_in_use
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_in_use_no_ema
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_kept
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_email
+import mahjongtournamentsuite.adminapp.generated.resources.import_issue_email_owned
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_ema
+import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_email
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_invalid_id
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_missing_ema
-import mahjongtournamentsuite.adminapp.generated.resources.import_issue_replaces_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_team_conflict
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_team_ignored
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_team_in_use
@@ -112,22 +93,13 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown_
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown_slot
 import mahjongtournamentsuite.adminapp.generated.resources.import_players_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_reading_file
-import mahjongtournamentsuite.adminapp.generated.resources.import_replace_checkbox
-import mahjongtournamentsuite.adminapp.generated.resources.import_replace_hint
-import mahjongtournamentsuite.adminapp.generated.resources.import_result_assigned
-import mahjongtournamentsuite.adminapp.generated.resources.import_result_emails
-import mahjongtournamentsuite.adminapp.generated.resources.import_result_emails_refused
-import mahjongtournamentsuite.adminapp.generated.resources.import_result_failures
-import mahjongtournamentsuite.adminapp.generated.resources.import_result_skipped
-import mahjongtournamentsuite.adminapp.generated.resources.import_result_teams
+import mahjongtournamentsuite.adminapp.generated.resources.import_result_changed
+import mahjongtournamentsuite.adminapp.generated.resources.import_result_emptied
+import mahjongtournamentsuite.adminapp.generated.resources.import_result_no_accounts
+import mahjongtournamentsuite.adminapp.generated.resources.import_result_players
 import mahjongtournamentsuite.adminapp.generated.resources.import_row_title
-import mahjongtournamentsuite.adminapp.generated.resources.import_started_warning
-import mahjongtournamentsuite.adminapp.generated.resources.import_status_error
-import mahjongtournamentsuite.adminapp.generated.resources.import_status_new
-import mahjongtournamentsuite.adminapp.generated.resources.import_status_replace
-import mahjongtournamentsuite.adminapp.generated.resources.import_status_unchanged
-import mahjongtournamentsuite.adminapp.generated.resources.import_untouched_slots
-import org.jetbrains.compose.resources.StringResource
+import mahjongtournamentsuite.adminapp.generated.resources.import_started_blocked
+import mahjongtournamentsuite.adminapp.generated.resources.import_summary_players
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -137,13 +109,15 @@ private sealed interface ImportStep {
     data object Choose : ImportStep
     data object Reading : ImportStep
     data class Preview(val file: SelectedSpreadsheet, val preview: PlayerImportPreview) : ImportStep
-    data class Applying(val done: Int, val total: Int) : ImportStep
+    data object Applying : ImportStep
     data class Done(val result: PlayerImportResult) : ImportStep
 }
 
 /**
- * Fills the player slots from a CSV or Excel file. The file chooser opens at once. The editor sees what the import does
- * before it changes anything. [playerNameOf] gives the name of a player in the EMA registry. [onChanged] runs when the import changed data.
+ * Overwrites all players and teams of the tournament with a CSV or Excel file. The file chooser opens at once.
+ * The editor sees the check of the file before anything changes. A file with errors cannot be applied, and a
+ * tournament with table data refuses the import. When the tournament has players, the editor confirms the overwrite.
+ * [playerNameOf] gives the name of a player in the EMA registry. [onChanged] runs when the import changed data.
  */
 @Composable
 fun PlayerImportDialog(
@@ -162,18 +136,30 @@ fun PlayerImportDialog(
     val scope = rememberCoroutineScope()
     var step by remember { mutableStateOf<ImportStep>(ImportStep.Choose) }
     var error by remember { mutableStateOf<UiText?>(null) }
-    var replaceExisting by remember { mutableStateOf(false) }
+    var confirming by remember { mutableStateOf(false) }
 
     fun preview(file: SelectedSpreadsheet) = scope.launch {
         step = ImportStep.Reading
         when (val result = presenter.preview(tournamentId, file.fileName, file.bytes)) {
-            is AppResult.Success -> {
-                replaceExisting = false
-                step = ImportStep.Preview(file, result.value)
-            }
+            is AppResult.Success -> step = ImportStep.Preview(file, result.value)
             is AppResult.Failure -> {
                 error = result.error.toUiText()
                 step = ImportStep.Choose
+            }
+        }
+    }
+
+    fun apply(current: ImportStep.Preview) = scope.launch {
+        confirming = false
+        step = ImportStep.Applying
+        when (val result = presenter.apply(tournamentId, current.file.fileName, current.file.bytes)) {
+            is AppResult.Success -> {
+                onChanged()
+                step = ImportStep.Done(result.value)
+            }
+            is AppResult.Failure -> {
+                error = result.error.toUiText()
+                step = current
             }
         }
     }
@@ -200,19 +186,13 @@ fun PlayerImportDialog(
     when (val current = step) {
         ImportStep.Choose -> Unit
 
-        ImportStep.Reading, is ImportStep.Applying -> AlertDialog(
+        ImportStep.Reading, ImportStep.Applying -> AlertDialog(
             onDismissRequest = {},
             title = { Text(stringResource(Res.string.import_players_title)) },
             text = {
                 Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
                     CircularProgressIndicator()
-                    Text(
-                        if (current is ImportStep.Applying) {
-                            stringResource(Res.string.import_applying, current.done, current.total)
-                        } else {
-                            stringResource(Res.string.import_reading_file)
-                        },
-                    )
+                    Text(stringResource(if (current == ImportStep.Applying) Res.string.import_applying else Res.string.import_reading_file))
                 }
             },
             confirmButton = {},
@@ -220,42 +200,16 @@ fun PlayerImportDialog(
 
         is ImportStep.Preview -> {
             val preview = current.preview
-            val appliedCount = preview.newCount + if (replaceExisting) preview.replaceCount else 0
             AlertDialog(
                 onDismissRequest = onDismiss,
                 modifier = Modifier.appFocusGroup(),
                 title = { Text(stringResource(Res.string.import_players_title)) },
-                text = {
-                    ImportPreviewContent(
-                        preview = preview,
-                        replaceExisting = replaceExisting,
-                        onReplaceExistingChange = { replaceExisting = it },
-                        playerNameOf = playerNameOf,
-                    )
-                },
+                text = { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) },
                 confirmButton = {
                     Button(
-                        enabled = appliedCount > 0,
-                        onClick = {
-                            scope.launch {
-                                step = ImportStep.Applying(0, appliedCount)
-                                val result = presenter.apply(
-                                    tournamentId, current.file.fileName, current.file.bytes, preview, replaceExisting,
-                                    onProgress = { done, total -> step = ImportStep.Applying(done, total) },
-                                )
-                                when (result) {
-                                    is AppResult.Success -> {
-                                        onChanged()
-                                        step = ImportStep.Done(result.value)
-                                    }
-                                    is AppResult.Failure -> {
-                                        error = result.error.toUiText()
-                                        step = current
-                                    }
-                                }
-                            }
-                        },
-                    ) { Text(stringResource(Res.string.import_apply_count, appliedCount)) }
+                        enabled = preview.canApply,
+                        onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
+                    ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
                 },
                 dismissButton = {
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -264,6 +218,17 @@ fun PlayerImportDialog(
                     }
                 },
             )
+            if (confirming) {
+                AlertDialog(
+                    onDismissRequest = { confirming = false },
+                    modifier = Modifier.appFocusGroup(),
+                    icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                    title = { Text(stringResource(Res.string.import_confirm_title)) },
+                    text = { Text(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
+                    confirmButton = { Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) } },
+                    dismissButton = { TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) } },
+                )
+            }
         }
 
         is ImportStep.Done -> AlertDialog(
@@ -276,104 +241,29 @@ fun PlayerImportDialog(
     }
 }
 
+/** The check of the file: what the import saves, what it overwrites, and every row with a problem. */
 @Composable
 internal fun ImportPreviewContent(
     preview: PlayerImportPreview,
-    replaceExisting: Boolean,
-    onReplaceExistingChange: (Boolean) -> Unit,
     playerNameOf: (String) -> String?,
 ) {
-    // A tap on a summary tile shows only the rows of that status. A second tap shows all rows again.
-    var filter by remember(preview) { mutableStateOf<ImportRowStatus?>(null) }
-    // Errors come first, so the editor sees the rows to fix before the list of good rows.
-    val rows = remember(preview, filter) {
-        preview.rows
-            .filter { it.status != ImportRowStatus.UNCHANGED && (filter == null || it.status == filter) }
-            .sortedWith(compareBy({ it.status.sortOrder() }, { it.row }))
+    // Errors come first, so the editor sees the rows to fix before the warnings.
+    val rows = remember(preview) {
+        preview.rows.filter { it.issues.isNotEmpty() }.sortedWith(compareBy({ !it.hasError }, { it.row }))
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(
-                ImportRowStatus.NEW to preview.newCount,
-                ImportRowStatus.REPLACE to preview.replaceCount,
-                ImportRowStatus.ERROR to preview.errorCount,
-            ).forEach { (status, count) ->
-                ImportSummaryTile(
-                    status = status,
-                    count = count,
-                    selected = filter == status,
-                    onClick = { filter = if (filter == status) null else status },
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                )
-            }
+        if (preview.tournamentStarted) {
+            ImportNote(Icons.Filled.ErrorOutline, stringResource(Res.string.import_started_blocked), MaterialTheme.colorScheme.error)
         }
+        ImportNote(Icons.Filled.Info, stringResource(Res.string.import_summary_players, preview.importedPlayers), MaterialTheme.colorScheme.onSurfaceVariant)
         if (preview.errorCount > 0) {
-            ImportNote(
-                icon = Icons.Filled.ErrorOutline,
-                text = stringResource(Res.string.import_count_errors, preview.errorCount),
-                color = MaterialTheme.colorScheme.error,
-            )
-        }
-        if (preview.untouchedSlotIds.isNotEmpty()) {
-            ImportNote(
-                icon = Icons.Filled.Info,
-                text = stringResource(Res.string.import_untouched_slots, preview.untouchedSlotIds.size),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (preview.replaceCount > 0) {
-            ImportReplaceChoice(preview, replaceExisting, onReplaceExistingChange)
+            ImportNote(Icons.Filled.ErrorOutline, stringResource(Res.string.import_count_errors, preview.errorCount), MaterialTheme.colorScheme.error)
+        } else if (preview.existingPlayers > 0 && !preview.tournamentStarted) {
+            ImportNote(Icons.Filled.Warning, stringResource(Res.string.import_existing_players, preview.existingPlayers), MaterialTheme.colorScheme.tertiary)
         }
         LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(rows, key = { it.row }) { row -> ImportRowItem(row, playerNameOf) }
         }
-    }
-}
-
-private fun ImportRowStatus.sortOrder() = when (this) {
-    ImportRowStatus.ERROR -> 0
-    ImportRowStatus.REPLACE -> 1
-    ImportRowStatus.NEW -> 2
-    ImportRowStatus.UNCHANGED -> 3
-}
-
-private class StatusStyle(val icon: ImageVector, val color: Color, val container: Color, val label: StringResource)
-
-@Composable
-private fun ImportRowStatus.style(): StatusStyle {
-    val colors = MaterialTheme.colorScheme
-    return when (this) {
-        ImportRowStatus.ERROR -> StatusStyle(Icons.Filled.ErrorOutline, colors.error, colors.errorContainer, Res.string.import_status_error)
-        ImportRowStatus.REPLACE -> StatusStyle(Icons.Filled.SwapHoriz, colors.tertiary, colors.tertiaryContainer, Res.string.import_status_replace)
-        ImportRowStatus.NEW -> StatusStyle(Icons.Filled.PersonAdd, colors.primary, colors.primaryContainer, Res.string.import_status_new)
-        ImportRowStatus.UNCHANGED -> StatusStyle(Icons.Filled.Check, colors.onSurfaceVariant, colors.surfaceVariant, Res.string.import_status_unchanged)
-    }
-}
-
-/** A big count with the name of a status. It filters the list of rows. */
-@Composable
-private fun ImportSummaryTile(
-    status: ImportRowStatus,
-    count: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val style = status.style()
-    val shape = RoundedCornerShape(12.dp)
-    Column(
-        modifier = modifier
-            .clip(shape)
-            .background(if (count > 0) style.container else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f))
-            .border(if (selected) 2.dp else 0.dp, style.color, shape)
-            .selectable(selected = selected, enabled = count > 0, role = Role.Button, onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 10.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        val tint = if (count > 0) style.color else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
-        Icon(style.icon, contentDescription = null, tint = tint, modifier = Modifier.size(20.dp))
-        Text(count.toString(), style = MaterialTheme.typography.headlineSmall, color = tint)
-        Text(stringResource(style.label), style = MaterialTheme.typography.labelMedium, color = tint, textAlign = TextAlign.Center)
     }
 }
 
@@ -385,119 +275,34 @@ private fun ImportNote(icon: ImageVector, text: String, color: Color) {
     }
 }
 
-@Composable
-private fun ImportReplaceChoice(preview: PlayerImportPreview, replaceExisting: Boolean, onChange: (Boolean) -> Unit) {
-    val shape = RoundedCornerShape(12.dp)
-    Column(
-        Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.5f)).padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        if (preview.tournamentStarted) {
-            ImportNote(Icons.Filled.Warning, stringResource(Res.string.import_started_warning), MaterialTheme.colorScheme.error)
-        }
-        Row(
-            modifier = Modifier.toggleable(value = replaceExisting, role = Role.Checkbox, onValueChange = onChange),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Checkbox(checked = replaceExisting, onCheckedChange = null)
-            Spacer(Modifier.width(8.dp))
-            Text(stringResource(Res.string.import_replace_checkbox, preview.replaceCount))
-        }
-        if (!replaceExisting) {
-            Text(
-                stringResource(Res.string.import_replace_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-}
-
+/** A row of the file with a problem. It shows the values of the file, so the editor finds the line to fix. */
 @Composable
 private fun ImportRowItem(row: ImportRowPlan, playerNameOf: (String) -> String?) {
-    val style = row.status.style()
-    val isError = row.status == ImportRowStatus.ERROR
-    val playerLabel = { emaId: String -> playerNameOf(emaId)?.let { "$it · $emaId" } ?: "EMA $emaId" }
-    // The row shows only what changes: the old value, if there is one, and the new value.
-    // An error row shows the values of the file, so the editor finds the line to fix.
-    val oldPlayer = row.current?.emaId?.takeUnless { isError }?.let(playerLabel)
-    val newPlayer = row.emaId?.takeIf { isError || it != row.current?.emaId }?.let(playerLabel)
-    // An account that has an email keeps it. The issue list warns about a different email.
-    val email = row.email?.takeIf { isError || row.current?.email.isNullOrBlank() }
-    val team = row.team?.takeIf { isError || it != row.current?.teamName.orEmpty() }
-    val oldTeam = row.current?.teamName?.takeUnless { isError }
-    val oldEmail = row.current?.email?.takeUnless { isError }
+    val color = if (row.hasError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
     val shape = RoundedCornerShape(12.dp)
-    Row(
-        Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHigh),
-    ) {
-        Box(Modifier.width(4.dp).fillMaxHeight().background(style.color))
+    Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min).clip(shape).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
+        Box(Modifier.width(4.dp).fillMaxHeight().background(color))
         Column(Modifier.weight(1f).padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(Res.string.import_row_title, row.row, row.slotId?.toString() ?: "?"),
-                    style = MaterialTheme.typography.labelLarge,
-                    modifier = Modifier.weight(1f),
-                )
-                Row(
-                    Modifier.clip(RoundedCornerShape(50)).background(style.container).padding(horizontal = 8.dp, vertical = 2.dp),
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(style.icon, contentDescription = null, tint = style.color, modifier = Modifier.size(14.dp))
-                    Text(stringResource(style.label), style = MaterialTheme.typography.labelMedium, color = style.color)
-                }
+            Text(
+                stringResource(Res.string.import_row_title, row.row, row.slotId?.toString() ?: "?"),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            val values = listOfNotNull(
+                row.emaId?.let { emaId -> playerNameOf(emaId)?.let { "$it · $emaId" } ?: "EMA $emaId" },
+                row.team,
+                row.email,
+            )
+            if (values.isNotEmpty()) {
+                Text(values.joinToString(" · "), style = MaterialTheme.typography.bodyMedium)
             }
-            newPlayer?.let { ImportFieldChange(Res.string.import_field_player, oldPlayer, it) }
-            team?.let { ImportFieldChange(Res.string.import_field_team, oldTeam, it) }
-            email?.let { ImportFieldChange(Res.string.import_field_email, oldEmail, it) }
-            if (!isError && row.createsAccount) {
-                ImportNote(Icons.Filled.PersonAdd, stringResource(Res.string.import_creates_account), MaterialTheme.colorScheme.primary)
-            }
-            // The old and the new value show the replaced player already.
-            row.issues.filter { it.code != ImportIssueCode.REPLACES_PLAYER }.forEach { issue ->
-                val isIssueError = issue.severity == ImportIssueSeverity.ERROR
+            row.issues.forEach { issue ->
+                val isError = issue.severity == ImportIssueSeverity.ERROR
                 ImportNote(
-                    icon = if (isIssueError) Icons.Filled.ErrorOutline else Icons.Filled.Warning,
+                    icon = if (isError) Icons.Filled.ErrorOutline else Icons.Filled.Warning,
                     text = issue.toUiText().asString(),
-                    color = if (isIssueError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
-        }
-    }
-}
-
-/** A field with its name, the old value in grey and struck out, an arrow and the new value. */
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun ImportFieldChange(label: StringResource, old: String?, new: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
-        Text(
-            stringResource(label),
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(56.dp).padding(top = 3.dp),
-        )
-        FlowRow(
-            modifier = Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (!old.isNullOrBlank()) {
-                Text(
-                    old,
-                    style = MaterialTheme.typography.bodyMedium.copy(textDecoration = TextDecoration.LineThrough),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowForward,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(14.dp),
-                )
-            }
-            Text(new, style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold))
         }
     }
 }
@@ -505,30 +310,12 @@ private fun ImportFieldChange(label: StringResource, old: String?, new: String) 
 @Composable
 private fun ImportResultContent(result: PlayerImportResult) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ImportResultLine(Icons.Filled.PersonAdd, stringResource(Res.string.import_result_assigned, result.assigned), MaterialTheme.colorScheme.primary)
-        ImportResultLine(Icons.Filled.Email, stringResource(Res.string.import_result_emails, result.emailsSaved), MaterialTheme.colorScheme.primary)
-        if (result.emailsRefused > 0) {
-            ImportResultLine(Icons.Filled.Warning, stringResource(Res.string.import_result_emails_refused, result.emailsRefused), MaterialTheme.colorScheme.tertiary)
+        ImportResultLine(Icons.Filled.PersonAdd, stringResource(Res.string.import_result_players, result.players), MaterialTheme.colorScheme.primary)
+        ImportResultLine(Icons.Filled.Groups, stringResource(Res.string.import_result_changed, result.changedSlots), MaterialTheme.colorScheme.primary)
+        if (result.emptiedSlots > 0) {
+            ImportResultLine(Icons.Filled.SkipNext, stringResource(Res.string.import_result_emptied, result.emptiedSlots), MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        ImportResultLine(Icons.Filled.Groups, stringResource(Res.string.import_result_teams, result.teamsRenamed), MaterialTheme.colorScheme.primary)
-        ImportResultLine(Icons.Filled.SkipNext, stringResource(Res.string.import_result_skipped, result.skipped), MaterialTheme.colorScheme.onSurfaceVariant)
-        if (result.failures.isNotEmpty()) {
-            val shape = RoundedCornerShape(12.dp)
-            Column(
-                Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.errorContainer).padding(12.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                ImportNote(Icons.Filled.ErrorOutline, stringResource(Res.string.import_result_failures), MaterialTheme.colorScheme.error)
-                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                    items(result.failures) { failure ->
-                        Text(
-                            stringResource(Res.string.import_failure_line, failure.row?.toString() ?: "?", failure.message),
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            }
-        }
+        ImportNote(Icons.Filled.Info, stringResource(Res.string.import_result_no_accounts), MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -542,7 +329,6 @@ private fun ImportResultLine(icon: ImageVector, text: String, color: Color) {
 
 private fun ImportIssue.toUiText(): UiText {
     val first = args.getOrElse(0) { "" }
-    val second = args.getOrElse(1) { "" }
     return when (code) {
         ImportIssueCode.INVALID_ID -> UiText.of(Res.string.import_issue_invalid_id)
         ImportIssueCode.UNKNOWN_SLOT -> UiText.of(Res.string.import_issue_unknown_slot, first)
@@ -552,13 +338,11 @@ private fun ImportIssue.toUiText(): UiText {
         ImportIssueCode.UNKNOWN_EMA_ID -> UiText.of(Res.string.import_issue_unknown_ema, first)
         ImportIssueCode.DUPLICATE_EMA_ID -> UiText.of(Res.string.import_issue_duplicate_ema, first)
         ImportIssueCode.INVALID_EMAIL -> UiText.of(Res.string.import_issue_invalid_email, first)
+        ImportIssueCode.DUPLICATE_EMAIL -> UiText.of(Res.string.import_issue_duplicate_email, first)
+        ImportIssueCode.EMAIL_OWNED_BY_OTHER_ACCOUNT -> UiText.of(Res.string.import_issue_email_owned, first)
         ImportIssueCode.TEAM_NAME_TOO_LONG -> UiText.of(Res.string.import_issue_team_too_long)
         ImportIssueCode.TEAM_NAME_CONFLICT -> UiText.of(Res.string.import_issue_team_conflict)
         ImportIssueCode.TEAM_NAME_IN_USE -> UiText.of(Res.string.import_issue_team_in_use, first)
-        ImportIssueCode.REPLACES_PLAYER -> UiText.of(Res.string.import_issue_replaces_player)
-        ImportIssueCode.EMAIL_KEPT_ACCOUNT -> UiText.of(Res.string.import_issue_email_kept, first, second)
-        ImportIssueCode.EMAIL_IN_USE ->
-            if (first.isBlank()) UiText.of(Res.string.import_issue_email_in_use_no_ema) else UiText.of(Res.string.import_issue_email_in_use, first)
         ImportIssueCode.TEAM_IGNORED -> UiText.of(Res.string.import_issue_team_ignored)
         ImportIssueCode.UNKNOWN -> UiText.of(Res.string.import_issue_unknown)
     }

@@ -160,6 +160,28 @@ async function main(): Promise<void> {
     sentEmails.length = 0;
     res.status(200).json({ ok: true });
   });
+  // Tests call this to give the slots of a tournament a pending email, as the import does. The email of slot 7 is
+  // `<prefix>slot7@example.test`. A prefix that starts with "fail" makes the password reset email fail.
+  app.post("/__e2e/slot-emails", async (req, res) => {
+    try {
+      const tournamentId = String(req.query.tournament ?? "");
+      const prefix = String(req.query.prefix ?? "");
+      if (!tournamentId.startsWith("test-")) {
+        res.status(400).json({ error: "Pass ?tournament=test-a" });
+        return;
+      }
+      const slots = await db.collection(`tournaments/${tournamentId}/players`).get();
+      const writer = db.bulkWriter();
+      slots.docs.forEach((slot) => {
+        void writer.update(slot.ref, { email: `${prefix}slot${slot.id}@example.test` });
+      });
+      await writer.close();
+      res.status(200).json({ ok: true, slots: slots.size });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
   // Tests call this to get back the original data of some tournaments, for example after they changed a table.
   app.post("/__e2e/reset", async (req, res) => {
     try {

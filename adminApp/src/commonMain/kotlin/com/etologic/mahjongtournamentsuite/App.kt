@@ -143,7 +143,9 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                         tournamentId = args.tournamentId,
                     )
                 }
-                screen<UsersRoute> { GlobalUsersScreen(navController = navController) }
+                screen<UsersRoute> { backStackEntry ->
+                    GlobalUsersScreen(navController = navController, editUid = backStackEntry.toRoute<UsersRoute>().editUid)
+                }
                 screen<PlayersRoute> { backStackEntry ->
                     val args = backStackEntry.toRoute<PlayersRoute>()
                     PlayersScreen(

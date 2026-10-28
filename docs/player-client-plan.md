@@ -10,8 +10,8 @@ Phases 1 and 2 are built and tested. Phase 3 (schedules and notifications) is no
 | --- | --- |
 | Editor routes closed for player accounts (`requireEditor`) | Done |
 | Roles `ADMIN`, `EDITOR`, `PLAYER` as claims, `emaId` on the account | Done |
-| Account creation from an email without a password, password reset email, slot link | Done |
-| Management app: account state and invitation actions on the players screen | Done |
+| Account creation from the pending email of the import, without password and alias, password reset email, slot link | Done |
+| Management app: has account or not, invite and password reset on the players screen | Done |
 | Player read access with `requireTournamentReader`, scoped lists | Done |
 | Modules `:ui`, `:playerApp`, `:playerAndroidApp` (Android and web) | Done |
 | Hand entry with a review step (preview, then confirm) | Done |
@@ -42,11 +42,9 @@ No new libraries were added.
 
 1. Create the hosting site: `firebase hosting:sites:create mahjong-tournament-suite-player`.
 2. Connect the domain `mtsplayer.mahjongmadrid.com` to that site (Firebase console, Hosting, Add custom domain) and add the DNS records in cPanel.
-3. Create a mailbox for the sender and store its SMTP address as the secret `MTS_SMTP_URI`:
-   `npx -y firebase-tools@latest functions:secrets:set MTS_SMTP_URI --project mahjong-tournament-suite`.
-4. `PLAYER_APP_URL` and `MAIL_FROM` are set in `firebase/functions/.env`. Deploy the functions. Then deploy hosting for both sites.
-5. Save each existing editor account once in the accounts screen so it gets the `editor` claim.
-6. Run `npm run verify:roles` (see `firebase-role-rollout.md`).
+3. Deploy the functions. Then deploy hosting for both sites.
+4. Save each existing editor account once in the accounts screen so it gets the `editor` claim.
+5. Run `npm run verify:roles` (see `firebase-role-rollout.md`).
 
 ## Phase 3: schedules and notifications
 
@@ -70,15 +68,15 @@ The player screens use shared components from the `:ui` module. The design follo
 - **Tournament screen:** a header with the place and points of the player, and the tabs My tables, All tables and Ranking. Ranking marks the first three places with trophies.
 - **Tournament list:** a card per tournament with a status chip (Upcoming, In progress, Finished).
 
-## Invitations and registration emails
+## Import, invitations and password resets
 
+- The import overwrites all players and teams of a tournament and creates no account. It saves the email of the file on the slot as a pending email. Only admins read that email.
 - Assigning a player never sends an email. If an account owns the EMA ID, the slot shows that account and the player sees the tournament. No link is stored: the EMA ID is the link.
-- The email of a player lives only in the account. A player with no account gets an account without a password when an editor saves or imports the email.
-- An editor sends, resends or marks as not notified by hand, for one player or for many (button "Invitations" on the players screen).
-- The list tracks who was contacted. Editors filter by "Not invited yet", "Invited, waiting", "Contacted" or "No EMA ID" and run the action on the selected players.
-- "Invite" sends the password reset email to an account that has no password yet. The person chooses a password and signs in on the player app.
-- A player with a password gets a "you are registered" email with a link to the tournament (`/?tournament=<id>`). The player app opens that tournament after sign-in.
-- An account with an EMA ID (set by an admin in the accounts screen, or created from an email) sees every tournament where that EMA ID is assigned. The email is a notice and is optional for such players.
+- The players screen shows only "Has account" or "No account" for each player.
+- "Invite" creates the account of a player with no account, without a password and without an alias. It uses the EMA ID and the pending email of the slot, and sends the password reset email. The person chooses a password and signs in on the player app.
+- For a player with an account, an admin opens "Edit account" from the menu of the row. The dialog has the button to send the password reset email.
+- The "Invitations" dialog lists every player with a filter (All, No account, Has account). One button, "Send", invites the selected players with no account and resets the password of the selected players with an account.
+- An account with an EMA ID (set by an admin in the accounts screen, or created by an invitation) sees every tournament where that EMA ID is assigned.
 
 ## Table screen rules
 

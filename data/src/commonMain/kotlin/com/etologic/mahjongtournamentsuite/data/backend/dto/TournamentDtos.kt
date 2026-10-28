@@ -164,9 +164,9 @@ data class TournamentPlayerDto(
     val country: String = "",
     val assignedEmaId: String? = null,
     val accountUid: String? = null,
-    val invitationStatus: String = "NONE",
+    val hasAccount: Boolean = false,
     val email: String? = null,
-    val contactedAt: String? = null,
+    val hasEmail: Boolean = false,
     val substitution: PlayerSubstitutionDto? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
@@ -183,7 +183,6 @@ data class PlayerSubstitutionDto(
 @Serializable
 data class PlayerAccountItemDto(
     val playerId: Int,
-    val email: String? = null,
 )
 
 @Serializable
@@ -195,24 +194,12 @@ data class PlayerAccountActionRequestDto(
 data class PlayerAccountResultDto(
     val playerId: Int,
     val outcome: String,
-    val message: String? = null,
+    val reason: String? = null,
 )
 
 @Serializable
 data class PlayerAccountActionResponseDto(
     val results: List<PlayerAccountResultDto> = emptyList(),
-)
-
-@Serializable
-data class PlayerEmailResultDto(
-    val playerId: Int,
-    val outcome: String,
-    val message: String? = null,
-)
-
-@Serializable
-data class PlayerEmailsResponseDto(
-    val results: List<PlayerEmailResultDto> = emptyList(),
 )
 
 @Serializable

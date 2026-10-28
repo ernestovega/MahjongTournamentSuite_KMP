@@ -66,6 +66,8 @@
     <string name="import_file_missing_columns">The first line of the file needs these columns: %1$s.</string>
     <string name="import_file_no_rows">The file has no player rows.</string>
     <string name="import_file_too_many_rows">The file has more than %1$s rows. Split it into smaller files.</string>
+    <string name="import_file_tournament_started">The tournament has table data, so its players cannot change. Use the substitution of a player instead.</string>
+    <string name="import_file_has_errors">The file has errors. Fix them and choose the file again.</string>
     <string name="image_error_read">The photo could not be read.</string>
     <string name="image_error_open">The selected photo could not be opened.</string>
     <string name="image_error_decode">The selected logo could not be decoded.</string>

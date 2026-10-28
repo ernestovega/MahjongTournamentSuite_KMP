@@ -19,8 +19,11 @@ data class TournamentRoute(
     val tournamentId: String,
 )
 
+/** [editUid] opens the edit dialog of that account at once. The players screen uses it. */
 @Serializable
-data object UsersRoute
+data class UsersRoute(
+    val editUid: String? = null,
+)
 
 @Serializable
 data class PlayersRoute(

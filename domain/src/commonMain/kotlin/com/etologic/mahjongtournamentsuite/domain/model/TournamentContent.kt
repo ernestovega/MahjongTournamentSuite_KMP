@@ -9,11 +9,15 @@ data class TournamentPlayer(
     val assignedEmaId: String? = null,
     /** Player account linked to this slot. */
     val accountUid: String? = null,
-    val invitationStatus: InvitationStatus = InvitationStatus.NONE,
-    /** The email of the linked account. The email lives only in the account. Null when the slot has no account. */
+    /** True when an account owns the EMA id of the slot. */
+    val hasAccount: Boolean = false,
+    /**
+     * The email of the account, or the pending email of the import when the slot has no account.
+     * The server sends it to admins only. Everyone else gets null.
+     */
     val email: String? = null,
-    /** When the last invitation or registration email was sent to the player. Null when none was sent. */
-    val contactedAt: String? = null,
+    /** True when the slot has an email, so an invitation can go out. Editors get it without the email. */
+    val hasEmail: Boolean = false,
     /** Set when a substitute plays for this person from a round on. The substitute is never recorded. */
     val substitution: PlayerSubstitution? = null,
     val createdAt: String? = null,
@@ -56,40 +60,6 @@ data class PlayerSubstitution(
     /** True when the player has no personal statistics at all. Only an excluded player. */
     val excludedFromStatistics: Boolean get() = excludedFromEma
 }
-
-/**
- * [NONE]: no account, or an account with no password that got no email yet.
- * [INVITED]: the account has no password yet and the invitation email went out.
- * [ACCEPTED]: the person chose a password.
- */
-enum class InvitationStatus {
-    NONE,
-    INVITED,
-    ACCEPTED,
-}
-
-/** Where a player stands in the contact process. Editors filter and run bulk actions with it. */
-enum class PlayerContactState {
-    /** The slot has no EMA id, so nobody can be contacted. */
-    NO_EMA_ID,
-    /** No email was sent yet and no account is linked. */
-    NOT_INVITED,
-    /** An account is linked, but no email was sent yet. */
-    LINKED,
-    /** The invitation was sent and the player did not choose a password yet. */
-    INVITED,
-    /** The player has an account and an email was sent, or the player accepted. */
-    CONTACTED,
-}
-
-val TournamentPlayer.contactState: PlayerContactState
-    get() = when {
-        assignedEmaId.isNullOrBlank() -> PlayerContactState.NO_EMA_ID
-        invitationStatus == InvitationStatus.INVITED -> PlayerContactState.INVITED
-        accountUid != null && contactedAt != null -> PlayerContactState.CONTACTED
-        accountUid != null -> PlayerContactState.LINKED
-        else -> PlayerContactState.NOT_INVITED
-    }
 
 val TournamentPlayer.isAssigned: Boolean
     get() = !assignedEmaId.isNullOrBlank()

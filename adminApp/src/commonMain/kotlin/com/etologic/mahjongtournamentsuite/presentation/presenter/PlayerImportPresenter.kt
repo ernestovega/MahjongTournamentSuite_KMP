@@ -21,15 +21,8 @@ class PlayerImportPresenter(
         return repository.preview(tournamentId, fileName, bytes)
     }
 
-    suspend fun apply(
-        tournamentId: String,
-        fileName: String,
-        bytes: ByteArray,
-        preview: PlayerImportPreview,
-        replaceExisting: Boolean,
-        onProgress: (done: Int, total: Int) -> Unit,
-    ): AppResult<PlayerImportResult> {
+    suspend fun apply(tournamentId: String, fileName: String, bytes: ByteArray): AppResult<PlayerImportResult> {
         logger.i { "Applying a player import." }
-        return repository.apply(tournamentId, fileName, bytes, preview, replaceExisting, onProgress)
+        return repository.apply(tournamentId, fileName, bytes)
     }
 }

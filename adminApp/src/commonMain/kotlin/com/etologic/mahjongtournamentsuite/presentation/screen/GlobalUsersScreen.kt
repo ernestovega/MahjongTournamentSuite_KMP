@@ -90,7 +90,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account_created_reset_sent
 import mahjongtournamentsuite.adminapp.generated.resources.accounts
 import mahjongtournamentsuite.adminapp.generated.resources.accounts_count_summary
-import mahjongtournamentsuite.adminapp.generated.resources.action_did_not_run
 import mahjongtournamentsuite.adminapp.generated.resources.add_account
 import mahjongtournamentsuite.adminapp.generated.resources.alias
 import mahjongtournamentsuite.adminapp.generated.resources.all_tournaments
@@ -151,7 +150,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
-fun GlobalUsersScreen(navController: NavHostController) {
+fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null) {
     val presenter = koinInject<UsersPresenter>()
     val scope = rememberCoroutineScope()
     var access by remember { mutableStateOf<AdminStatus?>(null) }
@@ -169,6 +168,7 @@ fun GlobalUsersScreen(navController: NavHostController) {
     var selectedRoles by remember { mutableStateOf<Set<GlobalUserRole>>(emptySet()) }
     var selectedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
     var restoreUid by rememberSaveable { mutableStateOf<String?>(null) }
+    var editUidHandled by rememberSaveable { mutableStateOf(false) }
     val addFocusRequester = remember { FocusRequester() }
     val rowFocusRequesters = remember(users.map(ManagedUser::uid)) {
         users.associate { it.uid to FocusRequester() }
@@ -191,6 +191,14 @@ fun GlobalUsersScreen(navController: NavHostController) {
             (selectedTournamentId == null || user.role == GlobalUserRole.ADMIN || user.tournamentAssignments.any {
                 it.tournamentId == selectedTournamentId
             })
+    }
+
+    // The players screen opens this screen with the account to edit. The dialog opens once the accounts are loaded.
+    LaunchedEffect(users, editUid) {
+        if (editUid != null && !editUidHandled && users.isNotEmpty()) {
+            users.firstOrNull { it.uid == editUid }?.let { editingUser = it }
+            editUidHandled = true
+        }
     }
 
     fun refresh(force: Boolean = false) {

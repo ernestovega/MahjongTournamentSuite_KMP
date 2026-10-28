@@ -54,7 +54,8 @@ A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The er
 | `EditTournamentTest` | 12 | Edit dialog values, cancel, save, agenda rows, delete with confirmation, editor is refused. |
 | `CreateTournamentTest` | 10 | Form defaults, validation messages, and a valid creation that opens the new tournament. |
 | `TableEditingTest` | 7 | Hand entry in the admin table editor, the Completed switch, an editor save, and conflicts with another editor. |
-| `ToolsDialogsTest` | 5 | ID card and invitation dialogs. |
+| `ToolsDialogsTest` | 4 | ID card and invitation dialogs. |
+| `InvitationsTest` | 3 | Send from the invitations dialog: no email, valid email, email refused by the mailbox. |
 | `GlobalScreensTest` | 12 | App users, usage, EMA registry, statistics, theme. |
 | `StatisticsTest` | 6 | Tournament statistics tabs. |
 | `RankingAndTimerTest` | 10 | Ranking board paging and rows, timer round and countdown. |

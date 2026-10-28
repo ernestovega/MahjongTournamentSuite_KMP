@@ -119,7 +119,5 @@ private fun TournamentUsageDto.toDomain() = TournamentUsage(
     slots = slots,
     assignedSlots = assignedSlots,
     slotsWithAccount = slotsWithAccount,
-    invitationsSent = invitationsSent,
-    invitationsAccepted = invitationsAccepted,
-    invitationsPending = invitationsPending,
+    slotsWithPassword = slotsWithPassword,
 )

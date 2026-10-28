@@ -338,12 +338,13 @@ describe("player accounts", () => {
       await seedSlot(80, newEma(), { email });
       const read = async (token: string) => {
         const response = await server.request("GET", `/tournaments/${tournamentId}/players`, { token });
-        return (response.body as { players: Array<{ id: number; email: string | null; hasAccount: boolean }> }).players.find((player) => player.id === 80)!;
+        return (response.body as { players: Array<{ id: number; email: string | null; hasAccount: boolean; hasEmail: boolean }> }).players.find((player) => player.id === 80)!;
       };
 
       assert.deepEqual(await read(admin.token), { ...(await read(admin.token)), email, hasAccount: false });
       assert.equal((await read(editor.token)).email, null);
       assert.equal((await read(editor.token)).hasAccount, false);
+      assert.equal((await read(editor.token)).hasEmail, true);
     });
   });
 

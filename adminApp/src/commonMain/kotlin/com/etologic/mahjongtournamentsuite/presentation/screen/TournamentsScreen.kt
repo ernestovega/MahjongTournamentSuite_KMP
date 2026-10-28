@@ -136,7 +136,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_host_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_logo_for
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_yet
-import mahjongtournamentsuite.adminapp.generated.resources.open
 import mahjongtournamentsuite.adminapp.generated.resources.open_profile
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.role_admin
@@ -338,7 +337,7 @@ fun TournamentsScreen(
                 onAppUsers = if (adminStatus?.canManageUsers == true) {
                     {
                         lastFocusedControl = "users"
-                        navController.navigate(UsersRoute)
+                        navController.navigate(UsersRoute())
                     }
                 } else {
                     null

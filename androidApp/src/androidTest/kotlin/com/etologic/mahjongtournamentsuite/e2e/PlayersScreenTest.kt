@@ -74,7 +74,7 @@ class PlayersScreenTest : AdminE2eTest() {
         openPlayers()
         c.waitForText("Invite")
         c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("10000138")
-        c.waitForText("Linked")
+        c.waitForText("Has account")
         c.waitForNoText("Invite")
     }
 

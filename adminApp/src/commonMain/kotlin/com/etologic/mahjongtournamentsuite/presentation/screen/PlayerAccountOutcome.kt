@@ -11,57 +11,46 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerContactState
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
-import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.contact_invited
-import mahjongtournamentsuite.adminapp.generated.resources.contact_no_ema_id
-import mahjongtournamentsuite.adminapp.generated.resources.contact_state_linked
-import mahjongtournamentsuite.adminapp.generated.resources.contact_state_not_invited
-import mahjongtournamentsuite.adminapp.generated.resources.contact_state_reminded
 import mahjongtournamentsuite.adminapp.generated.resources.dialog_done_title
+import mahjongtournamentsuite.adminapp.generated.resources.failure_email_failed
+import mahjongtournamentsuite.adminapp.generated.resources.failure_email_in_use
+import mahjongtournamentsuite.adminapp.generated.resources.failure_no_ema_id
+import mahjongtournamentsuite.adminapp.generated.resources.failure_no_email
+import mahjongtournamentsuite.adminapp.generated.resources.failure_player_not_found
+import mahjongtournamentsuite.adminapp.generated.resources.failure_unexpected
 import mahjongtournamentsuite.adminapp.generated.resources.ok
-import mahjongtournamentsuite.adminapp.generated.resources.outcome_failed
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_invited
-import mahjongtournamentsuite.adminapp.generated.resources.outcome_notified
-import mahjongtournamentsuite.adminapp.generated.resources.outcome_revoked
-import mahjongtournamentsuite.adminapp.generated.resources.outcome_skipped
+import mahjongtournamentsuite.adminapp.generated.resources.outcome_reset_sent
 import mahjongtournamentsuite.adminapp.generated.resources.something_went_wrong
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-internal val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
-
-/** The time of a contact as local date and time in the device language. */
-internal fun contactTimeText(isoTime: String?): String? = localizedDateTimeOrNull(isoTime)
-
-@Composable
-internal fun PlayerContactState.label(): String = stringResource(
-    when (this) {
-        PlayerContactState.NO_EMA_ID -> Res.string.contact_no_ema_id
-        PlayerContactState.NOT_INVITED -> Res.string.contact_state_not_invited
-        PlayerContactState.LINKED -> Res.string.contact_state_linked
-        PlayerContactState.INVITED -> Res.string.contact_invited
-        PlayerContactState.CONTACTED -> Res.string.contact_state_reminded
-    },
-)
-
-/** The result of one account action, shown in its own dialog after the account dialog closes. */
+/** The result of one account action, shown in its own dialog. */
 data class AccountOutcome(val message: UiText, val isError: Boolean)
 
+internal fun PlayerAccountFailure.textRes(): StringResource = when (this) {
+    PlayerAccountFailure.PLAYER_NOT_FOUND -> Res.string.failure_player_not_found
+    PlayerAccountFailure.NO_EMA_ID -> Res.string.failure_no_ema_id
+    PlayerAccountFailure.NO_EMAIL -> Res.string.failure_no_email
+    PlayerAccountFailure.EMAIL_IN_USE -> Res.string.failure_email_in_use
+    PlayerAccountFailure.EMAIL_FAILED -> Res.string.failure_email_failed
+    PlayerAccountFailure.UNEXPECTED -> Res.string.failure_unexpected
+}
+
 /** The plain sentence for the result of one account action on one slot. */
-internal fun PlayerAccountActionResult.toOutcome(): AccountOutcome {
-    val detail = message?.let { " $it" }.orEmpty()
-    return when (outcome.name) {
-        "FAILED" -> AccountOutcome(UiText.of(Res.string.outcome_failed, detail), isError = true)
-        "SKIPPED" -> AccountOutcome(UiText.of(Res.string.outcome_skipped, detail), isError = false)
-        "INVITED" -> AccountOutcome(UiText.of(Res.string.outcome_invited, detail), isError = false)
-        "NOTIFIED" -> AccountOutcome(UiText.of(Res.string.outcome_notified, detail), isError = false)
-        "REVOKED" -> AccountOutcome(UiText.of(Res.string.outcome_revoked, detail), isError = false)
-        else -> AccountOutcome(UiText.Plain(outcome.name.lowercase().replaceFirstChar(Char::uppercase) + "." + detail), isError = false)
-    }
+internal fun PlayerAccountActionResult.toOutcome(): AccountOutcome = when (outcome) {
+    PlayerAccountOutcome.INVITED -> AccountOutcome(UiText.of(Res.string.outcome_invited), isError = false)
+    PlayerAccountOutcome.RESET_SENT -> AccountOutcome(UiText.of(Res.string.outcome_reset_sent), isError = false)
+    PlayerAccountOutcome.FAILED -> AccountOutcome(
+        UiText.of((reason ?: PlayerAccountFailure.UNEXPECTED).textRes()),
+        isError = true,
+    )
 }
 
 @Composable

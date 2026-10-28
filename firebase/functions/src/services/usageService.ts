@@ -218,9 +218,7 @@ export function localSlot(at: number, timeZone: string): { weekday: number; hour
 
 /** Activity actions that make one feature of the app. */
 const ACTION_FEATURES: Array<{ key: string; label: string; group: string; actions: string[] }> = [
-  { key: "invitations", label: "Player invitations", group: "Player accounts", actions: ["account.send", "account.resend"] },
-  { key: "emails", label: "Player e-mails saved", group: "Player accounts", actions: ["account.saveEmails"] },
-  { key: "revoke", label: "Invitations revoked", group: "Player accounts", actions: ["account.revoke"] },
+  { key: "invitations", label: "Player invitations and password resets", group: "Player accounts", actions: ["account.send"] },
   { key: "assign", label: "EMA numbers assigned", group: "Players", actions: ["player.assign", "player.import"] },
   { key: "substitution", label: "Player substitution", group: "Players", actions: ["player.substitute", "player.clearSubstitution"] },
   { key: "teamEditing", label: "Team editing", group: "Players", actions: ["team.update"] },

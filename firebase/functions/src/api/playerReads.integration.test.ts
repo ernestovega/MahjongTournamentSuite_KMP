@@ -73,6 +73,7 @@ describe("what a player can read", () => {
       assert.equal(slot.accountUid, null);
       assert.equal(slot.email, null);
       assert.equal(slot.hasAccount, false);
+      assert.equal(slot.hasEmail, false);
     }
   });
 
@@ -89,15 +90,15 @@ describe("what a player can read", () => {
     assert.equal((await server.request("GET", `/tournaments/${t2}/players`, { token: player.token })).status, 403);
   });
 
-  it("shows an editor whether a slot has an account, and never an email", async () => {
+  it("shows an editor whether a slot has an account and an email, and never the email", async () => {
     const reader = await createAccount({ role: "EDITOR", memberOf: [t1] });
     await db.doc(`tournaments/${t1}/players/2`).update({ email: "pending@example.test" });
 
     const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: reader.token });
-    const players = (body as { players: Array<{ id: number; email: string | null; hasAccount: boolean }> }).players;
+    const players = (body as { players: Array<{ id: number; email: string | null; hasAccount: boolean; hasEmail: boolean }> }).players;
 
-    assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.hasAccount]), [
-      [1, null, true], [2, null, false], [3, null, true], [4, null, true],
+    assert.deepEqual(players.map((slot) => [slot.id, slot.email, slot.hasAccount, slot.hasEmail]), [
+      [1, null, true, true], [2, null, false, true], [3, null, true, true], [4, null, true, true],
     ]);
   });
 

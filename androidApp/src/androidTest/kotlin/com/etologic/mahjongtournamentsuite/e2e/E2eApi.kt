@@ -57,6 +57,12 @@ object E2eApi {
         return (0 until list.length()).map { list.getJSONObject(it) }
     }
 
+    /** Gives every slot of the tournament a pending email, as the import does: `<prefix>slot7@example.test` for slot 7. */
+    fun setSlotEmails(tournamentId: String, prefix: String = "") {
+        val reply = call("POST", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/slot-emails?tournament=$tournamentId&prefix=$prefix")
+        check(reply.status == 200) { "Setting the slot emails failed: ${reply.status} ${reply.body}" }
+    }
+
     fun clearEmails() {
         call("DELETE", "${E2E_BACKEND_URL.removeSuffix("/api")}/__e2e/mail")
     }
