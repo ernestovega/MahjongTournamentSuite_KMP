@@ -1,6 +1,7 @@
 import { FieldValue } from "firebase-admin/firestore";
 
 import { db, firebaseProjectId } from "../firebase";
+import { ownershipAction } from "../services/emaIdOwnership";
 import { globalVersionUpdate } from "../services/dataVersionsService";
 import { isSelectableTimeZone } from "../services/matchTime";
 import { handScoreTotals, tablePointsOf } from "../services/handScoring";
@@ -494,7 +495,7 @@ const TOURNAMENTS: TournamentSpec[] = [
 
 /**
  * The people who test the apps. The first four have an account that owns the EMA id, so every slot with that EMA id
- * shows the account. The seed writes no link. The last three have none, to test invitations.
+ * shows the account. The seed makes the accounts own their EMA id (`linkTesterAccounts`) and writes no link. The last three have none, to test invitations.
  */
 const TESTER_ACCOUNTS: Record<string, string> = {
   "10990026": "takw7aMVudQWwoM4M20iG5argmr1", // Edgar
@@ -1248,6 +1249,25 @@ async function loadRegistry(): Promise<Registry> {
     .filter((player) => player.firstName && player.lastName && player.country);
 }
 
+/**
+ * Makes each tester account the owner of its EMA id (the profile and `emaIdIndex`), so every slot with that EMA id
+ * shows the account. It writes only documents that are free and never takes an EMA id from another account.
+ */
+async function linkTesterAccounts(): Promise<void> {
+  for (const [emaId, uid] of Object.entries(TESTER_ACCOUNTS)) {
+    const [profile, index] = await Promise.all([db.doc(`users/${uid}`).get(), db.doc(`emaIdIndex/${emaId}`).get()]);
+    const action = ownershipAction({
+      uid, emaId,
+      profileEmaId: typeof profile.get("emaId") === "string" && profile.get("emaId") !== "" ? profile.get("emaId") : null,
+      indexUid: index.exists ? String(index.get("uid")) : null,
+    });
+    console.log(`  tester account ${uid} (EMA ${emaId}): ${action}${action === "CLAIM" && !applyChanges ? " (preview)" : ""}`);
+    if (action !== "CLAIM" || !applyChanges) continue;
+    await db.doc(`users/${uid}`).set({ emaId, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    await db.doc(`emaIdIndex/${emaId}`).set({ uid, updatedAt: FieldValue.serverTimestamp() });
+  }
+}
+
 async function main(): Promise<void> {
   console.log(`${applyChanges ? "Applying" : "Previewing"} test tournaments for ${firebaseProjectId}.`);
   const registry = await loadRegistry();
@@ -1264,6 +1284,10 @@ async function main(): Promise<void> {
   if (small) throw new Error(`Test tournament ${small.id} must have at least ${MIN_TOURNAMENT_PLAYERS} players in groups of 4`);
   let created = 0;
 
+  if (specs.some((spec) => spec.testers === true)) {
+    console.log("\nTester accounts");
+    await linkTesterAccounts();
+  }
   for (const spec of specs) {
     const built = buildTournament(spec, registry);
     console.log(`\n${spec.id} (${spec.name})`);
