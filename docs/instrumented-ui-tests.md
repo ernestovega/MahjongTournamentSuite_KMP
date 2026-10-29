@@ -62,14 +62,17 @@ In both cases the runner starts the local backend on the emulators, like `npm ru
 - It uses the same Google Cloud sign-in as the deploy. See [Automatic Firebase deploy](ci-deploy.md).
 - Test Lab has a free daily quota. A full run of both apps uses more than that, so it costs money on the Blaze plan.
 
-### Every few merges
+### At night, when they are due
 
-The check **UI tests up to date** (`.github/workflows/ui-tests-due.yml`) runs on every pull request to `main`.
-It fails when 5 or more pull requests were merged since the UI tests last passed for an app. The count is per app.
-A run counts when it passed on `main` or on the branch of the pull request, on either runner.
+The workflow **UI tests nightly** (`.github/workflows/ui-tests-nightly.yml`) runs every day at 02:00 UTC on `main`. You can also start it by hand.
+It first decides, for each app, if the UI tests are due. They are due in two cases:
 
-When the check fails, run **UI tests** for the app it names. You can run it on the pull request branch with the GitHub emulator, so the tests check the new code. Test Lab only signs in from `main`. Then re-run the failed check from the pull request.
-Change the limit with the repository variable `UI_TESTS_EVERY_N_MERGES`.
+- 5 or more pull requests were merged since the last passing run of that app.
+- A merged pull request changed a critical path since that run. The list is `CRITICAL` in the workflow: the API routes and models of the functions, the Firestore and Storage rules, the `domain`, `data` and `ui` modules, the `src/main` folders of the Android apps and the Gradle files.
+
+When an app is due, the workflow runs **UI tests** on the GitHub emulator for that app. A failed run sends an email from GitHub. Nothing blocks a pull request.
+A manual run that passed on `main` also counts as a passing run.
+Change the limit of 5 with the repository variable `UI_TESTS_EVERY_N_MERGES`.
 
 ## What the tests cover
 

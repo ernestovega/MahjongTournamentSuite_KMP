@@ -1,0 +1,104 @@
+# Runs the UI tests at night when they are due. They are due when 5 or more pull requests were merged since the last
+# passing run of an app, or when a merged pull request changed a critical path (see CRITICAL below).
+# The tests run on the GitHub emulator, which is free. A failed run sends an email from GitHub.
+# See docs/instrumented-ui-tests.md.
+name: UI tests nightly
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  decide:
+    name: Decide which UI tests are due
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      app: ${{ steps.due.outputs.app }}
+    steps:
+      - id: due
+        uses: actions/github-script@v8
+        env:
+          # How many merged pull requests make the tests due. Change it with a repository variable.
+          MAX_MERGES: ${{ vars.UI_TESTS_EVERY_N_MERGES || '5' }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const maxMerges = Number(process.env.MAX_MERGES);
+            const apps = ["androidApp", "playerAndroidApp"];
+
+            // A change in these paths can break the apps in ways the unit tests do not see.
+            const CRITICAL = [
+              /^firebase\/functions\/src\/(api|models)\//,
+              /^firestore\.(rules|indexes\.json)$/,
+              /^storage\.rules$/,
+              /^(domain|data|ui)\//,
+              /^(androidApp|playerAndroidApp)\/src\/main\//,
+              /^(build\.gradle\.kts|gradle\.properties|gradle\/libs\.versions\.toml)$/,
+              /^[^/]+\/build\.gradle\.kts$/,
+            ];
+
+            // The last passing run of each app on main: when it finished and which commit it tested.
+            const lastPass = {};
+            for (const workflow_id of ["ui-tests.yml", "ui-tests-nightly.yml"]) {
+              const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+                owner, repo, workflow_id, branch: "main", status: "completed", per_page: 100,
+              }).catch((error) => {
+                if (error.status === 404) return [];
+                throw error;
+              });
+              for (const run of runs) {
+                const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                  owner, repo, run_id: run.id, per_page: 100,
+                });
+                for (const job of jobs) {
+                  // The nightly run calls ui-tests.yml, so the job name starts with "<caller job> / ".
+                  const app = apps.find((name) => job.name.includes(`${name} (`));
+                  if (!app || job.conclusion !== "success") continue;
+                  if (!lastPass[app] || job.completed_at > lastPass[app].at) {
+                    lastPass[app] = { at: job.completed_at, sha: run.head_sha };
+                  }
+                }
+              }
+            }
+
+            const { data: workflow } = await github.rest.actions.getWorkflow({ owner, repo, workflow_id: "ui-tests.yml" });
+            const due = [];
+            for (const app of apps) {
+              const since = lastPass[app]?.at ?? workflow.created_at;
+              const { data } = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${owner}/${repo} is:pr is:merged base:main merged:>${since}`,
+                per_page: 1,
+              });
+              const merged = data.total_count;
+              let critical = [];
+              if (merged > 0) {
+                const base = lastPass[app]?.sha ?? `${context.sha}~${merged}`;
+                const files = await github.paginate(github.rest.repos.compareCommitsWithBasehead, {
+                  owner, repo, basehead: `${base}...${context.sha}`, per_page: 100,
+                }, (response) => response.data.files ?? []).catch(() => []);
+                critical = files.map((file) => file.filename).filter((name) => CRITICAL.some((rule) => rule.test(name)));
+              }
+              core.info(`${app}: last passed ${since}, ${merged} pull requests merged since, ${critical.length} critical files changed.`);
+              if (merged >= maxMerges) due.push(app);
+              else if (critical.length > 0) due.push(app);
+            }
+            core.setOutput("app", due.length === apps.length ? "both" : due[0] ?? "none");
+
+  run:
+    name: UI tests
+    needs: decide
+    if: needs.decide.outputs.app != 'none'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/ui-tests.yml
+    with:
+      runner: github-emulator
+      app: ${{ needs.decide.outputs.app }}
