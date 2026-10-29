@@ -1,0 +1,106 @@
+# Runs the instrumented UI tests on an Android emulator inside the GitHub runner.
+# It only starts by hand: Actions > UI tests > Run workflow. See docs/instrumented-ui-tests.md.
+name: UI tests
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: App to test
+        type: choice
+        options: [both, androidApp, playerAndroidApp]
+        default: both
+      tests:
+        description: Optional test class or class#method, comma separated
+        type: string
+        required: false
+
+permissions:
+  contents: read
+
+jobs:
+  ui-tests:
+    name: ${{ matrix.module }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      # The admin app is a desktop style tool and runs on a tablet. On a phone it hides the buttons in menus.
+      matrix:
+        include: ${{ fromJSON(
+          inputs.app == 'androidApp' && '[{"module":"androidApp","profile":"pixel_tablet"}]' ||
+          inputs.app == 'playerAndroidApp' && '[{"module":"playerAndroidApp","profile":"pixel_6"}]' ||
+          '[{"module":"androidApp","profile":"pixel_tablet"},{"module":"playerAndroidApp","profile":"pixel_6"}]') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            firebase/functions/package-lock.json
+
+      - name: Install Firebase CLI and functions dependencies
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund --prefix firebase/functions
+          echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
+
+      - name: Start the local backend
+        working-directory: firebase/functions
+        env:
+          E2E_JAVA_HOME: ${{ env.JAVA_HOME }}
+        run: |
+          nohup npm run e2e:backend > "$RUNNER_TEMP/e2e-backend.log" 2>&1 &
+          for _ in $(seq 1 120); do
+            curl -s -o /dev/null http://127.0.0.1:5055/ && exit 0
+            sleep 5
+          done
+          cat "$RUNNER_TEMP/e2e-backend.log"
+          exit 1
+
+      - name: Build the app and the tests
+        run: ./gradlew :${{ matrix.module }}:assembleDebug :${{ matrix.module }}:assembleDebugAndroidTest
+
+      - name: Run the tests
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          E2E_TESTS: ${{ inputs.tests }}
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: ${{ matrix.profile }}
+          disable-animations: true
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          script: |
+            if [ "${{ matrix.module }}" = "playerAndroidApp" ]; then adb shell wm size 1080x2400 && adb shell wm density 420; fi
+            mkdir -p build && scripts/run-e2e-tests.sh ${{ matrix.module }} "$E2E_TESTS"; status=$?; adb pull /sdcard/Download/e2e ${{ matrix.module }}/build/e2e-screenshots || true; exit $status
+
+      - name: Upload the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-tests-${{ matrix.module }}
+          path: |
+            ${{ matrix.module }}/build/outputs/androidTest-results/
+            ${{ matrix.module }}/build/reports/androidTests/
+            ${{ matrix.module }}/build/e2e-screenshots/
+            build/e2e-gradle.log
+            ${{ runner.temp }}/e2e-backend.log
+          if-no-files-found: ignore

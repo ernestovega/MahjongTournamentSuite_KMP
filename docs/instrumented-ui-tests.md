@@ -38,6 +38,13 @@ The plain Gradle task `./gradlew :androidApp:connectedDebugAndroidTest` also wor
 The tests use the AndroidX Test Orchestrator. Every test starts in a new process with empty app data.
 A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The error message also lists the texts that were on the screen.
 
+## Run the tests on GitHub
+
+The workflow `.github/workflows/ui-tests.yml` runs the same tests on an emulator inside the GitHub runner. It starts the local backend there, so no test touches the production project.
+It never runs on its own. Start it in **Actions > UI tests > Run workflow**. Pick the app, and optionally one test class.
+The admin app runs on a `pixel_tablet` emulator and the player app on a `pixel_6` emulator. Both use the UTC time zone.
+The results, the reports, the screenshots of failed tests and the backend log are saved as artifacts of the run.
+
 ## What the tests cover
 
 189 tests: 138 for the admin app and 51 for the player app. All pass on the emulator.
