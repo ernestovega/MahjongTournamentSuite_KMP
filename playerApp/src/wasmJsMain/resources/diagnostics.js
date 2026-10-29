@@ -66,23 +66,28 @@
   };
 
   // A new canvas tells if the browser can make a WebGL context. The canvas of the app is not touched.
+  // Ask once and free the contexts. A browser keeps only a few contexts and drops the oldest, which can be the one of the app.
+  let gpuLines = null;
   const gpu = () => {
-    const lines = [];
+    if (gpuLines) return gpuLines;
+    gpuLines = [];
     ["webgl2", "webgl"].forEach((type) => {
       try {
         const gl = document.createElement("canvas").getContext(type);
         if (!gl) {
-          lines.push(type + ": NO");
+          gpuLines.push(type + ": NO");
           return;
         }
         const debug = gl.getExtension("WEBGL_debug_renderer_info");
         const renderer = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
-        lines.push(type + ": yes, " + renderer + ", max texture " + gl.getParameter(gl.MAX_TEXTURE_SIZE));
+        gpuLines.push(type + ": yes, " + renderer + ", max texture " + gl.getParameter(gl.MAX_TEXTURE_SIZE));
+        const lose = gl.getExtension("WEBGL_lose_context");
+        if (lose) lose.loseContext();
       } catch (e) {
-        lines.push(type + ": error " + e);
+        gpuLines.push(type + ": error " + e);
       }
     });
-    return lines;
+    return gpuLines;
   };
 
   const canvasLines = () => {

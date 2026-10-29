@@ -20,12 +20,12 @@ const chrome = process.env.CHROME_PATH ?? [
 const PANEL_TITLE = "The app did not start";
 
 // Load a page with diagnostics.js and the given extra script. Return the DOM after 40 seconds of virtual time.
-function run(extraScript, query = "") {
+function run(extraScript, query = "", beforeScript = "") {
   const dir = mkdtempSync(join(tmpdir(), "mts-diagnostics-"));
   try {
     const page = join(dir, "index.html");
     const diagnosticsTag = `<script src="${pathToFileURL(diagnostics).href}"></script>`;
-    writeFileSync(page, `<!DOCTYPE html><html><body>${diagnosticsTag}` +
+    writeFileSync(page, `<!DOCTYPE html><html><body><script>${beforeScript}</script>${diagnosticsTag}` +
       `<script>${extraScript}</script></body></html>`);
     return execFileSync(chrome, [
       "--headless=new", "--disable-gpu", "--no-first-run", `--user-data-dir=${join(dir, "profile")}`,
@@ -155,4 +155,21 @@ test("the panel shows a lost WebGL context", opts, () => {
     setTimeout(() => document.dispatchEvent(new Event("webglcontextlost")), 100);
   `);
   assert.ok(dom.includes("WebGL context lost."));
+});
+
+// The panel once made a new WebGL context every second. The browser then dropped the context of the app.
+test("?diagnostics does not make WebGL contexts again and again", opts, () => {
+  const dom = run(`
+    document.body.appendChild(document.createElement("canvas"));
+    setTimeout(() => { document.title = "contexts=" + window.__contexts; }, 30000);
+  `, "?diagnostics", `
+    window.__contexts = 0;
+    const original = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (type) {
+      if (type === "webgl" || type === "webgl2") window.__contexts++;
+      return original.apply(this, arguments);
+    };
+  `);
+  const count = Number(/contexts=(\d+)/.exec(dom)?.[1]);
+  assert.ok(count >= 1 && count <= 2, "Contexts made: " + count);
 });
