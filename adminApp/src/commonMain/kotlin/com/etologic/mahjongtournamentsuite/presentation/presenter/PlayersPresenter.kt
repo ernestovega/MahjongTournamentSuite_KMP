@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -22,6 +27,7 @@ class PlayersPresenter(
     private val playerRepository: PlayerRepository,
     private val accountRepository: PlayerAccountRepository,
     private val logger: Logger,
+    private val telemetry: Telemetry = NoTelemetry,
 ) {
     suspend fun loadPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> {
         logger.i { "Loading tournament players." }
@@ -51,6 +57,7 @@ class PlayersPresenter(
 
     suspend fun sendToPlayers(tournamentId: String, playerIds: List<Int>): AppResult<List<PlayerAccountActionResult>> =
         accountRepository.send(tournamentId, playerIds)
+            .track(telemetry, TelemetryEvent.ACCOUNTS_SENT, mapOf(TelemetryParam.PLAYERS to playerIds.size))
 
     suspend fun assignPlayer(
         tournamentId: String,

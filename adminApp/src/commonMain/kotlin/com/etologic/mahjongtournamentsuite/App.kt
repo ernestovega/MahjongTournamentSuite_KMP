@@ -57,6 +57,11 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
+import com.etologic.mahjongtournamentsuite.domain.telemetry.screenFromRoute
+import org.koin.compose.getKoin
 import org.koin.compose.KoinApplication
 import org.koin.dsl.koinConfiguration
 
@@ -120,6 +125,13 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
     LaunchedEffect(navController, routePersistence) {
         routePersistence ?: return@LaunchedEffect
         navController.currentBackStack.collect { routePersistence.save(it) }
+    }
+
+    // Each screen the user opens counts as one visit. The route gives the name, never an id.
+    val telemetry = getKoin().getOrNull<Telemetry>() ?: NoTelemetry
+    LaunchedEffect(navController, telemetry) {
+        telemetry.userProperty(TelemetryProperty.APP, "admin")
+        navController.currentBackStackEntryFlow.collect { telemetry.screenFromRoute(it.destination.route) }
     }
 
     CompositionLocalProvider(

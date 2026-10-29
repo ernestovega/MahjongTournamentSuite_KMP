@@ -1,11 +1,14 @@
 package com.etologic.mahjongtournamentsuite.data.di
 
 import co.touchlab.kermit.Logger
+import co.touchlab.kermit.platformLogWriter
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import com.etologic.mahjongtournamentsuite.data.network.createHttpClient
 import com.etologic.mahjongtournamentsuite.data.platform.PlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.platform.providePlatformNameProvider
+import com.etologic.mahjongtournamentsuite.data.telemetry.TelemetryLogWriter
+import com.etologic.mahjongtournamentsuite.data.telemetry.providePlatformTelemetry
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAdminRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultStatisticsRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultFeatureFlagsRepository
@@ -30,12 +33,23 @@ import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
+/** The telemetry of the app. A module set without [dataModule], as in some tests, gets one that sends nothing. */
+fun Scope.telemetry(): Telemetry = getOrNull() ?: NoTelemetry
+
 val dataModule = module {
-    single { Logger.withTag("MahjongTournamentSuite") }
+    single<Telemetry> { providePlatformTelemetry() }
+    single {
+        // The telemetry writer counts every failed request and reports the real bugs. See TelemetryLogWriter.
+        Logger.setLogWriters(platformLogWriter(), TelemetryLogWriter(get()))
+        Logger.withTag("MahjongTournamentSuite")
+    }
     single {
         Json {
             ignoreUnknownKeys = true

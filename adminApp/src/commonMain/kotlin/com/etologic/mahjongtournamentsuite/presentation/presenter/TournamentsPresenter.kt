@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
@@ -20,6 +24,7 @@ class TournamentsPresenter(
     private val tournamentRepository: TournamentRepository,
     private val adminRepository: AdminRepository,
     private val authRepository: AuthRepository,
+    private val telemetry: Telemetry = NoTelemetry,
 ) {
     suspend fun loadProfile(force: Boolean = false): AppResult<UserProfile> = authRepository.getMe(force.toRefreshMode())
 
@@ -44,7 +49,7 @@ class TournamentsPresenter(
     suspend fun lookupUser(identifier: String): AppResult<UserProfile> = adminRepository.lookupUser(identifier)
 
     suspend fun deleteTournament(tournamentId: String): AppResult<Unit> =
-        tournamentRepository.deleteTournament(tournamentId)
+        tournamentRepository.deleteTournament(tournamentId).track(telemetry, TelemetryEvent.TOURNAMENT_DELETED)
 
     suspend fun renameTournament(tournamentId: String, name: String): AppResult<Unit> =
         tournamentRepository.renameTournament(tournamentId, name)

@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
@@ -21,6 +25,7 @@ class UsersPresenter(
     private val adminRepository: AdminRepository,
     private val authRepository: AuthRepository,
     private val playerRepository: PlayerRepository,
+    private val telemetry: Telemetry = NoTelemetry,
 ) {
     suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.mode())
 
@@ -65,7 +70,9 @@ class UsersPresenter(
                 }
             }
         }
-        return AppResult.Success(results)
+        return AppResult.Success(results).also {
+            telemetry.event(TelemetryEvent.PASSWORD_RESET_REQUESTED, mapOf(TelemetryParam.KIND to "bulk", TelemetryParam.PLAYERS to uids.size))
+        }
     }
 
     suspend fun requestPasswordReset(email: String): AppResult<Unit> =
