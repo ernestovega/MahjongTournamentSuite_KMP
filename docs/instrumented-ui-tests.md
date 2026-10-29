@@ -38,6 +38,39 @@ The plain Gradle task `./gradlew :androidApp:connectedDebugAndroidTest` also wor
 The tests use the AndroidX Test Orchestrator. Every test starts in a new process with empty app data.
 A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The error message also lists the texts that were on the screen.
 
+## Run the tests on GitHub
+
+The workflow `.github/workflows/ui-tests.yml` runs the same tests from GitHub. It never runs on its own.
+Start it in **Actions > UI tests > Run workflow** on the `main` branch. Pick where it runs, the app, and optionally test classes.
+In both cases the runner starts the local backend on the emulators, like `npm run e2e:backend`. No test touches the production project.
+
+### On an emulator in the GitHub runner (default)
+
+- Free, because the repository is public.
+- The admin app runs on a `pixel_tablet` emulator and the player app on a `pixel_6` emulator, both API 34.
+- It uses `scripts/run-e2e-tests.sh`, so only the tests that hit the harness error start again.
+- The results, the reports, the screenshots of failed tests and the backend log are saved as artifacts of the run.
+
+### In Firebase Test Lab
+
+- Test Lab devices cannot reach the runner, so a temporary Cloudflare tunnel gives the backend a public https address.
+- The tests get that address in the `e2eBackendUrl` instrumentation argument. Without it they use `http://10.0.2.2:5055/api`.
+- The admin app runs on a `MediumTablet.arm` device in landscape and the player app on a `MediumPhone.arm` device. Both use API 34, English and UTC. The run can pick other devices.
+  The runner also uses UTC, so the seeded round times match the device.
+- Test Lab runs every failed test again up to 3 times. This also retries real failures.
+- The results, videos, logs and screenshots are in the Firebase console under **Test Lab**. The run saves the backend and tunnel logs as artifacts.
+- It uses the same Google Cloud sign-in as the deploy. See [Automatic Firebase deploy](ci-deploy.md).
+- Test Lab has a free daily quota. A full run of both apps uses more than that, so it costs money on the Blaze plan.
+
+### Every few merges
+
+The check **UI tests up to date** (`.github/workflows/ui-tests-due.yml`) runs on every pull request to `main`.
+It fails when 5 or more pull requests were merged since the UI tests last passed for an app. The count is per app.
+A run counts when it passed on `main` or on the branch of the pull request, on either runner.
+
+When the check fails, run **UI tests** for the app it names. You can run it on the pull request branch with the GitHub emulator, so the tests check the new code. Test Lab only signs in from `main`. Then re-run the failed check from the pull request.
+Change the limit with the repository variable `UI_TESTS_EVERY_N_MERGES`.
+
 ## What the tests cover
 
 189 tests: 138 for the admin app and 51 for the player app. All pass on the emulator.

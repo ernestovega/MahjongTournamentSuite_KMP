@@ -56,14 +56,20 @@ object E2eAccounts {
     const val TIME_OVER = "over@e2e.test"
 }
 
-/** The Android emulator reaches the computer that runs the backend at 10.0.2.2. */
-const val E2E_BACKEND_URL = "http://10.0.2.2:5055/api"
+/**
+ * The Android emulator reaches the computer that runs the backend at 10.0.2.2. A device in Firebase Test Lab gets a
+ * public address of the backend in the `e2eBackendUrl` instrumentation argument.
+ */
+val E2E_BACKEND_URL: String =
+    InstrumentationRegistry.getArguments().getString("e2eBackendUrl") ?: "http://10.0.2.2:5055/api"
 
 private const val WAIT_MS = 20_000L
 
 /** Starts every test with no saved session, and points the app to the local backend. */
 class FreshAppState : ExternalResource() {
     override fun before() {
+        // The Google password manager shows a "Save password?" window over the app after a sign-in.
+        shell("settings put secure autofill_service null")
         BackendUrlOverride.functionsBaseUrl = E2E_BACKEND_URL
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         File(context.filesDir, "auth_session.json").delete()
