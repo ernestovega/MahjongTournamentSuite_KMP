@@ -39,10 +39,18 @@ test("the id of the browser stays, so the app can cancel the frame", () => {
   assert.equal(fakeWindow.requestAnimationFrame(() => {}), 43);
 });
 
-test("index.html loads the fix before the app", () => {
-  const html = readFileSync(join(resources, "index.html"), "utf8");
-  const fix = html.indexOf('src="raf-fix.js"');
-  const app = html.indexOf('src="playerApp.js"');
-  assert.ok(fix >= 0, "index.html does not load raf-fix.js");
-  assert.ok(fix < app, "raf-fix.js must load before playerApp.js");
-});
+const pages = {
+  player: [join(resources, "index.html"), "playerApp.js", join(resources, "raf-fix.js")],
+  admin: [join(resources, "../../../../adminApp/src/webMain/resources/index.html"), "adminApp.js",
+    join(resources, "../../../../adminApp/src/webMain/resources/raf-fix.js")],
+};
+
+for (const [name, [page, app, fixFile]] of Object.entries(pages)) {
+  test(`the ${name} index.html loads the fix before the app`, () => {
+    const html = readFileSync(page, "utf8");
+    const fix = html.indexOf('src="raf-fix.js"');
+    assert.ok(fix >= 0, "index.html does not load raf-fix.js");
+    assert.ok(fix < html.indexOf(`src="${app}"`), "raf-fix.js must load before " + app);
+    assert.equal(readFileSync(fixFile, "utf8"), code, "raf-fix.js differs from the player copy");
+  });
+}
