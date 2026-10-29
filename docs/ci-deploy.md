@@ -35,5 +35,5 @@ In GitHub, **Settings > Rules > Rulesets > New ruleset > New branch ruleset**:
 - Name `main`, enforcement **Active**.
 - Target branches: **Include default branch**.
 - Turn on **Restrict deletions**, **Block force pushes** and **Require a pull request before merging** with 0 required approvals.
-- Turn on **Require status checks to pass** and add **Build and test**.
+- Turn on **Require status checks to pass** and add **Build and test** and **UI tests up to date**.
 - Leave the bypass list empty so nobody can push to `main` directly.

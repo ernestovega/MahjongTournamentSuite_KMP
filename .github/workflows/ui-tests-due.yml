@@ -1,0 +1,69 @@
+# Makes the UI tests run every few merges. A pull request fails this check when too many pull requests were merged
+# into main since the last UI tests run that passed for both apps. Run the UI tests (on main or on the pull request
+# branch), then re-run this check. See docs/instrumented-ui-tests.md.
+name: UI tests due
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  actions: read
+  contents: read
+  pull-requests: read
+
+jobs:
+  ui-tests-due:
+    name: UI tests up to date
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          # How many merged pull requests may pass without a UI tests run. Change it with a repository variable.
+          MAX_MERGES: ${{ vars.UI_TESTS_EVERY_N_MERGES || '5' }}
+          HEAD_BRANCH: ${{ github.head_ref }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const maxMerges = Number(process.env.MAX_MERGES);
+            const apps = ["androidApp", "playerAndroidApp"];
+
+            // The last time each app passed, on main or on this pull request branch.
+            const lastPass = {};
+            const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
+              owner, repo, workflow_id: "ui-tests.yml", status: "completed", per_page: 100,
+            });
+            for (const run of runs) {
+              if (run.head_branch !== "main" && run.head_branch !== process.env.HEAD_BRANCH) continue;
+              const jobs = await github.paginate(github.rest.actions.listJobsForWorkflowRun, {
+                owner, repo, run_id: run.id, per_page: 100,
+              });
+              for (const job of jobs) {
+                const app = apps.find((name) => job.name.startsWith(`${name} `));
+                if (!app || job.conclusion !== "success") continue;
+                if (!lastPass[app] || job.completed_at > lastPass[app]) lastPass[app] = job.completed_at;
+              }
+              if (apps.every((app) => lastPass[app])) break;
+            }
+
+            // Before the first run, count from the day the UI tests workflow was added.
+            const { data: workflow } = await github.rest.actions.getWorkflow({ owner, repo, workflow_id: "ui-tests.yml" })
+              .catch(() => ({ data: { created_at: new Date().toISOString() } }));
+
+            let failed = false;
+            for (const app of apps) {
+              const since = lastPass[app] ?? workflow.created_at;
+              const { data } = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${owner}/${repo} is:pr is:merged base:main merged:>${since}`,
+                per_page: 1,
+              });
+              const merged = data.total_count;
+              const when = lastPass[app] ? `last passed ${since}` : "never passed";
+              core.info(`${app}: ${when}, ${merged} pull requests merged since then, at most ${maxMerges}.`);
+              if (merged >= maxMerges) {
+                failed = true;
+                core.error(`${app}: ${merged} pull requests were merged since the UI tests last passed. Run "UI tests" for ${app}, then re-run this check.`);
+              }
+            }
+            if (failed) core.setFailed("The UI tests are due.");

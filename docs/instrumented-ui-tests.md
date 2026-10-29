@@ -62,6 +62,15 @@ In both cases the runner starts the local backend on the emulators, like `npm ru
 - It uses the same Google Cloud sign-in as the deploy. See [Automatic Firebase deploy](ci-deploy.md).
 - Test Lab has a free daily quota. A full run of both apps uses more than that, so it costs money on the Blaze plan.
 
+### Every few merges
+
+The check **UI tests up to date** (`.github/workflows/ui-tests-due.yml`) runs on every pull request to `main`.
+It fails when 5 or more pull requests were merged since the UI tests last passed for an app. The count is per app.
+A run counts when it passed on `main` or on the branch of the pull request, on either runner.
+
+When the check fails, run **UI tests** for the app it names. You can run it on the pull request branch with the GitHub emulator, so the tests check the new code. Test Lab only signs in from `main`. Then re-run the failed check from the pull request.
+Change the limit with the repository variable `UI_TESTS_EVERY_N_MERGES`.
+
 ## What the tests cover
 
 189 tests: 138 for the admin app and 51 for the player app. All pass on the emulator.
