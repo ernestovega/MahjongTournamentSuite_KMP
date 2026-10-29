@@ -10,11 +10,20 @@
 
   // The app draws on a canvas. When a canvas exists, the app has started.
   // Compose puts the canvas inside a shadow root, so the search must go into the shadow roots.
-  const hasCanvas = (root) => {
-    if (root.querySelector("canvas") !== null) return true;
-    return Array.from(root.querySelectorAll("*")).some((element) => element.shadowRoot && hasCanvas(element.shadowRoot));
+  const findCanvases = (root, found = []) => {
+    root.querySelectorAll("canvas").forEach((canvas) => found.push(canvas));
+    root.querySelectorAll("*").forEach((element) => {
+      if (element.shadowRoot) findCanvases(element.shadowRoot, found);
+    });
+    return found;
   };
-  const started = () => hasCanvas(document);
+  const started = () => findCanvases(document).length > 0;
+
+  // Add ?diagnostics to the address to see this panel when the app starts but the screen stays blank.
+  const forced = /[?&]diagnostics(=|&|$)/.test(location.search);
+  let closed = false;
+  // True when a canvas exists but it cannot show anything. Set by the check after the wait.
+  let broken = false;
 
   const seconds = () => Math.round((Date.now() - startedAt) / 100) / 10;
 
@@ -56,6 +65,43 @@
     }
   };
 
+  // A new canvas tells if the browser can make a WebGL context. The canvas of the app is not touched.
+  const gpu = () => {
+    const lines = [];
+    ["webgl2", "webgl"].forEach((type) => {
+      try {
+        const gl = document.createElement("canvas").getContext(type);
+        if (!gl) {
+          lines.push(type + ": NO");
+          return;
+        }
+        const debug = gl.getExtension("WEBGL_debug_renderer_info");
+        const renderer = debug ? gl.getParameter(debug.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+        lines.push(type + ": yes, " + renderer + ", max texture " + gl.getParameter(gl.MAX_TEXTURE_SIZE));
+      } catch (e) {
+        lines.push(type + ": error " + e);
+      }
+    });
+    return lines;
+  };
+
+  const canvasLines = () => {
+    const canvases = findCanvases(document);
+    if (!canvases.length) return ["  none"];
+    return canvases.map((canvas, index) => {
+      const box = canvas.getBoundingClientRect();
+      const style = getComputedStyle(canvas);
+      return "  #" + (index + 1) + ": " + canvas.width + "x" + canvas.height + " pixels, shown " +
+        Math.round(box.width) + "x" + Math.round(box.height) + " at " + Math.round(box.left) + "," + Math.round(box.top) +
+        ", display " + style.display + ", visibility " + style.visibility + ", opacity " + style.opacity;
+    });
+  };
+
+  // A canvas of size zero cannot show anything.
+  const canvasProblems = () => findCanvases(document)
+    .filter((canvas) => canvas.width === 0 || canvas.height === 0 || canvas.getBoundingClientRect().width === 0)
+    .map(() => "A canvas has size zero.");
+
   const info = () => {
     let locale = "";
     let calendar = "";
@@ -74,6 +120,7 @@
       "Wasm GC: " + yesNo(supports([0, 97, 115, 109, 1, 0, 0, 0, 1, 5, 1, 95, 1, 120, 0])),
       "Wasm exceptions (old): " + yesNo(supports([0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 10, 8, 1, 6, 0, 6, 64, 25, 11, 11])),
       "Wasm exceptions (new): " + yesNo(supports([0, 97, 115, 109, 1, 0, 0, 0, 1, 4, 1, 96, 0, 0, 3, 2, 1, 0, 10, 8, 1, 6, 0, 31, 64, 0, 11, 11])),
+      "Page: " + document.visibilityState + ", body " + (document.body ? document.body.clientWidth + "x" + document.body.clientHeight : "none"),
       "Storage: " + safeStorage(window.localStorage || {}) + " / " + safeStorage(window.sessionStorage || {}),
       "Language: " + navigator.language + " (" + (navigator.languages || []).join(", ") + ")",
       "Locale: " + locale + ", calendar: " + calendar,
@@ -85,9 +132,14 @@
   };
 
   const buildReport = () => {
-    const lines = ["MahjongTournamentSuite Player did not start.", location.href, ""];
+    const lines = [
+      "MahjongTournamentSuite Player " + (started() ? "diagnostics (the app started)." : "did not start."),
+      location.href,
+      "",
+    ];
     lines.push(problems.length ? problems.join("\n") : "No error was reported.", "");
-    lines.push(info().join("\n"), "", "Files loaded:", resources().join("\n"));
+    lines.push(info().join("\n"), "", "Graphics:", gpu().map((line) => "  " + line).join("\n"));
+    lines.push("", "Canvas of the app:", canvasLines().join("\n"), "", "Files loaded:", resources().join("\n"));
     return lines.join("\n");
   };
 
@@ -128,7 +180,8 @@
       "-webkit-overflow-scrolling:touch;touch-action:pan-y;background:#fff;color:#b00020;text-align:left;" +
       "padding:12px;box-sizing:border-box";
     const title = document.createElement("div");
-    title.textContent = "The app did not start. Send the text below to the organizer.";
+    title.textContent = (started() && !broken ? "Diagnostics of the app." : "The app did not start.") +
+      " Send the text below to the organizer.";
     title.style.cssText = "font:600 15px sans-serif;margin-bottom:10px";
     const buttons = document.createElement("div");
     buttons.appendChild(button("Copy text", (event) => copy(event.currentTarget)));
@@ -136,6 +189,12 @@
       buttons.appendChild(button("Share", () => navigator.share({ text: buildReport() }).catch(() => {})));
     }
     buttons.appendChild(button("Reload", () => window.location.reload()));
+    if (started()) {
+      buttons.appendChild(button("Close", () => {
+        closed = true;
+        render();
+      }));
+    }
     report = document.createElement("pre");
     report.style.cssText = "margin:0;white-space:pre-wrap;word-break:break-word;font:11px/1.3 monospace;" +
       "user-select:text;-webkit-user-select:text";
@@ -144,7 +203,8 @@
   };
 
   const render = () => {
-    if (started()) {
+    // Show the panel when the app did not start, when a canvas is broken, or when the user asks for it.
+    if (closed || (started() && !forced && !broken)) {
       if (panel) {
         panel.remove();
         panel = null;
@@ -185,11 +245,27 @@
 
   if (typeof WebAssembly !== "object") add("This browser does not support WebAssembly.");
 
+  // The browser can take the graphics context from the page. Kotlin and recovery.js cannot see why.
+  document.addEventListener("webglcontextlost", () => {
+    broken = true;
+    add("WebGL context lost.");
+  }, true);
+
   setTimeout(() => {
-    if (!started()) add("No screen after " + WAIT_MS / 1000 + " seconds.");
+    if (!started()) {
+      add("No screen after " + WAIT_MS / 1000 + " seconds.");
+      return;
+    }
+    const canvasIssues = canvasProblems();
+    if (canvasIssues.length) {
+      broken = true;
+      canvasIssues.forEach((issue) => add(issue));
+    }
   }, WAIT_MS);
 
-  // Remove the panel when the app starts late.
+  // Keep the panel up to date. It goes away when the app starts late.
+  // With ?diagnostics in the address, wait two seconds so the canvas exists when the panel shows.
+  if (forced) setTimeout(render, 2000);
   setInterval(() => {
     if (panel) render();
   }, 1000);

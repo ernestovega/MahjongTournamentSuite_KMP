@@ -20,7 +20,7 @@ const chrome = process.env.CHROME_PATH ?? [
 const PANEL_TITLE = "The app did not start";
 
 // Load a page with diagnostics.js and the given extra script. Return the DOM after 40 seconds of virtual time.
-function run(extraScript) {
+function run(extraScript, query = "") {
   const dir = mkdtempSync(join(tmpdir(), "mts-diagnostics-"));
   try {
     const page = join(dir, "index.html");
@@ -29,7 +29,7 @@ function run(extraScript) {
       `<script>${extraScript}</script></body></html>`);
     return execFileSync(chrome, [
       "--headless=new", "--disable-gpu", "--no-first-run", `--user-data-dir=${join(dir, "profile")}`,
-      "--virtual-time-budget=40000", "--dump-dom", pathToFileURL(page).href,
+      "--virtual-time-budget=40000", "--dump-dom", pathToFileURL(page).href + query,
     ], { encoding: "utf8", timeout: 120000, stdio: ["ignore", "pipe", "ignore"] });
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -118,4 +118,41 @@ test("the panel keeps the console messages in the text", opts, () => {
   const dom = run(`console.error("kotlin says no");`);
   assert.ok(dom.includes(PANEL_TITLE));
   assert.ok(dom.includes("Console error: kotlin says no"));
+});
+
+// The real problem of the Safari tester: the app starts, the canvas exists, and the screen stays blank.
+test("?diagnostics shows the panel with the canvas data when the app runs", opts, () => {
+  const dom = run(`
+    const host = document.createElement("div");
+    document.body.appendChild(host);
+    host.attachShadow({ mode: "open" }).appendChild(document.createElement("canvas"));
+  `, "?tournament=x&diagnostics");
+  assert.ok(dom.includes("Diagnostics of the app."));
+  assert.ok(dom.includes("Canvas of the app:"));
+  assert.ok(dom.includes("300x150 pixels"));
+  assert.ok(dom.includes("Graphics:"));
+  assert.ok(dom.includes("Close"));
+});
+
+test("a word that only starts like diagnostics does not force the panel", opts, () => {
+  const dom = run(`document.body.appendChild(document.createElement("canvas"));`, "?diagnosticsX=1");
+  assert.ok(!dom.includes("Diagnostics of the app."));
+});
+
+test("the panel shows a canvas of size zero", opts, () => {
+  const dom = run(`
+    const canvas = document.createElement("canvas");
+    canvas.width = 0;
+    document.body.appendChild(canvas);
+  `);
+  assert.ok(dom.includes("A canvas has size zero."));
+  assert.ok(dom.includes("The app did not start."));
+});
+
+test("the panel shows a lost WebGL context", opts, () => {
+  const dom = run(`
+    document.body.appendChild(document.createElement("canvas"));
+    setTimeout(() => document.dispatchEvent(new Event("webglcontextlost")), 100);
+  `);
+  assert.ok(dom.includes("WebGL context lost."));
 });
