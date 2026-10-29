@@ -47,7 +47,7 @@
     }).catch(() => {});
   };
 
-  // The web has no Crashlytics. An error that nobody handled goes to Analytics as a crash event.
+  // An error that nobody handled goes to Analytics as a crash event.
   let crashes = 0;
   function reportCrash(kind, message) {
     if (crashes++ >= MAX_CRASHES) return;

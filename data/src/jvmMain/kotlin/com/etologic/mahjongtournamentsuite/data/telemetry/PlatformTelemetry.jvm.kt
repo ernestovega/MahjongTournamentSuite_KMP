@@ -31,8 +31,8 @@ internal object DesktopTelemetryConfig {
 }
 
 /**
- * Analytics of the desktop app. There is no Crashlytics for the desktop, so a handled error goes to Analytics as
- * `app_error`, and an error that nobody handled goes as `app_crash`.
+ * Analytics of the desktop app. A handled error goes to Analytics as `app_error`, and an error that nobody handled
+ * goes as `app_crash`.
  */
 internal class DesktopTelemetry(
     private val measurementId: String,

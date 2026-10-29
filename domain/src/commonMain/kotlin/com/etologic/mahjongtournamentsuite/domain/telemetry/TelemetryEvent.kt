@@ -12,10 +12,10 @@ object TelemetryEvent {
     /** A request failed. The log writer sends it, with [TelemetryParam.ACTION] and [TelemetryParam.REASON]. */
     const val ACTION_FAILED = "action_failed"
 
-    /** The app handled an error. Only the platforms without Crashlytics send it. Android reports it to Crashlytics. */
+    /** The app handled an error that points to a bug. */
     const val APP_ERROR = "app_error"
 
-    /** The app stopped because of an error that nobody handled. Only the platforms without Crashlytics send it. */
+    /** The app stopped because of an error that nobody handled. */
     const val APP_CRASH = "app_crash"
 
     const val TOURNAMENT_CREATED = "tournament_created"

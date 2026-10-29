@@ -48,7 +48,6 @@ kotlin {
             implementation(libs.firebase.appcheck.playintegrity)
             implementation(libs.firebase.appcheck.debug)
             implementation(libs.firebase.analytics)
-            implementation(libs.firebase.crashlytics)
         }
         jvmMain.dependencies {
             implementation(libs.ktor.client.cio)

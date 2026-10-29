@@ -11,7 +11,7 @@ import kotlinx.serialization.json.JsonPrimitive
 private external fun sendTelemetry(kind: String, name: String, json: String)
 
 /**
- * Analytics of the web app through `telemetry.js`. The web has no Crashlytics, so a handled error goes to Analytics
+ * Analytics of the web app through `telemetry.js`. A handled error goes to Analytics
  * as the event `app_error`. A crash goes there as `app_crash`, sent by the error handlers of `telemetry.js`.
  */
 private object WebTelemetry : Telemetry {

@@ -1,16 +1,16 @@
-# Telemetry: Analytics and Crashlytics
+# Telemetry: Analytics
 
-Both apps send usage data to Firebase Analytics (GA4) and errors to Crashlytics. This page lists what the apps send and what to set up in Firebase.
+Both apps send usage data and errors to Firebase Analytics (GA4). Errors are events, so every platform works the same way. This page lists what the apps send and what to set up in Firebase.
 
 ## What each platform sends
 
 | App | Platform | Analytics | Errors |
 | --- | --- | --- | --- |
-| Admin and player | Android | Firebase SDK | Crashlytics: crashes and handled errors |
+| Admin and player | Android | Firebase SDK | Event `app_crash` and event `app_error` |
 | Admin and player | Web | Firebase JS SDK (`telemetry.js`) | Event `app_crash` and event `app_error` |
 | Admin | Desktop | GA4 Measurement Protocol | Event `app_crash` and event `app_error` |
 
-Crashlytics has no web or desktop version. On those platforms an error is an Analytics event. Use the events report to read it.
+Crashlytics is not used, because it has no web or desktop version. Read the errors in the events report of GA4. They have the error type but no stack trace.
 
 Nothing is sent until the settings of the platform are filled in. The apps build and run without them.
 
@@ -36,10 +36,10 @@ Nothing is sent until the settings of the platform are filled in. The apps build
 | `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `person`, `me` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `action_failed` | Any request fails | `action`, `reason` |
-| `app_error`, `app_crash` | Web and desktop only | `action`, `kind`, `message` |
+| `app_error`, `app_crash` | A bug or a crash | `action`, `kind`, `message` |
 
 `reason` of `action_failed` is `network`, `timeout`, `auth`, `conflict`, `client_error`, `server_error` or `unexpected`.
-Only `server_error` and `unexpected` also go to Crashlytics. The others are normal events, such as a user with no network.
+Only `server_error` and `unexpected` also send `app_error`. The others are normal events, such as a user with no network.
 
 ## Questions the data answers
 
@@ -67,9 +67,7 @@ Do these steps one time. The Firebase project is `mahjong-tournament-suite`.
 2. Download `google-services.json` of each app.
 3. Save the files as `androidApp/google-services.json` and `playerAndroidApp/google-services.json`.
    The file holds no secret. You can commit it, so CI builds and the UI tests also send data.
-4. Open Crashlytics in the console and select "Enable". The first crash finishes the setup.
-5. Build and run the release variant. Force a test crash one time and check that it shows in Crashlytics.
-   Crashlytics shows a crash after the next start of the app.
+4. Build and run the app. Check the events in DebugView (step 6).
 
 If you already filled the App Check values in the manifest, keep them. App Check uses its own named Firebase app.
 

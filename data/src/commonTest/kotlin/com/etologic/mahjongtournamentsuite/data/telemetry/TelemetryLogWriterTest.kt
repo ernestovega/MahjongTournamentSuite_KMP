@@ -20,7 +20,7 @@ class TelemetryLogWriterTest {
     private fun reasons() = telemetry.events.map { it.second[TelemetryParam.REASON] }
 
     @Test
-    fun serverErrorGoesToAnalyticsAndCrashlytics() {
+    fun serverErrorIsCountedAndReportedAsABug() {
         warn(BackendHttpException(HttpStatusCode.InternalServerError, "secret body"))
         assertEquals(listOf("server_error"), reasons())
         assertEquals("Sign in failed.", telemetry.errors.single().second)

@@ -12,7 +12,7 @@ import kotlinx.coroutines.CancellationException
 
 /**
  * Every repository logs a failed request as a warning with the error. This writer counts each of them as
- * `action_failed` and reports the ones that point to a bug to Crashlytics. So all requests are traced
+ * `action_failed` and reports the ones that point to a bug as `app_error`. So all requests are traced
  * and no repository needs its own code for it.
  */
 class TelemetryLogWriter(private val telemetry: Telemetry) : LogWriter() {
@@ -33,7 +33,7 @@ internal data class FailureKind(val reason: String, val isBug: Boolean)
 
 /**
  * Sorts an error. Offline users, timeouts, wrong passwords and edit conflicts are normal, so only the count goes
- * to Analytics. A server error or an unknown error is a bug and goes to Crashlytics too.
+ * to Analytics. A server error or an unknown error is a bug and goes to Analytics as `app_error` too.
  * Returns null for a cancelled job, which is not a failure.
  */
 internal fun Throwable.classify(): FailureKind? = when {

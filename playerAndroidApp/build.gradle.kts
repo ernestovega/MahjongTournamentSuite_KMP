@@ -6,11 +6,10 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
-// Analytics and Crashlytics need the file google-services.json of the Android app. See docs/telemetry.md.
+// Analytics needs the file google-services.json of the Android app. See docs/telemetry.md.
 // Without the file the app builds and runs, and it sends no telemetry.
 if (file("google-services.json").exists()) {
     apply(plugin = "com.google.gms.google-services")
-    apply(plugin = "com.google.firebase.crashlytics")
 }
 
 android {

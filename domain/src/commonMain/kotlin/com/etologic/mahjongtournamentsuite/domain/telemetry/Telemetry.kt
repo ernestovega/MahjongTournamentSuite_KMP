@@ -1,8 +1,8 @@
 package com.etologic.mahjongtournamentsuite.domain.telemetry
 
 /**
- * Usage and error tracing. Each platform sends the data to the place it supports: Firebase Analytics and Crashlytics
- * on Android, Analytics on the web and on the desktop. A platform without settings uses [NoTelemetry].
+ * Usage and error tracing. Every platform sends the data to Firebase Analytics (GA4): the SDK on Android and the web,
+ * the Measurement Protocol on the desktop. Errors are events too. A platform without settings uses [NoTelemetry].
  *
  * Rules for every caller:
  * - Never send personal data: no email, no name, no EMA id, no tournament id. Send only counts and fixed words.
@@ -15,7 +15,7 @@ interface Telemetry {
     /** Counts one visit of a screen. [name] is a fixed name, never an id. */
     fun screen(name: String)
 
-    /** Reports an error that the app handled. [area] tells which action failed. A fatal crash needs no call. */
+    /** Reports an error that the app handled, as the event `app_error`. [area] tells which action failed. */
     fun error(throwable: Throwable, area: String)
 
     /** Sets a property that GA4 adds to every later event of this user. A null [value] removes it. */
