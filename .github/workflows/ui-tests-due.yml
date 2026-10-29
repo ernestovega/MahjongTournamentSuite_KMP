@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/github-script@v7
+      - uses: actions/github-script@v8
         env:
           # How many merged pull requests may pass without a UI tests run. Change it with a repository variable.
           MAX_MERGES: ${{ vars.UI_TESTS_EVERY_N_MERGES || '5' }}
@@ -31,8 +31,12 @@ jobs:
 
             // The last time each app passed, on main or on this pull request branch.
             const lastPass = {};
+            // GitHub does not know the workflow until it is on main, so a 404 means no runs yet.
             const runs = await github.paginate(github.rest.actions.listWorkflowRuns, {
               owner, repo, workflow_id: "ui-tests.yml", status: "completed", per_page: 100,
+            }).catch((error) => {
+              if (error.status === 404) return [];
+              throw error;
             });
             for (const run of runs) {
               if (run.head_branch !== "main" && run.head_branch !== process.env.HEAD_BRANCH) continue;
