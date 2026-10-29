@@ -51,6 +51,17 @@ test("other versions and other engines show nothing", () => {
   }
 });
 
+test("the warning explains how to turn off the JIT, with the steps of the device", () => {
+  const mac = load(SAFARI_MAC("27.2")).added[0].children[0].children[1].textContent;
+  assert.match(mac, /Disables JIT/);
+  assert.match(mac, /Develop > WebKit Feature Flags/);
+  assert.match(mac, /Cmd\+Q/);
+  const phone = load(SAFARI_IPHONE("27.2")).added[0].children[0].children[1].textContent;
+  assert.match(phone, /Disables JIT/);
+  assert.match(phone, /Settings > Apps > Safari > Advanced > Feature Flags/);
+  assert.doesNotMatch(phone, /Cmd\+Q/);
+});
+
 test("the close button removes the warning and it stays closed in the tab", () => {
   const { added, storage } = load(SAFARI_MAC("27.2"));
   const button = added[0].children[1];

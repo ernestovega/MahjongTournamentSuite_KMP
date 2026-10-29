@@ -17,11 +17,23 @@
   bar.setAttribute("role", "alert");
   bar.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:2147483647;display:flex;gap:12px;" +
     "align-items:center;padding:10px 16px;background:#f9a825;color:#000;font:14px/1.4 sans-serif;text-align:left";
-  const text = document.createElement("span");
+  const text = document.createElement("div");
   text.style.flex = "1";
-  text.textContent = "This version of Safari (27.2) has a bug that can break this app. " +
+  const problem = document.createElement("div");
+  problem.textContent = "This version of Safari (27.2) has a bug that can break this app. " +
     "The screen can stay blank or show items in the wrong place. " +
     "Use another browser on a computer, or wait for the next Apple update.";
+  // Without another browser, the user can turn off the WebAssembly compiler of Safari. The app then loads slowly.
+  const workaround = document.createElement("div");
+  workaround.style.cssText = "margin-top:6px;font-size:13px";
+  const onPhone = /iPhone|iPad/.test(agent);
+  workaround.textContent = "No other browser? " + (onPhone
+    ? "Open Settings > Apps > Safari > Advanced > Feature Flags. "
+    : "Open Safari > Settings > Advanced and turn on \"Show features for web developers\". Then open Develop > WebKit Feature Flags. ") +
+    "Turn on \"Experimental WebAssembly Debugger (Disables JIT)\". " +
+    (onPhone ? "Close Safari and open it again. " : "Quit Safari with Cmd+Q and open it again. ") +
+    "The app then loads slowly, but the screen draws well.";
+  text.append(problem, workaround);
   const close = document.createElement("button");
   close.textContent = "Close";
   close.style.cssText = "padding:6px 12px;border:1px solid #000;background:transparent;color:#000;font:inherit;cursor:pointer";
