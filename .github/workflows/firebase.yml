@@ -51,6 +51,10 @@ jobs:
       - name: Build web apps
         run: ./gradlew :adminApp:wasmJsBrowserDistribution :playerApp:wasmJsBrowserDistribution
 
+      # The UI tests only run by hand (ui-tests.yml). This keeps them compiling.
+      - name: Build the UI tests
+        run: ./gradlew :androidApp:assembleDebugAndroidTest :playerAndroidApp:assembleDebugAndroidTest
+
   deploy:
     name: Deploy to Firebase
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'

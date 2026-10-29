@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Lets the GitHub Actions workflow .github/workflows/firebase.yml deploy to Firebase
-# without a stored key (Workload Identity Federation). Run it once in Google Cloud Shell
+# Lets the GitHub Actions workflows firebase.yml (deploy) and ui-tests.yml (Firebase Test Lab)
+# sign in to Google Cloud without a stored key (Workload Identity Federation). Run it once in Google Cloud Shell
 # (https://shell.cloud.google.com) signed in as a project owner. It is safe to run again.
 set -euo pipefail
 
@@ -9,7 +9,7 @@ REPOSITORY="ernestovega/MahjongTournamentSuite_KMP"
 REPOSITORY_ID="924300180"
 POOL="github"
 PROVIDER="github-actions"
-SA_NAME="github-deployer"
+SA_NAME="github-deployer"  # Also runs the UI tests in Test Lab.
 SA_EMAIL="${SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
 gcloud config set project "$PROJECT_ID" >/dev/null
@@ -23,7 +23,8 @@ gcloud services enable \
   artifactregistry.googleapis.com eventarc.googleapis.com pubsub.googleapis.com \
   cloudscheduler.googleapis.com cloudtasks.googleapis.com secretmanager.googleapis.com \
   firebase.googleapis.com firebasehosting.googleapis.com firebaserules.googleapis.com \
-  firestore.googleapis.com firebasestorage.googleapis.com
+  firestore.googleapis.com firebasestorage.googleapis.com \
+  testing.googleapis.com toolresults.googleapis.com storage.googleapis.com
 
 echo "Creating the deploy service account..."
 gcloud iam service-accounts describe "$SA_EMAIL" >/dev/null 2>&1 \
@@ -41,7 +42,10 @@ for role in \
   roles/cloudtasks.admin \
   roles/secretmanager.admin \
   roles/datastore.indexAdmin \
-  roles/serviceusage.serviceUsageConsumer; do
+  roles/serviceusage.serviceUsageConsumer \
+  roles/cloudtestservice.testAdmin \
+  roles/firebase.analyticsViewer \
+  roles/storage.admin; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${SA_EMAIL}" --role="$role" --condition=None >/dev/null
 done

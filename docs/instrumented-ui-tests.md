@@ -38,12 +38,21 @@ The plain Gradle task `./gradlew :androidApp:connectedDebugAndroidTest` also wor
 The tests use the AndroidX Test Orchestrator. Every test starts in a new process with empty app data.
 A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The error message also lists the texts that were on the screen.
 
-## Run the tests on GitHub
+## Run the tests in Firebase Test Lab
 
-The workflow `.github/workflows/ui-tests.yml` runs the same tests on an emulator inside the GitHub runner. It starts the local backend there, so no test touches the production project.
-It never runs on its own. Start it in **Actions > UI tests > Run workflow**. Pick the app, and optionally one test class.
-The admin app runs on a `pixel_tablet` emulator and the player app on a `pixel_6` emulator. Both use the UTC time zone.
-The results, the reports, the screenshots of failed tests and the backend log are saved as artifacts of the run.
+The workflow `.github/workflows/ui-tests.yml` runs the same tests in Firebase Test Lab. It never runs on its own.
+Start it in **Actions > UI tests > Run workflow** on the `main` branch. Pick the app, and optionally test classes and the devices.
+
+1. The runner starts the local backend on the emulators, like `npm run e2e:backend`. No test touches the production project.
+2. A temporary Cloudflare tunnel gives the backend a public https address. Test Lab devices cannot reach the runner.
+3. The tests get that address in the `e2eBackendUrl` instrumentation argument. Without it they use `http://10.0.2.2:5055/api`.
+4. The admin app runs on a `MediumTablet.arm` device in landscape and the player app on a `MediumPhone.arm` device. Both use API 34, English and UTC.
+   The runner also uses UTC, so the seeded round times match the device.
+5. Test Lab runs every failed test again up to 3 times. This replaces the harness retry of `scripts/run-e2e-tests.sh`, but it also retries real failures.
+
+The results, videos, logs and the screenshots of failed tests are in the Firebase console under **Test Lab**. The run saves the backend and tunnel logs as artifacts.
+The workflow uses the same Google Cloud sign-in as the deploy. See [Automatic Firebase deploy](ci-deploy.md).
+Test Lab has a free daily quota. A full run of both apps uses more than that, so it costs money on the Blaze plan.
 
 ## What the tests cover
 

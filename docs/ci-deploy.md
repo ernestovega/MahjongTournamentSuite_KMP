@@ -24,7 +24,7 @@ One-time setup:
    - `GCP_WORKLOAD_IDENTITY_PROVIDER`
    - `GCP_DEPLOY_SERVICE_ACCOUNT`
 
-The script creates the service account `github-deployer` with these roles: Firebase Admin, Cloud Functions Admin, Cloud Run Admin, Service Account User, Artifact Registry Admin, Cloud Build Editor, Cloud Scheduler Admin, Cloud Tasks Admin, Secret Manager Admin, Cloud Datastore Index Admin and Service Usage Consumer.
+The script creates the service account `github-deployer` with these roles: Firebase Admin, Cloud Functions Admin, Cloud Run Admin, Service Account User, Artifact Registry Admin, Cloud Build Editor, Cloud Scheduler Admin, Cloud Tasks Admin, Secret Manager Admin, Cloud Datastore Index Admin and Service Usage Consumer. The UI tests workflow (`ui-tests.yml`) uses the same account to run Firebase Test Lab, with Firebase Test Lab Admin, Firebase Analytics Viewer and Storage Admin.
 
 Function secrets (`MTS_ID_TOOLKIT_API_KEY`, `MTS_SMTP_URI`, `PLACES_API_KEY`) stay in Secret Manager. The workflow does not change them.
 

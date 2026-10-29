@@ -1,4 +1,4 @@
-# Runs the instrumented UI tests on an Android emulator inside the GitHub runner.
+# Runs the instrumented UI tests in Firebase Test Lab against the local test backend.
 # It only starts by hand: Actions > UI tests > Run workflow. See docs/instrumented-ui-tests.md.
 name: UI tests
 
@@ -14,31 +14,41 @@ on:
         description: Optional test class or class#method, comma separated
         type: string
         required: false
+      tablet:
+        description: Test Lab device for the admin app (model,version)
+        type: string
+        default: MediumTablet.arm,34
+      phone:
+        description: Test Lab device for the player app (model,version)
+        type: string
+        default: MediumPhone.arm,34
 
 permissions:
   contents: read
+
+env:
+  FIREBASE_PROJECT: mahjong-tournament-suite
+  # The seed writes round times in the time zone of the backend. Test Lab devices use UTC.
+  TZ: UTC
 
 jobs:
   ui-tests:
     name: ${{ matrix.module }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       fail-fast: false
       # The admin app is a desktop style tool and runs on a tablet. On a phone it hides the buttons in menus.
       matrix:
         include: ${{ fromJSON(
-          inputs.app == 'androidApp' && '[{"module":"androidApp","profile":"pixel_tablet"}]' ||
-          inputs.app == 'playerAndroidApp' && '[{"module":"playerAndroidApp","profile":"pixel_6"}]' ||
-          '[{"module":"androidApp","profile":"pixel_tablet"},{"module":"playerAndroidApp","profile":"pixel_6"}]') }}
+          inputs.app == 'androidApp' && '[{"module":"androidApp","form":"tablet","orientation":"landscape"}]' ||
+          inputs.app == 'playerAndroidApp' && '[{"module":"playerAndroidApp","form":"phone","orientation":"portrait"}]' ||
+          '[{"module":"androidApp","form":"tablet","orientation":"landscape"},{"module":"playerAndroidApp","form":"phone","orientation":"portrait"}]') }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Enable KVM for the emulator
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
 
       - uses: actions/setup-java@v4
         with:
@@ -54,6 +64,9 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             firebase/functions/package-lock.json
+
+      - name: Build the app and the tests
+        run: ./gradlew :${{ matrix.module }}:assembleDebug :${{ matrix.module }}:assembleDebugAndroidTest
 
       - name: Install Firebase CLI and functions dependencies
         run: |
@@ -74,33 +87,68 @@ jobs:
           cat "$RUNNER_TEMP/e2e-backend.log"
           exit 1
 
-      - name: Build the app and the tests
-        run: ./gradlew :${{ matrix.module }}:assembleDebug :${{ matrix.module }}:assembleDebugAndroidTest
+      # Test Lab devices cannot reach the runner, so a temporary Cloudflare tunnel gives the backend a public https
+      # address. It only lives during this job and the backend only holds the fake test data.
+      - name: Open a tunnel to the backend
+        run: |
+          curl -fsSL -o "$RUNNER_TEMP/cloudflared" https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x "$RUNNER_TEMP/cloudflared"
+          nohup "$RUNNER_TEMP/cloudflared" tunnel --no-autoupdate --url http://127.0.0.1:5055 > "$RUNNER_TEMP/tunnel.log" 2>&1 &
+          for _ in $(seq 1 60); do
+            url="$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' "$RUNNER_TEMP/tunnel.log" | head -n 1)"
+            if [ -n "$url" ] && curl -s -o /dev/null "$url/"; then
+              echo "E2E_BACKEND_URL=$url/api" >> "$GITHUB_ENV"
+              exit 0
+            fi
+            sleep 2
+          done
+          cat "$RUNNER_TEMP/tunnel.log"
+          exit 1
 
-      - name: Run the tests
-        uses: reactivecircus/android-emulator-runner@v2
-        env:
-          E2E_TESTS: ${{ inputs.tests }}
+      - uses: google-github-actions/auth@v2
         with:
-          api-level: 34
-          target: google_apis
-          arch: x86_64
-          profile: ${{ matrix.profile }}
-          disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: |
-            if [ "${{ matrix.module }}" = "playerAndroidApp" ]; then adb shell wm size 1080x2400 && adb shell wm density 420; fi
-            mkdir -p build && scripts/run-e2e-tests.sh ${{ matrix.module }} "$E2E_TESTS"; status=$?; adb pull /sdcard/Download/e2e ${{ matrix.module }}/build/e2e-screenshots || true; exit $status
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
 
-      - name: Upload the results
+      - uses: google-github-actions/setup-gcloud@v2
+
+      # Test Lab runs every failed test again up to 3 times. The Compose test harness sometimes fails with a thread
+      # error that does not happen on a device. See "Known limits" in docs/instrumented-ui-tests.md.
+      - name: Run the tests in Test Lab
+        env:
+          MODULE: ${{ matrix.module }}
+          DEVICE: ${{ matrix.form == 'tablet' && inputs.tablet || inputs.phone }}
+          ORIENTATION: ${{ matrix.orientation }}
+          TESTS: ${{ inputs.tests }}
+        run: |
+          model="${DEVICE%%,*}"
+          version="${DEVICE##*,}"
+          targets=()
+          if [ -n "$TESTS" ]; then
+            # gcloud splits the list at the commas, so every entry gets its own "class" prefix.
+            targets=(--test-targets "class ${TESTS//,/,class }")
+          fi
+          gcloud firebase test android run \
+            --project "$FIREBASE_PROJECT" \
+            --type instrumentation \
+            --app "$(ls "$MODULE"/build/outputs/apk/debug/*.apk | head -n 1)" \
+            --test "$(ls "$MODULE"/build/outputs/apk/androidTest/debug/*.apk | head -n 1)" \
+            --device "model=$model,version=$version,locale=en_US,orientation=$ORIENTATION" \
+            --use-orchestrator \
+            --environment-variables "clearPackageData=true,e2eBackendUrl=$E2E_BACKEND_URL" \
+            --directories-to-pull /sdcard/Download/e2e \
+            --num-flaky-test-attempts 3 \
+            --timeout 60m \
+            --results-history-name "$MODULE" \
+            --results-dir "ui-tests/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/$MODULE" \
+            "${targets[@]}"
+
+      - name: Upload the logs
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ui-tests-${{ matrix.module }}
           path: |
-            ${{ matrix.module }}/build/outputs/androidTest-results/
-            ${{ matrix.module }}/build/reports/androidTests/
-            ${{ matrix.module }}/build/e2e-screenshots/
-            build/e2e-gradle.log
             ${{ runner.temp }}/e2e-backend.log
+            ${{ runner.temp }}/tunnel.log
           if-no-files-found: ignore
