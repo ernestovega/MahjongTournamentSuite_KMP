@@ -9,7 +9,12 @@
   let report = null;
 
   // The app draws on a canvas. When a canvas exists, the app has started.
-  const started = () => document.querySelector("canvas") !== null;
+  // Compose puts the canvas inside a shadow root, so the search must go into the shadow roots.
+  const hasCanvas = (root) => {
+    if (root.querySelector("canvas") !== null) return true;
+    return Array.from(root.querySelectorAll("*")).some((element) => element.shadowRoot && hasCanvas(element.shadowRoot));
+  };
+  const started = () => hasCanvas(document);
 
   const seconds = () => Math.round((Date.now() - startedAt) / 100) / 10;
 
