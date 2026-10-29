@@ -37,3 +37,7 @@ In GitHub, **Settings > Rules > Rulesets > New ruleset > New branch ruleset**:
 - Turn on **Restrict deletions**, **Block force pushes** and **Require a pull request before merging** with 0 required approvals.
 - Turn on **Require status checks to pass** and add **Build and test** and **UI tests up to date**.
 - Leave the bypass list empty so nobody can push to `main` directly.
+
+## Dependency updates
+
+`.github/dependabot.yml` makes Dependabot open pull requests every week. It covers Gradle, npm (root and `firebase/functions`) and GitHub Actions. Each pull request runs the normal check **Build and test**. Merge it when the check passes. Dependabot opens at most 3 pull requests at a time for Gradle and for functions.
