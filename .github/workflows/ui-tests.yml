@@ -163,7 +163,7 @@ jobs:
             # The tablet keeps the same size in dp. The error windows of slow system apps must not cover the app.
             adb shell settings put global hide_error_dialogs 1
             if [ "${{ matrix.module }}" = "playerAndroidApp" ]; then adb shell wm size 720x1600 && adb shell wm density 280; else adb shell wm size 1280x800 && adb shell wm density 160; fi
-            mkdir -p build && scripts/run-e2e-tests.sh ${{ matrix.module }} "$E2E_TESTS"; status=$?; adb logcat -d > build/e2e-logcat.txt; adb pull /sdcard/Download/e2e ${{ matrix.module }}/build/e2e-screenshots || true; exit $status
+            mkdir -p build && E2E_LOGCAT=build/e2e-logcat.txt scripts/run-e2e-tests.sh ${{ matrix.module }} "$E2E_TESTS"; status=$?; adb pull /sdcard/Download/e2e ${{ matrix.module }}/build/e2e-screenshots || true; exit $status
 
       - if: inputs.runner == 'firebase-test-lab'
         uses: google-github-actions/auth@v2
