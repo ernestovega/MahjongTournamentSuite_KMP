@@ -1,0 +1,26 @@
+# Opens pull requests that update dependencies. Each one runs the normal pull request check.
+version: 2
+updates:
+  - package-ecosystem: gradle
+    target-branch: develop
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+  - package-ecosystem: npm
+    target-branch: develop
+    directory: /firebase/functions
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 3
+  - package-ecosystem: npm
+    target-branch: develop
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 2
+  - package-ecosystem: github-actions
+    target-branch: develop
+    directory: /
+    schedule:
+      interval: weekly
