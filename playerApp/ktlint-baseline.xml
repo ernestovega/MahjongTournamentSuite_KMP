@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <baseline version="1.0">
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/Drawable0.commonMain.kt">
+    <file name="../../wt-ktlint/playerApp/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/Drawable0.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="18" column="1" source="standard:indent" />
         <error line="18" column="24" source="standard:wrapping" />
@@ -11,7 +11,7 @@
         <error line="24" column="14" source="standard:function-naming" />
         <error line="25" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/Plurals0.commonMain.kt">
+    <file name="../../wt-ktlint/playerApp/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/Plurals0.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="19" column="1" source="standard:indent" />
         <error line="19" column="28" source="standard:wrapping" />
@@ -54,7 +54,7 @@
         <error line="50" column="1" source="standard:indent" />
         <error line="51" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/String0.commonMain.kt">
+    <file name="../../wt-ktlint/playerApp/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/String0.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="19" column="1" source="standard:indent" />
         <error line="19" column="22" source="standard:wrapping" />
@@ -1358,7 +1358,7 @@
         <error line="1117" column="1" source="standard:indent" />
         <error line="1118" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/String1.commonMain.kt">
+    <file name="../../wt-ktlint/playerApp/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/playerapp/generated/resources/String1.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="19" column="1" source="standard:indent" />
         <error line="19" column="22" source="standard:wrapping" />
@@ -1986,10 +1986,10 @@
         <error line="545" column="1" source="standard:indent" />
         <error line="546" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceCollectors/mahjongtournamentsuite/playerapp/generated/resources/ExpectResourceCollectors.kt">
+    <file name="../../wt-ktlint/playerApp/build/generated/compose/resourceGenerator/kotlin/commonMainResourceCollectors/mahjongtournamentsuite/playerapp/generated/resources/ExpectResourceCollectors.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonResClass/mahjongtournamentsuite/playerapp/generated/resources/Res.kt">
+    <file name="../../wt-ktlint/playerApp/build/generated/compose/resourceGenerator/kotlin/commonResClass/mahjongtournamentsuite/playerapp/generated/resources/Res.kt">
         <error line="3" column="1" source="standard:indent" />
         <error line="4" column="1" source="standard:indent" />
         <error line="9" column="1" source="standard:import-ordering" />
@@ -2022,7 +2022,7 @@
         <error line="46" column="1" source="standard:indent" />
         <error line="46" column="17" source="standard:class-naming" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/wasmJsMainResourceCollectors/mahjongtournamentsuite/playerapp/generated/resources/ActualResourceCollectors.kt">
+    <file name="../../wt-ktlint/playerApp/build/generated/compose/resourceGenerator/kotlin/wasmJsMainResourceCollectors/mahjongtournamentsuite/playerapp/generated/resources/ActualResourceCollectors.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="15" column="1" source="standard:indent" />
         <error line="16" column="1" source="standard:indent" />
@@ -2039,12 +2039,12 @@
         <error line="39" column="1" source="standard:indent" />
         <error line="40" column="1" source="standard:indent" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/HandDetails.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/HandDetails.kt">
         <error line="12" column="1" source="standard:no-unused-imports" />
         <error line="227" column="51" source="standard:multiline-if-else" />
         <error line="227" column="66" source="standard:multiline-if-else" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/HandEntryPanel.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/HandEntryPanel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="194" column="27" source="standard:condition-wrapping" />
         <error line="194" column="45" source="standard:condition-wrapping" />
@@ -2091,17 +2091,17 @@
         <error line="619" column="135" source="standard:curly-spacing" />
         <error line="619" column="135" source="standard:statement-wrapping" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/MatchTime.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/MatchTime.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerApp.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerApp.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerMenu.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerMenu.kt">
         <error line="1" column="1" source="standard:filename" />
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerPresenters.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerPresenters.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="31" column="75" source="standard:function-signature" />
         <error line="41" column="93" source="standard:function-signature" />
@@ -2111,7 +2111,7 @@
         <error line="150" column="124" source="standard:function-signature" />
         <error line="154" column="116" source="standard:function-signature" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerScreens.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerScreens.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="14" column="1" source="standard:no-unused-imports" />
         <error line="19" column="1" source="standard:no-unused-imports" />
@@ -2341,7 +2341,7 @@
         <error line="1850" column="1" source="standard:indent" />
         <error line="1855" column="1" source="standard:no-consecutive-blank-lines" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerStatisticsScreen.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerStatisticsScreen.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="21" column="1" source="standard:no-unused-imports" />
         <error line="36" column="1" source="standard:no-unused-imports" />
@@ -2403,7 +2403,7 @@
         <error line="646" column="31" source="standard:argument-list-wrapping" />
         <error line="675" column="41" source="standard:argument-list-wrapping" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerTournamentView.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerTournamentView.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="57" column="29" source="standard:argument-list-wrapping" />
         <error line="57" column="50" source="standard:argument-list-wrapping" />
@@ -2416,10 +2416,10 @@
         <error line="182" column="36" source="standard:condition-wrapping" />
         <error line="186" column="46" source="standard:function-signature" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/RoutePersistence.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/RoutePersistence.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/TournamentInfoTab.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/TournamentInfoTab.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="8" column="1" source="standard:no-unused-imports" />
         <error line="54" column="1" source="standard:no-unused-imports" />
@@ -2427,14 +2427,14 @@
         <error line="242" column="51" source="standard:function-signature" />
         <error line="272" column="51" source="standard:function-signature" />
     </file>
-    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/player/MatchTimeTest.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/player/MatchTimeTest.kt">
         <error line="118" column="19" source="standard:argument-list-wrapping" />
         <error line="118" column="31" source="standard:argument-list-wrapping" />
         <error line="118" column="48" source="standard:argument-list-wrapping" />
         <error line="118" column="64" source="standard:argument-list-wrapping" />
         <error line="118" column="79" source="standard:argument-list-wrapping" />
     </file>
-    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerTournamentViewTest.kt">
+    <file name="../../wt-ktlint/playerApp/src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerTournamentViewTest.kt">
         <error line="60" column="32" source="standard:argument-list-wrapping" />
         <error line="60" column="52" source="standard:argument-list-wrapping" />
         <error line="60" column="71" source="standard:argument-list-wrapping" />
@@ -2444,10 +2444,10 @@
         <error line="98" column="91" source="standard:argument-list-wrapping" />
         <error line="98" column="101" source="standard:argument-list-wrapping" />
     </file>
-    <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/AllTextsResolveTest.kt">
+    <file name="../../wt-ktlint/playerApp/src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/AllTextsResolveTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/HandEntryPanelUiTest.kt">
+    <file name="../../wt-ktlint/playerApp/src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/HandEntryPanelUiTest.kt">
         <error line="35" column="31" source="standard:parameter-list-wrapping" />
         <error line="35" column="31" source="standard:function-signature" />
         <error line="35" column="45" source="standard:parameter-list-wrapping" />
@@ -2475,10 +2475,10 @@
         <error line="112" column="58" source="standard:argument-list-wrapping" />
         <error line="113" column="38" source="standard:argument-list-wrapping" />
     </file>
-    <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/PluralTextsTest.kt">
+    <file name="../../wt-ktlint/playerApp/src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/PluralTextsTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/RankingTabsUiTest.kt">
+    <file name="../../wt-ktlint/playerApp/src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/player/RankingTabsUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="42" column="23" source="standard:argument-list-wrapping" />
         <error line="42" column="35" source="standard:argument-list-wrapping" />
@@ -2486,7 +2486,7 @@
         <error line="42" column="72" source="standard:argument-list-wrapping" />
         <error line="43" column="42" source="standard:argument-list-wrapping" />
     </file>
-    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/player/main.kt">
+    <file name="../../wt-ktlint/playerApp/src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/player/main.kt">
         <error line="1" column="1" source="standard:filename" />
     </file>
 </baseline>

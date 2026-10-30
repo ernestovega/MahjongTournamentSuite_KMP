@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <baseline version="1.0">
-    <file name="build/generated/compose/resourceGenerator/kotlin/androidMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ActualResourceCollectors.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/androidMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ActualResourceCollectors.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="15" column="1" source="standard:indent" />
         <error line="16" column="1" source="standard:indent" />
@@ -21,7 +21,7 @@
         <error line="43" column="1" source="standard:indent" />
         <error line="44" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Drawable0.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Drawable0.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="17" column="1" source="standard:indent" />
         <error line="17" column="24" source="standard:wrapping" />
@@ -725,7 +725,7 @@
         <error line="815" column="1" source="standard:indent" />
         <error line="816" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Drawable1.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Drawable1.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="17" column="1" source="standard:indent" />
         <error line="17" column="24" source="standard:wrapping" />
@@ -1429,7 +1429,7 @@
         <error line="815" column="1" source="standard:indent" />
         <error line="816" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Drawable2.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Drawable2.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="17" column="1" source="standard:indent" />
         <error line="17" column="24" source="standard:wrapping" />
@@ -1874,7 +1874,7 @@
         <error line="519" column="1" source="standard:indent" />
         <error line="520" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Font0.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/Font0.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="17" column="1" source="standard:indent" />
         <error line="17" column="20" source="standard:wrapping" />
@@ -1885,7 +1885,7 @@
         <error line="23" column="14" source="standard:function-naming" />
         <error line="24" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String0.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String0.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="18" column="1" source="standard:indent" />
         <error line="18" column="22" source="standard:wrapping" />
@@ -3189,7 +3189,7 @@
         <error line="1116" column="1" source="standard:indent" />
         <error line="1117" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String1.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String1.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="18" column="1" source="standard:indent" />
         <error line="18" column="22" source="standard:wrapping" />
@@ -4493,7 +4493,7 @@
         <error line="1116" column="1" source="standard:indent" />
         <error line="1117" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String2.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String2.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="18" column="1" source="standard:indent" />
         <error line="18" column="22" source="standard:wrapping" />
@@ -5797,7 +5797,7 @@
         <error line="1116" column="1" source="standard:indent" />
         <error line="1117" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String3.commonMain.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceAccessors/mahjongtournamentsuite/ui/generated/resources/String3.commonMain.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="18" column="1" source="standard:indent" />
         <error line="18" column="22" source="standard:wrapping" />
@@ -5996,10 +5996,10 @@
         <error line="181" column="1" source="standard:indent" />
         <error line="182" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ExpectResourceCollectors.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ExpectResourceCollectors.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/commonResClass/mahjongtournamentsuite/ui/generated/resources/Res.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/commonResClass/mahjongtournamentsuite/ui/generated/resources/Res.kt">
         <error line="3" column="1" source="standard:indent" />
         <error line="4" column="1" source="standard:indent" />
         <error line="9" column="1" source="standard:import-ordering" />
@@ -6032,7 +6032,7 @@
         <error line="46" column="1" source="standard:indent" />
         <error line="46" column="17" source="standard:class-naming" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/jvmMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ActualResourceCollectors.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/jvmMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ActualResourceCollectors.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="15" column="1" source="standard:indent" />
         <error line="16" column="1" source="standard:indent" />
@@ -6053,7 +6053,7 @@
         <error line="43" column="1" source="standard:indent" />
         <error line="44" column="1" source="standard:indent" />
     </file>
-    <file name="build/generated/compose/resourceGenerator/kotlin/wasmJsMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ActualResourceCollectors.kt">
+    <file name="../../wt-ktlint/ui/build/generated/compose/resourceGenerator/kotlin/wasmJsMainResourceCollectors/mahjongtournamentsuite/ui/generated/resources/ActualResourceCollectors.kt">
         <error line="5" column="1" source="standard:import-ordering" />
         <error line="15" column="1" source="standard:indent" />
         <error line="16" column="1" source="standard:indent" />
@@ -6074,18 +6074,18 @@
         <error line="43" column="1" source="standard:indent" />
         <error line="44" column="1" source="standard:indent" />
     </file>
-    <file name="src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/ImagePicker.android.kt">
+    <file name="../../wt-ktlint/ui/src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/ImagePicker.android.kt">
         <error line="56" column="46" source="standard:multiline-if-else" />
     </file>
-    <file name="src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.android.kt">
+    <file name="../../wt-ktlint/ui/src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.android.kt">
         <error line="9" column="51" source="standard:statement-wrapping" />
         <error line="9" column="59" source="standard:statement-wrapping" />
         <error line="9" column="86" source="standard:statement-wrapping" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppErrorDialog.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppErrorDialog.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppScaffold.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppScaffold.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="21" column="1" source="standard:no-unused-imports" />
         <error line="36" column="1" source="standard:no-unused-imports" />
@@ -6272,36 +6272,36 @@
         <error line="291" column="1" source="standard:indent" />
         <error line="292" column="1" source="standard:indent" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppTopBarButton.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppTopBarButton.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppTopBarLeadingActions.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppTopBarLeadingActions.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="39" column="32" source="standard:statement-wrapping" />
         <error line="39" column="56" source="standard:statement-wrapping" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppVersionLabel.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppVersionLabel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/CountryFlag.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/CountryFlag.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="288" column="72" source="standard:function-signature" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/CountryFlagResources.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/CountryFlagResources.kt">
         <error line="4" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/DateField.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/DateField.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/FlatDataTable.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/FlatDataTable.kt">
         <error line="42" column="1" source="standard:no-unused-imports" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/ImageCropDialog.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/ImageCropDialog.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="9" column="1" source="standard:no-unused-imports" />
         <error line="11" column="1" source="standard:no-unused-imports" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/KeyboardFocus.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/KeyboardFocus.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="17" column="1" source="standard:no-unused-imports" />
         <error line="18" column="1" source="standard:no-unused-imports" />
@@ -6309,21 +6309,21 @@
         <error line="39" column="1" source="standard:no-unused-imports" />
         <error line="67" column="9" source="standard:curly-spacing" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/LevelMedal.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/LevelMedal.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="5" column="1" source="standard:no-unused-imports" />
         <error line="8" column="1" source="standard:no-unused-imports" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PersistentScroll.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PersistentScroll.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PhotoEditor.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PhotoEditor.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PlatformScrollbars.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PlatformScrollbars.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PlayerStatisticsPanel.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/PlayerStatisticsPanel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="4" column="1" source="standard:no-unused-imports" />
         <error line="17" column="1" source="standard:no-unused-imports" />
@@ -6406,10 +6406,10 @@
         <error line="1378" column="1" source="standard:indent" />
         <error line="1379" column="1" source="standard:indent" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/ProfileDialog.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/ProfileDialog.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/ScreenLayouts.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/ScreenLayouts.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="41" column="1" source="standard:no-unused-imports" />
         <error line="164" column="1" source="standard:indent" />
@@ -6430,16 +6430,16 @@
         <error line="179" column="1" source="standard:indent" />
         <error line="180" column="1" source="standard:indent" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SectionCard.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SectionCard.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SelectField.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SelectField.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SignInForm.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SignInForm.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/StatisticsViews.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/StatisticsViews.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="22" column="1" source="standard:no-unused-imports" />
         <error line="26" column="1" source="standard:no-unused-imports" />
@@ -6460,10 +6460,10 @@
         <error line="319" column="52" source="standard:parameter-list-wrapping" />
         <error line="319" column="52" source="standard:function-signature" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SubstitutionText.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SubstitutionText.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TableSeats.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TableSeats.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="13" column="1" source="standard:no-unused-imports" />
         <error line="23" column="1" source="standard:no-unused-imports" />
@@ -6480,10 +6480,10 @@
         <error line="326" column="5" source="standard:spacing-between-declarations-with-comments" />
         <error line="474" column="90" source="standard:function-signature" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TopBarMenu.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TopBarMenu.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TournamentStatisticsPanel.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TournamentStatisticsPanel.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="26" column="1" source="standard:no-unused-imports" />
         <error line="93" column="64" source="standard:argument-list-wrapping" />
@@ -6508,39 +6508,50 @@
         <error line="168" column="66" source="standard:argument-list-wrapping" />
         <error line="173" column="32" source="standard:argument-list-wrapping" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/SessionState.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/SessionState.kt">
         <error line="54" column="23" source="standard:wrapping" />
         <error line="54" column="36" source="standard:wrapping" />
         <error line="56" column="9" source="standard:wrapping" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreference.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/ThemePreference.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/AppErrorUi.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/AppErrorUi.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="62" column="46" source="standard:condition-wrapping" />
         <error line="64" column="58" source="standard:condition-wrapping" />
         <error line="65" column="52" source="standard:condition-wrapping" />
     </file>
-    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.kt">
+    <file name="../../wt-ktlint/ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.kt">
         <error line="17" column="70" source="standard:function-signature" />
     </file>
-    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/ImagePicker.jvm.kt">
+    <file name="../../wt-ktlint/ui/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/ImagePicker.jvm.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/SpreadsheetPicker.jvm.kt">
+    <file name="../../wt-ktlint/ui/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/SpreadsheetPicker.jvm.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/SpreadsheetSaver.jvm.kt">
+    <file name="../../wt-ktlint/ui/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/SpreadsheetSaver.jvm.kt">
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
-    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/PlatformTheme.jvm.kt">
+    <file name="../../wt-ktlint/ui/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/theme/PlatformTheme.jvm.kt">
         <error line="29" column="33" source="standard:function-signature" />
     </file>
-    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.jvm.kt">
+    <file name="../../wt-ktlint/ui/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.jvm.kt">
         <error line="9" column="51" source="standard:statement-wrapping" />
         <error line="9" column="59" source="standard:statement-wrapping" />
         <error line="9" column="86" source="standard:statement-wrapping" />
+    </file>
+    <file name="../../wt-ktlint/ui/src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/ImagePicker.wasm.kt">
+        <error line="28" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="../../wt-ktlint/ui/src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.wasm.kt">
+        <error line="3" column="143" source="standard:function-signature" />
+        <error line="13" column="67" source="standard:function-signature" />
+        <error line="17" column="73" source="standard:function-signature" />
+        <error line="21" column="84" source="standard:function-signature" />
+        <error line="25" column="78" source="standard:function-signature" />
+        <error line="29" column="112" source="standard:function-signature" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/AllTextsResolveTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -6611,11 +6622,11 @@
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TooltipLayoutUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="51" column="147" source="standard:function-signature" />
-        <error line="71" column="50" source="standard:function-signature" />
-        <error line="75" column="51" source="standard:function-signature" />
-        <error line="79" column="43" source="standard:function-signature" />
-        <error line="83" column="42" source="standard:function-signature" />
+        <error line="53" column="147" source="standard:function-signature" />
+        <error line="73" column="50" source="standard:function-signature" />
+        <error line="77" column="51" source="standard:function-signature" />
+        <error line="81" column="43" source="standard:function-signature" />
+        <error line="85" column="42" source="standard:function-signature" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/language/AppLanguageTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -6632,16 +6643,5 @@
         <error line="23" column="81" source="standard:function-signature" />
         <error line="26" column="95" source="standard:function-signature" />
         <error line="29" column="17" source="standard:function-naming" />
-    </file>
-    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/platform/ImagePicker.wasm.kt">
-        <error line="28" column="1" source="standard:no-consecutive-blank-lines" />
-    </file>
-    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/util/LocalizedDateTime.wasm.kt">
-        <error line="3" column="143" source="standard:function-signature" />
-        <error line="13" column="67" source="standard:function-signature" />
-        <error line="17" column="73" source="standard:function-signature" />
-        <error line="21" column="84" source="standard:function-signature" />
-        <error line="25" column="78" source="standard:function-signature" />
-        <error line="29" column="112" source="standard:function-signature" />
     </file>
 </baseline>
