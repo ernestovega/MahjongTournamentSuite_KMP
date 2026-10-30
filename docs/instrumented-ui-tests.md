@@ -40,8 +40,7 @@ A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The er
 
 ## Run the tests on GitHub
 
-The workflow `.github/workflows/ui-tests.yml` runs the same tests from GitHub. It never runs on its own.
-Start it in **Actions > UI tests > Run workflow** on the `main` branch. Pick where it runs, the app, and optionally test classes.
+The workflow `.github/workflows/ui-tests.yml` runs the same tests from GitHub. It runs in the pull request to `main`. You can also start it in **Actions > UI tests > Run workflow**. Pick where it runs, the app, and optionally test classes.
 In both cases the runner starts the local backend on the emulators, like `npm run e2e:backend`. No test touches the production project.
 
 ### On an emulator in the GitHub runner (default)
@@ -62,14 +61,9 @@ In both cases the runner starts the local backend on the emulators, like `npm ru
 - It uses the same Google Cloud sign-in as the deploy. See [Automatic Firebase deploy](ci-deploy.md).
 - Test Lab has a free daily quota. A full run of both apps uses more than that, so it costs money on the Blaze plan.
 
-### Every few merges
+### On the pull request to main
 
-The check **UI tests up to date** (`.github/workflows/ui-tests-due.yml`) runs on every pull request to `main`.
-It fails when 5 or more pull requests were merged since the UI tests last passed for an app. The count is per app.
-A run counts when it passed on `main` or on the branch of the pull request, on either runner.
-
-When the check fails, run **UI tests** for the app it names. You can run it on the pull request branch with the GitHub emulator, so the tests check the new code. Test Lab only signs in from `main`. Then re-run the failed check from the pull request.
-Change the limit with the repository variable `UI_TESTS_EVERY_N_MERGES`.
+The job **UI tests** of `.github/workflows/firebase.yml` runs this workflow on the GitHub emulator for both apps. It runs at the same time as the other checks. A pull request from `develop` to `main` cannot merge until it passes.
 
 ## What the tests cover
 

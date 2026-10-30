@@ -1,9 +1,25 @@
 # Automatic Firebase deploy
 
-The workflow `.github/workflows/firebase.yml` has two jobs:
+## Branches
 
-- **Build and test** runs on every pull request to `main`. It runs the functions tests and builds both Wasm web apps. Nothing is deployed.
-- **Deploy to Firebase** runs on every push to `main`, which is every merged pull request. It can also be started by hand from the Actions tab. It runs the functions tests and then deploys hosting (both sites), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
+- Work happens on branches that start from `develop`. Merge them into `develop` without a pull request. Nothing runs on `develop`.
+- To release, open a pull request from `develop` to `main`. It runs every test, including the UI tests.
+- After the merge into `main`, the workflow deploys Firebase.
+
+## Workflow
+
+The workflow `.github/workflows/firebase.yml` has two parts:
+
+- **Build and test** runs on every pull request to `main`. Six checks run at the same time:
+  - **Functions tests**: the unit tests of the functions.
+  - **Functions integration tests**: the integration tests on the Firebase Auth and Firestore emulators.
+  - **Kotlin tests**: ktlint and the tests of all modules.
+  - **Scripts and diagnostics tests**: the Node tests of `scripts/` and the start diagnostics in Chrome.
+  - **Build web apps**: both Wasm web apps.
+  - **UI tests**: the UI tests of both Android apps on emulators of the GitHub runner. See [Instrumented UI tests](instrumented-ui-tests.md).
+
+  The last job, named **Build and test**, fails when any check fails. The ruleset of `main` requires only this job. Nothing is deployed.
+- **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. It runs the functions tests and then deploys hosting (both sites), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
 
 The deploy uses `--force`, so a function removed from the code is also deleted in Firebase. Two deploys never run at the same time: a newer push waits for the running one.
 
@@ -35,9 +51,27 @@ In GitHub, **Settings > Rules > Rulesets > New ruleset > New branch ruleset**:
 - Name `main`, enforcement **Active**.
 - Target branches: **Include default branch**.
 - Turn on **Restrict deletions**, **Block force pushes** and **Require a pull request before merging** with 0 required approvals.
-- Turn on **Require status checks to pass** and add **Build and test** and **UI tests up to date**.
+- Turn on **Require status checks to pass** and add **Build and test**. It includes the UI tests.
 - Leave the bypass list empty so nobody can push to `main` directly.
 
 ## Dependency updates
 
 `.github/dependabot.yml` makes Dependabot open pull requests every week. It covers Gradle, npm (root and `firebase/functions`) and GitHub Actions. Each pull request runs the normal check **Build and test**. Merge it when the check passes. Dependabot opens at most 3 pull requests at a time for Gradle and for functions.
+
+## Kotlin style (ktlint)
+
+The check **Kotlin tests** runs `./gradlew ktlintCheck`. The rules are in `.editorconfig`. The code that existed before the check has about 10 000 style warnings. They are in `ktlint-baseline.xml` of each module, so only new code fails.
+
+- Check on your computer: `./gradlew ktlintCheck`.
+- Fix the style of the files you changed: `./gradlew ktlintFormat`.
+- Fix old code in a module and make its baseline smaller: fix the files, then run `./gradlew :<module>:ktlintGenerateBaseline`.
+
+## Dependency updates
+
+`.github/dependabot.yml` makes Dependabot open pull requests to `develop` every week. It covers Gradle, npm (root and `firebase/functions`) and GitHub Actions. Nothing checks them on `develop`. The checks run when you release `develop` to `main`.
+
+## Plan and status
+
+- **Done:** deploy on merge to `main`, the ruleset on `main`, all tests in the pull request to `main`, ktlint and Dependabot.
+- **Idea:** UI tests of the web apps with Playwright, in Chromium, Firefox and WebKit. The first tests would check that the app starts and draws the canvas.
+- **Pending, no date:** a release pipeline for the Android apps: build, signing, Play Store. It also turns on R8 (code shrinking and obfuscation) and resource shrinking. Both are off now (`isMinifyEnabled = false`).

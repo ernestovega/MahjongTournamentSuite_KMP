@@ -1,6 +1,7 @@
 # Runs the instrumented UI tests against the local test backend, on an emulator in the GitHub runner (free) or in
 # Firebase Test Lab (billed above the daily free quota).
-# It only starts by hand: Actions > UI tests > Run workflow. See docs/instrumented-ui-tests.md.
+# It runs in the pull request from develop to main (firebase.yml) and by hand (Actions > UI tests > Run workflow).
+# See docs/instrumented-ui-tests.md.
 name: UI tests
 
 on:
@@ -15,6 +16,29 @@ on:
         description: App to test
         type: choice
         options: [both, androidApp, playerAndroidApp]
+        default: both
+      tests:
+        description: Optional test class or class#method, comma separated
+        type: string
+        required: false
+      tablet:
+        description: Test Lab only. Device for the admin app (model,version)
+        type: string
+        default: MediumTablet.arm,34
+      phone:
+        description: Test Lab only. Device for the player app (model,version)
+        type: string
+        default: MediumPhone.arm,34
+
+  workflow_call:
+    inputs:
+      runner:
+        description: Where the tests run
+        type: string
+        default: github-emulator
+      app:
+        description: App to test
+        type: string
         default: both
       tests:
         description: Optional test class or class#method, comma separated
