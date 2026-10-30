@@ -49,6 +49,8 @@ jobs:
           npm test
 
       - name: Test Kotlin code
+        # A hung UI test must not use the whole job time.
+        timeout-minutes: 15
         run: >
           ./gradlew
           :domain:jvmTest :data:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
