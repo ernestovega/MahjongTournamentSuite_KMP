@@ -1,0 +1,319 @@
+<?xml version="1.0" encoding="utf-8"?>
+<baseline version="1.0">
+    <file name="src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/BackendConfig.android.kt">
+        <error line="9" column="48" source="standard:function-signature" />
+    </file>
+    <file name="src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/HttpClientEngineFactory.android.kt">
+        <error line="8" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/data/platform/AndroidPlatformContext.kt">
+        <error line="14" column="36" source="standard:function-signature" />
+        <error line="18" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/data/platform/PlatformCompute.android.kt">
+        <error line="5" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/androidMain/kotlin/com/etologic/mahjongtournamentsuite/data/session/PlatformAuthSessionStore.android.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="33" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/backend/FunctionsBackendApi.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="17" column="1" source="standard:no-unused-imports" />
+        <error line="89" column="71" source="standard:function-signature" />
+        <error line="92" column="88" source="standard:function-signature" />
+        <error line="95" column="74" source="standard:function-signature" />
+        <error line="98" column="54" source="standard:function-signature" />
+        <error line="101" column="101" source="standard:function-signature" />
+        <error line="104" column="104" source="standard:function-signature" />
+        <error line="107" column="66" source="standard:function-signature" />
+        <error line="110" column="118" source="standard:function-signature" />
+        <error line="113" column="80" source="standard:function-signature" />
+        <error line="116" column="61" source="standard:function-signature" />
+        <error line="119" column="74" source="standard:function-signature" />
+        <error line="122" column="77" source="standard:function-signature" />
+        <error line="126" column="89" source="standard:function-signature" />
+        <error line="139" column="79" source="standard:function-signature" />
+        <error line="150" column="70" source="standard:function-signature" />
+        <error line="204" column="105" source="standard:function-signature" />
+        <error line="451" column="84" source="standard:function-signature" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/cache/SessionRepositoryCache.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/di/DataModule.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/HttpClientEngineFactory.kt">
+        <error line="7" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/HttpClientFactory.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/platform/PlatformCompute.kt">
+        <error line="11" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultAdminRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="39" column="1" source="standard:indent" />
+        <error line="40" column="1" source="standard:indent" />
+        <error line="41" column="1" source="standard:indent" />
+        <error line="42" column="1" source="standard:indent" />
+        <error line="43" column="1" source="standard:indent" />
+        <error line="44" column="1" source="standard:indent" />
+        <error line="45" column="1" source="standard:indent" />
+        <error line="46" column="1" source="standard:indent" />
+        <error line="109" column="81" source="standard:function-signature" />
+        <error line="124" column="99" source="standard:function-signature" />
+        <error line="130" column="104" source="standard:function-signature" />
+        <error line="141" column="119" source="standard:function-signature" />
+        <error line="150" column="80" source="standard:function-signature" />
+        <error line="209" column="1" source="standard:indent" />
+        <error line="210" column="1" source="standard:indent" />
+        <error line="211" column="1" source="standard:indent" />
+        <error line="212" column="1" source="standard:indent" />
+        <error line="213" column="1" source="standard:indent" />
+        <error line="214" column="1" source="standard:indent" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultAuthRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="159" column="102" source="standard:function-signature" />
+        <error line="167" column="65" source="standard:function-signature" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerHandRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="68" column="104" source="standard:function-signature" />
+        <error line="108" column="46" source="standard:function-signature" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerImportRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="38" column="85" source="standard:function-signature" />
+        <error line="68" column="64" source="standard:function-signature" />
+        <error line="71" column="104" source="standard:function-signature" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="23" column="90" source="standard:function-signature" />
+        <error line="94" column="80" source="standard:function-signature" />
+        <error line="110" column="51" source="standard:function-signature" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultStatisticsRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="25" column="73" source="standard:function-signature" />
+        <error line="58" column="95" source="standard:function-signature" />
+        <error line="68" column="120" source="standard:function-signature" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultTournamentRepository.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="82" column="1" source="standard:indent" />
+        <error line="327" column="1" source="standard:indent" />
+        <error line="328" column="1" source="standard:indent" />
+        <error line="329" column="1" source="standard:indent" />
+        <error line="330" column="1" source="standard:indent" />
+        <error line="331" column="1" source="standard:indent" />
+        <error line="332" column="1" source="standard:indent" />
+        <error line="333" column="1" source="standard:indent" />
+        <error line="334" column="1" source="standard:indent" />
+        <error line="335" column="1" source="standard:indent" />
+        <error line="336" column="1" source="standard:indent" />
+        <error line="391" column="1" source="standard:indent" />
+        <error line="392" column="1" source="standard:indent" />
+        <error line="393" column="1" source="standard:indent" />
+        <error line="394" column="1" source="standard:indent" />
+        <error line="395" column="1" source="standard:indent" />
+        <error line="396" column="1" source="standard:indent" />
+        <error line="397" column="1" source="standard:indent" />
+        <error line="398" column="1" source="standard:indent" />
+        <error line="399" column="1" source="standard:indent" />
+        <error line="400" column="1" source="standard:indent" />
+        <error line="401" column="1" source="standard:indent" />
+        <error line="402" column="1" source="standard:indent" />
+        <error line="403" column="1" source="standard:indent" />
+        <error line="404" column="1" source="standard:indent" />
+        <error line="405" column="1" source="standard:indent" />
+        <error line="406" column="1" source="standard:indent" />
+        <error line="407" column="1" source="standard:indent" />
+        <error line="408" column="1" source="standard:indent" />
+        <error line="409" column="1" source="standard:indent" />
+        <error line="422" column="1" source="standard:indent" />
+        <error line="423" column="1" source="standard:indent" />
+        <error line="424" column="1" source="standard:indent" />
+        <error line="425" column="1" source="standard:indent" />
+        <error line="426" column="1" source="standard:indent" />
+        <error line="427" column="1" source="standard:indent" />
+        <error line="428" column="1" source="standard:indent" />
+        <error line="429" column="1" source="standard:indent" />
+        <error line="430" column="1" source="standard:indent" />
+        <error line="431" column="1" source="standard:indent" />
+        <error line="471" column="1" source="standard:indent" />
+        <error line="472" column="1" source="standard:indent" />
+        <error line="473" column="1" source="standard:indent" />
+        <error line="568" column="1" source="standard:indent" />
+        <error line="569" column="1" source="standard:indent" />
+        <error line="570" column="1" source="standard:indent" />
+        <error line="571" column="1" source="standard:indent" />
+        <error line="585" column="1" source="standard:indent" />
+        <error line="586" column="1" source="standard:indent" />
+        <error line="587" column="1" source="standard:indent" />
+        <error line="588" column="1" source="standard:indent" />
+        <error line="589" column="1" source="standard:indent" />
+        <error line="590" column="1" source="standard:indent" />
+        <error line="591" column="1" source="standard:indent" />
+        <error line="592" column="1" source="standard:indent" />
+        <error line="593" column="1" source="standard:indent" />
+        <error line="594" column="1" source="standard:indent" />
+        <error line="595" column="1" source="standard:indent" />
+        <error line="596" column="1" source="standard:indent" />
+        <error line="597" column="1" source="standard:indent" />
+        <error line="598" column="1" source="standard:indent" />
+        <error line="599" column="1" source="standard:indent" />
+        <error line="600" column="1" source="standard:indent" />
+        <error line="601" column="1" source="standard:indent" />
+        <error line="602" column="1" source="standard:indent" />
+        <error line="603" column="1" source="standard:indent" />
+        <error line="618" column="1" source="standard:indent" />
+        <error line="619" column="1" source="standard:indent" />
+        <error line="620" column="1" source="standard:indent" />
+        <error line="621" column="1" source="standard:indent" />
+        <error line="622" column="1" source="standard:indent" />
+        <error line="623" column="1" source="standard:indent" />
+        <error line="660" column="69" source="standard:multiline-if-else" />
+        <error line="815" column="81" source="standard:function-signature" />
+        <error line="903" column="86" source="standard:function-signature" />
+        <error line="939" column="70" source="standard:function-signature" />
+        <error line="970" column="18" source="standard:wrapping" />
+        <error line="971" column="88" source="standard:wrapping" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/RepositorySupport.kt">
+        <error line="38" column="40" source="standard:multiline-if-else" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/session/AuthSessionStore.kt">
+        <error line="8" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/session/PlatformAuthSessionStore.kt">
+        <error line="9" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/session/StoredAuthSession.kt">
+        <error line="12" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/backend/FunctionsBackendApiTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/cache/SessionRepositoryCacheTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="32" column="90" source="standard:statement-wrapping" />
+        <error line="32" column="107" source="standard:statement-wrapping" />
+        <error line="32" column="111" source="standard:statement-wrapping" />
+        <error line="62" column="90" source="standard:statement-wrapping" />
+        <error line="62" column="107" source="standard:statement-wrapping" />
+        <error line="62" column="111" source="standard:statement-wrapping" />
+        <error line="156" column="59" source="standard:statement-wrapping" />
+        <error line="156" column="67" source="standard:statement-wrapping" />
+        <error line="156" column="81" source="standard:statement-wrapping" />
+        <error line="156" column="91" source="standard:statement-wrapping" />
+        <error line="169" column="81" source="standard:statement-wrapping" />
+        <error line="169" column="89" source="standard:statement-wrapping" />
+        <error line="169" column="107" source="standard:statement-wrapping" />
+        <error line="170" column="60" source="standard:statement-wrapping" />
+        <error line="170" column="68" source="standard:statement-wrapping" />
+        <error line="170" column="78" source="standard:statement-wrapping" />
+        <error line="193" column="66" source="standard:statement-wrapping" />
+        <error line="193" column="74" source="standard:statement-wrapping" />
+        <error line="193" column="88" source="standard:statement-wrapping" />
+        <error line="193" column="108" source="standard:statement-wrapping" />
+        <error line="207" column="65" source="standard:statement-wrapping" />
+        <error line="207" column="78" source="standard:statement-wrapping" />
+        <error line="207" column="85" source="standard:statement-wrapping" />
+        <error line="257" column="89" source="standard:statement-wrapping" />
+        <error line="257" column="97" source="standard:statement-wrapping" />
+        <error line="257" column="111" source="standard:statement-wrapping" />
+        <error line="257" column="119" source="standard:statement-wrapping" />
+        <error line="291" column="89" source="standard:statement-wrapping" />
+        <error line="291" column="106" source="standard:statement-wrapping" />
+        <error line="291" column="110" source="standard:statement-wrapping" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/cache/TournamentTableStoreTest.kt">
+        <error line="68" column="71" source="standard:statement-wrapping" />
+        <error line="68" column="84" source="standard:statement-wrapping" />
+        <error line="68" column="90" source="standard:statement-wrapping" />
+        <error line="90" column="49" source="standard:statement-wrapping" />
+        <error line="90" column="62" source="standard:statement-wrapping" />
+        <error line="90" column="68" source="standard:statement-wrapping" />
+        <error line="193" column="74" source="standard:statement-wrapping" />
+        <error line="193" column="87" source="standard:statement-wrapping" />
+        <error line="193" column="119" source="standard:statement-wrapping" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultAdminRepositoryPasswordResetsTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultFeatureFlagsRepositoryTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerAccountRepositoryTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="27" column="106" source="standard:function-signature" />
+        <error line="60" column="47" source="standard:argument-list-wrapping" />
+        <error line="60" column="78" source="standard:argument-list-wrapping" />
+        <error line="61" column="46" source="standard:argument-list-wrapping" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerImportRepositoryTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="36" column="8" source="standard:function-signature" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerRepositoryTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultTournamentRepositoryTest.kt">
+        <error line="51" column="77" source="standard:function-signature" />
+        <error line="111" column="104" source="standard:function-signature" />
+        <error line="114" column="106" source="standard:function-signature" />
+        <error line="445" column="102" source="standard:function-signature" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/FakeAuthRepository.kt">
+        <error line="17" column="91" source="standard:function-signature" />
+        <error line="20" column="80" source="standard:function-signature" />
+        <error line="27" column="68" source="standard:function-signature" />
+        <error line="32" column="83" source="standard:function-signature" />
+        <error line="35" column="78" source="standard:function-signature" />
+        <error line="38" column="102" source="standard:function-signature" />
+        <error line="41" column="65" source="standard:function-signature" />
+    </file>
+    <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/RepositorySupportTest.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+    </file>
+    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/BackendConfig.jvm.kt">
+        <error line="3" column="48" source="standard:function-signature" />
+        <error line="6" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/HttpClientEngineFactory.jvm.kt">
+        <error line="8" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/data/platform/PlatformCompute.jvm.kt">
+        <error line="5" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/data/session/PlatformAuthSessionStore.jvm.kt">
+        <error line="3" column="1" source="standard:import-ordering" />
+        <error line="32" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/AppCheck.wasmJs.kt">
+        <error line="14" column="62" source="standard:function-signature" />
+    </file>
+    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/BackendConfig.wasmJs.kt">
+        <error line="11" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/data/network/HttpClientEngineFactory.wasmJs.kt">
+        <error line="8" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/data/platform/PlatformCompute.wasmJs.kt">
+        <error line="5" column="1" source="standard:no-consecutive-blank-lines" />
+    </file>
+    <file name="src/wasmJsMain/kotlin/com/etologic/mahjongtournamentsuite/data/session/PlatformAuthSessionStore.wasm.kt">
+        <error line="6" column="8" source="standard:wrapping" />
+        <error line="9" column="4" source="standard:wrapping" />
+        <error line="13" column="8" source="standard:wrapping" />
+        <error line="16" column="4" source="standard:wrapping" />
+        <error line="20" column="8" source="standard:wrapping" />
+        <error line="23" column="4" source="standard:wrapping" />
+        <error line="31" column="53" source="standard:function-expression-body" />
+    </file>
+</baseline>

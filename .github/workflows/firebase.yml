@@ -48,6 +48,9 @@ jobs:
           npm ci --no-audit --no-fund
           npm test
 
+      - name: Check the Kotlin style
+        run: ./gradlew ktlintCheck
+
       - name: Build web apps
         run: ./gradlew :adminApp:wasmJsBrowserDistribution :playerApp:wasmJsBrowserDistribution
 

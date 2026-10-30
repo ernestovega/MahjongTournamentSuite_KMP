@@ -37,3 +37,11 @@ In GitHub, **Settings > Rules > Rulesets > New ruleset > New branch ruleset**:
 - Turn on **Restrict deletions**, **Block force pushes** and **Require a pull request before merging** with 0 required approvals.
 - Turn on **Require status checks to pass** and add **Build and test** and **UI tests up to date**.
 - Leave the bypass list empty so nobody can push to `main` directly.
+
+## Kotlin style (ktlint)
+
+The check **Build and test** runs `./gradlew ktlintCheck`. The rules are in `.editorconfig`. The code that existed before the check has about 10 000 style warnings. They are in `ktlint-baseline.xml` of each module, so only new code fails the check.
+
+- Check on your computer: `./gradlew ktlintCheck`.
+- Fix the style of the files you changed: `./gradlew ktlintFormat`.
+- Fix old code in a module and make its baseline smaller: fix the files, then run `./gradlew :<module>:ktlintGenerateBaseline`.
