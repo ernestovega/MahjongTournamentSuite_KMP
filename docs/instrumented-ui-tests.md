@@ -64,7 +64,7 @@ In both cases the runner starts the local backend on the emulators, like `npm ru
 
 ### At night, when they are due
 
-The workflow **UI tests nightly** (`.github/workflows/ui-tests-nightly.yml`) runs every day at 02:00 UTC on `main`. You can also start it by hand.
+The workflow **UI tests nightly** (`.github/workflows/ui-tests-nightly.yml`) runs every day at 04:00 UTC on `main`. This is 05:00 in Spain in winter and 06:00 in summer, because GitHub uses UTC only. You can also start it by hand.
 It first decides, for each app, if the UI tests are due. They are due in two cases:
 
 - 5 or more pull requests were merged since the last passing run of that app.
