@@ -35,5 +35,21 @@ In GitHub, **Settings > Rules > Rulesets > New ruleset > New branch ruleset**:
 - Name `main`, enforcement **Active**.
 - Target branches: **Include default branch**.
 - Turn on **Restrict deletions**, **Block force pushes** and **Require a pull request before merging** with 0 required approvals.
-- Turn on **Require status checks to pass** and add **Build and test** and **UI tests up to date**.
+- Turn on **Require status checks to pass** and add **Build and test**. Do not add the UI tests. They are slow and can cost money, so the workflow **UI tests nightly** runs them when they are due.
 - Leave the bypass list empty so nobody can push to `main` directly.
+
+## Plan and status
+
+Decisions of 2026-10-29:
+
+- **Done:** deploy on merge to `main`, the check on pull requests, the UI tests workflow (by hand), the UI tests due check and the ruleset on `main`.
+- **UI tests:** a nightly workflow runs them when they are due (done in a separate pull request). You can also run them by hand or on your computer. They are not a required check, because they are slow and can cost money. The workflow **UI tests nightly** runs them at night when they are due. See [Instrumented UI tests](instrumented-ui-tests.md).
+- **Slow tests:** the functions integration tests need the Firebase emulators. They count as UI tests: run them by hand or on your computer, not in the pull request check.
+- **Done in this pull request:** the check **Build and test** runs every other test:
+  - the Kotlin tests (`jvmTest` of `domain`, `data`, `ui`, `adminApp` and `playerApp`, and `testDebugUnitTest` of the two Android apps),
+  - the functions unit tests (`npm test`),
+  - the Node tests in `scripts/` and `playerApp/diagnostics-test/`.
+- **Done in a separate pull request:** a ktlint check to the pull request check.
+- **Done in a separate pull request:** Dependabot (`.github/dependabot.yml`) for Gradle, npm and GitHub Actions.
+- **Idea:** UI tests of the web apps with Playwright, in Chromium, Firefox and WebKit. The first tests would check that the app starts and draws the canvas.
+- **Pending, no date:** a release pipeline for the Android apps: build, signing, Play Store. It also turns on R8 (code shrinking and obfuscation) and resource shrinking. Both are off now (`isMinifyEnabled = false`).

@@ -48,6 +48,17 @@ jobs:
           npm ci --no-audit --no-fund
           npm test
 
+      - name: Test Kotlin code
+        run: >
+          ./gradlew
+          :domain:jvmTest :data:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
+          :androidApp:testDebugUnitTest :playerAndroidApp:testDebugUnitTest
+
+      - name: Test scripts and start diagnostics
+        run: |
+          node --test scripts/recovery.test.mjs
+          node --test playerApp/diagnostics-test/*.test.mjs
+
       - name: Build web apps
         run: ./gradlew :adminApp:wasmJsBrowserDistribution :playerApp:wasmJsBrowserDistribution
 

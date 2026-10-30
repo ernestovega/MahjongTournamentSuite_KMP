@@ -250,7 +250,7 @@ class PlayerImportDialogUiTest {
 
         awaitText("Import (2)")
 
-        listOf("ID", "Player", "Email").forEach { onNodeWithText(it).assertExists() }
+        listOf("ID", "Player/EMA ID", "Email").forEach { onNodeWithText(it).assertExists() }
         listOf("a@b.es", "c@b.es", "00000002", "00000003").forEach { onNodeWithText(it).assertExists() }
         onAllNodesWithText("Team").assertCountEquals(0)
     }
