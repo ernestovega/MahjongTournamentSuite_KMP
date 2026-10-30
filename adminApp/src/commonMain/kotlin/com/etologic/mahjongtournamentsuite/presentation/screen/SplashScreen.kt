@@ -9,6 +9,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,11 +47,14 @@ fun SplashScreen(
         }
         val nextRoute = if (hasSession) TournamentsRoute else SignInRoute
 
-        navController.navigate(nextRoute) {
-            popUpTo(SplashRoute) { inclusive = true }
-        }
-        if (hasSession) {
-            restoredRoutes.filterNot { it == TournamentsRoute }.forEach { navController.navigate(it) }
+        // The check above can suspend. The navigation must run on the main thread, also in the UI tests.
+        withContext(Dispatchers.Main) {
+            navController.navigate(nextRoute) {
+                popUpTo(SplashRoute) { inclusive = true }
+            }
+            if (hasSession) {
+                restoredRoutes.filterNot { it == TournamentsRoute }.forEach { navController.navigate(it) }
+            }
         }
     }
 
