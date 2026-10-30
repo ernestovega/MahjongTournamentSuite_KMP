@@ -1,10 +1,11 @@
-# Checks every pull request to main and deploys Firebase when main changes.
+# Checks every pull request to develop or main and deploys Firebase when main changes.
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
 name: Firebase
 
 on:
   pull_request:
-    branches: [main]
+    # develop is where the work is merged. main is the release branch: a push to main deploys.
+    branches: [main, develop]
   push:
     branches: [main]
   workflow_dispatch:

@@ -1,8 +1,14 @@
 # Automatic Firebase deploy
 
+## Branches
+
+- Work happens on branches that start from `develop`. Merge them back into `develop` with a pull request.
+- `develop` is not deployed. Deploy by merging `develop` into `main` with a pull request.
+- `main` is protected. `develop` is not.
+
 The workflow `.github/workflows/firebase.yml` has two jobs:
 
-- **Build and test** runs on every pull request to `main`. It has five checks that run at the same time: the functions tests, the Kotlin tests, the Node tests of the scripts and the start diagnostics, the build of both Wasm web apps, and the build of the UI tests. The last job, named **Build and test**, fails when any of them fails. The ruleset of `main` requires only this job. Nothing is deployed.
+- **Build and test** runs on every pull request to `develop` or `main`. It has five checks that run at the same time: the functions tests, the Kotlin tests, the Node tests of the scripts and the start diagnostics, the build of both Wasm web apps, and the build of the UI tests. The last job, named **Build and test**, fails when any of them fails. The ruleset of `main` requires only this job. Nothing is deployed.
 - **Deploy to Firebase** runs on every push to `main`, which is every merged pull request. It can also be started by hand from the Actions tab. It runs the functions tests and then deploys hosting (both sites), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
 
 The deploy uses `--force`, so a function removed from the code is also deleted in Firebase. Two deploys never run at the same time: a newer push waits for the running one.
