@@ -1,6 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelector
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
+import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
+import mahjongtournamentsuite.ui.generated.resources.consent_withdraw_info
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -109,86 +113,97 @@ fun ProfileDialog(
         is AppResult.Failure -> result.error.toUiText()
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = { if (!saving) onDismiss() },
-        title = { Text(stringResource(Res.string.profile_title)) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                PhotoEditor(
-                    photoUrl = photoProfile.photoUrl,
-                    hasOwnPhoto = photoProfile.hasOwnPhoto,
-                    name = profile.alias.ifBlank { profile.email },
-                    onUpload = { contentType, bytes -> savePhoto { onSavePhoto(contentType, bytes) } },
-                    onRemove = { savePhoto { onRemovePhoto() } },
-                )
-                OutlinedTextField(
-                    value = alias,
-                    onValueChange = {
-                        alias = it.take(MAX_ALIAS_LENGTH)
-                        error = null
-                    },
-                    label = { Text(stringResource(Res.string.profile_alias)) },
-                    supportingText = error?.let { message -> { Text(message.asString()) } },
-                    isError = error != null,
-                    singleLine = true,
-                    enabled = !saving,
-                    modifier = Modifier.fillMaxWidth().focusRequester(aliasFocusRequester),
-                )
-                OutlinedTextField(
-                    value = profile.email,
-                    onValueChange = {},
-                    label = { Text(stringResource(Res.string.field_email)) },
-                    readOnly = true,
-                    singleLine = true,
+    TrackedDialog("Profile") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (!saving) onDismiss() },
+            title = { Text(stringResource(Res.string.profile_title)) },
+            text = {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                )
-                profile.emaId?.let { emaId ->
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    PhotoEditor(
+                        photoUrl = photoProfile.photoUrl,
+                        hasOwnPhoto = photoProfile.hasOwnPhoto,
+                        name = profile.alias.ifBlank { profile.email },
+                        onUpload = { contentType, bytes -> savePhoto { onSavePhoto(contentType, bytes) } },
+                        onRemove = { savePhoto { onRemovePhoto() } },
+                    )
                     OutlinedTextField(
-                        value = emaId,
-                        onValueChange = {},
-                        label = { Text(stringResource(Res.string.profile_ema_number)) },
-                        trailingIcon = {
-                            TooltipBox(
-                                positionProvider = rememberAppTooltipPositionProvider(),
-                                tooltip = { AppPlainTooltip { Text(stringResource(Res.string.profile_ema_number_info)) } },
-                                state = rememberTooltipState(),
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Info,
-                                    contentDescription = stringResource(Res.string.profile_ema_number_info),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
+                        value = alias,
+                        onValueChange = {
+                            alias = it.take(MAX_ALIAS_LENGTH)
+                            error = null
                         },
+                        label = { Text(stringResource(Res.string.profile_alias)) },
+                        supportingText = error?.let { message -> { Text(message.asString()) } },
+                        isError = error != null,
+                        singleLine = true,
+                        enabled = !saving,
+                        modifier = Modifier.fillMaxWidth().focusRequester(aliasFocusRequester),
+                    )
+                    OutlinedTextField(
+                        value = profile.email,
+                        onValueChange = {},
+                        label = { Text(stringResource(Res.string.field_email)) },
                         readOnly = true,
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                     )
+                    profile.emaId?.let { emaId ->
+                        OutlinedTextField(
+                            value = emaId,
+                            onValueChange = {},
+                            label = { Text(stringResource(Res.string.profile_ema_number)) },
+                            trailingIcon = {
+                                TooltipBox(
+                                    positionProvider = rememberAppTooltipPositionProvider(),
+                                    tooltip = { AppPlainTooltip { Text(stringResource(Res.string.profile_ema_number_info)) } },
+                                    state = rememberTooltipState(),
+                                ) {
+                                    Icon(
+                                        Icons.Outlined.Info,
+                                        contentDescription = stringResource(Res.string.profile_ema_number_info),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                            readOnly = true,
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                    LanguageSelector(Modifier.fillMaxWidth())
+                    ThemeSelector()
+                    // The user can withdraw the consent at any time. The app then asks again and stays closed.
+                    LocalWithdrawConsent.current?.let { withdraw ->
+                        Text(
+                            stringResource(Res.string.consent_withdraw_info),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                        FocusedTextButton(enabled = !saving, onClick = withdraw) { Text(stringResource(Res.string.consent_withdraw)) }
+                    }
                 }
-                LanguageSelector(Modifier.fillMaxWidth())
-                ThemeSelector()
-            }
-        },
-        // Logout is at the left of the button row. Close and Save are at the right.
-        confirmButton = {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                if (onSignOut != null) {
-                    FocusedTextButton(
-                        enabled = !saving,
-                        onClick = onSignOut,
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    ) { Text(stringResource(Res.string.action_logout)) }
+            },
+            // Logout is at the left of the button row. Close and Save are at the right.
+            confirmButton = {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    if (onSignOut != null) {
+                        FocusedTextButton(
+                            enabled = !saving,
+                            onClick = onSignOut,
+                            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        ) { Text(stringResource(Res.string.action_logout)) }
+                    }
+                    Spacer(Modifier.weight(1f))
+                    FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
+                    Spacer(Modifier.width(8.dp))
+                    FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
                 }
-                Spacer(Modifier.weight(1f))
-                FocusedTextButton(enabled = !saving, onClick = onDismiss) { Text(stringResource(Res.string.action_close)) }
-                Spacer(Modifier.width(8.dp))
-                FocusedButton(enabled = canSave, onClick = { save() }) { Text(stringResource(Res.string.action_save)) }
-            }
-        },
-    )
+            },
+        )
+    }
 }

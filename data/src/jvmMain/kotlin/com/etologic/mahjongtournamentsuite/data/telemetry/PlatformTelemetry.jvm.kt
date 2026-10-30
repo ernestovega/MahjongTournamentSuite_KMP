@@ -3,9 +3,8 @@ package com.etologic.mahjongtournamentsuite.data.telemetry
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
+import java.io.File
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -31,55 +30,52 @@ internal object DesktopTelemetryConfig {
 }
 
 /**
- * Analytics of the desktop app. A handled error goes to Analytics as `app_error`, and an error that nobody handled
- * goes as `app_crash`.
+ * Analytics of the desktop app. It sends nothing before the user accepted.
  */
 internal class DesktopTelemetry(
     private val measurementId: String,
     private val apiSecret: String,
+    private val env: String,
 ) : Telemetry {
     private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()
     private val clientId = readClientId()
     private val sessionId = System.currentTimeMillis() / 1000
     private val properties = ConcurrentHashMap<String, String>()
+    private val preferences = Preferences.userRoot().node("MahjongTournamentSuite")
+    private var consent = runCatching { preferences.getBoolean(CONSENT_KEY, false) }.getOrDefault(false)
 
     init {
-        // jpackage sets this property in an installed app. A run from the IDE or Gradle does not have it.
-        val installed = System.getProperty("jpackage.app-path") != null
         properties[TelemetryProperty.PLATFORM] = "desktop"
-        properties[TelemetryProperty.ENVIRONMENT] = if (installed) "prod" else "dev"
+        properties[TelemetryProperty.ENVIRONMENT] = env
         properties[TelemetryProperty.LANGUAGE] = Locale.getDefault().language
-        installCrashHandler()
+    }
+
+    override val requiresConsent: Boolean = true
+
+    override fun hasConsent(): Boolean = consent
+
+    override fun setConsent(granted: Boolean) {
+        consent = granted
+        runCatching { preferences.putBoolean(CONSENT_KEY, granted) }
     }
 
     override fun event(name: String, params: Map<String, Any>) {
-        send(name, params, wait = false)
+        send(name, params)
     }
 
     override fun screen(name: String) {
         event("screen_view", mapOf("screen_name" to name))
     }
 
-    override fun error(throwable: Throwable, area: String) {
-        event(TelemetryEvent.APP_ERROR, errorParams(throwable, area))
-    }
+    /** The error log of the API takes handled errors. The decorator sends them there and counts them as events. */
+    override fun error(throwable: Throwable, area: String) = Unit
 
     override fun userProperty(name: String, value: String?) {
         if (value == null) properties.remove(name) else properties[name] = value
     }
 
-    private fun installCrashHandler() {
-        val previous = Thread.getDefaultUncaughtExceptionHandler()
-        Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-            runCatching {
-                // The app may close right after this handler, so the call waits for the answer.
-                send(TelemetryEvent.APP_CRASH, mapOf(TelemetryParam.KIND to (throwable::class.simpleName ?: "Error")), wait = true)
-            }
-            previous?.uncaughtException(thread, throwable)
-        }
-    }
-
-    private fun send(name: String, params: Map<String, Any>, wait: Boolean) {
+    private fun send(name: String, params: Map<String, Any>) {
+        if (!consent) return
         runCatching {
             val body = JsonObject(
                 mapOf(
@@ -109,8 +105,7 @@ internal class DesktopTelemetry(
             val request = HttpRequest.newBuilder(
                 URI("https://www.google-analytics.com/mp/collect?measurement_id=$measurementId&api_secret=$apiSecret"),
             ).timeout(Duration.ofSeconds(5)).POST(HttpRequest.BodyPublishers.ofString(body)).build()
-            val response = client.sendAsync(request, HttpResponse.BodyHandlers.discarding())
-            if (wait) response.get(2, java.util.concurrent.TimeUnit.SECONDS)
+            client.sendAsync(request, HttpResponse.BodyHandlers.discarding())
         }
     }
 
@@ -122,12 +117,40 @@ internal class DesktopTelemetry(
 
     private companion object {
         const val CLIENT_ID_KEY = "telemetryClientId"
+        const val CONSENT_KEY = "telemetryConsent"
     }
 }
 
-actual fun providePlatformTelemetry(): Telemetry =
-    if (DesktopTelemetryConfig.MEASUREMENT_ID.isBlank() || DesktopTelemetryConfig.API_SECRET.isBlank()) {
+/** A file in the home folder. A crash writes it, and the next start sends it. */
+internal class FilePendingCrashStore(private val file: File) : PendingCrashStore {
+    override fun save(json: String) {
+        runCatching {
+            file.parentFile?.mkdirs()
+            file.writeText(json)
+        }
+    }
+
+    override fun take(): String? = runCatching {
+        if (file.exists()) file.readText().also { file.delete() } else null
+    }.getOrNull()
+}
+
+actual fun providePlatformTelemetry(): PlatformTelemetry {
+    // jpackage sets this property in an installed app. A run from the IDE or Gradle does not have it.
+    val env = if (System.getProperty("jpackage.app-path") != null) "prod" else "dev"
+    val analytics = if (DesktopTelemetryConfig.MEASUREMENT_ID.isBlank() || DesktopTelemetryConfig.API_SECRET.isBlank()) {
         NoTelemetry
     } else {
-        DesktopTelemetry(DesktopTelemetryConfig.MEASUREMENT_ID, DesktopTelemetryConfig.API_SECRET)
+        DesktopTelemetry(DesktopTelemetryConfig.MEASUREMENT_ID, DesktopTelemetryConfig.API_SECRET, env)
     }
+    val pending = FilePendingCrashStore(File(System.getProperty("user.home"), ".mahjongtournamentsuite/pending-crash.json"))
+    return PlatformTelemetry(analytics, "admin", "desktop", env, Locale.getDefault().language, pending)
+}
+
+actual fun installCrashHandler(onCrash: (Throwable) -> Unit) {
+    val previous = Thread.getDefaultUncaughtExceptionHandler()
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+        onCrash(throwable)
+        previous?.uncaughtException(thread, throwable)
+    }
+}

@@ -39,8 +39,8 @@ import org.jetbrains.compose.resources.painterResource
 import kotlinx.serialization.Serializable
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
-import com.etologic.mahjongtournamentsuite.domain.telemetry.screenFromRoute
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import org.koin.compose.getKoin
 import org.koin.compose.KoinApplication
 import org.koin.dsl.koinConfiguration
@@ -103,6 +103,7 @@ fun PlayerApp(
     KoinApplication(configuration = koinConfiguration { modules(dataModule, playerModule) }) {
         val themeController = rememberThemeController()
         CompositionLocalProvider(
+            LocalTelemetry provides (getKoin().getOrNull<Telemetry>() ?: NoTelemetry),
             LocalThemeController provides themeController,
             LocalScrollPositionStore provides remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } },
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
@@ -112,9 +113,12 @@ fun PlayerApp(
             },
         ) {
             ProvideAppLanguage {
-                MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        PlayerNavigation(openTournamentId, sessionStorage)
+                // The user cannot enter before accepting the anonymous analytics.
+                ConsentGate {
+                    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+                        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                            PlayerNavigation(openTournamentId, sessionStorage)
+                        }
                     }
                 }
             }
@@ -133,12 +137,6 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
         navController.currentBackStack.collect { routePersistence.save(it) }
     }
 
-    // Each screen the user opens counts as one visit. The route gives the name, never an id.
-    val telemetry = getKoin().getOrNull<Telemetry>() ?: NoTelemetry
-    LaunchedEffect(navController, telemetry) {
-        telemetry.userProperty(TelemetryProperty.APP, "player")
-        navController.currentBackStackEntryFlow.collect { telemetry.screenFromRoute(it.destination.route) }
-    }
     NavHost(navController = navController, startDestination = SplashRoute) {
         screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes) }
         screen<SignInRoute> { entry ->

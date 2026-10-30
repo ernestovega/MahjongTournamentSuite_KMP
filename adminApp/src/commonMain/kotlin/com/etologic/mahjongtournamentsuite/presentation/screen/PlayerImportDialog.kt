@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -221,61 +222,69 @@ fun PlayerImportDialog(
     when (val current = step) {
         ImportStep.Choose -> Unit
 
-        ImportStep.Reading, ImportStep.Applying -> AlertDialog(
-            onDismissRequest = {},
-            title = { Text(stringResource(Res.string.import_players_title)) },
-            text = {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator()
-                    Text(stringResource(if (current == ImportStep.Applying) Res.string.import_applying else Res.string.import_reading_file))
-                }
-            },
-            confirmButton = {},
-        )
+        ImportStep.Reading, ImportStep.Applying -> TrackedDialog("ImportPlayersProgress") {
+            AlertDialog(
+                onDismissRequest = {},
+                title = { Text(stringResource(Res.string.import_players_title)) },
+                text = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator()
+                        Text(stringResource(if (current == ImportStep.Applying) Res.string.import_applying else Res.string.import_reading_file))
+                    }
+                },
+                confirmButton = {},
+            )
+        }
 
         is ImportStep.Preview -> {
             val preview = current.preview
-            Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-                Surface(
-                    modifier = Modifier.appFocusGroup().widthIn(max = 1100.dp).fillMaxWidth(0.92f).fillMaxHeight(0.94f),
-                    shape = AlertDialogDefaults.shape,
-                    color = AlertDialogDefaults.containerColor,
-                    tonalElevation = AlertDialogDefaults.TonalElevation,
-                ) {
-                    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text(stringResource(Res.string.import_players_title), style = MaterialTheme.typography.headlineSmall)
-                        Box(Modifier.weight(1f)) { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                            TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
-                            Button(
-                                enabled = preview.canApply,
-                                onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
-                            ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
+            TrackedDialog("ImportPlayersPreview") {
+                Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                    Surface(
+                        modifier = Modifier.appFocusGroup().widthIn(max = 1100.dp).fillMaxWidth(0.92f).fillMaxHeight(0.94f),
+                        shape = AlertDialogDefaults.shape,
+                        color = AlertDialogDefaults.containerColor,
+                        tonalElevation = AlertDialogDefaults.TonalElevation,
+                    ) {
+                        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text(stringResource(Res.string.import_players_title), style = MaterialTheme.typography.headlineSmall)
+                            Box(Modifier.weight(1f)) { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                                TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
+                                Button(
+                                    enabled = preview.canApply,
+                                    onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
+                                ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
+                            }
                         }
                     }
                 }
             }
             if (confirming) {
-                AlertDialog(
-                    onDismissRequest = { confirming = false },
-                    modifier = Modifier.appFocusGroup(),
-                    icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                    title = { Text(stringResource(Res.string.import_confirm_title)) },
-                    text = { Text(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
-                    confirmButton = { Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) } },
-                    dismissButton = { TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) } },
-                )
+                TrackedDialog("ImportConfirm") {
+                    AlertDialog(
+                        onDismissRequest = { confirming = false },
+                        modifier = Modifier.appFocusGroup(),
+                        icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        title = { Text(stringResource(Res.string.import_confirm_title)) },
+                        text = { Text(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
+                        confirmButton = { Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) } },
+                        dismissButton = { TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) } },
+                    )
+                }
             }
         }
 
-        is ImportStep.Done -> AlertDialog(
-            onDismissRequest = onDismiss,
-            modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.import_done_title)) },
-            text = { ImportResultContent(current.result) },
-            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) } },
-        )
+        is ImportStep.Done -> TrackedDialog("ImportDone") {
+            AlertDialog(
+                onDismissRequest = onDismiss,
+                modifier = Modifier.appFocusGroup(),
+                title = { Text(stringResource(Res.string.import_done_title)) },
+                text = { ImportResultContent(current.result) },
+                confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) } },
+            )
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -168,108 +169,110 @@ fun PlayerAccountsBulkDialog(
         )
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.invitations_and_reminders)) },
-        text = {
-            BoxWithConstraints(Modifier.fillMaxSize()) {
-                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AccountFilter.entries.forEach { option ->
-                            val count = players.count { it.matches(option) }
-                            FilterChip(
-                                selected = filter == option,
-                                onClick = { filter = option; selected = emptySet() },
-                                leadingIcon = { Icon(option.icon, contentDescription = null, Modifier.size(18.dp)) },
-                                label = { Text(stringResource(Res.string.usage_filter_chip, stringResource(option.label), count)) },
-                            )
-                        }
-                    }
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text(stringResource(Res.string.search_by_name_number_email_ema)) },
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(
-                            enabled = shown.isNotEmpty() && !busy,
-                            onClick = { selected = shown.map { it.id }.toSet() },
-                        ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
-                        TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
-                            Text(stringResource(Res.string.clear))
-                        }
-                        Text(stringResource(Res.string.selected_count, chosen.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    LazyColumn(Modifier.fillMaxWidth().weight(1f).testTag("account_list")) {
-                        // The titles stay at the top while the rows scroll under them.
-                        stickyHeader { ColumnTitles() }
-                        items(shown, key = { it.id }) { slot ->
-                            val result = results.firstOrNull { it.playerId == slot.id }
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
-                                    Checkbox(
-                                        checked = slot.id in selected,
-                                        enabled = !busy,
-                                        onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
-                                    )
-                                }
-                                Text(slot.id.toString(), Modifier.width(IdColumnWidth))
-                                val country = countryOf(slot)
-                                Box(Modifier.width(FlagColumnWidth), contentAlignment = Alignment.Center) {
-                                    CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
-                                }
-                                Text(
-                                    emaIdOf(slot) ?: "—",
-                                    Modifier.width(EmaColumnWidth),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
+    TrackedDialog("InvitationsAndReminders") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.invitations_and_reminders)) },
+            text = {
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AccountFilter.entries.forEach { option ->
+                                val count = players.count { it.matches(option) }
+                                FilterChip(
+                                    selected = filter == option,
+                                    onClick = { filter = option; selected = emptySet() },
+                                    leadingIcon = { Icon(option.icon, contentDescription = null, Modifier.size(18.dp)) },
+                                    label = { Text(stringResource(Res.string.usage_filter_chip, stringResource(option.label), count)) },
                                 )
-                                Text(nameOf(slot), Modifier.weight(1f), maxLines = 1)
-                                EmailCell(slot, Modifier.weight(1f))
-                                ResultCell(slot, result)
                             }
                         }
+                        OutlinedTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text(stringResource(Res.string.search_by_name_number_email_ema)) },
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(
+                                enabled = shown.isNotEmpty() && !busy,
+                                onClick = { selected = shown.map { it.id }.toSet() },
+                            ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
+                            TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
+                                Text(stringResource(Res.string.clear))
+                            }
+                            Text(stringResource(Res.string.selected_count, chosen.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        LazyColumn(Modifier.fillMaxWidth().weight(1f).testTag("account_list")) {
+                            // The titles stay at the top while the rows scroll under them.
+                            stickyHeader { ColumnTitles() }
+                            items(shown, key = { it.id }) { slot ->
+                                val result = results.firstOrNull { it.playerId == slot.id }
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
+                                        Checkbox(
+                                            checked = slot.id in selected,
+                                            enabled = !busy,
+                                            onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
+                                        )
+                                    }
+                                    Text(slot.id.toString(), Modifier.width(IdColumnWidth))
+                                    val country = countryOf(slot)
+                                    Box(Modifier.width(FlagColumnWidth), contentAlignment = Alignment.Center) {
+                                        CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
+                                    }
+                                    Text(
+                                        emaIdOf(slot) ?: "—",
+                                        Modifier.width(EmaColumnWidth),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                    )
+                                    Text(nameOf(slot), Modifier.weight(1f), maxLines = 1)
+                                    EmailCell(slot, Modifier.weight(1f))
+                                    ResultCell(slot, result)
+                                }
+                            }
+                        }
+                        if (shown.isEmpty()) Text(stringResource(Res.string.no_players_in_this_group), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        var errorSeen by remember(errorMessage) { mutableStateOf(false) }
+                        errorMessage?.takeUnless { errorSeen }?.let { AppErrorDialog(it, onDismiss = { errorSeen = true }) }
                     }
-                    if (shown.isEmpty()) Text(stringResource(Res.string.no_players_in_this_group), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    var errorSeen by remember(errorMessage) { mutableStateOf(false) }
-                    errorMessage?.takeUnless { errorSeen }?.let { AppErrorDialog(it, onDismiss = { errorSeen = true }) }
                 }
-            }
-        },
-        confirmButton = {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                InfoTooltipIcon(stringResource(Res.string.bulk_info))
-                Text(
-                    stringResource(Res.string.send_summary, chosen.count { !it.hasAccount }, chosen.count { it.hasAccount }),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.weight(1f))
-                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
-                Button(
-                    enabled = chosen.isNotEmpty() && !busy,
-                    onClick = { if (missingEmail.isNotEmpty()) askingEmails = true else onSend(chosen.map { it.id }, emptyMap()) },
+            },
+            confirmButton = {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.send_count, chosen.size))
+                    InfoTooltipIcon(stringResource(Res.string.bulk_info))
+                    Text(
+                        stringResource(Res.string.send_summary, chosen.count { !it.hasAccount }, chosen.count { it.hasAccount }),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                    Button(
+                        enabled = chosen.isNotEmpty() && !busy,
+                        onClick = { if (missingEmail.isNotEmpty()) askingEmails = true else onSend(chosen.map { it.id }, emptyMap()) },
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(Res.string.send_count, chosen.size))
+                    }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
     // These dialogs come after the main dialog, so they are drawn above it.
     if (busy) SendingDialog()
     summary?.let { SendSummaryDialog(it, nameOf = { id -> players.firstOrNull { p -> p.id == id }?.let { p -> "$id · ${nameOf(p)}" } ?: id.toString() }, onDismiss = { summary = null }) }

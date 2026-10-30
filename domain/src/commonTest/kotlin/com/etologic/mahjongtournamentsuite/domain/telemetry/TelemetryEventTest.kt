@@ -9,16 +9,6 @@ import kotlin.test.assertTrue
 
 class TelemetryEventTest {
     @Test
-    fun screenNameKeepsTheClassAndDropsTheIds() {
-        val telemetry = RecordingTelemetry()
-        telemetry.screenFromRoute("com.etologic.mahjongtournamentsuite.presentation.TournamentRoute/{tournamentId}")
-        telemetry.screenFromRoute("com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute?tournamentId={tournamentId}")
-        telemetry.screenFromRoute("com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute")
-        telemetry.screenFromRoute(null)
-        assertEquals(listOf("Tournament", "Statistics", "Tournaments"), telemetry.screens)
-    }
-
-    @Test
     fun successCountsTheEventAndFailureDoesNot() {
         val telemetry = RecordingTelemetry()
         AppResult.Success(1).track(telemetry, TelemetryEvent.LOGIN)

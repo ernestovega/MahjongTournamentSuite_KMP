@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -63,34 +64,36 @@ internal fun SlotEmailDialog(
     val valid = email.trim().matches(EMAIL_PATTERN)
     LaunchedEffect(Unit) { focus.requestFocus() }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 560.dp).fillMaxWidth(),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.email_dialog_title, playerName)) },
-        text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (currentEmail == null && hasEmail) Text(stringResource(Res.string.email_dialog_hidden_hint))
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    modifier = Modifier.fillMaxWidth().focusRequester(focus),
-                    singleLine = true,
-                    label = { Text(stringResource(Res.string.email)) },
-                    isError = email.isNotBlank() && !valid,
-                    supportingText = { if (email.isNotBlank() && !valid) Text(stringResource(Res.string.email_invalid)) },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                )
-            }
-        },
-        confirmButton = { Button(enabled = valid && !busy, onClick = { onSave(email.trim()) }) { Text(confirmLabel) } },
-        dismissButton = {
-            Column {
-                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                if (hasEmail) TextButton(enabled = !busy, onClick = onRemove) { Text(stringResource(Res.string.remove_email)) }
-            }
-        },
-    )
+    TrackedDialog("EmailDialog") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 560.dp).fillMaxWidth(),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.email_dialog_title, playerName)) },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (currentEmail == null && hasEmail) Text(stringResource(Res.string.email_dialog_hidden_hint))
+                    OutlinedTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        modifier = Modifier.fillMaxWidth().focusRequester(focus),
+                        singleLine = true,
+                        label = { Text(stringResource(Res.string.email)) },
+                        isError = email.isNotBlank() && !valid,
+                        supportingText = { if (email.isNotBlank() && !valid) Text(stringResource(Res.string.email_invalid)) },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                    )
+                }
+            },
+            confirmButton = { Button(enabled = valid && !busy, onClick = { onSave(email.trim()) }) { Text(confirmLabel) } },
+            dismissButton = {
+                Column {
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                    if (hasEmail) TextButton(enabled = !busy, onClick = onRemove) { Text(stringResource(Res.string.remove_email)) }
+                }
+            },
+        )
+    }
 }
 
 /**
@@ -112,35 +115,37 @@ internal fun MissingEmailsDialog(
     val allValid = filled.values.all { it.matches(EMAIL_PATTERN) }
     LaunchedEffect(Unit) { firstFocus.requestFocus() }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 560.dp).fillMaxWidth(),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.emails_are_missing)) },
-        text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.these_players_have_no_email))
-                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(players, key = { it.id }) { slot ->
-                        val value = emails[slot.id].orEmpty()
-                        OutlinedTextField(
-                            value = value,
-                            onValueChange = { emails = emails + (slot.id to it) },
-                            modifier = Modifier.fillMaxWidth().then(if (slot == players.first()) Modifier.focusRequester(firstFocus) else Modifier),
-                            singleLine = true,
-                            label = { Text("${slot.id} · ${nameOf(slot)}") },
-                            isError = value.isNotBlank() && !value.trim().matches(EMAIL_PATTERN),
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                        )
+    TrackedDialog("EmailsAreMissing") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 560.dp).fillMaxWidth(),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.emails_are_missing)) },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(Res.string.these_players_have_no_email))
+                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(players, key = { it.id }) { slot ->
+                            val value = emails[slot.id].orEmpty()
+                            OutlinedTextField(
+                                value = value,
+                                onValueChange = { emails = emails + (slot.id to it) },
+                                modifier = Modifier.fillMaxWidth().then(if (slot == players.first()) Modifier.focusRequester(firstFocus) else Modifier),
+                                singleLine = true,
+                                label = { Text("${slot.id} · ${nameOf(slot)}") },
+                                isError = value.isNotBlank() && !value.trim().matches(EMAIL_PATTERN),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            )
+                        }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            Button(enabled = filled.isNotEmpty() && allValid && !busy, onClick = { onConfirm(filled) }) {
-                Text("$confirmLabel (${filled.size})")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
-    )
+            },
+            confirmButton = {
+                Button(enabled = filled.isNotEmpty() && allValid && !busy, onClick = { onConfirm(filled) }) {
+                    Text("$confirmLabel (${filled.size})")
+                }
+            },
+            dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+        )
+    }
 }

@@ -3,7 +3,7 @@ import { recordActivity } from "../../services/activityLog";
 import { actorFromToken } from "../../services/changeLog";
 
 import { auth, db } from "../../firebase";
-import { badRequest, forbidden } from "../httpError";
+import { badRequest, forbidden, notFound } from "../httpError";
 import { readContentType, readPhotoData } from "./auth.routes";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
@@ -32,6 +32,7 @@ import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
 import { DEFAULT_USAGE_PERIOD, loadUsageReport, USAGE_PERIODS } from "../../services/usageService";
 import { pathParam } from "../pathParam";
+import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
 
 type Actor = { uid: string; admin?: boolean };
 
@@ -88,6 +89,27 @@ export function adminRouter(): Router {
         throw badRequest("Invalid period", { allowed: USAGE_PERIODS });
       }
       res.status(200).json(await loadUsageReport(days));
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** The error log of the apps: each problem once, with a count. */
+  router.get("/error-groups", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const limit = Math.min(Math.max(Number(req.query.limit ?? 50) || 50, 1), 200);
+      res.status(200).json({ groups: await listErrorGroups(limit) });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /** One problem with its stack trace and its newest reports. */
+  router.get("/error-groups/:id", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const group = await loadErrorGroup(pathParam(req, "id"), 50);
+      if (!group) throw notFound("Error group not found");
+      res.status(200).json(group);
     } catch (error) {
       next(error);
     }

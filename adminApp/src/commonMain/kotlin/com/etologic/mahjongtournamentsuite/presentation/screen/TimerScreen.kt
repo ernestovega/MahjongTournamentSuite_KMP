@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -182,95 +183,97 @@ private fun TimerContent(
             timeFieldFocusRequester.requestFocus()
         }
 
-        AlertDialog(
-            modifier = Modifier.appFocusGroup(),
-            onDismissRequest = { isSetTimeDialogOpen = false },
-            confirmButton = {
-                Button(
-                    focusRequester = setFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = timeFieldFocusRequester,
-                        next = cancelFocusRequester,
-                    ),
-                    onClick = { applyRemainingTime() },
-                ) {
-                    Text(stringResource(Res.string.set))
-                }
-            },
-            dismissButton = {
-                Button(
-                    onClick = { isSetTimeDialogOpen = false },
-                    focusRequester = cancelFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = setFocusRequester,
-                        next = timeFieldFocusRequester,
-                    ),
-                ) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            },
-            title = { Text(stringResource(Res.string.remaining_time)) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text(stringResource(Res.string.enter_remaining_time_in_minutes))
-                    OutlinedTextField(
-                        value = minutesValue,
-                        onValueChange = { typed ->
-                            val text = typed.text.toDigitsInput()
-                            minutesValue = typed.copy(
-                                text = text,
-                                selection = TextRange(
-                                    typed.selection.start.coerceAtMost(text.length),
-                                    typed.selection.end.coerceAtMost(text.length),
-                                ),
-                            )
-                        },
-                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                            keyboardType = KeyboardType.Number,
-                            imeAction = ImeAction.Done,
+        TrackedDialog("SetRemainingTime") {
+            AlertDialog(
+                modifier = Modifier.appFocusGroup(),
+                onDismissRequest = { isSetTimeDialogOpen = false },
+                confirmButton = {
+                    Button(
+                        focusRequester = setFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = timeFieldFocusRequester,
+                            next = cancelFocusRequester,
                         ),
-                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                            onDone = { applyRemainingTime() },
+                        onClick = { applyRemainingTime() },
+                    ) {
+                        Text(stringResource(Res.string.set))
+                    }
+                },
+                dismissButton = {
+                    Button(
+                        onClick = { isSetTimeDialogOpen = false },
+                        focusRequester = cancelFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = setFocusRequester,
+                            next = timeFieldFocusRequester,
                         ),
-                        singleLine = true,
-                        modifier = Modifier
-                            .focusRequester(timeFieldFocusRequester)
-                            .focusProperties {
-                                previous = cancelFocusRequester
-                                next = setFocusRequester
-                            }
-                            .onPreviewKeyEvent { event ->
-                                if (event.type != KeyEventType.KeyDown) {
-                                    return@onPreviewKeyEvent false
-                                }
-                                when (event.key) {
-                                    Key.Tab -> {
-                                        if (event.isShiftPressed) {
-                                            cancelFocusRequester.requestFocus()
-                                        } else {
-                                            setFocusRequester.requestFocus()
-                                        }
-                                        true
-                                    }
-                                    Key.DirectionUp -> {
-                                        cancelFocusRequester.requestFocus()
-                                        true
-                                    }
-                                    Key.DirectionDown -> {
-                                        setFocusRequester.requestFocus()
-                                        true
-                                    }
-                                    Key.Enter, Key.NumPadEnter -> {
-                                        applyRemainingTime()
-                                        true
-                                    }
-                                    else -> false
-                                }
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                },
+                title = { Text(stringResource(Res.string.remaining_time)) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(stringResource(Res.string.enter_remaining_time_in_minutes))
+                        OutlinedTextField(
+                            value = minutesValue,
+                            onValueChange = { typed ->
+                                val text = typed.text.toDigitsInput()
+                                minutesValue = typed.copy(
+                                    text = text,
+                                    selection = TextRange(
+                                        typed.selection.start.coerceAtMost(text.length),
+                                        typed.selection.end.coerceAtMost(text.length),
+                                    ),
+                                )
                             },
-                    )
-                }
-            },
-        )
+                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                imeAction = ImeAction.Done,
+                            ),
+                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                                onDone = { applyRemainingTime() },
+                            ),
+                            singleLine = true,
+                            modifier = Modifier
+                                .focusRequester(timeFieldFocusRequester)
+                                .focusProperties {
+                                    previous = cancelFocusRequester
+                                    next = setFocusRequester
+                                }
+                                .onPreviewKeyEvent { event ->
+                                    if (event.type != KeyEventType.KeyDown) {
+                                        return@onPreviewKeyEvent false
+                                    }
+                                    when (event.key) {
+                                        Key.Tab -> {
+                                            if (event.isShiftPressed) {
+                                                cancelFocusRequester.requestFocus()
+                                            } else {
+                                                setFocusRequester.requestFocus()
+                                            }
+                                            true
+                                        }
+                                        Key.DirectionUp -> {
+                                            cancelFocusRequester.requestFocus()
+                                            true
+                                        }
+                                        Key.DirectionDown -> {
+                                            setFocusRequester.requestFocus()
+                                            true
+                                        }
+                                        Key.Enter, Key.NumPadEnter -> {
+                                            applyRemainingTime()
+                                            true
+                                        }
+                                        else -> false
+                                    }
+                                },
+                        )
+                    }
+                },
+            )
+        }
     }
 
     Column(

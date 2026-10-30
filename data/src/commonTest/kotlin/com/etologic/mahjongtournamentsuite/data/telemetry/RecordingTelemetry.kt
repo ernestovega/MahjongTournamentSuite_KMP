@@ -21,4 +21,7 @@ class RecordingTelemetry : Telemetry {
     }
 
     override fun userProperty(name: String, value: String?) = Unit
+    override val requiresConsent: Boolean = true
+    override fun hasConsent(): Boolean = true
+    override fun setConsent(granted: Boolean) = Unit
 }

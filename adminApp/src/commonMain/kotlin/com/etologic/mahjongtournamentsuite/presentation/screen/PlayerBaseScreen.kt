@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import org.jetbrains.compose.resources.pluralStringResource
@@ -434,55 +435,57 @@ fun PlayerBaseScreen(navController: NavHostController) {
             confirmFocusRequester.requestFocus()
         }
 
-        AlertDialog(
-            modifier = Modifier.appFocusGroup(),
-            onDismissRequest = {
-                if (!saving) {
-                    showSaveConfirmation = false
-                    restoreSaveFocus = true
-                }
-            },
-            title = { Text(stringResource(Res.string.save_player_changes)) },
-            text = {
-                Text(stringResource(Res.string.save_changes_to, selected?.displayName ?: stringResource(Res.string.this_player)))
-            },
-            confirmButton = {
-                Button(
-                    enabled = !saving,
-                    onClick = {
-                        showSaveConfirmation = false
-                        save()
-                    },
-                    focusRequester = confirmFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = cancelFocusRequester,
-                        next = cancelFocusRequester,
-                    ),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                    ),
-                ) {
-                    Text(stringResource(Res.string.save))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    enabled = !saving,
-                    onClick = {
+        TrackedDialog("SavePlayerChanges") {
+            AlertDialog(
+                modifier = Modifier.appFocusGroup(),
+                onDismissRequest = {
+                    if (!saving) {
                         showSaveConfirmation = false
                         restoreSaveFocus = true
-                    },
-                    focusRequester = cancelFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = confirmFocusRequester,
-                        next = confirmFocusRequester,
-                    ),
-                ) {
-                    Text(stringResource(Res.string.cancel))
-                }
-            },
-        )
+                    }
+                },
+                title = { Text(stringResource(Res.string.save_player_changes)) },
+                text = {
+                    Text(stringResource(Res.string.save_changes_to, selected?.displayName ?: stringResource(Res.string.this_player)))
+                },
+                confirmButton = {
+                    Button(
+                        enabled = !saving,
+                        onClick = {
+                            showSaveConfirmation = false
+                            save()
+                        },
+                        focusRequester = confirmFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = cancelFocusRequester,
+                            next = cancelFocusRequester,
+                        ),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary,
+                        ),
+                    ) {
+                        Text(stringResource(Res.string.save))
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        enabled = !saving,
+                        onClick = {
+                            showSaveConfirmation = false
+                            restoreSaveFocus = true
+                        },
+                        focusRequester = cancelFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = confirmFocusRequester,
+                            next = confirmFocusRequester,
+                        ),
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                },
+            )
+        }
     }
 
     if (showNewPlayerDialog) {
@@ -493,81 +496,83 @@ fun PlayerBaseScreen(navController: NavHostController) {
             newEmaFocusRequester.requestFocus()
         }
 
-        AlertDialog(
-            modifier = Modifier.appFocusGroup(),
-            onDismissRequest = { if (!saving) showNewPlayerDialog = false },
-            title = { Text(stringResource(Res.string.new_player)) },
-            text = {
-                val newPlayerScrollState = rememberScrollState()
-                Box(modifier = Modifier.heightIn(max = 620.dp)) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .verticalScroll(newPlayerScrollState)
-                            .padding(end = PlatformScrollbarThickness),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                    newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }
-                    OutlinedTextField(
-                        value = newEmaId,
-                        onValueChange = { newEmaId = it.toDigitsInput(8); newPlayerError = null },
-                        label = { Text(stringResource(Res.string.ema_number)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth().focusRequester(newEmaFocusRequester),
-                    )
-                    OutlinedTextField(
-                        value = newFirstName,
-                        onValueChange = { newFirstName = it; newPlayerError = null },
-                        label = { Text(stringResource(Res.string.first_name)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    OutlinedTextField(
-                        value = newLastName,
-                        onValueChange = { newLastName = it; newPlayerError = null },
-                        label = { Text(stringResource(Res.string.last_name)) },
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    EmaCountryDropdown(
-                        selectedCode = newCountry,
-                        onCountrySelected = { newCountry = it; newPlayerError = null },
-                        label = stringResource(Res.string.country),
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    PlayerPhotoPreview(
-                        model = newPhoto?.dataUrl,
-                        playerName = "$newFirstName $newLastName".trim(),
-                        maxWidth = 200.dp,
-                        maxHeight = 220.dp,
-                    )
-                    Button(enabled = !saving, onClick = newPlayerImagePicker::launch) {
-                        Text(stringResource(if (newPhoto == null) Res.string.photo_choose else Res.string.photo_choose_new))
-                    }
-                    newPhoto?.let {
-                        Text(
-                            text = it.fileName,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        TrackedDialog("NewPlayer") {
+            AlertDialog(
+                modifier = Modifier.appFocusGroup(),
+                onDismissRequest = { if (!saving) showNewPlayerDialog = false },
+                title = { Text(stringResource(Res.string.new_player)) },
+                text = {
+                    val newPlayerScrollState = rememberScrollState()
+                    Box(modifier = Modifier.heightIn(max = 620.dp)) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .verticalScroll(newPlayerScrollState)
+                                .padding(end = PlatformScrollbarThickness),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                        newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }
+                        OutlinedTextField(
+                            value = newEmaId,
+                            onValueChange = { newEmaId = it.toDigitsInput(8); newPlayerError = null },
+                            label = { Text(stringResource(Res.string.ema_number)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth().focusRequester(newEmaFocusRequester),
+                        )
+                        OutlinedTextField(
+                            value = newFirstName,
+                            onValueChange = { newFirstName = it; newPlayerError = null },
+                            label = { Text(stringResource(Res.string.first_name)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        OutlinedTextField(
+                            value = newLastName,
+                            onValueChange = { newLastName = it; newPlayerError = null },
+                            label = { Text(stringResource(Res.string.last_name)) },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        EmaCountryDropdown(
+                            selectedCode = newCountry,
+                            onCountrySelected = { newCountry = it; newPlayerError = null },
+                            label = stringResource(Res.string.country),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        PlayerPhotoPreview(
+                            model = newPhoto?.dataUrl,
+                            playerName = "$newFirstName $newLastName".trim(),
+                            maxWidth = 200.dp,
+                            maxHeight = 220.dp,
+                        )
+                        Button(enabled = !saving, onClick = newPlayerImagePicker::launch) {
+                            Text(stringResource(if (newPhoto == null) Res.string.photo_choose else Res.string.photo_choose_new))
+                        }
+                        newPhoto?.let {
+                            Text(
+                                text = it.fileName,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        }
+                        PlatformVerticalScrollbar(
+                            scrollState = newPlayerScrollState,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .fillMaxHeight()
+                                .width(PlatformScrollbarThickness),
                         )
                     }
-                    }
-                    PlatformVerticalScrollbar(
-                        scrollState = newPlayerScrollState,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .fillMaxHeight()
-                            .width(PlatformScrollbarThickness),
-                    )
-                }
-            },
-            confirmButton = {
-                Button(enabled = !saving, onClick = ::createPlayer) { Text(stringResource(Res.string.add_player)) }
-            },
-            dismissButton = {
-                TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { Text(stringResource(Res.string.cancel)) }
-            },
-        )
+                },
+                confirmButton = {
+                    Button(enabled = !saving, onClick = ::createPlayer) { Text(stringResource(Res.string.add_player)) }
+                },
+                dismissButton = {
+                    TextButton(enabled = !saving, onClick = { showNewPlayerDialog = false }) { Text(stringResource(Res.string.cancel)) }
+                },
+            )
+        }
     }
 
     AppScaffold(

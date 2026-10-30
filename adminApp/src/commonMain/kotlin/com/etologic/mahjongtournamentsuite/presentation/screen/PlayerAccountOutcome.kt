@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Warning
@@ -105,18 +106,20 @@ internal fun PlayerAccountActionResult.toOutcome(): AccountOutcome = when (outco
 /** Tells the user that the emails are going out. It has no button: the app closes it when the send ends. */
 @Composable
 internal fun SendingDialog() {
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = {},
-        title = { Text(stringResource(Res.string.sending_title)) },
-        text = {
-            Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                CircularProgressIndicator()
-                Text(stringResource(Res.string.sending_text))
-            }
-        },
-        confirmButton = {},
-    )
+    TrackedDialog("AccountActionsSending") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = {},
+            title = { Text(stringResource(Res.string.sending_title)) },
+            text = {
+                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    CircularProgressIndicator()
+                    Text(stringResource(Res.string.sending_text))
+                }
+            },
+            confirmButton = {},
+        )
+    }
 }
 
 /**
@@ -133,50 +136,54 @@ internal fun SendSummaryDialog(
     val reminded = results.count { it.outcome == PlayerAccountOutcome.REMINDED }
     val failed = results.filter { it.outcome == PlayerAccountOutcome.FAILED }
     val color = if (failed.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = onDismiss,
-        icon = { Icon(if (failed.isEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null, tint = color) },
-        title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
-        text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.send_result_invited, invited))
-                Text(stringResource(Res.string.send_result_reminded, reminded))
-                Text(stringResource(Res.string.send_result_failed, failed.size), color = if (failed.isEmpty()) Color.Unspecified else color)
-                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                    items(failed, key = { it.playerId }) { result ->
-                        Text(
-                            stringResource(
-                                Res.string.send_failure_line,
-                                nameOf(result.playerId),
-                                stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes()),
-                            ),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
+    TrackedDialog("AccountActionsDone") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            icon = { Icon(if (failed.isEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null, tint = color) },
+            title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(Res.string.send_result_invited, invited))
+                    Text(stringResource(Res.string.send_result_reminded, reminded))
+                    Text(stringResource(Res.string.send_result_failed, failed.size), color = if (failed.isEmpty()) Color.Unspecified else color)
+                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
+                        items(failed, key = { it.playerId }) { result ->
+                            Text(
+                                stringResource(
+                                    Res.string.send_failure_line,
+                                    nameOf(result.playerId),
+                                    stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes()),
+                                ),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                 }
-            }
-        },
-        confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
-    )
+            },
+            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
+        )
+    }
 }
 
 @Composable
 fun AccountOutcomeDialog(outcome: AccountOutcome, onDismiss: () -> Unit) {
     val color = if (outcome.isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = onDismiss,
-        icon = {
-            Icon(
-                if (outcome.isError) Icons.Filled.Warning else Icons.Filled.CheckCircle,
-                contentDescription = null,
-                tint = color,
-            )
-        },
-        title = { Text(stringResource(if (outcome.isError) Res.string.something_went_wrong else Res.string.dialog_done_title), color = color) },
-        text = { Text(outcome.message.asString(), style = MaterialTheme.typography.bodyLarge) },
-        confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
-    )
+    TrackedDialog("AccountActionsError") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            icon = {
+                Icon(
+                    if (outcome.isError) Icons.Filled.Warning else Icons.Filled.CheckCircle,
+                    contentDescription = null,
+                    tint = color,
+                )
+            },
+            title = { Text(stringResource(if (outcome.isError) Res.string.something_went_wrong else Res.string.dialog_done_title), color = color) },
+            text = { Text(outcome.message.asString(), style = MaterialTheme.typography.bodyLarge) },
+            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
+        )
+    }
 }

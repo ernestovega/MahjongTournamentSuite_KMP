@@ -59,8 +59,9 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
-import com.etologic.mahjongtournamentsuite.domain.telemetry.screenFromRoute
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedScreen
 import org.koin.compose.getKoin
 import org.koin.compose.KoinApplication
 import org.koin.dsl.koinConfiguration
@@ -82,7 +83,7 @@ fun RankingApp(tournamentId: String) {
             val themeController = rememberThemeController()
             CompositionLocalProvider(LocalThemeController provides themeController) {
                 MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-                    RankingStandaloneScreen(tournamentId)
+                    TrackedScreen("Rankings") { RankingStandaloneScreen(tournamentId) }
                 }
             }
         }
@@ -96,21 +97,26 @@ private fun AppWithModules(content: @Composable () -> Unit) {
             modules(dataModule, presentationModule)
         },
     ) {
+        val telemetry = getKoin().getOrNull<Telemetry>() ?: NoTelemetry
         CompositionLocalProvider(
+            LocalTelemetry provides telemetry,
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
             LocalAdaptiveTopBar provides true,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value
             },
         ) {
-            content()
+            // The user cannot enter before accepting the anonymous analytics.
+            ConsentGate(content)
         }
     }
 }
 
 @Composable
 fun TimerApp(initialRound: Int = 1) {
-    TimerStandaloneScreen(initialRound = initialRound)
+    AppWithModules {
+        TrackedScreen("Timer") { TimerStandaloneScreen(initialRound = initialRound) }
+    }
 }
 
 @Composable
@@ -125,13 +131,6 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
     LaunchedEffect(navController, routePersistence) {
         routePersistence ?: return@LaunchedEffect
         navController.currentBackStack.collect { routePersistence.save(it) }
-    }
-
-    // Each screen the user opens counts as one visit. The route gives the name, never an id.
-    val telemetry = getKoin().getOrNull<Telemetry>() ?: NoTelemetry
-    LaunchedEffect(navController, telemetry) {
-        telemetry.userProperty(TelemetryProperty.APP, "admin")
-        navController.currentBackStackEntryFlow.collect { telemetry.screenFromRoute(it.destination.route) }
     }
 
     CompositionLocalProvider(

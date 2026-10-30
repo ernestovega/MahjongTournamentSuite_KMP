@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -84,47 +85,49 @@ fun CreateProgressDialog(
     }
 
     val calculating = progress == null || progress.phase == CreateTournamentPresenter.Phase.CALCULATING
-    AlertDialog(
-        modifier = Modifier.widthIn(max = 560.dp),
-        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
-        onDismissRequest = {},
-        title = { Text(stringResource(Res.string.create_progress_title)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    Text(stringResource(if (calculating) Res.string.create_calculating else Res.string.create_saving))
+    TrackedDialog("CreateProgress") {
+        AlertDialog(
+            modifier = Modifier.widthIn(max = 560.dp),
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+            onDismissRequest = {},
+            title = { Text(stringResource(Res.string.create_progress_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                        Text(stringResource(if (calculating) Res.string.create_calculating else Res.string.create_saving))
+                    }
+                    Text(stringResource(Res.string.create_elapsed, formatElapsed(elapsedMillis)))
+                    if (calculating && progress != null) {
+                        Text(stringResource(Res.string.create_tried, formatCount(progress.tried)))
+                        val perSecond = if (elapsedMillis > 0) progress.tried * 1000 / elapsedMillis else 0L
+                        Text(stringResource(Res.string.create_speed, formatCount(perSecond)))
+                        Text(
+                            stringResource(
+                                Res.string.create_parallel,
+                                progress.runningTries,
+                                progress.maxConcurrency,
+                            ),
+                        )
+                        LinearProgressIndicator(
+                            progress = { progress.runningTries.toFloat() / progress.maxConcurrency.coerceAtLeast(1) },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                        WorkerPulseGrid(progress.runningTries, progress.maxConcurrency)
+                        LoadChart(load)
+                    } else {
+                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                    }
                 }
-                Text(stringResource(Res.string.create_elapsed, formatElapsed(elapsedMillis)))
-                if (calculating && progress != null) {
-                    Text(stringResource(Res.string.create_tried, formatCount(progress.tried)))
-                    val perSecond = if (elapsedMillis > 0) progress.tried * 1000 / elapsedMillis else 0L
-                    Text(stringResource(Res.string.create_speed, formatCount(perSecond)))
-                    Text(
-                        stringResource(
-                            Res.string.create_parallel,
-                            progress.runningTries,
-                            progress.maxConcurrency,
-                        ),
-                    )
-                    LinearProgressIndicator(
-                        progress = { progress.runningTries.toFloat() / progress.maxConcurrency.coerceAtLeast(1) },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                    WorkerPulseGrid(progress.runningTries, progress.maxConcurrency)
-                    LoadChart(load)
-                } else {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                }
-            }
-        },
-        confirmButton = {
-            Button(onClick = onCancel) { Text(stringResource(Res.string.create_cancel_calculation)) }
-        },
-    )
+            },
+            confirmButton = {
+                Button(onClick = onCancel) { Text(stringResource(Res.string.create_cancel_calculation)) }
+            },
+        )
+    }
 }
 
 /** One cell for each parallel slot. A running cell pulses. The phase of the pulse differs for each cell. */

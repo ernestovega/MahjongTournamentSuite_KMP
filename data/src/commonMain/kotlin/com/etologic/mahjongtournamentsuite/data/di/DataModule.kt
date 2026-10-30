@@ -7,7 +7,10 @@ import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import com.etologic.mahjongtournamentsuite.data.network.createHttpClient
 import com.etologic.mahjongtournamentsuite.data.platform.PlatformNameProvider
 import com.etologic.mahjongtournamentsuite.data.platform.providePlatformNameProvider
+import com.etologic.mahjongtournamentsuite.data.telemetry.ErrorReporter
+import com.etologic.mahjongtournamentsuite.data.telemetry.ReportingTelemetry
 import com.etologic.mahjongtournamentsuite.data.telemetry.TelemetryLogWriter
+import com.etologic.mahjongtournamentsuite.data.telemetry.installCrashHandler
 import com.etologic.mahjongtournamentsuite.data.telemetry.providePlatformTelemetry
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultAdminRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultStatisticsRepository
@@ -37,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import io.ktor.client.HttpClient
 import kotlinx.serialization.json.Json
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
 import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
@@ -44,7 +48,15 @@ import org.koin.dsl.module
 fun Scope.telemetry(): Telemetry = getOrNull() ?: NoTelemetry
 
 val dataModule = module {
-    single<Telemetry> { providePlatformTelemetry() }
+    single<Telemetry> {
+        val platform = providePlatformTelemetry()
+        val reporter = ErrorReporter(platform, get(), get())
+        if (platform.analytics.requiresConsent) installCrashHandler(reporter::recordCrash)
+        // The crash of the last run leaves now, when the user accepted the analytics.
+        reporter.flushPending()
+        platform.analytics.userProperty(TelemetryProperty.APP, platform.app)
+        ReportingTelemetry(platform.analytics, reporter)
+    }
     single {
         // The telemetry writer counts every failed request and reports the real bugs. See TelemetryLogWriter.
         Logger.setLogWriters(platformLogWriter(), TelemetryLogWriter(get()))

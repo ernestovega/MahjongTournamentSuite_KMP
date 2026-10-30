@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -63,65 +64,67 @@ internal fun EmaPlayerPickerDialog(
         val haystack = "${player.displayName} ${player.emaId} ${player.country}"
         terms.all { haystack.matchesSearch(it) }
     }
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.select_ema_player)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text(stringResource(Res.string.name_ema_id_or_country)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().focusRequester(focus),
-                )
-                if (matches.isEmpty()) {
-                    Text(stringResource(Res.string.no_player_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                } else {
-                    LazyColumn(Modifier.heightIn(max = 360.dp)) {
-                        items(matches.take(MAX_RESULTS), key = { it.emaId }) { player ->
-                            val owner = owners[player.emaId]
-                            Row(
-                                Modifier.fillMaxWidth()
-                                    .clickable(enabled = owner == null) { onSelect(player) }
-                                    .padding(vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                Column(Modifier.weight(1f)) {
-                                    Text(
-                                        player.displayName.ifBlank { player.emaId },
-                                        fontWeight = if (player.emaId == selectedEmaId) FontWeight.Bold else null,
-                                        color = if (owner == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                    Text(
-                                        listOf(player.emaId, player.country).filter { it.isNotBlank() }.joinToString(" · "),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
+    TrackedDialog("SelectEmaPlayer") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.select_ema_player)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text(stringResource(Res.string.name_ema_id_or_country)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().focusRequester(focus),
+                    )
+                    if (matches.isEmpty()) {
+                        Text(stringResource(Res.string.no_player_found), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    } else {
+                        LazyColumn(Modifier.heightIn(max = 360.dp)) {
+                            items(matches.take(MAX_RESULTS), key = { it.emaId }) { player ->
+                                val owner = owners[player.emaId]
+                                Row(
+                                    Modifier.fillMaxWidth()
+                                        .clickable(enabled = owner == null) { onSelect(player) }
+                                        .padding(vertical = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    Column(Modifier.weight(1f)) {
+                                        Text(
+                                            player.displayName.ifBlank { player.emaId },
+                                            fontWeight = if (player.emaId == selectedEmaId) FontWeight.Bold else null,
+                                            color = if (owner == null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                        Text(
+                                            listOf(player.emaId, player.country).filter { it.isNotBlank() }.joinToString(" · "),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                    if (owner != null) {
+                                        Text(
+                                            stringResource(Res.string.used_by, owner),
+                                            style = MaterialTheme.typography.labelMedium,
+                                            color = MaterialTheme.colorScheme.error,
+                                        )
+                                    }
                                 }
-                                if (owner != null) {
-                                    Text(
-                                        stringResource(Res.string.used_by, owner),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.error,
-                                    )
-                                }
+                                HorizontalDivider()
                             }
-                            HorizontalDivider()
+                        }
+                        if (matches.size > MAX_RESULTS) {
+                            Text(
+                                stringResource(Res.string.showing_first_of, MAX_RESULTS, matches.size),
+                                style = MaterialTheme.typography.labelMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
                         }
                     }
-                    if (matches.size > MAX_RESULTS) {
-                        Text(
-                            stringResource(Res.string.showing_first_of, MAX_RESULTS, matches.size),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
                 }
-            }
-        },
-        confirmButton = {},
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
-    )
+            },
+            confirmButton = {},
+            dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+        )
+    }
 }

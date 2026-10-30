@@ -318,4 +318,17 @@
     <string name="spreadsheet_chooser_filter">CSV and Excel files</string>
     <string name="spreadsheet_error_read">The app could not read the file. Choose a CSV or Excel file and try again.</string>
     <string name="spreadsheet_error_save">The app could not save the file. Try again.</string>
+    <string name="consent_title">Anonymous analytics</string>
+    <string name="consent_intro">This app collects anonymous data about how people use it and about errors. The team uses the data only to find problems and to improve the app.</string>
+    <string name="consent_collects">The app records the following data:
+• The screens, dialogs and tabs that you open, and for how long.
+• The actions that you use, such as saving a table.
+• Errors and crashes, with technical details such as the type of the error.</string>
+    <string name="consent_not_collected">The app does not record your name, your email address, your EMA number or any text that you enter. The data does not identify you.</string>
+    <string name="consent_required">You can use the app only if you accept. If you do not accept, you cannot enter the app.</string>
+    <string name="consent_accept">Accept and continue</string>
+    <string name="consent_decline">Decline</string>
+    <string name="consent_declined_note">You cannot use the app without the anonymous analytics. You can close the app, or you can accept to continue.</string>
+    <string name="consent_withdraw">Withdraw analytics consent</string>
+    <string name="consent_withdraw_info">The app stops the analytics and asks you again. You cannot use the app until you accept.</string>
 </resources>

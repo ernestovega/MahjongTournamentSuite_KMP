@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Box
@@ -33,7 +34,7 @@ import org.jetbrains.compose.resources.stringResource
 fun AppErrorDialog(
     message: String,
     onDismiss: () -> Unit,
-) = AppMessageDialog(title = stringResource(Res.string.dialog_error_title), message = message, onDismiss = onDismiss)
+) = AppMessageDialog(trackingName = "ErrorMessage", title = stringResource(Res.string.dialog_error_title), message = message, onDismiss = onDismiss)
 
 @Composable
 fun AppErrorDialog(
@@ -46,7 +47,7 @@ fun AppErrorDialog(
 fun AppSuccessDialog(
     message: String,
     onDismiss: () -> Unit,
-) = AppMessageDialog(title = stringResource(Res.string.dialog_done_title), message = message, onDismiss = onDismiss)
+) = AppMessageDialog(trackingName = "SuccessMessage", title = stringResource(Res.string.dialog_done_title), message = message, onDismiss = onDismiss)
 
 @Composable
 fun AppSuccessDialog(
@@ -56,6 +57,7 @@ fun AppSuccessDialog(
 
 @Composable
 private fun AppMessageDialog(
+    trackingName: String,
     title: String,
     message: String,
     onDismiss: () -> Unit,
@@ -68,58 +70,60 @@ private fun AppMessageDialog(
         dismissFocusRequester.requestFocus()
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = 240.dp),
-            ) {
-                LazyColumn(
-                    state = listState,
+    TrackedDialog(trackingName) {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            title = { Text(title) },
+            text = {
+                Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .heightIn(max = 240.dp)
-                        .padding(end = scrollbarPadding),
+                        .heightIn(max = 240.dp),
                 ) {
-                    item {
-                        SelectionContainer {
-                            Text(
-                                text = message,
-                                style = MaterialTheme.typography.bodyMedium,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 240.dp)
+                            .padding(end = scrollbarPadding),
+                    ) {
+                        item {
+                            SelectionContainer {
+                                Text(
+                                    text = message,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
                         }
                     }
+    
+                    if (PlatformScrollbarThickness > 0.dp) {
+                        PlatformVerticalScrollbar(
+                            listState = listState,
+                            modifier = Modifier
+                                .align(Alignment.CenterEnd)
+                                .heightIn(max = 240.dp)
+                                .width(scrollbarPadding),
+                        )
+                    }
                 }
-
-                if (PlatformScrollbarThickness > 0.dp) {
-                    PlatformVerticalScrollbar(
-                        listState = listState,
-                        modifier = Modifier
-                            .align(Alignment.CenterEnd)
-                            .heightIn(max = 240.dp)
-                            .width(scrollbarPadding),
-                    )
+            },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onDismiss,
+                    focusRequester = dismissFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = dismissFocusRequester,
+                        next = dismissFocusRequester,
+                    ),
+                ) {
+                    Text(stringResource(Res.string.action_ok))
                 }
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                onClick = onDismiss,
-                focusRequester = dismissFocusRequester,
-                buttonModifier = Modifier.focusLoop(
-                    previous = dismissFocusRequester,
-                    next = dismissFocusRequester,
-                ),
-            ) {
-                Text(stringResource(Res.string.action_ok))
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 @Preview(device = Devices.DESKTOP)

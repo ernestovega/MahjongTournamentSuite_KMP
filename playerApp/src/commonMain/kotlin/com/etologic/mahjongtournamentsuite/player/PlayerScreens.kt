@@ -413,6 +413,7 @@ fun TournamentsScreen(navController: NavHostController) {
                         selected = tab == index,
                         onClick = { tab = index },
                         title = title,
+                        trackingName = if (index == 0) "MyTournaments" else "Statistics",
                         icon = {
                             Icon(
                                 if (index == 0) Icons.Default.EmojiEvents else StatisticsIcon,
@@ -854,6 +855,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                             selected = tab == index,
                             onClick = { tab = index },
                             title = title,
+                            trackingName = listOf("Tables", "Ranking", "Statistics", "Info")[index],
                             icon = {
                                 val icon = when (index) {
                                     0 -> Icons.Default.People
@@ -884,7 +886,16 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                         2 -> stringResource(Res.string.tab_tables_team)
                                         else -> stringResource(Res.string.tab_tables_all)
                                     }
-                                    CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = id }, title = title)
+                                    CompactTab(
+                                        selected = tablesTab == index,
+                                        onClick = { chosenTablesTab = id },
+                                        title = title,
+                                        trackingName = when (id) {
+                                            0 -> "TablesMe"
+                                            2 -> "TablesTeam"
+                                            else -> "TablesAll"
+                                        },
+                                    )
                                 }
                             }
                         }
@@ -1290,6 +1301,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                                 selected = item == kind,
                                 onClick = { chosen = item },
                                 title = stringResource(item.short),
+                                trackingName = item.name,
                                 icon = {
                                     when (item) {
                                         RankingKind.PLAYERS -> Icon(Icons.Default.People, contentDescription = null, Modifier.size(20.dp))
@@ -1811,6 +1823,7 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
                             selected = tab == index,
                             onClick = { tab = index },
                             title = title,
+                            trackingName = if (index == 0) "Tables" else "Statistics",
                             icon = {
                                 Icon(
                                     if (index == 0) Icons.Default.People else StatisticsIcon,

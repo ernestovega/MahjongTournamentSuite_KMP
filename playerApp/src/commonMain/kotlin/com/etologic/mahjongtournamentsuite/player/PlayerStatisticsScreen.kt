@@ -223,7 +223,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(scopes.indexOf(scope)), color = TabContentColor) },
                 ) {
                     scopes.forEach { item ->
-                        CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title())
+                        CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title(), trackingName = item.name)
                     }
                 }
                 val pickerData = shown
@@ -329,6 +329,7 @@ fun TournamentStatisticsTab(
                             selected = item == tab,
                             onClick = { tabName = item.name },
                             title = stringResource(item.title),
+                            trackingName = item.name,
                             icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
                         )
                     }
@@ -476,6 +477,7 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
                             selected = item == tab,
                             onClick = { tabName = item.name },
                             title = stringResource(item.title),
+                            trackingName = item.name,
                             icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
                         )
                     }
@@ -681,6 +683,7 @@ private fun OthersViewTabs(view: OthersView, onChoose: (OthersView) -> Unit) {
                 selected = item == view,
                 onClick = { onChoose(item) },
                 title = stringResource(item.title),
+                trackingName = item.name,
                 icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
             )
         }

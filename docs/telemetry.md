@@ -1,18 +1,28 @@
-# Telemetry: Analytics
+# Telemetry: Analytics and error log
 
-Both apps send usage data and errors to Firebase Analytics (GA4). Errors are events, so every platform works the same way. This page lists what the apps send and what to set up in Firebase.
+Both apps send usage data to Firebase Analytics (GA4). They send errors with their stack trace to our own error log in Firestore.
+Both are anonymous. The user must accept them before the app opens.
 
 ## What each platform sends
 
-| App | Platform | Analytics | Errors |
+| App | Platform | Analytics | Error log |
 | --- | --- | --- | --- |
-| Admin and player | Android | Firebase SDK | Event `app_crash` and event `app_error` |
-| Admin and player | Web | Firebase JS SDK (`telemetry.js`) | Event `app_crash` and event `app_error` |
-| Admin | Desktop | GA4 Measurement Protocol | Event `app_crash` and event `app_error` |
+| Admin and player | Android | Firebase SDK | Handled errors at once. A crash at the next start. |
+| Admin and player | Web | Firebase JS SDK (`telemetry.js`) | Handled errors at once. A crash at once, from `telemetry.js`. |
+| Admin | Desktop | GA4 Measurement Protocol | Handled errors at once. A crash at the next start. |
 
-Crashlytics is not used, because it has no web or desktop version. Read the errors in the events report of GA4. They have the error type but no stack trace.
-
+Crashlytics is not used, because it has no web or desktop version.
 Nothing is sent until the settings of the platform are filled in. The apps build and run without them.
+A platform without Analytics settings also sends no error log and shows no consent screen.
+
+## Consent
+
+- On the first start the app shows the screen "Anonymous analytics". It explains what the app records.
+- The user can only enter after "Accept and continue". "Decline" keeps the user on the screen with a note.
+- The answer is saved on the device. Android: `SharedPreferences` file `mts_telemetry`. Web: `localStorage` key `mtsAnalyticsConsent`. Desktop: Java preferences.
+- The user can withdraw the consent in the profile dialog. The app then stops all data and shows the screen again.
+- On Android, `firebase_analytics_collection_enabled` is `false` in the manifest. Collection starts only after the user accepts.
+- The Android UI tests save the consent before they start the app, so builds with Firebase settings still run them.
 
 ## Rules for the data
 
@@ -20,12 +30,16 @@ Nothing is sent until the settings of the platform are filled in. The apps build
 - A parameter holds a fixed word or a count.
 - The user properties are `app`, `platform`, `env`, `role` and `language`.
 - `env` is `prod`, `dev` or `debug`. Filter the reports on `env = prod`.
+- The server removes emails, long numbers and tokens from the text of an error report before it saves it.
 
 ## Events
 
 | Event | When | Parameters |
 | --- | --- | --- |
-| `screen_view` | The user opens a screen | `firebase_screen`: `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Rankings` ... |
+| `screen_view` | The user opens a screen | `firebase_screen`: the name of the route, for example `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Timer` |
+| `dialog_view` | A dialog opens | `dialog`, `screen` |
+| `tab_view` | A tab is selected | `tab`, `screen` |
+| `view_time` | A screen, dialog or tab closes | `kind` (`screen`, `dialog` or `tab`), `view`, `screen`, `seconds` |
 | `login`, `logout` | Sign in worked, sign out | none |
 | `password_reset_requested` | A reset email went out | `kind=bulk`, `players` for the mass reset |
 | `tournament_created` | A tournament is created | `players`, `rounds`, `is_teams` |
@@ -36,18 +50,37 @@ Nothing is sent until the settings of the platform are filled in. The apps build
 | `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `person`, `me` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `action_failed` | Any request fails | `action`, `reason` |
-| `app_error`, `app_crash` | A bug or a crash | `action`, `kind`, `message` |
+| `app_error` | The app caught a bug | `report_id`, `action`, `kind`, `reason` |
+| `app_crash` | The app stopped | `report_id`, `kind` |
 
 `reason` of `action_failed` is `network`, `timeout`, `auth`, `conflict`, `client_error`, `server_error` or `unexpected`.
-Only `server_error` and `unexpected` also send `app_error`. The others are normal events, such as a user with no network.
+Only `server_error` and `unexpected` also create an `app_error` and an error report. The others are normal events, such as a user with no network.
 
-## Questions the data answers
+## Time on screen and user journeys
 
-- Which screens and actions do the users use most and least? `screen_view` and the events above.
-- Who uses the apps? Split by the user properties `app`, `role`, `platform` and `language`.
-- Where do users stop? Build funnels in Explore: `screen_view Tournaments` > `tournament_created`, and `hand_previewed` > `hand_recorded`.
-- Which actions fail? `action_failed` by `action` and `reason`.
-- How many editing conflicts happen? `action_failed` with `reason = conflict`.
+- **Time:** `view_time` gives the seconds of each screen, dialog and tab. It works the same on every platform. A view counts at most 30 minutes, because an app can wait in the background. The web does not send the last view when the user closes the tab.
+- **Journeys:** GA4 builds them from the order of `screen_view`, `dialog_view` and `tab_view`. Open Explore > Path exploration and start from `screen_view`.
+- **Funnels:** in Explore > Funnel exploration use for example `screen_view Tournaments` > `tournament_created`, or `hand_previewed` > `hand_recorded`.
+
+## The error log
+
+`POST /telemetry/errors` receives a report. The route is public, because a crash can happen before sign-in. App Check and a limit of 30 reports per minute for each address protect it.
+
+- Equal errors share one group in the collection `errorGroups`. The group id comes from the error type, the area and the first three lines of the stack.
+- A group holds a count, the first and last time, a sample message and stack trace, and the count for each platform and app.
+- The newest reports of a group are in `errorGroups/{id}/reports`. Firestore deletes reports after 30 days and groups after 90 days without a new report. The rule is the TTL on the field `expireAt` in `firebase/firestore.indexes.json`.
+- Each report has a `reportId`. The same value is the parameter `report_id` of the event `app_error` or `app_crash` in Analytics.
+
+### Read the error log
+
+- Admin API: `GET /admin/error-groups?limit=50` lists the groups, newest first. `GET /admin/error-groups/{id}` gives one group with its stack trace and its reports. Only admins can call them.
+- Firebase console: open Firestore and the collection `errorGroups`.
+
+### Cross the log with Analytics
+
+1. In GA4, a user with `report_id` in `app_error` shows which screen, role, platform and version had the error.
+2. In the error log, the report with the same `reportId` has the stack trace.
+3. With the BigQuery export of GA4 you can join both in SQL: `event_params.report_id` with the field `reportId` of an export of `errorGroups`.
 
 ## Setup in the Firebase console
 
@@ -67,7 +100,7 @@ Do these steps one time. The Firebase project is `mahjong-tournament-suite`.
 2. Download `google-services.json` of each app.
 3. Save the files as `androidApp/google-services.json` and `playerAndroidApp/google-services.json`.
    The file holds no secret. You can commit it, so CI builds and the UI tests also send data.
-4. Build and run the app. Check the events in DebugView (step 6).
+4. Build and run the app. Accept the consent screen. Check the events in DebugView (step 6).
 
 If you already filled the App Check values in the manifest, keep them. App Check uses its own named Firebase app.
 
@@ -89,15 +122,27 @@ If you already filled the App Check values in the manifest, keep them. App Check
    `data/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/data/telemetry/PlatformTelemetry.jvm.kt`.
 5. The desktop events appear in the stream of the admin web app. The user property `platform = desktop` tells them apart.
 
-### 5. Custom definitions in GA4
+### 5. Server
+
+1. Deploy the functions: the route `/telemetry/errors` and the admin routes `/admin/error-groups`.
+2. Deploy the Firestore settings: `firebase deploy --only firestore:indexes`. This creates the TTL rules for `errorGroups` and `reports`.
+3. Check that the TTL policies are active in Firestore > Time-to-live.
+
+### 6. Custom definitions in GA4
 
 GA4 shows a custom parameter in reports only after you register it.
-Open Admin > Custom definitions > Create custom dimension. Use scope "Event" for the first group.
+Open Admin > Custom definitions > Create custom dimension.
 
 | Dimension name | Scope | Parameter or property |
 | --- | --- | --- |
 | Action | Event | `action` |
 | Reason | Event | `reason` |
+| Report id | Event | `report_id` |
+| View | Event | `view` |
+| View kind | Event | `kind` |
+| Screen | Event | `screen` |
+| Dialog | Event | `dialog` |
+| Tab | Event | `tab` |
 | Statistics scope | Event | `scope` |
 | Import format | Event | `format` |
 | App | User | `app` |
@@ -106,9 +151,9 @@ Open Admin > Custom definitions > Create custom dimension. Use scope "Event" for
 | Environment | User | `env` |
 | Language | User | `language` |
 
-Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds` and `hands`.
+Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds`, `hands` and `seconds`. Use "Seconds" as the unit of `seconds`.
 
-### 6. Check the data
+### 7. Check the data
 
 1. Android: run `adb shell setprop debug.firebase.analytics.app <applicationId>`. Open Admin > DebugView in GA4.
 2. Web: use the Chrome extension "Google Analytics Debugger". Events show in DebugView.
@@ -117,13 +162,14 @@ Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds` a
 
 ## Privacy
 
-The data has no direct personal data. Analytics on the web still stores an identifier in the browser.
-The EU rules for cookies can need the consent of the user. Decide this before you turn on the web settings.
-The `Telemetry` interface is the one place to add a consent switch.
+- The consent screen is the legal basis. The text is in `consent_*` of the `ui` module, in all languages.
+- The data has no direct personal data. Analytics still stores an identifier of the device or the browser.
+- Ask a lawyer to check the text of the consent screen before you publish the apps.
 
 ## Add a new event
 
 1. Add the name to `TelemetryEvent` in the `domain` module.
 2. Call `result.track(telemetry, TelemetryEvent.X)` in the presenter, or `telemetry.event(...)`.
-3. Add the event to the table on this page.
-4. Keep the parameters to fixed words and counts. Register a new parameter in GA4 if a report needs it.
+3. For a new dialog, wrap it in `TrackedDialog("Name")`. For a new tab, call `TrackedTab("Name")` while it is selected. A new route is tracked by `screen<T>`.
+4. Add the event to the table on this page.
+5. Keep the parameters to fixed words and counts. Register a new parameter in GA4 if a report needs it.

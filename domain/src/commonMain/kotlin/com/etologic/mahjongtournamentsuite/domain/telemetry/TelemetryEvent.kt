@@ -12,10 +12,10 @@ object TelemetryEvent {
     /** A request failed. The log writer sends it, with [TelemetryParam.ACTION] and [TelemetryParam.REASON]. */
     const val ACTION_FAILED = "action_failed"
 
-    /** The app handled an error that points to a bug. */
+    /** The app handled an error that points to a bug. It has a [TelemetryParam.REPORT_ID]. */
     const val APP_ERROR = "app_error"
 
-    /** The app stopped because of an error that nobody handled. */
+    /** The app stopped because of an error that nobody handled. It has a [TelemetryParam.REPORT_ID]. */
     const val APP_CRASH = "app_crash"
 
     const val TOURNAMENT_CREATED = "tournament_created"
@@ -25,6 +25,15 @@ object TelemetryEvent {
     const val PLAYERS_EXPORTED = "players_exported"
     const val ACCOUNTS_SENT = "accounts_sent"
     const val STATISTICS_VIEWED = "statistics_viewed"
+
+    /** The user opened a dialog. */
+    const val DIALOG_VIEW = "dialog_view"
+
+    /** The user opened a tab. */
+    const val TAB_VIEW = "tab_view"
+
+    /** How long a screen, a dialog or a tab stayed open. */
+    const val VIEW_TIME = "view_time"
 
     const val HAND_PREVIEWED = "hand_previewed"
     const val HAND_RECORDED = "hand_recorded"
@@ -42,6 +51,14 @@ object TelemetryParam {
     const val HANDS = "hands"
     const val KIND = "kind"
     const val MESSAGE = "message"
+    const val SCREEN = "screen"
+    const val VIEW = "view"
+    const val DIALOG = "dialog"
+    const val TAB = "tab"
+    const val SECONDS = "seconds"
+
+    /** The id of an error. The same id is in the error log of the API. It joins the log with Analytics. */
+    const val REPORT_ID = "report_id"
 }
 
 object TelemetryProperty {
@@ -65,11 +82,9 @@ fun Collection<GlobalUserRole>.telemetryRole(): String = when {
     else -> "player"
 }
 
-/**
- * Counts a visit when the app opens a screen. [route] is the route of the navigation, for example
- * `com.example.TournamentRoute/{tournamentId}`. The screen name keeps the class name and drops the ids.
- */
-fun Telemetry.screenFromRoute(route: String?) {
-    val name = route?.substringBefore('/')?.substringBefore('?')?.substringAfterLast('.')?.removeSuffix("Route")
-    if (!name.isNullOrBlank()) screen(name)
+/** The kinds of view that the app measures. The value goes in [TelemetryParam.KIND] of `view_time`. */
+object TelemetryViewKind {
+    const val SCREEN = "screen"
+    const val DIALOG = "dialog"
+    const val TAB = "tab"
 }

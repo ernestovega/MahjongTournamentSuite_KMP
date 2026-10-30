@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.Badge
@@ -78,14 +79,16 @@ fun AppTopBarActions(
 ) {
     var lockedInfoOpen by remember { mutableStateOf(false) }
     if (lockedInfoOpen) {
-        AlertDialog(
-            modifier = Modifier.appFocusGroup(),
-            onDismissRequest = { lockedInfoOpen = false },
-            icon = { Icon(Icons.Default.Info, contentDescription = null) },
-            title = { Text(stringResource(Res.string.import_locked_title)) },
-            text = { Text(stringResource(Res.string.import_locked_text)) },
-            confirmButton = { Button(onClick = { lockedInfoOpen = false }) { Text(stringResource(Res.string.ok)) } },
-        )
+        TrackedDialog("ImportLocked") {
+            AlertDialog(
+                modifier = Modifier.appFocusGroup(),
+                onDismissRequest = { lockedInfoOpen = false },
+                icon = { Icon(Icons.Default.Info, contentDescription = null) },
+                title = { Text(stringResource(Res.string.import_locked_title)) },
+                text = { Text(stringResource(Res.string.import_locked_text)) },
+                confirmButton = { Button(onClick = { lockedInfoOpen = false }) { Text(stringResource(Res.string.ok)) } },
+            )
+        }
     }
     TopBarButtonsLayout {
         onTeams?.let { AppTopBarButton(stringResource(Res.string.teams), Icons.Default.Groups, it, teamsFocusRequester) }

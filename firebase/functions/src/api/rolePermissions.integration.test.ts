@@ -21,6 +21,9 @@ type Access = "PUBLIC" | "SIGNED_IN" | "EDITOR" | "READER" | "PLAYER" | "MEMBER"
 const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/health", "PUBLIC"],
   ["GET", "/config/", "PUBLIC"],
+  ["POST", "/telemetry/errors", "PUBLIC"],
+  ["GET", "/admin/error-groups", "ADMIN"],
+  ["GET", "/admin/error-groups/:id", "ADMIN"],
   ["POST", "/auth/signIn", "PUBLIC"],
   ["POST", "/auth/passwordReset", "PUBLIC"],
   ["POST", "/auth/refresh", "PUBLIC"],

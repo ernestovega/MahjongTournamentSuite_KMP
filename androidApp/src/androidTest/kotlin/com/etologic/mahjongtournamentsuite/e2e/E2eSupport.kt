@@ -99,6 +99,10 @@ class AdminAppRule {
 
     /** Starts the app with the backend address that the test has set. */
     fun launchKeepingBackend() {
+        // A build with Firebase settings asks for the analytics consent. The test accepts it before the start.
+        InstrumentationRegistry.getInstrumentation().targetContext
+            .getSharedPreferences("mts_telemetry", android.content.Context.MODE_PRIVATE)
+            .edit().putBoolean("consent", true).commit()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         // The first frame can come a little later than the launch. Wait until the app has a Compose screen.
         repeat(50) {

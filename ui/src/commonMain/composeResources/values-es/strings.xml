@@ -318,4 +318,17 @@
     <string name="spreadsheet_chooser_filter">Archivos CSV y Excel</string>
     <string name="spreadsheet_error_read">La aplicación no pudo leer el archivo. Elige un archivo CSV o Excel e inténtalo de nuevo.</string>
     <string name="spreadsheet_error_save">La aplicación no pudo guardar el archivo. Inténtalo de nuevo.</string>
+    <string name="consent_title">Analítica anónima</string>
+    <string name="consent_intro">Esta aplicación recoge datos anónimos sobre cómo se usa y sobre los errores. El equipo usa los datos solo para encontrar problemas y para mejorar la aplicación.</string>
+    <string name="consent_collects">La aplicación registra estos datos:
+• Las pantallas, los diálogos y las pestañas que abres, y durante cuánto tiempo.
+• Las acciones que usas, como guardar una mesa.
+• Los errores y los cierres inesperados, con datos técnicos como el tipo de error.</string>
+    <string name="consent_not_collected">La aplicación no registra tu nombre, tu correo electrónico, tu número EMA ni ningún texto que escribas. Los datos no te identifican.</string>
+    <string name="consent_required">Solo puedes usar la aplicación si aceptas. Si no aceptas, no puedes entrar en la aplicación.</string>
+    <string name="consent_accept">Aceptar y continuar</string>
+    <string name="consent_decline">Rechazar</string>
+    <string name="consent_declined_note">No puedes usar la aplicación sin la analítica anónima. Puedes cerrar la aplicación o aceptar para continuar.</string>
+    <string name="consent_withdraw">Retirar el consentimiento de analítica</string>
+    <string name="consent_withdraw_info">La aplicación detiene la analítica y te lo pregunta de nuevo. No puedes usar la aplicación hasta que aceptes.</string>
 </resources>

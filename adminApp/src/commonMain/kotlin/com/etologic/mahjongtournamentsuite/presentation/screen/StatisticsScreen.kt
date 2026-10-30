@@ -253,6 +253,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                             selected = item == selectedMainTab,
                             onClick = { if (item != selectedMainTab) scope = item },
                             title = item.adminTitle(),
+                            trackingName = item.name,
                             icon = { Icon(item.adminIcon(), contentDescription = null, Modifier.size(20.dp)) },
                         )
                     }
@@ -367,6 +368,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                 selected = item == scope,
                                 onClick = { scope = item },
                                 title = title,
+                                trackingName = item.name,
                                 icon = { Icon(icon, contentDescription = null, Modifier.size(20.dp)) },
                             )
                         }

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -184,148 +185,150 @@ fun IdCardsExportDialog(
     val widthInvalid = widthValue == null || widthValue < minWidthMm - 0.05 || widthValue > maxWidthMm + 0.05
     val heightInvalid = heightValue == null || heightValue < minHeightMm - 0.05 || heightValue > maxHeightMm + 0.05
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text(stringResource(Res.string.create_id_cards))
-                FocusedTextButton(
-                    onClick = {
-                        layout = IdCardSheetLayout()
-                        widthText = layout.cardWidthMm().oneDecimal()
-                        heightText = layout.cardHeightMm().oneDecimal()
-                    },
+    TrackedDialog("CreateIdCards") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
-                    Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Text(stringResource(Res.string.restore_settings), modifier = Modifier.padding(start = 6.dp))
+                    Text(stringResource(Res.string.create_id_cards))
+                    FocusedTextButton(
+                        onClick = {
+                            layout = IdCardSheetLayout()
+                            widthText = layout.cardWidthMm().oneDecimal()
+                            heightText = layout.cardHeightMm().oneDecimal()
+                        },
+                    ) {
+                        Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Text(stringResource(Res.string.restore_settings), modifier = Modifier.padding(start = 6.dp))
+                    }
                 }
-            }
-        },
-        text = {
-            Column(
-                modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (capacity > 1) {
+            },
+            text = {
+                Column(
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    if (capacity > 1) {
+                        LabeledSlider(
+                            icon = Icons.Default.GridView,
+                            label = stringResource(Res.string.cards_per_sheet),
+                            value = effective.cardsPerSheet.toFloat(),
+                            onValueChange = { layout = layout.copy(cardsPerSheet = it.roundToInt()) },
+                            valueRange = 1f..capacity.toFloat(),
+                            steps = capacity - 2,
+                            thumbText = effective.cardsPerSheet.toString(),
+                        )
+                    }
                     LabeledSlider(
-                        icon = Icons.Default.GridView,
-                        label = stringResource(Res.string.cards_per_sheet),
-                        value = effective.cardsPerSheet.toFloat(),
-                        onValueChange = { layout = layout.copy(cardsPerSheet = it.roundToInt()) },
-                        valueRange = 1f..capacity.toFloat(),
-                        steps = capacity - 2,
-                        thumbText = effective.cardsPerSheet.toString(),
+                        icon = Icons.Default.AspectRatio,
+                        label = stringResource(Res.string.card_size),
+                        value = layout.scalePercent.toFloat(),
+                        onValueChange = { applyScale((it * 10).roundToLong() / 10.0) },
+                        valueRange = minScale.toFloat()..maxScale.toFloat(),
+                        steps = 0,
+                        thumbText = "${layout.scalePercent.roundToInt()}%",
                     )
-                }
-                LabeledSlider(
-                    icon = Icons.Default.AspectRatio,
-                    label = stringResource(Res.string.card_size),
-                    value = layout.scalePercent.toFloat(),
-                    onValueChange = { applyScale((it * 10).roundToLong() / 10.0) },
-                    valueRange = minScale.toFloat()..maxScale.toFloat(),
-                    steps = 0,
-                    thumbText = "${layout.scalePercent.roundToInt()}%",
-                )
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Icon(Icons.Default.Straighten, contentDescription = null, modifier = Modifier.size(20.dp))
-                    OutlinedTextField(
-                        value = widthText,
-                        onValueChange = { text ->
-                            widthText = text
-                            val mm = text.replace(',', '.').toDoubleOrNull()
-                            if (mm != null && mm >= minWidthMm - 0.05 && mm <= maxWidthMm + 0.05) {
-                                applyScale(mmToScalePercent(mm), updateWidthText = false)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Icon(Icons.Default.Straighten, contentDescription = null, modifier = Modifier.size(20.dp))
+                        OutlinedTextField(
+                            value = widthText,
+                            onValueChange = { text ->
+                                widthText = text
+                                val mm = text.replace(',', '.').toDoubleOrNull()
+                                if (mm != null && mm >= minWidthMm - 0.05 && mm <= maxWidthMm + 0.05) {
+                                    applyScale(mmToScalePercent(mm), updateWidthText = false)
+                                }
+                            },
+                            label = { Text(stringResource(Res.string.width_mm)) },
+                            singleLine = true,
+                            isError = widthInvalid,
+                            supportingText = if (widthInvalid) {
+                                { Text(stringResource(Res.string.use_range, minWidthMm.oneDecimal(), maxWidthMm.oneDecimal())) }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        ProportionLinkIcon(
+                            originalWidthMm = IdCardSheetLayout().cardWidthMm(),
+                            originalHeightMm = IdCardSheetLayout().cardHeightMm(),
+                        )
+                        OutlinedTextField(
+                            value = heightText,
+                            onValueChange = { text ->
+                                heightText = text
+                                val mm = text.replace(',', '.').toDoubleOrNull()
+                                if (mm != null && mm >= minHeightMm - 0.05 && mm <= maxHeightMm + 0.05) {
+                                    applyScale(mmHeightToScalePercent(mm), updateHeightText = false)
+                                }
+                            },
+                            label = { Text(stringResource(Res.string.height_mm)) },
+                            singleLine = true,
+                            isError = heightInvalid,
+                            supportingText = if (heightInvalid) {
+                                { Text(stringResource(Res.string.use_range, minHeightMm.oneDecimal(), maxHeightMm.oneDecimal())) }
+                            } else {
+                                null
+                            },
+                            modifier = Modifier.weight(1f),
+                        )
+                        Row {
+                            FilledTonalIconToggleButton(
+                                checked = !layout.landscape,
+                                onCheckedChange = { applyOrientation(false) },
+                            ) {
+                                Icon(Icons.Default.CropPortrait, contentDescription = stringResource(Res.string.portrait))
                             }
-                        },
-                        label = { Text(stringResource(Res.string.width_mm)) },
-                        singleLine = true,
-                        isError = widthInvalid,
-                        supportingText = if (widthInvalid) {
-                            { Text(stringResource(Res.string.use_range, minWidthMm.oneDecimal(), maxWidthMm.oneDecimal())) }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    ProportionLinkIcon(
-                        originalWidthMm = IdCardSheetLayout().cardWidthMm(),
-                        originalHeightMm = IdCardSheetLayout().cardHeightMm(),
-                    )
-                    OutlinedTextField(
-                        value = heightText,
-                        onValueChange = { text ->
-                            heightText = text
-                            val mm = text.replace(',', '.').toDoubleOrNull()
-                            if (mm != null && mm >= minHeightMm - 0.05 && mm <= maxHeightMm + 0.05) {
-                                applyScale(mmHeightToScalePercent(mm), updateHeightText = false)
+                            FilledTonalIconToggleButton(
+                                checked = layout.landscape,
+                                onCheckedChange = { applyOrientation(true) },
+                            ) {
+                                Icon(Icons.Default.CropLandscape, contentDescription = stringResource(Res.string.landscape))
                             }
-                        },
-                        label = { Text(stringResource(Res.string.height_mm)) },
-                        singleLine = true,
-                        isError = heightInvalid,
-                        supportingText = if (heightInvalid) {
-                            { Text(stringResource(Res.string.use_range, minHeightMm.oneDecimal(), maxHeightMm.oneDecimal())) }
-                        } else {
-                            null
-                        },
-                        modifier = Modifier.weight(1f),
-                    )
-                    Row {
-                        FilledTonalIconToggleButton(
-                            checked = !layout.landscape,
-                            onCheckedChange = { applyOrientation(false) },
-                        ) {
-                            Icon(Icons.Default.CropPortrait, contentDescription = stringResource(Res.string.portrait))
                         }
-                        FilledTonalIconToggleButton(
-                            checked = layout.landscape,
-                            onCheckedChange = { applyOrientation(true) },
-                        ) {
-                            Icon(Icons.Default.CropLandscape, contentDescription = stringResource(Res.string.landscape))
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
+                        SheetSketch(effective, title = stringResource(Res.string.front_sheet), back = false)
+                        SheetSketch(effective, title = stringResource(Res.string.back_sheet), back = true)
+                    }
+                    // The checkboxes use a smaller touch target, so the two lines stay close to each other.
+                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
+                        Column {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = layout.cutMarks,
+                                    onCheckedChange = { layout = layout.copy(cutMarks = it) },
+                                )
+                                Text(stringResource(Res.string.print_cut_marks_around_the_cards))
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Checkbox(
+                                    checked = layout.doubleSided,
+                                    onCheckedChange = { layout = layout.copy(doubleSided = it) },
+                                )
+                                Text(stringResource(Res.string.arrange_the_cards_for_printing_on))
+                            }
                         }
                     }
                 }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
-                    SheetSketch(effective, title = stringResource(Res.string.front_sheet), back = false)
-                    SheetSketch(effective, title = stringResource(Res.string.back_sheet), back = true)
+            },
+            confirmButton = {
+                FocusedButton(
+                    enabled = !widthInvalid && !heightInvalid,
+                    onClick = { onExport(effective) },
+                ) {
+                    Text(stringResource(Res.string.create_pdf))
                 }
-                // The checkboxes use a smaller touch target, so the two lines stay close to each other.
-                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 32.dp) {
-                    Column {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = layout.cutMarks,
-                                onCheckedChange = { layout = layout.copy(cutMarks = it) },
-                            )
-                            Text(stringResource(Res.string.print_cut_marks_around_the_cards))
-                        }
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Checkbox(
-                                checked = layout.doubleSided,
-                                onCheckedChange = { layout = layout.copy(doubleSided = it) },
-                            )
-                            Text(stringResource(Res.string.arrange_the_cards_for_printing_on))
-                        }
-                    }
-                }
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                enabled = !widthInvalid && !heightInvalid,
-                onClick = { onExport(effective) },
-            ) {
-                Text(stringResource(Res.string.create_pdf))
-            }
-        },
-        dismissButton = {
-            FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-        },
-    )
+            },
+            dismissButton = {
+                FocusedTextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+            },
+        )
+    }
 }
 
 /**

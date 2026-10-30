@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
@@ -52,19 +53,21 @@ fun DateField(label: String, value: String, onChange: (String) -> Unit, modifier
     )
     if (open) {
         val state = rememberDatePickerState(initialSelectedDateMillis = isoDateToEpochMillis(value))
-        DatePickerDialog(
-            onDismissRequest = { open = false },
-            confirmButton = {
-                TextButton(
-                    enabled = state.selectedDateMillis != null,
-                    onClick = {
-                        state.selectedDateMillis?.let { onChange(epochMillisToIsoDate(it)) }
-                        open = false
-                    },
-                ) { Text(stringResource(Res.string.action_ok)) }
-            },
-            dismissButton = { TextButton(onClick = { open = false }) { Text(stringResource(Res.string.action_cancel)) } },
-        ) { DatePicker(state = state) }
+        TrackedDialog("DatePicker") {
+            DatePickerDialog(
+                onDismissRequest = { open = false },
+                confirmButton = {
+                    TextButton(
+                        enabled = state.selectedDateMillis != null,
+                        onClick = {
+                            state.selectedDateMillis?.let { onChange(epochMillisToIsoDate(it)) }
+                            open = false
+                        },
+                    ) { Text(stringResource(Res.string.action_ok)) }
+                },
+                dismissButton = { TextButton(onClick = { open = false }) { Text(stringResource(Res.string.action_cancel)) } },
+            ) { DatePicker(state = state) }
+        }
     }
 }
 
