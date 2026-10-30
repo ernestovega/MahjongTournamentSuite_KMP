@@ -12,6 +12,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.util.tournamentDataRevision
 
@@ -33,11 +37,13 @@ class RankingPresenter(
     private val playerRepository: PlayerRepository,
     private val calculateRankings: CalculateTournamentRankingsUseCase,
     private val logger: Logger,
+    private val telemetry: Telemetry = NoTelemetry,
 ) {
     suspend fun generateEmaReport(
         tournamentId: String,
         rankings: List<PlayerRanking>,
     ): AppResult<ByteArray> = tournamentRepository.generateEmaReport(tournamentId, rankings)
+        .trackAction(telemetry, TelemetryAction.EMA_REPORT_EXPORTED)
 
     suspend fun load(tournamentId: String, force: Boolean = false): AppResult<RankingSnapshot> {
         logger.i { "Loading tournament rankings." }

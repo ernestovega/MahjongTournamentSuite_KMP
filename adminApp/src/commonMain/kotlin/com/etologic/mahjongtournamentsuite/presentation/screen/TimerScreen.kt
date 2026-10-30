@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -58,11 +57,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
@@ -84,6 +83,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.time_is_up
 import mahjongtournamentsuite.adminapp.generated.resources.timer_pause
 import mahjongtournamentsuite.adminapp.generated.resources.timer_start
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 
 @Composable
 fun TimerStandaloneScreen(
@@ -155,7 +155,9 @@ private fun TimerContent(
         }
     }
 
-    val progress = if (maxTimeSeconds <= 0L) 0f else {
+    val progress = if (maxTimeSeconds <= 0L) {
+        0f
+    } else {
         ((maxTimeSeconds - timeLeftSeconds).toFloat() / maxTimeSeconds.toFloat()).coerceIn(0f, 1f)
     }
 
@@ -527,7 +529,7 @@ private fun formatHms(totalSeconds: Long): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
-    return "${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
+    return "$hours:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
 }
 
 @Preview(device = Devices.DESKTOP)

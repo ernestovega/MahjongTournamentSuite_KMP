@@ -55,7 +55,6 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/admin/users/password-resets", "ADMIN"],
   ["PUT", "/admin/users/:uid/photo", "ADMIN"],
   ["DELETE", "/admin/users/:uid/photo", "ADMIN"],
-  ["GET", "/admin/usage", "ADMIN"],
   ["POST", "/tournaments/", "ADMIN"],
   ["PUT", "/tournaments/:tournamentId/settings", "ADMIN"],
   ["DELETE", "/tournaments/:tournamentId", "ADMIN"],

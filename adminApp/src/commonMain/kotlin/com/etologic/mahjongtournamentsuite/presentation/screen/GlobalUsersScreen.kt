@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,11 +24,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -74,18 +70,20 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHead
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -126,7 +124,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_match
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_selected
 import mahjongtournamentsuite.adminapp.generated.resources.optional_display_name
 import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_to
-import mahjongtournamentsuite.adminapp.generated.resources.player
 import mahjongtournamentsuite.adminapp.generated.resources.plus_more
 import mahjongtournamentsuite.adminapp.generated.resources.role
 import mahjongtournamentsuite.adminapp.generated.resources.role_admin
@@ -152,6 +149,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 @Composable
 fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null) {
@@ -196,9 +195,13 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             if (user.disabled) disabledLabel else activeLabel,
         ).any { it.matchesSearch(searchQuery) } &&
             (selectedRoles.isEmpty() || user.role in selectedRoles) &&
-            (selectedTournamentId == null || user.role == GlobalUserRole.ADMIN || user.tournamentAssignments.any {
-                it.tournamentId == selectedTournamentId
-            })
+            (
+                selectedTournamentId == null ||
+                    user.role == GlobalUserRole.ADMIN ||
+                    user.tournamentAssignments.any {
+                        it.tournamentId == selectedTournamentId
+                    }
+                )
     }
 
     // The players screen opens this screen with the account to edit. The dialog opens once the accounts are loaded.
@@ -302,7 +305,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     LaunchedEffect(editingUser, showCreateDialog, pendingDisabledUser, restoreUid, users) {
         if (editingUser == null && !showCreateDialog && pendingDisabledUser == null) {
             val uid = restoreUid
-            if (uid == null) addFocusRequester.requestFocus() else {
+            if (uid == null) {
+                addFocusRequester.requestFocus()
+            } else {
                 rowFocusRequesters[uid]?.requestFocus()
                 restoreUid = null
             }
@@ -419,7 +424,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 }
             },
             onChangeDisabled = { user ->
-                if (user.disabled) setDisabled(user, false) else {
+                if (user.disabled) {
+                    setDisabled(user, false)
+                } else {
                     editingUser = null
                     pendingDisabledUser = user
                 }
@@ -635,7 +642,10 @@ private fun ManageUserDialog(
     val emaOwner = emaId.trim().takeIf { it.isNotEmpty() }
         ?.let { id -> accounts.firstOrNull { it.uid != original?.uid && it.emaId == id } }
     val isPlayerRole = role == GlobalUserRole.PLAYER
-    val valid = normalizedEmail.contains("@") && emailsMatch && emailOwner == null && emaOwner == null &&
+    val valid = normalizedEmail.contains("@") &&
+        emailsMatch &&
+        emailOwner == null &&
+        emaOwner == null &&
         (!isPlayerRole || emaId.isNotBlank())
     var showEmaPicker by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { emailFocus.requestFocus() }
@@ -675,13 +685,19 @@ private fun ManageUserDialog(
                             name = target.alias.ifBlank { target.email },
                             onUpload = { contentType, bytes ->
                                 when (val result = onUploadPhoto(target, contentType, bytes)) {
-                                    is AppResult.Success -> { photoUser = result.value; null }
+                                    is AppResult.Success -> {
+                                        photoUser = result.value
+                                        null
+                                    }
                                     is AppResult.Failure -> result.error.toUiText()
                                 }
                             },
                             onRemove = {
                                 when (val result = onRemovePhoto(target)) {
-                                    is AppResult.Success -> { photoUser = result.value; null }
+                                    is AppResult.Success -> {
+                                        photoUser = result.value
+                                        null
+                                    }
                                     is AppResult.Failure -> result.error.toUiText()
                                 }
                             },
@@ -837,7 +853,9 @@ private fun ManageUserDialog(
                         Spacer(Modifier.width(8.dp))
                         FocusedButton(
                             onClick = {
-                                val selectedAssignments = if (role != GlobalUserRole.EDITOR) emptyList() else {
+                                val selectedAssignments = if (role != GlobalUserRole.EDITOR) {
+                                    emptyList()
+                                } else {
                                     tournaments.filter { assignments[it.id] == true }
                                         .map { TournamentAssignment(it.id, it.name) }
                                 }
@@ -857,7 +875,10 @@ private fun ManageUserDialog(
             players = emaPlayers,
             owners = accounts.filter { it.uid != original?.uid && it.emaId != null }.associate { it.emaId!! to it.email },
             selectedEmaId = emaId.trim().ifBlank { null },
-            onSelect = { emaId = it.emaId; showEmaPicker = false },
+            onSelect = {
+                emaId = it.emaId
+                showEmaPicker = false
+            },
             onDismiss = { showEmaPicker = false },
         )
     }
@@ -1084,4 +1105,3 @@ private fun GlobalUserRole.label(): String = stringResource(
         GlobalUserRole.PLAYER -> Res.string.role_player
     },
 )
-

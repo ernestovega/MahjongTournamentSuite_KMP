@@ -14,6 +14,8 @@
   const CONSENT_KEY = "mtsAnalyticsConsent";
   const MAX_CRASHES = 5;
   const configured = !!(CONFIG.apiKey && CONFIG.appId && CONFIG.measurementId);
+  // The tests of the repository replace this loader, so they need no network. The page never sets it.
+  const loadSdk = window.mtsSdkLoader || ((file) => import(SDK + file));
 
   window.mtsApp = APP;
   window.mtsTelemetryConfigured = () => configured;
@@ -37,9 +39,9 @@
   };
 
   async function start() {
-    const { initializeApp } = await import(SDK + "firebase-app.js");
+    const { initializeApp } = await loadSdk("firebase-app.js");
     const { getAnalytics, logEvent, setUserProperties, setAnalyticsCollectionEnabled, isSupported } =
-      await import(SDK + "firebase-analytics.js");
+      await loadSdk("firebase-analytics.js");
     if (!(await isSupported())) return null;
     // A named app, so it does not clash with the app of App Check.
     const app = initializeApp(

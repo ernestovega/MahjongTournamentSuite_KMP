@@ -1,15 +1,12 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -42,8 +39,8 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
 import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import kotlin.math.min
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.action_cancel
 import mahjongtournamentsuite.ui.generated.resources.crop_left_right
@@ -52,6 +49,7 @@ import mahjongtournamentsuite.ui.generated.resources.crop_up_down
 import mahjongtournamentsuite.ui.generated.resources.crop_use
 import mahjongtournamentsuite.ui.generated.resources.crop_zoom
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.min
 
 /** Dialog that crops an image to a square. The circle in the preview shows the area that the app uses. */
 @Composable

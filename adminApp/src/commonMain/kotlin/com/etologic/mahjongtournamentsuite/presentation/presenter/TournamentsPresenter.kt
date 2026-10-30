@@ -1,24 +1,26 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
-import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
-import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
+import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 
 class TournamentsPresenter(
     private val tournamentRepository: TournamentRepository,
@@ -32,8 +34,7 @@ class TournamentsPresenter(
 
     suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias)
 
-    suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> =
-        authRepository.updatePhoto(contentType, bytes)
+    suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = authRepository.updatePhoto(contentType, bytes)
 
     suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
 
@@ -43,16 +44,14 @@ class TournamentsPresenter(
 
     suspend fun loadCountries(force: Boolean = false): AppResult<List<Country>> = tournamentRepository.listCountries(force.toRefreshMode())
 
-    suspend fun loadPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> =
-        tournamentRepository.listTournamentPlayers(tournamentId, force.toRefreshMode())
+    suspend fun loadPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> = tournamentRepository.listTournamentPlayers(tournamentId, force.toRefreshMode())
 
     suspend fun lookupUser(identifier: String): AppResult<UserProfile> = adminRepository.lookupUser(identifier)
 
-    suspend fun deleteTournament(tournamentId: String): AppResult<Unit> =
-        tournamentRepository.deleteTournament(tournamentId).track(telemetry, TelemetryEvent.TOURNAMENT_DELETED)
+    suspend fun deleteTournament(tournamentId: String): AppResult<Unit> = tournamentRepository.deleteTournament(tournamentId).track(telemetry, TelemetryEvent.TOURNAMENT_DELETED)
 
-    suspend fun renameTournament(tournamentId: String, name: String): AppResult<Unit> =
-        tournamentRepository.renameTournament(tournamentId, name)
+    suspend fun renameTournament(tournamentId: String, name: String): AppResult<Unit> = tournamentRepository.renameTournament(tournamentId, name)
+        .trackAction(telemetry, TelemetryAction.TOURNAMENT_RENAMED)
 
     suspend fun updateTournamentSettings(
         tournamentId: String,
@@ -98,7 +97,7 @@ class TournamentsPresenter(
         matchEndMode = matchEndMode,
         matchExtraMinutes = matchExtraMinutes,
         timeZone = timeZone,
-    )
+    ).trackAction(telemetry, TelemetryAction.TOURNAMENT_SETTINGS_UPDATED)
 
     suspend fun signOut() = authRepository.signOut()
 }

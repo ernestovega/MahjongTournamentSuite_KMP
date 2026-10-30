@@ -1,24 +1,26 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
-import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
-import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
-import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
-import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetFailure
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetOutcome
+import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 
 class UsersPresenter(
     private val tournamentRepository: TournamentRepository,
@@ -29,9 +31,6 @@ class UsersPresenter(
 ) {
     suspend fun loadAdminStatus(force: Boolean = false): AppResult<AdminStatus> = adminRepository.whoAmI(force.mode())
 
-    suspend fun loadUsageReport(days: Int): AppResult<com.etologic.mahjongtournamentsuite.domain.model.UsageReport> =
-        adminRepository.loadUsageReport(days)
-
     suspend fun loadUsers(force: Boolean = false): AppResult<List<ManagedUser>> = adminRepository.listUsers(force.mode())
 
     suspend fun createUser(
@@ -41,20 +40,21 @@ class UsersPresenter(
         tournamentAssignments: List<TournamentAssignment>,
         emaId: String? = null,
     ): AppResult<ManagedUser> = adminRepository.createUser(email, alias, role, tournamentAssignments, emaId)
+        .trackAction(telemetry, TelemetryAction.ACCOUNT_CREATED)
 
     /** The shared EMA player list. The account dialog uses it to pick an EMA ID. */
     suspend fun loadEmaPlayers(force: Boolean = false): AppResult<List<Player>> = playerRepository.listPlayers(force.mode())
 
-    suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser> = adminRepository.updateUser(user)
+    suspend fun updateUser(user: ManagedUser): AppResult<ManagedUser> = adminRepository.updateUser(user).trackAction(telemetry, TelemetryAction.ACCOUNT_UPDATED)
 
     /** Only admins can set the photo of another account. */
-    suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser> =
-        adminRepository.updateUserPhoto(uid, contentType, bytes)
+    suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser> = adminRepository.updateUserPhoto(uid, contentType, bytes)
+        .trackAction(telemetry, TelemetryAction.ACCOUNT_PHOTO_UPDATED)
 
-    suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = adminRepository.removeUserPhoto(uid)
+    suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = adminRepository.removeUserPhoto(uid).trackAction(telemetry, TelemetryAction.ACCOUNT_PHOTO_REMOVED)
 
-    suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> =
-        adminRepository.setUserDisabled(uid, disabled)
+    suspend fun setUserDisabled(uid: String, disabled: Boolean): AppResult<ManagedUser> = adminRepository.setUserDisabled(uid, disabled)
+        .trackAction(telemetry, if (disabled) TelemetryAction.ACCOUNT_DISABLED else TelemetryAction.ACCOUNT_ENABLED)
 
     /** Sends the password reset email to many accounts. Only admins call it. */
     suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> {
@@ -75,8 +75,7 @@ class UsersPresenter(
         }
     }
 
-    suspend fun requestPasswordReset(email: String): AppResult<Unit> =
-        authRepository.requestPasswordReset(email)
+    suspend fun requestPasswordReset(email: String): AppResult<Unit> = authRepository.requestPasswordReset(email)
 
     suspend fun loadTournaments(force: Boolean = false): AppResult<List<Tournament>> = tournamentRepository.listTournaments(force.mode())
 }

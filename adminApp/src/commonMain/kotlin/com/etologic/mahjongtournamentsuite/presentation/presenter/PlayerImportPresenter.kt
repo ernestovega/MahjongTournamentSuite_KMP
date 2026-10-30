@@ -1,16 +1,16 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
-import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
-import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerExportFile
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerImportRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 
 class PlayerImportPresenter(
     private val repository: PlayerImportRepository,

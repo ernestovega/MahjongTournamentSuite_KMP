@@ -12,6 +12,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresente
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
@@ -31,8 +32,8 @@ val presentationModule = module {
     factory { UsersPresenter(get(), get(), get(), get(), telemetry()) }
     factory { PlayersPresenter(get(), get(), get(), get(), telemetry()) }
     factory { PlayerImportPresenter(get(), get(), telemetry()) }
-    factory { TeamsPresenter(get(), get(), get()) }
-    factory { PlayerBasePresenter(get(), get()) }
+    factory { TeamsPresenter(get(), get(), get(), telemetry()) }
+    factory { PlayerBasePresenter(get(), get(), telemetry()) }
     factory { TablesPresenter(get(), get(), get()) }
     factory { TableManagerPresenter(get(), get(), telemetry()) }
     factory { CalculateTournamentRankingsUseCase() }
@@ -40,6 +41,7 @@ val presentationModule = module {
     factory { LoadStatisticsUseCase(get(), get(), get()) }
     factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
     factory { StatisticsPresenter(get(), get(), get(), get(), get(), telemetry()) }
-    factory { RankingPresenter(get(), get(), get(), get()) }
-    factory { IdCardProofPresenter(get()) }
+    factory { RankingPresenter(get(), get(), get(), get(), telemetry()) }
+    factory { IdCardProofPresenter(get(), telemetry()) }
+    factory { ErrorsPresenter(get()) }
 }

@@ -14,8 +14,7 @@ class TelemetryLogWriterTest {
     private val telemetry = RecordingTelemetry()
     private val writer = TelemetryLogWriter(telemetry)
 
-    private fun warn(error: Throwable?, severity: Severity = Severity.Warn) =
-        writer.log(severity, "Sign in failed.", "tag", error)
+    private fun warn(error: Throwable?, severity: Severity = Severity.Warn) = writer.log(severity, "Sign in failed.", "tag", error)
 
     private fun reasons() = telemetry.events.map { it.second[TelemetryParam.REASON] }
 

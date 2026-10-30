@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedTab
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
@@ -13,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedTab
 
 /** The color of every tab row. It is the color of the top bar. */
 @Composable

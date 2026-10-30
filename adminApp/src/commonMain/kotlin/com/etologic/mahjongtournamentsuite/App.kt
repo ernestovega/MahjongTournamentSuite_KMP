@@ -35,7 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.RankingsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
+import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TablesRoute
 import com.etologic.mahjongtournamentsuite.presentation.TimerRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
@@ -49,7 +49,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandalone
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SplashScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.UsageScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TablesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
@@ -179,7 +179,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     )
                 }
                 screen<TimerRoute> { TimerStandaloneScreen() }
-                screen<UsageRoute> { UsageScreen(navController) }
+                screen<ErrorsRoute> { ErrorsScreen(navController) }
                 screen<StatisticsRoute> { backStackEntry ->
                     StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())
                 }

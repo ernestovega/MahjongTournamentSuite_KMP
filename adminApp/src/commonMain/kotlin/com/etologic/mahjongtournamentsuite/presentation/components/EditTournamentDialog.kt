@@ -1,8 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedTab
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
@@ -49,18 +45,17 @@ import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_M
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedTab
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiIsoDateTimeOrDash
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
-import kotlinx.datetime.TimeZone
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -124,6 +119,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.yes
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 private enum class TournamentEditField {
     NAME,
@@ -365,7 +362,7 @@ fun EditTournamentDialog(
                                             null
                                         },
                                     )
-    
+
                                     MatchTimeFields(
                                         durationText = settingsMatchDurationText,
                                         onDurationChange = { settingsMatchDurationText = it },
@@ -381,7 +378,7 @@ fun EditTournamentDialog(
                                         onExtraMinutesChange = { settingsMatchExtraText = it },
                                         enabled = !isLoading,
                                     )
-    
+
                                     TournamentOptionSwitch(
                                         label = stringResource(Res.string.best_hands),
                                         description = stringResource(Res.string.count_the_best_hands_and_show),
@@ -474,164 +471,165 @@ fun EditTournamentDialog(
                                         },
                                         fieldModifier = Modifier.focusRequester(settingsColorFocusRequester),
                                     )
-    
+
                                     Text(stringResource(Res.string.logo), style = MaterialTheme.typography.titleSmall)
                                     val logoModel = when {
                                         removeSettingsLogo -> null
                                         settingsLogo != null -> settingsLogo?.dataUrl
                                         reusedSettingsLogoTournament != null -> reusedSettingsLogoTournament?.associationLogoUrl
                                         else -> tournament.associationLogoUrl
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                                    verticalAlignment = Alignment.Top,
-                                ) {
-                                    TournamentLogoPreview(
-                                        model = logoModel,
-                                        onImageInfo = { logoImageInfo = it },
-                                        modifier = Modifier.size(120.dp),
-                                    )
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                        verticalAlignment = Alignment.Top,
                                     ) {
-                                        Text(
-                                            text = when {
-                                                removeSettingsLogo -> stringResource(Res.string.logo_will_be_removed)
-                                                settingsLogo != null -> buildString {
-                                                    append(settingsLogo?.fileName.orEmpty())
-                                                    append(" · ")
-                                                    append(formatByteSize(settingsLogo?.bytes?.size?.toLong() ?: 0L))
-                                                    logoImageInfo?.let { append(" · ").append(it) }
-                                                }
-                                                reusedSettingsLogoTournament != null ->
-                                                    stringResource(Res.string.logo_from, reusedSettingsLogoTournament?.name.orEmpty())
-                                                tournament.associationLogoUrl != null ->
-                                                    logoImageInfo?.let { stringResource(Res.string.logo_current_info, it) } ?: stringResource(Res.string.logo_current)
-                                                else -> stringResource(Res.string.logo_none)
-                                            },
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        TournamentLogoPreview(
+                                            model = logoModel,
+                                            onImageInfo = { logoImageInfo = it },
+                                            modifier = Modifier.size(120.dp),
                                         )
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
+                                        Column(
+                                            modifier = Modifier.weight(1f),
+                                            verticalArrangement = Arrangement.spacedBy(8.dp),
                                         ) {
-                                            Button(onClick = settingsLogoPicker::launch) {
-                                                Text(stringResource(if (logoModel == null) Res.string.logo_choose else Res.string.logo_upload))
-                                            }
-                                            if (tournaments.any {
-                                                    it.id != tournament.id && !it.associationLogoUrl.isNullOrBlank()
-                                                }) {
-                                                Button(onClick = { showSettingsLogoLibrary = true }) {
-                                                    Text(stringResource(Res.string.reuse))
+                                            Text(
+                                                text = when {
+                                                    removeSettingsLogo -> stringResource(Res.string.logo_will_be_removed)
+                                                    settingsLogo != null -> buildString {
+                                                        append(settingsLogo?.fileName.orEmpty())
+                                                        append(" · ")
+                                                        append(formatByteSize(settingsLogo?.bytes?.size?.toLong() ?: 0L))
+                                                        logoImageInfo?.let { append(" · ").append(it) }
+                                                    }
+                                                    reusedSettingsLogoTournament != null ->
+                                                        stringResource(Res.string.logo_from, reusedSettingsLogoTournament?.name.orEmpty())
+                                                    tournament.associationLogoUrl != null ->
+                                                        logoImageInfo?.let { stringResource(Res.string.logo_current_info, it) } ?: stringResource(Res.string.logo_current)
+                                                    else -> stringResource(Res.string.logo_none)
+                                                },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                Button(onClick = settingsLogoPicker::launch) {
+                                                    Text(stringResource(if (logoModel == null) Res.string.logo_choose else Res.string.logo_upload))
                                                 }
-                                            }
-                                            if (logoModel != null) {
-                                                FocusedTextButton(
-                                                    onClick = {
-                                                        settingsLogo = null
-                                                        reusedSettingsLogoTournament = null
-                                                        removeSettingsLogo = true
-                                                        logoImageInfo = null
-                                                    },
-                                                ) { Text(stringResource(Res.string.remove)) }
+                                                if (tournaments.any {
+                                                        it.id != tournament.id && !it.associationLogoUrl.isNullOrBlank()
+                                                    }
+                                                ) {
+                                                    Button(onClick = { showSettingsLogoLibrary = true }) {
+                                                        Text(stringResource(Res.string.reuse))
+                                                    }
+                                                }
+                                                if (logoModel != null) {
+                                                    FocusedTextButton(
+                                                        onClick = {
+                                                            settingsLogo = null
+                                                            reusedSettingsLogoTournament = null
+                                                            removeSettingsLogo = true
+                                                            logoImageInfo = null
+                                                        },
+                                                    ) { Text(stringResource(Res.string.remove)) }
+                                                }
                                             }
                                         }
                                     }
-                                }
-    
-                                TournamentReadOnlyField(
-                                    label = stringResource(Res.string.logo_url),
-                                    value = tournament.associationLogoUrl ?: "—",
-                                )
-    
-                                TournamentIdCardPreviewButton(
-                                    shortName = settingsShortName,
-                                    primaryColor = settingsPrimaryColor,
-                                    year = settingsEventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
-                                    associationLogoContentType = settingsLogo?.contentType,
-                                    associationLogoBytes = settingsLogo?.bytes,
-                                    associationLogoUrl = reusedSettingsLogoTournament?.associationLogoUrl
-                                        ?: if (settingsLogo == null && !removeSettingsLogo) tournament.associationLogoUrl else null,
-                                    roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
-                                    onError = { renameError = it },
-                                )
+
+                                    TournamentReadOnlyField(
+                                        label = stringResource(Res.string.logo_url),
+                                        value = tournament.associationLogoUrl ?: "—",
+                                    )
+
+                                    TournamentIdCardPreviewButton(
+                                        shortName = settingsShortName,
+                                        primaryColor = settingsPrimaryColor,
+                                        year = settingsEventStartDate.toIsoTournamentDateOrNull()?.take(4).orEmpty(),
+                                        associationLogoContentType = settingsLogo?.contentType,
+                                        associationLogoBytes = settingsLogo?.bytes,
+                                        associationLogoUrl = reusedSettingsLogoTournament?.associationLogoUrl
+                                            ?: if (settingsLogo == null && !removeSettingsLogo) tournament.associationLogoUrl else null,
+                                        roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
+                                        onError = { renameError = it },
+                                    )
                                 }
                                 EditTournamentTab.SCHEDULE -> {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    OutlinedTextField(
-                                        value = settingsEventStartDate,
-                                        onValueChange = {
-                                            settingsEventStartDate = it.toDateInput()
-                                            settingsEventEndDate = adjustedEndDate(
-                                                startDisplayDate = settingsEventStartDate,
-                                                endDisplayDate = settingsEventEndDate,
-                                            )
-                                            invalidEditFields = invalidEditFields - setOf(
-                                                TournamentEditField.START_DATE,
-                                                TournamentEditField.END_DATE,
-                                            )
-                                            renameError = null
-                                        },
-                                        modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
-                                        label = { RequiredLabel(stringResource(Res.string.from)) },
-                                        placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
-                                        trailingIcon = {
-                                            IconButton(onClick = { showDateRangePicker = true }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.DateRange,
-                                                    contentDescription = stringResource(Res.string.choose_start_date),
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        OutlinedTextField(
+                                            value = settingsEventStartDate,
+                                            onValueChange = {
+                                                settingsEventStartDate = it.toDateInput()
+                                                settingsEventEndDate = adjustedEndDate(
+                                                    startDisplayDate = settingsEventStartDate,
+                                                    endDisplayDate = settingsEventEndDate,
                                                 )
-                                            }
-                                        },
-                                        singleLine = true,
-                                        isError = TournamentEditField.START_DATE in invalidEditFields,
-                                        supportingText = if (TournamentEditField.START_DATE in invalidEditFields) {
-                                            { Text(stringResource(Res.string.use_dd_mm_yyyy)) }
-                                        } else {
-                                            null
-                                        },
-                                    )
-                                    OutlinedTextField(
-                                        value = settingsEventEndDate,
-                                        onValueChange = {
-                                            val newValue = it.toDateInput()
-                                            settingsEventEndDate = when {
-                                                newValue.isEmpty() && settingsEventStartDate.toIsoTournamentDateOrNull() != null ->
-                                                    settingsEventStartDate
-                                                else -> adjustedEndDate(settingsEventStartDate, newValue)
-                                            }
-                                            invalidEditFields = invalidEditFields - setOf(
-                                                TournamentEditField.START_DATE,
-                                                TournamentEditField.END_DATE,
-                                            )
-                                            renameError = null
-                                        },
-                                        modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
-                                        label = { RequiredLabel(stringResource(Res.string.date_to)) },
-                                        placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
-                                        trailingIcon = {
-                                            IconButton(onClick = { showDateRangePicker = true }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.DateRange,
-                                                    contentDescription = stringResource(Res.string.choose_end_date),
+                                                invalidEditFields = invalidEditFields - setOf(
+                                                    TournamentEditField.START_DATE,
+                                                    TournamentEditField.END_DATE,
                                                 )
-                                            }
-                                        },
-                                        singleLine = true,
-                                        isError = TournamentEditField.END_DATE in invalidEditFields,
-                                        supportingText = if (TournamentEditField.END_DATE in invalidEditFields) {
-                                            { Text(stringResource(Res.string.use_a_valid_date_on_or)) }
-                                        } else {
-                                            null
-                                        },
-                                    )
-                                }
+                                                renameError = null
+                                            },
+                                            modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
+                                            label = { RequiredLabel(stringResource(Res.string.from)) },
+                                            placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
+                                            trailingIcon = {
+                                                IconButton(onClick = { showDateRangePicker = true }) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.DateRange,
+                                                        contentDescription = stringResource(Res.string.choose_start_date),
+                                                    )
+                                                }
+                                            },
+                                            singleLine = true,
+                                            isError = TournamentEditField.START_DATE in invalidEditFields,
+                                            supportingText = if (TournamentEditField.START_DATE in invalidEditFields) {
+                                                { Text(stringResource(Res.string.use_dd_mm_yyyy)) }
+                                            } else {
+                                                null
+                                            },
+                                        )
+                                        OutlinedTextField(
+                                            value = settingsEventEndDate,
+                                            onValueChange = {
+                                                val newValue = it.toDateInput()
+                                                settingsEventEndDate = when {
+                                                    newValue.isEmpty() && settingsEventStartDate.toIsoTournamentDateOrNull() != null ->
+                                                        settingsEventStartDate
+                                                    else -> adjustedEndDate(settingsEventStartDate, newValue)
+                                                }
+                                                invalidEditFields = invalidEditFields - setOf(
+                                                    TournamentEditField.START_DATE,
+                                                    TournamentEditField.END_DATE,
+                                                )
+                                                renameError = null
+                                            },
+                                            modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
+                                            label = { RequiredLabel(stringResource(Res.string.date_to)) },
+                                            placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
+                                            trailingIcon = {
+                                                IconButton(onClick = { showDateRangePicker = true }) {
+                                                    Icon(
+                                                        imageVector = Icons.Default.DateRange,
+                                                        contentDescription = stringResource(Res.string.choose_end_date),
+                                                    )
+                                                }
+                                            },
+                                            singleLine = true,
+                                            isError = TournamentEditField.END_DATE in invalidEditFields,
+                                            supportingText = if (TournamentEditField.END_DATE in invalidEditFields) {
+                                                { Text(stringResource(Res.string.use_a_valid_date_on_or)) }
+                                            } else {
+                                                null
+                                            },
+                                        )
+                                    }
                                     TournamentScheduleEditor(
                                         roundRows = settingsRoundScheduleRows,
                                         onRoundRowsChange = { settingsRoundScheduleRows = it },
@@ -659,61 +657,61 @@ fun EditTournamentDialog(
                                             value = stringResource(if (tournament.isCompleted) Res.string.yes else Res.string.no),
                                             modifier = Modifier.weight(1f),
                                         )
-                                }
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        TournamentReadOnlyField(
+                                            label = stringResource(Res.string.players),
+                                            value = tournament.numPlayers.toString(),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        TournamentReadOnlyField(
+                                            label = stringResource(Res.string.rounds),
+                                            value = tournament.numRounds.toString(),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        TournamentReadOnlyField(
+                                            label = stringResource(Res.string.tries),
+                                            value = tournament.numTries.toString(),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                    }
                                     TournamentReadOnlyField(
-                                        label = stringResource(Res.string.players),
-                                        value = tournament.numPlayers.toString(),
-                                        modifier = Modifier.weight(1f),
+                                        label = stringResource(Res.string.created_by_uid),
+                                        value = tournament.createdByUid ?: "—",
                                     )
                                     TournamentReadOnlyField(
-                                        label = stringResource(Res.string.rounds),
-                                        value = tournament.numRounds.toString(),
-                                        modifier = Modifier.weight(1f),
+                                        label = stringResource(Res.string.created_by_name),
+                                        value = tournament.createdByName ?: "—",
                                     )
-                                    TournamentReadOnlyField(
-                                        label = stringResource(Res.string.tries),
-                                        value = tournament.numTries.toString(),
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                }
-                                TournamentReadOnlyField(
-                                    label = stringResource(Res.string.created_by_uid),
-                                    value = tournament.createdByUid ?: "—",
-                                )
-                                TournamentReadOnlyField(
-                                    label = stringResource(Res.string.created_by_name),
-                                    value = tournament.createdByName ?: "—",
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                ) {
-                                    TournamentReadOnlyField(
-                                        label = stringResource(Res.string.created_at),
-                                        value = tournament.createdAt.toUiIsoDateTimeOrDash(),
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    TournamentReadOnlyField(
-                                        label = stringResource(Res.string.updated_at),
-                                        value = tournament.updatedAt.toUiIsoDateTimeOrDash(),
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    ) {
+                                        TournamentReadOnlyField(
+                                            label = stringResource(Res.string.created_at),
+                                            value = tournament.createdAt.toUiIsoDateTimeOrDash(),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        TournamentReadOnlyField(
+                                            label = stringResource(Res.string.updated_at),
+                                            value = tournament.updatedAt.toUiIsoDateTimeOrDash(),
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                    }
                                 }
                             }
+                        }
                     }
+                    renameError?.let { message ->
+                        Text(
+                            text = message.asString(),
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
                     }
-                            renameError?.let { message ->
-                                Text(
-                                    text = message.asString(),
-                                    color = MaterialTheme.colorScheme.error,
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
                 }
             },
             confirmButton = {
@@ -844,29 +842,31 @@ fun EditTournamentDialog(
                                 isLoading = true
                                 invalidEditFields = emptySet()
                                 renameError = null
-                                when (val result = presenter.updateTournamentSettings(
-                                    tournamentId = tournament.id,
-                                    name = newName,
-                                    shortName = newShortName,
-                                    primaryColor = newPrimaryColor,
-                                    eventStartDate = validEventStartDate,
-                                    eventEndDate = validEventEndDate,
-                                    hostCountry = newHostCountry,
-                                    hostCity = newHostCity,
-                                    venue = settingsVenue,
-                                    associationLogoContentType = settingsLogo?.contentType,
-                                    associationLogoBytes = settingsLogo?.bytes,
-                                    associationLogoSourceTournamentId = reusedSettingsLogoTournament?.id,
-                                    removeAssociationLogo = removeSettingsLogo,
-                                    roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
-                                    agendaItems = settingsAgendaRows.toTournamentAgendaItems(),
-                                    countBestHands = settingsCountBestHands,
-                                    countChickenHands = settingsCountChickenHands,
-                                    matchDurationMinutes = validMatchDuration,
-                                    matchEndMode = if (settingsFinishHand) MatchEndMode.FINISH_HAND else MatchEndMode.STOP,
-                                    matchExtraMinutes = validMatchExtra ?: tournament.matchExtraMinutes,
-                                    timeZone = settingsTimeZone.trim(),
-                                )) {
+                                when (
+                                    val result = presenter.updateTournamentSettings(
+                                        tournamentId = tournament.id,
+                                        name = newName,
+                                        shortName = newShortName,
+                                        primaryColor = newPrimaryColor,
+                                        eventStartDate = validEventStartDate,
+                                        eventEndDate = validEventEndDate,
+                                        hostCountry = newHostCountry,
+                                        hostCity = newHostCity,
+                                        venue = settingsVenue,
+                                        associationLogoContentType = settingsLogo?.contentType,
+                                        associationLogoBytes = settingsLogo?.bytes,
+                                        associationLogoSourceTournamentId = reusedSettingsLogoTournament?.id,
+                                        removeAssociationLogo = removeSettingsLogo,
+                                        roundSchedules = settingsRoundScheduleRows.toTournamentRoundSchedules(),
+                                        agendaItems = settingsAgendaRows.toTournamentAgendaItems(),
+                                        countBestHands = settingsCountBestHands,
+                                        countChickenHands = settingsCountChickenHands,
+                                        matchDurationMinutes = validMatchDuration,
+                                        matchEndMode = if (settingsFinishHand) MatchEndMode.FINISH_HAND else MatchEndMode.STOP,
+                                        matchExtraMinutes = validMatchExtra ?: tournament.matchExtraMinutes,
+                                        timeZone = settingsTimeZone.trim(),
+                                    )
+                                ) {
                                     is AppResult.Success -> {
                                         showDateRangePicker = false
                                         showColorPickerDialog = false
@@ -876,7 +876,7 @@ fun EditTournamentDialog(
                                         refreshTournaments()
                                         onDismiss()
                                     }
-    
+
                                     is AppResult.Failure -> {
                                         invalidEditFields = emptySet()
                                         errorMessage = result.error.toUiText()
@@ -990,7 +990,7 @@ fun EditTournamentDialog(
                             coroutineScope.launch {
                                 errorMessage = null
                                 isLoading = true
-    
+
                                 when (val result = presenter.deleteTournament(deleting.id)) {
                                     is AppResult.Success -> {
                                         deleteDialogTournament = null
@@ -998,12 +998,12 @@ fun EditTournamentDialog(
                                         refreshTournaments()
                                         onDeleted()
                                     }
-    
+
                                     is AppResult.Failure -> {
                                         errorMessage = result.error.toUiText()
                                     }
                                 }
-    
+
                                 isLoading = false
                             }
                         },

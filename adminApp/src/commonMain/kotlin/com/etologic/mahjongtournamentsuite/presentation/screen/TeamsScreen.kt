@@ -1,9 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import com.etologic.mahjongtournamentsuite.presentation.util.asString
-import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -59,8 +55,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
-import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -74,13 +68,18 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
+import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -176,9 +175,10 @@ fun TeamsScreen(
                     player.id.toString().contains(normalizedQuery) ||
                         normalizeSearchText(player.name.orEmpty()).contains(normalizedQuery)
                 }
-            val matchesCountry = selectedCountryCodes.isEmpty() || teamPlayers.any { player ->
-                player.country.trim().uppercase() in selectedCountryCodes
-            }
+            val matchesCountry = selectedCountryCodes.isEmpty() ||
+                teamPlayers.any { player ->
+                    player.country.trim().uppercase() in selectedCountryCodes
+                }
             matchesSearch && matchesCountry
         }
     }
@@ -248,12 +248,14 @@ fun TeamsScreen(
                 scope.launch {
                     saving = true
                     error = null
-                    when (val result = presenter.updateTeam(
-                        tournamentId = tournamentId,
-                        teamId = editingTeam.id,
-                        name = name,
-                        emaIds = emaIds,
-                    )) {
+                    when (
+                        val result = presenter.updateTeam(
+                            tournamentId = tournamentId,
+                            teamId = editingTeam.id,
+                            name = name,
+                            emaIds = emaIds,
+                        )
+                    ) {
                         is AppResult.Success -> {
                             restoreTeamId = editingTeam.id
                             editingTeamId = null

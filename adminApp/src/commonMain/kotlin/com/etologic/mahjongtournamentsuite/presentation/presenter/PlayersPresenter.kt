@@ -1,10 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
-import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
-import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -17,10 +12,17 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
+import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 
 class PlayersPresenter(
     private val tournamentRepository: TournamentRepository,
@@ -38,26 +40,22 @@ class PlayersPresenter(
 
     suspend fun loadCountries(force: Boolean = false): AppResult<List<Country>> = tournamentRepository.listCountries(force.mode())
 
-    suspend fun loadTeams(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTeam>> =
-        tournamentRepository.listTournamentTeams(tournamentId, force.mode())
+    suspend fun loadTeams(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTeam>> = tournamentRepository.listTournamentTeams(tournamentId, force.mode())
 
-    suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> =
-        tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
+    suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> = tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
 
-    suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> =
-        tournamentRepository.generateTournamentIdCards(tournamentId, sheet)
+    suspend fun generateIdCards(tournamentId: String, sheet: IdCardSheetLayout? = null): AppResult<ByteArray> = tournamentRepository.generateTournamentIdCards(tournamentId, sheet)
+        .trackAction(telemetry, TelemetryAction.ID_CARDS_EXPORTED)
 
-    suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> =
-        tournamentRepository.generateTournamentIdList(tournamentId)
+    suspend fun generateIdList(tournamentId: String): AppResult<ByteArray> = tournamentRepository.generateTournamentIdList(tournamentId)
+        .trackAction(telemetry, TelemetryAction.ID_LIST_EXPORTED)
 
     /** Invites the players with no account and resets the password of the others. */
     /** Sets or clears the pending email of slots. */
-    suspend fun saveEmails(tournamentId: String, items: List<PlayerEmailItem>): AppResult<List<PlayerEmailResult>> =
-        accountRepository.saveEmails(tournamentId, items)
+    suspend fun saveEmails(tournamentId: String, items: List<PlayerEmailItem>): AppResult<List<PlayerEmailResult>> = accountRepository.saveEmails(tournamentId, items).trackAction(telemetry, TelemetryAction.EMAILS_SAVED)
 
-    suspend fun sendToPlayers(tournamentId: String, playerIds: List<Int>): AppResult<List<PlayerAccountActionResult>> =
-        accountRepository.send(tournamentId, playerIds)
-            .track(telemetry, TelemetryEvent.ACCOUNTS_SENT, mapOf(TelemetryParam.PLAYERS to playerIds.size))
+    suspend fun sendToPlayers(tournamentId: String, playerIds: List<Int>): AppResult<List<PlayerAccountActionResult>> = accountRepository.send(tournamentId, playerIds)
+        .track(telemetry, TelemetryEvent.ACCOUNTS_SENT, mapOf(TelemetryParam.PLAYERS to playerIds.size))
 
     suspend fun assignPlayer(
         tournamentId: String,
@@ -67,13 +65,15 @@ class PlayersPresenter(
         tournamentId,
         tournamentPlayerId,
         emaId,
-    )
+    ).trackAction(telemetry, if (emaId == null) TelemetryAction.PLAYER_UNASSIGNED else TelemetryAction.PLAYER_ASSIGNED)
 
     suspend fun setSubstitution(
         tournamentId: String,
         tournamentPlayerId: Int,
         substitution: PlayerSubstitution?,
-    ): AppResult<Unit> = tournamentRepository.setPlayerSubstitution(tournamentId, tournamentPlayerId, substitution)
+    ): AppResult<Unit> = tournamentRepository
+        .setPlayerSubstitution(tournamentId, tournamentPlayerId, substitution)
+        .trackAction(telemetry, if (substitution == null) TelemetryAction.SUBSTITUTION_CLEARED else TelemetryAction.PLAYER_SUBSTITUTED)
 }
 
 private fun Boolean.mode() = if (this) RefreshMode.FORCE else RefreshMode.IF_CHANGED

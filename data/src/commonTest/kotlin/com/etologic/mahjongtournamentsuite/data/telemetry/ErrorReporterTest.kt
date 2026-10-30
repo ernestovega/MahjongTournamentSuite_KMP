@@ -39,7 +39,7 @@ class ErrorReporterTest {
 
     private val client = HttpClient(
         MockEngine { request ->
-            requests += request.url.toString() to String(request.body.toByteArray())
+            requests += request.url.toString() to request.body.toByteArray().decodeToString()
             respond("", HttpStatusCode.NoContent)
         },
     )
@@ -57,7 +57,11 @@ class ErrorReporterTest {
             analytics = object : com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry by analytics {
                 override fun hasConsent(): Boolean = consent
             },
-            app = "player", platform = "android", env = "prod", language = "es", pendingCrashes = store,
+            app = "player",
+            platform = "android",
+            env = "prod",
+            language = "es",
+            pendingCrashes = store,
         )
         return ErrorReporter(platform, client, ApiConfiguration("https://api.test/api"), CoroutineScope(Dispatchers.Unconfined))
     }

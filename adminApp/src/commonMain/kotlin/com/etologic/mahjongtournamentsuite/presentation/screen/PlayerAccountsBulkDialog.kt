@@ -1,10 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.AlertDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -33,7 +31,6 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -57,23 +54,25 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account
 import mahjongtournamentsuite.adminapp.generated.resources.account_has
-import mahjongtournamentsuite.adminapp.generated.resources.country
-import mahjongtournamentsuite.adminapp.generated.resources.ema_id
-import mahjongtournamentsuite.adminapp.generated.resources.email
-import mahjongtournamentsuite.adminapp.generated.resources.id
-import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.account_none
 import mahjongtournamentsuite.adminapp.generated.resources.bulk_info
 import mahjongtournamentsuite.adminapp.generated.resources.clear
 import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.ema_id
+import mahjongtournamentsuite.adminapp.generated.resources.email
 import mahjongtournamentsuite.adminapp.generated.resources.filter_all
+import mahjongtournamentsuite.adminapp.generated.resources.filter_chip_count
+import mahjongtournamentsuite.adminapp.generated.resources.id
 import mahjongtournamentsuite.adminapp.generated.resources.invitations_and_reminders
+import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_email_warning
 import mahjongtournamentsuite.adminapp.generated.resources.no_players_in_this_group
@@ -85,9 +84,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_count_label
 import mahjongtournamentsuite.adminapp.generated.resources.send_summary
-import mahjongtournamentsuite.adminapp.generated.resources.usage_filter_chip
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** The groups an editor can filter by. [hasAccount] null shows every player. */
 internal enum class AccountFilter(val label: StringResource, val icon: ImageVector, val hasAccount: Boolean?) {
@@ -96,8 +96,7 @@ internal enum class AccountFilter(val label: StringResource, val icon: ImageVect
     HAS_ACCOUNT(Res.string.account_has, Icons.Default.CheckCircle, true),
 }
 
-internal fun TournamentPlayer.matches(filter: AccountFilter): Boolean =
-    filter.hasAccount == null || hasAccount == filter.hasAccount
+internal fun TournamentPlayer.matches(filter: AccountFilter): Boolean = filter.hasAccount == null || hasAccount == filter.hasAccount
 
 /** True when the query is blank or appears in the player number, name, email, EMA number or country. */
 internal fun TournamentPlayer.matchesQuery(
@@ -183,9 +182,12 @@ fun PlayerAccountsBulkDialog(
                                 val count = players.count { it.matches(option) }
                                 FilterChip(
                                     selected = filter == option,
-                                    onClick = { filter = option; selected = emptySet() },
+                                    onClick = {
+                                        filter = option
+                                        selected = emptySet()
+                                    },
                                     leadingIcon = { Icon(option.icon, contentDescription = null, Modifier.size(18.dp)) },
-                                    label = { Text(stringResource(Res.string.usage_filter_chip, stringResource(option.label), count)) },
+                                    label = { Text(stringResource(Res.string.filter_chip_count, stringResource(option.label), count)) },
                                 )
                             }
                         }

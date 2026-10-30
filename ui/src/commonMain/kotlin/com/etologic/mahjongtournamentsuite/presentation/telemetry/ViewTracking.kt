@@ -69,8 +69,7 @@ private fun TrackView(kind: String, name: String, parent: String?) {
     }
 }
 
-private fun viewParams(key: String, name: String, parent: String?): Map<String, Any> =
-    buildMap {
-        put(key, name)
-        if (parent != null) put(TelemetryParam.SCREEN, parent)
-    }
+private fun viewParams(key: String, name: String, parent: String?): Map<String, Any> = buildMap {
+    put(key, name)
+    if (parent != null) put(TelemetryParam.SCREEN, parent)
+}

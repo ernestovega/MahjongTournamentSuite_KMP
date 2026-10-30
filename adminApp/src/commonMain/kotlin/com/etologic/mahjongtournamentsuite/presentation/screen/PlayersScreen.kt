@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
@@ -20,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -72,16 +70,14 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailItem
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerEmailOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
-import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -90,13 +86,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
-import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton as OutlinedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -105,12 +97,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account
@@ -126,12 +118,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.clear_assignment_mess
 import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_n
-import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.edit_account
 import mahjongtournamentsuite.adminapp.generated.resources.edit_email
-import mahjongtournamentsuite.adminapp.generated.resources.save
-import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
-import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
+import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
@@ -146,10 +135,13 @@ import mahjongtournamentsuite.adminapp.generated.resources.photo
 import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.player_actions
 import mahjongtournamentsuite.adminapp.generated.resources.player_n
+import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_country_or_ema
 import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_ema_number_player
+import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
+import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.substitution
 import mahjongtournamentsuite.adminapp.generated.resources.tables
@@ -159,6 +151,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.this_assignment
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_players
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 /** Links generated tournament slots to players in the shared base. */
 @Composable
@@ -411,9 +407,15 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             val country = assigned?.country.orEmpty()
             val team = teamNamesById[slot.team] ?: teamLabel(slot.team)
             val tablesForPlayer = tableNumbersByPlayerId[slot.id].orEmpty()
-            val matchesSearch = query.isEmpty() || listOf(
-                name, assigned?.emaId.orEmpty(), slot.email.orEmpty(), slot.id.toString(), team, tablesForPlayer,
-            ).any { normalizeSearchText(it).contains(query) }
+            val matchesSearch = query.isEmpty() ||
+                listOf(
+                    name,
+                    assigned?.emaId.orEmpty(),
+                    slot.email.orEmpty(),
+                    slot.id.toString(),
+                    team,
+                    tablesForPlayer,
+                ).any { normalizeSearchText(it).contains(query) }
             val matchesCountry = selectedCountryCodes.isEmpty() || country.trim().uppercase() in selectedCountryCodes
             matchesSearch && matchesCountry
         }
@@ -474,7 +476,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             busy = accountBusy,
             errorMessage = accountError,
             onSend = { playerIds, emails -> sendToPlayers(playerIds, emails = emails) },
-            onDismiss = { bulkAccountsOpen = false; accountResults = emptyList(); accountError = null },
+            onDismiss = {
+                bulkAccountsOpen = false
+                accountResults = emptyList()
+                accountError = null
+            },
         )
     }
     val assignFocusRequesters = remember(players.map { it.id }) { players.map { FocusRequester() } }
@@ -781,8 +787,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                             true
                                                         }
                                                         Key.DirectionUp -> {
-                                                            if (index == 0) searchFocusRequester.requestFocus()
-                                                            else requestPlayerFocus(index - 1)
+                                                            if (index == 0) {
+                                                                searchFocusRequester.requestFocus()
+                                                            } else {
+                                                                requestPlayerFocus(index - 1)
+                                                            }
                                                             true
                                                         }
                                                         Key.DirectionDown -> {
@@ -1048,7 +1057,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             AppTopBarActions(
                 onIdCards = { idCardsDialogOpen = true },
                 onIdList = ::exportIdList,
-                onPlayerAccounts = { accountError = null; accountResults = emptyList(); bulkAccountsOpen = true },
+                onPlayerAccounts = {
+                    accountError = null
+                    accountResults = emptyList()
+                    bulkAccountsOpen = true
+                },
                 onImportPlayers = { importDialogOpen = true },
                 importLocked = tournamentStarted,
                 onExportPlayers = exportPlayers,
@@ -1093,7 +1106,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     searchFocusRequester.requestFocus()
                                 }) { Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.clear_search)) }
                             }
-                        } else null,
+                        } else {
+                            null
+                        },
                         modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                     )
                     if (tournamentCountryCodes.isNotEmpty()) {
@@ -1113,13 +1128,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             selectedCountryCodes = if (isSelected) selectedCountryCodes - code else selectedCountryCodes + code
                                         },
                                         shape = CircleShape,
-                                        colors = if (isSelected) ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.primary,
-                                            contentColor = MaterialTheme.colorScheme.onPrimary,
-                                        ) else ButtonDefaults.textButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        ),
+                                        colors = if (isSelected) {
+                                            ButtonDefaults.textButtonColors(
+                                                containerColor = MaterialTheme.colorScheme.primary,
+                                                contentColor = MaterialTheme.colorScheme.onPrimary,
+                                            )
+                                        } else {
+                                            ButtonDefaults.textButtonColors(
+                                                containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                                                contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        },
                                         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 5.dp),
                                     ) {
                                         CountryFlag(code = code, contentDescription = stringResource(Res.string.filter_by_code, code))
@@ -1254,44 +1273,46 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     modifier = Modifier.width(TournamentPlayerActionColumnWidth),
                                     contentAlignment = Alignment.CenterEnd,
                                 ) {
-                                    if (!slot.isAssigned) Box(
-                                        modifier = Modifier
-                                            .clip(MaterialTheme.shapes.small)
-                                            .background(
-                                                if (focusedAssignRowIndex == index) {
-                                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
-                                                } else {
-                                                    androidx.compose.ui.graphics.Color.Transparent
-                                                },
-                                            )
-                                            .padding(3.dp),
-                                    ) {
-                                        Button(
-                                            enabled = !loading && savingId == null,
-                                            onClick = { openAssignment(slot.id) },
+                                    if (!slot.isAssigned) {
+                                        Box(
                                             modifier = Modifier
-                                                .focusRequester(assignFocusRequesters[filteredPlayerIndexes[index]])
-                                                .onFocusChanged {
-                                                    focusedAssignRowIndex = if (it.isFocused) index else null
-                                                }
-                                                .onPreviewKeyEvent { event ->
-                                                    if (event.type != KeyEventType.KeyDown) {
-                                                        return@onPreviewKeyEvent false
+                                                .clip(MaterialTheme.shapes.small)
+                                                .background(
+                                                    if (focusedAssignRowIndex == index) {
+                                                        MaterialTheme.colorScheme.primary.copy(alpha = 0.16f)
+                                                    } else {
+                                                        androidx.compose.ui.graphics.Color.Transparent
+                                                    },
+                                                )
+                                                .padding(3.dp),
+                                        ) {
+                                            Button(
+                                                enabled = !loading && savingId == null,
+                                                onClick = { openAssignment(slot.id) },
+                                                modifier = Modifier
+                                                    .focusRequester(assignFocusRequesters[filteredPlayerIndexes[index]])
+                                                    .onFocusChanged {
+                                                        focusedAssignRowIndex = if (it.isFocused) index else null
                                                     }
-                                                    when (event.key) {
-                                                        Key.DirectionLeft, Key.DirectionRight -> true
-                                                        Key.DirectionUp -> {
-                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
-                                                            true
+                                                    .onPreviewKeyEvent { event ->
+                                                        if (event.type != KeyEventType.KeyDown) {
+                                                            return@onPreviewKeyEvent false
                                                         }
-                                                        Key.DirectionDown -> {
-                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
-                                                            true
+                                                        when (event.key) {
+                                                            Key.DirectionLeft, Key.DirectionRight -> true
+                                                            Key.DirectionUp -> {
+                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
+                                                                true
+                                                            }
+                                                            Key.DirectionDown -> {
+                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
+                                                                true
+                                                            }
+                                                            else -> false
                                                         }
-                                                        else -> false
-                                                    }
-                                                },
-                                        ) { Text(stringResource(Res.string.assign), maxLines = 1, overflow = TextOverflow.Clip) }
+                                                    },
+                                            ) { Text(stringResource(Res.string.assign), maxLines = 1, overflow = TextOverflow.Clip) }
+                                        }
                                     }
                                     if (slot.isAssigned) {
                                         var actionsMenuOpen by remember { mutableStateOf(false) }
@@ -1315,23 +1336,23 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                     .onFocusChanged {
                                                         focusedClearRowIndex = if (it.isFocused) index else null
                                                     }
-                                                .onPreviewKeyEvent { event ->
-                                                    if (event.type != KeyEventType.KeyDown) {
-                                                        return@onPreviewKeyEvent false
-                                                    }
-                                                    when (event.key) {
-                                                        Key.DirectionLeft, Key.DirectionRight -> true
-                                                        Key.DirectionUp -> {
-                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
-                                                            true
+                                                    .onPreviewKeyEvent { event ->
+                                                        if (event.type != KeyEventType.KeyDown) {
+                                                            return@onPreviewKeyEvent false
                                                         }
-                                                        Key.DirectionDown -> {
-                                                            requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
-                                                            true
+                                                        when (event.key) {
+                                                            Key.DirectionLeft, Key.DirectionRight -> true
+                                                            Key.DirectionUp -> {
+                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index - 1) ?: -1)
+                                                                true
+                                                            }
+                                                            Key.DirectionDown -> {
+                                                                requestPlayerActionFocus(filteredPlayerIndexes.getOrNull(index + 1) ?: -1)
+                                                                true
+                                                            }
+                                                            else -> false
                                                         }
-                                                        else -> false
-                                                    }
-                                                },
+                                                    },
                                             ) { Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.player_actions)) }
                                             DropdownMenu(
                                                 expanded = actionsMenuOpen,

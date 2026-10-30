@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,12 +19,9 @@ import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -56,7 +51,6 @@ import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
@@ -66,8 +60,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournam
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
-import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
-import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TabContentColor
@@ -78,7 +70,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.components.tabRowColor
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.all_tournaments
@@ -98,6 +89,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournaments
 import mahjongtournamentsuite.adminapp.generated.resources.use_the_field_above_to_search
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** The width of one tab on a wide screen. */
 private val StatisticsTabWidth = 260.dp
@@ -127,8 +120,10 @@ private fun StatisticsScope.adminTitle(): String = stringResource(
 fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     val presenter = koinInject<StatisticsPresenter>()
     var tournamentId by rememberPersistentText("tournament", route.tournamentId)
-    val hasTable = tournamentId != null && tournamentId == route.tournamentId &&
-        route.roundId != null && route.tableId != null
+    val hasTable = tournamentId != null &&
+        tournamentId == route.tournamentId &&
+        route.roundId != null &&
+        route.tableId != null
     // The main tabs. The player tab opens the overall scope of one player.
     val mainTabs = buildList {
         add(StatisticsScope.TOURNAMENT)
@@ -244,7 +239,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 PrimaryTabRow(
                     selectedTabIndex = mainTabs.indexOf(selectedMainTab),
-                    containerColor = tabRowColor(), contentColor = TabContentColor,
+                    containerColor = tabRowColor(),
+                    contentColor = TabContentColor,
                     indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(mainTabs.indexOf(selectedMainTab)), color = TabContentColor) },
                     modifier = Modifier.widthIn(max = StatisticsTabWidth * mainTabs.size),
                 ) {
@@ -261,7 +257,9 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             }
             // The selector sits between the tab rows.
             val pickerData = tournamentData
-            if (scope == StatisticsScope.TOURNAMENT || scope == StatisticsScope.PERSON || scope == StatisticsScope.PERSON_TOURNAMENTS ||
+            if (scope == StatisticsScope.TOURNAMENT ||
+                scope == StatisticsScope.PERSON ||
+                scope == StatisticsScope.PERSON_TOURNAMENTS ||
                 (scope == StatisticsScope.PLAYER && pickerData != null)
             ) {
                 // The name moves to the top bar when this card, with the name of the player, scrolls out of view.
@@ -302,8 +300,13 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     SelectField(
-                                        stringResource(Res.string.tournament), options, tournamentId,
-                                        { tournamentId = it; changingTournament = false },
+                                        stringResource(Res.string.tournament),
+                                        options,
+                                        tournamentId,
+                                        {
+                                            tournamentId = it
+                                            changingTournament = false
+                                        },
                                         Modifier.weight(1f),
                                     )
                                     if (chosenTournament != null) TextButton(onClick = { changingTournament = false }) { Text(stringResource(Res.string.cancel)) }
@@ -340,8 +343,13 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     SelectField(
-                                        stringResource(Res.string.stats_player_field), options, personEma,
-                                        { emaId = it; changingPlayer = false },
+                                        stringResource(Res.string.stats_player_field),
+                                        options,
+                                        personEma,
+                                        {
+                                            emaId = it
+                                            changingPlayer = false
+                                        },
                                         Modifier.weight(1f),
                                     )
                                     if (personProfile != null) TextButton(onClick = { changingPlayer = false }) { Text(stringResource(Res.string.cancel)) }
@@ -359,7 +367,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     PrimaryTabRow(
                         selectedTabIndex = subTabs.indexOfFirst { it.first == scope },
-                        containerColor = tabRowColor(), contentColor = TabContentColor,
+                        containerColor = tabRowColor(),
+                        contentColor = TabContentColor,
                         indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(subTabs.indexOfFirst { it.first == scope }), color = TabContentColor) },
                         modifier = Modifier.widthIn(max = StatisticsTabWidth * subTabs.size),
                     ) {
@@ -376,77 +385,81 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 }
             }
             Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-            when (scope) {
-                StatisticsScope.TOURNAMENT -> {
-                    val specific = tournamentData
-                    val all = overview
-                    if (tournamentId != null && specific != null && specific.tournament.id == tournamentId) {
-                        TournamentStatisticsPanel(
-                            statistics = specific.statistics,
-                            names = specific.names,
-                            onOpenPlayer = { slot ->
-                                chosenSlotText = slot.toString()
-                                val ema = specific.slots.firstOrNull { it.id == slot }?.assignedEmaId?.takeIf { it.isNotBlank() }
-                                if (ema != null) emaId = ema
-                                scope = if (ema != null) StatisticsScope.PERSON else StatisticsScope.PLAYER
-                            },
-                        )
-                    } else if (tournamentId == null && !overviewAllowed) {
-                        Text(
-                            stringResource(Res.string.stats_admin_only),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    } else if (tournamentId == null && all != null) {
-                        TournamentStatisticsPanel(
-                            statistics = all.statistics,
-                            names = all.names,
-                            tournamentCount = all.tournamentCount,
-                            playerCount = all.playerCount,
-                            onOpenPlayer = { playerId ->
-                                emaId = all.profiles[playerId]?.emaId?.takeIf { it.isNotBlank() }
-                                scope = StatisticsScope.PERSON
-                            },
-                        )
+                message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                when (scope) {
+                    StatisticsScope.TOURNAMENT -> {
+                        val specific = tournamentData
+                        val all = overview
+                        if (tournamentId != null && specific != null && specific.tournament.id == tournamentId) {
+                            TournamentStatisticsPanel(
+                                statistics = specific.statistics,
+                                names = specific.names,
+                                onOpenPlayer = { slot ->
+                                    chosenSlotText = slot.toString()
+                                    val ema = specific.slots.firstOrNull { it.id == slot }?.assignedEmaId?.takeIf { it.isNotBlank() }
+                                    if (ema != null) emaId = ema
+                                    scope = if (ema != null) StatisticsScope.PERSON else StatisticsScope.PLAYER
+                                },
+                            )
+                        } else if (tournamentId == null && !overviewAllowed) {
+                            Text(
+                                stringResource(Res.string.stats_admin_only),
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        } else if (tournamentId == null && all != null) {
+                            TournamentStatisticsPanel(
+                                statistics = all.statistics,
+                                names = all.names,
+                                tournamentCount = all.tournamentCount,
+                                playerCount = all.playerCount,
+                                onOpenPlayer = { playerId ->
+                                    emaId = all.profiles[playerId]?.emaId?.takeIf { it.isNotBlank() }
+                                    scope = StatisticsScope.PERSON
+                                },
+                            )
+                        }
+                    }
+
+                    StatisticsScope.TABLE ->
+                        tournamentData?.statistics?.tables
+                            ?.firstOrNull { it.roundId == route.roundId && it.tableId == route.tableId }
+                            ?.let { TableStatisticsPanel(it, tournamentData!!.names) }
+                            ?: Text(stringResource(Res.string.this_table_has_no_statistics_yet))
+
+                    StatisticsScope.PLAYER -> tournamentData?.let { data ->
+                        val slotId = effectiveSlot ?: data.slots.firstOrNull()?.id
+                        data.statistics.players.firstOrNull { it.playerId == slotId }?.let { stats ->
+                            PlayerStatisticsPanel(
+                                stats,
+                                header = data.profiles[slotId]?.let { profile -> { NameHeader(profile) { nameScrolledOut = it } } },
+                                tournaments = listOf(data.tournament),
+                                rivalNames = data.rivalNames,
+                                onOpenRival = { ema ->
+                                    emaId = ema
+                                    scope = StatisticsScope.PERSON
+                                },
+                            )
+                        }
+                    }
+
+                    StatisticsScope.PERSON -> {
+                        person?.let { data ->
+                            PlayerStatisticsPanel(
+                                data.overall,
+                                tournaments = data.tournaments.map { it.first },
+                                rivalNames = data.rivalNames,
+                                onOpenRival = { ema -> emaId = ema },
+                            )
+                        } ?: if (personEma == null) PickPlayerHint() else Unit
+                    }
+
+                    StatisticsScope.PERSON_TOURNAMENTS -> {
+                        person?.let { data ->
+                            PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) })
+                        } ?: if (personEma == null) PickPlayerHint() else Unit
                     }
                 }
-
-                StatisticsScope.TABLE -> tournamentData?.statistics?.tables
-                    ?.firstOrNull { it.roundId == route.roundId && it.tableId == route.tableId }
-                    ?.let { TableStatisticsPanel(it, tournamentData!!.names) }
-                    ?: Text(stringResource(Res.string.this_table_has_no_statistics_yet))
-
-                StatisticsScope.PLAYER -> tournamentData?.let { data ->
-                    val slotId = effectiveSlot ?: data.slots.firstOrNull()?.id
-                    data.statistics.players.firstOrNull { it.playerId == slotId }?.let { stats ->
-                        PlayerStatisticsPanel(
-                stats,
-                header = data.profiles[slotId]?.let { profile -> { NameHeader(profile) { nameScrolledOut = it } } },
-                tournaments = listOf(data.tournament),
-                rivalNames = data.rivalNames,
-                onOpenRival = { ema -> emaId = ema; scope = StatisticsScope.PERSON },
-            )
-                    }
-                }
-
-                StatisticsScope.PERSON -> {
-                    person?.let { data ->
-                        PlayerStatisticsPanel(
-                            data.overall,
-                            tournaments = data.tournaments.map { it.first },
-                            rivalNames = data.rivalNames,
-                            onOpenRival = { ema -> emaId = ema },
-                        )
-                    } ?: if (personEma == null) PickPlayerHint() else Unit
-                }
-
-                StatisticsScope.PERSON_TOURNAMENTS -> {
-                    person?.let { data ->
-                        PlayerTournamentsSection(data.tournaments, loadStandings = { ids -> presenter.standings(data.emaId, ids) })
-                    } ?: if (personEma == null) PickPlayerHint() else Unit
-                }
-            }
             }
         }
     }

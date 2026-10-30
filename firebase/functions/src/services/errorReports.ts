@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 
-import { FieldValue } from "firebase-admin/firestore";
+import { FieldPath, FieldValue } from "firebase-admin/firestore";
 
 import { db } from "../firebase";
 import { badRequest } from "../api/httpError";
@@ -160,12 +160,27 @@ export type ErrorGroupSummary = {
   lastApp: string;
   lastPlatform: string;
   lastVersion: string;
+  lastEnv: string;
   platforms: Record<string, number>;
+  apps: Record<string, number>;
 };
 
-export async function listErrorGroups(limit: number): Promise<ErrorGroupSummary[]> {
-  const snapshot = await db.collection(ERROR_GROUPS_COLLECTION).orderBy("lastSeen", "desc").limit(limit).get();
-  return snapshot.docs.map((doc) => {
+/** Where the next page starts: the time of the last entry of the page and its document id. */
+export type PageCursor = { at: number; id: string };
+
+export type ErrorGroupPage = { groups: ErrorGroupSummary[]; nextCursor: PageCursor | null };
+
+/**
+ * One page of groups, newest first. [since] keeps the groups seen at that time or later (milliseconds).
+ * The answer has a nextCursor while more groups are left. Pass it back as [cursor] to read the next page.
+ */
+export async function listErrorGroups(options: { limit: number; since?: number; cursor?: PageCursor }): Promise<ErrorGroupPage> {
+  let query = db.collection(ERROR_GROUPS_COLLECTION).orderBy("lastSeen", "desc").orderBy(FieldPath.documentId(), "desc");
+  if (options.since !== undefined) query = query.where("lastSeen", ">=", options.since);
+  if (options.cursor) query = query.startAfter(options.cursor.at, options.cursor.id);
+  const snapshot = await query.limit(options.limit + 1).get();
+  const docs = snapshot.docs.slice(0, options.limit);
+  const groups = docs.map((doc) => {
     const data = doc.data();
     return {
       id: doc.id,
@@ -179,26 +194,37 @@ export async function listErrorGroups(limit: number): Promise<ErrorGroupSummary[
       lastApp: data.lastApp ?? "",
       lastPlatform: data.lastPlatform ?? "",
       lastVersion: data.lastVersion ?? "",
+      lastEnv: data.lastEnv ?? "",
       platforms: data.platforms ?? {},
+      apps: data.apps ?? {},
     };
   });
+  const last = groups[groups.length - 1];
+  const hasMore = snapshot.docs.length > options.limit;
+  return { groups, nextCursor: hasMore && last ? { at: last.lastSeen, id: last.id } : null };
 }
 
-/** One group with its sample stack and its newest reports. Null when the group does not exist. */
-export async function loadErrorGroup(id: string, reportLimit: number) {
+/**
+ * One group with its sample stack and one page of its reports, newest first. Null when the group does not exist.
+ * The answer has a nextReportCursor while more reports are left. Pass it back as [cursor].
+ */
+export async function loadErrorGroup(id: string, reportLimit: number, cursor?: PageCursor) {
   const ref = db.collection(ERROR_GROUPS_COLLECTION).doc(id);
-  const [group, reports] = await Promise.all([
-    ref.get(),
-    ref.collection(REPORTS_SUBCOLLECTION).orderBy("createdAt", "desc").limit(reportLimit).get(),
-  ]);
+  let reportQuery = ref.collection(REPORTS_SUBCOLLECTION).orderBy("createdAt", "desc").orderBy(FieldPath.documentId(), "desc");
+  if (cursor) reportQuery = reportQuery.startAfter(cursor.at, cursor.id);
+  const [group, reports] = await Promise.all([ref.get(), reportQuery.limit(reportLimit + 1).get()]);
   if (!group.exists) return null;
   const { expireAt: _groupExpire, ...data } = group.data() ?? {};
+  const page = reports.docs.slice(0, reportLimit);
+  const last = page[page.length - 1];
+  const hasMore = reports.docs.length > reportLimit;
   return {
     id,
     ...data,
-    reports: reports.docs.map((doc) => {
+    reports: page.map((doc) => {
       const { expireAt: _expire, ...report } = doc.data();
       return report;
     }),
+    nextReportCursor: hasMore && last ? { at: last.data().createdAt ?? 0, id: last.id } : null,
   };
 }

@@ -1,12 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import mahjongtournamentsuite.playerapp.generated.resources.scope_players
-import mahjongtournamentsuite.playerapp.generated.resources.scope_me
-import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
-import mahjongtournamentsuite.playerapp.generated.resources.scope_others
-import mahjongtournamentsuite.playerapp.generated.resources.scope_overall
-import mahjongtournamentsuite.playerapp.generated.resources.scope_by_tournaments
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +11,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -33,41 +25,30 @@ import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
@@ -77,15 +58,13 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerTournamentsSection
 import com.etologic.mahjongtournamentsuite.presentation.components.ResetScrollOnChange
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
-import com.etologic.mahjongtournamentsuite.presentation.components.StatRow
-import com.etologic.mahjongtournamentsuite.presentation.components.StatSection
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
@@ -93,16 +72,21 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentSta
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
-import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import kotlin.math.roundToInt
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.action_cancel
 import mahjongtournamentsuite.playerapp.generated.resources.action_change
 import mahjongtournamentsuite.playerapp.generated.resources.country_n
+import mahjongtournamentsuite.playerapp.generated.resources.scope_by_tournaments
+import mahjongtournamentsuite.playerapp.generated.resources.scope_me
+import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
+import mahjongtournamentsuite.playerapp.generated.resources.scope_others
+import mahjongtournamentsuite.playerapp.generated.resources.scope_overall
 import mahjongtournamentsuite.playerapp.generated.resources.scope_player
+import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.stats_choose_player_message
 import mahjongtournamentsuite.playerapp.generated.resources.stats_choose_player_title
@@ -115,6 +99,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.stats_unavailable
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /**
  * Tells the screen that the tab is loading. The screen shows its progress bar under the top bar while this is true.
@@ -214,28 +200,29 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             ResetScrollOnChange(LocalScreenScroll.current?.state, scope to chosenSlotText)
             message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             if (scopes.size > 1) {
-              Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                PrimaryScrollableTabRow(
-                    modifier = Modifier.weight(1f),
-                    selectedTabIndex = scopes.indexOf(scope),
-                    edgePadding = 0.dp,
-                    containerColor = tabRowColor(), contentColor = TabContentColor,
-                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(scopes.indexOf(scope)), color = TabContentColor) },
-                ) {
-                    scopes.forEach { item ->
-                        CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title(), trackingName = item.name)
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    PrimaryScrollableTabRow(
+                        modifier = Modifier.weight(1f),
+                        selectedTabIndex = scopes.indexOf(scope),
+                        edgePadding = 0.dp,
+                        containerColor = tabRowColor(),
+                        contentColor = TabContentColor,
+                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(scopes.indexOf(scope)), color = TabContentColor) },
+                    ) {
+                        scopes.forEach { item ->
+                            CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title(), trackingName = item.name)
+                        }
+                    }
+                    val pickerData = shown
+                    if (scope == StatisticsScope.PLAYER && pickerData != null) {
+                        PlayerDropdownField(
+                            names = pickerData.names,
+                            selectedId = chosenSlotId ?: mySlotId ?: pickerData.slots.firstOrNull()?.id,
+                            onChoose = { chosenSlotText = it.toString() },
+                            modifier = Modifier.padding(start = 12.dp).width(240.dp),
+                        )
                     }
                 }
-                val pickerData = shown
-                if (scope == StatisticsScope.PLAYER && pickerData != null) {
-                    PlayerDropdownField(
-                        names = pickerData.names,
-                        selectedId = chosenSlotId ?: mySlotId ?: pickerData.slots.firstOrNull()?.id,
-                        onChoose = { chosenSlotText = it.toString() },
-                        modifier = Modifier.padding(start = 12.dp).width(240.dp),
-                    )
-                }
-              }
             }
             if (!finished) return@ScreenColumn
             when (scope) {
@@ -271,11 +258,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     data.statistics.players.firstOrNull { it.playerId == slotId }
                         ?.let { stats ->
                             PlayerStatisticsPanel(
-                stats,
-                header = data.profiles[slotId]?.let { profile -> { PlayerStatisticsHeader(profile) } },
-                tournaments = listOf(data.tournament),
-                rivalNames = data.rivalNames,
-            )
+                                stats,
+                                header = data.profiles[slotId]?.let { profile -> { PlayerStatisticsHeader(profile) } },
+                                tournaments = listOf(data.tournament),
+                                rivalNames = data.rivalNames,
+                            )
                         }
                 }
             }
@@ -320,7 +307,8 @@ fun TournamentStatisticsTab(
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 PrimaryTabRow(
                     selectedTabIndex = tabs.indexOf(tab),
-                    containerColor = tabRowColor(), contentColor = TabContentColor,
+                    containerColor = tabRowColor(),
+                    contentColor = TabContentColor,
                     indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
                     modifier = Modifier.widthIn(max = StatisticsTabWidth * tabs.size),
                 ) {
@@ -461,14 +449,18 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     }
     ReportLoading(!finished || othersLoading, onLoadingChange)
     // A rival opens in the "Others" tab.
-    val openRival: (String) -> Unit = { ema -> otherEma = ema; tabName = MyStatisticsKind.OTHERS.name }
+    val openRival: (String) -> Unit = { ema ->
+        otherEma = ema
+        tabName = MyStatisticsKind.OTHERS.name
+    }
     Column(Modifier.fillMaxSize()) {
         HideOnScrollTabs(tab) {
             // The tab row touches the top tab row and has the same width. The content under it has its own padding.
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                 PrimaryTabRow(
                     selectedTabIndex = tabs.indexOf(tab),
-                    containerColor = tabRowColor(), contentColor = TabContentColor,
+                    containerColor = tabRowColor(),
+                    contentColor = TabContentColor,
                     indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
                     modifier = Modifier.widthIn(max = 720.dp),
                 ) {
@@ -556,7 +548,10 @@ private fun OthersStatistics(
         val id = emaId ?: return@LaunchedEffect
         onLoadingChange(true)
         when (val result = presenter.person(id)) {
-            is AppResult.Success -> { data = result.value; message = null }
+            is AppResult.Success -> {
+                data = result.value
+                message = null
+            }
             is AppResult.Failure -> message = result.error.toUiText()
         }
         onLoadingChange(false)
@@ -579,8 +574,13 @@ private fun OthersStatistics(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     SelectField(
-                        stringResource(Res.string.stats_player_field), options, emaId,
-                        { onEmaIdChange(it); changing = false },
+                        stringResource(Res.string.stats_player_field),
+                        options,
+                        emaId,
+                        {
+                            onEmaIdChange(it)
+                            changing = false
+                        },
                         Modifier.weight(1f),
                     )
                     if (profile != null) TextButton(onClick = { changing = false }) { Text(stringResource(Res.string.action_cancel)) }
@@ -643,9 +643,12 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
                 Spacer(Modifier.width(12.dp))
             }
             Text(
-                profile.name, Modifier.weight(1f, fill = false),
-                style = MaterialTheme.typography.titleMedium, color = TabContentColor,
-                maxLines = 1, overflow = TextOverflow.Ellipsis,
+                profile.name,
+                Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.titleMedium,
+                color = TabContentColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
             )
         }
         OutlinedButton(
@@ -674,7 +677,8 @@ private fun OthersViewTabs(view: OthersView, onChoose: (OthersView) -> Unit) {
     val views = OthersView.entries
     PrimaryTabRow(
         selectedTabIndex = views.indexOf(view),
-        containerColor = tabRowColor(), contentColor = TabContentColor,
+        containerColor = tabRowColor(),
+        contentColor = TabContentColor,
         indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(views.indexOf(view)), color = TabContentColor) },
         modifier = Modifier.widthIn(max = OthersMaxWidth),
     ) {

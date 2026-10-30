@@ -45,23 +45,19 @@ private object WebTelemetry : Telemetry {
 
     override fun hasConsent(): Boolean = readConsent()
 
-    override fun setConsent(granted: Boolean) =
-        sendTelemetry("consent", "", JsonObject(mapOf("value" to JsonPrimitive(granted))).toString())
+    override fun setConsent(granted: Boolean) = sendTelemetry("consent", "", JsonObject(mapOf("value" to JsonPrimitive(granted))).toString())
 
-    override fun event(name: String, params: Map<String, Any>) =
-        sendTelemetry("event", name, params.toJsonObject().toString())
+    override fun event(name: String, params: Map<String, Any>) = sendTelemetry("event", name, params.toJsonObject().toString())
 
     override fun screen(name: String) = sendTelemetry("screen", name, "{}")
 
     /** The error log of the API takes handled errors. The decorator sends them there and counts them as events. */
     override fun error(throwable: Throwable, area: String) = Unit
 
-    override fun userProperty(name: String, value: String?) =
-        sendTelemetry("property", name, JsonObject(mapOf("value" to JsonPrimitive(value))).toString())
+    override fun userProperty(name: String, value: String?) = sendTelemetry("property", name, JsonObject(mapOf("value" to JsonPrimitive(value))).toString())
 }
 
-actual fun providePlatformTelemetry(): PlatformTelemetry =
-    PlatformTelemetry(WebTelemetry, readApp(), "web", readEnvironment(), readLanguage(), pendingCrashes = null)
+actual fun providePlatformTelemetry(): PlatformTelemetry = PlatformTelemetry(WebTelemetry, readApp(), "web", readEnvironment(), readLanguage(), pendingCrashes = null)
 
 /** The web has no thread handler. `telemetry.js` listens to the errors of the page. */
 actual fun installCrashHandler(onCrash: (Throwable) -> Unit) = Unit

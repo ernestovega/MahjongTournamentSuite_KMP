@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -54,8 +53,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import kotlin.math.roundToInt
-import kotlin.math.roundToLong
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.arrange_the_cards_for_printing_on
 import mahjongtournamentsuite.adminapp.generated.resources.back_sheet
@@ -75,17 +73,17 @@ import mahjongtournamentsuite.adminapp.generated.resources.the_width_and_the_hei
 import mahjongtournamentsuite.adminapp.generated.resources.use_range
 import mahjongtournamentsuite.adminapp.generated.resources.width_mm
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.roundToInt
+import kotlin.math.roundToLong
 
 private fun Double.oneDecimal(): String {
     val tenths = (this * 10).roundToLong()
     return "${tenths / 10}.${tenths % 10}"
 }
 
-private fun mmToScalePercent(widthMm: Double): Double =
-    widthMm / (IdCardSheetLayout.CARD_WIDTH_PT * IdCardSheetLayout.MM_PER_PT) * 100
+private fun mmToScalePercent(widthMm: Double): Double = widthMm / (IdCardSheetLayout.CARD_WIDTH_PT * IdCardSheetLayout.MM_PER_PT) * 100
 
-private fun mmHeightToScalePercent(heightMm: Double): Double =
-    heightMm / (IdCardSheetLayout.CARD_HEIGHT_PT * IdCardSheetLayout.MM_PER_PT) * 100
+private fun mmHeightToScalePercent(heightMm: Double): Double = heightMm / (IdCardSheetLayout.CARD_HEIGHT_PT * IdCardSheetLayout.MM_PER_PT) * 100
 
 /** A chain icon between the width and the height fields. Its tooltip explains the fixed proportion. */
 @OptIn(ExperimentalMaterial3Api::class)

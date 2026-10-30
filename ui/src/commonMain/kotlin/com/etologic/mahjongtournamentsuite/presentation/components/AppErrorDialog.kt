@@ -1,8 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -23,7 +20,10 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.action_ok
 import mahjongtournamentsuite.ui.generated.resources.dialog_done_title
@@ -98,7 +98,7 @@ private fun AppMessageDialog(
                             }
                         }
                     }
-    
+
                     if (PlatformScrollbarThickness > 0.dp) {
                         PlatformVerticalScrollbar(
                             listState = listState,

@@ -18,7 +18,7 @@
     <string name="sign_in_button">Iniciar sesión</string>
     <string name="app_logo_description">Logotipo de Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Usuarios</string>
-    <string name="top_bar_app_usage">Uso de la app</string>
+    <string name="top_bar_app_errors">Errores de la app</string>
     <string name="top_bar_timer">Temporizador</string>
     <string name="top_bar_ranking">Clasificación</string>
     <string name="date_field_clear">Borrar %1$s</string>

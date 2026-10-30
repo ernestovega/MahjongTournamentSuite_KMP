@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
-import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -14,16 +12,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -34,7 +29,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CalendarLocale
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -75,7 +69,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -88,7 +81,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -96,17 +88,9 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
-import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
-import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.time.Instant
+import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
@@ -141,6 +125,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournament_logo_previ
 import mahjongtournamentsuite.adminapp.generated.resources.when_the_time_is_off
 import mahjongtournamentsuite.adminapp.generated.resources.when_the_time_is_over_the
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 internal expect fun mondayFirstCalendarLocale(): CalendarLocale
@@ -516,7 +508,7 @@ fun TournamentLogoLibraryDialog(
                                 onClick = { onSelect(tournament) },
                                 focusRequester = itemFocusRequesters[index],
                                 buttonModifier = Modifier.focusLoop(previous = previous, next = next),
-                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
                             ) {
                                 AsyncImage(
                                     model = tournament.associationLogoUrl,
@@ -574,9 +566,8 @@ fun TournamentDatePickerDialog(
         ?.takeIf { minimumMillis == null || it >= minimumMillis }
     val selectableDates = remember(minimumMillis, maximumMillis) {
         object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                (minimumMillis == null || utcTimeMillis >= minimumMillis) &&
-                    (maximumMillis == null || utcTimeMillis <= maximumMillis)
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean = (minimumMillis == null || utcTimeMillis >= minimumMillis) &&
+                (maximumMillis == null || utcTimeMillis <= maximumMillis)
         }
     }
     val locale = remember { mondayFirstCalendarLocale() }
@@ -627,7 +618,6 @@ fun TournamentDatePickerDialog(
             },
         ) {
             DatePicker(state = state, colors = tournamentDatePickerColors())
-        
         }
     }
 }
@@ -843,7 +833,6 @@ fun TournamentDateRangePickerDialog(
                     }
                 }
             }
-        
         }
     }
 }
@@ -890,12 +879,11 @@ private fun displayDateToEpochMillis(value: String): Long? = runCatching {
     LocalDate.parse(isoDate).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
 }.getOrNull()
 
-private fun epochMillisToDisplayDate(value: Long): String =
-    Instant.fromEpochMilliseconds(value)
-        .toLocalDateTime(TimeZone.UTC)
-        .date
-        .toString()
-        .toDisplayTournamentDate()
+private fun epochMillisToDisplayDate(value: Long): String = Instant.fromEpochMilliseconds(value)
+    .toLocalDateTime(TimeZone.UTC)
+    .date
+    .toString()
+    .toDisplayTournamentDate()
 
 private data class RgbColor(val red: Int, val green: Int, val blue: Int) {
     fun toHexColor(): String = buildString {
@@ -999,15 +987,13 @@ fun TournamentOptionSwitch(
 const val MAX_MATCH_DURATION_MINUTES = 600
 
 /** The minutes of a match typed in a form, or null when the text is not a whole number from 1 to the maximum. */
-fun matchDurationOrNull(text: String): Int? =
-    text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_DURATION_MINUTES }
+fun matchDurationOrNull(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_DURATION_MINUTES }
 
 /** Longest extra time that the forms accept, in minutes. */
 const val MAX_MATCH_EXTRA_MINUTES = 120
 
 /** The extra minutes typed in a form, or null when the text is not a whole number from 1 to the maximum. */
-fun matchExtraMinutesOrNull(text: String): Int? =
-    text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_EXTRA_MINUTES }
+fun matchExtraMinutesOrNull(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_EXTRA_MINUTES }
 
 private val TimeZoneIdPattern = Regex("^(UTC|[A-Za-z_]+(/[A-Za-z0-9_+-]+)+)$")
 

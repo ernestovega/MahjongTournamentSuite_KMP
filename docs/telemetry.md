@@ -48,10 +48,26 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `players_imported`, `players_exported` | Import or export of players | `format`: `csv` or `xlsx` |
 | `accounts_sent` | Invite or reminder to players | `players` |
 | `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `person`, `me` |
+| `admin_action` | An administrator or editor tries to change or export something (admin app). One event for each try | `action`, one word of the list below. `outcome`: `ok` or `failed` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `action_failed` | Any request fails | `action`, `reason` |
 | `app_error` | The app caught a bug | `report_id`, `action`, `kind`, `reason` |
 | `app_crash` | The app stopped | `report_id`, `kind` |
+
+`outcome` of `admin_action` is `failed` when the request failed. The same failure also sends `action_failed` with the `reason`. To see why an action failed, look at `action_failed` for the same minute, or use the BigQuery export.
+
+`action` of `admin_action` is one of:
+
+| Group | Words |
+| --- | --- |
+| Tournament | `tournament_renamed`, `tournament_settings_updated` |
+| Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
+| Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
+| Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_photo_updated`, `account_photo_removed` |
+| EMA registry | `registry_player_created`, `registry_player_updated`, `registry_photo_updated` |
+
+Other admin work has its own event: `tournament_created`, `tournament_deleted`, `table_saved`, `players_imported`, `players_exported`, `accounts_sent`, `password_reset_requested`.
+The events carry no name and no account id. Split them with the user property `role` to compare administrators and editors.
 
 `reason` of `action_failed` is `network`, `timeout`, `auth`, `conflict`, `client_error`, `server_error` or `unexpected`.
 Only `server_error` and `unexpected` also create an `app_error` and an error report. The others are normal events, such as a user with no network.
@@ -73,7 +89,12 @@ Only `server_error` and `unexpected` also create an `app_error` and an error rep
 
 ### Read the error log
 
-- Admin API: `GET /admin/error-groups?limit=50` lists the groups, newest first. `GET /admin/error-groups/{id}` gives one group with its stack trace and its reports. Only admins can call them.
+- Admin app: administrators open the button "App errors" in the top bar of the Tournaments screen. The screen lists the problems, newest first.
+  - Filters: search text, period, app, platform, type (crash or handled) and production only. The sort is by last time or by count.
+  - A click on a row opens the stack trace, the counts for each platform and app, and the newest reports with their `reportId`. A button copies the stack trace.
+  - The period filter goes to the server. The screen reads every page of that period (200 problems for each request), so no problem is left out. The other filters work on the loaded problems.
+  - The reports in the detail load 50 at a time. A button loads the next 50.
+- Admin API: `GET /admin/error-groups` lists the groups, newest first, in pages of up to 200 (`limit`). `since` (milliseconds) keeps the groups seen at that time or later. While the answer has a `nextCursor`, send its `at` and `id` as `cursorAt` and `cursorId` to read the next page. `GET /admin/error-groups/{id}` gives one group with its stack trace and a page of its reports (`limit` up to 200, same cursor with `nextReportCursor`). Only admins can call them.
 - Firebase console: open Firestore and the collection `errorGroups`.
 
 ### Cross the log with Analytics
@@ -137,6 +158,7 @@ Open Admin > Custom definitions > Create custom dimension.
 | --- | --- | --- |
 | Action | Event | `action` |
 | Reason | Event | `reason` |
+| Outcome | Event | `outcome` |
 | Report id | Event | `report_id` |
 | View | Event | `view` |
 | View kind | Event | `kind` |
@@ -166,10 +188,31 @@ Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds`, 
 - The data has no direct personal data. Analytics still stores an identifier of the device or the browser.
 - Ask a lawyer to check the text of the consent screen before you publish the apps.
 
+## Tests
+
+| Test | What it checks | How to run |
+| --- | --- | --- |
+| `Ga4RulesTest` (domain) | Names of events, parameters and user properties follow the rules of GA4. The lists `all` hold every constant. | `./gradlew :domain:jvmTest` |
+| `AdminActionTrackingTest` (adminApp) | Every write of the admin app sends one `admin_action`, with `ok` or `failed`. | `./gradlew :adminApp:jvmTest` |
+| `telemetryJs.test.ts` (firebase/functions) | Both copies of `telemetry.js` run in a fake page with a fake SDK: consent, events, crash reports, limits. The crash body passes `parseErrorReport` of the server. | `cd firebase/functions && npm test` |
+| `DesktopTelemetryTest` (data) | The desktop app posts the right body to a local server, only after consent. | `./gradlew :data:jvmTest` |
+| `Ga4ValidationSmokeTest` (data) | Google accepts every event of the app. It uses the validation address of the Measurement Protocol, which stores nothing. | See below. It does nothing without the variables. |
+
+Run the smoke test after you add or change an event:
+
+```
+MTS_GA4_MEASUREMENT_ID=G-... MTS_GA4_API_SECRET=... ./gradlew :data:jvmTest --tests '*Ga4ValidationSmokeTest*'
+```
+
+A pass means that the format is valid. It does not mean that GA4 counted the event. Only DebugView (step 7) or the BigQuery export shows that.
+
+The tests of `telemetry.js` fill in the empty settings and replace the loader of the SDK with `window.mtsSdkLoader`. The page never sets that loader.
+
 ## Add a new event
 
 1. Add the name to `TelemetryEvent` in the `domain` module.
 2. Call `result.track(telemetry, TelemetryEvent.X)` in the presenter, or `telemetry.event(...)`.
 3. For a new dialog, wrap it in `TrackedDialog("Name")`. For a new tab, call `TrackedTab("Name")` while it is selected. A new route is tracked by `screen<T>`.
-4. Add the event to the table on this page.
-5. Keep the parameters to fixed words and counts. Register a new parameter in GA4 if a report needs it.
+4. Add the name to the list `all` of its object. `Ga4RulesTest` fails when a constant is missing from the list or breaks a rule of GA4.
+5. Add the event to the table on this page.
+6. Keep the parameters to fixed words and counts. Register a new parameter in GA4 if a report needs it.

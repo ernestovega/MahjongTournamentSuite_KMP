@@ -1,10 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
-import org.jetbrains.compose.resources.pluralStringResource
-import mahjongtournamentsuite.adminapp.generated.resources.country_players_count
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -25,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
@@ -73,7 +67,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.displayName
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -82,11 +75,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHead
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.EmaCountryDropdown
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformScrollbarThickness
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
@@ -94,12 +85,15 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberImagePicker
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerBasePresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -110,6 +104,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.choose_a_player_in_the_list
 import mahjongtournamentsuite.adminapp.generated.resources.clear_search
 import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.country_players_count
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.first_name
@@ -142,8 +137,12 @@ import mahjongtournamentsuite.adminapp.generated.resources.save_changes_to
 import mahjongtournamentsuite.adminapp.generated.resources.save_player_changes
 import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_or_ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.this_player
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 /** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
@@ -511,50 +510,62 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 .padding(end = PlatformScrollbarThickness),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                         ) {
-                        newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }
-                        OutlinedTextField(
-                            value = newEmaId,
-                            onValueChange = { newEmaId = it.toDigitsInput(8); newPlayerError = null },
-                            label = { Text(stringResource(Res.string.ema_number)) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth().focusRequester(newEmaFocusRequester),
-                        )
-                        OutlinedTextField(
-                            value = newFirstName,
-                            onValueChange = { newFirstName = it; newPlayerError = null },
-                            label = { Text(stringResource(Res.string.first_name)) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        OutlinedTextField(
-                            value = newLastName,
-                            onValueChange = { newLastName = it; newPlayerError = null },
-                            label = { Text(stringResource(Res.string.last_name)) },
-                            singleLine = true,
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        EmaCountryDropdown(
-                            selectedCode = newCountry,
-                            onCountrySelected = { newCountry = it; newPlayerError = null },
-                            label = stringResource(Res.string.country),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        PlayerPhotoPreview(
-                            model = newPhoto?.dataUrl,
-                            playerName = "$newFirstName $newLastName".trim(),
-                            maxWidth = 200.dp,
-                            maxHeight = 220.dp,
-                        )
-                        Button(enabled = !saving, onClick = newPlayerImagePicker::launch) {
-                            Text(stringResource(if (newPhoto == null) Res.string.photo_choose else Res.string.photo_choose_new))
-                        }
-                        newPhoto?.let {
-                            Text(
-                                text = it.fileName,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            newPlayerError?.let { AppErrorDialog(it, onDismiss = { newPlayerError = null }) }
+                            OutlinedTextField(
+                                value = newEmaId,
+                                onValueChange = {
+                                    newEmaId = it.toDigitsInput(8)
+                                    newPlayerError = null
+                                },
+                                label = { Text(stringResource(Res.string.ema_number)) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth().focusRequester(newEmaFocusRequester),
                             )
-                        }
+                            OutlinedTextField(
+                                value = newFirstName,
+                                onValueChange = {
+                                    newFirstName = it
+                                    newPlayerError = null
+                                },
+                                label = { Text(stringResource(Res.string.first_name)) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            OutlinedTextField(
+                                value = newLastName,
+                                onValueChange = {
+                                    newLastName = it
+                                    newPlayerError = null
+                                },
+                                label = { Text(stringResource(Res.string.last_name)) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            EmaCountryDropdown(
+                                selectedCode = newCountry,
+                                onCountrySelected = {
+                                    newCountry = it
+                                    newPlayerError = null
+                                },
+                                label = stringResource(Res.string.country),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            PlayerPhotoPreview(
+                                model = newPhoto?.dataUrl,
+                                playerName = "$newFirstName $newLastName".trim(),
+                                maxWidth = 200.dp,
+                                maxHeight = 220.dp,
+                            )
+                            Button(enabled = !saving, onClick = newPlayerImagePicker::launch) {
+                                Text(stringResource(if (newPhoto == null) Res.string.photo_choose else Res.string.photo_choose_new))
+                            }
+                            newPhoto?.let {
+                                Text(
+                                    text = it.fileName,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         }
                         PlatformVerticalScrollbar(
                             scrollState = newPlayerScrollState,
@@ -772,60 +783,60 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     .padding(end = PlatformScrollbarThickness),
                                 verticalArrangement = Arrangement.spacedBy(12.dp),
                             ) {
-                            OutlinedTextField(
-                                value = emaId,
-                                onValueChange = { emaId = it.toDigitsInput(8) },
-                                label = { Text(stringResource(Res.string.ema_number)) },
-                                enabled = canEditEmaNumber && !saving,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            OutlinedTextField(firstName, { firstName = it }, label = { Text(stringResource(Res.string.first_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                            OutlinedTextField(lastName, { lastName = it }, label = { Text(stringResource(Res.string.last_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                            EmaCountryDropdown(
-                                selectedCode = country,
-                                onCountrySelected = { country = it },
-                                enabled = canEdit,
-                                label = stringResource(Res.string.country),
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
-                            PlayerPhotoPreview(
-                                model = photoModel,
-                                playerName = "$firstName $lastName".trim(),
-                                maxWidth = 280.dp,
-                                maxHeight = 340.dp,
-                                enabled = canEdit && !saving,
-                                onClick = imagePicker::launch,
-                            )
-                            if (canEdit) {
-                                pendingPhoto?.let {
-                                    Text(
-                                        text = it.fileName,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            }
-                            if (canEdit && hasPlayerChanges) {
-                                Row(
+                                OutlinedTextField(
+                                    value = emaId,
+                                    onValueChange = { emaId = it.toDigitsInput(8) },
+                                    label = { Text(stringResource(Res.string.ema_number)) },
+                                    enabled = canEditEmaNumber && !saving,
                                     modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                                ) {
-                                    Button(
-                                        enabled = !saving,
-                                        onClick = { showSaveConfirmation = true },
-                                        focusRequester = saveFocusRequester,
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.tertiary,
-                                            contentColor = MaterialTheme.colorScheme.onTertiary,
-                                        ),
-                                    ) {
-                                        Text(stringResource(Res.string.save))
+                                )
+                                OutlinedTextField(firstName, { firstName = it }, label = { Text(stringResource(Res.string.first_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                                OutlinedTextField(lastName, { lastName = it }, label = { Text(stringResource(Res.string.last_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                                EmaCountryDropdown(
+                                    selectedCode = country,
+                                    onCountrySelected = { country = it },
+                                    enabled = canEdit,
+                                    label = stringResource(Res.string.country),
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                                val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
+                                PlayerPhotoPreview(
+                                    model = photoModel,
+                                    playerName = "$firstName $lastName".trim(),
+                                    maxWidth = 280.dp,
+                                    maxHeight = 340.dp,
+                                    enabled = canEdit && !saving,
+                                    onClick = imagePicker::launch,
+                                )
+                                if (canEdit) {
+                                    pendingPhoto?.let {
+                                        Text(
+                                            text = it.fileName,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     }
                                 }
-                            } else if (!canEdit) {
-                                Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            }
+                                if (canEdit && hasPlayerChanges) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                                    ) {
+                                        Button(
+                                            enabled = !saving,
+                                            onClick = { showSaveConfirmation = true },
+                                            focusRequester = saveFocusRequester,
+                                            colors = ButtonDefaults.buttonColors(
+                                                containerColor = MaterialTheme.colorScheme.tertiary,
+                                                contentColor = MaterialTheme.colorScheme.onTertiary,
+                                            ),
+                                        ) {
+                                            Text(stringResource(Res.string.save))
+                                        }
+                                    }
+                                } else if (!canEdit) {
+                                    Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
                             }
                             PlatformVerticalScrollbar(
                                 scrollState = detailsScrollState,

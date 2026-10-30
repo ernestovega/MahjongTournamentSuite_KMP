@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,10 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.email
@@ -37,9 +35,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.email_dialog_title
 import mahjongtournamentsuite.adminapp.generated.resources.email_invalid
 import mahjongtournamentsuite.adminapp.generated.resources.emails_are_missing
 import mahjongtournamentsuite.adminapp.generated.resources.remove_email
-import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.these_players_have_no_email
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 internal val EMAIL_PATTERN = Regex("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$")
 

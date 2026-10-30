@@ -83,7 +83,7 @@ The job **UI tests** of `.github/workflows/firebase.yml` runs this workflow on t
 | `TableEditingTest` | 7 | Hand entry in the admin table editor, the Completed switch, an editor save, and conflicts with another editor. |
 | `ToolsDialogsTest` | 4 | ID card and invitation dialogs. |
 | `InvitationsTest` | 4 | Send from the invitations dialog: the dialog asks for a missing email, a typed email, a valid email, email refused by the mailbox. |
-| `GlobalScreensTest` | 12 | App users, usage, EMA registry, statistics, theme. |
+| `GlobalScreensTest` | 11 | App users, App errors, EMA registry, statistics, theme. |
 | `StatisticsTest` | 6 | Tournament statistics tabs. |
 | `RankingAndTimerTest` | 10 | Ranking board paging and rows, timer round and countdown. |
 | `PlayerSignInTest` | 6 | Player app sign in and errors. |

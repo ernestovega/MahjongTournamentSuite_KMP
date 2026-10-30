@@ -50,7 +50,7 @@ private val savedKinds: List<RouteKind<*>> = listOf(
     kind<TimerRoute>(),
     kind<RankingsRoute>(),
     kind<StatisticsRoute>(),
-    kind<UsageRoute>(),
+    kind<ErrorsRoute>(),
 )
 
 /**

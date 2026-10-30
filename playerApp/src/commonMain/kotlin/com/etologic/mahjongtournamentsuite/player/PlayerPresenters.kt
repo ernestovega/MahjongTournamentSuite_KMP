@@ -1,5 +1,20 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
+import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
+import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
+import com.etologic.mahjongtournamentsuite.domain.model.Player
+import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
+import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
@@ -7,26 +22,11 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
 import com.etologic.mahjongtournamentsuite.domain.telemetry.telemetryRole
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
-import co.touchlab.kermit.Logger
-import com.etologic.mahjongtournamentsuite.domain.model.AppError
-import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
-import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
-import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
-import com.etologic.mahjongtournamentsuite.domain.model.Player
-import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
-import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
-import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
-import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
-import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
+import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 
 class PlayerSessionPresenter(
@@ -36,11 +36,10 @@ class PlayerSessionPresenter(
 ) {
     suspend fun hasSession(): Boolean = authRepository.currentSession() != null
 
-    suspend fun signIn(email: String, password: String): AppResult<Unit> =
-        when (val result = authRepository.signIn(email.trim(), password).track(telemetry, TelemetryEvent.LOGIN)) {
-            is AppResult.Success -> AppResult.Success(Unit)
-            is AppResult.Failure -> result
-        }
+    suspend fun signIn(email: String, password: String): AppResult<Unit> = when (val result = authRepository.signIn(email.trim(), password).track(telemetry, TelemetryEvent.LOGIN)) {
+        is AppResult.Success -> AppResult.Success(Unit)
+        is AppResult.Failure -> result
+    }
 
     suspend fun loadProfile(): AppResult<UserProfile> = authRepository.getMe(RefreshMode.FORCE).also { result ->
         if (result is AppResult.Success) telemetry.userProperty(TelemetryProperty.ROLE, result.value.roles.telemetryRole())
@@ -48,8 +47,7 @@ class PlayerSessionPresenter(
 
     suspend fun updateAlias(alias: String): AppResult<UserProfile> = authRepository.updateAlias(alias)
 
-    suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> =
-        authRepository.updatePhoto(contentType, bytes)
+    suspend fun updatePhoto(contentType: String, bytes: ByteArray): AppResult<UserProfile> = authRepository.updatePhoto(contentType, bytes)
 
     suspend fun removePhoto(): AppResult<UserProfile> = authRepository.removePhoto()
 
@@ -69,8 +67,7 @@ class PlayerTournamentPresenter(
     private val authRepository: AuthRepository,
     private val calculateRankings: CalculateTournamentRankingsUseCase,
 ) {
-    suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> =
-        tournamentRepository.listTournaments(refreshMode)
+    suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
 
     /** Loads the tournament. The repositories check the revision first and load only what changed. */
     suspend fun load(
@@ -124,8 +121,7 @@ class PlayerTablePresenter(
     ): AppResult<Unit> = handRepository.addPenalties(tournamentId, roundId, tableId, penalties, expectedVersion)
         .track(telemetry, TelemetryEvent.PENALTY_ADDED, mapOf(TelemetryParam.HANDS to penalties.size))
 
-    suspend fun preview(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal): AppResult<HandPreview> =
-        handRepository.previewHand(tournamentId, roundId, tableId, proposal).track(telemetry, TelemetryEvent.HAND_PREVIEWED)
+    suspend fun preview(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal): AppResult<HandPreview> = handRepository.previewHand(tournamentId, roundId, tableId, proposal).track(telemetry, TelemetryEvent.HAND_PREVIEWED)
 
     suspend fun record(
         tournamentId: String,
@@ -159,16 +155,13 @@ class PlayerStatisticsPresenter(
     }
 
     /** The players that the signed-in player plays with, from the tournaments that the account can see. */
-    suspend fun players(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Player>> =
-        playerRepository.listPlayers(refreshMode)
+    suspend fun players(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Player>> = playerRepository.listPlayers(refreshMode)
 
     /** The statistics of another player, in the tournaments that the account can see. */
-    suspend fun person(emaId: String, refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> =
-        loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("person")
+    suspend fun person(emaId: String, refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> = loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("person")
 
     /** The final places of a player in some tournaments. The list shows them for the tournaments on screen. */
-    suspend fun standings(emaId: String, tournamentIds: List<String>, own: Boolean = true): Map<String, Standing> =
-        (loadStored.standings(emaId, own = own, tournamentIds) as? AppResult.Success)?.value.orEmpty()
+    suspend fun standings(emaId: String, tournamentIds: List<String>, own: Boolean = true): Map<String, Standing> = (loadStored.standings(emaId, own = own, tournamentIds) as? AppResult.Success)?.value.orEmpty()
 
     private fun <T> AppResult<T>.viewed(scope: String) = track(telemetry, TelemetryEvent.STATISTICS_VIEWED, mapOf(TelemetryParam.SCOPE to scope))
 }

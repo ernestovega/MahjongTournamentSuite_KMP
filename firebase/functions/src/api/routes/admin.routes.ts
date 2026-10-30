@@ -30,9 +30,9 @@ import {
 } from "../../services/usersService";
 import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
-import { DEFAULT_USAGE_PERIOD, loadUsageReport, USAGE_PERIODS } from "../../services/usageService";
 import { pathParam } from "../pathParam";
 import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
+import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
 
 type Actor = { uid: string; admin?: boolean };
 
@@ -81,33 +81,26 @@ export function adminRouter(): Router {
     }
   });
 
-  /** Usage analytics for administrators: who uses the apps, what they use, when, and where problems appear. */
-  router.get("/usage", requireAuth, requireAdmin, async (req, res, next) => {
-    try {
-      const days = Number(req.query.days ?? DEFAULT_USAGE_PERIOD);
-      if (!(USAGE_PERIODS as readonly number[]).includes(days)) {
-        throw badRequest("Invalid period", { allowed: USAGE_PERIODS });
-      }
-      res.status(200).json(await loadUsageReport(days));
-    } catch (error) {
-      next(error);
-    }
-  });
-
-  /** The error log of the apps: each problem once, with a count. */
+  /**
+   * The error log of the apps: each problem once, with a count. It answers one page at a time, newest first.
+   * `since` (milliseconds) keeps the problems seen at that time or later. A `nextCursor` in the answer means that
+   * more pages exist. Send its two fields back as `cursorAt` and `cursorId` to read the next page.
+   */
   router.get("/error-groups", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      const limit = Math.min(Math.max(Number(req.query.limit ?? 50) || 50, 1), 200);
-      res.status(200).json({ groups: await listErrorGroups(limit) });
+      const limit = limitQuery(req.query.limit, 200);
+      const since = req.query.since === undefined ? undefined : numberQuery(req.query.since, "since");
+      res.status(200).json(await listErrorGroups({ limit, since, cursor: cursorQuery(req.query) }));
     } catch (error) {
       next(error);
     }
   });
 
-  /** One problem with its stack trace and its newest reports. */
+  /** One problem with its stack trace and one page of its newest reports. Pages work as in the list. */
   router.get("/error-groups/:id", requireAuth, requireAdmin, async (req, res, next) => {
     try {
-      const group = await loadErrorGroup(pathParam(req, "id"), 50);
+      const limit = limitQuery(req.query.limit, 50);
+      const group = await loadErrorGroup(pathParam(req, "id"), limit, cursorQuery(req.query));
       if (!group) throw notFound("Error group not found");
       res.status(200).json(group);
     } catch (error) {

@@ -4,6 +4,9 @@ import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import java.io.File
 import java.net.URI
 import java.net.http.HttpClient
@@ -14,9 +17,6 @@ import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.prefs.Preferences
-import kotlinx.serialization.json.JsonArray
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * The settings of Analytics for the desktop app. The desktop has no Firebase SDK, so it sends the events to the
@@ -36,12 +36,16 @@ internal class DesktopTelemetry(
     private val measurementId: String,
     private val apiSecret: String,
     private val env: String,
+    /** The collect endpoint of GA4. A test sets the address of a local server. */
+    private val endpoint: String = GA4_ENDPOINT,
+    /** The node of the Java preferences that holds the consent and the id of the installation. A test uses its own. */
+    private val preferencesNode: String = PREFERENCES_NODE,
 ) : Telemetry {
     private val client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build()
-    private val clientId = readClientId()
+    private val clientId = readClientId(preferencesNode)
     private val sessionId = System.currentTimeMillis() / 1000
     private val properties = ConcurrentHashMap<String, String>()
-    private val preferences = Preferences.userRoot().node("MahjongTournamentSuite")
+    private val preferences = Preferences.userRoot().node(preferencesNode)
     private var consent = runCatching { preferences.getBoolean(CONSENT_KEY, false) }.getOrDefault(false)
 
     init {
@@ -77,49 +81,58 @@ internal class DesktopTelemetry(
     private fun send(name: String, params: Map<String, Any>) {
         if (!consent) return
         runCatching {
-            val body = JsonObject(
-                mapOf(
-                    "client_id" to JsonPrimitive(clientId),
-                    "user_properties" to JsonObject(
-                        properties.mapValues { JsonObject(mapOf("value" to JsonPrimitive(it.value))) },
-                    ),
-                    "events" to JsonArray(
-                        listOf(
-                            JsonObject(
-                                mapOf(
-                                    "name" to JsonPrimitive(name),
-                                    "params" to JsonObject(
-                                        params.toJsonObject() + mapOf(
-                                            // Without these two values GA4 does not count the event in the standard reports.
-                                            "session_id" to JsonPrimitive(sessionId),
-                                            "engagement_time_msec" to JsonPrimitive(1),
-                                            "app_version" to JsonPrimitive(AppVersion.name),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ).toString()
+            val body = measurementBody(clientId, properties, sessionId, name, params)
             val request = HttpRequest.newBuilder(
-                URI("https://www.google-analytics.com/mp/collect?measurement_id=$measurementId&api_secret=$apiSecret"),
+                URI("$endpoint?measurement_id=$measurementId&api_secret=$apiSecret"),
             ).timeout(Duration.ofSeconds(5)).POST(HttpRequest.BodyPublishers.ofString(body)).build()
             client.sendAsync(request, HttpResponse.BodyHandlers.discarding())
         }
     }
 
     /** A random id for this installation. It holds no data about the person. */
-    private fun readClientId(): String = runCatching {
-        val preferences = Preferences.userRoot().node("MahjongTournamentSuite")
+    private fun readClientId(node: String): String = runCatching {
+        val preferences = Preferences.userRoot().node(node)
         preferences.get(CLIENT_ID_KEY, null) ?: UUID.randomUUID().toString().also { preferences.put(CLIENT_ID_KEY, it) }
     }.getOrElse { UUID.randomUUID().toString() }
 
-    private companion object {
-        const val CLIENT_ID_KEY = "telemetryClientId"
-        const val CONSENT_KEY = "telemetryConsent"
+    companion object {
+        const val GA4_ENDPOINT = "https://www.google-analytics.com/mp/collect"
+        const val PREFERENCES_NODE = "MahjongTournamentSuite"
+        private const val CLIENT_ID_KEY = "telemetryClientId"
+        private const val CONSENT_KEY = "telemetryConsent"
     }
 }
+
+/** The body of one request to the Measurement Protocol of GA4. */
+internal fun measurementBody(
+    clientId: String,
+    properties: Map<String, String>,
+    sessionId: Long,
+    name: String,
+    params: Map<String, Any>,
+): String = JsonObject(
+    mapOf(
+        "client_id" to JsonPrimitive(clientId),
+        "user_properties" to JsonObject(properties.mapValues { JsonObject(mapOf("value" to JsonPrimitive(it.value))) }),
+        "events" to JsonArray(
+            listOf(
+                JsonObject(
+                    mapOf(
+                        "name" to JsonPrimitive(name),
+                        "params" to JsonObject(
+                            params.toJsonObject() + mapOf(
+                                // Without these two values GA4 does not count the event in the standard reports.
+                                "session_id" to JsonPrimitive(sessionId),
+                                "engagement_time_msec" to JsonPrimitive(1),
+                                "app_version" to JsonPrimitive(AppVersion.name),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    ),
+).toString()
 
 /** A file in the home folder. A crash writes it, and the next start sends it. */
 internal class FilePendingCrashStore(private val file: File) : PendingCrashStore {
@@ -135,14 +148,13 @@ internal class FilePendingCrashStore(private val file: File) : PendingCrashStore
     }.getOrNull()
 }
 
+/** The Analytics of the desktop app, or [NoTelemetry] while the measurement id or the API secret is empty. */
+internal fun desktopAnalytics(measurementId: String, apiSecret: String, env: String): Telemetry = if (measurementId.isBlank() || apiSecret.isBlank()) NoTelemetry else DesktopTelemetry(measurementId, apiSecret, env)
+
 actual fun providePlatformTelemetry(): PlatformTelemetry {
     // jpackage sets this property in an installed app. A run from the IDE or Gradle does not have it.
     val env = if (System.getProperty("jpackage.app-path") != null) "prod" else "dev"
-    val analytics = if (DesktopTelemetryConfig.MEASUREMENT_ID.isBlank() || DesktopTelemetryConfig.API_SECRET.isBlank()) {
-        NoTelemetry
-    } else {
-        DesktopTelemetry(DesktopTelemetryConfig.MEASUREMENT_ID, DesktopTelemetryConfig.API_SECRET, env)
-    }
+    val analytics = desktopAnalytics(DesktopTelemetryConfig.MEASUREMENT_ID, DesktopTelemetryConfig.API_SECRET, env)
     val pending = FilePendingCrashStore(File(System.getProperty("user.home"), ".mahjongtournamentsuite/pending-crash.json"))
     return PlatformTelemetry(analytics, "admin", "desktop", env, Locale.getDefault().language, pending)
 }

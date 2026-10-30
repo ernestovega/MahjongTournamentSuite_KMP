@@ -18,7 +18,7 @@
     <string name="sign_in_button">Sign in</string>
     <string name="app_logo_description">Mahjong Tournament Suite logo</string>
     <string name="top_bar_app_users">Users</string>
-    <string name="top_bar_app_usage">App usage</string>
+    <string name="top_bar_app_errors">App errors</string>
     <string name="top_bar_timer">Timer</string>
     <string name="top_bar_ranking">Ranking</string>
     <string name="date_field_clear">Clear %1$s</string>
