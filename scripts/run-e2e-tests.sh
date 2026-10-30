@@ -18,6 +18,7 @@ status_file="$(mktemp)"
 run_gradle() {
   local args=()
   [ -n "$1" ] && args+=("-Pandroid.testInstrumentationRunnerArguments.class=$1")
+  [ -n "${E2E_WAIT_MS:-}" ] && args+=("-Pandroid.testInstrumentationRunnerArguments.e2eWaitMs=$E2E_WAIT_MS")
   rm -rf "$results"
   (cd "$root" && ./gradlew ":$module:connectedDebugAndroidTest" ${args[@]+"${args[@]}"} > "$root/build/e2e-gradle.log" 2>&1)
 }
