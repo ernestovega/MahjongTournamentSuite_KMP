@@ -149,6 +149,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         env:
           E2E_TESTS: ${{ inputs.tests }}
+          E2E_WAIT_MS: 90000
         with:
           api-level: 34
           target: google_apis
@@ -156,13 +157,15 @@ jobs:
           profile: ${{ matrix.profile }}
           disable-animations: true
           ram-size: 4096M
+          # With a hardware keyboard the soft keyboard does not cover half of the screen, as on a computer.
+          enable-hw-keyboard: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           script: |
             # The runner has two cores and draws with software. A small screen keeps the app fast enough.
             # The tablet keeps the same size in dp. The error windows of slow system apps must not cover the app.
             adb shell settings put global hide_error_dialogs 1
             if [ "${{ matrix.module }}" = "playerAndroidApp" ]; then adb shell wm size 720x1600 && adb shell wm density 280; else adb shell wm size 1280x800 && adb shell wm density 160; fi
-            mkdir -p build && scripts/run-e2e-tests.sh ${{ matrix.module }} "$E2E_TESTS"; status=$?; adb pull /sdcard/Download/e2e ${{ matrix.module }}/build/e2e-screenshots || true; exit $status
+            mkdir -p build && E2E_LOGCAT=build/e2e-logcat.txt scripts/run-e2e-tests.sh ${{ matrix.module }} "$E2E_TESTS"; status=$?; adb pull /sdcard/Download/e2e ${{ matrix.module }}/build/e2e-screenshots || true; exit $status
 
       - if: inputs.runner == 'firebase-test-lab'
         uses: google-github-actions/auth@v2
@@ -216,6 +219,7 @@ jobs:
             ${{ matrix.module }}/build/reports/androidTests/
             ${{ matrix.module }}/build/e2e-screenshots/
             build/e2e-gradle.log
+            build/e2e-logcat.txt
             ${{ runner.temp }}/e2e-backend.log
             ${{ runner.temp }}/tunnel.log
           if-no-files-found: ignore
