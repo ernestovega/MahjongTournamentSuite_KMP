@@ -64,14 +64,14 @@ In both cases the runner starts the local backend on the emulators, like `npm ru
 
 ### At night, when they are due
 
-The workflow **UI tests nightly** (`.github/workflows/ui-tests-nightly.yml`) runs every day at 04:00 UTC on `main`. This is 05:00 in Spain in winter and 06:00 in summer, because GitHub uses UTC only. You can also start it by hand.
+The workflow **UI tests nightly** (`.github/workflows/ui-tests-nightly.yml`) runs every day at 04:00 UTC on the default branch of the repository. Set the default branch to `develop`, so the tests check the code that is merged there. This is 05:00 in Spain in winter and 06:00 in summer, because GitHub uses UTC only. You can also start it by hand.
 It first decides, for each app, if the UI tests are due. They are due in two cases:
 
 - 5 or more pull requests were merged since the last passing run of that app.
 - A merged pull request changed a critical path since that run. The list is `CRITICAL` in the workflow: the API routes and models of the functions, the Firestore and Storage rules, the `domain`, `data` and `ui` modules, the `src/main` folders of the Android apps and the Gradle files.
 
 When an app is due, the workflow runs **UI tests** on the GitHub emulator for that app. A failed run sends an email from GitHub. Nothing blocks a pull request.
-A manual run that passed on `main` also counts as a passing run.
+A manual run that passed on the default branch also counts as a passing run.
 Change the limit of 5 with the repository variable `UI_TESTS_EVERY_N_MERGES`.
 
 ## What the tests cover
