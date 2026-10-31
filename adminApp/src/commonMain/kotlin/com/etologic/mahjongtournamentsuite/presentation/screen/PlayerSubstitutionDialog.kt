@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -62,69 +63,71 @@ fun PlayerSubstitutionDialog(
     var duringSession by remember { mutableStateOf(current?.duringSession ?: false) }
     var excluded by remember { mutableStateOf(current?.excludedFromEma ?: false) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(if (current == null) stringResource(Res.string.substitute_player_question, playerName) else stringResource(Res.string.substitution_of_player, playerName)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.substitution_explanation))
-                Text(stringResource(Res.string.reason), style = MaterialTheme.typography.labelLarge)
-                SubstitutionReason.entries.forEach { option ->
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(
-                            selected = reason == option,
-                            onClick = {
-                                reason = option
-                                if (option == SubstitutionReason.LATE) duringSession = false
-                                if (option != SubstitutionReason.ILLNESS) excluded = false
-                            },
-                        )
-                        Text(
-                            when (option) {
-                                SubstitutionReason.LATE -> stringResource(Res.string.reason_late)
-                                SubstitutionReason.ILLNESS -> stringResource(Res.string.reason_ill)
-                                SubstitutionReason.DISQUALIFIED -> stringResource(Res.string.reason_disqualified)
-                            },
-                        )
+    TrackedDialog("SubstitutePlayerQuestion") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(if (current == null) stringResource(Res.string.substitute_player_question, playerName) else stringResource(Res.string.substitution_of_player, playerName)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(Res.string.substitution_explanation))
+                    Text(stringResource(Res.string.reason), style = MaterialTheme.typography.labelLarge)
+                    SubstitutionReason.entries.forEach { option ->
+                        Row(
+                            Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(
+                                selected = reason == option,
+                                onClick = {
+                                    reason = option
+                                    if (option == SubstitutionReason.LATE) duringSession = false
+                                    if (option != SubstitutionReason.ILLNESS) excluded = false
+                                },
+                            )
+                            Text(
+                                when (option) {
+                                    SubstitutionReason.LATE -> stringResource(Res.string.reason_late)
+                                    SubstitutionReason.ILLNESS -> stringResource(Res.string.reason_ill)
+                                    SubstitutionReason.DISQUALIFIED -> stringResource(Res.string.reason_disqualified)
+                                },
+                            )
+                        }
+                    }
+                    Text(stringResource(Res.string.first_round_of_the_substitute), style = MaterialTheme.typography.labelLarge)
+                    Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        rounds.forEach { round ->
+                            FilterChip(selected = fromRound == round, onClick = { fromRound = round }, label = { Text("$round") })
+                        }
+                    }
+                    if (reason != SubstitutionReason.LATE) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = duringSession, onCheckedChange = { duringSession = it })
+                            Text(stringResource(Res.string.the_player_leaves_after_the_session))
+                        }
+                    }
+                    if (reason == SubstitutionReason.ILLNESS) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Checkbox(checked = excluded, onCheckedChange = { excluded = it })
+                            Text(stringResource(Res.string.the_head_referee_excluded_the_player))
+                        }
+                    }
+                    if (reason == SubstitutionReason.DISQUALIFIED) {
+                        Text(stringResource(Res.string.a_disqualified_player_gets_0_table))
                     }
                 }
-                Text(stringResource(Res.string.first_round_of_the_substitute), style = MaterialTheme.typography.labelLarge)
-                Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    rounds.forEach { round ->
-                        FilterChip(selected = fromRound == round, onClick = { fromRound = round }, label = { Text("$round") })
-                    }
+            },
+            confirmButton = {
+                Button(
+                    enabled = !busy,
+                    onClick = { onSave(PlayerSubstitution(reason, fromRound, duringSession, excluded)) },
+                ) { Text(stringResource(if (current == null) Res.string.substitute else Res.string.save)) }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (current != null) TextButton(enabled = !busy, onClick = onRemove) { Text(stringResource(Res.string.remove_substitution)) }
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
                 }
-                if (reason != SubstitutionReason.LATE) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = duringSession, onCheckedChange = { duringSession = it })
-                        Text(stringResource(Res.string.the_player_leaves_after_the_session))
-                    }
-                }
-                if (reason == SubstitutionReason.ILLNESS) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Checkbox(checked = excluded, onCheckedChange = { excluded = it })
-                        Text(stringResource(Res.string.the_head_referee_excluded_the_player))
-                    }
-                }
-                if (reason == SubstitutionReason.DISQUALIFIED) {
-                    Text(stringResource(Res.string.a_disqualified_player_gets_0_table))
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                enabled = !busy,
-                onClick = { onSave(PlayerSubstitution(reason, fromRound, duringSession, excluded)) },
-            ) { Text(stringResource(if (current == null) Res.string.substitute else Res.string.save)) }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (current != null) TextButton(enabled = !busy, onClick = onRemove) { Text(stringResource(Res.string.remove_substitution)) }
-                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-            }
-        },
-    )
+            },
+        )
+    }
 }

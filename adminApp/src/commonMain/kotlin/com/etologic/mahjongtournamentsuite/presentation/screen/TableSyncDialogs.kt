@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
@@ -50,32 +51,34 @@ internal fun TableUpdatesDialog(
     val scrollState = rememberScrollState()
     LaunchedEffect(notices.size) { okFocusRequester.requestFocus() }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(if (notices.size == 1) Res.string.table_updated else Res.string.tables_updated)) },
-        text = {
-            ScrollableColumnWithScrollbar(
-                state = scrollState,
-                modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
-            ) {
-                notices.forEachIndexed { index, notice ->
-                    if (index > 0) Spacer(Modifier.height(16.dp))
-                    Text(notice.headline().asString(), fontWeight = FontWeight.Bold)
-                    if (notice.lostChanges.isNotEmpty()) {
-                        Spacer(Modifier.height(6.dp))
-                        Text(stringResource(Res.string.enter_these_values_again_if_they), style = MaterialTheme.typography.bodySmall)
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            notice.lostChanges.forEach { change ->
-                                Text(stringResource(Res.string.lost_change_line, change.label.asString(), change.value.asString()), style = MaterialTheme.typography.bodyMedium)
+    TrackedDialog("TableUpdated") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(if (notices.size == 1) Res.string.table_updated else Res.string.tables_updated)) },
+            text = {
+                ScrollableColumnWithScrollbar(
+                    state = scrollState,
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 420.dp),
+                ) {
+                    notices.forEachIndexed { index, notice ->
+                        if (index > 0) Spacer(Modifier.height(16.dp))
+                        Text(notice.headline().asString(), fontWeight = FontWeight.Bold)
+                        if (notice.lostChanges.isNotEmpty()) {
+                            Spacer(Modifier.height(6.dp))
+                            Text(stringResource(Res.string.enter_these_values_again_if_they), style = MaterialTheme.typography.bodySmall)
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                notice.lostChanges.forEach { change ->
+                                    Text(stringResource(Res.string.lost_change_line, change.label.asString(), change.value.asString()), style = MaterialTheme.typography.bodyMedium)
+                                }
                             }
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
-        },
-    )
+            },
+            confirmButton = {
+                FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
+            },
+        )
+    }
 }

@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -13,16 +12,13 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -33,7 +29,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CalendarLocale
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDefaults
 import androidx.compose.material3.DatePickerDialog
@@ -74,7 +69,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
@@ -87,7 +81,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -95,17 +88,9 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.validation.TournamentDateRangeValidator
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
-import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
-import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import kotlin.math.PI
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
-import kotlin.time.Instant
+import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
@@ -140,6 +125,14 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournament_logo_previ
 import mahjongtournamentsuite.adminapp.generated.resources.when_the_time_is_off
 import mahjongtournamentsuite.adminapp.generated.resources.when_the_time_is_over_the
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.PI
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import kotlin.math.sqrt
+import kotlin.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 internal expect fun mondayFirstCalendarLocale(): CalendarLocale
@@ -222,96 +215,98 @@ fun TournamentColorPickerDialog(
         colorFieldFocusRequester.requestFocus()
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.choose_tournament_color)) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                VisualColorWheel(
-                    hue = hue,
-                    saturation = saturation,
-                    brightness = brightness,
-                    focusRequester = wheelFocusRequester,
-                    onColorChanged = { newHue, newSaturation ->
-                        updateFromHsv(newHue, newSaturation, brightness)
-                    },
-                )
-                Row(
+    TrackedDialog("ChooseTournamentColor") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.choose_tournament_color)) },
+            text = {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(stringResource(Res.string.brightness), style = MaterialTheme.typography.bodySmall)
-                    Slider(
-                        value = brightness,
-                        onValueChange = { updateFromHsv(hue, saturation, it) },
-                        modifier = Modifier.weight(1f),
+                    VisualColorWheel(
+                        hue = hue,
+                        saturation = saturation,
+                        brightness = brightness,
+                        focusRequester = wheelFocusRequester,
+                        onColorChanged = { newHue, newSaturation ->
+                            updateFromHsv(newHue, newSaturation, brightness)
+                        },
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(stringResource(Res.string.brightness), style = MaterialTheme.typography.bodySmall)
+                        Slider(
+                            value = brightness,
+                            onValueChange = { updateFromHsv(hue, saturation, it) },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .background(
+                                HsvColor(hue, saturation, brightness).toRgbColor().toComposeColor(),
+                                MaterialTheme.shapes.small,
+                            )
+                            .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small),
+                    )
+                    OutlinedTextField(
+                        value = hexValue,
+                        onValueChange = { newValue ->
+                            val limitedText = newValue.text.toHexColorInput()
+                            hexValue = newValue.copy(
+                                text = limitedText,
+                                selection = TextRange(
+                                    start = newValue.selection.start.coerceAtMost(limitedText.length),
+                                    end = newValue.selection.end.coerceAtMost(limitedText.length),
+                                ),
+                            )
+                            limitedText.toRgbColorOrNull()?.toHsvColor()?.let { hsv ->
+                                hue = hsv.hue
+                                saturation = hsv.saturation
+                                brightness = hsv.value
+                            }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(colorFieldFocusRequester)
+                            .onFocusChanged { focusState ->
+                                if (focusState.isFocused && !isColorFieldFocused) {
+                                    hexValue = hexValue.copy(
+                                        selection = TextRange(0, hexValue.text.length),
+                                    )
+                                }
+                                isColorFieldFocused = focusState.isFocused
+                            },
+                        label = { Text(stringResource(Res.string.tournament_color)) },
+                        placeholder = { Text(stringResource(Res.string.rrggbb)) },
+                        singleLine = true,
+                        isError = hexValue.text.toRgbColorOrNull() == null,
                     )
                 }
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp)
-                        .background(
-                            HsvColor(hue, saturation, brightness).toRgbColor().toComposeColor(),
-                            MaterialTheme.shapes.small,
-                        )
-                        .border(1.dp, MaterialTheme.colorScheme.outline, MaterialTheme.shapes.small),
-                )
-                OutlinedTextField(
-                    value = hexValue,
-                    onValueChange = { newValue ->
-                        val limitedText = newValue.text.toHexColorInput()
-                        hexValue = newValue.copy(
-                            text = limitedText,
-                            selection = TextRange(
-                                start = newValue.selection.start.coerceAtMost(limitedText.length),
-                                end = newValue.selection.end.coerceAtMost(limitedText.length),
-                            ),
-                        )
-                        limitedText.toRgbColorOrNull()?.toHsvColor()?.let { hsv ->
-                            hue = hsv.hue
-                            saturation = hsv.saturation
-                            brightness = hsv.value
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(colorFieldFocusRequester)
-                        .onFocusChanged { focusState ->
-                            if (focusState.isFocused && !isColorFieldFocused) {
-                                hexValue = hexValue.copy(
-                                    selection = TextRange(0, hexValue.text.length),
-                                )
-                            }
-                            isColorFieldFocused = focusState.isFocused
-                        },
-                    label = { Text(stringResource(Res.string.tournament_color)) },
-                    placeholder = { Text(stringResource(Res.string.rrggbb)) },
-                    singleLine = true,
-                    isError = hexValue.text.toRgbColorOrNull() == null,
-                )
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                enabled = hexValue.text.toRgbColorOrNull() != null,
-                onClick = { onColorSelected(hexValue.text.uppercase()) },
-            ) {
-                Text(stringResource(Res.string.ok))
-            }
-        },
-        dismissButton = {
-            FocusedTextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        },
-    )
+            },
+            confirmButton = {
+                FocusedButton(
+                    enabled = hexValue.text.toRgbColorOrNull() != null,
+                    onClick = { onColorSelected(hexValue.text.uppercase()) },
+                ) {
+                    Text(stringResource(Res.string.ok))
+                }
+            },
+            dismissButton = {
+                FocusedTextButton(onClick = onDismiss) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -489,60 +484,62 @@ fun TournamentLogoLibraryDialog(
         }
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.reuse_tournament_logo)) },
-        text = {
-            if (logos.isEmpty()) {
-                Text(stringResource(Res.string.no_saved_tournament_logos_are_available))
-            } else {
-                FlowRow(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(max = 400.dp)
-                        .verticalScroll(rememberScrollState()),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    logos.forEachIndexed { index, tournament ->
-                        val previous = if (index == 0) cancelFocusRequester else itemFocusRequesters[index - 1]
-                        val next = if (index == logos.lastIndex) cancelFocusRequester else itemFocusRequesters[index + 1]
-                        FocusedButton(
-                            onClick = { onSelect(tournament) },
-                            focusRequester = itemFocusRequesters[index],
-                            buttonModifier = Modifier.focusLoop(previous = previous, next = next),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
-                        ) {
-                            AsyncImage(
-                                model = tournament.associationLogoUrl,
-                                contentDescription = null,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .size(112.dp)
-                                    .clip(CircleShape)
-                                    .background(Color.White),
-                            )
+    TrackedDialog("ReuseTournamentLogo") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.reuse_tournament_logo)) },
+            text = {
+                if (logos.isEmpty()) {
+                    Text(stringResource(Res.string.no_saved_tournament_logos_are_available))
+                } else {
+                    FlowRow(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = 400.dp)
+                            .verticalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        logos.forEachIndexed { index, tournament ->
+                            val previous = if (index == 0) cancelFocusRequester else itemFocusRequesters[index - 1]
+                            val next = if (index == logos.lastIndex) cancelFocusRequester else itemFocusRequesters[index + 1]
+                            FocusedButton(
+                                onClick = { onSelect(tournament) },
+                                focusRequester = itemFocusRequesters[index],
+                                buttonModifier = Modifier.focusLoop(previous = previous, next = next),
+                                colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent),
+                            ) {
+                                AsyncImage(
+                                    model = tournament.associationLogoUrl,
+                                    contentDescription = null,
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .size(112.dp)
+                                        .clip(CircleShape)
+                                        .background(Color.White),
+                                )
+                            }
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {},
-        dismissButton = {
-            FocusedTextButton(
-                onClick = onDismiss,
-                focusRequester = cancelFocusRequester,
-                buttonModifier = if (itemFocusRequesters.isEmpty()) {
-                    Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
-                } else {
-                    Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
-                },
-            ) {
-                Text(stringResource(Res.string.cancel))
-            }
-        },
-    )
+            },
+            confirmButton = {},
+            dismissButton = {
+                FocusedTextButton(
+                    onClick = onDismiss,
+                    focusRequester = cancelFocusRequester,
+                    buttonModifier = if (itemFocusRequesters.isEmpty()) {
+                        Modifier.focusLoop(cancelFocusRequester, cancelFocusRequester)
+                    } else {
+                        Modifier.focusLoop(itemFocusRequesters.last(), itemFocusRequesters.first())
+                    },
+                ) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 /** Today has an outline. Only a selected day has a filled background. */
@@ -569,9 +566,8 @@ fun TournamentDatePickerDialog(
         ?.takeIf { minimumMillis == null || it >= minimumMillis }
     val selectableDates = remember(minimumMillis, maximumMillis) {
         object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                (minimumMillis == null || utcTimeMillis >= minimumMillis) &&
-                    (maximumMillis == null || utcTimeMillis <= maximumMillis)
+            override fun isSelectableDate(utcTimeMillis: Long): Boolean = (minimumMillis == null || utcTimeMillis >= minimumMillis) &&
+                (maximumMillis == null || utcTimeMillis <= maximumMillis)
         }
     }
     val locale = remember { mondayFirstCalendarLocale() }
@@ -602,25 +598,27 @@ fun TournamentDatePickerDialog(
             }
     }
 
-    DatePickerDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            FocusedTextButton(
-                enabled = state.selectedDateMillis != null,
-                onClick = {
-                    state.selectedDateMillis?.let { onDateSelected(epochMillisToDisplayDate(it)) }
-                },
-            ) {
-                Text(stringResource(Res.string.ok))
-            }
-        },
-        dismissButton = {
-            FocusedTextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        },
-    ) {
-        DatePicker(state = state, colors = tournamentDatePickerColors())
+    TrackedDialog("TournamentDatePicker") {
+        DatePickerDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                FocusedTextButton(
+                    enabled = state.selectedDateMillis != null,
+                    onClick = {
+                        state.selectedDateMillis?.let { onDateSelected(epochMillisToDisplayDate(it)) }
+                    },
+                ) {
+                    Text(stringResource(Res.string.ok))
+                }
+            },
+            dismissButton = {
+                FocusedTextButton(onClick = onDismiss) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+        ) {
+            DatePicker(state = state, colors = tournamentDatePickerColors())
+        }
     }
 }
 
@@ -661,37 +659,39 @@ fun TournamentTimePickerDialog(
             }
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.appFocusGroup(),
-        title = { Text(stringResource(Res.string.select_time)) },
-        text = {
-            Box(
-                modifier = Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                TimePicker(state = state)
-            }
-        },
-        confirmButton = {
-            FocusedTextButton(
-                onClick = {
-                    onTimeSelected(
-                        "${state.hour.toString().padStart(2, '0')}:" +
-                            state.minute.toString().padStart(2, '0'),
-                    )
-                },
-                focusRequester = confirmFocusRequester,
-            ) {
-                Text(stringResource(Res.string.ok))
-            }
-        },
-        dismissButton = {
-            FocusedTextButton(onClick = onDismiss) {
-                Text(stringResource(Res.string.cancel))
-            }
-        },
-    )
+    TrackedDialog("TimePicker") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            modifier = Modifier.appFocusGroup(),
+            title = { Text(stringResource(Res.string.select_time)) },
+            text = {
+                Box(
+                    modifier = Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    TimePicker(state = state)
+                }
+            },
+            confirmButton = {
+                FocusedTextButton(
+                    onClick = {
+                        onTimeSelected(
+                            "${state.hour.toString().padStart(2, '0')}:" +
+                                state.minute.toString().padStart(2, '0'),
+                        )
+                    },
+                    focusRequester = confirmFocusRequester,
+                ) {
+                    Text(stringResource(Res.string.ok))
+                }
+            },
+            dismissButton = {
+                FocusedTextButton(onClick = onDismiss) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+        )
+    }
 }
 
 /** Reports every day click made in the picker, even when the clicked day is already selected. */
@@ -757,77 +757,79 @@ fun TournamentDateRangePickerDialog(
 
     // This picker needs added height to show the next month. The 420 dp cap keeps day spacing compact.
     // Outer padding keeps the custom dialog clear of small window edges.
-    BasicAlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.appFocusGroup(),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            modifier = Modifier
-                .padding(horizontal = 16.dp, vertical = 12.dp)
-                .widthIn(max = 420.dp)
-                .fillMaxWidth()
-                .fillMaxHeight(0.9f)
-                .heightIn(max = 720.dp),
-            shape = DatePickerDefaults.shape,
-            color = pickerColors.containerColor,
-            tonalElevation = DatePickerDefaults.TonalElevation,
+    TrackedDialog("TournamentDateRangePicker") {
+        BasicAlertDialog(
+            onDismissRequest = onDismiss,
+            modifier = Modifier.appFocusGroup(),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
-            Column {
-                DateRangePicker(
-                    state = state,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    colors = pickerColors,
-                    title = {
-                        DateRangePickerDefaults.DateRangePickerTitle(
-                            displayMode = state.displayMode,
-                            modifier = Modifier.padding(
-                                start = 24.dp,
-                                top = 24.dp,
-                                end = 24.dp,
-                                bottom = 8.dp,
-                            ),
-                            contentColor = pickerColors.titleContentColor,
-                        )
-                    },
-                    headline = {
-                        ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                            DateRangePickerDefaults.DateRangePickerHeadline(
-                                selectedStartDateMillis = state.selectedStartDateMillis,
-                                selectedEndDateMillis = state.selectedEndDateMillis,
+            Surface(
+                modifier = Modifier
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .widthIn(max = 420.dp)
+                    .fillMaxWidth()
+                    .fillMaxHeight(0.9f)
+                    .heightIn(max = 720.dp),
+                shape = DatePickerDefaults.shape,
+                color = pickerColors.containerColor,
+                tonalElevation = DatePickerDefaults.TonalElevation,
+            ) {
+                Column {
+                    DateRangePicker(
+                        state = state,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        colors = pickerColors,
+                        title = {
+                            DateRangePickerDefaults.DateRangePickerTitle(
                                 displayMode = state.displayMode,
-                                dateFormatter = dateFormatter,
-                                modifier = Modifier.padding(start = 24.dp, end = 8.dp, bottom = 16.dp),
-                                contentColor = pickerColors.headlineContentColor,
+                                modifier = Modifier.padding(
+                                    start = 24.dp,
+                                    top = 24.dp,
+                                    end = 24.dp,
+                                    bottom = 8.dp,
+                                ),
+                                contentColor = pickerColors.titleContentColor,
                             )
-                        }
-                    },
-                )
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                    horizontalArrangement = Arrangement.End,
-                ) {
-                    FocusedTextButton(onClick = onDismiss) {
-                        Text(stringResource(Res.string.cancel))
-                    }
-                    FocusedTextButton(
-                        enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
-                        onClick = {
-                            val startMillis = state.selectedStartDateMillis
-                            val endMillis = state.selectedEndDateMillis
-                            if (startMillis != null && endMillis != null) {
-                                onDatesSelected(
-                                    epochMillisToDisplayDate(startMillis),
-                                    epochMillisToDisplayDate(endMillis),
+                        },
+                        headline = {
+                            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                                DateRangePickerDefaults.DateRangePickerHeadline(
+                                    selectedStartDateMillis = state.selectedStartDateMillis,
+                                    selectedEndDateMillis = state.selectedEndDateMillis,
+                                    displayMode = state.displayMode,
+                                    dateFormatter = dateFormatter,
+                                    modifier = Modifier.padding(start = 24.dp, end = 8.dp, bottom = 16.dp),
+                                    contentColor = pickerColors.headlineContentColor,
                                 )
                             }
                         },
+                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                        horizontalArrangement = Arrangement.End,
                     ) {
-                        Text(stringResource(Res.string.ok))
+                        FocusedTextButton(onClick = onDismiss) {
+                            Text(stringResource(Res.string.cancel))
+                        }
+                        FocusedTextButton(
+                            enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
+                            onClick = {
+                                val startMillis = state.selectedStartDateMillis
+                                val endMillis = state.selectedEndDateMillis
+                                if (startMillis != null && endMillis != null) {
+                                    onDatesSelected(
+                                        epochMillisToDisplayDate(startMillis),
+                                        epochMillisToDisplayDate(endMillis),
+                                    )
+                                }
+                            },
+                        ) {
+                            Text(stringResource(Res.string.ok))
+                        }
                     }
                 }
             }
@@ -877,12 +879,11 @@ private fun displayDateToEpochMillis(value: String): Long? = runCatching {
     LocalDate.parse(isoDate).atStartOfDayIn(TimeZone.UTC).toEpochMilliseconds()
 }.getOrNull()
 
-private fun epochMillisToDisplayDate(value: Long): String =
-    Instant.fromEpochMilliseconds(value)
-        .toLocalDateTime(TimeZone.UTC)
-        .date
-        .toString()
-        .toDisplayTournamentDate()
+private fun epochMillisToDisplayDate(value: Long): String = Instant.fromEpochMilliseconds(value)
+    .toLocalDateTime(TimeZone.UTC)
+    .date
+    .toString()
+    .toDisplayTournamentDate()
 
 private data class RgbColor(val red: Int, val green: Int, val blue: Int) {
     fun toHexColor(): String = buildString {
@@ -986,15 +987,13 @@ fun TournamentOptionSwitch(
 const val MAX_MATCH_DURATION_MINUTES = 600
 
 /** The minutes of a match typed in a form, or null when the text is not a whole number from 1 to the maximum. */
-fun matchDurationOrNull(text: String): Int? =
-    text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_DURATION_MINUTES }
+fun matchDurationOrNull(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_DURATION_MINUTES }
 
 /** Longest extra time that the forms accept, in minutes. */
 const val MAX_MATCH_EXTRA_MINUTES = 120
 
 /** The extra minutes typed in a form, or null when the text is not a whole number from 1 to the maximum. */
-fun matchExtraMinutesOrNull(text: String): Int? =
-    text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_EXTRA_MINUTES }
+fun matchExtraMinutesOrNull(text: String): Int? = text.trim().toIntOrNull()?.takeIf { it in 1..MAX_MATCH_EXTRA_MINUTES }
 
 private val TimeZoneIdPattern = Regex("^(UTC|[A-Za-z_]+(/[A-Za-z0-9_+-]+)+)$")
 

@@ -201,4 +201,5 @@ Apply these rules to every new or changed dialog:
 ## Statistics
 
 Statistics are described in `docs/statistics.md`.
-One use case in `:domain` computes them for both apps. The usage report for administrators comes from `GET /admin/usage`.
+One use case in `:domain` computes them for both apps.
+Usage data goes to Firebase Analytics. Errors go to the error log. Administrators read the error log in the App errors screen. See `docs/telemetry.md`.

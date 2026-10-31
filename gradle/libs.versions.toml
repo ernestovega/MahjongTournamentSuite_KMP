@@ -1,4 +1,5 @@
 [versions]
+ktlintGradle = "13.1.0"
 agp = "9.4.1"
 app-versionCode = "1"
 app-versionName = "1.0.0"
@@ -19,6 +20,7 @@ kotlinx-serialization = "1.12.0"
 ktor = "3.6.0"
 material3 = "1.12.0-alpha03"
 coil = "3.6.3"
+google-services = "4.5.0"
 
 [libraries]
 androidx-test-runner = { module = "androidx.test:runner", version = "1.7.0" }
@@ -53,6 +55,7 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version = "34.0.0"
 firebase-appcheck = { module = "com.google.firebase:firebase-appcheck" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
@@ -67,4 +70,6 @@ composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "com
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

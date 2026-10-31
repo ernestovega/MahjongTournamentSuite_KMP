@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
@@ -10,13 +11,13 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
-import com.etologic.mahjongtournamentsuite.presentation.theme.label
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
+import com.etologic.mahjongtournamentsuite.presentation.theme.label
 import mahjongtournamentsuite.ui.generated.resources.Res
-import mahjongtournamentsuite.ui.generated.resources.top_bar_app_usage
+import mahjongtournamentsuite.ui.generated.resources.top_bar_app_errors
 import mahjongtournamentsuite.ui.generated.resources.top_bar_app_users
 import mahjongtournamentsuite.ui.generated.resources.top_bar_ranking
 import mahjongtournamentsuite.ui.generated.resources.top_bar_timer
@@ -27,17 +28,19 @@ fun AppTopBarLeadingActions(
     showThemeToggle: Boolean = false,
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
-    onUsage: (() -> Unit)? = null,
+    onErrors: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
     timerFocusRequester: FocusRequester? = null,
     rankingFocusRequester: FocusRequester? = null,
-    usageFocusRequester: FocusRequester? = null,
+    errorsFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
 ) {
     TopBarButtonsLayout {
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_users), Icons.Default.Person, it, usersFocusRequester) }
-        if (showThemeToggle) { ThemeModeToggleButton() }
-        onUsage?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_usage), StatisticsIcon, it, usageFocusRequester) }
+        if (showThemeToggle) {
+            ThemeModeToggleButton()
+        }
+        onErrors?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_errors), Icons.Default.BugReport, it, errorsFocusRequester) }
         onTimer?.let { AppTopBarButton(stringResource(Res.string.top_bar_timer), Icons.Default.AccessTime, it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton(stringResource(Res.string.top_bar_ranking), Icons.Default.Leaderboard, it, rankingFocusRequester) }
     }

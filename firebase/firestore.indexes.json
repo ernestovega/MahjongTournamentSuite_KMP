@@ -2,6 +2,18 @@
   "indexes": [],
   "fieldOverrides": [
     {
+      "collectionGroup": "errorGroups",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
+      "collectionGroup": "reports",
+      "fieldPath": "expireAt",
+      "ttl": true,
+      "indexes": []
+    },
+    {
       "collectionGroup": "members",
       "fieldPath": "uid",
       "indexes": [

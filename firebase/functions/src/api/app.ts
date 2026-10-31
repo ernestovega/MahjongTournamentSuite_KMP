@@ -12,6 +12,7 @@ import { playerRouter } from "./routes/player.routes";
 import { playersRouter } from "./routes/players.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
 import { syncRouter } from "./routes/sync.routes";
+import { telemetryRouter } from "./routes/telemetry.routes";
 import { venuesRouter } from "./routes/venues.routes";
 
 const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
@@ -28,6 +29,7 @@ export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
   ["/player", playerRouter],
   ["/tournaments", tournamentsRouter],
   ["/venues", venuesRouter],
+  ["/telemetry", telemetryRouter],
 ];
 
 export function buildApp(): express.Express {

@@ -7,24 +7,26 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 
 class TeamsPresenter(
     private val tournamentRepository: TournamentRepository,
     private val playerRepository: PlayerRepository,
     private val logger: Logger,
+    private val telemetry: Telemetry = NoTelemetry,
 ) {
-    suspend fun loadTeams(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTeam>> =
-        tournamentRepository.listTournamentTeams(tournamentId, force.mode())
+    suspend fun loadTeams(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTeam>> = tournamentRepository.listTournamentTeams(tournamentId, force.mode())
 
-    suspend fun loadTournamentPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> =
-        tournamentRepository.listTournamentPlayers(tournamentId, force.mode())
+    suspend fun loadTournamentPlayers(tournamentId: String, force: Boolean = false): AppResult<List<TournamentPlayer>> = tournamentRepository.listTournamentPlayers(tournamentId, force.mode())
 
     suspend fun loadBasePlayers(force: Boolean = false): AppResult<List<Player>> = playerRepository.listPlayers(force.mode())
 
-    suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> =
-        tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
+    suspend fun loadTables(tournamentId: String, force: Boolean = false): AppResult<List<TournamentTable>> = tournamentRepository.listTournamentTables(tournamentId, refreshMode = force.mode())
 
     suspend fun updateTeam(
         tournamentId: String,
@@ -34,6 +36,7 @@ class TeamsPresenter(
     ): AppResult<Unit> {
         logger.i { "Updating tournament team $teamId." }
         return tournamentRepository.updateTournamentTeam(tournamentId, teamId, name, emaIds)
+            .trackAction(telemetry, TelemetryAction.TEAM_UPDATED)
     }
 }
 

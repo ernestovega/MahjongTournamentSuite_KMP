@@ -1,9 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -24,7 +24,6 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.AlertDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -32,7 +31,6 @@ import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -56,23 +54,25 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.account
 import mahjongtournamentsuite.adminapp.generated.resources.account_has
-import mahjongtournamentsuite.adminapp.generated.resources.country
-import mahjongtournamentsuite.adminapp.generated.resources.ema_id
-import mahjongtournamentsuite.adminapp.generated.resources.email
-import mahjongtournamentsuite.adminapp.generated.resources.id
-import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.account_none
 import mahjongtournamentsuite.adminapp.generated.resources.bulk_info
 import mahjongtournamentsuite.adminapp.generated.resources.clear
 import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.country
+import mahjongtournamentsuite.adminapp.generated.resources.ema_id
+import mahjongtournamentsuite.adminapp.generated.resources.email
 import mahjongtournamentsuite.adminapp.generated.resources.filter_all
+import mahjongtournamentsuite.adminapp.generated.resources.filter_chip_count
+import mahjongtournamentsuite.adminapp.generated.resources.id
 import mahjongtournamentsuite.adminapp.generated.resources.invitations_and_reminders
+import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_email_warning
 import mahjongtournamentsuite.adminapp.generated.resources.no_players_in_this_group
@@ -84,9 +84,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_count_label
 import mahjongtournamentsuite.adminapp.generated.resources.send_summary
-import mahjongtournamentsuite.adminapp.generated.resources.usage_filter_chip
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** The groups an editor can filter by. [hasAccount] null shows every player. */
 internal enum class AccountFilter(val label: StringResource, val icon: ImageVector, val hasAccount: Boolean?) {
@@ -95,8 +96,7 @@ internal enum class AccountFilter(val label: StringResource, val icon: ImageVect
     HAS_ACCOUNT(Res.string.account_has, Icons.Default.CheckCircle, true),
 }
 
-internal fun TournamentPlayer.matches(filter: AccountFilter): Boolean =
-    filter.hasAccount == null || hasAccount == filter.hasAccount
+internal fun TournamentPlayer.matches(filter: AccountFilter): Boolean = filter.hasAccount == null || hasAccount == filter.hasAccount
 
 /** True when the query is blank or appears in the player number, name, email, EMA number or country. */
 internal fun TournamentPlayer.matchesQuery(
@@ -168,108 +168,113 @@ fun PlayerAccountsBulkDialog(
         )
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.invitations_and_reminders)) },
-        text = {
-            BoxWithConstraints(Modifier.fillMaxSize()) {
-                Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AccountFilter.entries.forEach { option ->
-                            val count = players.count { it.matches(option) }
-                            FilterChip(
-                                selected = filter == option,
-                                onClick = { filter = option; selected = emptySet() },
-                                leadingIcon = { Icon(option.icon, contentDescription = null, Modifier.size(18.dp)) },
-                                label = { Text(stringResource(Res.string.usage_filter_chip, stringResource(option.label), count)) },
-                            )
-                        }
-                    }
-                    OutlinedTextField(
-                        value = query,
-                        onValueChange = { query = it },
-                        modifier = Modifier.fillMaxWidth(),
-                        singleLine = true,
-                        label = { Text(stringResource(Res.string.search_by_name_number_email_ema)) },
-                    )
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        TextButton(
-                            enabled = shown.isNotEmpty() && !busy,
-                            onClick = { selected = shown.map { it.id }.toSet() },
-                        ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
-                        TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
-                            Text(stringResource(Res.string.clear))
-                        }
-                        Text(stringResource(Res.string.selected_count, chosen.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                    LazyColumn(Modifier.fillMaxWidth().weight(1f).testTag("account_list")) {
-                        // The titles stay at the top while the rows scroll under them.
-                        stickyHeader { ColumnTitles() }
-                        items(shown, key = { it.id }) { slot ->
-                            val result = results.firstOrNull { it.playerId == slot.id }
-                            Row(
-                                Modifier.fillMaxWidth(),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            ) {
-                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
-                                    Checkbox(
-                                        checked = slot.id in selected,
-                                        enabled = !busy,
-                                        onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
-                                    )
-                                }
-                                Text(slot.id.toString(), Modifier.width(IdColumnWidth))
-                                val country = countryOf(slot)
-                                Box(Modifier.width(FlagColumnWidth), contentAlignment = Alignment.Center) {
-                                    CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
-                                }
-                                Text(
-                                    emaIdOf(slot) ?: "—",
-                                    Modifier.width(EmaColumnWidth),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
+    TrackedDialog("InvitationsAndReminders") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(Res.string.invitations_and_reminders)) },
+            text = {
+                BoxWithConstraints(Modifier.fillMaxSize()) {
+                    Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AccountFilter.entries.forEach { option ->
+                                val count = players.count { it.matches(option) }
+                                FilterChip(
+                                    selected = filter == option,
+                                    onClick = {
+                                        filter = option
+                                        selected = emptySet()
+                                    },
+                                    leadingIcon = { Icon(option.icon, contentDescription = null, Modifier.size(18.dp)) },
+                                    label = { Text(stringResource(Res.string.filter_chip_count, stringResource(option.label), count)) },
                                 )
-                                Text(nameOf(slot), Modifier.weight(1f), maxLines = 1)
-                                EmailCell(slot, Modifier.weight(1f))
-                                ResultCell(slot, result)
                             }
                         }
+                        OutlinedTextField(
+                            value = query,
+                            onValueChange = { query = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text(stringResource(Res.string.search_by_name_number_email_ema)) },
+                        )
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            TextButton(
+                                enabled = shown.isNotEmpty() && !busy,
+                                onClick = { selected = shown.map { it.id }.toSet() },
+                            ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
+                            TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
+                                Text(stringResource(Res.string.clear))
+                            }
+                            Text(stringResource(Res.string.selected_count, chosen.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        LazyColumn(Modifier.fillMaxWidth().weight(1f).testTag("account_list")) {
+                            // The titles stay at the top while the rows scroll under them.
+                            stickyHeader { ColumnTitles() }
+                            items(shown, key = { it.id }) { slot ->
+                                val result = results.firstOrNull { it.playerId == slot.id }
+                                Row(
+                                    Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                ) {
+                                    CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
+                                        Checkbox(
+                                            checked = slot.id in selected,
+                                            enabled = !busy,
+                                            onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
+                                        )
+                                    }
+                                    Text(slot.id.toString(), Modifier.width(IdColumnWidth))
+                                    val country = countryOf(slot)
+                                    Box(Modifier.width(FlagColumnWidth), contentAlignment = Alignment.Center) {
+                                        CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
+                                    }
+                                    Text(
+                                        emaIdOf(slot) ?: "—",
+                                        Modifier.width(EmaColumnWidth),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        maxLines = 1,
+                                    )
+                                    Text(nameOf(slot), Modifier.weight(1f), maxLines = 1)
+                                    EmailCell(slot, Modifier.weight(1f))
+                                    ResultCell(slot, result)
+                                }
+                            }
+                        }
+                        if (shown.isEmpty()) Text(stringResource(Res.string.no_players_in_this_group), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        var errorSeen by remember(errorMessage) { mutableStateOf(false) }
+                        errorMessage?.takeUnless { errorSeen }?.let { AppErrorDialog(it, onDismiss = { errorSeen = true }) }
                     }
-                    if (shown.isEmpty()) Text(stringResource(Res.string.no_players_in_this_group), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    var errorSeen by remember(errorMessage) { mutableStateOf(false) }
-                    errorMessage?.takeUnless { errorSeen }?.let { AppErrorDialog(it, onDismiss = { errorSeen = true }) }
                 }
-            }
-        },
-        confirmButton = {
-            Row(
-                Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                InfoTooltipIcon(stringResource(Res.string.bulk_info))
-                Text(
-                    stringResource(Res.string.send_summary, chosen.count { !it.hasAccount }, chosen.count { it.hasAccount }),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.weight(1f))
-                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
-                Button(
-                    enabled = chosen.isNotEmpty() && !busy,
-                    onClick = { if (missingEmail.isNotEmpty()) askingEmails = true else onSend(chosen.map { it.id }, emptyMap()) },
+            },
+            confirmButton = {
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(Res.string.send_count, chosen.size))
+                    InfoTooltipIcon(stringResource(Res.string.bulk_info))
+                    Text(
+                        stringResource(Res.string.send_summary, chosen.count { !it.hasAccount }, chosen.count { it.hasAccount }),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.weight(1f))
+                    TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
+                    Button(
+                        enabled = chosen.isNotEmpty() && !busy,
+                        onClick = { if (missingEmail.isNotEmpty()) askingEmails = true else onSend(chosen.map { it.id }, emptyMap()) },
+                    ) {
+                        Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(Res.string.send_count, chosen.size))
+                    }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
     // These dialogs come after the main dialog, so they are drawn above it.
     if (busy) SendingDialog()
     summary?.let { SendSummaryDialog(it, nameOf = { id -> players.firstOrNull { p -> p.id == id }?.let { p -> "$id · ${nameOf(p)}" } ?: id.toString() }, onDismiss = { summary = null }) }

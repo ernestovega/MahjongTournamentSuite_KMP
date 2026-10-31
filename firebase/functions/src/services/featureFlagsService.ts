@@ -17,10 +17,14 @@ let cached: { flags: FeatureFlags; loadedAt: number } | null = null;
 /**
  * Reads the feature flags from the Firebase Remote Config server template.
  * A flag that is missing, or a failed read, gives the default value (feature off).
+ * The emulators have no Google credentials, so a run on them does not read Remote Config.
  */
 export async function getFeatureFlags(): Promise<FeatureFlags> {
   if (cached && Date.now() - cached.loadedAt < CACHE_MS) {
     return cached.flags;
+  }
+  if (process.env.FIREBASE_AUTH_EMULATOR_HOST) {
+    return defaults;
   }
   try {
     const template = await getRemoteConfig(getApps()[0]).getServerTemplate({
@@ -34,6 +38,9 @@ export async function getFeatureFlags(): Promise<FeatureFlags> {
     return flags;
   } catch (error) {
     console.error(`Reading Remote Config failed for ${firebaseProjectId}`, error);
-    return cached?.flags ?? defaults;
+    // Keep the answer for a while. A new read would wait for the failing credential lookup again.
+    const flags = cached?.flags ?? defaults;
+    cached = { flags, loadedAt: Date.now() };
+    return flags;
   }
 }

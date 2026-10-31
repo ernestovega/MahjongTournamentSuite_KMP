@@ -1,9 +1,10 @@
-# Checks every pull request to main and deploys Firebase when main changes.
+# Runs every test on the pull request from develop to main and deploys Firebase when main changes.
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
 name: Firebase
 
 on:
   pull_request:
+    # The work is merged into develop without a pull request. A pull request from develop to main runs every test.
     branches: [main]
   push:
     branches: [main]
@@ -21,20 +22,14 @@ env:
   FIREBASE_PROJECT: mahjong-tournament-suite
 
 jobs:
-  check:
-    name: Build and test
+  # The checks below run at the same time. The job "Build and test" at the end is the one the ruleset of main requires.
+  functions:
+    name: Functions tests
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: 21
-
-      - uses: gradle/actions/setup-gradle@v4
 
       - uses: actions/setup-node@v4
         with:
@@ -48,12 +43,123 @@ jobs:
           npm ci --no-audit --no-fund
           npm test
 
+  integration:
+    name: Functions integration tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            firebase/functions/package-lock.json
+
+      # The tests run on the Firebase Auth and Firestore emulators. No test touches the production project.
+      - name: Test functions with the emulators
+        run: |
+          npm ci --no-audit --no-fund
+          npm ci --no-audit --no-fund --prefix firebase/functions
+          echo "$GITHUB_WORKSPACE/node_modules/.bin" >> "$GITHUB_PATH"
+          export PATH="$GITHUB_WORKSPACE/node_modules/.bin:$PATH"
+          npm run test:integration --prefix firebase/functions
+
+  kotlin:
+    name: Kotlin tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # A hung UI test must not use a long time.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Check the Kotlin style
+        run: ./gradlew ktlintCheck
+
+      - name: Test Kotlin code
+        run: >
+          ./gradlew
+          :domain:jvmTest :data:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
+          :androidApp:testDebugUnitTest :playerAndroidApp:testDebugUnitTest
+
+  scripts:
+    name: Scripts and diagnostics tests
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Test scripts and start diagnostics
+        run: |
+          node --test scripts/recovery.test.mjs
+          node --test playerApp/diagnostics-test/*.test.mjs
+
+  web:
+    name: Build web apps
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
       - name: Build web apps
         run: ./gradlew :adminApp:wasmJsBrowserDistribution :playerApp:wasmJsBrowserDistribution
 
-      # The UI tests only run by hand (ui-tests.yml). This keeps them compiling.
-      - name: Build the UI tests
-        run: ./gradlew :androidApp:assembleDebugAndroidTest :playerAndroidApp:assembleDebugAndroidTest
+  # The UI tests run on emulators in the GitHub runner. They are the slowest check, so they run at the same time as the others.
+  ui-tests:
+    name: UI tests
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      id-token: write
+    uses: ./.github/workflows/ui-tests.yml
+    with:
+      runner: github-emulator
+      app: both
+
+  check:
+    name: Build and test
+    if: ${{ always() && github.event_name == 'pull_request' }}
+    needs: [functions, integration, kotlin, scripts, web, ui-tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fail when a check did not pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "Results: $RESULTS"
+          for result in $RESULTS; do
+            [ "$result" = success ] || exit 1
+          done
 
   deploy:
     name: Deploy to Firebase

@@ -24,11 +24,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -73,18 +70,20 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHead
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.UsersPresenter
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -125,7 +124,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_match
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_selected
 import mahjongtournamentsuite.adminapp.generated.resources.optional_display_name
 import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_to
-import mahjongtournamentsuite.adminapp.generated.resources.player
 import mahjongtournamentsuite.adminapp.generated.resources.plus_more
 import mahjongtournamentsuite.adminapp.generated.resources.role
 import mahjongtournamentsuite.adminapp.generated.resources.role_admin
@@ -151,6 +149,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 @Composable
 fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null) {
@@ -195,9 +195,13 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
             if (user.disabled) disabledLabel else activeLabel,
         ).any { it.matchesSearch(searchQuery) } &&
             (selectedRoles.isEmpty() || user.role in selectedRoles) &&
-            (selectedTournamentId == null || user.role == GlobalUserRole.ADMIN || user.tournamentAssignments.any {
-                it.tournamentId == selectedTournamentId
-            })
+            (
+                selectedTournamentId == null ||
+                    user.role == GlobalUserRole.ADMIN ||
+                    user.tournamentAssignments.any {
+                        it.tournamentId == selectedTournamentId
+                    }
+                )
     }
 
     // The players screen opens this screen with the account to edit. The dialog opens once the accounts are loaded.
@@ -301,7 +305,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     LaunchedEffect(editingUser, showCreateDialog, pendingDisabledUser, restoreUid, users) {
         if (editingUser == null && !showCreateDialog && pendingDisabledUser == null) {
             val uid = restoreUid
-            if (uid == null) addFocusRequester.requestFocus() else {
+            if (uid == null) {
+                addFocusRequester.requestFocus()
+            } else {
                 rowFocusRequesters[uid]?.requestFocus()
                 restoreUid = null
             }
@@ -418,7 +424,9 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                 }
             },
             onChangeDisabled = { user ->
-                if (user.disabled) setDisabled(user, false) else {
+                if (user.disabled) {
+                    setDisabled(user, false)
+                } else {
                     editingUser = null
                     pendingDisabledUser = user
                 }
@@ -634,7 +642,10 @@ private fun ManageUserDialog(
     val emaOwner = emaId.trim().takeIf { it.isNotEmpty() }
         ?.let { id -> accounts.firstOrNull { it.uid != original?.uid && it.emaId == id } }
     val isPlayerRole = role == GlobalUserRole.PLAYER
-    val valid = normalizedEmail.contains("@") && emailsMatch && emailOwner == null && emaOwner == null &&
+    val valid = normalizedEmail.contains("@") &&
+        emailsMatch &&
+        emailOwner == null &&
+        emaOwner == null &&
         (!isPlayerRole || emaId.isNotBlank())
     var showEmaPicker by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { emailFocus.requestFocus() }
@@ -656,205 +667,218 @@ private fun ManageUserDialog(
         return
     }
 
-    AlertDialog(
-        onDismissRequest = { if (!saving) onDismiss() },
-        modifier = Modifier.appFocusGroup(),
-        title = { Text(stringResource(if (original == null) Res.string.add_account else Res.string.edit_account)) },
-        text = {
-            Column(
-                modifier = Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                // Only admins set the photo of another account. Editors do not see this part.
-                photoUser?.takeIf { canEditPhoto }?.let { target ->
-                    PhotoEditor(
-                        photoUrl = target.photoUrl,
-                        hasOwnPhoto = target.hasOwnPhoto,
-                        name = target.alias.ifBlank { target.email },
-                        onUpload = { contentType, bytes ->
-                            when (val result = onUploadPhoto(target, contentType, bytes)) {
-                                is AppResult.Success -> { photoUser = result.value; null }
-                                is AppResult.Failure -> result.error.toUiText()
-                            }
-                        },
-                        onRemove = {
-                            when (val result = onRemovePhoto(target)) {
-                                is AppResult.Success -> { photoUser = result.value; null }
-                                is AppResult.Failure -> result.error.toUiText()
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                OutlinedTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = { Text(stringResource(Res.string.email)) },
-                    supportingText = { if (emailOwner != null) Text(stringResource(Res.string.another_account_already_uses_this_email)) },
-                    isError = emailOwner != null,
-                    singleLine = true,
-                    enabled = !saving,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth().focusRequester(emailFocus),
-                )
-                OutlinedTextField(
-                    value = alias,
-                    onValueChange = { alias = it },
-                    label = { Text(stringResource(Res.string.alias)) },
-                    supportingText = { Text(stringResource(Res.string.optional_display_name)) },
-                    singleLine = true,
-                    enabled = !saving,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                // An admin sets the EMA ID of any account. An editor sets it only for player accounts.
-                if (canManageRoles || isPlayerRole) {
-                    val emaPlayer = emaPlayers.firstOrNull { it.emaId == emaId.trim() }
+    TrackedDialog("AddAccount") {
+        AlertDialog(
+            onDismissRequest = { if (!saving) onDismiss() },
+            modifier = Modifier.appFocusGroup(),
+            title = { Text(stringResource(if (original == null) Res.string.add_account else Res.string.edit_account)) },
+            text = {
+                Column(
+                    modifier = Modifier.heightIn(max = 560.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    // Only admins set the photo of another account. Editors do not see this part.
+                    photoUser?.takeIf { canEditPhoto }?.let { target ->
+                        PhotoEditor(
+                            photoUrl = target.photoUrl,
+                            hasOwnPhoto = target.hasOwnPhoto,
+                            name = target.alias.ifBlank { target.email },
+                            onUpload = { contentType, bytes ->
+                                when (val result = onUploadPhoto(target, contentType, bytes)) {
+                                    is AppResult.Success -> {
+                                        photoUser = result.value
+                                        null
+                                    }
+                                    is AppResult.Failure -> result.error.toUiText()
+                                }
+                            },
+                            onRemove = {
+                                when (val result = onRemovePhoto(target)) {
+                                    is AppResult.Success -> {
+                                        photoUser = result.value
+                                        null
+                                    }
+                                    is AppResult.Failure -> result.error.toUiText()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
                     OutlinedTextField(
-                        value = emaId,
-                        onValueChange = { emaId = it.filter(Char::isLetterOrDigit) },
-                        label = { Text(stringResource(Res.string.ema_id)) },
-                        supportingText = {
-                            val message = when {
-                                emaOwner != null -> stringResource(Res.string.ema_owner_other, emaOwner.email)
-                                emaPlayer != null -> stringResource(Res.string.ema_player_n, emaPlayer.displayName)
-                                isPlayerRole && emaId.isBlank() -> stringResource(Res.string.ema_needed_for_player)
-                                else -> null
-                            }
-                            if (message != null) Text(message)
-                        },
-                        isError = emaOwner != null,
-                        trailingIcon = {
-                            IconButton(onClick = { showEmaPicker = true }, enabled = !saving) {
-                                Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search_ema_players))
-                            }
-                        },
-                        singleLine = true,
-                        enabled = !saving,
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-                if (original == null) {
-                    OutlinedTextField(
-                        value = confirmEmail,
-                        onValueChange = { confirmEmail = it },
-                        label = { Text(stringResource(Res.string.confirm_email)) },
-                        supportingText = {
-                            if (confirmEmail.isNotEmpty() && !emailsMatch) Text(stringResource(Res.string.the_email_addresses_do_not_match))
-                        },
-                        isError = confirmEmail.isNotEmpty() && !emailsMatch,
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text(stringResource(Res.string.email)) },
+                        supportingText = { if (emailOwner != null) Text(stringResource(Res.string.another_account_already_uses_this_email)) },
+                        isError = emailOwner != null,
                         singleLine = true,
                         enabled = !saving,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth().focusRequester(emailFocus),
+                    )
+                    OutlinedTextField(
+                        value = alias,
+                        onValueChange = { alias = it },
+                        label = { Text(stringResource(Res.string.alias)) },
+                        supportingText = { Text(stringResource(Res.string.optional_display_name)) },
+                        singleLine = true,
+                        enabled = !saving,
                         modifier = Modifier.fillMaxWidth(),
                     )
-                }
-                GlobalRoleDropdown(
-                    role = role,
-                    // A player account may be promoted. An account with no role claim also reads as a player.
-                    // An editor can only choose the role of a new account, and cannot create admins.
-                    // An admin can also make an editor or an admin a player. The account loses the other role.
-                    options = when {
-                        original?.role == GlobalUserRole.PLAYER -> listOf(GlobalUserRole.PLAYER, GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
-                        original == null && !canManageRoles -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
-                        original == null -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
-                        else -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
-                    },
-                    enabled = (canManageRoles || original == null) && !isSelf && !saving,
-                    onSelect = { role = it },
-                )
-                if (role == GlobalUserRole.EDITOR) {
-                    Text(stringResource(Res.string.tournament_assignments), style = MaterialTheme.typography.titleSmall)
-                    if (tournaments.isEmpty()) {
-                        Text(stringResource(Res.string.no_tournaments_are_available), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    } else {
-                        val selectedTournaments = tournaments.filter { assignments[it.id] == true }
-                        val assignmentSummary = when (selectedTournaments.size) {
-                            0 -> stringResource(Res.string.no_tournaments_assigned)
-                            1 -> selectedTournaments.single().name
-                            else -> stringResource(Res.string.tournaments_selected, selectedTournaments.size)
-                        }
-                        FocusedOutlinedButton(
-                            onClick = {
-                                restoreTournamentSelectorFocus = true
-                                showTournamentSelector = true
+                    // An admin sets the EMA ID of any account. An editor sets it only for player accounts.
+                    if (canManageRoles || isPlayerRole) {
+                        val emaPlayer = emaPlayers.firstOrNull { it.emaId == emaId.trim() }
+                        OutlinedTextField(
+                            value = emaId,
+                            onValueChange = { emaId = it.filter(Char::isLetterOrDigit) },
+                            label = { Text(stringResource(Res.string.ema_id)) },
+                            supportingText = {
+                                val message = when {
+                                    emaOwner != null -> stringResource(Res.string.ema_owner_other, emaOwner.email)
+                                    emaPlayer != null -> stringResource(Res.string.ema_player_n, emaPlayer.displayName)
+                                    isPlayerRole && emaId.isBlank() -> stringResource(Res.string.ema_needed_for_player)
+                                    else -> null
+                                }
+                                if (message != null) Text(message)
                             },
+                            isError = emaOwner != null,
+                            trailingIcon = {
+                                IconButton(onClick = { showEmaPicker = true }, enabled = !saving) {
+                                    Icon(Icons.Default.Search, contentDescription = stringResource(Res.string.search_ema_players))
+                                }
+                            },
+                            singleLine = true,
                             enabled = !saving,
                             modifier = Modifier.fillMaxWidth(),
-                            buttonModifier = Modifier.fillMaxWidth(),
-                            focusRequester = tournamentSelectorFocus,
-                        ) {
-                            Text(
-                                text = assignmentSummary,
-                                modifier = Modifier.weight(1f),
-                                textAlign = TextAlign.Start,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            Text(stringResource(Res.string.change))
-                        }
-                        if (selectedTournaments.size > 1) {
-                            Text(
-                                text = selectedTournaments.take(2).joinToString { it.name } +
-                                    if (selectedTournaments.size > 2) " · " + stringResource(Res.string.plus_more, selectedTournaments.size - 2) else "",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                        )
                     }
-                }
-            }
-        },
-        confirmButton = {
-            val destructive = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-            Column(modifier = Modifier.fillMaxWidth()) {
-                if (original != null && !isSelf) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        FocusedTextButton(
-                            onClick = { onResetPassword(original.email) },
+                    if (original == null) {
+                        OutlinedTextField(
+                            value = confirmEmail,
+                            onValueChange = { confirmEmail = it },
+                            label = { Text(stringResource(Res.string.confirm_email)) },
+                            supportingText = {
+                                if (confirmEmail.isNotEmpty() && !emailsMatch) Text(stringResource(Res.string.the_email_addresses_do_not_match))
+                            },
+                            isError = confirmEmail.isNotEmpty() && !emailsMatch,
+                            singleLine = true,
                             enabled = !saving,
-                            colors = destructive,
-                        ) { Text(stringResource(Res.string.send_password_reset_email)) }
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                            modifier = Modifier.fillMaxWidth(),
+                        )
                     }
-                }
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    if (original != null && !isSelf && canDisable) {
-                        FocusedTextButton(
-                            onClick = { onChangeDisabled(original) },
-                            enabled = !saving,
-                            colors = destructive,
-                        ) { Text(stringResource(if (original.disabled) Res.string.enable_account else Res.string.disable_account_action)) }
-                    }
-                    Spacer(Modifier.weight(1f))
-                    FocusedTextButton(
-                        onClick = onDismiss,
-                        enabled = !saving,
-                        focusRequester = cancelFocus,
-                        buttonModifier = Modifier.focusLoop(saveFocus, saveFocus),
-                    ) { Text(stringResource(Res.string.cancel)) }
-                    Spacer(Modifier.width(8.dp))
-                    FocusedButton(
-                        onClick = {
-                            val selectedAssignments = if (role != GlobalUserRole.EDITOR) emptyList() else {
-                                tournaments.filter { assignments[it.id] == true }
-                                    .map { TournamentAssignment(it.id, it.name) }
-                            }
-                            onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
+                    GlobalRoleDropdown(
+                        role = role,
+                        // A player account may be promoted. An account with no role claim also reads as a player.
+                        // An editor can only choose the role of a new account, and cannot create admins.
+                        // An admin can also make an editor or an admin a player. The account loses the other role.
+                        options = when {
+                            original?.role == GlobalUserRole.PLAYER -> listOf(GlobalUserRole.PLAYER, GlobalUserRole.EDITOR, GlobalUserRole.ADMIN)
+                            original == null && !canManageRoles -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
+                            original == null -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
+                            else -> listOf(GlobalUserRole.EDITOR, GlobalUserRole.ADMIN, GlobalUserRole.PLAYER)
                         },
-                        enabled = valid && !saving,
-                        focusRequester = saveFocus,
-                        buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-                    ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
+                        enabled = (canManageRoles || original == null) && !isSelf && !saving,
+                        onSelect = { role = it },
+                    )
+                    if (role == GlobalUserRole.EDITOR) {
+                        Text(stringResource(Res.string.tournament_assignments), style = MaterialTheme.typography.titleSmall)
+                        if (tournaments.isEmpty()) {
+                            Text(stringResource(Res.string.no_tournaments_are_available), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        } else {
+                            val selectedTournaments = tournaments.filter { assignments[it.id] == true }
+                            val assignmentSummary = when (selectedTournaments.size) {
+                                0 -> stringResource(Res.string.no_tournaments_assigned)
+                                1 -> selectedTournaments.single().name
+                                else -> stringResource(Res.string.tournaments_selected, selectedTournaments.size)
+                            }
+                            FocusedOutlinedButton(
+                                onClick = {
+                                    restoreTournamentSelectorFocus = true
+                                    showTournamentSelector = true
+                                },
+                                enabled = !saving,
+                                modifier = Modifier.fillMaxWidth(),
+                                buttonModifier = Modifier.fillMaxWidth(),
+                                focusRequester = tournamentSelectorFocus,
+                            ) {
+                                Text(
+                                    text = assignmentSummary,
+                                    modifier = Modifier.weight(1f),
+                                    textAlign = TextAlign.Start,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(stringResource(Res.string.change))
+                            }
+                            if (selectedTournaments.size > 1) {
+                                Text(
+                                    text = selectedTournaments.take(2).joinToString { it.name } +
+                                        if (selectedTournaments.size > 2) " · " + stringResource(Res.string.plus_more, selectedTournaments.size - 2) else "",
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
+                    }
                 }
-            }
-        },
-    )
+            },
+            confirmButton = {
+                val destructive = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    if (original != null && !isSelf) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            FocusedTextButton(
+                                onClick = { onResetPassword(original.email) },
+                                enabled = !saving,
+                                colors = destructive,
+                            ) { Text(stringResource(Res.string.send_password_reset_email)) }
+                        }
+                    }
+                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        if (original != null && !isSelf && canDisable) {
+                            FocusedTextButton(
+                                onClick = { onChangeDisabled(original) },
+                                enabled = !saving,
+                                colors = destructive,
+                            ) { Text(stringResource(if (original.disabled) Res.string.enable_account else Res.string.disable_account_action)) }
+                        }
+                        Spacer(Modifier.weight(1f))
+                        FocusedTextButton(
+                            onClick = onDismiss,
+                            enabled = !saving,
+                            focusRequester = cancelFocus,
+                            buttonModifier = Modifier.focusLoop(saveFocus, saveFocus),
+                        ) { Text(stringResource(Res.string.cancel)) }
+                        Spacer(Modifier.width(8.dp))
+                        FocusedButton(
+                            onClick = {
+                                val selectedAssignments = if (role != GlobalUserRole.EDITOR) {
+                                    emptyList()
+                                } else {
+                                    tournaments.filter { assignments[it.id] == true }
+                                        .map { TournamentAssignment(it.id, it.name) }
+                                }
+                                onSave(normalizedEmail, alias.trim(), role, selectedAssignments, emaId.trim().ifBlank { null })
+                            },
+                            enabled = valid && !saving,
+                            focusRequester = saveFocus,
+                            buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                        ) { Text(stringResource(if (original == null) Res.string.save_and_send_password_reset else Res.string.save)) }
+                    }
+                }
+            },
+        )
+    }
     if (showEmaPicker) {
         EmaPlayerPickerDialog(
             players = emaPlayers,
             owners = accounts.filter { it.uid != original?.uid && it.emaId != null }.associate { it.emaId!! to it.email },
             selectedEmaId = emaId.trim().ifBlank { null },
-            onSelect = { emaId = it.emaId; showEmaPicker = false },
+            onSelect = {
+                emaId = it.emaId
+                showEmaPicker = false
+            },
             onDismiss = { showEmaPicker = false },
         )
     }
@@ -900,96 +924,98 @@ private fun TournamentAssignmentsDialog(
         if (filteredTournaments.isNotEmpty()) listState.scrollToItem(0)
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.appFocusGroup(),
-        title = { Text(stringResource(Res.string.assign_tournaments)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(
-                    value = searchText,
-                    onValueChange = { searchText = it },
-                    label = { Text(stringResource(Res.string.search_by_name)) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .focusRequester(searchFocus)
-                        .focusProperties { previous = closeFocus },
-                )
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    FilterChip(
-                        selected = showSelectedOnly,
-                        onClick = { showSelectedOnly = !showSelectedOnly },
-                        label = { Text(stringResource(Res.string.selected_only)) },
+    TrackedDialog("AssignTournaments") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            modifier = Modifier.appFocusGroup(),
+            title = { Text(stringResource(Res.string.assign_tournaments)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedTextField(
+                        value = searchText,
+                        onValueChange = { searchText = it },
+                        label = { Text(stringResource(Res.string.search_by_name)) },
+                        singleLine = true,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .focusRequester(searchFocus)
+                            .focusProperties { previous = closeFocus },
                     )
-                    Text(
-                        text = stringResource(Res.string.selected_count, selectedCount),
-                        modifier = Modifier.weight(1f).padding(top = 8.dp),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.End,
-                    )
-                }
-                if (filteredTournaments.isEmpty()) {
-                    Text(
-                        text = if (showSelectedOnly && selectedCount == 0) {
-                            stringResource(Res.string.no_tournaments_selected)
-                        } else {
-                            stringResource(Res.string.no_tournaments_match)
-                        },
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.height(240.dp).padding(top = 16.dp),
-                    )
-                } else {
-                    LazyColumnWithScrollbar(
-                        state = listState,
-                        modifier = Modifier.fillMaxWidth().height(240.dp),
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        items(
-                            count = filteredTournaments.size,
-                            key = { filteredTournaments[it].id },
-                        ) { index ->
-                            val tournament = filteredTournaments[index]
-                            TournamentSelectionRow(
-                                tournament = tournament,
-                                selected = assignments[tournament.id] == true,
-                                enabled = enabled,
-                                onToggle = {
-                                    onAssignmentChange(tournament.id, assignments[tournament.id] != true)
-                                },
-                            )
+                        FilterChip(
+                            selected = showSelectedOnly,
+                            onClick = { showSelectedOnly = !showSelectedOnly },
+                            label = { Text(stringResource(Res.string.selected_only)) },
+                        )
+                        Text(
+                            text = stringResource(Res.string.selected_count, selectedCount),
+                            modifier = Modifier.weight(1f).padding(top = 8.dp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.End,
+                        )
+                    }
+                    if (filteredTournaments.isEmpty()) {
+                        Text(
+                            text = if (showSelectedOnly && selectedCount == 0) {
+                                stringResource(Res.string.no_tournaments_selected)
+                            } else {
+                                stringResource(Res.string.no_tournaments_match)
+                            },
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.height(240.dp).padding(top = 16.dp),
+                        )
+                    } else {
+                        LazyColumnWithScrollbar(
+                            state = listState,
+                            modifier = Modifier.fillMaxWidth().height(240.dp),
+                        ) {
+                            items(
+                                count = filteredTournaments.size,
+                                key = { filteredTournaments[it].id },
+                            ) { index ->
+                                val tournament = filteredTournaments[index]
+                                TournamentSelectionRow(
+                                    tournament = tournament,
+                                    selected = assignments[tournament.id] == true,
+                                    enabled = enabled,
+                                    onToggle = {
+                                        onAssignmentChange(tournament.id, assignments[tournament.id] != true)
+                                    },
+                                )
+                            }
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                onClick = onDismiss,
-                enabled = enabled,
-                focusRequester = closeFocus,
-                buttonModifier = Modifier.focusProperties { next = searchFocus },
-            ) { Text(stringResource(Res.string.close)) }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                FocusedTextButton(
-                    onClick = {
-                        filteredTournaments.forEach { onAssignmentChange(it.id, true) }
-                    },
-                    enabled = enabled && filteredTournaments.isNotEmpty(),
-                ) { Text(stringResource(Res.string.select_results)) }
-                FocusedTextButton(
-                    onClick = {
-                        tournaments.forEach { onAssignmentChange(it.id, false) }
-                    },
-                    enabled = enabled && selectedCount > 0,
-                ) { Text(stringResource(Res.string.clear_all)) }
-            }
-        },
-    )
+            },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onDismiss,
+                    enabled = enabled,
+                    focusRequester = closeFocus,
+                    buttonModifier = Modifier.focusProperties { next = searchFocus },
+                ) { Text(stringResource(Res.string.close)) }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FocusedTextButton(
+                        onClick = {
+                            filteredTournaments.forEach { onAssignmentChange(it.id, true) }
+                        },
+                        enabled = enabled && filteredTournaments.isNotEmpty(),
+                    ) { Text(stringResource(Res.string.select_results)) }
+                    FocusedTextButton(
+                        onClick = {
+                            tournaments.forEach { onAssignmentChange(it.id, false) }
+                        },
+                        enabled = enabled && selectedCount > 0,
+                    ) { Text(stringResource(Res.string.clear_all)) }
+                }
+            },
+        )
+    }
 }
 
 @Composable
@@ -1045,28 +1071,30 @@ private fun DisableUserDialog(
     val disableFocus = remember { FocusRequester() }
     val cancelFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { cancelFocus.requestFocus() }
-    AlertDialog(
-        onDismissRequest = { if (!saving) onDismiss() },
-        modifier = Modifier.appFocusGroup(),
-        title = { Text(stringResource(Res.string.disable_account)) },
-        text = { Text(stringResource(Res.string.disable_user_message, user.email)) },
-        confirmButton = {
-            FocusedButton(
-                onClick = onConfirm,
-                enabled = !saving,
-                focusRequester = disableFocus,
-                buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
-            ) { Text(stringResource(Res.string.disable)) }
-        },
-        dismissButton = {
-            FocusedTextButton(
-                onClick = onDismiss,
-                enabled = !saving,
-                focusRequester = cancelFocus,
-                buttonModifier = Modifier.focusLoop(disableFocus, disableFocus),
-            ) { Text(stringResource(Res.string.cancel)) }
-        },
-    )
+    TrackedDialog("DisableAccount") {
+        AlertDialog(
+            onDismissRequest = { if (!saving) onDismiss() },
+            modifier = Modifier.appFocusGroup(),
+            title = { Text(stringResource(Res.string.disable_account)) },
+            text = { Text(stringResource(Res.string.disable_user_message, user.email)) },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onConfirm,
+                    enabled = !saving,
+                    focusRequester = disableFocus,
+                    buttonModifier = Modifier.focusLoop(cancelFocus, cancelFocus),
+                ) { Text(stringResource(Res.string.disable)) }
+            },
+            dismissButton = {
+                FocusedTextButton(
+                    onClick = onDismiss,
+                    enabled = !saving,
+                    focusRequester = cancelFocus,
+                    buttonModifier = Modifier.focusLoop(disableFocus, disableFocus),
+                ) { Text(stringResource(Res.string.cancel)) }
+            },
+        )
+    }
 }
 
 @Composable
@@ -1077,4 +1105,3 @@ private fun GlobalUserRole.label(): String = stringResource(
         GlobalUserRole.PLAYER -> Res.string.role_player
     },
 )
-

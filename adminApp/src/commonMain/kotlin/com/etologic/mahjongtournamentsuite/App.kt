@@ -35,7 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.RankingsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
-import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
+import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TablesRoute
 import com.etologic.mahjongtournamentsuite.presentation.TimerRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
@@ -49,7 +49,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandalone
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SplashScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.UsageScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TablesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
@@ -57,6 +57,12 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedScreen
+import org.koin.compose.getKoin
 import org.koin.compose.KoinApplication
 import org.koin.dsl.koinConfiguration
 
@@ -77,7 +83,7 @@ fun RankingApp(tournamentId: String) {
             val themeController = rememberThemeController()
             CompositionLocalProvider(LocalThemeController provides themeController) {
                 MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-                    RankingStandaloneScreen(tournamentId)
+                    TrackedScreen("Rankings") { RankingStandaloneScreen(tournamentId) }
                 }
             }
         }
@@ -91,21 +97,26 @@ private fun AppWithModules(content: @Composable () -> Unit) {
             modules(dataModule, presentationModule)
         },
     ) {
+        val telemetry = getKoin().getOrNull<Telemetry>() ?: NoTelemetry
         CompositionLocalProvider(
+            LocalTelemetry provides telemetry,
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
             LocalAdaptiveTopBar provides true,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value
             },
         ) {
-            content()
+            // The user cannot enter before accepting the anonymous analytics.
+            ConsentGate(content)
         }
     }
 }
 
 @Composable
 fun TimerApp(initialRound: Int = 1) {
-    TimerStandaloneScreen(initialRound = initialRound)
+    AppWithModules {
+        TrackedScreen("Timer") { TimerStandaloneScreen(initialRound = initialRound) }
+    }
 }
 
 @Composable
@@ -168,7 +179,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                     )
                 }
                 screen<TimerRoute> { TimerStandaloneScreen() }
-                screen<UsageRoute> { UsageScreen(navController) }
+                screen<ErrorsRoute> { ErrorsScreen(navController) }
                 screen<StatisticsRoute> { backStackEntry ->
                     StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())
                 }

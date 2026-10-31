@@ -101,11 +101,7 @@ class TableEditingTest : AdminE2eTest() {
         tickTableCompleted()
         c.clickButton("Save")
         c.waitForText("Completed")
-        // The save is in the usage report, and the server marks the tournament as completed.
-        c.clickButton("Back")
-        c.waitForText("Logout")
-        c.clickButton("App usage")
-        c.waitForText("0 by players, 1 by editors.")
+        // The server marks the tournament as completed.
         val list = E2eApi.call("GET", "/tournaments", E2eApi.signIn(E2eAccounts.ADMIN)).json().getJSONArray("tournaments")
         val tournament = (0 until list.length()).map { list.getJSONObject(it) }.first { it.getString("id") == "test-last-table" }
         check(tournament.getBoolean("isCompleted")) { "The tournament is not marked as completed" }

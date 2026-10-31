@@ -6,6 +6,12 @@ plugins {
     alias(libs.plugins.composeCompiler)
 }
 
+// Analytics needs the file google-services.json of the Android app. See docs/telemetry.md.
+// Without the file the app builds and runs, and it sends no telemetry.
+if (file("google-services.json").exists()) {
+    apply(plugin = "com.google.gms.google-services")
+}
+
 android {
     namespace = "com.etologic.mahjongtournamentsuite.player.android"
     compileSdk = libs.versions.android.compileSdk.get().toInt()

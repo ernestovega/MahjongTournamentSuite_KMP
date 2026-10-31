@@ -82,6 +82,8 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 `GET /auth/me` also returns `emaId` and `photoUrl` (the photo of the EMA player of the account). `PUT /auth/me` with `{ alias }` lets every signed-in user change the own alias (1 to 60 characters). The user cannot change the EMA id or the photo.
 `POST /venues/resolve-link` with `{ url }` (editors and admins) follows a short Google Maps link and returns `{ url }` with the full link. It follows only Google hosts and at most 5 redirects. The tournament form reads the venue name, the address, the country and the city from the full link.
 
+`POST /telemetry/errors` receives an error report from an app. It is public, with a limit of 30 reports per minute for each address. `GET /admin/error-groups` and `GET /admin/error-groups/{id}` (admins) read the error log. See [Telemetry](telemetry.md).
+
 ## Player accounts
 
 - **The import writes a pending email on the slot.** The slot field `email` holds the email of the import file. Only admins read it: `GET /tournaments/:id/players` returns `email` to admins only. Editors get `email: null` and the flags `hasAccount` and `hasEmail`. Players get `hasAccount: false`, `hasEmail: false` and `email: null`. For a slot with an account, `email` is the email of the account, and the pending email is ignored.

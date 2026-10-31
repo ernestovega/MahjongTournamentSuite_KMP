@@ -13,6 +13,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -37,54 +38,56 @@ fun UnsavedChangesDialog(
         saveFocusRequester.requestFocus()
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = { if (!isSaving) onCancel() },
-        title = { Text(stringResource(Res.string.unsaved_changes)) },
-        text = { Text(stringResource(Res.string.you_have_unsaved_changes_save_them)) },
-        confirmButton = {
-            FocusedButton(
-                enabled = !isSaving,
-                onClick = onSave,
-                focusRequester = saveFocusRequester,
-                buttonModifier = Modifier.focusLoop(
-                    previous = discardFocusRequester,
-                    next = cancelFocusRequester,
-                ),
-            ) {
-                Text(stringResource(Res.string.save))
-            }
-        },
-        dismissButton = {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FocusedTextButton(
+    TrackedDialog("UnsavedChanges") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (!isSaving) onCancel() },
+            title = { Text(stringResource(Res.string.unsaved_changes)) },
+            text = { Text(stringResource(Res.string.you_have_unsaved_changes_save_them)) },
+            confirmButton = {
+                FocusedButton(
                     enabled = !isSaving,
-                    onClick = onCancel,
-                    focusRequester = cancelFocusRequester,
+                    onClick = onSave,
+                    focusRequester = saveFocusRequester,
                     buttonModifier = Modifier.focusLoop(
-                        previous = saveFocusRequester,
-                        next = discardFocusRequester,
+                        previous = discardFocusRequester,
+                        next = cancelFocusRequester,
                     ),
                 ) {
-                    Text(stringResource(Res.string.cancel))
+                    Text(stringResource(Res.string.save))
                 }
-                FocusedTextButton(
-                    enabled = !isSaving,
-                    onClick = onDiscard,
-                    focusRequester = discardFocusRequester,
-                    buttonModifier = Modifier.focusLoop(
-                        previous = cancelFocusRequester,
-                        next = saveFocusRequester,
-                    ),
-                ) {
-                    Text(
-                        text = stringResource(Res.string.discard),
-                        color = MaterialTheme.colorScheme.error,
-                    )
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FocusedTextButton(
+                        enabled = !isSaving,
+                        onClick = onCancel,
+                        focusRequester = cancelFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = saveFocusRequester,
+                            next = discardFocusRequester,
+                        ),
+                    ) {
+                        Text(stringResource(Res.string.cancel))
+                    }
+                    FocusedTextButton(
+                        enabled = !isSaving,
+                        onClick = onDiscard,
+                        focusRequester = discardFocusRequester,
+                        buttonModifier = Modifier.focusLoop(
+                            previous = cancelFocusRequester,
+                            next = saveFocusRequester,
+                        ),
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.discard),
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
-            }
-        },
-    )
+            },
+        )
+    }
 }
 
 @Preview(device = Devices.DESKTOP)

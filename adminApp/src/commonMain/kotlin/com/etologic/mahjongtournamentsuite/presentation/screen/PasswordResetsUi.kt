@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -76,15 +77,17 @@ internal fun PasswordResetBar(
 /** Asks before the app sends many emails. */
 @Composable
 internal fun PasswordResetsConfirmDialog(count: Int, busy: Boolean, onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = { if (!busy) onDismiss() },
-        icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null) },
-        title = { Text(stringResource(Res.string.password_resets_confirm_title)) },
-        text = { Text(stringResource(Res.string.password_resets_confirm_text, count)) },
-        confirmButton = { Button(enabled = !busy, onClick = onConfirm) { Text(stringResource(Res.string.send_password_reset_count, count)) } },
-        dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
-    )
+    TrackedDialog("PasswordResetsConfirm") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (!busy) onDismiss() },
+            icon = { Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null) },
+            title = { Text(stringResource(Res.string.password_resets_confirm_title)) },
+            text = { Text(stringResource(Res.string.password_resets_confirm_text, count)) },
+            confirmButton = { Button(enabled = !busy, onClick = onConfirm) { Text(stringResource(Res.string.send_password_reset_count, count)) } },
+            dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
+        )
+    }
 }
 
 private fun PasswordResetFailure?.textRes(): StringResource = when (this) {
@@ -101,26 +104,28 @@ internal fun PasswordResetsResultDialog(results: List<PasswordResetResult>, user
     val sent = results.count { it.outcome == PasswordResetOutcome.SENT }
     val failed = results.filter { it.outcome == PasswordResetOutcome.FAILED }
     val color = if (failed.isEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = onDismiss,
-        icon = { Icon(if (failed.isEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null, tint = color) },
-        title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
-        text = {
-            Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(Res.string.password_resets_summary, sent, failed.size))
-                LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
-                    items(failed, key = { it.uid }) { result ->
-                        val name = users.firstOrNull { it.uid == result.uid }?.email ?: result.uid
-                        Text(
-                            stringResource(Res.string.reset_failure_line, name, stringResource(result.reason.textRes())),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.error,
-                        )
+    TrackedDialog("PasswordResetsDone") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            icon = { Icon(if (failed.isEmpty()) Icons.Filled.CheckCircle else Icons.Filled.Warning, contentDescription = null, tint = color) },
+            title = { Text(stringResource(Res.string.dialog_done_title), color = color) },
+            text = {
+                Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(Res.string.password_resets_summary, sent, failed.size))
+                    LazyColumn(Modifier.fillMaxWidth().heightIn(max = 240.dp)) {
+                        items(failed, key = { it.uid }) { result ->
+                            val name = users.firstOrNull { it.uid == result.uid }?.email ?: result.uid
+                            Text(
+                                stringResource(Res.string.reset_failure_line, name, stringResource(result.reason.textRes())),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                 }
-            }
-        },
-        confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
-    )
+            },
+            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.ok)) } },
+        )
+    }
 }

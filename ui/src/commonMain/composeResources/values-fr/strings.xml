@@ -18,7 +18,7 @@
     <string name="sign_in_button">Se connecter</string>
     <string name="app_logo_description">Logo de Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Utilisateurs</string>
-    <string name="top_bar_app_usage">Utilisation de l'app</string>
+    <string name="top_bar_app_errors">Erreurs de l\'app</string>
     <string name="top_bar_timer">Minuteur</string>
     <string name="top_bar_ranking">Classement</string>
     <string name="date_field_clear">Effacer %1$s</string>
@@ -318,4 +318,17 @@
     <string name="spreadsheet_chooser_filter">Fichiers CSV et Excel</string>
     <string name="spreadsheet_error_read">L'application n'a pas pu lire le fichier. Choisissez un fichier CSV ou Excel et réessayez.</string>
     <string name="spreadsheet_error_save">L'application n'a pas pu enregistrer le fichier. Réessayez.</string>
+    <string name="consent_title">Analyse anonyme</string>
+    <string name="consent_intro">Cette application collecte des données anonymes sur son utilisation et sur les erreurs. L\'équipe utilise ces données uniquement pour trouver des problèmes et pour améliorer l\'application.</string>
+    <string name="consent_collects">L\'application enregistre les données suivantes :
+• Les écrans, les boîtes de dialogue et les onglets que vous ouvrez, et pendant combien de temps.
+• Les actions que vous utilisez, comme l\'enregistrement d\'une table.
+• Les erreurs et les plantages, avec des détails techniques comme le type de l\'erreur.</string>
+    <string name="consent_not_collected">L\'application n\'enregistre pas votre nom, votre adresse e-mail, votre numéro EMA ni aucun texte que vous saisissez. Les données ne vous identifient pas.</string>
+    <string name="consent_required">Vous pouvez utiliser l\'application seulement si vous acceptez. Si vous n\'acceptez pas, vous ne pouvez pas entrer dans l\'application.</string>
+    <string name="consent_accept">Accepter et continuer</string>
+    <string name="consent_decline">Refuser</string>
+    <string name="consent_declined_note">Vous ne pouvez pas utiliser l\'application sans l\'analyse anonyme. Vous pouvez fermer l\'application ou accepter pour continuer.</string>
+    <string name="consent_withdraw">Retirer le consentement à l\'analyse</string>
+    <string name="consent_withdraw_info">L\'application arrête l\'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l\'application tant que vous n\'acceptez pas.</string>
 </resources>

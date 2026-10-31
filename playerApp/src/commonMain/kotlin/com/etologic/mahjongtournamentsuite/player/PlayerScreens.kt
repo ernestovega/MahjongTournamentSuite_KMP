@@ -1,55 +1,34 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
-import mahjongtournamentsuite.playerapp.generated.resources.tab_stats
-import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_me
-import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_team
-import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_all
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
-import androidx.compose.material.icons.filled.Edit
-import com.etologic.mahjongtournamentsuite.presentation.util.matchesSearch
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bolt
-import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Directions
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.ExpandLess
@@ -62,34 +41,23 @@ import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -106,7 +74,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -116,64 +83,61 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
-import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
-import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import coil3.compose.AsyncImage
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.seatScores
-import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
-import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
-import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
-import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
+import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
+import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PositionTrophy
 import com.etologic.mahjongtournamentsuite.presentation.components.RankTrophy
-import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatDisplay
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatLevelMedal
-import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
-import kotlin.time.Clock
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.TimeZone
-import kotlinx.datetime.toLocalDateTime
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
-import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
+import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
+import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import kotlin.time.Duration
-import kotlin.time.TimeSource
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.action_open
 import mahjongtournamentsuite.playerapp.generated.resources.age_hours
@@ -183,7 +147,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.contact_send_email
 import mahjongtournamentsuite.playerapp.generated.resources.data_stale
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_message
 import mahjongtournamentsuite.playerapp.generated.resources.details_no_hands_title
-import mahjongtournamentsuite.playerapp.generated.resources.field_password
 import mahjongtournamentsuite.playerapp.generated.resources.field_search
 import mahjongtournamentsuite.playerapp.generated.resources.hand_discard
 import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
@@ -222,7 +185,11 @@ import mahjongtournamentsuite.playerapp.generated.resources.status_in_progress
 import mahjongtournamentsuite.playerapp.generated.resources.status_upcoming
 import mahjongtournamentsuite.playerapp.generated.resources.tab_info
 import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
+import mahjongtournamentsuite.playerapp.generated.resources.tab_stats
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables
+import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_all
+import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_me
+import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_team
 import mahjongtournamentsuite.playerapp.generated.resources.table_details
 import mahjongtournamentsuite.playerapp.generated.resources.table_done
 import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
@@ -233,6 +200,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tables_mine_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_not_linked
 import mahjongtournamentsuite.playerapp.generated.resources.tables_player_empty_message
+import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
 import mahjongtournamentsuite.playerapp.generated.resources.team_hide_players
 import mahjongtournamentsuite.playerapp.generated.resources.team_n
 import mahjongtournamentsuite.playerapp.generated.resources.team_show_players
@@ -242,6 +210,11 @@ import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_ti
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
+import kotlin.time.Duration
+import kotlin.time.TimeSource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 /** The interval of the checks for new results while a tournament screen is open. */
 private const val REFRESH_INTERVAL_MS = 15_000L
@@ -398,63 +371,64 @@ fun TournamentsScreen(navController: NavHostController) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The screen uses the full width. The tab row and the tournament list keep a narrow column. The statistics use all the width.
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
-        ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            // The tabs use the color of the top bar.
-            HideOnScrollTabs(tab) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-            PrimaryTabRow(
-                selectedTabIndex = tab,
-                containerColor = tabRowColor(), contentColor = TabContentColor,
-                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
-                modifier = Modifier.widthIn(max = 720.dp),
-            ) {
-                listOf(stringResource(Res.string.scope_my_tournaments), stringResource(Res.string.stats_title)).forEachIndexed { index, title ->
-                    CompactTab(
-                        selected = tab == index,
-                        onClick = { tab = index },
-                        title = title,
-                        icon = {
-                            Icon(
-                                if (index == 0) Icons.Default.EmojiEvents else StatisticsIcon,
-                                contentDescription = null,
-                                Modifier.size(20.dp),
-                            )
-                        },
-                    )
-                }
-            }
-            }
-            }
-            Column(
-                Modifier.weight(1f).align(Alignment.CenterHorizontally).hideOnScroll(hideOnScroll)
-                    .then(if (tab == 1) Modifier.fillMaxWidth() else Modifier.widthIn(max = 720.dp).fillMaxWidth())
-                    ,
-            ) {
-                if (tab == 1) {
-                    MyStatisticsTab { statisticsLoading = it }
-                    return@Column
-                }
-                message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-                val list = items
-                when {
-                    list == null -> Unit
-                    list.isEmpty() -> Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) {
-                        EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_empty_title), stringResource(Res.string.tournaments_empty_message))
+            ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                // The tabs use the color of the top bar.
+                HideOnScrollTabs(tab) {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        PrimaryTabRow(
+                            selectedTabIndex = tab,
+                            containerColor = tabRowColor(),
+                            contentColor = TabContentColor,
+                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
+                            modifier = Modifier.widthIn(max = 720.dp),
+                        ) {
+                            listOf(stringResource(Res.string.scope_my_tournaments), stringResource(Res.string.stats_title)).forEachIndexed { index, title ->
+                                CompactTab(
+                                    selected = tab == index,
+                                    onClick = { tab = index },
+                                    title = title,
+                                    trackingName = if (index == 0) "MyTournaments" else "Statistics",
+                                    icon = {
+                                        Icon(
+                                            if (index == 0) Icons.Default.EmojiEvents else StatisticsIcon,
+                                            contentDescription = null,
+                                            Modifier.size(20.dp),
+                                        )
+                                    },
+                                )
+                            }
+                        }
                     }
-                    // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
-                    else -> LazyColumn(
-                        state = rememberPersistentLazyListState("tournaments"),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-                    ) {
-                        // The tournaments in progress come first. The sort is stable, so the other tournaments keep their order.
-                        items(list.sortedBy { if (statusOf(it) == TournamentStatus.IN_PROGRESS) 0 else 1 }, key = { it.id }) { tournament ->
-                            TournamentCard(tournament, standings[tournament.id]) { navController.navigate(TournamentRoute(tournament.id)) }
+                }
+                Column(
+                    Modifier.weight(1f).align(Alignment.CenterHorizontally).hideOnScroll(hideOnScroll)
+                        .then(if (tab == 1) Modifier.fillMaxWidth() else Modifier.widthIn(max = 720.dp).fillMaxWidth()),
+                ) {
+                    if (tab == 1) {
+                        MyStatisticsTab { statisticsLoading = it }
+                        return@Column
+                    }
+                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    val list = items
+                    when {
+                        list == null -> Unit
+                        list.isEmpty() -> Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) {
+                            EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_empty_title), stringResource(Res.string.tournaments_empty_message))
+                        }
+                        // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
+                        else -> LazyColumn(
+                            state = rememberPersistentLazyListState("tournaments"),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                        ) {
+                            // The tournaments in progress come first. The sort is stable, so the other tournaments keep their order.
+                            items(list.sortedBy { if (statusOf(it) == TournamentStatus.IN_PROGRESS) 0 else 1 }, key = { it.id }) { tournament ->
+                                TournamentCard(tournament, standings[tournament.id]) { navController.navigate(TournamentRoute(tournament.id)) }
+                            }
                         }
                     }
                 }
             }
-        }
         }
     }
 }
@@ -527,8 +501,7 @@ private fun OutlinedTag(color: Color, content: @Composable RowScope.() -> Unit) 
 
 /** The blue of the upcoming tournaments. It is lighter in the dark theme, so it stays visible. */
 @Composable
-private fun upcomingBlue(): Color =
-    if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) Color(0xFF4D9BFF) else Color(0xFF1565C0)
+private fun upcomingBlue(): Color = if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) Color(0xFF4D9BFF) else Color(0xFF1565C0)
 
 /** The color of the text on the blue: white on the dark blue, black on the light blue. */
 @Composable
@@ -838,91 +811,102 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The provider is outside the column, so all the tab rows use the same state.
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
-        ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            if (view == null) {
-                MessageDialog(message)
-                return@ScreenColumn
-            }
-            HideOnScrollTabs(tab) {
-                PrimaryTabRow(
-                    selectedTabIndex = tab,
-                    containerColor = tabRowColor(), contentColor = TabContentColor,
-                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
-                ) {
-                    listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_ranking), stringResource(Res.string.stats_title), stringResource(Res.string.tab_info)).forEachIndexed { index, title ->
-                        CompactTab(
-                            selected = tab == index,
-                            onClick = { tab = index },
-                            title = title,
-                            icon = {
-                                val icon = when (index) {
-                                    0 -> Icons.Default.People
-                                    1 -> Icons.Default.Leaderboard
-                                    2 -> StatisticsIcon
-                                    else -> Icons.Default.Info
-                                }
-                                Icon(icon, contentDescription = null, Modifier.size(20.dp))
-                            },
-                        )
+            ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                if (view == null) {
+                    MessageDialog(message)
+                    return@ScreenColumn
+                }
+                HideOnScrollTabs(tab) {
+                    PrimaryTabRow(
+                        selectedTabIndex = tab,
+                        containerColor = tabRowColor(),
+                        contentColor = TabContentColor,
+                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
+                    ) {
+                        listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_ranking), stringResource(Res.string.stats_title), stringResource(Res.string.tab_info)).forEachIndexed { index, title ->
+                            CompactTab(
+                                selected = tab == index,
+                                onClick = { tab = index },
+                                title = title,
+                                trackingName = listOf("Tables", "Ranking", "Statistics", "Info")[index],
+                                icon = {
+                                    val icon = when (index) {
+                                        0 -> Icons.Default.People
+                                        1 -> Icons.Default.Leaderboard
+                                        2 -> StatisticsIcon
+                                        else -> Icons.Default.Info
+                                    }
+                                    Icon(icon, contentDescription = null, Modifier.size(20.dp))
+                                },
+                            )
+                        }
                     }
                 }
-            }
-            Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
-                MessageDialog(message)
-                val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
-                when (tab) {
-                    0 -> {
-                        HideOnScrollTabs(tablesTab) {
-                            PrimaryTabRow(
-                                selectedTabIndex = tablesTab,
-                                containerColor = tabRowColor(), contentColor = TabContentColor,
-                                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
-                            ) {
-                                tablesTabs.forEachIndexed { index, id ->
-                                    val title = when (id) {
-                                        0 -> stringResource(Res.string.tab_tables_me)
-                                        2 -> stringResource(Res.string.tab_tables_team)
-                                        else -> stringResource(Res.string.tab_tables_all)
+                Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
+                    MessageDialog(message)
+                    val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
+                    when (tab) {
+                        0 -> {
+                            HideOnScrollTabs(tablesTab) {
+                                PrimaryTabRow(
+                                    selectedTabIndex = tablesTab,
+                                    containerColor = tabRowColor(),
+                                    contentColor = TabContentColor,
+                                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
+                                ) {
+                                    tablesTabs.forEachIndexed { index, id ->
+                                        val title = when (id) {
+                                            0 -> stringResource(Res.string.tab_tables_me)
+                                            2 -> stringResource(Res.string.tab_tables_team)
+                                            else -> stringResource(Res.string.tab_tables_all)
+                                        }
+                                        CompactTab(
+                                            selected = tablesTab == index,
+                                            onClick = { chosenTablesTab = id },
+                                            title = title,
+                                            trackingName = when (id) {
+                                                0 -> "TablesMe"
+                                                2 -> "TablesTeam"
+                                                else -> "TablesAll"
+                                            },
+                                        )
                                     }
-                                    CompactTab(selected = tablesTab == index, onClick = { chosenTablesTab = id }, title = title)
                                 }
                             }
+                            if (tablesTabId == 0) {
+                                TableList(
+                                    view,
+                                    view.myTables,
+                                    if (view.mySlotId == null) {
+                                        stringResource(Res.string.tables_not_linked)
+                                    } else {
+                                        stringResource(Res.string.tables_mine_empty)
+                                    },
+                                    open,
+                                    stickyRounds = false,
+                                )
+                            } else if (tablesTabId == 2) {
+                                TableList(
+                                    view,
+                                    view.teamTables,
+                                    stringResource(Res.string.tables_team_empty),
+                                    open,
+                                )
+                            } else {
+                                TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open)
+                            }
                         }
-                        if (tablesTabId == 0) {
-                            TableList(
-                                view,
-                                view.myTables,
-                                if (view.mySlotId == null) {
-                                    stringResource(Res.string.tables_not_linked)
-                                } else {
-                                    stringResource(Res.string.tables_mine_empty)
-                                },
-                                open,
-                                stickyRounds = false,
-                            )
-                        } else if (tablesTabId == 2) {
-                            TableList(
-                                view,
-                                view.teamTables,
-                                stringResource(Res.string.tables_team_empty),
-                                open,
-                            )
-                        } else {
-                            TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open)
-                        }
+                        1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
+                        2 -> TournamentStatisticsTab(tournamentId, view.mySlotId) { statisticsLoading = it }
+                        else -> TournamentInfoTab(view)
                     }
-                    1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
-                    2 -> TournamentStatisticsTab(tournamentId, view.mySlotId) { statisticsLoading = it }
-                    else -> TournamentInfoTab(view)
                 }
             }
-        }
         }
     }
 }
 
-private fun datesOf(tournament: Tournament): String? =
-    formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)
+private fun datesOf(tournament: Tournament): String? = formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate)
 
 /**
  * The four players of a table in the order of hand 1 (East, South, West, North).
@@ -1282,7 +1266,8 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                 HideOnScrollTabs(kinds.size) {
                     PrimaryTabRow(
                         selectedTabIndex = selectedIndex,
-                        containerColor = tabRowColor(), contentColor = TabContentColor,
+                        containerColor = tabRowColor(),
+                        contentColor = TabContentColor,
                         indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(selectedIndex), color = TabContentColor) },
                     ) {
                         kinds.forEach { item ->
@@ -1290,6 +1275,7 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
                                 selected = item == kind,
                                 onClick = { chosen = item },
                                 title = stringResource(item.short),
+                                trackingName = item.name,
                                 icon = {
                                     when (item) {
                                         RankingKind.PLAYERS -> Icon(Icons.Default.People, contentDescription = null, Modifier.size(20.dp))
@@ -1430,7 +1416,9 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
                         Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceContainerHigh, CircleShape),
                         contentAlignment = Alignment.Center,
                     ) { PositionTrophy(row.position, size = 24.dp) }
-                } else Text("${row.position}", fontWeight = FontWeight.Bold)
+                } else {
+                    Text("${row.position}", fontWeight = FontWeight.Bold)
+                }
             }
         }
         // The flag comes first and has a fixed width, so the names are aligned. A team has no flag.
@@ -1541,8 +1529,11 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 diffsAvailable = !complete && table.doneHands > 0,
                 // On a table that takes hands, a tap on a player starts a hand won by that player.
                 onPlayerClick = { slot ->
-                    if (view.canAddHands(table, now)) preselectWinner = slot
-                    else navController.navigate(PlayerTablesRoute(tournamentId, slot))
+                    if (view.canAddHands(table, now)) {
+                        preselectWinner = slot
+                    } else {
+                        navController.navigate(PlayerTablesRoute(tournamentId, slot))
+                    }
                 },
             )
             HandEntryPanel(
@@ -1795,63 +1786,64 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
         onBack = { navController.popBackStack() },
     ) {
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
-        ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            if (view == null) {
-                MessageDialog(message)
-                return@ScreenColumn
-            }
-            HideOnScrollTabs(tab) {
-                PrimaryTabRow(
-                    selectedTabIndex = tab,
-                    containerColor = tabRowColor(), contentColor = TabContentColor,
-                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
-                ) {
-                    listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_stats)).forEachIndexed { index, title ->
-                        CompactTab(
-                            selected = tab == index,
-                            onClick = { tab = index },
-                            title = title,
-                            icon = {
-                                Icon(
-                                    if (index == 0) Icons.Default.People else StatisticsIcon,
-                                    contentDescription = null,
-                                    Modifier.size(20.dp),
-                                )
-                            },
-                        )
+            ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                if (view == null) {
+                    MessageDialog(message)
+                    return@ScreenColumn
+                }
+                HideOnScrollTabs(tab) {
+                    PrimaryTabRow(
+                        selectedTabIndex = tab,
+                        containerColor = tabRowColor(),
+                        contentColor = TabContentColor,
+                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
+                    ) {
+                        listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_stats)).forEachIndexed { index, title ->
+                            CompactTab(
+                                selected = tab == index,
+                                onClick = { tab = index },
+                                title = title,
+                                trackingName = if (index == 0) "Tables" else "Statistics",
+                                icon = {
+                                    Icon(
+                                        if (index == 0) Icons.Default.People else StatisticsIcon,
+                                        contentDescription = null,
+                                        Modifier.size(20.dp),
+                                    )
+                                },
+                            )
+                        }
                     }
                 }
-            }
-            Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
-                MessageDialog(message)
-                if (tab == 1) {
-                    PlayerSlotStatisticsTab(
-                        tournamentId,
-                        slotId,
-                        ranking = ranking,
-                    ) { statisticsLoading = it }
-                } else if (tables.isEmpty()) {
-                    Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message)) }
-                } else {
-                    // The padding is inside the list, so the list ends at the tab row and at the bottom of the screen.
-                    LazyColumn(
-                        state = rememberPersistentLazyListState("tables"),
-                        verticalArrangement = Arrangement.spacedBy(10.dp),
-                        contentPadding = PaddingValues(16.dp),
-                    ) {
-                        items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                            TableSummaryCard(view, table, highlightSlot = slotId) {
-                                navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
+                    MessageDialog(message)
+                    if (tab == 1) {
+                        PlayerSlotStatisticsTab(
+                            tournamentId,
+                            slotId,
+                            ranking = ranking,
+                        ) { statisticsLoading = it }
+                    } else if (tables.isEmpty()) {
+                        Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message)) }
+                    } else {
+                        // The padding is inside the list, so the list ends at the tab row and at the bottom of the screen.
+                        LazyColumn(
+                            state = rememberPersistentLazyListState("tables"),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
+                            contentPadding = PaddingValues(16.dp),
+                        ) {
+                            items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
+                                TableSummaryCard(view, table, highlightSlot = slotId) {
+                                    navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                                }
                             }
                         }
                     }
                 }
             }
         }
-        }
     }
 }
-
 
 /** The color of the winner in the hand list, the counterpart of the red loser. Same green as the gains of the hand review. */
 private val WinnerColor = Color(0xFF00934C)

@@ -1,67 +1,68 @@
 package com.etologic.mahjongtournamentsuite.data.backend
 
-import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.FeatureFlagsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorGroupDetailDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorGroupsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorLogCursorDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.FeatureFlagsDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailsResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerEmailItemDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerAccountActionResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerExportDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerImportResultDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RenameTournamentRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ResolveVenueLinkResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SetUserDisabledRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
-import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundsResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpsertMemberRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PersonStatisticsDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.StatisticsOverviewDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UsageReportDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTablesResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpsertMemberRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.WhoAmIResponseDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.timeout
@@ -72,10 +73,11 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
-import io.ktor.http.encodeURLPath
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
+import io.ktor.http.encodeURLParameter
+import io.ktor.http.encodeURLPath
 import io.ktor.http.isSuccess
 
 class FunctionsBackendApi(
@@ -86,45 +88,34 @@ class FunctionsBackendApi(
 
     suspend fun featureFlags(): FeatureFlagsDto = get(path = "/config")
 
-    suspend fun signIn(request: SignInRequestDto): SignInResponseDto =
-        post(path = "/auth/signIn", requestBody = request)
+    suspend fun signIn(request: SignInRequestDto): SignInResponseDto = post(path = "/auth/signIn", requestBody = request)
 
-    suspend fun requestPasswordReset(request: PasswordResetRequestDto): OkResponseDto =
-        post(path = "/auth/passwordReset", requestBody = request)
+    suspend fun requestPasswordReset(request: PasswordResetRequestDto): OkResponseDto = post(path = "/auth/passwordReset", requestBody = request)
 
-    suspend fun refresh(request: RefreshRequestDto): RefreshResponseDto =
-        post(path = "/auth/refresh", requestBody = request)
+    suspend fun refresh(request: RefreshRequestDto): RefreshResponseDto = post(path = "/auth/refresh", requestBody = request)
 
-    suspend fun me(idToken: String): UserProfileDto =
-        get(path = "/auth/me", idToken = idToken)
+    suspend fun me(idToken: String): UserProfileDto = get(path = "/auth/me", idToken = idToken)
 
-    suspend fun updateOwnAlias(idToken: String, request: UpdateOwnAliasRequestDto): UserProfileDto =
-        put(path = "/auth/me", requestBody = request, idToken = idToken)
+    suspend fun updateOwnAlias(idToken: String, request: UpdateOwnAliasRequestDto): UserProfileDto = put(path = "/auth/me", requestBody = request, idToken = idToken)
 
-    suspend fun updateOwnPhoto(idToken: String, request: UpdatePlayerPhotoRequestDto): UserProfileDto =
-        put(path = "/auth/me/photo", requestBody = request, idToken = idToken)
+    suspend fun updateOwnPhoto(idToken: String, request: UpdatePlayerPhotoRequestDto): UserProfileDto = put(path = "/auth/me/photo", requestBody = request, idToken = idToken)
 
-    suspend fun removeOwnPhoto(idToken: String): UserProfileDto =
-        delete(path = "/auth/me/photo", idToken = idToken)
+    suspend fun removeOwnPhoto(idToken: String): UserProfileDto = delete(path = "/auth/me/photo", idToken = idToken)
 
-    suspend fun updateUserPhoto(idToken: String, uid: String, request: UpdatePlayerPhotoRequestDto): ManagedUserDto =
-        put(path = "/admin/users/$uid/photo", requestBody = request, idToken = idToken)
+    suspend fun updateUserPhoto(idToken: String, uid: String, request: UpdatePlayerPhotoRequestDto): ManagedUserDto = put(path = "/admin/users/$uid/photo", requestBody = request, idToken = idToken)
 
-    suspend fun removeUserPhoto(idToken: String, uid: String): ManagedUserDto =
-        delete(path = "/admin/users/$uid/photo", idToken = idToken)
+    suspend fun removeUserPhoto(idToken: String, uid: String): ManagedUserDto = delete(path = "/admin/users/$uid/photo", idToken = idToken)
 
-    suspend fun whoAmI(idToken: String): WhoAmIResponseDto =
-        get(path = "/admin/whoami", idToken = idToken)
+    suspend fun whoAmI(idToken: String): WhoAmIResponseDto = get(path = "/admin/whoami", idToken = idToken)
 
-    suspend fun usageReport(idToken: String, days: Int): UsageReportDto =
-        get(path = "/admin/usage?days=$days", idToken = idToken)
+    suspend fun errorGroups(idToken: String, sinceMillis: Long?, cursor: ErrorLogCursorDto?): ErrorGroupsResponseDto = get(path = "/admin/error-groups?limit=$ERROR_PAGE_SIZE" + sinceMillis.sinceQuery() + cursor.cursorQuery(), idToken = idToken)
 
-    suspend fun statisticsOverview(idToken: String): StatisticsOverviewDto =
-        get(path = "/tournaments/statistics/overview", idToken = idToken)
+    suspend fun errorGroup(idToken: String, id: String, cursor: ErrorLogCursorDto?): ErrorGroupDetailDto = get(path = "/admin/error-groups/$id?limit=$ERROR_REPORTS_PAGE_SIZE" + cursor.cursorQuery(), idToken = idToken)
+
+    suspend fun statisticsOverview(idToken: String): StatisticsOverviewDto = get(path = "/tournaments/statistics/overview", idToken = idToken)
 
     /** The results of one player. A null [emaId] means the signed-in account. */
-    suspend fun personStatistics(idToken: String, emaId: String?): PersonStatisticsDto =
-        get(path = "/tournaments/statistics/${statisticsOwner(emaId)}", idToken = idToken)
+    suspend fun personStatistics(idToken: String, emaId: String?): PersonStatisticsDto = get(path = "/tournaments/statistics/${statisticsOwner(emaId)}", idToken = idToken)
 
     suspend fun personStandings(idToken: String, emaId: String?, tournamentIds: List<String>): StandingsResponseDto {
         val response = httpClient.get(url("/tournaments/statistics/${statisticsOwner(emaId)}/standings")) {
@@ -136,8 +127,7 @@ class FunctionsBackendApi(
 
     private fun statisticsOwner(emaId: String?): String = if (emaId == null) "me" else "persons/${emaId.encodeURLPath()}"
 
-    suspend fun globalDataVersions(idToken: String): DataVersionsManifestDto =
-        get(path = "/sync/manifest", idToken = idToken)
+    suspend fun globalDataVersions(idToken: String): DataVersionsManifestDto = get(path = "/sync/manifest", idToken = idToken)
 
     suspend fun tournamentDataVersions(
         idToken: String,
@@ -147,8 +137,7 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    suspend fun listUsers(idToken: String): ManagedUsersResponseDto =
-        get(path = "/admin/users", idToken = idToken)
+    suspend fun listUsers(idToken: String): ManagedUsersResponseDto = get(path = "/admin/users", idToken = idToken)
 
     suspend fun createUser(
         idToken: String,
@@ -201,8 +190,7 @@ class FunctionsBackendApi(
         return response.requireSuccessBody()
     }
 
-    suspend fun listTournaments(idToken: String, playerScope: Boolean = false): TournamentsResponseDto =
-        get(path = if (playerScope) "/tournaments?scope=player" else "/tournaments", idToken = idToken)
+    suspend fun listTournaments(idToken: String, playerScope: Boolean = false): TournamentsResponseDto = get(path = if (playerScope) "/tournaments?scope=player" else "/tournaments", idToken = idToken)
 
     suspend fun createTournament(
         idToken: String,
@@ -448,8 +436,7 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
-    private fun playerTablePath(tournamentId: String, roundId: Int, tableId: Int) =
-        "/player/tournaments/$tournamentId/tables/$roundId/$tableId"
+    private fun playerTablePath(tournamentId: String, roundId: Int, tableId: Int) = "/player/tournaments/$tournamentId/tables/$roundId/$tableId"
 
     suspend fun previewHand(
         idToken: String,
@@ -644,6 +631,13 @@ class FunctionsBackendApi(
     }
 }
 
+/** The server accepts at most 200 entries in one page. The app reads the next page until none is left. */
+private const val ERROR_PAGE_SIZE = 200
+private const val ERROR_REPORTS_PAGE_SIZE = 50
+
+private fun Long?.sinceQuery() = if (this == null) "" else "&since=$this"
+
+private fun ErrorLogCursorDto?.cursorQuery() = if (this == null) "" else "&cursorAt=$at&cursorId=${id.encodeURLParameter()}"
 private const val XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 private const val EMA_REPORT_MIME_TYPE = XLSX_MIME_TYPE
 

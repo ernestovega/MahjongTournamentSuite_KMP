@@ -1,23 +1,21 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.border
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,15 +27,15 @@ import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Surface
 import androidx.compose.material3.AlertDialogDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,13 +47,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -66,48 +64,34 @@ import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueCode
 import com.etologic.mahjongtournamentsuite.domain.model.ImportIssueSeverity
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRemovedPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.ImportRowPlan
-import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
+import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetSaver
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
-import mahjongtournamentsuite.adminapp.generated.resources.team
-import mahjongtournamentsuite.adminapp.generated.resources.email
-import mahjongtournamentsuite.adminapp.generated.resources.player
-import mahjongtournamentsuite.adminapp.generated.resources.id
-import mahjongtournamentsuite.adminapp.generated.resources.import_tip_removed
-import mahjongtournamentsuite.adminapp.generated.resources.import_tip_changed
-import mahjongtournamentsuite.adminapp.generated.resources.import_summary_line
-import mahjongtournamentsuite.adminapp.generated.resources.import_state_warning
-import mahjongtournamentsuite.adminapp.generated.resources.import_state_unchanged
-import mahjongtournamentsuite.adminapp.generated.resources.import_state_removed
-import mahjongtournamentsuite.adminapp.generated.resources.import_state_error
-import mahjongtournamentsuite.adminapp.generated.resources.import_state_changed
-import mahjongtournamentsuite.adminapp.generated.resources.import_legend_warning
-import mahjongtournamentsuite.adminapp.generated.resources.import_column_player
-import mahjongtournamentsuite.adminapp.generated.resources.import_legend_error
-import mahjongtournamentsuite.adminapp.generated.resources.import_legend_changed
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.email
+import mahjongtournamentsuite.adminapp.generated.resources.id
 import mahjongtournamentsuite.adminapp.generated.resources.import_apply_count
 import mahjongtournamentsuite.adminapp.generated.resources.import_applying
 import mahjongtournamentsuite.adminapp.generated.resources.import_choose_other_file
+import mahjongtournamentsuite.adminapp.generated.resources.import_column_player
 import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_button
 import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_text
 import mahjongtournamentsuite.adminapp.generated.resources.import_confirm_title
@@ -127,6 +111,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_issue_team_too
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown_ema
 import mahjongtournamentsuite.adminapp.generated.resources.import_issue_unknown_slot
+import mahjongtournamentsuite.adminapp.generated.resources.import_legend_changed
+import mahjongtournamentsuite.adminapp.generated.resources.import_legend_error
+import mahjongtournamentsuite.adminapp.generated.resources.import_legend_warning
 import mahjongtournamentsuite.adminapp.generated.resources.import_players_title
 import mahjongtournamentsuite.adminapp.generated.resources.import_reading_file
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_changed
@@ -134,10 +121,21 @@ import mahjongtournamentsuite.adminapp.generated.resources.import_result_emptied
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_no_accounts
 import mahjongtournamentsuite.adminapp.generated.resources.import_result_players
 import mahjongtournamentsuite.adminapp.generated.resources.import_started_blocked
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_changed
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_error
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_removed
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_unchanged
+import mahjongtournamentsuite.adminapp.generated.resources.import_state_warning
+import mahjongtournamentsuite.adminapp.generated.resources.import_summary_line
+import mahjongtournamentsuite.adminapp.generated.resources.import_tip_changed
+import mahjongtournamentsuite.adminapp.generated.resources.import_tip_removed
+import mahjongtournamentsuite.adminapp.generated.resources.team
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 /** What the dialog shows now. */
 private sealed interface ImportStep {
@@ -221,61 +219,69 @@ fun PlayerImportDialog(
     when (val current = step) {
         ImportStep.Choose -> Unit
 
-        ImportStep.Reading, ImportStep.Applying -> AlertDialog(
-            onDismissRequest = {},
-            title = { Text(stringResource(Res.string.import_players_title)) },
-            text = {
-                Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
-                    CircularProgressIndicator()
-                    Text(stringResource(if (current == ImportStep.Applying) Res.string.import_applying else Res.string.import_reading_file))
-                }
-            },
-            confirmButton = {},
-        )
+        ImportStep.Reading, ImportStep.Applying -> TrackedDialog("ImportPlayersProgress") {
+            AlertDialog(
+                onDismissRequest = {},
+                title = { Text(stringResource(Res.string.import_players_title)) },
+                text = {
+                    Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CircularProgressIndicator()
+                        Text(stringResource(if (current == ImportStep.Applying) Res.string.import_applying else Res.string.import_reading_file))
+                    }
+                },
+                confirmButton = {},
+            )
+        }
 
         is ImportStep.Preview -> {
             val preview = current.preview
-            Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-                Surface(
-                    modifier = Modifier.appFocusGroup().widthIn(max = 1100.dp).fillMaxWidth(0.92f).fillMaxHeight(0.94f),
-                    shape = AlertDialogDefaults.shape,
-                    color = AlertDialogDefaults.containerColor,
-                    tonalElevation = AlertDialogDefaults.TonalElevation,
-                ) {
-                    Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        Text(stringResource(Res.string.import_players_title), style = MaterialTheme.typography.headlineSmall)
-                        Box(Modifier.weight(1f)) { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
-                            TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
-                            TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
-                            Button(
-                                enabled = preview.canApply,
-                                onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
-                            ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
+            TrackedDialog("ImportPlayersPreview") {
+                Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+                    Surface(
+                        modifier = Modifier.appFocusGroup().widthIn(max = 1100.dp).fillMaxWidth(0.92f).fillMaxHeight(0.94f),
+                        shape = AlertDialogDefaults.shape,
+                        color = AlertDialogDefaults.containerColor,
+                        tonalElevation = AlertDialogDefaults.TonalElevation,
+                    ) {
+                        Column(Modifier.padding(24.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                            Text(stringResource(Res.string.import_players_title), style = MaterialTheme.typography.headlineSmall)
+                            Box(Modifier.weight(1f)) { ImportPreviewContent(preview = preview, playerNameOf = playerNameOf) }
+                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                                TextButton(onClick = onDismiss) { Text(stringResource(Res.string.cancel)) }
+                                TextButton(onClick = picker::launch) { Text(stringResource(Res.string.import_choose_other_file)) }
+                                Button(
+                                    enabled = preview.canApply,
+                                    onClick = { if (preview.existingPlayers > 0) confirming = true else apply(current) },
+                                ) { Text(stringResource(Res.string.import_apply_count, preview.importedPlayers)) }
+                            }
                         }
                     }
                 }
             }
             if (confirming) {
-                AlertDialog(
-                    onDismissRequest = { confirming = false },
-                    modifier = Modifier.appFocusGroup(),
-                    icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                    title = { Text(stringResource(Res.string.import_confirm_title)) },
-                    text = { Text(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
-                    confirmButton = { Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) } },
-                    dismissButton = { TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) } },
-                )
+                TrackedDialog("ImportConfirm") {
+                    AlertDialog(
+                        onDismissRequest = { confirming = false },
+                        modifier = Modifier.appFocusGroup(),
+                        icon = { Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        title = { Text(stringResource(Res.string.import_confirm_title)) },
+                        text = { Text(stringResource(Res.string.import_confirm_text, preview.existingPlayers, preview.importedPlayers)) },
+                        confirmButton = { Button(onClick = { apply(current) }) { Text(stringResource(Res.string.import_confirm_button)) } },
+                        dismissButton = { TextButton(onClick = { confirming = false }) { Text(stringResource(Res.string.cancel)) } },
+                    )
+                }
             }
         }
 
-        is ImportStep.Done -> AlertDialog(
-            onDismissRequest = onDismiss,
-            modifier = Modifier.appFocusGroup(),
-            title = { Text(stringResource(Res.string.import_done_title)) },
-            text = { ImportResultContent(current.result) },
-            confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) } },
-        )
+        is ImportStep.Done -> TrackedDialog("ImportDone") {
+            AlertDialog(
+                onDismissRequest = onDismiss,
+                modifier = Modifier.appFocusGroup(),
+                title = { Text(stringResource(Res.string.import_done_title)) },
+                text = { ImportResultContent(current.result) },
+                confirmButton = { Button(onClick = onDismiss) { Text(stringResource(Res.string.close)) } },
+            )
+        }
     }
 }
 
@@ -365,8 +371,11 @@ private fun ImportTableHeader(showTeam: Boolean) {
     ) {
         @Composable
         fun Title(textRes: StringResource, modifier: Modifier) = Text(
-            stringResource(textRes), modifier.padding(horizontal = 6.dp),
-            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+            stringResource(textRes),
+            modifier.padding(horizontal = 6.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            maxLines = 1,
         )
         Title(Res.string.id, Modifier.width(IdColumnWidth))
         Title(Res.string.import_column_player, Modifier.weight(1.3f))

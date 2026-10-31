@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -11,6 +16,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 class TableManagerPresenter(
     private val tournamentRepository: TournamentRepository,
     private val logger: Logger,
+    private val telemetry: Telemetry = NoTelemetry,
 ) {
     suspend fun loadTableWithHands(
         tournamentId: String,
@@ -62,6 +68,6 @@ class TableManagerPresenter(
             expectedVersion = expectedVersion,
             tablePatch = tablePatch,
             handPatches = handPatches,
-        )
+        ).track(telemetry, TelemetryEvent.TABLE_SAVED, mapOf(TelemetryParam.HANDS to handPatches.size))
     }
 }

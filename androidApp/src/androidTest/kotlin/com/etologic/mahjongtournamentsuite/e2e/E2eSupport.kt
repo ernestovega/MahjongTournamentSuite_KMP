@@ -63,7 +63,8 @@ object E2eAccounts {
 val E2E_BACKEND_URL: String =
     InstrumentationRegistry.getArguments().getString("e2eBackendUrl") ?: "http://10.0.2.2:5055/api"
 
-private const val WAIT_MS = 20_000L
+/** How long a test waits for a screen. The slow emulator of the CI runner gets more time with the `e2eWaitMs` argument. */
+private val WAIT_MS: Long = InstrumentationRegistry.getArguments().getString("e2eWaitMs")?.toLongOrNull() ?: 20_000L
 
 /** Starts every test with no saved session, and points the app to the local backend. */
 class FreshAppState : ExternalResource() {
@@ -99,6 +100,10 @@ class AdminAppRule {
 
     /** Starts the app with the backend address that the test has set. */
     fun launchKeepingBackend() {
+        // A build with Firebase settings asks for the analytics consent. The test accepts it before the start.
+        InstrumentationRegistry.getInstrumentation().targetContext
+            .getSharedPreferences("mts_telemetry", android.content.Context.MODE_PRIVATE)
+            .edit().putBoolean("consent", true).commit()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         // The first frame can come a little later than the launch. Wait until the app has a Compose screen.
         repeat(50) {

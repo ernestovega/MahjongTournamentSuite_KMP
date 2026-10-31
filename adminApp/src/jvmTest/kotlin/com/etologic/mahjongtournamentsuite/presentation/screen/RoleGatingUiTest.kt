@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
@@ -15,11 +16,8 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.runComposeUiTest
-import androidx.compose.runtime.Composable
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
-import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
-import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
@@ -38,7 +36,6 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeControll
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
-import io.ktor.client.HttpClient
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
@@ -51,6 +48,7 @@ import kotlin.test.assertTrue
 class RoleGatingUiTest {
     private val boss = ManagedUser("a1", "boss@example.test", "Boss", GlobalUserRole.ADMIN, false, emptyList())
     private val ed = ManagedUser("e1", "ed@example.test", "Ed", GlobalUserRole.EDITOR, false, emptyList())
+
     /** The account of the signed-in editor. The fake repository signs in as uid "me". */
     private val me = ManagedUser("me", "me@example.test", "Me", GlobalUserRole.EDITOR, false, emptyList())
 
@@ -108,6 +106,7 @@ class RoleGatingUiTest {
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(1)
         onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
+        onNodeWithText("App errors").assertExists()
         onAllNodesWithText("Admin", substring = true).assertCountEquals(1)
     }
 
@@ -119,6 +118,7 @@ class RoleGatingUiTest {
         onAllNodesWithContentDescription("Edit Open").assertCountEquals(0)
         onNodeWithText("Users").assertExists()
         onNodeWithText("EMA players").assertExists()
+        onAllNodesWithText("App errors").assertCountEquals(0)
         onAllNodesWithText("Editor", substring = true).assertCountEquals(1)
     }
 
@@ -219,7 +219,13 @@ class RoleGatingUiTest {
     @Test
     fun theAccountListShowsTheCountryOfAPlayerAccount() = runComposeUiTest {
         val playerAccount = ManagedUser(
-            "p1", "ada@example.test", "Ada", GlobalUserRole.PLAYER, false, emptyList(), emaId = "10001",
+            "p1",
+            "ada@example.test",
+            "Ada",
+            GlobalUserRole.PLAYER,
+            false,
+            emptyList(),
+            emaId = "10001",
         )
         show(World(GlobalUserRole.ADMIN, listOf(boss, playerAccount)), listOf(player)) {
             GlobalUsersScreen(rememberNavController())
