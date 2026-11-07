@@ -22,7 +22,9 @@ import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
 import com.etologic.mahjongtournamentsuite.data.session.CredentialStore
 import com.etologic.mahjongtournamentsuite.data.session.PlatformCredentialStore
 import com.etologic.mahjongtournamentsuite.data.session.PlatformAuthSessionStore
+import com.etologic.mahjongtournamentsuite.data.cache.PersistedValues
 import com.etologic.mahjongtournamentsuite.data.cache.SessionRepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.createPlatformPersistentCacheStore
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
@@ -48,7 +50,8 @@ val dataModule = module {
     single<CredentialStore> { PlatformCredentialStore() }
     single<HttpClient> { createHttpClient(json = get()) }
     single { FunctionsBackendApi(httpClient = get(), apiConfiguration = get()) }
-    single<RepositoryCache> { SessionRepositoryCache(logger = get()) }
+    single { PersistedValues(createPlatformPersistentCacheStore(), get()) }
+    single<RepositoryCache> { SessionRepositoryCache(logger = get(), persisted = get()) }
     single<FeatureFlagsRepository> { DefaultFeatureFlagsRepository(get(), get()) }
     single<AuthRepository> { DefaultAuthRepository(get(), get(), get(), get(), get()) }
     single<AdminRepository> { DefaultAdminRepository(get(), get(), get(), get()) }
@@ -56,7 +59,7 @@ val dataModule = module {
     single<PlayerHandRepository> { DefaultPlayerHandRepository(get(), get(), get(), get()) }
     single<PlayerAccountRepository> { DefaultPlayerAccountRepository(get(), get(), get(), get()) }
     single<PlayerImportRepository> { DefaultPlayerImportRepository(get(), get(), get(), get()) }
-    single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get()) }
+    single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get(), persisted = get()) }
     single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get(), get()) }
     single<PlatformNameProvider> { providePlatformNameProvider() }
 }

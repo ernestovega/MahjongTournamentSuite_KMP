@@ -34,6 +34,21 @@ interface RepositoryCache {
         fetch: suspend () -> T,
     ): T
 
+    /**
+     * Like [getOrLoad], and the server answer [D] is also saved on the device. After a new start of the app, the
+     * saved answer is used when the server still has the same revision, so it is not downloaded again.
+     * [map] turns the answer into the cached value. A cache without a device store just loads.
+     */
+    suspend fun <D : Any, T : Any> getOrLoadPersisted(
+        ownerUid: String,
+        key: String,
+        refreshMode: RefreshMode,
+        revision: suspend () -> Long,
+        persistence: Persistence<D>,
+        load: suspend () -> D,
+        map: (D) -> T,
+    ): T = getOrLoad(ownerUid, key, refreshMode, revision) { map(load()) }
+
     suspend fun markStale(vararg keyPrefixes: String)
 
     suspend fun clear()
@@ -51,11 +66,15 @@ class SessionRepositoryCache(
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     private val timeSource: TimeSource = TimeSource.Monotonic,
     private val freshFor: Duration = DEFAULT_FRESH_FOR,
+    /** Saves some answers on the device. Without it, the cache lives in memory only. */
+    private val persisted: PersistedValues? = null,
 ) : RepositoryCache {
     private data class Entry(
         val revision: Long,
         val value: Any,
         val confirmedAt: TimeMark,
+        /** Read from the device. The server has not confirmed its revision since the app started. */
+        val restored: Boolean = false,
     )
 
     private data class SharedResult(
@@ -85,13 +104,56 @@ class SessionRepositoryCache(
         val cached = mutex.withLock { entries[key] }
         if (cached != null && cached.revision != STALE_REVISION) {
             when (refreshMode) {
-                RefreshMode.CACHED -> return cached.value.cast()
+                // A value from the device may be old. Polling does not know it, so check its revision once.
+                RefreshMode.CACHED -> if (!cached.restored) return cached.value.cast()
                 RefreshMode.IF_CHANGED -> if (cached.isFresh()) return cached.value.cast()
                 RefreshMode.FORCE -> Unit
             }
         }
 
         return refresh(key, cached, refreshMode == RefreshMode.FORCE, revision, load).value.cast()
+    }
+
+    override suspend fun <D : Any, T : Any> getOrLoadPersisted(
+        ownerUid: String,
+        key: String,
+        refreshMode: RefreshMode,
+        revision: suspend () -> Long,
+        persistence: Persistence<D>,
+        load: suspend () -> D,
+        map: (D) -> T,
+    ): T {
+        val store = persisted ?: return getOrLoad(ownerUid, key, refreshMode, revision) { map(load()) }
+        selectOwner(ownerUid)
+        if (refreshMode != RefreshMode.FORCE && mutex.withLock { key !in entries }) {
+            restore(store, ownerUid, key, persistence, map)
+        }
+        var loaded: D? = null
+        val value = getOrLoad(ownerUid, key, refreshMode, revision) { load().also { loaded = it }.let(map) }
+        loaded?.let { answer ->
+            // Save only an answer that the cache kept with a real revision.
+            val savedRevision = mutex.withLock {
+                entries[key]?.takeIf { it.value === value && it.revision != STALE_REVISION }?.revision
+            }
+            if (savedRevision != null) store.write(ownerUid, persistence.name, savedRevision, persistence.serializer, answer)
+        }
+        return value
+    }
+
+    private suspend fun <D : Any, T : Any> restore(
+        store: PersistedValues,
+        ownerUid: String,
+        key: String,
+        persistence: Persistence<D>,
+        map: (D) -> T,
+    ) {
+        val (savedRevision, answer) = store.read(ownerUid, persistence.name, persistence.serializer) ?: return
+        val value = runCatching { map(answer) }.getOrNull() ?: return
+        mutex.withLock {
+            if (ownerUid != this.ownerUid || key in entries) return
+            // The mark lies in the past, so the value is never fresh. The next read checks the revision first.
+            entries[key] = Entry(savedRevision, value, timeSource.markNow() - freshFor, restored = true)
+        }
     }
 
     override suspend fun <T : Any> shared(
@@ -127,6 +189,8 @@ class SessionRepositoryCache(
     }
 
     override suspend fun clear() {
+        // Signing out or in removes the saved answers too, so the next person on this device does not get them.
+        persisted?.clear()
         mutex.withLock {
             inFlight.values.forEach { it.cancel() }
             inFlight.clear()
@@ -170,7 +234,7 @@ class SessionRepositoryCache(
                 // causes one extra load later. The cache never keeps a new revision with old data.
                 val remoteRevision = revision()
                 val entry = if (!force && cached != null && cached.revision == remoteRevision) {
-                    cached.copy(confirmedAt = timeSource.markNow())
+                    cached.copy(confirmedAt = timeSource.markNow(), restored = false)
                 } else {
                     Entry(revision = remoteRevision, value = load(), confirmedAt = timeSource.markNow())
                 }

@@ -42,6 +42,12 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDt
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
+import com.etologic.mahjongtournamentsuite.data.cache.PersistedValues
+import com.etologic.mahjongtournamentsuite.data.cache.Persistence
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
@@ -69,17 +75,25 @@ class DefaultTournamentRepository(
     private val tableStore: TournamentTableStore = TournamentTableStore(),
     /** The player app lists only the tournaments where the account is a player, whatever its role. */
     private val playerScope: Boolean = false,
+    /** Saves the tables on the device, so a new start of the app downloads only what changed. */
+    private val persisted: PersistedValues? = null,
 ) : TournamentRepository {
     private val lastPolledRevisions = mutableMapOf<String, Map<String, Long>>()
     private var lastPolledGlobalRevisions: Map<String, Long>? = null
 
-    override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = cachedRequest(
+    override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = persistedRequest(
         action = "Listing tournaments",
         key = GLOBAL_TOURNAMENTS_CACHE_KEY,
         resource = "tournaments",
         refreshMode = refreshMode,
-    ) { idToken ->
-            backendApi.listTournaments(idToken, playerScope).tournaments.map { it.toDomain() }.sortedRecentFirst()
+        // The player list holds fewer tournaments than the full list, so it is saved under its own name.
+        persistence = Persistence(
+            if (playerScope) "$GLOBAL_TOURNAMENTS_CACHE_KEY:player" else GLOBAL_TOURNAMENTS_CACHE_KEY,
+            TournamentsResponseDto.serializer(),
+        ),
+        fetch = { idToken -> backendApi.listTournaments(idToken, playerScope) },
+    ) { response ->
+        response.tournaments.map { it.toDomain() }.sortedRecentFirst()
     }
 
     override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> = runCatching {
@@ -381,17 +395,16 @@ class DefaultTournamentRepository(
     override suspend fun listTournamentPlayers(
         tournamentId: String,
         refreshMode: RefreshMode,
-    ): AppResult<List<TournamentPlayer>> = cachedRequest(
+    ): AppResult<List<TournamentPlayer>> = persistedRequest(
         action = "Listing tournament players",
         key = "tournament:$tournamentId:players",
         resource = "players",
         tournamentId = tournamentId,
         refreshMode = refreshMode,
-    ) { idToken ->
-            backendApi.listTournamentPlayers(
-                idToken = idToken,
-                tournamentId = tournamentId,
-            ).players.map { dto ->
+        persistence = Persistence("tournament:$tournamentId:players", TournamentPlayersResponseDto.serializer()),
+        fetch = { idToken -> backendApi.listTournamentPlayers(idToken = idToken, tournamentId = tournamentId) },
+    ) { response ->
+            response.players.map { dto ->
                 TournamentPlayer(
                     id = dto.id,
                     name = "Player ${dto.id}",
@@ -412,17 +425,16 @@ class DefaultTournamentRepository(
     override suspend fun listTournamentTeams(
         tournamentId: String,
         refreshMode: RefreshMode,
-    ): AppResult<List<TournamentTeam>> = cachedRequest(
+    ): AppResult<List<TournamentTeam>> = persistedRequest(
         action = "Listing tournament teams",
         key = "tournament:$tournamentId:teams",
         resource = "teams",
         tournamentId = tournamentId,
         refreshMode = refreshMode,
-    ) { idToken ->
-            backendApi.listTournamentTeams(
-                idToken = idToken,
-                tournamentId = tournamentId,
-            ).teams.map { dto ->
+        persistence = Persistence("tournament:$tournamentId:teams", TournamentTeamsResponseDto.serializer()),
+        fetch = { idToken -> backendApi.listTournamentTeams(idToken = idToken, tournamentId = tournamentId) },
+    ) { response ->
+            response.teams.map { dto ->
                 TournamentTeam(
                     id = dto.id,
                     name = dto.name,
@@ -651,23 +663,36 @@ class DefaultTournamentRepository(
         refreshMode: RefreshMode,
     ): AppResult<List<Pair<TableState, List<TableHand>>>> = runCatching {
         val session = authRepository.currentSession() ?: error("No active session")
+        // IF_CHANGED compares the table versions of the tournament manifest with the held tables,
+        // so a table that someone else saved is loaded again.
+        val hasNewerTables: suspend (Map<TableKey, Long>) -> Boolean = { known ->
+            withFreshIdToken { token ->
+                tournamentManifest(token, tournamentId).toDomain().tableVersions
+                    .any { (key, serverVersion) -> serverVersion > (known[key] ?: -1L) }
+            }
+        }
+        val persistedName = "tournament:$tournamentId:all-tables"
+        var answer: RoundTablesWithHandsResponseDto? = null
         tableStore.all(
             ownerUid = session.uid,
             tournamentId = tournamentId,
             reload = refreshMode == RefreshMode.FORCE,
-            // CACHED never asks the server. IF_CHANGED compares the table versions of the tournament manifest
-            // with the held tables, so a table that someone else saved is loaded again.
-            isOutdated = if (refreshMode == RefreshMode.IF_CHANGED) { known ->
-                withFreshIdToken { token ->
-                    tournamentManifest(token, tournamentId).toDomain().tableVersions
-                        .any { (key, serverVersion) -> serverVersion > (known[key] ?: -1L) }
+            // CACHED never asks the server, except to check tables that were saved on the device.
+            isOutdated = hasNewerTables.takeIf { refreshMode == RefreshMode.IF_CHANGED },
+            restore = persisted?.let { store ->
+                {
+                    store.read(session.uid, persistedName, RoundTablesWithHandsResponseDto.serializer())
+                        ?.let { (_, saved) -> runCatching { saved.tables.map { it.toDomain() } }.getOrNull() }
                 }
-            } else {
-                null
+            },
+            verifyRestored = hasNewerTables,
+            onFetched = {
+                // The table versions are inside the answer, so the saved revision is not used.
+                answer?.let { persisted?.write(session.uid, persistedName, 0, RoundTablesWithHandsResponseDto.serializer(), it) }
             },
             fetchAll = {
                 withFreshIdToken { token ->
-                    backendApi.getAllTablesWithHands(token, tournamentId).tables.map { it.toDomain() }
+                    backendApi.getAllTablesWithHands(token, tournamentId).also { answer = it }.tables.map { it.toDomain() }
                 }
             },
         )
@@ -745,6 +770,44 @@ class DefaultTournamentRepository(
                 }
             },
             load = { withFreshIdToken(block) },
+        )
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "$action failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    /** Like [cachedRequest], and the server answer is also saved on the device. */
+    private suspend fun <D : Any, T : Any> persistedRequest(
+        action: String,
+        key: String,
+        resource: String,
+        refreshMode: RefreshMode,
+        persistence: Persistence<D>,
+        fetch: suspend (String) -> D,
+        tournamentId: String? = null,
+        map: (D) -> T,
+    ): AppResult<T> = runCatching {
+        val session = authRepository.currentSession() ?: error("No active session")
+        cache.getOrLoadPersisted(
+            ownerUid = session.uid,
+            key = key,
+            refreshMode = refreshMode,
+            revision = {
+                withFreshIdToken { token ->
+                    val manifest = if (tournamentId == null) {
+                        globalManifest(token)
+                    } else {
+                        tournamentManifest(token, tournamentId)
+                    }
+                    manifest.resources[resource]?.revision ?: 0
+                }
+            },
+            persistence = persistence,
+            load = { withFreshIdToken(fetch) },
+            map = map,
         )
     }.fold(
         onSuccess = { AppResult.Success(it) },
