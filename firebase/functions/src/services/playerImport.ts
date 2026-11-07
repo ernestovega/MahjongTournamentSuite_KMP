@@ -1,5 +1,6 @@
-import ExcelJS = require("exceljs");
-import JSZip = require("jszip");
+import type { Buffer as ExcelBuffer, Workbook } from "exceljs";
+
+import { excelJs, jsZip } from "./lazyModules";
 
 import { badRequest } from "../api/httpError";
 import { EMAIL_PATTERN } from "./playerAccountsService";
@@ -138,10 +139,10 @@ export function declaredUnpackedBytes(buffer: Buffer): number | null {
   return total;
 }
 
-async function loadWorkbook(buffer: Buffer): Promise<ExcelJS.Workbook | null> {
-  const workbook = new ExcelJS.Workbook();
+async function loadWorkbook(buffer: Buffer): Promise<Workbook | null> {
+  const workbook = new (excelJs().Workbook)();
   try {
-    await workbook.xlsx.load(buffer as unknown as ExcelJS.Buffer);
+    await workbook.xlsx.load(buffer as unknown as ExcelBuffer);
     return workbook;
   } catch (_error) {
     return null;
@@ -155,7 +156,7 @@ async function loadWorkbook(buffer: Buffer): Promise<ExcelJS.Workbook | null> {
  */
 async function normalizeXlsx(buffer: Buffer): Promise<Buffer | null> {
   try {
-    const zip = await JSZip.loadAsync(buffer);
+    const zip = await jsZip().loadAsync(buffer);
     for (const name of Object.keys(zip.files)) {
       if (!/\.(xml|rels)$/i.test(name)) continue;
       const text = (await zip.file(name)!.async("string")).replace(/^\uFEFF/, "")
@@ -256,7 +257,7 @@ export function buildPlayerExportRecords(slots: ExportSlot[], isTeams: boolean, 
 
 /** Writes the records as an Excel file. Every cell is text, so Excel keeps the zeros at the start of an EMA number. */
 export async function writePlayerExportXlsx(records: string[][]): Promise<Buffer> {
-  const workbook = new ExcelJS.Workbook();
+  const workbook = new (excelJs().Workbook)();
   const sheet = workbook.addWorksheet("Players");
   records.forEach((record) => sheet.addRow(record));
   sheet.columns.forEach((column) => { column.width = 18; });
