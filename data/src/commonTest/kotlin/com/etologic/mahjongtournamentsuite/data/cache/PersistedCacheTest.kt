@@ -21,6 +21,19 @@ import kotlin.time.TestTimeSource
 @Serializable
 private data class Answer(val names: List<String>)
 
+@Serializable
+private data class Person(val name: String)
+
+@Serializable
+private data class PeopleV1(val people: List<Person>)
+
+/** The next version of the app: a field was added to a nested type. */
+@Serializable
+private data class PersonV2(val name: String, val photoUrl: String? = null)
+
+@Serializable
+private data class PeopleV2(val people: List<PersonV2>)
+
 /** The device: it keeps its values while the app starts again. */
 private class MemoryStore : PersistentCacheStore {
     val values = mutableMapOf<String, String>()
@@ -132,6 +145,14 @@ class PersistedCacheTest {
         device.values.keys.toList().forEach { device.values[it] = "{\"revision\":1,\"data\":{\"other\":3}}" }
 
         assertEquals("load 2", startApp().read(server))
+    }
+
+    @Test
+    fun anAnswerSavedByAnOlderAppWithOtherFieldsIsIgnored() = runTest {
+        persisted.write("u1", "people", 1, PeopleV1.serializer(), PeopleV1(listOf(Person("Ana"))))
+
+        assertNull(persisted.read("u1", "people", PeopleV2.serializer()))
+        assertEquals(1L, persisted.read("u1", "people", PeopleV1.serializer())?.first)
     }
 
     @Test

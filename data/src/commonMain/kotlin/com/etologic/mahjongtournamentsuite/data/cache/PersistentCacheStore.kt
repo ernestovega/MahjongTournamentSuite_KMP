@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.data.cache
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
@@ -30,8 +31,31 @@ class Persistence<D : Any>(
 @Serializable
 internal data class PersistedCacheRecord(
     val revision: Long,
+    /** The shape of [data]: all field names of the answer type, also the nested ones. See [shapeOf]. */
+    val shape: Int,
     val data: JsonElement,
 )
+
+/**
+ * A number that changes when a field of the answer type, or of a type inside it, is added, removed or renamed.
+ * A new version of the app then ignores the answers saved by the old one, and never shows an answer that lacks
+ * a new field.
+ */
+internal fun shapeOf(descriptor: SerialDescriptor): Int {
+    val visited = mutableSetOf<String>()
+    fun describe(current: SerialDescriptor): String {
+        if (!visited.add(current.serialName)) return current.serialName
+        return buildString {
+            append(current.serialName).append('(')
+            for (index in 0 until current.elementsCount) {
+                append(current.getElementName(index)).append(':')
+                append(describe(current.getElementDescriptor(index))).append(',')
+            }
+            append(')')
+        }
+    }
+    return describe(descriptor).hashCode()
+}
 
 /**
  * Server answers saved on the device, so a new start of the app does not download them again.
@@ -46,6 +70,7 @@ class PersistedValues(
         val text = store.read(storageName(ownerUid, name)) ?: return null
         return runCatching {
             val record = json.decodeFromString(PersistedCacheRecord.serializer(), text)
+            if (record.shape != shapeOf(serializer.descriptor)) return null
             record.revision to json.decodeFromJsonElement(serializer, record.data)
         }.getOrNull()
     }
@@ -54,7 +79,7 @@ class PersistedValues(
         val text = runCatching {
             json.encodeToString(
                 PersistedCacheRecord.serializer(),
-                PersistedCacheRecord(revision, json.encodeToJsonElement(serializer, value)),
+                PersistedCacheRecord(revision, shapeOf(serializer.descriptor), json.encodeToJsonElement(serializer, value)),
             )
         }.getOrNull() ?: return
         store.write(storageName(ownerUid, name), text)
