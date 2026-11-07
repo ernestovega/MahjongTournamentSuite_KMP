@@ -44,7 +44,7 @@ Several people can edit one tournament at the same time. This page describes how
 - A saved answer is never fresh. `RefreshMode.CACHED` also checks its revision once, because polling does not know that it may be old.
 - Signing in or out removes every saved answer. The answers of one account are never read for another account.
 - When the local storage of the browser is full, the app removes its saved answers and saves the newest one. A failed read or write never stops the app. It only loads from the server.
-- `PersistedValues` names the saved values with a format version (`v1`). A change of a saved answer type that old values cannot be read with must raise it.
+- Each saved answer records the field names of its type, also the nested ones. A new app version whose answer types have other fields ignores the old answers. The web cache uses at most about 3 MB of local storage, so the session and the settings always find room.
 
 ## Backend rules
 
