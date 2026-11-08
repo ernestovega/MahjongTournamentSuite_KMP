@@ -25,7 +25,16 @@ private class GatedServer {
     var tournamentsResult: (() -> AppResult<List<Tournament>>)? = null
     var tablesFail = false
 
+    // The revisions request answers at once, unless a test holds it to see what waits for it.
+    var holdRevisions = false
+    val revisionsGate = CompletableDeferred<Unit>()
+
     fun release() = gate.complete(Unit)
+
+    suspend fun prefetchRevisions() {
+        started += "revisions"
+        if (holdRevisions) revisionsGate.await()
+    }
 
     suspend fun <T> answer(name: String, mode: RefreshMode?, value: () -> AppResult<T>): AppResult<T> {
         started += name
@@ -36,6 +45,8 @@ private class GatedServer {
 }
 
 private class GatedTournamentRepository(private val server: GatedServer) : TournamentRepository {
+    override suspend fun prefetchRevisions(tournamentId: String) = server.prefetchRevisions()
+
     override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = server.answer("tournaments", refreshMode) {
         server.tournamentsResult?.invoke()
             ?: AppResult.Success(listOf(Tournament(id = "t1", name = "Open", isTeams = server.isTeams, numPlayers = 4, numRounds = 1)))
@@ -163,9 +174,45 @@ class PlayerTournamentLoadTest {
         val load = async { presenter.load("t1") }
         runCurrent()
 
-        assertEquals(setOf("tournaments", "players", "registry", "tables", "me"), server.started.toSet())
+        assertEquals(setOf("revisions", "tournaments", "players", "registry", "tables", "me"), server.started.toSet())
         server.release()
         assertIs<AppResult.Success<PlayerTournamentView>>(load.await())
+    }
+
+    @Test
+    fun theRevisionsAreAskedOnceBeforeAnyRead() = runTest {
+        server.holdRevisions = true
+        val load = async { presenter.load("t1") }
+        runCurrent()
+
+        assertEquals(listOf("revisions"), server.started)
+
+        server.revisionsGate.complete(Unit)
+        runCurrent()
+
+        assertEquals("revisions", server.started.first())
+        assertEquals(setOf("tournaments", "players", "registry", "tables", "me"), server.started.drop(1).toSet())
+        server.release()
+        assertIs<AppResult.Success<PlayerTournamentView>>(load.await())
+        assertEquals(1, server.started.count { it == "revisions" })
+    }
+
+    @Test
+    fun aForcedLoadAlsoAsksForTheRevisionsFirst() = runTest {
+        server.release()
+
+        presenter.load("t1", RefreshMode.FORCE)
+
+        assertEquals("revisions", server.started.first())
+        assertEquals(1, server.started.count { it == "revisions" })
+    }
+
+    @Test
+    fun aCachedLoadDoesNotAskForTheRevisions() = runTest {
+        server.release()
+
+        assertIs<AppResult.Success<PlayerTournamentView>>(presenter.load("t1", RefreshMode.CACHED))
+        assertTrue("revisions" !in server.started)
     }
 
     @Test
