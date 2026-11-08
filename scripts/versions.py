@@ -92,6 +92,9 @@ def products_of(path: str) -> set[str]:
     top = parts[0]
     if top in MODULES:
         products = MODULES[top]
+        # Test folders outside src, such as playerApp/diagnostics-test, go into no product.
+        if len(parts) > 2 and "test" in parts[1].lower():
+            return set()
         if len(parts) > 2 and parts[1] == "src":
             source_set = parts[2]
             if is_test_source_set(source_set):

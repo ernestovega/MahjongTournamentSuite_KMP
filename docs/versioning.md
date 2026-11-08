@@ -11,20 +11,20 @@ There are three products, and each one has its own version:
 The versions are in `gradle/libs.versions.toml`:
 
 ```toml
-web-versionName = "1.0.3"
-admin-versionName = "1.0.3"
-admin-versionCode = "3"
-player-versionName = "1.0.3"
-player-versionCode = "3"
+web-versionName = "1.0.2"
+admin-versionName = "1.0.1"
+admin-versionCode = "2"
+player-versionName = "1.0.1"
+player-versionCode = "2"
 ```
 
-The names are `MAJOR.MINOR.PATCH`. The apps also have a version code for Google Play, which goes up by one with every new version. The web has no version code. The build generates the object `AppVersion` in `domain` from these values, and the apps show the right one through `LocalAppVersion`.
+The names are `MAJOR.MINOR.PATCH`. The patch counts the pull requests merged to `main` that changed the product, counted from PR #1: PR #2 set the web to 1.0.1 and PR #15 set the web to 1.0.2 and both apps to 1.0.1. The apps also have a version code for Google Play, which goes up by one with every new version (it started at 2 because the apps were built with code 1 before). The web has no version code. The build generates the object `AppVersion` in `domain` from these values, and the apps show the right one through `LocalAppVersion`.
 
 ## Bump a version
 
 ```bash
-python3 scripts/versions.py bump web      # 1.0.3 -> 1.0.4
-python3 scripts/versions.py bump admin    # 1.0.3 -> 1.0.4, code + 1
+python3 scripts/versions.py bump web      # 1.0.2 -> 1.0.3
+python3 scripts/versions.py bump admin    # 1.0.1 -> 1.0.2, code + 1
 python3 scripts/versions.py show
 ```
 
