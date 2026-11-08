@@ -74,130 +74,6 @@ data class SetUserDisabledRequestDto(
 )
 
 @Serializable
-data class UsagePeriodDto(
-    val activeUsers: Int = 0,
-    val saves: Int = 0,
-    val handChanges: Int = 0,
-    val playerSaves: Int = 0,
-    val editorSaves: Int = 0,
-    val actions: Int = 0,
-    val activeTournaments: Int = 0,
-    val tournamentsCreated: Int = 0,
-    val newAccounts: Int = 0,
-    val conflicts: Int = 0,
-    val resets: Int = 0,
-)
-
-@Serializable
-data class UsageAccountsDto(
-    val total: Int = 0,
-    val admins: Int = 0,
-    val editors: Int = 0,
-    val players: Int = 0,
-    val disabled: Int = 0,
-    val active: Int = 0,
-    val visitors: Int = 0,
-    val dormant: Int = 0,
-    val neverSignedIn: Int = 0,
-)
-
-@Serializable
-data class DailyUsageDto(
-    val date: String = "",
-    val saves: Int = 0,
-    val actions: Int = 0,
-    val activeUsers: Int = 0,
-)
-
-@Serializable
-data class UserUsageDto(
-    val uid: String,
-    val name: String? = null,
-    val role: String = "PLAYER",
-    val status: String = "NEVER",
-    val saves: Int = 0,
-    val handChanges: Int = 0,
-    val actions: Int = 0,
-    val tournaments: Int = 0,
-    val activeDays: Int = 0,
-    val lastActiveDaysAgo: Int? = null,
-    val lastSeenDaysAgo: Int? = null,
-    val createdDaysAgo: Int? = null,
-)
-
-@Serializable
-data class FeatureUsageDto(
-    val key: String,
-    val label: String = "",
-    val group: String = "",
-    val scope: String = "PERIOD",
-    val uses: Int = 0,
-    val users: Int? = null,
-    val adoption: Double? = null,
-    val lastUsedDaysAgo: Int? = null,
-)
-
-@Serializable
-data class FunnelStepDto(
-    val key: String,
-    val label: String = "",
-    val count: Int = 0,
-)
-
-@Serializable
-data class CountryUsageDto(
-    val country: String = "",
-    val tournaments: Int = 0,
-    val players: Int = 0,
-    val saves: Int = 0,
-)
-
-@Serializable
-data class TournamentUsageDto(
-    val tournamentId: String,
-    val name: String = "",
-    val country: String = "",
-    val startDate: String = "",
-    val endDate: String = "",
-    val status: String = "DONE",
-    val tables: Int = 0,
-    val completedTables: Int = 0,
-    val handsTables: Int = 0,
-    val totalsOnlyTables: Int = 0,
-    val manualTotalsTables: Int = 0,
-    val saves: Int = 0,
-    val savesInPeriod: Int = 0,
-    val playerSaves: Int = 0,
-    val editorSaves: Int = 0,
-    val resets: Int = 0,
-    val conflicts: Int = 0,
-    val tablesTouched: Int = 0,
-    val savesPerTouchedTable: Double? = null,
-    val activeHours: Double? = null,
-    val lastActivityDaysAgo: Int? = null,
-    val slots: Int = 0,
-    val assignedSlots: Int = 0,
-    val slotsWithAccount: Int = 0,
-    val slotsWithPassword: Int = 0,
-)
-
-@Serializable
-data class UsageReportDto(
-    val generatedAt: String = "",
-    val periodDays: Int = 30,
-    val current: UsagePeriodDto = UsagePeriodDto(),
-    val previous: UsagePeriodDto = UsagePeriodDto(),
-    val accounts: UsageAccountsDto = UsageAccountsDto(),
-    val daily: List<DailyUsageDto> = emptyList(),
-    val heatmap: List<List<Int>> = emptyList(),
-    val users: List<UserUsageDto> = emptyList(),
-    val features: List<FeatureUsageDto> = emptyList(),
-    val funnel: List<FunnelStepDto> = emptyList(),
-    val countries: List<CountryUsageDto> = emptyList(),
-    val tournaments: List<TournamentUsageDto> = emptyList(),
-)
-
-@Serializable
 data class DigestResultDto(
     val emaId: String = "",
     val slotId: Int = 0,
@@ -302,4 +178,71 @@ data class StatisticsOverviewDto(
     val highestHand: Int = 0,
     val playerCount: Int = 0,
     val players: List<PlayerTotalsDto> = emptyList(),
+)
+
+@Serializable
+data class ErrorGroupDto(
+    val id: String = "",
+    val errorType: String = "",
+    val area: String = "",
+    val message: String = "",
+    val count: Int = 0,
+    val firstSeen: Long = 0,
+    val lastSeen: Long = 0,
+    val lastKind: String = "",
+    val lastApp: String = "",
+    val lastPlatform: String = "",
+    val lastVersion: String = "",
+    val lastEnv: String = "",
+    val platforms: Map<String, Int> = emptyMap(),
+    val apps: Map<String, Int> = emptyMap(),
+)
+
+@Serializable
+data class ErrorLogCursorDto(
+    val at: Long = 0,
+    val id: String = "",
+)
+
+@Serializable
+data class ErrorGroupsResponseDto(
+    val groups: List<ErrorGroupDto> = emptyList(),
+    val nextCursor: ErrorLogCursorDto? = null,
+)
+
+@Serializable
+data class ErrorReportDto(
+    val reportId: String = "",
+    val createdAt: Long = 0,
+    val app: String = "",
+    val platform: String = "",
+    val kind: String = "",
+    val env: String = "",
+    val role: String? = null,
+    val appVersion: String = "",
+    val reason: String = "",
+    val httpStatus: Int? = null,
+    val message: String = "",
+    val language: String = "",
+)
+
+@Serializable
+data class ErrorGroupDetailDto(
+    val id: String = "",
+    val errorType: String = "",
+    val area: String = "",
+    val message: String = "",
+    val stackTrace: String = "",
+    val count: Int = 0,
+    val firstSeen: Long = 0,
+    val lastSeen: Long = 0,
+    val lastKind: String = "",
+    val lastApp: String = "",
+    val lastPlatform: String = "",
+    val lastVersion: String = "",
+    val lastEnv: String = "",
+    val platforms: Map<String, Int> = emptyMap(),
+    val apps: Map<String, Int> = emptyMap(),
+    val reports: List<ErrorReportDto> = emptyList(),
+    val nextReportCursor: ErrorLogCursorDto? = null,
 )

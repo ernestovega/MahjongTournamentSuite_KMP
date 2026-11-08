@@ -1,11 +1,12 @@
 [versions]
+ktlintGradle = "13.1.0"
 agp = "9.4.1"
 # Versions of the three products. Each one goes up on its own, see docs/versioning.md.
 # Bump the patch with: python3 scripts/versions.py bump <web|admin|player>
 # MAJOR and MINOR only change by hand, when the owner decides.
 web-versionName = "1.0.3"
-admin-versionName = "1.0.1"
-admin-versionCode = "1"
+admin-versionName = "1.0.2"
+admin-versionCode = "2"
 player-versionName = "1.0.2"
 player-versionCode = "2"
 android-compileSdk = "37"
@@ -25,6 +26,7 @@ kotlinx-serialization = "1.12.0"
 ktor = "3.6.0"
 material3 = "1.12.0-alpha03"
 coil = "3.6.3"
+google-services = "4.5.0"
 
 [libraries]
 androidx-test-runner = { module = "androidx.test:runner", version = "1.7.0" }
@@ -59,6 +61,7 @@ firebase-bom = { module = "com.google.firebase:firebase-bom", version = "34.0.0"
 firebase-appcheck = { module = "com.google.firebase:firebase-appcheck" }
 firebase-appcheck-playintegrity = { module = "com.google.firebase:firebase-appcheck-playintegrity" }
 firebase-appcheck-debug = { module = "com.google.firebase:firebase-appcheck-debug" }
+firebase-analytics = { module = "com.google.firebase:firebase-analytics" }
 ktor-client-contentNegotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
@@ -73,4 +76,6 @@ composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "com
 composeMultiplatform = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlinMultiplatform = { id = "org.jetbrains.kotlin.multiplatform", version.ref = "kotlin" }
+googleServices = { id = "com.google.gms.google-services", version.ref = "google-services" }
+ktlint = { id = "org.jlleitschuh.gradle.ktlint", version.ref = "ktlintGradle" }
 kotlinSerialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "827074322474",
+    "project_id": "mahjong-tournament-suite",
+    "storage_bucket": "mahjong-tournament-suite.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827074322474:android:c6fa0140f07192f1efa353",
+        "android_client_info": {
+          "package_name": "com.etologic.mahjongtournamentsuite"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASiX-nCDOOUSjMJKhKLzrAIktCP898Ne0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:827074322474:android:e3cb8bef5898e4d1efa353",
+        "android_client_info": {
+          "package_name": "com.etologic.mahjongtournamentsuite.player"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyASiX-nCDOOUSjMJKhKLzrAIktCP898Ne0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

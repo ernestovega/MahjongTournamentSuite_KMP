@@ -2,11 +2,13 @@ package com.etologic.mahjongtournamentsuite.domain.repository
 
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
+import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
+import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.PasswordResetResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAssignment
-import com.etologic.mahjongtournamentsuite.domain.model.UsageReport
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 
 interface AdminRepository {
@@ -41,6 +43,13 @@ interface AdminRepository {
      */
     suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>>
 
-    /** Usage analytics for the last [days] days (7, 30 or 90). Only an administrator can load it. Never cached. */
-    suspend fun loadUsageReport(days: Int): AppResult<UsageReport>
+    /**
+     * One page of the error log, newest first, each problem once with a count. [sinceMillis] keeps the problems seen
+     * at that time or later. Pass the [ErrorGroupsPage.nextCursor] of a page as [cursor] to read the next one.
+     * Only an administrator can load it. Never cached.
+     */
+    suspend fun loadErrorGroups(sinceMillis: Long? = null, cursor: ErrorLogCursor? = null): AppResult<ErrorGroupsPage>
+
+    /** One problem with its stack trace and one page of its newest reports. Only an administrator can load it. Never cached. */
+    suspend fun loadErrorGroup(id: String, reportCursor: ErrorLogCursor? = null): AppResult<ErrorGroupDetail>
 }
