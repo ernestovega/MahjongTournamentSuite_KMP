@@ -51,6 +51,9 @@ import com.etologic.mahjongtournamentsuite.data.cache.Persistence
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
+import com.etologic.mahjongtournamentsuite.data.cache.MANIFEST_SHARE_TIME
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
+import com.etologic.mahjongtournamentsuite.data.cache.tournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
@@ -60,7 +63,6 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import io.ktor.http.HttpStatusCode
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
 import kotlin.io.encoding.Base64
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -866,17 +868,19 @@ class DefaultTournamentRepository(
         if (prefixes.isNotEmpty()) cache.markStale(*prefixes.toTypedArray())
     }
 
-    /** Cached requests of one screen ask for the same manifest many times. They share one answer. */
     private suspend fun tournamentManifest(
         token: String,
         tournamentId: String,
         maxAge: Duration = MANIFEST_SHARE_TIME,
-    ): DataVersionsManifestDto = cache.shared("manifest:tournament:$tournamentId", maxAge) {
-        backendApi.tournamentDataVersions(token, tournamentId)
-    }
+    ): DataVersionsManifestDto = cache.tournamentManifest(backendApi, token, tournamentId, maxAge)
 
-    private suspend fun globalManifest(token: String): DataVersionsManifestDto =
-        cache.shared("manifest:global", MANIFEST_SHARE_TIME) { backendApi.globalDataVersions(token) }
+    private suspend fun globalManifest(token: String): DataVersionsManifestDto = cache.globalManifest(backendApi, token)
+
+    override suspend fun prefetchRevisions(tournamentId: String) {
+        // A failure here only means that the reads ask for the revisions themselves, and report the error.
+        runCatching { withFreshIdToken { token -> tournamentManifest(token, tournamentId) } }
+            .onFailure { logger.w(it) { "Prefetching the tournament revisions failed." } }
+    }
 
     private suspend fun <T> withFreshIdToken(
         block: suspend (String) -> T,
@@ -914,8 +918,6 @@ private fun TournamentAgendaItem.toDto() = TournamentAgendaItemDto(
     date = date,
     startTime = startTime,
 )
-
-private val MANIFEST_SHARE_TIME = 2.seconds
 
 private fun DataVersionsManifestDto.toDomain(): TournamentManifest = TournamentManifest(
     tablesRevision = resources["tables"]?.revision ?: 0,

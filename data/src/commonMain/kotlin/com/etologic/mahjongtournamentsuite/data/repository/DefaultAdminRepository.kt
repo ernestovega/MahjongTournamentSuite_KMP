@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
@@ -165,7 +166,7 @@ class DefaultAdminRepository(
             refreshMode = refreshMode,
             revision = {
                 withFreshIdToken { token ->
-                    backendApi.globalDataVersions(token).resources["users"]?.revision ?: 0
+                    cache.globalManifest(backendApi, token).resources["users"]?.revision ?: 0
                 }
             },
             load = { withFreshIdToken(block) },

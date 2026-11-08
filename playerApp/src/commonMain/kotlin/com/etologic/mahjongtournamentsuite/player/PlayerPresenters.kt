@@ -65,6 +65,8 @@ class PlayerTournamentPresenter(
         tournamentId: String,
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<PlayerTournamentView> {
+        // One request answers the revision checks of all the reads below. CACHED reads do not check.
+        if (refreshMode != RefreshMode.CACHED) tournamentRepository.prefetchRevisions(tournamentId)
         val tournament = when (val result = tournamentRepository.listTournaments(refreshMode)) {
             is AppResult.Success -> result.value.firstOrNull { it.id == tournamentId }
                 ?: return AppResult.Failure(AppError.Unexpected("Tournament not found"))

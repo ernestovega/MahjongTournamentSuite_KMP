@@ -35,6 +35,18 @@ interface RepositoryCache {
     ): T
 
     /**
+     * Like [shared], and one answer also gives the answers of other keys. [alsoShares] maps the answer to them,
+     * for example the global revisions inside a tournament manifest. They are kept as if fetched at the same time,
+     * and only when the answer itself is kept. A cache that does not share them just fetches.
+     */
+    suspend fun <T : Any> sharedAndSeed(
+        key: String,
+        maxAge: Duration,
+        alsoShares: (T) -> Map<String, Any>,
+        fetch: suspend () -> T,
+    ): T = shared(key, maxAge, fetch)
+
+    /**
      * Like [getOrLoad], and the server answer [D] is also saved on the device. After a new start of the app, the
      * saved answer is used when the server still has the same revision, so it is not downloaded again.
      * [map] turns the answer into the cached value. A cache without a device store just loads.
@@ -160,6 +172,13 @@ class SessionRepositoryCache(
         key: String,
         maxAge: Duration,
         fetch: suspend () -> T,
+    ): T = sharedAndSeed(key, maxAge, { emptyMap() }, fetch)
+
+    override suspend fun <T : Any> sharedAndSeed(
+        key: String,
+        maxAge: Duration,
+        alsoShares: (T) -> Map<String, Any>,
+        fetch: suspend () -> T,
     ): T {
         val request = mutex.withLock {
             sharedResults[key]?.takeIf { it.receivedAt.elapsedNow() < maxAge }?.let { return it.value.cast() }
@@ -170,7 +189,19 @@ class SessionRepositoryCache(
         return try {
             val result = request.await()
             // A write finished while the call ran when markStale removed the request. Do not keep that result.
-            mutex.withLock { if (sharedInFlight[key] === request) sharedResults[key] = result }
+            mutex.withLock {
+                if (sharedInFlight[key] === request) {
+                    sharedResults[key] = result
+                    val value: T = result.value.cast()
+                    alsoShares(value).forEach { (otherKey, otherValue) ->
+                        // An answer that is already newer stays.
+                        val current = sharedResults[otherKey]
+                        if (current == null || current.receivedAt.elapsedNow() > result.receivedAt.elapsedNow()) {
+                            sharedResults[otherKey] = SharedResult(otherValue, result.receivedAt)
+                        }
+                    }
+                }
+            }
             result.value.cast()
         } finally {
             mutex.withLock { if (sharedInFlight[key] === request) sharedInFlight.remove(key) }
