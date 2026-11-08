@@ -123,6 +123,7 @@ jobs:
       - name: Test scripts and start diagnostics
         run: |
           node --test scripts/recovery.test.mjs
+          python3 -m unittest discover -s scripts -p "*_test.py"
           node --test playerApp/diagnostics-test/*.test.mjs
 
   web:

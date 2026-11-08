@@ -44,3 +44,5 @@ Which files go into which product:
 - Tests, Markdown files, `docs/`, `scripts/` and `.github/`: none.
 
 A pull request can also bump a product that it did not change. The check only fails when a version goes down, or when a name and its code do not go up together.
+
+`scripts/versions_test.py` tests these rules and the check itself on a small git repository. The job "Scripts and diagnostics tests" runs it: `python3 -m unittest discover -s scripts -p "*_test.py"`. Change the tests together with the rules above.
