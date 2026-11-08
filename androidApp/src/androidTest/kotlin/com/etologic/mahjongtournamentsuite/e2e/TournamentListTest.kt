@@ -52,7 +52,7 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
-        listOf("Logout", "Users", "System", "App usage", "Timer", "Statistics", "EMA players", "New tournament")
+        listOf("Logout", "Users", "System", "App errors", "Timer", "Statistics", "EMA players", "New tournament")
             .forEach { c.waitForText(it) }
     }
 
@@ -71,7 +71,7 @@ class TournamentListTest : AdminE2eTest() {
         start(E2eAccounts.EDITOR)
         c.waitForText("EMA players")
         c.assertNoText("New tournament")
-        c.assertNoText("App usage")
+        c.assertNoText("App errors")
     }
 
     @Test
@@ -84,7 +84,7 @@ class TournamentListTest : AdminE2eTest() {
         start(E2eAccounts.PLAYER)
         c.assertNoText("Test - Large team tournament")
         c.assertNoText("New tournament")
-        c.assertNoText("App usage")
+        c.assertNoText("App errors")
     }
 
     @Test

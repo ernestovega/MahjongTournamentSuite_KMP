@@ -1,8 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import com.etologic.mahjongtournamentsuite.presentation.util.asString
-import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -58,8 +55,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
-import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -73,13 +68,18 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
+import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -175,9 +175,10 @@ fun TeamsScreen(
                     player.id.toString().contains(normalizedQuery) ||
                         normalizeSearchText(player.name.orEmpty()).contains(normalizedQuery)
                 }
-            val matchesCountry = selectedCountryCodes.isEmpty() || teamPlayers.any { player ->
-                player.country.trim().uppercase() in selectedCountryCodes
-            }
+            val matchesCountry = selectedCountryCodes.isEmpty() ||
+                teamPlayers.any { player ->
+                    player.country.trim().uppercase() in selectedCountryCodes
+                }
             matchesSearch && matchesCountry
         }
     }
@@ -247,12 +248,14 @@ fun TeamsScreen(
                 scope.launch {
                     saving = true
                     error = null
-                    when (val result = presenter.updateTeam(
-                        tournamentId = tournamentId,
-                        teamId = editingTeam.id,
-                        name = name,
-                        emaIds = emaIds,
-                    )) {
+                    when (
+                        val result = presenter.updateTeam(
+                            tournamentId = tournamentId,
+                            teamId = editingTeam.id,
+                            name = name,
+                            emaIds = emaIds,
+                        )
+                    ) {
                         is AppResult.Success -> {
                             restoreTeamId = editingTeam.id
                             editingTeamId = null
@@ -552,76 +555,78 @@ private fun TeamEditorDialog(
         }
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.appFocusGroup(),
-        title = { Text(stringResource(Res.string.edit_team_n, team.id)) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { if (it.length <= 80) name = it },
-                    label = { Text(stringResource(Res.string.team_name)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().focusRequester(nameFocusRequester),
-                )
+    TrackedDialog("EditTeam") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            modifier = Modifier.appFocusGroup(),
+            title = { Text(stringResource(Res.string.edit_team_n, team.id)) },
+            text = {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 520.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(
-                        text = stringResource(Res.string.team_members),
-                        style = MaterialTheme.typography.labelLarge,
-                        textAlign = TextAlign.Center,
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { if (it.length <= 80) name = it },
+                        label = { Text(stringResource(Res.string.team_name)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().focusRequester(nameFocusRequester),
                     )
-                    if (assignmentsLocked) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                    ) {
                         Text(
-                            text = stringResource(Res.string.player_assignments_are_locked_because_table),
-                            color = MaterialTheme.colorScheme.error,
+                            text = stringResource(Res.string.team_members),
+                            style = MaterialTheme.typography.labelLarge,
                             textAlign = TextAlign.Center,
                         )
-                    }
-                    Column(
-                        modifier = Modifier.wrapContentWidth(),
-                        horizontalAlignment = Alignment.Start,
-                    ) {
-                        teamSlots.forEachIndexed { index, slot ->
-                            val selected = selectedEmaIds.getOrNull(index)?.let(playersByEma::get)
-                            FocusedAssistChip(
-                                onClick = { playerPickerSlotIndex = index },
-                                enabled = !saving && !assignmentsLocked,
-                                focusRequester = slotFocusRequesters[index],
-                                label = {
-                                    Text(
-                                        text = "${slot.id} - ${selected?.displayName ?: stringResource(Res.string.not_assigned)}",
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                },
+                        if (assignmentsLocked) {
+                            Text(
+                                text = stringResource(Res.string.player_assignments_are_locked_because_table),
+                                color = MaterialTheme.colorScheme.error,
+                                textAlign = TextAlign.Center,
                             )
                         }
+                        Column(
+                            modifier = Modifier.wrapContentWidth(),
+                            horizontalAlignment = Alignment.Start,
+                        ) {
+                            teamSlots.forEachIndexed { index, slot ->
+                                val selected = selectedEmaIds.getOrNull(index)?.let(playersByEma::get)
+                                FocusedAssistChip(
+                                    onClick = { playerPickerSlotIndex = index },
+                                    enabled = !saving && !assignmentsLocked,
+                                    focusRequester = slotFocusRequesters[index],
+                                    label = {
+                                        Text(
+                                            text = "${slot.id} - ${selected?.displayName ?: stringResource(Res.string.not_assigned)}",
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    },
+                                )
+                            }
+                        }
+                    }
+                    moveWarning?.let { warningText ->
+                        val warning = warningText.asString()
+                        Text(warning, color = MaterialTheme.colorScheme.error)
                     }
                 }
-                moveWarning?.let { warningText ->
-                    val warning = warningText.asString()
-                    Text(warning, color = MaterialTheme.colorScheme.error)
-                }
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                onClick = { onSave(name.trim(), selectedEmaIds.toList()) },
-                enabled = !saving && name.trim().isNotEmpty() && (!assignmentsLocked || !membershipChanged),
-            ) { Text(stringResource(Res.string.save_team)) }
-        },
-        dismissButton = {
-            FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
-        },
-    )
+            },
+            confirmButton = {
+                FocusedButton(
+                    onClick = { onSave(name.trim(), selectedEmaIds.toList()) },
+                    enabled = !saving && name.trim().isNotEmpty() && (!assignmentsLocked || !membershipChanged),
+                ) { Text(stringResource(Res.string.save_team)) }
+            },
+            dismissButton = {
+                FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+            },
+        )
+    }
 }
 
 @Composable
@@ -657,71 +662,73 @@ private fun PlayerPickerDialog(
         if (filteredPlayers.isNotEmpty()) listState.scrollToItem(0)
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        modifier = Modifier.appFocusGroup(),
-        title = { Text(stringResource(Res.string.select_player_n, slot.id)) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                OutlinedTextField(
-                    value = query,
-                    onValueChange = { query = it },
-                    label = { Text(stringResource(Res.string.search_players)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
-                )
-                if (filteredPlayers.isEmpty()) {
-                    Text(
-                        text = stringResource(Res.string.no_players_match_the_search),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    TrackedDialog("SelectPlayer") {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            modifier = Modifier.appFocusGroup(),
+            title = { Text(stringResource(Res.string.select_player_n, slot.id)) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    OutlinedTextField(
+                        value = query,
+                        onValueChange = { query = it },
+                        label = { Text(stringResource(Res.string.search_players)) },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                     )
-                } else {
-                    Box(Modifier.fillMaxWidth().heightIn(max = 320.dp)) {
-                        LazyColumnWithScrollbar(state = listState) {
-                            itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { _, player ->
-                                val assignedSlot = slotsByEma[player.emaId]
-                                val assignedTeam = assignedSlot?.let {
-                                    teamNamesById[it.team] ?: stringResource(Res.string.team_n, it.team)
-                                }
-                                DataTableRow(
-                                    onClick = { onSelect(player) },
-                                    highlighted = player.emaId == selectedEmaId,
-                                ) {
-                                    Column(Modifier.weight(1f)) {
-                                        Text(player.displayName, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                        Text(
-                                            buildString {
-                                                append(stringResource(Res.string.rival_ema, player.emaId))
-                                                if (assignedTeam != null) {
-                                                    append(" • $assignedTeam • ")
-                                                    append(stringResource(Res.string.player_n, assignedSlot.id))
-                                                }
-                                            },
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
+                    if (filteredPlayers.isEmpty()) {
+                        Text(
+                            text = stringResource(Res.string.no_players_match_the_search),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    } else {
+                        Box(Modifier.fillMaxWidth().heightIn(max = 320.dp)) {
+                            LazyColumnWithScrollbar(state = listState) {
+                                itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { _, player ->
+                                    val assignedSlot = slotsByEma[player.emaId]
+                                    val assignedTeam = assignedSlot?.let {
+                                        teamNamesById[it.team] ?: stringResource(Res.string.team_n, it.team)
                                     }
+                                    DataTableRow(
+                                        onClick = { onSelect(player) },
+                                        highlighted = player.emaId == selectedEmaId,
+                                    ) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(player.displayName, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Text(
+                                                buildString {
+                                                    append(stringResource(Res.string.rival_ema, player.emaId))
+                                                    if (assignedTeam != null) {
+                                                        append(" • $assignedTeam • ")
+                                                        append(stringResource(Res.string.player_n, assignedSlot.id))
+                                                    }
+                                                },
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    }
+                                    DataTableDivider()
                                 }
-                                DataTableDivider()
                             }
                         }
                     }
                 }
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                onClick = onClear,
-                enabled = !saving && selectedEmaId != null,
-            ) { Text(stringResource(Res.string.clear_slot)) }
-        },
-        dismissButton = {
-            FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
-        },
-    )
+            },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onClear,
+                    enabled = !saving && selectedEmaId != null,
+                ) { Text(stringResource(Res.string.clear_slot)) }
+            },
+            dismissButton = {
+                FocusedTextButton(onClick = onDismiss, enabled = !saving) { Text(stringResource(Res.string.cancel)) }
+            },
+        )
+    }
 }
 
 private data class TeamPlayerSummary(

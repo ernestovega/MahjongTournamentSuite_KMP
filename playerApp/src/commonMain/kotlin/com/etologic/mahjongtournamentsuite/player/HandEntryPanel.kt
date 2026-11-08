@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import com.etologic.mahjongtournamentsuite.presentation.components.label
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -21,17 +20,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -60,7 +55,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
+import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -125,6 +122,10 @@ import mahjongtournamentsuite.playerapp.generated.resources.hand_draw
 import mahjongtournamentsuite.playerapp.generated.resources.scope_table
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 private val GainColor = Color(0xFF00934C)
 
@@ -191,18 +192,23 @@ fun HandEntryPanel(
     val parsed = score.trim().toIntOrNull()
     val chickenTooHigh = chicken && parsed != null && parsed > 12
     val penaltyEntries = penaltyDrafts.map { it.toEntry() }
-    val valid = isDraw || winner != null && parsed != null && parsed >= 8 &&
+    val valid = isDraw ||
+        winner != null &&
+        parsed != null &&
+        parsed >= 8 &&
         (selfDraw || (loser != null && loser != winner)) &&
         (!chicken || (!selfDraw && !chickenTooHigh))
     fun proposal() = if (isDraw) {
         HandProposal(winnerSlotId = null, loserSlotId = null, score = 0, isLastHand = lastHand || extraTime)
-    } else HandProposal(
-        winnerSlotId = winner!!,
-        loserSlotId = if (selfDraw) null else loser,
-        score = parsed!!,
-        isChickenHand = chicken,
-        isLastHand = lastHand || extraTime,
-    )
+    } else {
+        HandProposal(
+            winnerSlotId = winner!!,
+            loserSlotId = if (selfDraw) null else loser,
+            score = parsed!!,
+            isChickenHand = chicken,
+            isLastHand = lastHand || extraTime,
+        )
+    }
 
     fun finishEntry() {
         preview = null
@@ -318,189 +324,235 @@ fun HandEntryPanel(
     val review = preview
     val saving = busy || awaitingKey != null
     if ((mode == EntryMode.WIN || mode == EntryMode.DRAW) && review == null) {
-        AlertDialog(
-            onDismissRequest = { finishEntry() },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
-                    HandLabel(handInPlay)
-                }
-            },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (!isDraw) {
-                        SectionLabel(stringResource(Res.string.entry_winner))
-                        PlayerChoices(seatIds, winner, view, ::windOf) { slot -> winner = slot; if (loser == slot) loser = null }
-                        CheckRow(stringResource(Res.string.entry_self_draw), selfDraw) { selfDraw = it; if (it) { loser = null; chicken = false } }
-                        if (!selfDraw) {
-                            SectionLabel(stringResource(Res.string.entry_loser))
-                            PlayerChoices(seatIds.filter { it != winner }, loser, view, ::windOf) { loser = it }
-                        }
-                        OutlinedTextField(
-                            value = score,
-                            onValueChange = { score = it.filter(Char::isDigit) },
-                            label = { Text(stringResource(Res.string.entry_hand_score)) },
-                            singleLine = true,
-                            isError = chickenTooHigh,
-                            supportingText = if (chickenTooHigh) {
-                                { Text(stringResource(Res.string.entry_chicken_limit)) }
-                            } else {
-                                null
-                            },
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            modifier = Modifier.fillMaxWidth(),
-                        )
-                        if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }) { chicken = it }
-                    } else {
-                        Text(stringResource(Res.string.entry_draw_explanation))
+        TrackedDialog("EntryAddDraw") {
+            AlertDialog(
+                onDismissRequest = { finishEntry() },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
+                        HandLabel(handInPlay)
                     }
-                    if (extraTime) {
-                        Text(stringResource(Res.string.entry_extra_time_last))
-                    } else if (handInPlay < 16) {
-                        CheckRow(stringResource(Res.string.entry_last_hand), lastHand) { lastHand = it }
-                    }
-                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-                }
-            },
-            confirmButton = {
-                Button(
-                    enabled = valid && !busy,
-                    onClick = {
-                        scope.launch {
-                            busy = true
-                            message = null
-                            when (val result = presenter.preview(tournamentId, roundId, tableId, proposal())) {
-                                is AppResult.Success -> preview = result.value
-                                is AppResult.Failure ->
-                                    if (result.error is AppError.Conflict) tableChanged(result.error.toUiText())
-                                    else message = result.error.toUiText()
+                },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        if (!isDraw) {
+                            SectionLabel(stringResource(Res.string.entry_winner))
+                            PlayerChoices(seatIds, winner, view, ::windOf) { slot ->
+                                winner = slot
+                                if (loser == slot) loser = null
                             }
-                            busy = false
+                            CheckRow(stringResource(Res.string.entry_self_draw), selfDraw) {
+                                selfDraw = it
+                                if (it) {
+                                    loser = null
+                                    chicken = false
+                                }
+                            }
+                            if (!selfDraw) {
+                                SectionLabel(stringResource(Res.string.entry_loser))
+                                PlayerChoices(seatIds.filter { it != winner }, loser, view, ::windOf) { loser = it }
+                            }
+                            OutlinedTextField(
+                                value = score,
+                                onValueChange = { score = it.filter(Char::isDigit) },
+                                label = { Text(stringResource(Res.string.entry_hand_score)) },
+                                singleLine = true,
+                                isError = chickenTooHigh,
+                                supportingText = if (chickenTooHigh) {
+                                    { Text(stringResource(Res.string.entry_chicken_limit)) }
+                                } else {
+                                    null
+                                },
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+                            if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }) { chicken = it }
+                        } else {
+                            Text(stringResource(Res.string.entry_draw_explanation))
                         }
-                    },
-                ) { Text(stringResource(Res.string.entry_review)) }
-            },
-            dismissButton = { TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) } },
-        )
+                        if (extraTime) {
+                            Text(stringResource(Res.string.entry_extra_time_last))
+                        } else if (handInPlay < 16) {
+                            CheckRow(stringResource(Res.string.entry_last_hand), lastHand) { lastHand = it }
+                        }
+                        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        enabled = valid && !busy,
+                        onClick = {
+                            scope.launch {
+                                busy = true
+                                message = null
+                                when (val result = presenter.preview(tournamentId, roundId, tableId, proposal())) {
+                                    is AppResult.Success -> preview = result.value
+                                    is AppResult.Failure ->
+                                        if (result.error is AppError.Conflict) {
+                                            tableChanged(result.error.toUiText())
+                                        } else {
+                                            message = result.error.toUiText()
+                                        }
+                                }
+                                busy = false
+                            }
+                        },
+                    ) { Text(stringResource(Res.string.entry_review)) }
+                },
+                dismissButton = { TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) } },
+            )
+        }
     }
     if ((mode == EntryMode.WIN || mode == EntryMode.DRAW) && review != null) {
-        AlertDialog(
-            onDismissRequest = { if (!saving) { preview = null; message = null } },
-            title = {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(Res.string.entry_check_hand))
-                    HandLabel(review.handId)
-                }
-            },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
-                    if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_hand))
-                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-                }
-            },
-            confirmButton = {
-                Button(
-                    enabled = !saving,
-                    onClick = {
-                        scope.launch {
-                            busy = true
-                            message = null
-                            when (val result = presenter.record(tournamentId, roundId, tableId, proposal(), review.tableVersion)) {
-                                is AppResult.Success -> {
-                                    awaitingKey = progressKey
-                                    onSaved()
-                                }
-                                is AppResult.Failure ->
-                                    if (result.error is AppError.Conflict) {
-                                        tableChanged(result.error.toUiText())
-                                    } else {
-                                        message = result.error.toUiText()
-                                        preview = null
+        TrackedDialog("EntryCheckHand") {
+            AlertDialog(
+                onDismissRequest = {
+                    if (!saving) {
+                        preview = null
+                        message = null
+                    }
+                },
+                title = {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(stringResource(Res.string.entry_check_hand))
+                        HandLabel(review.handId)
+                    }
+                },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
+                        if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_hand))
+                        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        enabled = !saving,
+                        onClick = {
+                            scope.launch {
+                                busy = true
+                                message = null
+                                when (val result = presenter.record(tournamentId, roundId, tableId, proposal(), review.tableVersion)) {
+                                    is AppResult.Success -> {
+                                        awaitingKey = progressKey
+                                        onSaved()
                                     }
+                                    is AppResult.Failure ->
+                                        if (result.error is AppError.Conflict) {
+                                            tableChanged(result.error.toUiText())
+                                        } else {
+                                            message = result.error.toUiText()
+                                            preview = null
+                                        }
+                                }
+                                busy = false
                             }
-                            busy = false
-                        }
-                    },
-                ) { Text(stringResource(Res.string.entry_confirm_save)) }
-            },
-            dismissButton = { TextButton(enabled = !saving, onClick = { preview = null; message = null }) { Text(stringResource(Res.string.entry_edit)) } },
-        )
+                        },
+                    ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                },
+                dismissButton = {
+                    TextButton(enabled = !saving, onClick = {
+                        preview = null
+                        message = null
+                    }) { Text(stringResource(Res.string.entry_edit)) }
+                },
+            )
+        }
     }
     if (mode == EntryMode.PENALTY && !penaltyReview) {
-        AlertDialog(
-            onDismissRequest = { finishEntry() },
-            title = { Text(stringResource(Res.string.entry_add_penalty)) },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    penaltyDrafts.forEachIndexed { index, draft ->
-                        PenaltyCard(
-                            number = index + 1,
-                            draft = draft,
-                            seats = seats,
-                            view = view,
-                            windOf = ::windOf,
-                            onChange = { penaltyDrafts[index] = it },
-                            onRemove = { penaltyDrafts.removeAt(index); if (penaltyDrafts.isEmpty()) finishEntry() },
+        TrackedDialog("EntryAddPenalty") {
+            AlertDialog(
+                onDismissRequest = { finishEntry() },
+                title = { Text(stringResource(Res.string.entry_add_penalty)) },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        penaltyDrafts.forEachIndexed { index, draft ->
+                            PenaltyCard(
+                                number = index + 1,
+                                draft = draft,
+                                seats = seats,
+                                view = view,
+                                windOf = ::windOf,
+                                onChange = { penaltyDrafts[index] = it },
+                                onRemove = {
+                                    penaltyDrafts.removeAt(index)
+                                    if (penaltyDrafts.isEmpty()) finishEntry()
+                                },
+                            )
+                        }
+                        if (penaltyDrafts.size < MAX_PENALTIES) {
+                            OutlinedButton(onClick = { penaltyDrafts.add(PenaltyDraft()) }, Modifier.fillMaxWidth()) {
+                                Icon(Icons.Default.Add, contentDescription = null, Modifier.size(18.dp))
+                                Spacer(Modifier.width(8.dp))
+                                Text(stringResource(Res.string.entry_add_another_penalty))
+                            }
+                        }
+                        Text(
+                            stringResource(Res.string.entry_penalty_note),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     }
-                    if (penaltyDrafts.size < MAX_PENALTIES) {
-                        OutlinedButton(onClick = { penaltyDrafts.add(PenaltyDraft()) }, Modifier.fillMaxWidth()) {
-                            Icon(Icons.Default.Add, contentDescription = null, Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(stringResource(Res.string.entry_add_another_penalty))
-                        }
-                    }
-                    Text(
-                        stringResource(Res.string.entry_penalty_note),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            },
-            confirmButton = {
-                Button(
-                    enabled = penaltyEntries.isNotEmpty() && penaltyEntries.all { it.isValid },
-                    onClick = { penaltyReview = true },
-                ) { Text(stringResource(Res.string.entry_review)) }
-            },
-            dismissButton = { TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) } },
-        )
+                },
+                confirmButton = {
+                    Button(
+                        enabled = penaltyEntries.isNotEmpty() && penaltyEntries.all { it.isValid },
+                        onClick = { penaltyReview = true },
+                    ) { Text(stringResource(Res.string.entry_review)) }
+                },
+                dismissButton = { TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) } },
+            )
+        }
     }
     if (mode == EntryMode.PENALTY && penaltyReview) {
-        AlertDialog(
-            onDismissRequest = { if (!saving) { penaltyReview = false; message = null } },
-            title = { Text(stringResource(Res.string.entry_check_penalty)) },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    penaltyEntries.forEach { PenaltyLine(it, view, seats, ::windOf) }
-                    if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_penalty))
-                    message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-                }
-            },
-            confirmButton = {
-                Button(
-                    enabled = !saving,
-                    onClick = {
-                        scope.launch {
-                            busy = true
-                            message = null
-                            when (val result = presenter.addPenalties(tournamentId, roundId, tableId, penaltyEntries, table.table.version)) {
-                                is AppResult.Success -> {
-                                    awaitingKey = progressKey
-                                    onSaved()
+        TrackedDialog("EntryCheckPenalty") {
+            AlertDialog(
+                onDismissRequest = {
+                    if (!saving) {
+                        penaltyReview = false
+                        message = null
+                    }
+                },
+                title = { Text(stringResource(Res.string.entry_check_penalty)) },
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        penaltyEntries.forEach { PenaltyLine(it, view, seats, ::windOf) }
+                        if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_penalty))
+                        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        enabled = !saving,
+                        onClick = {
+                            scope.launch {
+                                busy = true
+                                message = null
+                                when (val result = presenter.addPenalties(tournamentId, roundId, tableId, penaltyEntries, table.table.version)) {
+                                    is AppResult.Success -> {
+                                        awaitingKey = progressKey
+                                        onSaved()
+                                    }
+                                    is AppResult.Failure ->
+                                        if (result.error is AppError.Conflict) {
+                                            tableChanged(result.error.toUiText())
+                                        } else {
+                                            message = result.error.toUiText()
+                                        }
                                 }
-                                is AppResult.Failure ->
-                                    if (result.error is AppError.Conflict) tableChanged(result.error.toUiText())
-                                    else message = result.error.toUiText()
+                                busy = false
                             }
-                            busy = false
-                        }
-                    },
-                ) { Text(stringResource(Res.string.entry_confirm_save)) }
-            },
-            dismissButton = { TextButton(enabled = !saving, onClick = { penaltyReview = false; message = null }) { Text(stringResource(Res.string.entry_edit)) } },
-        )
+                        },
+                    ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                },
+                dismissButton = {
+                    TextButton(enabled = !saving, onClick = {
+                        penaltyReview = false
+                        message = null
+                    }) { Text(stringResource(Res.string.entry_edit)) }
+                },
+            )
+        }
     }
 }
 
@@ -615,8 +667,12 @@ private fun PenaltyCard(
                 singleLine = true,
                 isError = notSplittable,
                 supportingText = when {
-                    notSplittable -> {{ Text(stringResource(Res.string.entry_shared_multiple)) }}
-                    draft.shared && amount != null && amount > 0 -> {{ Text(stringResource(Res.string.entry_others_get, amount / 3)) }}
+                    notSplittable -> {
+                        { Text(stringResource(Res.string.entry_shared_multiple)) }
+                    }
+                    draft.shared && amount != null && amount > 0 -> {
+                        { Text(stringResource(Res.string.entry_others_get, amount / 3)) }
+                    }
                     else -> null
                 },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

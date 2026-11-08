@@ -18,6 +18,7 @@ status_file="$(mktemp)"
 run_gradle() {
   local args=()
   [ -n "$1" ] && args+=("-Pandroid.testInstrumentationRunnerArguments.class=$1")
+  [ -n "${E2E_WAIT_MS:-}" ] && args+=("-Pandroid.testInstrumentationRunnerArguments.e2eWaitMs=$E2E_WAIT_MS")
   rm -rf "$results"
   (cd "$root" && ./gradlew ":$module:connectedDebugAndroidTest" ${args[@]+"${args[@]}"} > "$root/build/e2e-gradle.log" 2>&1)
 }
@@ -46,6 +47,12 @@ adb shell service call alarm 3 s16 "$(readlink /etc/localtime | sed 's#.*/zonein
 # The tests look for English texts. The apps follow the device language, so they get an English locale.
 adb shell cmd locale set-app-locales com.etologic.mahjongtournamentsuite --locales en-US > /dev/null 2>&1 || true
 adb shell cmd locale set-app-locales com.etologic.mahjongtournamentsuite.player --locales en-US > /dev/null 2>&1 || true
+
+# Gradle installs and removes the app for every run, so the log must be read while the tests run.
+if [ -n "${E2E_LOGCAT:-}" ]; then
+  adb logcat -c > /dev/null 2>&1 || true
+  adb logcat -v time > "$E2E_LOGCAT" 2>&1 &
+fi
 
 current="$filter"
 for run in $(seq 1 "$max_runs"); do
