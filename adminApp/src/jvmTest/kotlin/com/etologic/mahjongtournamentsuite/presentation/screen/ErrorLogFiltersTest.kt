@@ -19,9 +19,20 @@ class ErrorLogFiltersTest {
         platforms: Map<String, Int> = mapOf("android" to 1),
         apps: Map<String, Int> = mapOf("admin" to 1),
     ) = ErrorGroup(
-        id = id, errorType = type, area = "", message = message, count = count, firstSeen = lastSeen, lastSeen = lastSeen,
-        lastKind = kind, lastApp = apps.keys.first(), lastPlatform = platforms.keys.first(), lastVersion = "1.0", lastEnv = env,
-        platforms = platforms, apps = apps,
+        id = id,
+        errorType = type,
+        area = "",
+        message = message,
+        count = count,
+        firstSeen = lastSeen,
+        lastSeen = lastSeen,
+        lastKind = kind,
+        lastApp = apps.keys.first(),
+        lastPlatform = platforms.keys.first(),
+        lastVersion = "1.0",
+        lastEnv = env,
+        platforms = platforms,
+        apps = apps,
     )
 
     private fun ids(groups: List<ErrorGroup>, filters: ErrorFilters = ErrorFilters()) = groups.applyFilters(filters, now).map { it.id }
