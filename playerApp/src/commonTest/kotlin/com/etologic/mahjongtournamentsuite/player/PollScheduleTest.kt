@@ -18,7 +18,11 @@ class PollScheduleTest {
         completed: Boolean = false,
         mode: MatchEndMode = MatchEndMode.FINISH_HAND,
     ) = Tournament(
-        id = "t", name = "T", isTeams = false, numPlayers = 4, numRounds = 2,
+        id = "t",
+        name = "T",
+        isTeams = false,
+        numPlayers = 4,
+        numRounds = 2,
         eventStartDate = start,
         eventEndDate = end,
         roundSchedules = listOf(

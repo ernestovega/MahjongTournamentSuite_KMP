@@ -51,9 +51,20 @@ class ErrorsScreenUiTest {
         env: String = "prod",
         app: String = "admin",
     ) = ErrorGroup(
-        id = id, errorType = type, area = "tournaments", message = "boom $id", count = count, firstSeen = now - 5_000, lastSeen = now - 1_000,
-        lastKind = kind, lastApp = app, lastPlatform = platform, lastVersion = "1.2.3", lastEnv = env,
-        platforms = mapOf(platform to count), apps = mapOf(app to count),
+        id = id,
+        errorType = type,
+        area = "tournaments",
+        message = "boom $id",
+        count = count,
+        firstSeen = now - 5_000,
+        lastSeen = now - 1_000,
+        lastKind = kind,
+        lastApp = app,
+        lastPlatform = platform,
+        lastVersion = "1.2.3",
+        lastEnv = env,
+        platforms = mapOf(platform to count),
+        apps = mapOf(app to count),
     )
 
     private val webGroup = group("g1", "WebFailure", "web", 7)
@@ -78,8 +89,18 @@ class ErrorsScreenUiTest {
                     nextReportCursor = null,
                     reports = listOf(
                         ErrorReportEntry(
-                            reportId = "report-abc", createdAt = now - 1_000, app = "admin", platform = "web", kind = "handled", env = "prod",
-                            role = "admin", appVersion = "1.2.3", reason = "server_error", httpStatus = 500, message = "boom", language = "en",
+                            reportId = "report-abc",
+                            createdAt = now - 1_000,
+                            app = "admin",
+                            platform = "web",
+                            kind = "handled",
+                            env = "prod",
+                            role = "admin",
+                            appVersion = "1.2.3",
+                            reason = "server_error",
+                            httpStatus = 500,
+                            message = "boom",
+                            language = "en",
                         ),
                     ),
                 ),
@@ -282,8 +303,18 @@ class ErrorsScreenUiTest {
     @Test
     fun moreReportsLoadOnRequestAndAddToTheOnesShown() = runComposeUiTest {
         val firstReport = ErrorReportEntry(
-            reportId = "report-1", createdAt = now - 2_000, app = "admin", platform = "web", kind = "handled", env = "prod",
-            role = null, appVersion = "1.2.3", reason = "", httpStatus = null, message = "", language = "en",
+            reportId = "report-1",
+            createdAt = now - 2_000,
+            app = "admin",
+            platform = "web",
+            kind = "handled",
+            env = "prod",
+            role = null,
+            appVersion = "1.2.3",
+            reason = "",
+            httpStatus = null,
+            message = "",
+            language = "en",
         )
         val secondReport = firstReport.copy(reportId = "report-2", createdAt = now - 3_000)
         val admin = show(configure = {

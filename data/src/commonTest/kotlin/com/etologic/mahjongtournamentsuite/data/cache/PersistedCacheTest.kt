@@ -195,10 +195,20 @@ class PersistedCacheTest {
     }
 
     private fun table(round: Int, id: Int, version: Long) = TableState(
-        version = version, roundId = round, tableId = id, playerIds = listOf(1, 2, 3, 4),
-        playerEastId = "", playerSouthId = "", playerWestId = "", playerNorthId = "",
-        playerEastScore = "", playerSouthScore = "", playerWestScore = "", playerNorthScore = "",
-        isCompleted = false, useTotalsOnly = true,
+        version = version,
+        roundId = round,
+        tableId = id,
+        playerIds = listOf(1, 2, 3, 4),
+        playerEastId = "",
+        playerSouthId = "",
+        playerWestId = "",
+        playerNorthId = "",
+        playerEastScore = "",
+        playerSouthScore = "",
+        playerWestScore = "",
+        playerNorthScore = "",
+        isCompleted = false,
+        useTotalsOnly = true,
     )
 
     private fun hands() = listOf(TableHand(1, "", "", "", false, false, "", "", "", ""))

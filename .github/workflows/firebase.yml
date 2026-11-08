@@ -98,7 +98,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Check the Kotlin style
-        run: ./gradlew ktlintCheck
+        # --continue lists the style problems of every module, not only of the first one that fails.
+        run: ./gradlew ktlintCheck --continue
 
       - name: Test Kotlin code
         run: >
