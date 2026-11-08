@@ -76,7 +76,10 @@ class PersistedCacheTest {
         ownerUid = owner,
         key = "global:emaPlayers",
         refreshMode = refreshMode,
-        revision = { server.revisionChecks++; server.revision },
+        revision = {
+            server.revisionChecks++
+            server.revision
+        },
         persistence = persistence,
         load = { server.answer() },
         map = { it.names.single() },
@@ -166,8 +169,14 @@ class PersistedCacheTest {
             tournamentId = "t1",
             isOutdated = null,
             restore = { saved },
-            verifyRestored = { known -> checks++; known[TableKey(1, 1)] != 4L },
-            fetchAll = { fullLoads++; listOf(table(1, 1, version = 4) to hands()) },
+            verifyRestored = { known ->
+                checks++
+                known[TableKey(1, 1)] != 4L
+            },
+            fetchAll = {
+                fullLoads++
+                listOf(table(1, 1, version = 4) to hands())
+            },
         )
 
         assertEquals(1, checks)
@@ -186,7 +195,10 @@ class PersistedCacheTest {
             restore = { listOf(table(1, 1, version = 3) to hands()) },
             verifyRestored = { false },
             onFetched = { fetched++ },
-            fetchAll = { fullLoads++; emptyList() },
+            fetchAll = {
+                fullLoads++
+                emptyList()
+            },
         )
 
         assertEquals(0, fullLoads)

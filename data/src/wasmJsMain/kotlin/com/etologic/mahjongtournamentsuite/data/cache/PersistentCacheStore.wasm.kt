@@ -1,10 +1,12 @@
 package com.etologic.mahjongtournamentsuite.data.cache
 
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
-@JsFun("""(name) => {
-    try { return window.localStorage.getItem(name); }
-    catch (_) { return null; }
-}""")
+@JsFun(
+    """(name) => {
+        try { return window.localStorage.getItem(name); }
+        catch (_) { return null; }
+    }""",
+)
 private external fun readLocalStorage(name: String): String?
 
 /**
@@ -13,37 +15,41 @@ private external fun readLocalStorage(name: String): String?
  * be passed, the cache removes its own values first. A value larger than the budget is not saved.
  */
 @OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
-@JsFun("""(prefix, name, value, budget) => {
-    try {
-        if (value.length > budget) return false;
-        const storage = window.localStorage;
-        let used = 0;
-        for (let i = 0; i < storage.length; i++) {
-            const key = storage.key(i);
-            if (key && key.startsWith(prefix) && key !== name) used += key.length + (storage.getItem(key) || "").length;
-        }
-        if (used + name.length + value.length > budget) {
+@JsFun(
+    """(prefix, name, value, budget) => {
+        try {
+            if (value.length > budget) return false;
+            const storage = window.localStorage;
+            let used = 0;
+            for (let i = 0; i < storage.length; i++) {
+                const key = storage.key(i);
+                if (key && key.startsWith(prefix) && key !== name) used += key.length + (storage.getItem(key) || "").length;
+            }
+            if (used + name.length + value.length > budget) {
+                for (let i = storage.length - 1; i >= 0; i--) {
+                    const key = storage.key(i);
+                    if (key && key.startsWith(prefix)) storage.removeItem(key);
+                }
+            }
+            storage.setItem(name, value);
+            return true;
+        } catch (_) { return false; }
+    }""",
+)
+private external fun writeLocalStorage(prefix: String, name: String, value: String, budget: Int): Boolean
+
+@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
+@JsFun(
+    """(prefix) => {
+        try {
+            const storage = window.localStorage;
             for (let i = storage.length - 1; i >= 0; i--) {
                 const key = storage.key(i);
                 if (key && key.startsWith(prefix)) storage.removeItem(key);
             }
-        }
-        storage.setItem(name, value);
-        return true;
-    } catch (_) { return false; }
-}""")
-private external fun writeLocalStorage(prefix: String, name: String, value: String, budget: Int): Boolean
-
-@OptIn(kotlin.js.ExperimentalWasmJsInterop::class)
-@JsFun("""(prefix) => {
-    try {
-        const storage = window.localStorage;
-        for (let i = storage.length - 1; i >= 0; i--) {
-            const key = storage.key(i);
-            if (key && key.startsWith(prefix)) storage.removeItem(key);
-        }
-    } catch (_) {}
-}""")
+        } catch (_) {}
+    }""",
+)
 private external fun removeLocalStorage(prefix: String)
 
 /**

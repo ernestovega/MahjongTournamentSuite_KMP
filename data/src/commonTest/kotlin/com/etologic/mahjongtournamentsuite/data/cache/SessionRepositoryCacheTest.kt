@@ -326,7 +326,10 @@ class SessionRepositoryCacheTest {
         var globalFetches = 0
 
         cache.sharedAndSeed("tournament", 2.seconds, { mapOf("global" to "global from tournament") }) { "tournament" }
-        val global = cache.shared("global", 2.seconds) { globalFetches++; "global fetched" }
+        val global = cache.shared("global", 2.seconds) {
+            globalFetches++
+            "global fetched"
+        }
 
         assertEquals("global from tournament", global)
         assertEquals(0, globalFetches)
