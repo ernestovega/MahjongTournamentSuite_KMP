@@ -4,6 +4,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
 import com.etologic.mahjongtournamentsuite.presentation.platform.BrowserSessionStorage
+import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import kotlinx.browser.window
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -21,7 +22,7 @@ fun main() {
         when (parameters["standalone"]) {
             "timer" -> TimerApp(parameters["initialRound"]?.toIntOrNull() ?: 1)
             "rankings" -> RankingApp(parameters["tournamentId"].orEmpty())
-            else -> App(remember { BrowserSessionStorage("adminApp") })
+            else -> App(remember { BrowserSessionStorage("adminApp") }, appVersion = AppVersion.web)
         }
     }
 }

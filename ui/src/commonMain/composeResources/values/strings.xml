@@ -308,7 +308,7 @@
     <string name="action_back">Back</string>
     <string name="dropdown_search">Search</string>
     <string name="logo_of">Logo of %1$s</string>
-    <string name="app_version_label">App %1$s</string>
+    <string name="app_version_label">v%1$s</string>
     <string name="theme_title">Theme</string>
     <string name="theme_system">System</string>
     <string name="theme_light">Light</string>

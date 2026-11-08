@@ -28,6 +28,14 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The version check compares the branch with main.
+          fetch-depth: 0
+
+      # Fails when the web, the admin app or the player app changed without a higher version.
+      # See docs/versioning.md.
+      - name: Check versions
+        run: python3 scripts/versions.py check --base "origin/${{ github.base_ref }}"
 
       - uses: actions/setup-java@v4
         with:
