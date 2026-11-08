@@ -38,8 +38,7 @@ class TournamentScheduleEditorTest {
 
     @Test
     fun everyRoundNeedsADateAndAStartTime() = runTest {
-        suspend fun errorFor(vararg rows: RoundScheduleEditorRow) =
-            tournamentScheduleEditorError(rows.toList(), emptyList(), "2026-10-02", "2026-10-03").render()
+        suspend fun errorFor(vararg rows: RoundScheduleEditorRow) = tournamentScheduleEditorError(rows.toList(), emptyList(), "2026-10-02", "2026-10-03").render()
 
         assertEquals(
             "Round 2 needs a date.",
