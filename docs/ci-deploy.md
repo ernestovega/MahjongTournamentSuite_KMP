@@ -8,7 +8,7 @@
 
 ## Workflow
 
-The workflow `.github/workflows/firebase.yml` has two parts:
+The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Tests and deploy**) has two parts. Its tests run in GitHub runners, which are free because the repository is public. Only the deploy goes to Firebase.
 
 - **Build and test** runs on every pull request to `main`. It first checks that every changed product has a higher version ([versioning.md](versioning.md)). Six checks run at the same time:
   - **Functions tests**: the unit tests of the functions.
