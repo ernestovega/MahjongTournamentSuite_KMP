@@ -72,7 +72,10 @@ private class ChangingServer {
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PersistedRepositoryFreshnessTest {
-    private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+    }
     private val device = DeviceStore()
     private val server = ChangingServer()
 

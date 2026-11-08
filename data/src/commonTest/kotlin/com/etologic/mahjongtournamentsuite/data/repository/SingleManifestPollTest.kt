@@ -30,7 +30,10 @@ import kotlin.time.TestTimeSource
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class SingleManifestPollTest {
-    private val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
+    private val json = Json {
+        ignoreUnknownKeys = true
+        explicitNulls = false
+    }
 
     private val requests = mutableListOf<String>()
     private var tournamentsRevision = 1L
@@ -41,6 +44,7 @@ class SingleManifestPollTest {
     private var tableVersion = 1L
     private var tournamentName = "Open"
     private var emaPlayerName = "Ada"
+
     // The app names the slots itself, so a change of a slot shows in its team.
     private var playerTeam = 1
     private var teamName = "Team A"
