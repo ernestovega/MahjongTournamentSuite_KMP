@@ -1,5 +1,6 @@
-import ExcelJS = require("exceljs");
-import sharp from "sharp";
+import type { Buffer as ExcelBuffer } from "exceljs";
+
+import { excelJs, sharp } from "./lazyModules";
 
 import { flagSvgFor, IdCardsDocument, loadIdCardsDocument, MISSING_FLAG_SVG, splitPlayerName } from "./idCardsService";
 
@@ -16,7 +17,7 @@ export const ID_LIST_BASE_HEADERS = [
 ] as const;
 
 export async function buildIdList(model: IdCardsDocument): Promise<Buffer> {
-  const workbook = new ExcelJS.Workbook();
+  const workbook = new (excelJs().Workbook)();
   workbook.creator = "MahjongTournamentSuite";
 
   const sheet = workbook.addWorksheet("ID list", { views: [{ state: "frozen", ySplit: 1 }] });
@@ -53,8 +54,8 @@ export async function buildIdList(model: IdCardsDocument): Promise<Buffer> {
     const imageKey = flagSvg == null ? "missing" : countryCode;
     let imageId = flagImageIds.get(imageKey);
     if (imageId == null) {
-      const png = await sharp(Buffer.from(flagSvg ?? MISSING_FLAG_SVG)).resize(36, 27, { fit: "fill" }).png().toBuffer();
-      imageId = workbook.addImage({ buffer: png as unknown as ExcelJS.Buffer, extension: "png" });
+      const png = await sharp()(Buffer.from(flagSvg ?? MISSING_FLAG_SVG)).resize(36, 27, { fit: "fill" }).png().toBuffer();
+      imageId = workbook.addImage({ buffer: png as unknown as ExcelBuffer, extension: "png" });
       flagImageIds.set(imageKey, imageId);
     }
     sheet.addImage(imageId, {

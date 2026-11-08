@@ -21,6 +21,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 class DefaultAuthRepository(
     private val backendApi: FunctionsBackendApi,
@@ -31,6 +36,11 @@ class DefaultAuthRepository(
 ) : AuthRepository {
     private var loadedFromStore: Boolean = false
     private var session: AuthSession? = null
+
+    // A screen sends several requests at the same time. When the token expired, they all get 401 together.
+    // One refresh serves them all: the others wait for it and reuse its session.
+    private val refreshMutex = Mutex()
+    private var lastRefresh: Pair<TimeMark, AuthSession>? = null
 
     private suspend fun ensureLoadedFromStore() {
         if (loadedFromStore) return
@@ -84,7 +94,15 @@ class DefaultAuthRepository(
         },
     )
 
-    override suspend fun refreshSession(): AppResult<AuthSession> = runCatching {
+    override suspend fun refreshSession(): AppResult<AuthSession> = refreshMutex.withLock {
+        val recent = lastRefresh
+        if (recent != null && recent.second == session && recent.first.elapsedNow() < SHARED_REFRESH_WINDOW) {
+            return@withLock AppResult.Success(recent.second)
+        }
+        refreshSessionNow()
+    }
+
+    private suspend fun refreshSessionNow(): AppResult<AuthSession> = runCatching {
         ensureLoadedFromStore()
         val current = session ?: error("No active session")
         val response = backendApi.refresh(
@@ -98,6 +116,7 @@ class DefaultAuthRepository(
     }.fold(
         onSuccess = { newSession ->
             session = newSession
+            lastRefresh = TimeSource.Monotonic.markNow() to newSession
             sessionStore.save(newSession.toStored())
             AppResult.Success(newSession)
         },
@@ -212,3 +231,5 @@ private fun AuthSession.toStored(): StoredAuthSession = StoredAuthSession(
     idToken = idToken,
     refreshToken = refreshToken,
 )
+
+private val SHARED_REFRESH_WINDOW = 10.seconds

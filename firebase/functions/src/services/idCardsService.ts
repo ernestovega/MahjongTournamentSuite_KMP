@@ -1,4 +1,4 @@
-import PDFDocument from "pdfkit";
+/// <reference types="pdfkit" />
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
@@ -7,6 +7,7 @@ import { db, storage } from "../firebase";
 import { listCountries } from "./countriesService";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import { readStoredRoundSchedules, type TournamentRoundSchedule } from "./tournamentSchedule";
+import { pdfKit } from "./lazyModules";
 
 export const CARD_WIDTH = 242.88;
 export const CARD_HEIGHT = 153;
@@ -533,7 +534,7 @@ export async function buildIdCardsPdf(model: IdCardsDocument, sheet?: IdCardShee
   const grid = sheet == null ? null : idCardSheetGrid(sheet);
   if (sheet != null && grid == null) throw new Error("The card size does not fit on an A4 sheet.");
   return new Promise<Buffer>((resolve, reject) => {
-    const doc = new PDFDocument({
+    const doc = new (pdfKit())({
       autoFirstPage: false,
       compress: true,
       info: { Title: `${model.tournamentShortName} ID cards` },
