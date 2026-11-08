@@ -114,6 +114,12 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 - **Cleanup of old data.** `npm run cleanup:emails-and-guests` previews, and `npm run cleanup:emails-and-guests:apply` removes the retired data: `nonMember` (the slot becomes an open slot), `invitedEmail`, `invitationStatus`, `invitedAt` and `notifiedAt` of slots, and every `playerInvitations` document. `npm run cleanup:account-links` previews, and `npm run cleanup:account-links:apply` removes the stored account links: `accountUid` of slots and every `users/{uid}/playerTournaments` document.
 
 
+## Load speed
+
+- The API loads the heavy libraries (ExcelJS, JSZip, sharp, PDFKit, nodemailer) on their first use, through `services/lazyModules.ts`. A new instance starts in about half the time and with about 55 MB less memory. Import these libraries only as types at the top of a file.
+- `tables-with-hands` reads the hands by document id (`1` to `16` of each table) in batch calls of up to 500 documents, not with one query per table.
+- Firebase Hosting serves the web files with `Cache-Control: no-cache`. The browser asks every time and gets `304 Not Modified` when the file did not change, so a reload does not download the app again and a new deploy is still seen at once.
+
 ## Firestore data model
 
 - `users/{uid}`
