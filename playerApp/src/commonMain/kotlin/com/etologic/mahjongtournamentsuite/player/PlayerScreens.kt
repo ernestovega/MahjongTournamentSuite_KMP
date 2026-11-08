@@ -172,6 +172,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlin.time.Duration
 import kotlin.time.TimeSource
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import mahjongtournamentsuite.playerapp.generated.resources.Res
@@ -242,9 +243,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_ti
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-
-/** The interval of the checks for new results while a tournament screen is open. */
-private const val REFRESH_INTERVAL_MS = 15_000L
 
 @Composable
 fun SplashScreen(
@@ -755,19 +753,26 @@ private fun LinkButton(icon: ImageVector, label: String, description: String? = 
 }
 
 /**
- * Loads the tournament and checks for changes at a fixed interval while the screen is open.
+ * Loads the tournament and checks for changes while the screen is open. [PollSchedule] sets how often: never again
+ * for a finished tournament, every minute before it starts, every 15 seconds while it runs, and every 5 seconds on a
+ * table whose round is being played ([tableRoundId]). A hidden tab or an app in the background does not check.
+ * Coming back always checks at once.
  * A failed check does not show a message when the tournament is already on screen.
  * After [STALE_AFTER_FAILURES] failed checks in a row, the message tells how long the data is old.
  */
 @Composable
-private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pair<PlayerTournamentView?, UiText?> {
+private fun rememberTournamentView(
+    tournamentId: String,
+    reloadKey: Int = 0,
+    tableRoundId: Int? = null,
+): Pair<PlayerTournamentView?, UiText?> {
     val presenter = koinInject<PlayerTournamentPresenter>()
     var view by remember(tournamentId) { mutableStateOf<PlayerTournamentView?>(null) }
     var message by remember(tournamentId) { mutableStateOf<UiText?>(null) }
     var failures by remember(tournamentId) { mutableIntStateOf(0) }
     var lastUpdate by remember(tournamentId) { mutableStateOf(TimeSource.Monotonic.markNow()) }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(tournamentId, reloadKey) {
+    LaunchedEffect(tournamentId, reloadKey, tableRoundId) {
         // Only the first load after a manual reload reads everything again. The later checks ask for changes only.
         var forceNext = reloadKey > 0
         while (true) {
@@ -791,7 +796,12 @@ private fun rememberTournamentView(tournamentId: String, reloadKey: Int = 0): Pa
                     }
                 }
             }
-            delay(REFRESH_INTERVAL_MS)
+            val tournament = view?.tournament
+            val wait = PollSchedule.nextDelay(tournament, tableRoundId, tournament?.currentVenueDateTime() ?: currentLocalDateTime())
+            // Waits for the next check. Going to the background ends the wait, so the return checks at once.
+            withTimeoutOrNull(wait ?: Duration.INFINITE) {
+                lifecycle.currentStateFlow.first { !it.isAtLeast(Lifecycle.State.STARTED) }
+            }
         }
     }
     return view to message
@@ -1489,7 +1499,7 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
 @Composable
 fun TableScreen(navController: NavHostController, tournamentId: String, roundId: Int, tableId: Int) {
     var reloadKey by remember { mutableStateOf(0) }
-    val (view, message) = rememberTournamentView(tournamentId, reloadKey)
+    val (view, message) = rememberTournamentView(tournamentId, reloadKey, tableRoundId = roundId)
     val table = view?.tables?.firstOrNull { it.roundId == roundId && it.tableId == tableId }
     var preselectWinner by remember { mutableStateOf<Int?>(null) }
     // The detailed list of hands refers to the players by id, so the seats show the ids while it is on.

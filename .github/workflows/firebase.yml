@@ -59,6 +59,10 @@ jobs:
       - name: Build web apps
         run: ./gradlew :adminApp:wasmJsBrowserDistribution :playerApp:wasmJsBrowserDistribution
 
+      # The unit tests of the app logic: repositories, caches and presenters.
+      - name: Test the app logic
+        run: ./gradlew :domain:jvmTest :data:jvmTest :playerApp:jvmTest
+
       # The UI tests only run by hand (ui-tests.yml). This keeps them compiling.
       - name: Build the UI tests
         run: ./gradlew :androidApp:assembleDebugAndroidTest :playerAndroidApp:assembleDebugAndroidTest

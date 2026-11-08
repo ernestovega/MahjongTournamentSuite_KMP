@@ -155,7 +155,7 @@ The table editor checks the server for changes while it is open. See [Multi-edit
 - Load when a screen opens. A cached copy is used for 10 seconds. After that, one manifest request decides if a reload is needed.
 - A save, a reset or a conflict marks the cached copies old.
 - The table editor polls the manifest. Other screens do not poll.
-- The player app checks the server every 15 seconds while a tournament screen is open and visible. It loads all tables again only when the table versions of the manifest are higher than the held versions.
+- The player app checks the server while a tournament screen is open and visible (`PollSchedule`): never again for a finished tournament, every minute before it starts, every 15 seconds while it runs, and every 5 seconds on a table whose round is being played, including the extra time. Coming back from the background or a hidden tab always checks at once. It loads all tables again only when the table versions of the manifest are higher than the held versions.
 
 ## Public routes
 
