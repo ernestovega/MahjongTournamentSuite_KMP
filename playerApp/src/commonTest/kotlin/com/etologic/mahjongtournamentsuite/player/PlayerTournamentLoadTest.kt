@@ -128,9 +128,6 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
     override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = unusedFakeResult<Unit>()
 
     override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode) = unusedFakeResult<List<TournamentRound>>()
-
-
-
 }
 
 private class GatedPlayerRepository(private val server: GatedServer) : PlayerRepository {
