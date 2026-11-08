@@ -4,7 +4,7 @@
 The versions live in gradle/libs.versions.toml. See docs/versioning.md.
 
     python3 scripts/versions.py show
-    python3 scripts/versions.py bump <web|admin|player> [major|minor|patch]
+    python3 scripts/versions.py bump <web|admin|player>
     python3 scripts/versions.py check [--base origin/main]
 
 `check` lists the files that the branch changed since it left the base branch, finds the products
@@ -183,17 +183,13 @@ def check(base: str) -> int:
     return 1 if errors else 0
 
 
-def bump(product: str, part: str) -> int:
+def bump(product: str) -> int:
     path = ROOT / CATALOG
     text = path.read_text()
     current = read_versions(text)[product]
+    # Only the patch goes up here. MAJOR and MINOR are changed by hand in the catalog.
     major, minor, patch = parse_name(current["name"])
-    if part == "major":
-        major, minor, patch = major + 1, 0, 0
-    elif part == "minor":
-        minor, patch = minor + 1, 0
-    else:
-        patch += 1
+    patch += 1
     name = f"{major}.{minor}.{patch}"
     text = re.sub(rf'^({product}-versionName\s*=\s*)"[^"]*"', rf'\g<1>"{name}"', text, flags=re.M)
     message = f"{LABELS[product]}: {current['name']} → {name}"
@@ -218,12 +214,11 @@ def main() -> int:
     commands.add_parser("show")
     bump_parser = commands.add_parser("bump")
     bump_parser.add_argument("product", choices=PRODUCTS)
-    bump_parser.add_argument("part", nargs="?", default="patch", choices=("major", "minor", "patch"))
     check_parser = commands.add_parser("check")
     check_parser.add_argument("--base", default="origin/main")
     args = parser.parse_args()
     if args.command == "bump":
-        return bump(args.product, args.part)
+        return bump(args.product)
     if args.command == "check":
         return check(args.base)
     return show()

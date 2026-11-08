@@ -11,10 +11,10 @@ There are three products, and each one has its own version:
 The versions are in `gradle/libs.versions.toml`:
 
 ```toml
-web-versionName = "1.1.0"
-admin-versionName = "1.1.0"
+web-versionName = "1.0.1"
+admin-versionName = "1.0.1"
 admin-versionCode = "2"
-player-versionName = "1.1.0"
+player-versionName = "1.0.1"
 player-versionCode = "2"
 ```
 
@@ -23,13 +23,12 @@ The names are `MAJOR.MINOR.PATCH`. The apps also have a version code for Google 
 ## Bump a version
 
 ```bash
-python3 scripts/versions.py bump web            # 1.1.0 -> 1.1.1
-python3 scripts/versions.py bump admin minor    # 1.1.0 -> 1.2.0, code + 1
-python3 scripts/versions.py bump player major   # 1.1.0 -> 2.0.0, code + 1
+python3 scripts/versions.py bump web      # 1.0.1 -> 1.0.2
+python3 scripts/versions.py bump admin    # 1.0.1 -> 1.0.2, code + 1
 python3 scripts/versions.py show
 ```
 
-Use `patch` (the default) for fixes, `minor` for new features and `major` for big changes.
+The script only raises the patch (the third number). MAJOR and MINOR are changed by hand in `gradle/libs.versions.toml` when the owner decides, setting the patch back to 0 and raising the version code of the apps by one. The check accepts that too.
 
 ## The check on pull requests
 

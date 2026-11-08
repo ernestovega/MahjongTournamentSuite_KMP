@@ -1,11 +1,12 @@
 [versions]
 agp = "9.4.1"
 # Versions of the three products. Each one goes up on its own, see docs/versioning.md.
-# Bump them with: python3 scripts/versions.py bump <web|admin|player> [major|minor|patch]
-web-versionName = "1.1.0"
-admin-versionName = "1.1.0"
+# Bump the patch with: python3 scripts/versions.py bump <web|admin|player>
+# MAJOR and MINOR only change by hand, when the owner decides.
+web-versionName = "1.0.1"
+admin-versionName = "1.0.1"
 admin-versionCode = "2"
-player-versionName = "1.1.0"
+player-versionName = "1.0.1"
 player-versionCode = "2"
 android-compileSdk = "37"
 android-minSdk = "24"
