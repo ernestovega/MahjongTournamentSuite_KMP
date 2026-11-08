@@ -229,6 +229,8 @@
     <string name="schedule_round_invalid_date">Il turno %1$d ha una data non valida.</string>
     <string name="schedule_round_outside_range">Il turno %1$d deve essere nell'intervallo di date del torneo.</string>
     <string name="schedule_round_invalid_time">Il turno %1$d ha un'ora di inizio non valida.</string>
+    <string name="schedule_round_missing_date">Il turno %1$d ha bisogno di una data.</string>
+    <string name="schedule_round_missing_time">Il turno %1$d ha bisogno di un'ora di inizio.</string>
     <string name="schedule_agenda_invalid_date">La voce %1$d dell'agenda ha una data non valida.</string>
     <string name="schedule_agenda_invalid_time">La voce %1$d dell'agenda ha un'ora di inizio non valida.</string>
     <string name="logo_must_be_jpeg_png">Il logo deve essere un'immagine JPEG o PNG.</string>
