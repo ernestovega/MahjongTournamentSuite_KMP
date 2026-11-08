@@ -1,6 +1,7 @@
 # Runs every test on the pull request from develop to main and deploys Firebase when main changes.
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
-name: Firebase
+# The name says what it does, not where: the tests run in GitHub runners, only the deploy goes to Firebase.
+name: Tests and deploy
 
 on:
   pull_request:
