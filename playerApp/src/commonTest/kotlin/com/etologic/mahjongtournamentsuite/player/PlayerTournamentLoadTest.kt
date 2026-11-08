@@ -36,16 +36,14 @@ private class GatedServer {
 }
 
 private class GatedTournamentRepository(private val server: GatedServer) : TournamentRepository {
-    override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> =
-        server.answer("tournaments", refreshMode) {
-            server.tournamentsResult?.invoke()
-                ?: AppResult.Success(listOf(Tournament(id = "t1", name = "Open", isTeams = server.isTeams, numPlayers = 4, numRounds = 1)))
-        }
+    override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = server.answer("tournaments", refreshMode) {
+        server.tournamentsResult?.invoke()
+            ?: AppResult.Success(listOf(Tournament(id = "t1", name = "Open", isTeams = server.isTeams, numPlayers = 4, numRounds = 1)))
+    }
 
-    override suspend fun listTournamentPlayers(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentPlayer>> =
-        server.answer("players", refreshMode) {
-            AppResult.Success((1..4).map { TournamentPlayer(id = it, name = "", team = 1, assignedEmaId = "1000000$it") })
-        }
+    override suspend fun listTournamentPlayers(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentPlayer>> = server.answer("players", refreshMode) {
+        AppResult.Success((1..4).map { TournamentPlayer(id = it, name = "", team = 1, assignedEmaId = "1000000$it") })
+    }
 
     override suspend fun getAllTablesWithHands(
         tournamentId: String,
@@ -54,17 +52,13 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
         if (server.tablesFail) AppResult.Failure(AppError.Network) else AppResult.Success(emptyList())
     }
 
-    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentTeam>> =
-        server.answer("teams", refreshMode) { AppResult.Success(listOf(TournamentTeam(id = 1, name = "Team", playerIds = listOf(1, 2, 3, 4)))) }
+    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentTeam>> = server.answer("teams", refreshMode) { AppResult.Success(listOf(TournamentTeam(id = 1, name = "Team", playerIds = listOf(1, 2, 3, 4)))) }
 
-    override suspend fun listTournamentTables(tournamentId: String, roundId: Int?, refreshMode: RefreshMode) =
-        unusedFakeResult<List<TournamentTable>>()
+    override suspend fun listTournamentTables(tournamentId: String, roundId: Int?, refreshMode: RefreshMode) = unusedFakeResult<List<TournamentTable>>()
 
-    override suspend fun getTableWithHands(tournamentId: String, roundId: Int, tableId: Int, refreshMode: RefreshMode) =
-        unusedFakeResult<Pair<TableState, List<TableHand>>>()
+    override suspend fun getTableWithHands(tournamentId: String, roundId: Int, tableId: Int, refreshMode: RefreshMode) = unusedFakeResult<Pair<TableState, List<TableHand>>>()
 
-    override suspend fun getRoundTablesWithHands(tournamentId: String, roundId: Int, refreshMode: RefreshMode) =
-        unusedFakeResult<List<Pair<TableState, List<TableHand>>>>()
+    override suspend fun getRoundTablesWithHands(tournamentId: String, roundId: Int, refreshMode: RefreshMode) = unusedFakeResult<List<Pair<TableState, List<TableHand>>>>()
 
     override suspend fun saveTableState(
         tournamentId: String,
@@ -131,16 +125,14 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
 }
 
 private class GatedPlayerRepository(private val server: GatedServer) : PlayerRepository {
-    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> =
-        server.answer("registry", refreshMode) { AppResult.Success(emptyList()) }
+    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> = server.answer("registry", refreshMode) { AppResult.Success(emptyList()) }
     override suspend fun createPlayer(player: Player): AppResult<Player> = error("unused")
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = error("unused")
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
 }
 
 private class GatedAuthRepository(private val server: GatedServer) : AuthRepository {
-    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> =
-        server.answer("me", refreshMode) { AppResult.Success(UserProfile(uid = "u1", email = "p@x.es", emaId = "10000001")) }
+    override suspend fun getMe(refreshMode: RefreshMode): AppResult<UserProfile> = server.answer("me", refreshMode) { AppResult.Success(UserProfile(uid = "u1", email = "p@x.es", emaId = "10000001")) }
 
     override suspend fun currentSession(): AuthSession = AuthSession(uid = "u1", idToken = "id", refreshToken = "refresh")
     override suspend fun signIn(email: String, password: String): AppResult<AuthSession> = error("unused")
@@ -154,8 +146,7 @@ private class GatedAuthRepository(private val server: GatedServer) : AuthReposit
     override suspend fun removePhoto(): AppResult<UserProfile> = error("unused")
 }
 
-private fun <T> unusedFakeResult(): AppResult<T> =
-    AppResult.Failure(AppError.Unexpected("Unused test repository method"))
+private fun <T> unusedFakeResult(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Unused test repository method"))
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerTournamentLoadTest {
