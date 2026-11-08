@@ -64,14 +64,22 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedScreen
 import org.koin.compose.getKoin
 import org.koin.compose.KoinApplication
+import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import org.koin.dsl.koinConfiguration
 
 @Composable
 @Preview
-fun App(sessionStorage: SessionStateStorage? = null) {
+/** [appVersion] is the version shown to the user. The web entry point passes the web version. */
+fun App(
+    sessionStorage: SessionStateStorage? = null,
+    appVersion: String = AppVersion.admin,
+) {
     AppWithModules {
-        ProvideAppLanguage {
-            MahjongTournamentSuiteApp(sessionStorage)
+        CompositionLocalProvider(LocalAppVersion provides appVersion) {
+            ProvideAppLanguage {
+                MahjongTournamentSuiteApp(sessionStorage)
+            }
         }
     }
 }
