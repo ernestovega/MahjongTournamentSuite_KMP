@@ -1,8 +1,10 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.test.performClick
 import org.junit.After
 import org.junit.Test
@@ -27,6 +29,20 @@ class CreateTournamentTest : AdminE2eTest() {
         c.field("Contact email").performTextInputText("e2e@example.com")
         c.field("Players").performTextReplacementText(players)
         c.field("Rounds").performTextReplacementText(rounds)
+        rounds.toIntOrNull()?.takeIf { it > 0 }?.let { fillRoundSchedules(it) }
+    }
+
+    /** Every round needs a date and a start time. The rounds play today, one hour apart. */
+    private fun fillRoundSchedules(rounds: Int, skipStartTimeOfRound: Int? = null) {
+        c.clickButton("Schedule")
+        c.waitForText("Round $rounds")
+        val today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
+        val dates = c.onAllNodes(hasSetTextAction() and hasText("Date"))
+        val times = c.onAllNodes(hasSetTextAction() and hasText("Start"))
+        repeat(rounds) { index ->
+            dates[index].performTextReplacement(today)
+            times[index].performTextReplacement(if (index + 1 == skipStartTimeOfRound) "" else "${10 + index % 12}:00")
+        }
     }
 
     private fun openForm() {
@@ -129,6 +145,15 @@ class CreateTournamentTest : AdminE2eTest() {
         fillValidForm(players = "16", rounds = "0")
         c.clickButton("Create")
         c.waitForText("Must be a positive whole number.")
+    }
+
+    @Test
+    fun everyRoundNeedsAStartTime() {
+        openForm()
+        fillValidForm(players = "16", rounds = "2")
+        fillRoundSchedules(rounds = 2, skipStartTimeOfRound = 2)
+        c.clickButton("Create")
+        c.waitForText("Round 2 needs a start time.", substring = true)
     }
 
     @Test

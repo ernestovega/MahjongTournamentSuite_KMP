@@ -231,6 +231,8 @@
     <string name="schedule_round_invalid_date">Le tour %1$d a une date non valide.</string>
     <string name="schedule_round_outside_range">Le tour %1$d doit être dans la période du tournoi.</string>
     <string name="schedule_round_invalid_time">Le tour %1$d a une heure de début non valide.</string>
+    <string name="schedule_round_missing_date">Le tour %1$d a besoin d'une date.</string>
+    <string name="schedule_round_missing_time">Le tour %1$d a besoin d'une heure de début.</string>
     <string name="schedule_agenda_invalid_date">L'élément d'agenda %1$d a une date non valide.</string>
     <string name="schedule_agenda_invalid_time">L'élément d'agenda %1$d a une heure de début non valide.</string>
     <string name="logo_must_be_jpeg_png">Le logo doit être une image JPEG ou PNG.</string>
@@ -475,7 +477,7 @@
     <string name="create_intro">Crée automatiquement les tours, les tables et les joueurs.</string>
     <string name="create_required_note">Les champs marqués d'un * sont obligatoires.</string>
     <string name="create_players_placeholder">Multiple de 4, minimum %1$d</string>
-    <string name="create_teams_info">Regroupez les joueurs en équipes de quatre.\nLes membres d\'une équipe ne joueront pas ensemble.</string>
+    <string name="create_teams_info">Regroupez les joueurs en équipes de quatre.\nLes membres d'une équipe ne joueront pas ensemble.</string>
     <string name="create_heavy_info">Utilise plus de processeur pour calculer le programme plus vite.</string>
     <string name="logo_from">Logo de %1$s</string>
     <string name="logo_none">Aucun logo</string>

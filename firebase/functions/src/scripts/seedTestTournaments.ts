@@ -84,8 +84,8 @@ type TournamentSpec = {
   players: PlayerSpec[];
   countBestHands: boolean;
   countChickenHands: boolean;
-  /** One entry for every round. A null entry keeps the date and the time empty. */
-  schedule: Array<{ date: string; startTime: string } | null>;
+  /** One entry for every round. Every round needs a date and a start time, as in the apps. */
+  schedule: Array<{ date: string; startTime: string }>;
   agenda: Agenda[];
   mode: (round: number, table: number, tablesPerRound: number) => TableMode;
   members?: string[];
@@ -298,7 +298,7 @@ const TOURNAMENTS: TournamentSpec[] = [
   },
   {
     id: "test-no-extras",
-    name: "Test - Without best hands, chicken hands or dates",
+    name: "Test - Without best hands or chicken hands",
     shortName: "BARE",
     primaryColor: "#455A64",
     startDate: "2026-09-12", endDate: "2026-09-13",
@@ -307,7 +307,7 @@ const TOURNAMENTS: TournamentSpec[] = [
     isTeams: false, numRounds: 3,
     players: emaPlayers(20, 7),
     countBestHands: false, countChickenHands: false,
-    schedule: [null, null, null],
+    schedule: spread(3, "2026-09-12", 2),
     agenda: [],
     mode: () => ({ kind: "full" }),
   },
@@ -375,7 +375,7 @@ const TOURNAMENTS: TournamentSpec[] = [
       { date: "2026-05-29", startTime: "16:00" }, { date: "2026-05-29", startTime: "18:30" },
       { date: "2026-05-30", startTime: "09:00" }, { date: "2026-05-30", startTime: "11:20" },
       { date: "2026-05-30", startTime: "15:00" }, { date: "2026-05-30", startTime: "17:20" },
-      { date: "2026-05-31", startTime: "09:00" }, { date: "2026-05-31", startTime: "11:20" },
+      { date: "2026-05-31", startTime: "09:00" },
     ],
     agenda: [
       { title: "Welcome dinner the day before the first round with a deliberately long agenda title", date: "2026-05-28", startTime: "21:00" },
@@ -1219,7 +1219,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
     numPlayers,
     numRounds: spec.numRounds,
     roundSchedules: spec.schedule.map((entry, index) => ({
-      roundId: index + 1, date: entry?.date ?? null, startTime: entry?.startTime ?? null,
+      roundId: index + 1, date: entry.date, startTime: entry.startTime,
     })),
     agendaItems: spec.agenda,
     numTries: 200 + Math.floor(rng() * 5000),
@@ -1273,11 +1273,24 @@ async function linkTesterAccounts(): Promise<void> {
   }
 }
 
+/** Every round needs a date inside the tournament and a start time, as the apps require. */
+function scheduleProblem(spec: TournamentSpec): string | null {
+  if (spec.schedule.length !== spec.numRounds) {
+    return `the schedule has ${spec.schedule.length} rounds instead of ${spec.numRounds}`;
+  }
+  const bad = spec.schedule.findIndex((entry) =>
+    !/^\d{4}-\d{2}-\d{2}$/.test(entry.date) || entry.date < spec.startDate || entry.date > spec.endDate ||
+    !/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(entry.startTime));
+  return bad >= 0 ? `round ${bad + 1} needs a date inside the tournament and a start time` : null;
+}
+
 async function main(): Promise<void> {
   console.log(`${applyChanges ? "Applying" : "Previewing"} test tournaments for ${firebaseProjectId}.`);
+  const everySpec = [...TOURNAMENTS, ...TESTER_TOURNAMENTS, ...PRODUCTION_TOURNAMENTS];
+  const unscheduled = everySpec.find((spec) => scheduleProblem(spec) != null);
+  if (unscheduled) throw new Error(`Test tournament ${unscheduled.id}: ${scheduleProblem(unscheduled)}`);
   const registry = await loadRegistry();
   console.log(`EMA registry: ${registry.length} players.`);
-  const everySpec = [...TOURNAMENTS, ...TESTER_TOURNAMENTS, ...PRODUCTION_TOURNAMENTS];
   const specs = everySpec.filter((spec) => {
     if (only != null) return only.includes(spec.id);
     if (onlyProduction) return spec.production === true;

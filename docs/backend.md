@@ -128,7 +128,7 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
 A tournament has a required venue and a required `contactEmail` for the organizers. The venue is a `venueMapUrl`, or a `venueName` together with a `venueAddress`. `POST /tournaments` and `PATCH /tournaments/:id` return 400 when the venue or the email is missing. `contactEmail` must be a valid email address.
-`venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Round schedules must stay inside the tournament dates. The player app shows the venue, the round times and the agenda on the Info tab.
+`venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Every round needs a date inside the tournament dates and a start time (`roundSchedules`): the backend refuses a new tournament or an edit without them, and an older tournament without them must complete them on its next edit. The player app uses them to know when the tournament and each round play. `npm run check:integrity -- --quiet` lists the stored tournaments that still lack some (findings `schedule.empty` and `schedule.incomplete`). The player app shows the venue, the round times and the agenda on the Info tab.
 
 Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive.
 

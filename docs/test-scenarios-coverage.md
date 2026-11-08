@@ -13,7 +13,7 @@ This page lists each scenario and the tournament that covers it. A scenario with
 | `test-special-names` | 16 | Individual | EMA players whose names have accents or other alphabets. |
 | `test-teams-partial` | 24 | Teams | Teams with 0 to 3 open slots, long and unicode team names. |
 | `test-totals-only` | 16 | Teams | Tables with manual totals only, and a total that does not add up to zero. |
-| `test-no-extras` | 20 | Individual | No best hands, no chicken hands, no venue, no schedule, no agenda. |
+| `test-no-extras` | 20 | Individual | No best hands, no chicken hands, no agenda. Every round has a date and a start time, as every tournament must. |
 | `test-incomplete-states` | 16 | Teams | Every incomplete table state, and invalid hands. |
 | `test-registration-open` | 24 | Teams | Registered, not started. All tables empty. Future dates. |
 | `test-extremes` | 32 | Individual | Extreme scores and penalties, a very long name, long venue and agenda. |
@@ -30,7 +30,7 @@ This page lists each scenario and the tournament that covers it. A scenario with
 | Minimum size (16 players) | `test-min-16` |
 | Large size (64 players, 48 tables) | `test-large` |
 | One round only | `test-min-16` |
-| Many rounds (8) | `test-extremes` |
+| Many rounds (7) | `test-extremes` |
 | Finished tournament | `test-min-16`, `test-draws-penalties`, `test-ties` |
 | Running tournament | `test-live-ongoing` |
 | Not started tournament | `test-registration-open` |
@@ -45,7 +45,7 @@ This page lists each scenario and the tournament that covers it. A scenario with
 | Empty, seated, partial, pending and invalid hands | `test-incomplete-states` |
 | Best hands off and chicken hands off | `test-no-extras` |
 | Best hands on and chicken hands off | `test-last-table` |
-| No venue, no schedule, no agenda | `test-no-extras` |
+| No agenda | `test-no-extras` |
 | Logo address that does not load | `test-last-table` |
 | Editor member of some tournaments | accounts `editor@e2e.test` and `outsider@e2e.test` |
 | Player at a running table, seated, waiting, finished | accounts `player@`, `seated@`, `waiting@`, `done@` |

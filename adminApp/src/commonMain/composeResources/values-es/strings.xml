@@ -231,6 +231,8 @@
     <string name="schedule_round_invalid_date">La ronda %1$d tiene una fecha no válida.</string>
     <string name="schedule_round_outside_range">La ronda %1$d debe estar dentro del rango de fechas del torneo.</string>
     <string name="schedule_round_invalid_time">La ronda %1$d tiene una hora de inicio no válida.</string>
+    <string name="schedule_round_missing_date">La ronda %1$d necesita una fecha.</string>
+    <string name="schedule_round_missing_time">La ronda %1$d necesita una hora de inicio.</string>
     <string name="schedule_agenda_invalid_date">El elemento %1$d de la agenda tiene una fecha no válida.</string>
     <string name="schedule_agenda_invalid_time">El elemento %1$d de la agenda tiene una hora de inicio no válida.</string>
     <string name="logo_must_be_jpeg_png">El logotipo debe ser una imagen JPEG o PNG.</string>

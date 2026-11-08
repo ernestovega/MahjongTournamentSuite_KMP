@@ -132,3 +132,16 @@ test("a team number in a tournament without teams is an error", () => {
   input.players[0].data.team = 1;
   assert.ok(codes(input).includes("players.teamUnused"));
 });
+
+test("a round without a date or a start time is a warning", () => {
+  const schedules = (rows: unknown[]) => {
+    const input = valid();
+    input.tournament.roundSchedules = rows;
+    return checkTournamentIntegrity("t", input).findings.filter((finding) => finding.code.startsWith("schedule."));
+  };
+
+  assert.deepEqual(schedules([{ roundId: 1, date: null, startTime: null }]).map((f) => [f.severity, f.code]), [["warning", "schedule.empty"]]);
+  assert.deepEqual(schedules([{ roundId: 1, date: "2026-10-01", startTime: null }]).map((f) => [f.severity, f.code]), [["warning", "schedule.incomplete"]]);
+  assert.deepEqual(schedules([{ roundId: 1, date: null, startTime: "09:00" }]).map((f) => [f.severity, f.code]), [["warning", "schedule.incomplete"]]);
+  assert.deepEqual(schedules([{ roundId: 1, date: "2026-10-01", startTime: "09:00" }]), []);
+});
