@@ -92,9 +92,10 @@ class DefaultTournamentRepository(
             TournamentsResponseDto.serializer(),
         ),
         fetch = { idToken -> backendApi.listTournaments(idToken, playerScope) },
-    ) { response ->
-        response.tournaments.map { it.toDomain() }.sortedRecentFirst()
-    }
+        map = { response ->
+            response.tournaments.map { it.toDomain() }.sortedRecentFirst()
+        },
+    )
 
     override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
@@ -403,24 +404,25 @@ class DefaultTournamentRepository(
         refreshMode = refreshMode,
         persistence = Persistence("tournament:$tournamentId:players", TournamentPlayersResponseDto.serializer()),
         fetch = { idToken -> backendApi.listTournamentPlayers(idToken = idToken, tournamentId = tournamentId) },
-    ) { response ->
-        response.players.map { dto ->
-            TournamentPlayer(
-                id = dto.id,
-                name = "Player ${dto.id}",
-                team = dto.team,
-                country = "",
-                assignedEmaId = dto.assignedEmaId,
-                accountUid = dto.accountUid,
-                hasAccount = dto.hasAccount,
-                email = dto.email,
-                hasEmail = dto.hasEmail,
-                substitution = dto.substitution?.toDomain(),
-                createdAt = dto.createdAt,
-                updatedAt = dto.updatedAt,
-            )
-        }
-    }
+        map = { response ->
+            response.players.map { dto ->
+                TournamentPlayer(
+                    id = dto.id,
+                    name = "Player ${dto.id}",
+                    team = dto.team,
+                    country = "",
+                    assignedEmaId = dto.assignedEmaId,
+                    accountUid = dto.accountUid,
+                    hasAccount = dto.hasAccount,
+                    email = dto.email,
+                    hasEmail = dto.hasEmail,
+                    substitution = dto.substitution?.toDomain(),
+                    createdAt = dto.createdAt,
+                    updatedAt = dto.updatedAt,
+                )
+            }
+        },
+    )
 
     override suspend fun listTournamentTeams(
         tournamentId: String,
@@ -433,15 +435,16 @@ class DefaultTournamentRepository(
         refreshMode = refreshMode,
         persistence = Persistence("tournament:$tournamentId:teams", TournamentTeamsResponseDto.serializer()),
         fetch = { idToken -> backendApi.listTournamentTeams(idToken = idToken, tournamentId = tournamentId) },
-    ) { response ->
-        response.teams.map { dto ->
-            TournamentTeam(
-                id = dto.id,
-                name = dto.name,
-                playerIds = dto.playerIds,
-            )
-        }
-    }
+        map = { response ->
+            response.teams.map { dto ->
+                TournamentTeam(
+                    id = dto.id,
+                    name = dto.name,
+                    playerIds = dto.playerIds,
+                )
+            }
+        },
+    )
 
     override suspend fun updateTournamentTeam(
         tournamentId: String,
