@@ -57,20 +57,41 @@ class TournamentTableStore {
      * Returns all tables of the tournament sorted by round and table.
      * It calls [fetchAll] only if the store has not loaded all tables yet, if [reload] is true, or if [isOutdated]
      * says so. [isOutdated] gets the version of each table that the store holds. It runs without the lock.
+     *
+     * Before the first load, [restore] can give the tables that were saved on the device. They are checked with
+     * [verifyRestored] (or [isOutdated]) before use, also when the caller does not check, because they can be old.
+     * [onFetched] gets every complete load, so the caller can save it.
      */
     suspend fun all(
         ownerUid: String,
         tournamentId: String,
         reload: Boolean = false,
         isOutdated: (suspend (known: Map<TableKey, Long>) -> Boolean)? = null,
+        restore: (suspend () -> List<TableWithHands>?)? = null,
+        verifyRestored: (suspend (known: Map<TableKey, Long>) -> Boolean)? = null,
+        onFetched: (suspend (List<TableWithHands>) -> Unit)? = null,
         fetchAll: suspend () -> List<TableWithHands>,
     ): List<TableWithHands> {
         selectOwner(ownerUid)
-        val known = mutex.withLock {
-            entries[tournamentId]?.takeIf { it.isComplete }?.tables?.mapValues { it.value.first.version }
+        var known = completeVersions(tournamentId)
+        var restored = false
+        if (known == null && !reload && restore != null) {
+            val saved = restore()
+            if (saved != null) {
+                mutex.withLock {
+                    val entry = entries.getOrPut(tournamentId) { Entry() }
+                    if (!entry.isComplete) {
+                        saved.forEach { value -> entry.accept(value) }
+                        entry.isComplete = true
+                        restored = true
+                    }
+                }
+                known = completeVersions(tournamentId)
+            }
         }
-        val needsLoad = reload || known == null || (isOutdated?.invoke(known) ?: false)
-        val loaded = if (needsLoad) fetchAll() else null
+        val check = isOutdated ?: verifyRestored.takeIf { restored }
+        val needsLoad = reload || known == null || (check?.invoke(known) ?: false)
+        val loaded = if (needsLoad) fetchAll().also { onFetched?.invoke(it) } else null
         return mutex.withLock {
             val entry = entries.getOrPut(tournamentId) { Entry() }
             if (loaded != null) {
@@ -81,5 +102,9 @@ class TournamentTableStore {
                 .sortedWith(compareBy({ it.key.roundId }, { it.key.tableId }))
                 .map { it.value }
         }
+    }
+
+    private suspend fun completeVersions(tournamentId: String): Map<TableKey, Long>? = mutex.withLock {
+        entries[tournamentId]?.takeIf { it.isComplete }?.tables?.mapValues { it.value.first.version }
     }
 }

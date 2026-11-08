@@ -5,6 +5,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.cache.Persistence
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -21,9 +23,7 @@ class DefaultPlayerRepository(
     private val cache: RepositoryCache,
 ) : PlayerRepository {
     override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> =
-        cachedRequest("Listing shared players", refreshMode) { token ->
-            backendApi.listPlayers(token).players.map { it.toPlayer() }
-        }
+        cachedRequest("Listing shared players", refreshMode)
 
     override suspend fun createPlayer(player: Player): AppResult<Player> = request("Creating shared player") { token ->
         backendApi.createPlayer(
@@ -69,10 +69,10 @@ class DefaultPlayerRepository(
     private suspend fun cachedRequest(
         action: String,
         refreshMode: RefreshMode,
-        block: suspend (String) -> List<Player>,
     ): AppResult<List<Player>> = runCatching {
         val session = authRepository.currentSession() ?: error("No active session")
-        cache.getOrLoad(
+        // The answer is also saved on the device, so a new start of the app does not download it again.
+        cache.getOrLoadPersisted(
             ownerUid = session.uid,
             key = PLAYERS_CACHE_KEY,
             refreshMode = refreshMode,
@@ -81,7 +81,9 @@ class DefaultPlayerRepository(
                     backendApi.globalDataVersions(token).resources["emaPlayers"]?.revision ?: 0
                 }
             },
-            load = { withFreshIdToken(block) },
+            persistence = Persistence(PLAYERS_CACHE_KEY, PlayersResponseDto.serializer()),
+            load = { withFreshIdToken { token -> backendApi.listPlayers(token) } },
+            map = { response -> response.players.map { it.toPlayer() } },
         )
     }.fold(
         onSuccess = { AppResult.Success(it) },

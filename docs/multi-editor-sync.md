@@ -37,6 +37,15 @@ Several people can edit one tournament at the same time. This page describes how
 - The generated files (ID cards, ID list, EMA report) follow the same rule. They are reused without any request until polling marks them old. The EMA export first runs one poll, then uses the held data like the ranking.
 - The ranking screen loads once and stays still while it is open. The EMA export forces a fresh load.
 
+## Answers saved on the device
+
+- Some answers are also saved on the device, so a new start of the app does not download them again: the tournaments list, the players and the teams of a tournament, the EMA players and all tables with their hands. The web apps use the local storage of the browser. Android uses the cache folder of the app, and the desktop app uses `~/.mahjongtournamentsuite/cache`.
+- A saved answer keeps the revision it was loaded at. After a new start, the app asks the server for the revision first (one manifest request) and uses the saved answer only when the revision is the same. The saved tables are compared table by table with `tableVersions`.
+- A saved answer is never fresh. `RefreshMode.CACHED` also checks its revision once, because polling does not know that it may be old.
+- Signing in or out removes every saved answer. The answers of one account are never read for another account.
+- When the local storage of the browser is full, the app removes its saved answers and saves the newest one. A failed read or write never stops the app. It only loads from the server.
+- Each saved answer records the field names of its type, also the nested ones. A new app version whose answer types have other fields ignores the old answers. The web cache uses at most about 3 MB of local storage, so the session and the settings always find room.
+
 ## Backend rules
 
 - A save runs in one Firestore transaction. It reads the table and its 16 hand documents **by document**, not by query. A query locks a range, and then editors of different tables wait for each other.
