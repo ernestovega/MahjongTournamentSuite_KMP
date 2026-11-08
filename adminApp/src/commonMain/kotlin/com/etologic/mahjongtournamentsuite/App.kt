@@ -68,9 +68,9 @@ import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import org.koin.dsl.koinConfiguration
 
+/** [appVersion] is the version shown to the user. The web entry point passes the web version. */
 @Composable
 @Preview
-/** [appVersion] is the version shown to the user. The web entry point passes the web version. */
 fun App(
     sessionStorage: SessionStateStorage? = null,
     appVersion: String = AppVersion.admin,
