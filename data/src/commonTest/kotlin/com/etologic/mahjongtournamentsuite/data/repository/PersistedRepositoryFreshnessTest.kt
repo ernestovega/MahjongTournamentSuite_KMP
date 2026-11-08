@@ -126,8 +126,7 @@ class PersistedRepositoryFreshnessTest {
 
     private fun <T> AppResult<T>.value(): T = assertIs<AppResult.Success<T>>(this).value
 
-    private suspend fun App.east(mode: RefreshMode = RefreshMode.IF_CHANGED) =
-        tournaments.getAllTablesWithHands("t1", mode).value().map { it.first.playerEastId }
+    private suspend fun App.east(mode: RefreshMode = RefreshMode.IF_CHANGED) = tournaments.getAllTablesWithHands("t1", mode).value().map { it.first.playerEastId }
 
     // --- Lists ---
 
