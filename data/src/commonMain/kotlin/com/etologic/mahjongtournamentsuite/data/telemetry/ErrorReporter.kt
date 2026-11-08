@@ -2,7 +2,6 @@ package com.etologic.mahjongtournamentsuite.data.telemetry
 
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.network.ApiConfiguration
-import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import io.ktor.client.HttpClient
@@ -101,7 +100,7 @@ class ErrorReporter(
             "platform" to JsonPrimitive(platform.platform),
             "env" to JsonPrimitive(platform.env),
             "language" to JsonPrimitive(platform.language),
-            "appVersion" to JsonPrimitive(AppVersion.name),
+            "appVersion" to JsonPrimitive(platform.appVersion),
             "sessionId" to JsonPrimitive(sessionId),
             "kind" to JsonPrimitive(kind),
             "reportId" to JsonPrimitive(reportId),

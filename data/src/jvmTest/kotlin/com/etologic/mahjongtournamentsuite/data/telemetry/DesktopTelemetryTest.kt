@@ -92,7 +92,7 @@ class DesktopTelemetryTest {
         // Without these two values GA4 does not count the event in the standard reports.
         assertTrue(params.getValue("session_id").jsonPrimitive.content.toLong() > 0)
         assertEquals("1", params.getValue("engagement_time_msec").jsonPrimitive.content)
-        assertEquals(AppVersion.name, params.getValue("app_version").jsonPrimitive.content)
+        assertEquals(AppVersion.admin, params.getValue("app_version").jsonPrimitive.content)
         assertTrue(hit.body.getValue("client_id").jsonPrimitive.content.isNotBlank())
     }
 

@@ -134,7 +134,7 @@ internal fun measurementBody(
                                 // Without these two values GA4 does not count the event in the standard reports.
                                 "session_id" to JsonPrimitive(sessionId),
                                 "engagement_time_msec" to JsonPrimitive(1),
-                                "app_version" to JsonPrimitive(AppVersion.name),
+                                "app_version" to JsonPrimitive(AppVersion.admin),
                             ),
                         ),
                     ),
