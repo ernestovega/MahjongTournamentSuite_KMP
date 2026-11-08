@@ -29,7 +29,7 @@ private class FakeAnalytics : Telemetry {
     val screens = mutableListOf<String>()
     val errors = mutableListOf<Throwable>()
     val properties = mutableListOf<Pair<String, String?>>()
-    var consent = true
+    var accepted = true
 
     override fun event(name: String, params: Map<String, Any>) {
         events += name to params
@@ -49,10 +49,10 @@ private class FakeAnalytics : Telemetry {
 
     override val requiresConsent: Boolean = true
 
-    override fun hasConsent(): Boolean = consent
+    override fun hasConsent(): Boolean = accepted
 
     override fun setConsent(granted: Boolean) {
-        consent = granted
+        accepted = granted
     }
 }
 
@@ -151,11 +151,11 @@ class ReportingTelemetryTest {
     @Test
     fun acceptingSendsTheCrashOfTheLastRun() = runTest {
         reporter.recordCrash(IllegalArgumentException("fatal"))
-        analytics.consent = false
+        analytics.accepted = false
 
         telemetry.setConsent(true)
 
-        assertTrue(analytics.consent)
+        assertTrue(analytics.accepted)
         awaitRequests(1)
         assertEquals("crash", report()["kind"]?.jsonPrimitive?.content)
         assertEquals(1, analytics.events.count { it.first == TelemetryEvent.APP_CRASH })
@@ -169,7 +169,7 @@ class ReportingTelemetryTest {
         telemetry.setConsent(false)
         telemetry.error(IllegalStateException("boom"), "Action failed.")
 
-        assertFalse(analytics.consent)
+        assertFalse(analytics.accepted)
         assertTrue(requests.isEmpty())
         assertTrue(analytics.events.isEmpty())
         assertTrue(store.saved != null)
