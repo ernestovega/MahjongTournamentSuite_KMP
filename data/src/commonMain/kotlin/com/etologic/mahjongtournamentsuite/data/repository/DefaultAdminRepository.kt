@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
-import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ErrorLogCursorDto
@@ -11,6 +10,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserReque
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAssignmentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
