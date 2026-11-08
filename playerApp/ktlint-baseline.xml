@@ -64,13 +64,13 @@
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerPresenters.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="31" column="75" source="standard:function-signature" />
-        <error line="41" column="93" source="standard:function-signature" />
-        <error line="60" column="114" source="standard:function-signature" />
-        <error line="113" column="124" source="standard:function-signature" />
-        <error line="146" column="102" source="standard:function-signature" />
-        <error line="150" column="124" source="standard:function-signature" />
-        <error line="154" column="116" source="standard:function-signature" />
+        <error line="33" column="75" source="standard:function-signature" />
+        <error line="43" column="93" source="standard:function-signature" />
+        <error line="62" column="114" source="standard:function-signature" />
+        <error line="130" column="124" source="standard:function-signature" />
+        <error line="163" column="102" source="standard:function-signature" />
+        <error line="167" column="124" source="standard:function-signature" />
+        <error line="171" column="116" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/player/PlayerScreens.kt">
         <error line="3" column="1" source="standard:import-ordering" />

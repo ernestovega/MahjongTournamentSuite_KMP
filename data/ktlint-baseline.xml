@@ -55,7 +55,6 @@
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultAdminRepository.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="39" column="1" source="standard:indent" />
         <error line="40" column="1" source="standard:indent" />
         <error line="41" column="1" source="standard:indent" />
         <error line="42" column="1" source="standard:indent" />
@@ -63,22 +62,22 @@
         <error line="44" column="1" source="standard:indent" />
         <error line="45" column="1" source="standard:indent" />
         <error line="46" column="1" source="standard:indent" />
-        <error line="109" column="81" source="standard:function-signature" />
-        <error line="124" column="99" source="standard:function-signature" />
-        <error line="130" column="104" source="standard:function-signature" />
-        <error line="141" column="119" source="standard:function-signature" />
-        <error line="150" column="80" source="standard:function-signature" />
-        <error line="209" column="1" source="standard:indent" />
+        <error line="47" column="1" source="standard:indent" />
+        <error line="110" column="81" source="standard:function-signature" />
+        <error line="125" column="99" source="standard:function-signature" />
+        <error line="131" column="104" source="standard:function-signature" />
+        <error line="142" column="119" source="standard:function-signature" />
+        <error line="151" column="80" source="standard:function-signature" />
         <error line="210" column="1" source="standard:indent" />
         <error line="211" column="1" source="standard:indent" />
         <error line="212" column="1" source="standard:indent" />
         <error line="213" column="1" source="standard:indent" />
         <error line="214" column="1" source="standard:indent" />
+        <error line="215" column="1" source="standard:indent" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultAuthRepository.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="159" column="102" source="standard:function-signature" />
-        <error line="167" column="65" source="standard:function-signature" />
+        <error line="179" column="102" source="standard:function-signature" />
+        <error line="187" column="65" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerHandRepository.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -93,9 +92,9 @@
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultPlayerRepository.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="23" column="90" source="standard:function-signature" />
-        <error line="94" column="80" source="standard:function-signature" />
-        <error line="110" column="51" source="standard:function-signature" />
+        <error line="26" column="90" source="standard:function-signature" />
+        <error line="97" column="80" source="standard:function-signature" />
+        <error line="113" column="51" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultStatisticsRepository.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -105,84 +104,53 @@
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultTournamentRepository.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="82" column="1" source="standard:indent" />
-        <error line="327" column="1" source="standard:indent" />
-        <error line="328" column="1" source="standard:indent" />
-        <error line="329" column="1" source="standard:indent" />
-        <error line="330" column="1" source="standard:indent" />
-        <error line="331" column="1" source="standard:indent" />
-        <error line="332" column="1" source="standard:indent" />
-        <error line="333" column="1" source="standard:indent" />
-        <error line="334" column="1" source="standard:indent" />
-        <error line="335" column="1" source="standard:indent" />
-        <error line="336" column="1" source="standard:indent" />
-        <error line="391" column="1" source="standard:indent" />
-        <error line="392" column="1" source="standard:indent" />
-        <error line="393" column="1" source="standard:indent" />
-        <error line="394" column="1" source="standard:indent" />
-        <error line="395" column="1" source="standard:indent" />
-        <error line="396" column="1" source="standard:indent" />
-        <error line="397" column="1" source="standard:indent" />
-        <error line="398" column="1" source="standard:indent" />
-        <error line="399" column="1" source="standard:indent" />
-        <error line="400" column="1" source="standard:indent" />
-        <error line="401" column="1" source="standard:indent" />
-        <error line="402" column="1" source="standard:indent" />
-        <error line="403" column="1" source="standard:indent" />
-        <error line="404" column="1" source="standard:indent" />
-        <error line="405" column="1" source="standard:indent" />
-        <error line="406" column="1" source="standard:indent" />
-        <error line="407" column="1" source="standard:indent" />
-        <error line="408" column="1" source="standard:indent" />
-        <error line="409" column="1" source="standard:indent" />
-        <error line="422" column="1" source="standard:indent" />
-        <error line="423" column="1" source="standard:indent" />
-        <error line="424" column="1" source="standard:indent" />
-        <error line="425" column="1" source="standard:indent" />
-        <error line="426" column="1" source="standard:indent" />
-        <error line="427" column="1" source="standard:indent" />
-        <error line="428" column="1" source="standard:indent" />
-        <error line="429" column="1" source="standard:indent" />
-        <error line="430" column="1" source="standard:indent" />
-        <error line="431" column="1" source="standard:indent" />
-        <error line="471" column="1" source="standard:indent" />
-        <error line="472" column="1" source="standard:indent" />
-        <error line="473" column="1" source="standard:indent" />
-        <error line="568" column="1" source="standard:indent" />
-        <error line="569" column="1" source="standard:indent" />
-        <error line="570" column="1" source="standard:indent" />
-        <error line="571" column="1" source="standard:indent" />
+        <error line="344" column="1" source="standard:indent" />
+        <error line="345" column="1" source="standard:indent" />
+        <error line="346" column="1" source="standard:indent" />
+        <error line="347" column="1" source="standard:indent" />
+        <error line="348" column="1" source="standard:indent" />
+        <error line="349" column="1" source="standard:indent" />
+        <error line="350" column="1" source="standard:indent" />
+        <error line="351" column="1" source="standard:indent" />
+        <error line="352" column="1" source="standard:indent" />
+        <error line="353" column="1" source="standard:indent" />
+        <error line="488" column="1" source="standard:indent" />
+        <error line="489" column="1" source="standard:indent" />
+        <error line="490" column="1" source="standard:indent" />
         <error line="585" column="1" source="standard:indent" />
         <error line="586" column="1" source="standard:indent" />
         <error line="587" column="1" source="standard:indent" />
         <error line="588" column="1" source="standard:indent" />
-        <error line="589" column="1" source="standard:indent" />
-        <error line="590" column="1" source="standard:indent" />
-        <error line="591" column="1" source="standard:indent" />
-        <error line="592" column="1" source="standard:indent" />
-        <error line="593" column="1" source="standard:indent" />
-        <error line="594" column="1" source="standard:indent" />
-        <error line="595" column="1" source="standard:indent" />
-        <error line="596" column="1" source="standard:indent" />
-        <error line="597" column="1" source="standard:indent" />
-        <error line="598" column="1" source="standard:indent" />
-        <error line="599" column="1" source="standard:indent" />
-        <error line="600" column="1" source="standard:indent" />
-        <error line="601" column="1" source="standard:indent" />
         <error line="602" column="1" source="standard:indent" />
         <error line="603" column="1" source="standard:indent" />
+        <error line="604" column="1" source="standard:indent" />
+        <error line="605" column="1" source="standard:indent" />
+        <error line="606" column="1" source="standard:indent" />
+        <error line="607" column="1" source="standard:indent" />
+        <error line="608" column="1" source="standard:indent" />
+        <error line="609" column="1" source="standard:indent" />
+        <error line="610" column="1" source="standard:indent" />
+        <error line="611" column="1" source="standard:indent" />
+        <error line="612" column="1" source="standard:indent" />
+        <error line="613" column="1" source="standard:indent" />
+        <error line="614" column="1" source="standard:indent" />
+        <error line="615" column="1" source="standard:indent" />
+        <error line="616" column="1" source="standard:indent" />
+        <error line="617" column="1" source="standard:indent" />
         <error line="618" column="1" source="standard:indent" />
         <error line="619" column="1" source="standard:indent" />
         <error line="620" column="1" source="standard:indent" />
-        <error line="621" column="1" source="standard:indent" />
-        <error line="622" column="1" source="standard:indent" />
-        <error line="623" column="1" source="standard:indent" />
-        <error line="660" column="69" source="standard:multiline-if-else" />
-        <error line="815" column="81" source="standard:function-signature" />
-        <error line="903" column="86" source="standard:function-signature" />
-        <error line="939" column="70" source="standard:function-signature" />
-        <error line="970" column="18" source="standard:wrapping" />
-        <error line="971" column="88" source="standard:wrapping" />
+        <error line="635" column="1" source="standard:indent" />
+        <error line="636" column="1" source="standard:indent" />
+        <error line="637" column="1" source="standard:indent" />
+        <error line="638" column="1" source="standard:indent" />
+        <error line="639" column="1" source="standard:indent" />
+        <error line="640" column="1" source="standard:indent" />
+        <error line="886" column="81" source="standard:function-signature" />
+        <error line="970" column="86" source="standard:function-signature" />
+        <error line="1006" column="70" source="standard:function-signature" />
+        <error line="1037" column="18" source="standard:wrapping" />
+        <error line="1038" column="88" source="standard:wrapping" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/data/repository/RepositorySupport.kt">
         <error line="38" column="40" source="standard:multiline-if-else" />
