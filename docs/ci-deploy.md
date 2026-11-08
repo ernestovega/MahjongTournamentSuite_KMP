@@ -2,7 +2,7 @@
 
 The workflow `.github/workflows/firebase.yml` has two jobs:
 
-- **Build and test** runs on every pull request to `main`. It runs the functions tests and builds both Wasm web apps. Nothing is deployed.
+- **Build and test** runs on every pull request to `main`. It checks that every changed product has a higher version ([versioning.md](versioning.md)), runs the functions tests and builds both Wasm web apps. Nothing is deployed.
 - **Deploy to Firebase** runs on every push to `main`, which is every merged pull request. It can also be started by hand from the Actions tab. It runs the functions tests and then deploys hosting (both sites), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
 
 The deploy uses `--force`, so a function removed from the code is also deleted in Firebase. Two deploys never run at the same time: a newer push waits for the running one.

@@ -114,6 +114,10 @@ These are currently tolerated unless they become actionable:
 
 Treat those as tooling noise unless a specific failure appears.
 
+## Versions
+
+The web, the admin app and the player app have independent versions in `gradle/libs.versions.toml`. Every pull request to `main` must bump the version of each product it changes, or the **Build and test** check fails. Run `python3 scripts/versions.py check` before pushing, and bump with `python3 scripts/versions.py bump <web|admin|player> [major|minor|patch]`. Details: `docs/versioning.md`.
+
 ## Editing Guidance
 
 - Preserve the `domain` -> `data` -> `adminApp` direction.
