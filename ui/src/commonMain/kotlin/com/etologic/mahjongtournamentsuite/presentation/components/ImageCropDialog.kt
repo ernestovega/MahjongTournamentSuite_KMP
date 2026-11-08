@@ -6,9 +6,7 @@ import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -41,8 +39,8 @@ import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedImage
 import com.etologic.mahjongtournamentsuite.presentation.platform.SquareImageCrop
 import com.etologic.mahjongtournamentsuite.presentation.platform.cropSelectedImage
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import kotlin.math.min
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.action_cancel
 import mahjongtournamentsuite.ui.generated.resources.crop_left_right
@@ -51,6 +49,7 @@ import mahjongtournamentsuite.ui.generated.resources.crop_up_down
 import mahjongtournamentsuite.ui.generated.resources.crop_use
 import mahjongtournamentsuite.ui.generated.resources.crop_zoom
 import org.jetbrains.compose.resources.stringResource
+import kotlin.math.min
 
 /** Dialog that crops an image to a square. The circle in the preview shows the area that the app uses. */
 @Composable
@@ -73,83 +72,85 @@ fun ImageCropDialog(
         zoomFocusRequester.requestFocus()
     }
 
-    AlertDialog(
-        modifier = Modifier.appFocusGroup(),
-        onDismissRequest = { if (!isCropping) onDismiss() },
-        title = { Text(title) },
-        text = {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    hint,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-                CircularCropPreview(
-                    model = image.dataUrl,
-                    imageSize = imageSize,
-                    zoom = zoom,
-                    horizontalPosition = horizontalPosition,
-                    verticalPosition = verticalPosition,
-                    onImageSize = { imageSize = it },
-                    onPositionChange = { horizontal, vertical ->
-                        horizontalPosition = horizontal
-                        verticalPosition = vertical
-                    },
-                )
-                CropSlider(
-                    label = stringResource(Res.string.crop_zoom),
-                    value = zoom,
-                    valueRange = 1f..3f,
-                    onValueChange = { zoom = it },
-                    modifier = Modifier.focusRequester(zoomFocusRequester),
-                )
-                CropSlider(
-                    label = stringResource(Res.string.crop_left_right),
-                    value = horizontalPosition,
-                    valueRange = -1f..1f,
-                    onValueChange = { horizontalPosition = it },
-                )
-                CropSlider(
-                    label = stringResource(Res.string.crop_up_down),
-                    value = verticalPosition,
-                    valueRange = -1f..1f,
-                    onValueChange = { verticalPosition = it },
-                )
-            }
-        },
-        confirmButton = {
-            FocusedButton(
-                enabled = !isCropping && imageSize != IntSize.Zero,
-                onClick = {
-                    isCropping = true
-                    cropSelectedImage(
-                        image = image,
-                        crop = SquareImageCrop(zoom, horizontalPosition, verticalPosition),
-                        onCropped = onCropped,
-                        onError = {
-                            isCropping = false
-                            onError(it)
+    TrackedDialog("ImageCrop") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (!isCropping) onDismiss() },
+            title = { Text(title) },
+            text = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        hint,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
+                    CircularCropPreview(
+                        model = image.dataUrl,
+                        imageSize = imageSize,
+                        zoom = zoom,
+                        horizontalPosition = horizontalPosition,
+                        verticalPosition = verticalPosition,
+                        onImageSize = { imageSize = it },
+                        onPositionChange = { horizontal, vertical ->
+                            horizontalPosition = horizontal
+                            verticalPosition = vertical
                         },
                     )
-                },
-            ) {
-                if (isCropping) {
-                    CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(stringResource(Res.string.crop_use))
+                    CropSlider(
+                        label = stringResource(Res.string.crop_zoom),
+                        value = zoom,
+                        valueRange = 1f..3f,
+                        onValueChange = { zoom = it },
+                        modifier = Modifier.focusRequester(zoomFocusRequester),
+                    )
+                    CropSlider(
+                        label = stringResource(Res.string.crop_left_right),
+                        value = horizontalPosition,
+                        valueRange = -1f..1f,
+                        onValueChange = { horizontalPosition = it },
+                    )
+                    CropSlider(
+                        label = stringResource(Res.string.crop_up_down),
+                        value = verticalPosition,
+                        valueRange = -1f..1f,
+                        onValueChange = { verticalPosition = it },
+                    )
                 }
-            }
-        },
-        dismissButton = {
-            FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
-                Text(stringResource(Res.string.action_cancel))
-            }
-        },
-    )
+            },
+            confirmButton = {
+                FocusedButton(
+                    enabled = !isCropping && imageSize != IntSize.Zero,
+                    onClick = {
+                        isCropping = true
+                        cropSelectedImage(
+                            image = image,
+                            crop = SquareImageCrop(zoom, horizontalPosition, verticalPosition),
+                            onCropped = onCropped,
+                            onError = {
+                                isCropping = false
+                                onError(it)
+                            },
+                        )
+                    },
+                ) {
+                    if (isCropping) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(Res.string.crop_use))
+                    }
+                }
+            },
+            dismissButton = {
+                FocusedTextButton(enabled = !isCropping, onClick = onDismiss) {
+                    Text(stringResource(Res.string.action_cancel))
+                }
+            },
+        )
+    }
 }
 
 @Composable

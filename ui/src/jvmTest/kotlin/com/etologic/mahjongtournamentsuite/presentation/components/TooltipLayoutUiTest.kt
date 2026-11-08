@@ -8,9 +8,11 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.DesktopComposeUiTest
+import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performMouseInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
@@ -36,7 +38,7 @@ class TooltipLayoutUiTest {
 
     /** Hovers the info icon, then checks that the tooltip that starts with [firstLine] is inside the window. */
     private fun DesktopComposeUiTest.checkTooltip(width: Int, height: Int, firstLine: String) {
-        onNodeWithContentDescription("More information").performMouseInput { moveTo(center) }
+        onNodeWithContentDescription("More information").performTouchInput { longClick() }
         mainClock.advanceTimeBy(2_000)
         waitForIdle()
         val bounds = onNodeWithText(firstLine, substring = true).fetchSemanticsNode().boundsInRoot
