@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.platform.platformCpuCount
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -23,6 +28,7 @@ class CreateTournamentPresenter(
     private val tournamentRepository: TournamentRepository,
     private val logger: Logger,
     private val generateSchedule: GenerateTournamentScheduleBruteForceParallelUseCase,
+    private val telemetry: Telemetry = NoTelemetry,
 ) {
     suspend fun loadCountries(): AppResult<List<Country>> = tournamentRepository.listCountries()
 
@@ -125,6 +131,11 @@ class CreateTournamentPresenter(
             null
         }
 
+        val createdParams = mapOf(
+            TelemetryParam.PLAYERS to numPlayers,
+            TelemetryParam.ROUNDS to numRounds,
+            TelemetryParam.IS_TEAMS to isTeams,
+        )
         logger.i { "Creating tournament on backend." }
         val result = tournamentRepository.createTournament(
             CreateTournamentRequest(
@@ -168,7 +179,7 @@ class CreateTournamentPresenter(
                     }
                     if (candidates.size == 1) {
                         logger.w { "Create tournament failed with connection drop, but tournament is visible after retry. Treating as success." }
-                        return AppResult.Success(candidates.single())
+                        return AppResult.Success(candidates.single()).track(telemetry, TelemetryEvent.TOURNAMENT_CREATED, createdParams)
                     }
                 }
 
@@ -176,7 +187,7 @@ class CreateTournamentPresenter(
             }
         }
 
-        return result
+        return result.track(telemetry, TelemetryEvent.TOURNAMENT_CREATED, createdParams)
     }
 
     private fun calculateMaxConcurrency(

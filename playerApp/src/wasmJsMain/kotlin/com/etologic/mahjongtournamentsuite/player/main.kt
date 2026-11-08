@@ -3,8 +3,8 @@ package com.etologic.mahjongtournamentsuite.player
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeViewport
-import com.etologic.mahjongtournamentsuite.presentation.platform.BrowserSessionStorage
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import com.etologic.mahjongtournamentsuite.presentation.platform.BrowserSessionStorage
 import kotlinx.browser.window
 
 private external fun decodeURIComponent(value: String): String

@@ -21,6 +21,9 @@ type Access = "PUBLIC" | "SIGNED_IN" | "EDITOR" | "READER" | "PLAYER" | "MEMBER"
 const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/health", "PUBLIC"],
   ["GET", "/config/", "PUBLIC"],
+  ["POST", "/telemetry/errors", "PUBLIC"],
+  ["GET", "/admin/error-groups", "ADMIN"],
+  ["GET", "/admin/error-groups/:id", "ADMIN"],
   ["POST", "/auth/signIn", "PUBLIC"],
   ["POST", "/auth/passwordReset", "PUBLIC"],
   ["POST", "/auth/refresh", "PUBLIC"],
@@ -52,7 +55,6 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/admin/users/password-resets", "ADMIN"],
   ["PUT", "/admin/users/:uid/photo", "ADMIN"],
   ["DELETE", "/admin/users/:uid/photo", "ADMIN"],
-  ["GET", "/admin/usage", "ADMIN"],
   ["POST", "/tournaments/", "ADMIN"],
   ["PUT", "/tournaments/:tournamentId/settings", "ADMIN"],
   ["DELETE", "/tournaments/:tournamentId", "ADMIN"],

@@ -62,6 +62,6 @@ data class StatisticsRoute(
     val emaId: String? = null,
 )
 
-/** Usage analytics. Only administrators can open it. */
+/** The error log of the apps. Only administrators can open it. */
 @Serializable
-data object UsageRoute
+data object ErrorsRoute
