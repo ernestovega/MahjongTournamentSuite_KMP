@@ -41,7 +41,8 @@ class SingleManifestPollTest {
     private var tableVersion = 1L
     private var tournamentName = "Open"
     private var emaPlayerName = "Ada"
-    private var playerName = "P1"
+    // The app names the slots itself, so a change of a slot shows in its team.
+    private var playerTeam = 1
     private var teamName = "Team A"
     private var tableEast = "1"
 
@@ -89,7 +90,7 @@ class SingleManifestPollTest {
                 path == "/tournaments/t1/sync/manifest" -> jsonResponse(tournamentManifestJson())
                 path == "/tournaments" ->
                     jsonResponse("""{"tournaments":[{"id":"t1","name":"$tournamentName","isTeams":true,"numPlayers":4,"numRounds":1}]}""")
-                path.endsWith("/players") -> jsonResponse("""{"players":[{"id":1,"name":"$playerName","team":1}]}""")
+                path.endsWith("/players") -> jsonResponse("""{"players":[{"id":1,"name":"P1","team":$playerTeam}]}""")
                 path.endsWith("/teams") -> jsonResponse("""{"teams":[{"id":1,"name":"$teamName","playerIds":[1]}]}""")
                 path.endsWith("/tables-with-hands") -> jsonResponse(
                     """{"tables":[{"table":{"version":$tableVersion,"roundId":1,"tableId":1,"playerIds":[1,2,3,4],""" +
@@ -114,7 +115,7 @@ class SingleManifestPollTest {
 
     private fun <T> AppResult<T>.value(): T = assertIs<AppResult.Success<T>>(this).value
 
-    private class Screen(val tournament: String, val player: String, val team: String, val emaPlayer: String, val east: String)
+    private class Screen(val tournament: String, val playerTeam: Int, val team: String, val emaPlayer: String, val east: String)
 
     /** What the player tournament screen reads on every refresh, in the same order. */
     private suspend fun refresh(mode: RefreshMode = RefreshMode.IF_CHANGED, prefetch: Boolean = true): Screen {
@@ -124,7 +125,7 @@ class SingleManifestPollTest {
         val emaPlayer = players.listPlayers(mode).value().single()
         val tables = tournaments.getAllTablesWithHands("t1", mode).value()
         val team = tournaments.listTournamentTeams("t1", mode).value().single()
-        return Screen(tournament.name, player.name, team.name, emaPlayer.firstName, tables.single().first.playerEastId)
+        return Screen(tournament.name, player.team, team.name, emaPlayer.firstName, tables.single().first.playerEastId)
     }
 
     /** The next poll comes after the cached values stopped being fresh. */
@@ -200,13 +201,13 @@ class SingleManifestPollTest {
         startApp()
         refresh()
         playersRevision++
-        playerName = "P1 renamed"
+        playerTeam = 2
         teamsRevision++
         teamName = "Team B"
 
         val screen = nextPoll()
 
-        assertEquals("P1 renamed", screen.player)
+        assertEquals(2, screen.playerTeam)
         assertEquals("Team B", screen.team)
         assertEquals(1, tournamentManifests)
     }
@@ -312,13 +313,13 @@ class SingleManifestPollTest {
         refresh()
         cache.markStale("tournament:t1:players")
         playersRevision++
-        playerName = "P1 after the write"
+        playerTeam = 3
         requests.clear()
 
         // Right after the write, without waiting for a poll.
         val player = tournaments.listTournamentPlayers("t1", RefreshMode.IF_CHANGED).value().single()
 
-        assertEquals("P1 after the write", player.name)
+        assertEquals(3, player.team)
     }
 
     @Test
