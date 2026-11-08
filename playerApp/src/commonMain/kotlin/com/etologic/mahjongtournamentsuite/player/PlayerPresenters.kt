@@ -28,6 +28,8 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUs
 import com.etologic.mahjongtournamentsuite.domain.usecase.PersonStatisticsData
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 
 class PlayerSessionPresenter(
     private val authRepository: AuthRepository,
@@ -69,36 +71,49 @@ class PlayerTournamentPresenter(
 ) {
     suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
 
-    /** Loads the tournament. The repositories check the revision first and load only what changed. */
+    /**
+     * Loads the tournament. The repositories check the revision first and load only what changed.
+     * The requests run at the same time, so the screen waits for the slowest one and not for all of them in a row.
+     */
     suspend fun load(
         tournamentId: String,
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
-    ): AppResult<PlayerTournamentView> {
-        // One request answers the revision checks of all the reads below. CACHED reads do not check.
+    ): AppResult<PlayerTournamentView> = coroutineScope {
+        // One request answers the revision checks of all the reads below, so it goes first. CACHED reads do not check.
         if (refreshMode != RefreshMode.CACHED) tournamentRepository.prefetchRevisions(tournamentId)
-        val tournament = when (val result = tournamentRepository.listTournaments(refreshMode)) {
+        val tournamentsRequest = async { tournamentRepository.listTournaments(refreshMode) }
+        val slotsRequest = async { tournamentRepository.listTournamentPlayers(tournamentId, refreshMode) }
+        val registryRequest = async { playerRepository.listPlayers(refreshMode) }
+        val tablesRequest = async { tournamentRepository.getAllTablesWithHands(tournamentId, refreshMode) }
+        val meRequest = async { authRepository.getMe(refreshMode) }
+
+        val tournament = when (val result = tournamentsRequest.await()) {
             is AppResult.Success -> result.value.firstOrNull { it.id == tournamentId }
-                ?: return AppResult.Failure(AppError.Unexpected("Tournament not found"))
-            is AppResult.Failure -> return result
+                ?: return@coroutineScope AppResult.Failure(AppError.Unexpected("Tournament not found"))
+            is AppResult.Failure -> return@coroutineScope result
         }
-        val slots = when (val result = tournamentRepository.listTournamentPlayers(tournamentId, refreshMode)) {
+        // Only a team tournament has teams, so this request waits for the tournament.
+        val teamsRequest = async {
+            if (tournament.isTeams) {
+                (tournamentRepository.listTournamentTeams(tournamentId, refreshMode) as? AppResult.Success)?.value.orEmpty()
+            } else {
+                emptyList()
+            }
+        }
+        val slots = when (val result = slotsRequest.await()) {
             is AppResult.Success -> result.value
-            is AppResult.Failure -> return result
+            is AppResult.Failure -> return@coroutineScope result
         }
-        val registry = when (val result = playerRepository.listPlayers(refreshMode)) {
+        val registry = when (val result = registryRequest.await()) {
             is AppResult.Success -> result.value
-            is AppResult.Failure -> return result
+            is AppResult.Failure -> return@coroutineScope result
         }
-        val tables = when (val result = tournamentRepository.getAllTablesWithHands(tournamentId, refreshMode)) {
+        val tables = when (val result = tablesRequest.await()) {
             is AppResult.Success -> result.value
-            is AppResult.Failure -> return result
+            is AppResult.Failure -> return@coroutineScope result
         }
-        val teams = if (tournament.isTeams) {
-            (tournamentRepository.listTournamentTeams(tournamentId, refreshMode) as? AppResult.Success)?.value.orEmpty()
-        } else {
-            emptyList()
-        }
-        val myEmaId = (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.emaId
+        val teams = teamsRequest.await()
+        val myEmaId = (meRequest.await() as? AppResult.Success)?.value?.emaId
         // A table whose time is over counts as completed, even when nobody marked its last hand.
         val expiredTables = tournament.closeExpiredTables(tables, tournament.currentVenueDateTime())
         val rankings = calculateRankings(
@@ -106,7 +121,7 @@ class PlayerTournamentPresenter(
             expiredTables.map { (table, hands) -> RankingTable(table, hands) },
             tournament.isTeams,
         )
-        return AppResult.Success(buildPlayerTournamentView(tournament, slots, registry, expiredTables, rankings, myEmaId, teams))
+        AppResult.Success(buildPlayerTournamentView(tournament, slots, registry, expiredTables, rankings, myEmaId, teams))
     }
 }
 

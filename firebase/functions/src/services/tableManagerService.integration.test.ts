@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { before, describe, it } from "node:test";
 
 import { HttpError } from "../api/httpError";
+import { db } from "../firebase";
 import {
   readHand,
   readTable,
@@ -316,6 +317,64 @@ describe("table reads with the Firestore emulator", () => {
 
     assert.deepEqual(tables.map((entry) => [entry.table.roundId, entry.table.tableId]), [[1, 1], [1, 2], [2, 1]]);
     assert.ok(tables.every((entry) => entry.hands.length === 16));
+  });
+
+  it("reads more hands than one batch call holds and gives each table its own hands", async () => {
+    // 40 tables hold 640 hands, more than one batch read of 500.
+    const tables = Array.from({ length: 40 }, (_, index) => ({ roundId: Math.floor(index / 10) + 1, tableId: (index % 10) + 1 }));
+    const id = await seedTournament({ tables });
+    await db.doc(`tournaments/${id}/tables/4_10/hands/16`).update({ handScore: "88" });
+    await db.doc(`tournaments/${id}/tables/1_1/hands/1`).update({ handScore: "11" });
+
+    const read = await getAllTablesWithHands({ tournamentId: id });
+
+    assert.equal(read.length, 40);
+    assert.ok(read.every((entry) => entry.hands.length === 16));
+    const scoreOf = (roundId: number, tableId: number, handId: number) => read
+      .find((entry) => entry.table.roundId === roundId && entry.table.tableId === tableId)
+      ?.hands.find((hand) => hand.handId === handId)?.handScore;
+    assert.equal(scoreOf(4, 10, 16), "88");
+    assert.equal(scoreOf(1, 1, 1), "11");
+    assert.equal(read.filter((entry) => entry.hands.some((hand) => hand.handScore !== "")).length, 2);
+  });
+
+  it("leaves out a hand that does not exist, like a query", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }, { roundId: 1, tableId: 2 }] });
+    await db.doc(`tournaments/${id}/tables/1_1/hands/9`).delete();
+
+    const read = await getAllTablesWithHands({ tournamentId: id });
+
+    assert.deepEqual(read.map((entry) => entry.hands.length), [15, 16]);
+    assert.ok(!read[0].hands.some((hand) => hand.handId === 9));
+  });
+
+  it("reads a table without hands with no hands", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }], withHands: false });
+
+    const read = await getAllTablesWithHands({ tournamentId: id });
+
+    assert.deepEqual(read.map((entry) => entry.hands.length), [0]);
+  });
+
+  it("never mixes the hands of two tournaments", async () => {
+    const first = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const second = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    await db.doc(`tournaments/${second}/tables/1_1/hands/1`).update({ handScore: "99" });
+
+    const read = await getAllTablesWithHands({ tournamentId: first });
+
+    assert.equal(read.length, 1);
+    assert.ok(read[0].hands.every((hand) => hand.handScore === ""));
+  });
+
+  it("returns the hands of a save at once", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    await save(id, 1, 0, {}, [{ handId: 3, patch: { handScore: "24" } }]);
+
+    const read = await getAllTablesWithHands({ tournamentId: id });
+
+    assert.equal(read[0].hands.find((hand) => hand.handId === 3)?.handScore, "24");
+    assert.equal(read[0].table.version, 1);
   });
 
   it("reads no table for a tournament without tables", async () => {
