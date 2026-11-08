@@ -67,7 +67,7 @@ class EditTournamentTest : AdminE2eTest() {
 
     @Test
     fun tournamentWithoutAgendaOpensTheDialog() {
-        openDialog("Test - Without best hands, chicken hands or dates")
+        openDialog("Test - Without best hands or chicken hands")
         c.waitForText("Branding")
         c.clickButton("Schedule")
         c.waitForText("Add activity")
@@ -126,7 +126,7 @@ class EditTournamentTest : AdminE2eTest() {
 
     @Test
     fun confirmedDeleteRemovesTheTournamentFromTheList() {
-        val name = "Test - Without best hands, chicken hands or dates"
+        val name = "Test - Without best hands or chicken hands"
         openDialog(name)
         c.clickButton("Delete")
         c.waitForText("Delete tournament")

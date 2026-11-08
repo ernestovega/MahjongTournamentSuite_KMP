@@ -136,7 +136,7 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 - (optional later) `tournaments/{tournamentId}/playerStats/{playerId}` for fast rankings
 
 A tournament has a required venue and a required `contactEmail` for the organizers. The venue is a `venueMapUrl`, or a `venueName` together with a `venueAddress`. `POST /tournaments` and `PATCH /tournaments/:id` return 400 when the venue or the email is missing. `contactEmail` must be a valid email address.
-`venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Round schedules must stay inside the tournament dates. The player app shows the venue, the round times and the agenda on the Info tab.
+`venueMapUrl` must be an `https` link to Google Maps. Agenda items (`agendaItems`) may use any date, also a day before or after the tournament days. Every round needs a date inside the tournament dates and a start time (`roundSchedules`): the backend refuses a new tournament or an edit without them, and an older tournament without them must complete them on its next edit. The player app uses them to know when the tournament and each round play. `npm run check:integrity -- --quiet` lists the stored tournaments that still lack some (findings `schedule.empty` and `schedule.incomplete`). The player app shows the venue, the round times and the agenda on the Info tab.
 
 Tournament documents store `eventStartDate` and `eventEndDate` as `YYYY-MM-DD`. Both dates are inclusive.
 
@@ -163,7 +163,7 @@ The table editor checks the server for changes while it is open. See [Multi-edit
 - Load when a screen opens. A cached copy is used for 10 seconds. After that, one manifest request decides if a reload is needed.
 - A save, a reset or a conflict marks the cached copies old.
 - The table editor polls the manifest. Other screens do not poll.
-- The player app checks the server every 15 seconds while a tournament screen is open and visible. It loads all tables again only when the table versions of the manifest are higher than the held versions.
+- The player app checks the server while a tournament screen is open and visible (`PollSchedule`): never again for a finished tournament, every minute before it starts, every 15 seconds while it runs, and every 5 seconds on a table whose round is being played, including the extra time. Coming back from the background or a hidden tab always checks at once. It loads all tables again only when the table versions of the manifest are higher than the held versions.
 
 ## Public routes
 

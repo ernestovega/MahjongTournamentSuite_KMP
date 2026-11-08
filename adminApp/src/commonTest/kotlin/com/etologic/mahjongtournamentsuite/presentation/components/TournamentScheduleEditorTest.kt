@@ -20,10 +20,10 @@ class TournamentScheduleEditorTest {
     }
 
     @Test
-    fun acceptsPartialSchedulesAndConvertsConfiguredValues() {
+    fun acceptsCompleteSchedulesAndConvertsConfiguredValues() {
         val rounds = listOf(
             RoundScheduleEditorRow(1, "02/10/2026", "09:30"),
-            RoundScheduleEditorRow(2),
+            RoundScheduleEditorRow(2, "03/10/2026", "10:00"),
         )
         val agenda = listOf(
             AgendaItemEditorRow("Registration", "02/10/2026", "08:30"),
@@ -32,7 +32,39 @@ class TournamentScheduleEditorTest {
 
         assertNull(tournamentScheduleEditorError(rounds, agenda, "2026-10-02", "2026-10-03"))
         assertEquals("2026-10-02", rounds.toTournamentRoundSchedules().first().date)
+        assertEquals("10:00", rounds.toTournamentRoundSchedules().last().startTime)
         assertEquals(1, agenda.toTournamentAgendaItems().size)
+    }
+
+    @Test
+    fun everyRoundNeedsADateAndAStartTime() = runTest {
+        suspend fun errorFor(vararg rows: RoundScheduleEditorRow) = tournamentScheduleEditorError(rows.toList(), emptyList(), "2026-10-02", "2026-10-03").render()
+
+        assertEquals(
+            "Round 2 needs a date.",
+            errorFor(RoundScheduleEditorRow(1, "02/10/2026", "09:30"), RoundScheduleEditorRow(2)),
+        )
+        assertEquals(
+            "Round 1 needs a date.",
+            errorFor(RoundScheduleEditorRow(1, "  ", "09:30")),
+        )
+        assertEquals(
+            "Round 1 needs a start time.",
+            errorFor(RoundScheduleEditorRow(1, "02/10/2026", "")),
+        )
+        assertEquals(
+            "Round 1 must be inside the tournament date range.",
+            errorFor(RoundScheduleEditorRow(1, "04/10/2026", "09:30")),
+        )
+    }
+
+    @Test
+    fun newRoundRowsMustBeFilledBeforeSaving() = runTest {
+        val rows = synchronizeRoundScheduleRows(emptyList(), roundCount = 2)
+
+        val error = tournamentScheduleEditorError(rows, emptyList(), "2026-10-02", "2026-10-03")
+
+        assertEquals("Round 1 needs a date.", error.render())
     }
 
     @Test

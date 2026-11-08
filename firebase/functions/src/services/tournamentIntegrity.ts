@@ -157,10 +157,13 @@ function checkTournamentInfo(c: Collector, input: IntegrityInput, numPlayers: nu
     const where = `round ${text(row.roundId)}`;
     const date = text(row.date);
     const time = text(row.startTime);
+    // Every round needs both. The apps refuse to save a tournament without them.
     if (date === "" && time === "") {
-      c.add("info", "schedule.empty", "The round has no date and no start time.", where);
+      c.add("warning", "schedule.empty", "The round has no date and no start time.", where);
       return;
     }
+    if (date === "") c.add("warning", "schedule.incomplete", "The round has a start time but no date.", where);
+    if (time === "") c.add("warning", "schedule.incomplete", "The round has a date but no start time.", where);
     if (date !== "" && !isValidIsoDate(date)) c.add("error", "schedule.date", `The date "${date}" is not valid.`, where);
     if (time !== "" && !TIME_PATTERN.test(time)) c.add("error", "schedule.time", `The time "${time}" is not valid.`, where);
     if (date !== "" && isValidIsoDate(start) && isValidIsoDate(end) && (date < start || date > end)) {

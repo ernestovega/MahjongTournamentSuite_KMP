@@ -26,6 +26,7 @@ import {
   readStoredMatchDuration,
   readStoredMatchEndMode,
   readStoredRoundSchedules,
+  requireCompleteRoundSchedules,
   type MatchEndMode,
   type TournamentAgendaItem,
   type TournamentRoundSchedule,
@@ -204,6 +205,7 @@ export async function createTournament(params: {
     params.eventStartDate,
     params.eventEndDate,
   );
+  requireCompleteRoundSchedules(roundSchedules, params.numRounds);
   const agendaItems = normalizeAgendaItems(params.agendaItems);
   const matchDurationMinutes = normalizeMatchDuration(params.matchDurationMinutes);
   const matchEndMode = normalizeMatchEndMode(params.matchEndMode);
@@ -515,6 +517,8 @@ export async function updateTournamentSettings(params: {
   const roundSchedules = params.roundSchedules === undefined
     ? readStoredRoundSchedules(before.get("roundSchedules"), numRounds, params.eventStartDate, params.eventEndDate)
     : normalizeRoundSchedules(params.roundSchedules, numRounds, params.eventStartDate, params.eventEndDate);
+  // An old tournament may lack some of them. Its next edit must complete them, even when it does not send them.
+  requireCompleteRoundSchedules(roundSchedules, numRounds);
   const agendaItems = params.agendaItems === undefined
     ? readStoredAgendaItems(before.get("agendaItems"))
     : normalizeAgendaItems(params.agendaItems);

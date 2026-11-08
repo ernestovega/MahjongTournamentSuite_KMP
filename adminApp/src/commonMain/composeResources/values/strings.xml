@@ -229,6 +229,8 @@
     <string name="schedule_round_invalid_date">Round %1$d has an invalid date.</string>
     <string name="schedule_round_outside_range">Round %1$d must be inside the tournament date range.</string>
     <string name="schedule_round_invalid_time">Round %1$d has an invalid start time.</string>
+    <string name="schedule_round_missing_date">Round %1$d needs a date.</string>
+    <string name="schedule_round_missing_time">Round %1$d needs a start time.</string>
     <string name="schedule_agenda_invalid_date">Agenda item %1$d has an invalid date.</string>
     <string name="schedule_agenda_invalid_time">Agenda item %1$d has an invalid start time.</string>
     <string name="logo_must_be_jpeg_png">Logo must be a JPEG or PNG image.</string>

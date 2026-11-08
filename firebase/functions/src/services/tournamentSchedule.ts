@@ -120,6 +120,20 @@ export function normalizeRoundSchedules(
   });
 }
 
+/**
+ * A new or edited tournament must give every round a date and a start time. The player app needs them to know when
+ * the tournament and each round take place.
+ */
+export function requireCompleteRoundSchedules(schedules: TournamentRoundSchedule[], numRounds: number): void {
+  if (schedules.length !== numRounds) throw badRequest("Every round needs a date and a start time");
+  const missing = schedules
+    .filter((schedule) => schedule.date == null || schedule.startTime == null)
+    .map((schedule) => schedule.roundId);
+  if (missing.length > 0) {
+    throw badRequest("Every round needs a date and a start time", { rounds: missing });
+  }
+}
+
 /** Agenda items may use any valid date. Events before or after the official games are allowed. */
 export function normalizeAgendaItems(value: unknown): TournamentAgendaItem[] {
   const rows = value == null ? [] : value;

@@ -66,6 +66,21 @@ class SpanishMessagesTest {
     }
 
     @Test
+    fun theMissingRoundScheduleErrorsAreInSpanish() = runTest {
+        spanish()
+        val noDate = tournamentScheduleEditorError(
+            roundRows = listOf(RoundScheduleEditorRow(1)),
+            agendaRows = emptyList(), eventStartDate = "2026-10-02", eventEndDate = "2026-10-02",
+        )
+        val noTime = tournamentScheduleEditorError(
+            roundRows = listOf(RoundScheduleEditorRow(1, "02/10/2026", "")),
+            agendaRows = emptyList(), eventStartDate = "2026-10-02", eventEndDate = "2026-10-02",
+        )
+        assertEquals("La ronda 1 necesita una fecha.", noDate.render())
+        assertEquals("La ronda 1 necesita una hora de inicio.", noTime.render())
+    }
+
+    @Test
     fun theDataStatusIsInSpanish() = runTest {
         spanish()
         val moment = Instant.parse("2026-10-11T15:30:12Z")
