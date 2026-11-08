@@ -16,10 +16,16 @@ internal class FakeTournamentRepository : TournamentRepository {
     var emaPlayersRevision = 1L
     var tournamentsRevision = 1L
     var failPlayers = false
+
+    /** When true, the write methods (settings, players, teams, files) work. Otherwise they fail, like an unused method. */
+    var writesSucceed = false
+
     /** Fails the next [getTableWithHands] calls for this many requests. */
     var failTableReads = 0
+
     /** Makes every save fail with this error. */
     var saveError: AppError? = null
+
     /** A conflict answer without table data, like an unreadable server body. */
     var conflictWithoutTable = false
 
@@ -40,7 +46,8 @@ internal class FakeTournamentRepository : TournamentRepository {
             useTotalsOnly = table.useTotalsOnly,
             // Like the server: seats, scores, hands or a completed table count as progress.
             hasProgress = listOf(table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId).any { it.isNotBlank() } ||
-                hands.any { it.handScore.isNotBlank() } || table.isCompleted,
+                hands.any { it.handScore.isNotBlank() } ||
+                table.isCompleted,
             version = table.version,
         )
     }
@@ -157,7 +164,7 @@ internal class FakeTournamentRepository : TournamentRepository {
 
     override suspend fun createTournament(request: CreateTournamentRequest) = unusedFakeResult<Tournament>()
 
-    override suspend fun renameTournament(tournamentId: String, name: String) = unusedFakeResult<Unit>()
+    override suspend fun renameTournament(tournamentId: String, name: String) = writeResult(Unit)
 
     override suspend fun updateTournamentSettings(
         tournamentId: String,
@@ -181,12 +188,12 @@ internal class FakeTournamentRepository : TournamentRepository {
         matchEndMode: MatchEndMode?,
         matchExtraMinutes: Int?,
         timeZone: String?,
-    ) = unusedFakeResult<Tournament>()
+    ) = writeResult(Tournament(id = tournamentId, name = name, isTeams = false, numPlayers = 0, numRounds = 0))
 
-    override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedFakeResult<ByteArray>()
-    override suspend fun generateIdCardProof(request: IdCardProofRequest) = unusedFakeResult<ByteArray>()
-    override suspend fun generateTournamentIdList(tournamentId: String) = unusedFakeResult<ByteArray>()
-    override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = unusedFakeResult<ByteArray>()
+    override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = writeResult(ByteArray(0))
+    override suspend fun generateIdCardProof(request: IdCardProofRequest) = writeResult(ByteArray(0))
+    override suspend fun generateTournamentIdList(tournamentId: String) = writeResult(ByteArray(0))
+    override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>) = writeResult(ByteArray(0))
     override suspend fun deleteTournament(tournamentId: String) = unusedFakeResult<Unit>()
 
     override suspend fun listTournamentMembers(tournamentId: String, refreshMode: RefreshMode) = unusedFakeResult<List<TournamentMember>>()
@@ -199,7 +206,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         return AppResult.Success(players)
     }
     override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode) = AppResult.Success(emptyList<TournamentTeam>())
-    override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = unusedFakeResult<Unit>()
+    override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>) = writeResult(Unit)
     override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = AppResult.Success(countries)
     override suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = AppResult.Success(ResolvedVenueLink(url, null))
 
@@ -207,14 +214,13 @@ internal class FakeTournamentRepository : TournamentRepository {
         tournamentId: String,
         tournamentPlayerId: Int,
         emaId: String?,
-    ) = unusedFakeResult<Unit>()
+    ) = writeResult(Unit)
 
-    override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = unusedFakeResult<Unit>()
+    override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?) = writeResult(Unit)
 
-    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> =
-        AppResult.Success(rounds)
+    private fun <T> writeResult(value: T): AppResult<T> = if (writesSucceed) AppResult.Success(value) else unusedFakeResult()
 
-
+    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> = AppResult.Success(rounds)
 
     override suspend fun getRoundTablesWithHands(
         tournamentId: String,
@@ -226,7 +232,6 @@ internal class FakeTournamentRepository : TournamentRepository {
             tables.entries.filter { it.key.roundId == roundId }.sortedBy { it.key.tableId }.map { it.value },
         )
     }
-
 }
 
 internal class NoPlayersRepository : PlayerRepository {
@@ -236,5 +241,4 @@ internal class NoPlayersRepository : PlayerRepository {
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
 }
 
-private fun <T> unusedFakeResult(): AppResult<T> =
-    AppResult.Failure(AppError.Unexpected("Unused test repository method"))
+private fun <T> unusedFakeResult(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Unused test repository method"))

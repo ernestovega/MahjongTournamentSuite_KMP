@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollScope
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedScreen
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
@@ -17,8 +18,12 @@ import kotlinx.serialization.serializer
 internal inline fun <reified T : Any> NavGraphBuilder.screen(
     crossinline content: @Composable (NavBackStackEntry) -> Unit,
 ) {
+    // The name of the route class, without "Route", is the name of the screen in the analytics.
+    val screenName = T::class.simpleName.orEmpty().removeSuffix("Route")
     composable<T> { entry ->
-        ScrollScope(entry.destination.route.orEmpty()) { content(entry) }
+        TrackedScreen(screenName) {
+            ScrollScope(entry.destination.route.orEmpty()) { content(entry) }
+        }
     }
 }
 
@@ -45,7 +50,7 @@ private val savedKinds: List<RouteKind<*>> = listOf(
     kind<TimerRoute>(),
     kind<RankingsRoute>(),
     kind<StatisticsRoute>(),
-    kind<UsageRoute>(),
+    kind<ErrorsRoute>(),
 )
 
 /**

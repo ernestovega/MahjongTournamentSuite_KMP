@@ -18,7 +18,7 @@
     <string name="sign_in_button">Accedi</string>
     <string name="app_logo_description">Logo di Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Utenti</string>
-    <string name="top_bar_app_usage">Utilizzo dell'app</string>
+    <string name="top_bar_app_errors">Errori dell\'app</string>
     <string name="top_bar_timer">Timer</string>
     <string name="top_bar_ranking">Classifica</string>
     <string name="date_field_clear">Cancella %1$s</string>
@@ -318,4 +318,17 @@
     <string name="spreadsheet_chooser_filter">File CSV ed Excel</string>
     <string name="spreadsheet_error_read">L'app non è riuscita a leggere il file. Scegli un file CSV o Excel e riprova.</string>
     <string name="spreadsheet_error_save">L'app non è riuscita a salvare il file. Riprova.</string>
+    <string name="consent_title">Analisi anonima</string>
+    <string name="consent_intro">Questa app raccoglie dati anonimi su come viene usata e sugli errori. Il team usa i dati solo per trovare problemi e per migliorare l\'app.</string>
+    <string name="consent_collects">L\'app registra questi dati:
+• Le schermate, le finestre di dialogo e le schede che apri, e per quanto tempo.
+• Le azioni che usi, come salvare un tavolo.
+• Gli errori e gli arresti anomali, con dettagli tecnici come il tipo di errore.</string>
+    <string name="consent_not_collected">L\'app non registra il tuo nome, il tuo indirizzo e-mail, il tuo numero EMA né alcun testo che scrivi. I dati non ti identificano.</string>
+    <string name="consent_required">Puoi usare l\'app solo se accetti. Se non accetti, non puoi entrare nell\'app.</string>
+    <string name="consent_accept">Accetta e continua</string>
+    <string name="consent_decline">Rifiuta</string>
+    <string name="consent_declined_note">Non puoi usare l\'app senza l\'analisi anonima. Puoi chiudere l\'app oppure accettare per continuare.</string>
+    <string name="consent_withdraw">Ritira il consenso all\'analisi</string>
+    <string name="consent_withdraw_info">L\'app interrompe l\'analisi e te lo chiede di nuovo. Non puoi usare l\'app finché non accetti.</string>
 </resources>

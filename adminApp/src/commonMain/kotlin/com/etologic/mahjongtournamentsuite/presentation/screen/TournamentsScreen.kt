@@ -78,7 +78,7 @@ import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
+import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -343,8 +343,8 @@ fun TournamentsScreen(
                     null
                 },
                 onTimer = { openTimer(navController) },
-                onUsage = if (adminStatus?.isAdmin == true) {
-                    { navController.navigate(UsageRoute) }
+                onErrors = if (adminStatus?.isAdmin == true) {
+                    { navController.navigate(ErrorsRoute) }
                 } else {
                     null
                 },

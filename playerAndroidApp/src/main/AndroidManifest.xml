@@ -11,6 +11,8 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <!-- App Check. Fill in the Android app of the Firebase project to turn it on. See docs/backend.md. -->
+        <!-- Analytics stays off until the user accepts it in the app. See docs/telemetry.md. -->
+        <meta-data android:name="firebase_analytics_collection_enabled" android:value="false" />
         <meta-data android:name="mts.appCheck.appId" android:value="" />
         <meta-data android:name="mts.appCheck.apiKey" android:value="" />
         <activity
