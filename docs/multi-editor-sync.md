@@ -29,6 +29,7 @@ Several people can edit one tournament at the same time. This page describes how
 
 - `SessionRepositoryCache` returns a cached value for 10 seconds after the server confirmed it. After that it waits for one revision check. It never returns old data and refreshes in the background.
 - Cached requests of one screen share one manifest request for 2 seconds (`shared`).
+- A tournament manifest also answers the global revision checks for those 2 seconds (`sharedAndSeed`): the tournament list, the EMA players, the accounts and the profile do not ask `GET /sync/manifest` again. The player tournament screen first calls `prefetchRevisions`, so a refresh without changes costs **one request**, and a change costs that request plus the download of what changed. A write still drops every shared answer, and the next read asks again.
 - A save, a reset or a conflict marks the cached copies old.
 - `RefreshMode.CACHED` returns any held value and never asks the server. Only a write that made the value old, or an empty cache, causes a load.
 - `TournamentTableStore` holds all tables with their hands for the rankings. The first ranking load makes one request. After that the ranking makes **no request**, also when it opens again. The table editor keeps the store current: its saves, its loads and its polling feed it. When polling finds a change in a round that is not open, it loads that table too.

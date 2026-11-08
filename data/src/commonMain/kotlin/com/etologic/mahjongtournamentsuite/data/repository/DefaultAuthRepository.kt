@@ -1,16 +1,15 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
-import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
-import kotlin.io.encoding.Base64
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
 import com.etologic.mahjongtournamentsuite.data.session.CredentialStore
 import com.etologic.mahjongtournamentsuite.data.session.SavedCredentials
@@ -18,11 +17,13 @@ import com.etologic.mahjongtournamentsuite.data.session.StoredAuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.io.encoding.Base64
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
@@ -145,7 +146,7 @@ class DefaultAuthRepository(
             refreshMode = refreshMode,
             revision = {
                 withFreshToken { token ->
-                    backendApi.globalDataVersions(token).resources["users"]?.revision ?: 0
+                    cache.globalManifest(backendApi, token).resources["users"]?.revision ?: 0
                 }
             },
             load = {

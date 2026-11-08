@@ -3,11 +3,12 @@ package com.etologic.mahjongtournamentsuite.data.repository
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.Persistence
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -78,7 +79,7 @@ class DefaultPlayerRepository(
             refreshMode = refreshMode,
             revision = {
                 withFreshIdToken { token ->
-                    backendApi.globalDataVersions(token).resources["emaPlayers"]?.revision ?: 0
+                    cache.globalManifest(backendApi, token).resources["emaPlayers"]?.revision ?: 0
                 }
             },
             persistence = Persistence(PLAYERS_CACHE_KEY, PlayersResponseDto.serializer()),

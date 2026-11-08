@@ -187,4 +187,11 @@ interface TournamentRepository {
      * remote read. Other cached requests of the tournament reuse the answer for a short time.
      */
     suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest>
+
+    /**
+     * Asks the backend once for all the revisions that the reads of this tournament check: its own, its table
+     * versions and the global ones. The reads that follow within a short time reuse that answer, so a refresh of the
+     * tournament costs one request when nothing changed. A failure is ignored: the reads then ask themselves.
+     */
+    suspend fun prefetchRevisions(tournamentId: String) {}
 }

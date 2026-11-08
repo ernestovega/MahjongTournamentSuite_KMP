@@ -79,6 +79,8 @@ class PlayerTournamentPresenter(
         tournamentId: String,
         refreshMode: RefreshMode = RefreshMode.IF_CHANGED,
     ): AppResult<PlayerTournamentView> = coroutineScope {
+        // One request answers the revision checks of all the reads below, so it goes first. CACHED reads do not check.
+        if (refreshMode != RefreshMode.CACHED) tournamentRepository.prefetchRevisions(tournamentId)
         val tournamentsRequest = async { tournamentRepository.listTournaments(refreshMode) }
         val slotsRequest = async { tournamentRepository.listTournamentPlayers(tournamentId, refreshMode) }
         val registryRequest = async { playerRepository.listPlayers(refreshMode) }

@@ -10,6 +10,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveManagedUserReque
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAssignmentDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -173,7 +174,7 @@ class DefaultAdminRepository(
             refreshMode = refreshMode,
             revision = {
                 withFreshIdToken { token ->
-                    backendApi.globalDataVersions(token).resources["users"]?.revision ?: 0
+                    cache.globalManifest(backendApi, token).resources["users"]?.revision ?: 0
                 }
             },
             load = { withFreshIdToken(block) },
