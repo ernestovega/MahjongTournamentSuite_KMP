@@ -1,11 +1,11 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.datetime.LocalDate
-import kotlinx.datetime.LocalDateTime
 
 /** Where a tournament is in time, as the checks for changes see it. */
 internal enum class PollPhase { NOT_STARTED, ONGOING, FINISHED }
