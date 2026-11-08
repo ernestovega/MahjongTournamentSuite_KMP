@@ -5,9 +5,9 @@
 (function () {
   const APP = "admin";
   const CONFIG = {
-    apiKey: "",
-    appId: "",
-    measurementId: "",
+    apiKey: "AIzaSyDf4pvgE_iwfbo2Yo4nEmMN0Ch0qvb1T_c",
+    appId: "1:827074322474:web:cb06b89f34d68a72efa353",
+    measurementId: "G-M6K6X05YS8",
     projectId: "mahjong-tournament-suite",
   };
   const SDK = "https://www.gstatic.com/firebasejs/11.0.2/";
