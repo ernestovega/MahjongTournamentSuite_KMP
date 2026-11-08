@@ -136,11 +136,13 @@ If you already filled the App Check values in the manifest, keep them. App Check
 
 ### 4. Desktop
 
-1. In GA4, open Admin > Data streams and select the stream of the admin web app.
-2. Copy the measurement id (`G-...`).
-3. Open "Measurement Protocol API secrets" and create a secret.
-4. Fill both values in `DesktopTelemetryConfig` in
+1. In GA4, open Admin > Data streams and select the stream of the web apps.
+2. The measurement id (`G-...`) is already in `DesktopTelemetryConfig` in
    `data/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/data/telemetry/PlatformTelemetry.jvm.kt`.
+3. Open "Measurement Protocol API secrets" and create a secret.
+4. The repository is public, so the secret is not in the code. Add it to `local.properties` of the machine that builds
+   the desktop app: `mts.ga4.apiSecret=...`. The variable `MTS_GA4_API_SECRET` also works, for example on CI.
+   The build of the data module puts it in the resource `mts-desktop-telemetry.properties`. A build without it sends nothing.
 5. The desktop events appear in the stream of the admin web app. The user property `platform = desktop` tells them apart.
 
 ### 5. Server

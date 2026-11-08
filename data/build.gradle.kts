@@ -62,3 +62,31 @@ kotlin {
         }
     }
 }
+
+// The API secret of the GA4 Measurement Protocol for the desktop app. The repository is public, so the secret is not
+// in the code: it comes from `mts.ga4.apiSecret` in local.properties, or from the variable MTS_GA4_API_SECRET.
+// Without it the desktop app sends no Analytics. See docs/telemetry.md.
+val desktopTelemetryApiSecret: Provider<String> = providers.environmentVariable("MTS_GA4_API_SECRET")
+    .orElse(
+        providers.fileContents(rootProject.layout.projectDirectory.file("local.properties")).asText
+            .map { text -> java.util.Properties().apply { load(text.reader()) }.getProperty("mts.ga4.apiSecret").orEmpty() },
+    )
+    .orElse("")
+
+val generateDesktopTelemetryResources by tasks.registering {
+    val apiSecret = desktopTelemetryApiSecret
+    val outputDir = layout.buildDirectory.dir("generated/desktopTelemetry")
+    inputs.property("apiSecret", apiSecret)
+    outputs.dir(outputDir)
+    doLast {
+        val file = outputDir.get().file("mts-desktop-telemetry.properties").asFile
+        file.parentFile.mkdirs()
+        file.writer().use { writer ->
+            java.util.Properties().apply { setProperty("apiSecret", apiSecret.get().trim()) }.store(writer, null)
+        }
+    }
+}
+
+kotlin.sourceSets.jvmMain {
+    resources.srcDir(generateDesktopTelemetryResources)
+}
