@@ -13,12 +13,12 @@ The versions are in `gradle/libs.versions.toml`:
 ```toml
 web-versionName = "1.0.2"
 admin-versionName = "1.0.1"
-admin-versionCode = "2"
+admin-versionCode = "1"
 player-versionName = "1.0.1"
-player-versionCode = "2"
+player-versionCode = "1"
 ```
 
-The names are `MAJOR.MINOR.PATCH`. The patch counts the pull requests merged to `main` that changed the product, counted from PR #1: PR #2 set the web to 1.0.1 and PR #15 set the web to 1.0.2 and both apps to 1.0.1. The apps also have a version code for Google Play, which goes up by one with every new version (it started at 2 because the apps were built with code 1 before). The web has no version code. The build generates the object `AppVersion` in `domain` from these values, and the apps show the right one through `LocalAppVersion`.
+The names are `MAJOR.MINOR.PATCH`. The patch counts the pull requests merged to `main` that changed the product, counted from PR #1: PR #2 set the web to 1.0.1 and PR #15 set the web to 1.0.2 and both apps to 1.0.1. The apps also have a version code for Google Play, which goes up by one with every new version. The web has no version code. The build generates the object `AppVersion` in `domain` from these values, and the apps show the right one through `LocalAppVersion`.
 
 ## Bump a version
 
