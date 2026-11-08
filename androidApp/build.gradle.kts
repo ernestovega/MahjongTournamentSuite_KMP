@@ -20,8 +20,8 @@ android {
         applicationId = "com.etologic.mahjongtournamentsuite"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = libs.versions.app.versionCode.get().toInt()
-        versionName = libs.versions.app.versionName.get()
+        versionCode = libs.versions.admin.versionCode.get().toInt()
+        versionName = libs.versions.admin.versionName.get()
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Every test runs in a new process with empty app data, so no session or cache leaks from one test to the next.
         testInstrumentationRunnerArguments["clearPackageData"] = "true"

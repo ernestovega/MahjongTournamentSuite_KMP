@@ -14,19 +14,29 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.Locale
+import java.util.Properties
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import java.util.prefs.Preferences
 
 /**
  * The settings of Analytics for the desktop app. The desktop has no Firebase SDK, so it sends the events to the
- * Measurement Protocol of GA4. These two values are public. Take them from the data stream of the admin web app:
- * the measurement id (`G-...`) and an API secret made in "Measurement Protocol API secrets". See docs/telemetry.md.
- * Without them the desktop app sends nothing.
+ * Measurement Protocol of GA4, in the data stream of the web apps. See docs/telemetry.md.
+ * The measurement id is public. The API secret is not in the code: the build of the data module takes it from
+ * `mts.ga4.apiSecret` in local.properties (or the variable MTS_GA4_API_SECRET) and puts it in a resource.
+ * Without the secret the desktop app sends nothing.
  */
 internal object DesktopTelemetryConfig {
-    const val MEASUREMENT_ID = ""
-    const val API_SECRET = ""
+    const val MEASUREMENT_ID = "G-M6K6X05YS8"
+    const val RESOURCE = "/mts-desktop-telemetry.properties"
+
+    val apiSecret: String by lazy {
+        runCatching {
+            DesktopTelemetryConfig::class.java.getResourceAsStream(RESOURCE)?.use { stream ->
+                Properties().apply { load(stream) }.getProperty("apiSecret")
+            }
+        }.getOrNull().orEmpty().trim()
+    }
 }
 
 /**
@@ -124,7 +134,7 @@ internal fun measurementBody(
                                 // Without these two values GA4 does not count the event in the standard reports.
                                 "session_id" to JsonPrimitive(sessionId),
                                 "engagement_time_msec" to JsonPrimitive(1),
-                                "app_version" to JsonPrimitive(AppVersion.name),
+                                "app_version" to JsonPrimitive(AppVersion.admin),
                             ),
                         ),
                     ),
@@ -154,7 +164,7 @@ internal fun desktopAnalytics(measurementId: String, apiSecret: String, env: Str
 actual fun providePlatformTelemetry(): PlatformTelemetry {
     // jpackage sets this property in an installed app. A run from the IDE or Gradle does not have it.
     val env = if (System.getProperty("jpackage.app-path") != null) "prod" else "dev"
-    val analytics = desktopAnalytics(DesktopTelemetryConfig.MEASUREMENT_ID, DesktopTelemetryConfig.API_SECRET, env)
+    val analytics = desktopAnalytics(DesktopTelemetryConfig.MEASUREMENT_ID, DesktopTelemetryConfig.apiSecret, env)
     val pending = FilePendingCrashStore(File(System.getProperty("user.home"), ".mahjongtournamentsuite/pending-crash.json"))
     return PlatformTelemetry(analytics, "admin", "desktop", env, Locale.getDefault().language, pending)
 }

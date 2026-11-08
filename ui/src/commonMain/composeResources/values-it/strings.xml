@@ -308,7 +308,7 @@
     <string name="action_back">Indietro</string>
     <string name="dropdown_search">Cerca</string>
     <string name="logo_of">Logo di %1$s</string>
-    <string name="app_version_label">App %1$s</string>
+    <string name="app_version_label">v%1$s</string>
     <string name="theme_title">Tema</string>
     <string name="theme_system">Sistema</string>
     <string name="theme_light">Chiaro</string>

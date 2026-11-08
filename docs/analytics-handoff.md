@@ -38,7 +38,7 @@ Nothing is sent to GA4 until the settings are filled in. The apps build and run 
    - In the Firebase console, open Project settings > General > Your apps > the web app > SDK setup > Config.
    - Copy `apiKey`, `appId` and `measurementId` (starts with `G-`).
    - Put them at the top of `adminApp/src/webMain/resources/telemetry.js` and `playerApp/src/wasmJsMain/resources/telemetry.js`. Both files must have the same values. Only the line `const APP` differs.
-3. **Desktop.** In GA4, open the data stream and create a secret in "Measurement Protocol API secrets". Put the measurement id and the secret in `DesktopTelemetryConfig`, in `data/src/jvmMain/kotlin/com/etologic/mahjongtournamentsuite/data/telemetry/PlatformTelemetry.jvm.kt`.
+3. **Desktop.** In GA4, open the data stream and create a secret in "Measurement Protocol API secrets". The measurement id is already in `DesktopTelemetryConfig`. Put the secret in `local.properties` as `mts.ga4.apiSecret=...` (see [Telemetry, step 4](telemetry.md#4-desktop)).
 4. **Android.** In Firebase, add two Android apps: `com.etologic.mahjongtournamentsuite` and `com.etologic.mahjongtournamentsuite.player`. Download their `google-services.json` files. Save them as `androidApp/google-services.json` and `playerAndroidApp/google-services.json`.
 5. **Custom definitions in GA4.** Register the dimensions and metrics of [Telemetry, step 6](telemetry.md#6-custom-definitions-in-ga4). New: the event dimension `Outcome` (parameter `outcome`).
 6. **Deploy.**

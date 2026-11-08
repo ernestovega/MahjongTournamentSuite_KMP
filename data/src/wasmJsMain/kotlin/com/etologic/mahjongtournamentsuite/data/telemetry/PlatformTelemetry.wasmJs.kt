@@ -38,7 +38,7 @@ private external fun readEnvironment(): String
 private object WebTelemetry : Telemetry {
     init {
         // The crash reports of the page need the version of the app.
-        sendTelemetry("context", "", JsonObject(mapOf("appVersion" to JsonPrimitive(AppVersion.name))).toString())
+        sendTelemetry("context", "", JsonObject(mapOf("appVersion" to JsonPrimitive(AppVersion.web))).toString())
     }
 
     override val requiresConsent: Boolean get() = readConfigured()

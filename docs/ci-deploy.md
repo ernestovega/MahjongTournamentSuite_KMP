@@ -10,7 +10,7 @@
 
 The workflow `.github/workflows/firebase.yml` has two parts:
 
-- **Build and test** runs on every pull request to `main`. Six checks run at the same time:
+- **Build and test** runs on every pull request to `main`. It first checks that every changed product has a higher version ([versioning.md](versioning.md)). Six checks run at the same time:
   - **Functions tests**: the unit tests of the functions.
   - **Functions integration tests**: the integration tests on the Firebase Auth and Firestore emulators.
   - **Kotlin tests**: ktlint and the tests of all modules.

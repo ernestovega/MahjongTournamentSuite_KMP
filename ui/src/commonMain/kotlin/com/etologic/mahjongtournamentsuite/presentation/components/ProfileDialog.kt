@@ -60,6 +60,7 @@ const val MAX_ALIAS_LENGTH = 60
  * The email and the EMA number are shown only. Admins set them.
  * [onSaveAlias] saves the new alias. After a save, [onSaved] gets the new profile and the dialog closes.
  * [onSavePhoto] and [onRemovePhoto] save the own photo. After a save, [onSaved] gets the new profile and the dialog stays open.
+ * The top right corner shows the app version from [LocalAppVersion].
  * When [onSignOut] is set, the dialog shows a red Logout button at the left of the button row that calls it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,7 +118,13 @@ fun ProfileDialog(
         AlertDialog(
             modifier = Modifier.appFocusGroup(),
             onDismissRequest = { if (!saving) onDismiss() },
-            title = { Text(stringResource(Res.string.profile_title)) },
+            // The version of the running app sits in the top right corner.
+            title = {
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(Res.string.profile_title), Modifier.weight(1f))
+                    AppVersionLabel()
+                }
+            },
             text = {
                 Column(
                     modifier = Modifier.fillMaxWidth(),

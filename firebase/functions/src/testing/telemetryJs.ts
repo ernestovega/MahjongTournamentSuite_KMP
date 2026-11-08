@@ -16,7 +16,7 @@ export function telemetrySource(app: TelemetryApp): string {
 }
 
 export type PageOptions = {
-  /** False keeps the empty settings of the file. The default fills them in, like a real release. */
+  /** False empties the settings of the file. The default sets test values, like a real release. */
   configured?: boolean;
   /** The value that the page already holds in localStorage for the consent. */
   storedConsent?: "1" | "0" | null;
@@ -51,13 +51,12 @@ export async function settle(): Promise<void> {
 
 /** Runs the script in an empty page with fake browser objects and a fake Analytics SDK. */
 export function loadPage(app: TelemetryApp, options: PageOptions = {}) {
-  let source = telemetrySource(app);
-  if (options.configured !== false) {
-    source = source
-      .replace('apiKey: ""', 'apiKey: "test-key"')
-      .replace('appId: ""', 'appId: "test-app"')
-      .replace('measurementId: ""', 'measurementId: "G-TEST"');
-  }
+  // The file may hold the real settings or empty ones. The tests always set their own values.
+  const configured = options.configured !== false;
+  const source = telemetrySource(app)
+    .replace(/apiKey: "[^"]*"/, `apiKey: "${configured ? "test-key" : ""}"`)
+    .replace(/appId: "[^"]*"/, `appId: "${configured ? "test-app" : ""}"`)
+    .replace(/measurementId: "[^"]*"/, `measurementId: "${configured ? "G-TEST" : ""}"`);
   const calls: PageCalls = { loaded: [], initialized: [], events: [], properties: [], collection: [], fetches: [] };
   const storage = new Map<string, string>();
   if (options.storedConsent) storage.set("mtsAnalyticsConsent", options.storedConsent);
