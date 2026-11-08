@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -95,11 +97,13 @@ private val playerModule = module {
 fun PlayerApp(
     openTournamentId: String? = null,
     sessionStorage: SessionStateStorage? = null,
+    appVersion: String = AppVersion.player,
 ) {
     KoinApplication(configuration = koinConfiguration { modules(dataModule, playerModule) }) {
         val themeController = rememberThemeController()
         CompositionLocalProvider(
             LocalThemeController provides themeController,
+            LocalAppVersion provides appVersion,
             LocalScrollPositionStore provides remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } },
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
             LocalAdaptiveTopBar provides true,
