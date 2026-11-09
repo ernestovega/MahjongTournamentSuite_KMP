@@ -60,9 +60,17 @@ fun EmaCountryDropdown(
     errorMessage: String? = null,
     label: String = stringResource(Res.string.host_country),
     required: Boolean = false,
+    /**
+     * True when the field gives two-letter codes, as the host country of a tournament. Without a country list the
+     * field falls back to the EMA countries, and their own codes have three letters.
+     */
+    twoLetterCodes: Boolean = false,
 ) {
     val countryNameOf = rememberCountryNames()
-    val options = remember(countries, countryNameOf) {
+    val fallback = remember(twoLetterCodes) {
+        if (twoLetterCodes) EmaHostCountries.map { it.copy(code = it.flagCode) } else EmaHostCountries
+    }
+    val options = remember(countries, countryNameOf, fallback) {
         countries
             .mapNotNull { country ->
                 val code = country.code.trim().uppercase()
@@ -75,11 +83,11 @@ fun EmaCountryDropdown(
             }
             .distinctBy(EmaCountryOption::code)
             .sortedBy(EmaCountryOption::name)
-            .ifEmpty { EmaHostCountries.map { it.copy(name = countryNameOf(it.flagCode, it.name)) } }
+            .ifEmpty { fallback.map { it.copy(name = countryNameOf(it.flagCode, it.name)) } }
     }
     val normalizedSelectedCode = selectedCode.trim().uppercase()
     val selected = options.firstOrNull { it.code == normalizedSelectedCode }
-        ?: EmaHostCountries.firstOrNull { it.code == normalizedSelectedCode }?.let { it.copy(name = countryNameOf(it.flagCode, it.name)) }
+        ?: fallback.firstOrNull { it.code == normalizedSelectedCode }?.let { it.copy(name = countryNameOf(it.flagCode, it.name)) }
     val selectOptions = remember(options) {
         options.map { option ->
             SelectOption(
