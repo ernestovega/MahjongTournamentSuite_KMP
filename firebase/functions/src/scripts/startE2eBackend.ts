@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import http from "node:http";
+import { gunzipSync } from "node:zlib";
 
 // The secret value is read from the environment when the code runs outside Firebase.
 process.env.MTS_ID_TOOLKIT_API_KEY ??= "e2e-key";
@@ -224,7 +225,13 @@ async function main(): Promise<void> {
     }) as typeof res.end;
     res.on("finish", () => {
       if (res.statusCode >= 400) {
-        const body = Buffer.concat(chunks).toString("utf8").slice(0, 1000);
+        const raw = Buffer.concat(chunks);
+        let body: string;
+        try {
+          body = (res.getHeader("content-encoding") === "gzip" ? gunzipSync(raw) : raw).toString("utf8").slice(0, 1000);
+        } catch {
+          body = "(unreadable body)";
+        }
         console.warn(`E2E request refused: ${req.method} ${req.url} ${res.statusCode} ${body}`);
       }
     });
