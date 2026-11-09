@@ -24,7 +24,8 @@ gcloud services enable \
   cloudscheduler.googleapis.com cloudtasks.googleapis.com secretmanager.googleapis.com \
   firebase.googleapis.com firebasehosting.googleapis.com firebaserules.googleapis.com \
   firestore.googleapis.com firebasestorage.googleapis.com \
-  testing.googleapis.com toolresults.googleapis.com storage.googleapis.com
+  testing.googleapis.com toolresults.googleapis.com storage.googleapis.com \
+  androidpublisher.googleapis.com
 
 echo "Creating the deploy service account..."
 gcloud iam service-accounts describe "$SA_EMAIL" >/dev/null 2>&1 \
