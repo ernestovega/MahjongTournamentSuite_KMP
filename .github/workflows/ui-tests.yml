@@ -208,6 +208,18 @@ jobs:
             --results-dir "ui-tests/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/$MODULE" \
             "${targets[@]}"
 
+      # The artifacts cannot always be downloaded, so the errors of the backend and the app go to the job log too.
+      - name: Show the backend and app errors
+        if: failure() && inputs.runner == 'github-emulator'
+        run: |
+          echo "::group::Backend errors"
+          grep -aiE "E2E request refused|error|exception" "$RUNNER_TEMP/e2e-backend.log" | grep -avE "MetadataLookupWarning|trace-warnings" | tail -n 300 || true
+          echo "::endgroup::"
+          echo "::group::App errors"
+          # The app logs with its own tag. The exception of a warning follows on the next lines with the same tag.
+          grep -aE "/MahjongTournamentSuite|AndroidRuntime" build/e2e-logcat.txt | grep -avE " [DIV]/" | tail -n 400 || true
+          echo "::endgroup::"
+
       # Test Lab keeps its own results, videos and screenshots in the Firebase console.
       - name: Upload the results
         if: always()

@@ -75,7 +75,9 @@ import kotlin.time.Clock
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.assign_all_before_export
 import mahjongtournamentsuite.adminapp.generated.resources.ema_report
@@ -384,7 +386,10 @@ fun TournamentScreen(
     /** Saves the given tables, or all tables with changes. Table saves are independent, so one failure keeps the other data. */
     fun requestSave(action: RoundEditorAction? = null, tableIds: List<Int>? = null) {
         val targets = tableIds ?: tableEditors.filterValues { it.hasUnsavedChanges }.keys.toList()
-        scope.launch { if (sync.saveTables(targets)) action?.let(::perform) }
+        scope.launch {
+            // The save suspends. The action can navigate, and the navigation must run on the main thread.
+            if (sync.saveTables(targets)) action?.let { withContext(Dispatchers.Main) { perform(it) } }
+        }
     }
 
     fun discardAll() {

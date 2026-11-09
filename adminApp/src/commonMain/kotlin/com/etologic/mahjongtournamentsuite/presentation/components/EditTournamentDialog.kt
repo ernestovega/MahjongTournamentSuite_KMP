@@ -55,7 +55,9 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiIsoDateTimeOrDash
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
@@ -994,9 +996,12 @@ fun EditTournamentDialog(
                                 when (val result = presenter.deleteTournament(deleting.id)) {
                                     is AppResult.Success -> {
                                         deleteDialogTournament = null
+                                        // Leave first. Without the tournament in the store this dialog closes, and
+                                        // that cancels this coroutine before a later onDeleted call could run.
+                                        // The delete suspends, so the navigation goes back to the main thread.
+                                        withContext(Dispatchers.Main) { onDeleted() }
                                         store.removeTournament(deleting.id)
                                         refreshTournaments()
-                                        onDeleted()
                                     }
 
                                     is AppResult.Failure -> {

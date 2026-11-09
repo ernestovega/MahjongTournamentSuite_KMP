@@ -47,7 +47,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
         c.waitForText("Clear assignment?")
         c.clickButton("Cancel")
         c.waitForNoText("Clear assignment?")
-        c.waitForText("LUCIA PEREZ")
+        c.waitForText("Lucia\nPEREZ")
     }
 
     @Test
@@ -56,7 +56,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
         chooseFromPlayerMenu("Clear")
         c.waitForText("Clear assignment?")
         c.clickButton("Clear assignment")
-        c.waitForNoText("LUCIA PEREZ")
+        c.waitForNoText("Lucia\nPEREZ")
         c.waitForText("Not assigned")
     }
 

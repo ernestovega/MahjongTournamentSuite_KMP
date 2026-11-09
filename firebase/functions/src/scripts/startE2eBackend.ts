@@ -1,5 +1,6 @@
 import { spawnSync } from "node:child_process";
 import http from "node:http";
+import { gunzipSync } from "node:zlib";
 
 // The secret value is read from the environment when the code runs outside Firebase.
 process.env.MTS_ID_TOOLKIT_API_KEY ??= "e2e-key";
@@ -205,7 +206,37 @@ async function main(): Promise<void> {
       res.status(500).json({ error: String(error) });
     }
   });
-  const server = http.createServer(app);
+  // The API answers a refused request with its reason, and the apps often show only a general error. The log keeps the
+  // reason, so a failed UI test can tell why the request was refused.
+  const server = http.createServer((req, res) => {
+    const chunks: Buffer[] = [];
+    const write = res.write.bind(res) as (...args: unknown[]) => boolean;
+    const end = res.end.bind(res) as (...args: unknown[]) => http.ServerResponse;
+    const keep = (chunk: unknown) => {
+      if (typeof chunk === "string" || chunk instanceof Uint8Array) chunks.push(Buffer.from(chunk));
+    };
+    res.write = ((chunk: unknown, ...rest: unknown[]) => {
+      keep(chunk);
+      return write(chunk, ...rest);
+    }) as typeof res.write;
+    res.end = ((chunk?: unknown, ...rest: unknown[]) => {
+      if (typeof chunk !== "function") keep(chunk);
+      return end(chunk, ...rest);
+    }) as typeof res.end;
+    res.on("finish", () => {
+      if (res.statusCode >= 400) {
+        const raw = Buffer.concat(chunks);
+        let body: string;
+        try {
+          body = (res.getHeader("content-encoding") === "gzip" ? gunzipSync(raw) : raw).toString("utf8").slice(0, 1000);
+        } catch {
+          body = "(unreadable body)";
+        }
+        console.warn(`E2E request refused: ${req.method} ${req.url} ${res.statusCode} ${body}`);
+      }
+    });
+    app(req, res);
+  });
   await new Promise<void>((resolve) => server.listen(PORT, "0.0.0.0", resolve));
   console.log(`E2E_BACKEND_READY http://0.0.0.0:${PORT}/api (password for every account: ${PASSWORD})`);
 }
