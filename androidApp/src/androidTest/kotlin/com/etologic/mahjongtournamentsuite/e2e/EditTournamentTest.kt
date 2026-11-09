@@ -150,7 +150,9 @@ class EditTournamentTest : AdminE2eTest() {
         // A zone that the list does not have, such as "Etc/UTC", shows as "UTC".
         val zone = java.util.TimeZone.getDefault().id
         val shown = if (zone == "UTC" || (zone.contains('/') && !zone.startsWith("Etc/") && !zone.startsWith("SystemV/"))) zone else "UTC"
-        listOf("Time zone", shown).forEach { c.waitForText(it) }
+        c.waitForText("Time zone")
+        // The field shows the offset and the name, for example "UTC +0 · UTC".
+        c.waitForText(shown, substring = true)
     }
 
     @Test

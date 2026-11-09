@@ -88,7 +88,7 @@ class TournamentListTest : AdminE2eTest() {
 
     @Test
     fun playerOpeningAppUsersGetsAPermissionError() {
-        val reply = E2eApi.call("GET", "/users", E2eApi.signIn(E2eAccounts.PLAYER))
+        val reply = E2eApi.call("GET", "/admin/users", E2eApi.signIn(E2eAccounts.PLAYER))
         check(reply.status == 403) { "A player read the app users: ${reply.status} ${reply.body}" }
     }
 

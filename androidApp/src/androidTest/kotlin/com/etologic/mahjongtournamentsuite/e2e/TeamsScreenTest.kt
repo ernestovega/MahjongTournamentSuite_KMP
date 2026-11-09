@@ -17,11 +17,9 @@ class TeamsScreenTest : AdminE2eTest() {
     @Test
     fun listShowsTeamsWithTheirFourPlayers() {
         openTeams()
-        listOf("ID", "Name", "Players", "Aces", "Bamboo", "Circles").forEach { c.waitForText(it) }
-        // The list is lazy. The fourth team is below the screen.
-        c.scrollListTo("Dragons")
-        c.waitForText("LUCIA PEREZ")
-        c.waitForText("JORGE MARTIN")
+        listOf("ID", "Name", "Players").forEach { c.waitForText(it) }
+        // The list is lazy, so the test scrolls to each row it checks.
+        listOf("Aces", "LUCIA PEREZ", "JORGE MARTIN", "Bamboo", "Circles", "Dragons").forEach { c.scrollListTo(it) }
     }
 
     @Test

@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasClickAction
@@ -9,6 +12,10 @@ import androidx.compose.ui.test.performClick
 import org.junit.Test
 
 class GlobalScreensTest : AdminE2eTest() {
+    private val hasEmaNumber = SemanticsMatcher("an EMA number") { node ->
+        node.config.getOrNull(SemanticsProperties.Text)?.any { Regex("^\\d{8}$").matches(it.text) } == true
+    }
+
     @Test
     fun appUsersListsEveryAccountWithRoleAndStatus() {
         start(E2eAccounts.ADMIN)
@@ -17,7 +24,7 @@ class GlobalScreensTest : AdminE2eTest() {
         // The list is lazy, so the test scrolls to each account.
         listOf("admin@e2e.test", "editor@e2e.test", "outsider@e2e.test", "disabled@e2e.test", "player@e2e.test", "stranger@e2e.test")
             .forEach { c.scrollListTo(it) }
-        c.waitForText("Disabled")
+        c.scrollListTo("Disabled")
         c.waitForText("New user")
     }
 
@@ -25,8 +32,10 @@ class GlobalScreensTest : AdminE2eTest() {
     fun appUsersShowsEmaIdOfLinkedPlayers() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
-        c.scrollListTo("10000138")
-        c.scrollListTo("10000137")
+        // The backend links the player accounts to the EMA players that the seed seats, so the ids follow the seed.
+        // The row of a linked account shows an EMA number of 8 digits.
+        c.scrollListTo("player@e2e.test")
+        c.waitUntil(20_000) { c.onAllNodes(hasEmaNumber).fetchSemanticsNodes().isNotEmpty() }
     }
 
     @Test
@@ -34,9 +43,10 @@ class GlobalScreensTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
         c.waitForText("11 of 11 accounts")
-        c.field("Search").performTextInputText("editor@")
+        // The search also matches the role, so "editor" would find every editor. "outsider" is only in one email.
+        c.field("Search").performTextInputText("outsider@")
         c.waitForText("1 of 11 accounts")
-        c.waitForText("editor@e2e.test")
+        c.waitForText("outsider@e2e.test")
         c.assertNoText("admin@e2e.test")
     }
 

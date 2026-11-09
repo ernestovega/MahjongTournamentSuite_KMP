@@ -208,6 +208,17 @@ jobs:
             --results-dir "ui-tests/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/$MODULE" \
             "${targets[@]}"
 
+      # The artifacts cannot always be downloaded, so the errors of the backend and the app go to the job log too.
+      - name: Show the backend and app errors
+        if: failure() && inputs.runner == 'github-emulator'
+        run: |
+          echo "::group::Backend errors"
+          grep -inE "error|exception|warn|status(code)?[^0-9]*[45][0-9][0-9]| [45][0-9][0-9] " "$RUNNER_TEMP/e2e-backend.log" | tail -n 300 || true
+          echo "::endgroup::"
+          echo "::group::App errors"
+          grep -E " [EW]/" build/e2e-logcat.txt | grep -ivE "chatty|gralloc|EGL|OpenGL|libc|ziparchive|studio.deploy" | tail -n 300 || true
+          echo "::endgroup::"
+
       # Test Lab keeps its own results, videos and screenshots in the Firebase console.
       - name: Upload the results
         if: always()

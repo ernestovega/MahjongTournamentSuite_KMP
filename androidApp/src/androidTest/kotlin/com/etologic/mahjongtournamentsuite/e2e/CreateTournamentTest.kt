@@ -208,7 +208,9 @@ class CreateTournamentTest : AdminE2eTest() {
         listOf("Match duration (minutes)", "120", "Finish the hand in play").forEach { c.waitForText(it) }
         c.assertNoText("Extra time (minutes)")
         openTab("Venue")
-        listOf("Time zone", expectedTimeZone()).forEach { c.waitForText(it) }
+        c.waitForText("Time zone")
+        // The field shows the offset and the name, for example "UTC +0 · UTC".
+        c.waitForText(expectedTimeZone(), substring = true)
     }
 
     @Test

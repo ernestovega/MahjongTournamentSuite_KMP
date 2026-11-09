@@ -280,10 +280,10 @@ fun ComposeTestRule.waitForAnyText(vararg texts: String, timeoutMs: Long = WAIT_
     waitUntil(timeoutMs) { texts.any { isOnScreen(it) } }
 }
 
-/** Scrolls the lazy list of the screen until a text is composed. */
+/** Scrolls the lazy list of the screen until a text or an icon description is composed. */
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.scrollListTo(text: String, substring: Boolean = false) {
-    val matcher = hasText(text, substring = substring)
+    val matcher = hasText(text, substring = substring) or hasContentDescription(text, substring = substring)
     waitUntil(WAIT_MS) {
         if (onAllNodes(matcher).fetchSemanticsNodes().isEmpty()) {
             onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
