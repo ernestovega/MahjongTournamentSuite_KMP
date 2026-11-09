@@ -3,20 +3,21 @@
 ## Branches
 
 - Work happens on branches that start from `develop`. Merge them into `develop` without a pull request. Nothing runs on `develop`.
-- To release, open a pull request from `develop` to `main`. It runs every test, including the UI tests.
+- To release, open a pull request from `develop` to `main`. It runs every test except the UI tests, which run by hand until the apps are in production.
 - After the merge into `main`, the workflow deploys Firebase.
 
 ## Workflow
 
 The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Tests and deploy**) has two parts. Its tests run in GitHub runners, which are free because the repository is public. Only the deploy goes to Firebase.
 
-- **Build and test** runs on every pull request to `main`. It first checks that every changed product has a higher version ([versioning.md](versioning.md)). Six checks run at the same time:
+- **Build and test** runs on every pull request to `main`. It first checks that every changed product has a higher version ([versioning.md](versioning.md)). Five checks run at the same time:
   - **Functions tests**: the unit tests of the functions.
   - **Functions integration tests**: the integration tests on the Firebase Auth and Firestore emulators.
   - **Kotlin tests**: ktlint and the tests of all modules.
   - **Scripts and diagnostics tests**: the Node tests of `scripts/` and the start diagnostics in Chrome.
   - **Build web apps**: both Wasm web apps.
-  - **UI tests**: the UI tests of both Android apps on emulators of the GitHub runner. See [Instrumented UI tests](instrumented-ui-tests.md).
+
+  The UI tests do not run here until the apps are in production. Run them by hand: see [Instrumented UI tests](instrumented-ui-tests.md).
 
   The last job, named **Build and test**, fails when any check fails. The ruleset of `main` requires only this job. Nothing is deployed.
 - **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. It runs the functions tests and then deploys hosting (both sites), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.

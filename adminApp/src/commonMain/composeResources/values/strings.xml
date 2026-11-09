@@ -378,7 +378,7 @@
     <string name="create">Create</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
-    <string name="delete_tournament_message">This will permanently delete \"%1$s\" (ID: %2$s).</string>
+    <string name="delete_tournament_message">This will permanently delete "%1$s" (ID: %2$s).</string>
     <string name="from">From</string>
     <string name="venue_error_required">Add a Google Maps link, or type the venue name and the address.</string>
     <string name="contact_email_required">Contact email is required.</string>

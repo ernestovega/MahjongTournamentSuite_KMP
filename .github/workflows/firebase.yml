@@ -143,22 +143,13 @@ jobs:
       - name: Build web apps
         run: ./gradlew :adminApp:wasmJsBrowserDistribution :playerApp:wasmJsBrowserDistribution
 
-  # The UI tests run on emulators in the GitHub runner. They are the slowest check, so they run at the same time as the others.
-  ui-tests:
-    name: UI tests
-    if: github.event_name == 'pull_request'
-    permissions:
-      contents: read
-      id-token: write
-    uses: ./.github/workflows/ui-tests.yml
-    with:
-      runner: github-emulator
-      app: both
+  # The UI tests do not run here until the apps are in production: they take close to an hour. Run them by hand with
+  # Actions > UI tests > Run workflow. See docs/instrumented-ui-tests.md.
 
   check:
     name: Build and test
     if: ${{ always() && github.event_name == 'pull_request' }}
-    needs: [functions, integration, kotlin, scripts, web, ui-tests]
+    needs: [functions, integration, kotlin, scripts, web]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:

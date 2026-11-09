@@ -34,7 +34,11 @@ for path in glob.glob(sys.argv[1] + "/**/TEST-*.xml", recursive=True):
         text = (bad[0].text or "") if bad else ""
         flaky = any(h in text for h in harness)
         lines = [l for l in text.split("\n") if l.strip() and not l.strip().startswith("at ")]
-        message = " | ".join(lines[:12])[:900]
+        # The app frames of the stack show where an error comes from, for example a call off the main thread.
+        frames = [l.strip() for l in text.split("\n") if l.strip().startswith("at ")]
+        stack = frames[:8] + [f for f in frames[8:] if f.startswith("at com.etologic")][:15]
+        # The first line is the error. The stack goes next, before the long screen dump.
+        message = " | ".join((lines[:1] + stack + lines[1:])[:330])[:30000]
         print(f"{case.get('classname')}#{case.get('name')}\t{'FAIL' if bad else 'PASS'}\t{'harness' if flaky else 'real'}\t{message}")
 PY
 }

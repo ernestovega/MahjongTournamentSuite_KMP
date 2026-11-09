@@ -30,6 +30,7 @@ import android.os.ParcelFileDescriptor
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isRoot
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestWatcher
@@ -149,7 +150,12 @@ fun ComposeTestRule.clickButton(text: String) {
     // On a phone the keyboard can cover the button.
     runCatching { androidx.test.espresso.Espresso.closeSoftKeyboard() }
     val label = hasText(text) or hasContentDescription(text)
-    val merged = onAllNodes(label and hasClickAction())
+    // The screens turn their buttons off while they load. A tap on a button that is off does nothing.
+    if (onAllNodes(label and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
+        waitUntil(WAIT_MS) { onAllNodes(label and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+    }
+    val enabled = onAllNodes(label and hasClickAction() and isEnabled())
+    val merged = if (enabled.fetchSemanticsNodes().isNotEmpty()) enabled else onAllNodes(label and hasClickAction())
     val button = if (merged.fetchSemanticsNodes().isNotEmpty()) merged[0] else onAllNodes(label, useUnmergedTree = true)[0]
     // A button outside a scroll container is already visible.
     runCatching { button.performScrollTo() }
@@ -172,7 +178,8 @@ class FailureReport(private val compose: ComposeTestRule) : TestWatcher() {
                     shell("screencap -p /sdcard/Download/e2e/$name.png")
                 }
                 val screen = runCatching {
-                    compose.onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().joinToString("\n") { it.toDebugString() }
+                    // The top window, for example a dialog, comes first. A long screen is cut at the end of the report.
+                    compose.onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().reversed().joinToString("\n") { it.toDebugString() }
                 }.getOrElse { "(no screen: ${it.message})" }
                 throw AssertionError("${error.message}\n--- screen ---\n$screen", error)
             }
@@ -279,10 +286,10 @@ fun ComposeTestRule.waitForAnyText(vararg texts: String, timeoutMs: Long = WAIT_
     waitUntil(timeoutMs) { texts.any { isOnScreen(it) } }
 }
 
-/** Scrolls the lazy list of the screen until a text is composed. */
+/** Scrolls the lazy list of the screen until a text or an icon description is composed. */
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.scrollListTo(text: String, substring: Boolean = false) {
-    val matcher = hasText(text, substring = substring)
+    val matcher = hasText(text, substring = substring) or hasContentDescription(text, substring = substring)
     waitUntil(WAIT_MS) {
         if (onAllNodes(matcher).fetchSemanticsNodes().isEmpty()) {
             onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->

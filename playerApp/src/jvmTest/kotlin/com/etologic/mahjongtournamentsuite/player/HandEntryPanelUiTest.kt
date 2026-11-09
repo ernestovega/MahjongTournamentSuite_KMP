@@ -71,7 +71,7 @@ class HandEntryPanelUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
     /** The round starts on 2026-10-10 at 10:00. The match lasts 120 minutes and the extra time lasts 15 minutes. */
-    private fun view(mode: MatchEndMode): PlayerTournamentView {
+    private fun view(mode: MatchEndMode, doneHands: Int = 0, now: String? = null): PlayerTournamentView {
         val tournament = Tournament(
             id = "t", name = "T", isTeams = false, numPlayers = 4, numRounds = 1,
             roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00")),
@@ -86,14 +86,15 @@ class HandEntryPanelUiTest {
         val hands = List(16) { index ->
             TableHand(
                 handId = index + 1, playerWinnerId = "", playerLooserId = "", handScore = "", isChickenHand = false,
-                isDone = false, playerEastPenalty = "", playerSouthPenalty = "", playerWestPenalty = "", playerNorthPenalty = "",
+                isDone = index < doneHands, playerEastPenalty = "", playerSouthPenalty = "", playerWestPenalty = "", playerNorthPenalty = "",
             )
         }
         return buildPlayerTournamentView(
             tournament,
             slots = (1..4).map { TournamentPlayer(id = it, name = "", team = 0, assignedEmaId = if (it == 1) "10000001" else null) },
             registry = emptyList(),
-            tables = listOf(table to hands),
+            // The presenter closes a table with played hands when its time is over, as the app does.
+            tables = now?.let { tournament.closeExpiredTables(listOf(table to hands), LocalDateTime.parse("2026-10-10T$it")) } ?: listOf(table to hands),
             rankings = TournamentRankings(emptyList(), emptyList(), emptyList(), emptyList()),
             myEmaId = "10000001",
         )
@@ -103,8 +104,9 @@ class HandEntryPanelUiTest {
         mode: MatchEndMode,
         time: String,
         repository: RecordingHandRepository = RecordingHandRepository(),
+        doneHands: Int = 0,
     ) {
-        val view = view(mode)
+        val view = view(mode, doneHands, time)
         setContent {
             MtsTheme(useDarkTheme = false) {
                 KoinApplication(application = { modules(module { single { PlayerTablePresenter(repository) } }) }) {
@@ -156,6 +158,27 @@ class HandEntryPanelUiTest {
         onNodeWithText("Add win").assertDoesNotExist()
         onNodeWithText("Add draw").assertDoesNotExist()
         onNodeWithText("Add penalty").assertDoesNotExist()
+    }
+
+    /** The table has played hands, so the time closes it. The player still reads why no hand can be added. */
+    @Test
+    fun aTableThatTheTimeClosedTellsWhyNoHandCanBeAdded() = runComposeUiTest {
+        show(MatchEndMode.STOP, "12:00", doneHands = 7)
+
+        onNodeWithText("The time of this match is over. You cannot add hands now. The organizers enter the missing data.")
+            .assertIsDisplayed()
+        onNodeWithText("Add win").assertDoesNotExist()
+        onNodeWithText("Add draw").assertDoesNotExist()
+    }
+
+    /** A table with its 16 hands is simply finished. The time message does not show. */
+    @Test
+    fun aFinishedTableShowsNoTimeMessage() = runComposeUiTest {
+        show(MatchEndMode.STOP, "12:00", doneHands = 16)
+
+        onNodeWithText("The time of this match is over. You cannot add hands now. The organizers enter the missing data.")
+            .assertDoesNotExist()
+        onNodeWithText("Add win").assertDoesNotExist()
     }
 
     @Test

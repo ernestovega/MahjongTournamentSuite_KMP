@@ -53,7 +53,9 @@ class InvitationsTest : AdminE2eTest() {
         c.onAllNodes(androidx.compose.ui.test.hasSetTextAction() and androidx.compose.ui.test.hasText("")).onLast()
             .performTextInput("typed.guest@example.test")
         c.clickLastButton("Send (1)")
-        c.waitForText("Invited")
+        // When the send ends, a summary counts what happened.
+        c.waitForText("Done")
+        c.waitForText("Accounts created and invitations sent: 1")
         val mails = E2eApi.sentEmails()
         check(mails.size == 1 && mails[0].getString("to") == "typed.guest@example.test") { "Unexpected emails: $mails" }
     }
@@ -64,7 +66,9 @@ class InvitationsTest : AdminE2eTest() {
         openDialogWithOnePlayerSelected()
         c.waitForText("New accounts: 1 · Reminders: 0")
         c.clickButton("Send (1)")
-        c.waitForText("Invited")
+        // When the send ends, a summary counts what happened.
+        c.waitForText("Done")
+        c.waitForText("Accounts created and invitations sent: 1")
         val mails = E2eApi.sentEmails()
         check(mails.size == 1) { "Expected one email, found ${mails.size}." }
         check(mails[0].getString("to").endsWith("@example.test")) { "The email went to ${mails[0].getString("to")}." }
@@ -76,7 +80,9 @@ class InvitationsTest : AdminE2eTest() {
         E2eApi.setSlotEmails("test-live-ongoing", prefix = "fail.")
         openDialogWithOnePlayerSelected()
         c.clickButton("Send (1)")
-        c.waitForText("The email could not be sent. Try again.")
+        // The summary lists the player that got no email, with the reason.
+        c.waitForText("Not sent: 1")
+        c.waitForText("The email could not be sent. Try again.", substring = true)
         check(E2eApi.sentEmails().isEmpty()) { "An email left although the mailbox refused it." }
     }
 }

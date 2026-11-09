@@ -68,7 +68,16 @@ object E2eApi {
     }
 
     /** Plays another editor: writes hand 16 of round 3, table 6 of test-last-table, as a finished hand. */
-    fun otherEditorFinishesLastHand(winner: String = "17", loser: String = "6", score: String = "8") {
+    /** The player ids at a table, in the order East, South, West, North. The seed decides who sits there. */
+    fun tableSeats(tournamentId: String, round: Int, table: Int): List<String> {
+        val data = call("GET", "/tournaments/$tournamentId/tables/$round/$table", signIn(E2eAccounts.ADMIN)).json().getJSONObject("table")
+        return listOf("playerEastId", "playerSouthId", "playerWestId", "playerNorthId").map { data.get(it).toString() }
+    }
+
+    /** The players of table 6 of round 3 of `test-last-table`, the table with one hand left. */
+    fun lastTableSeats(): List<String> = tableSeats("test-last-table", 3, 6)
+
+    fun otherEditorFinishesLastHand(winner: String = lastTableSeats()[0], loser: String = lastTableSeats()[1], score: String = "8") {
         val token = signIn(E2eAccounts.ADMIN)
         val table = call("GET", "/tournaments/test-last-table/tables/3/6", token).json().getJSONObject("table")
         val body = """{"expectedVersion":${table.getInt("version")},"tablePatch":{},"handPatches":[{"handId":16,"patch":{"playerWinnerId":"$winner","playerLooserId":"$loser","handScore":"$score","isDone":true}}]}"""
