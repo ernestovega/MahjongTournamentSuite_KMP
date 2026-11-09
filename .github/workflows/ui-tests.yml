@@ -213,11 +213,11 @@ jobs:
         if: failure() && inputs.runner == 'github-emulator'
         run: |
           echo "::group::Backend errors"
-          grep -iE "E2E request refused|error|exception" "$RUNNER_TEMP/e2e-backend.log" | grep -vE "MetadataLookupWarning|trace-warnings" | tail -n 300 || true
+          grep -aiE "E2E request refused|error|exception" "$RUNNER_TEMP/e2e-backend.log" | grep -avE "MetadataLookupWarning|trace-warnings" | tail -n 300 || true
           echo "::endgroup::"
           echo "::group::App errors"
           # The app logs with its own tag. The exception of a warning follows on the next lines with the same tag.
-          grep -E "/MahjongTournamentSuite|AndroidRuntime" build/e2e-logcat.txt | grep -vE " [DIV]/" | tail -n 400 || true
+          grep -aE "/MahjongTournamentSuite|AndroidRuntime" build/e2e-logcat.txt | grep -avE " [DIV]/" | tail -n 400 || true
           echo "::endgroup::"
 
       # Test Lab keeps its own results, videos and screenshots in the Firebase console.
