@@ -233,7 +233,7 @@
         <error line="18" column="1" source="standard:no-unused-imports" />
         <error line="26" column="1" source="standard:no-unused-imports" />
         <error line="39" column="1" source="standard:no-unused-imports" />
-        <error line="67" column="9" source="standard:curly-spacing" />
+        <error line="71" column="9" source="standard:curly-spacing" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/LevelMedal.kt">
         <error line="3" column="1" source="standard:import-ordering" />
