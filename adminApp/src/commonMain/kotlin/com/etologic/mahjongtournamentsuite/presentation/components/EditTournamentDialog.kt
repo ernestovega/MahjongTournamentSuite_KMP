@@ -994,9 +994,11 @@ fun EditTournamentDialog(
                                 when (val result = presenter.deleteTournament(deleting.id)) {
                                     is AppResult.Success -> {
                                         deleteDialogTournament = null
+                                        // Leave first. Without the tournament in the store this dialog closes, and
+                                        // that cancels this coroutine before a later onDeleted call could run.
+                                        onDeleted()
                                         store.removeTournament(deleting.id)
                                         refreshTournaments()
-                                        onDeleted()
                                     }
 
                                     is AppResult.Failure -> {

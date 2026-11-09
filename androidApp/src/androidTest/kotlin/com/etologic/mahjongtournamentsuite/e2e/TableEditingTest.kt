@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
@@ -15,8 +16,10 @@ import org.junit.Test
 
 /** Hand entry in the admin table editor. The tests use the last table of `test-last-table`, which has 15 hands. */
 class TableEditingTest : AdminE2eTest() {
-    private val emptyChoice = SemanticsMatcher("empty winner or loser") {
-        it.config.getOrNull(SemanticsProperties.EditableText)?.text == "-"
+    // The winner and loser cells are select fields. An empty one shows "-".
+    private val emptyChoice = SemanticsMatcher("empty winner or loser") { node ->
+        node.config.getOrNull(SemanticsProperties.Role) == Role.DropdownList &&
+            node.config.getOrNull(SemanticsProperties.Text)?.any { it.text == "-" } == true
     }
 
     @After

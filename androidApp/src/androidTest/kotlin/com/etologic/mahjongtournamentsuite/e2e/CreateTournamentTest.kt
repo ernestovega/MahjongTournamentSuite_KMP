@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.e2e
 
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
@@ -13,28 +14,36 @@ class CreateTournamentTest : AdminE2eTest() {
     @After
     fun deleteCreatedTournaments() = E2eApi.deleteTournamentsNamed("E2E created")
 
+    /** The form shows its fields in tabs: General, Venue, Branding and Schedule. */
+    private fun openTab(name: String) {
+        c.clickLastButton(name)
+    }
+
+    /** The country is a select field on the Venue tab. The search field of its menu narrows the long list. */
     private fun chooseCountry(name: String) {
-        // The list behind the form also has a "Country" header, so the form field is the last one.
-        c.onAllNodes(hasText("Country")).onLast().performClick()
+        c.selectField("Country").performClick()
+        c.onNode(hasTestTag("select-search")).performTextInputText(name)
         c.onAllNodes(hasText(name) and hasClickAction()).onLast().performClick()
     }
 
     private fun fillValidForm(players: String, rounds: String) {
         c.field("Name").performTextInputText("E2E created")
         c.field("Short name").performTextInputText("E2E")
+        c.field("Players").performTextReplacementText(players)
+        c.field("Rounds").performTextReplacementText(rounds)
+        openTab("Venue")
         chooseCountry("Spain")
         c.field("City").performTextInputText("Madrid")
         c.field("Venue name").performTextInputText("E2E club")
         c.field("Address").performTextInputText("Calle Mayor 1, Madrid")
         c.field("Contact email").performTextInputText("e2e@example.com")
-        c.field("Players").performTextReplacementText(players)
-        c.field("Rounds").performTextReplacementText(rounds)
         rounds.toIntOrNull()?.takeIf { it > 0 }?.let { fillRoundSchedules(it) }
+        openTab("General")
     }
 
     /** Every round needs a date and a start time. The rounds play today, one hour apart. */
     private fun fillRoundSchedules(rounds: Int, skipStartTimeOfRound: Int? = null) {
-        c.clickButton("Schedule")
+        openTab("Schedule")
         c.waitForText("Round $rounds")
         val today = java.time.LocalDate.now().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"))
         val dates = c.onAllNodes(hasSetTextAction() and hasText("Date"))
@@ -89,6 +98,7 @@ class CreateTournamentTest : AdminE2eTest() {
     fun venueIsRequired() {
         openForm()
         c.clickButton("Create")
+        openTab("Venue")
         c.waitForText("Add a Google Maps link, or type the venue name and the address.")
     }
 
@@ -96,14 +106,17 @@ class CreateTournamentTest : AdminE2eTest() {
     fun contactEmailIsRequired() {
         openForm()
         c.clickButton("Create")
+        openTab("Venue")
         c.waitForText("Contact email is required.")
     }
 
     @Test
     fun contactEmailMustBeValid() {
         openForm()
+        openTab("Venue")
         c.field("Contact email").performTextInputText("not an email")
         c.clickButton("Create")
+        openTab("Venue")
         c.waitForText("Use a valid email address.")
     }
 
@@ -174,16 +187,15 @@ class CreateTournamentTest : AdminE2eTest() {
     @Test
     fun matchTimeFieldsShowTheDefaults() {
         openForm()
-        c.clickButton("Match")
-        listOf("Match duration (minutes)", "120", "Time zone", java.util.TimeZone.getDefault().id, "Finish the hand in play")
-            .forEach { c.waitForText(it) }
+        listOf("Match duration (minutes)", "120", "Finish the hand in play").forEach { c.waitForText(it) }
         c.assertNoText("Extra time (minutes)")
+        openTab("Venue")
+        listOf("Time zone", java.util.TimeZone.getDefault().id).forEach { c.waitForText(it) }
     }
 
     @Test
     fun finishTheHandSwitchShowsTheExtraTimeField() {
         openForm()
-        c.clickButton("Match")
         c.clickButton("Finish the hand in play")
         c.waitForText("Extra time (minutes)")
         c.clickButton("Finish the hand in play")
@@ -194,7 +206,6 @@ class CreateTournamentTest : AdminE2eTest() {
     fun matchDurationZeroIsRejected() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
-        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("0")
         c.clickButton("Create")
         c.waitForText("Use a whole number of minutes from 1 to 600.")
@@ -204,7 +215,6 @@ class CreateTournamentTest : AdminE2eTest() {
     fun matchDurationAboveSixHundredIsRejected() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
-        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("601")
         c.clickButton("Create")
         c.waitForText("Use a whole number of minutes from 1 to 600.")
@@ -214,7 +224,6 @@ class CreateTournamentTest : AdminE2eTest() {
     fun extraTimeZeroIsRejectedWhenTheHandIsFinished() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
-        c.clickButton("Match")
         c.clickButton("Finish the hand in play")
         c.field("Extra time (minutes)").performTextReplacementText("0")
         c.clickButton("Create")
@@ -225,7 +234,6 @@ class CreateTournamentTest : AdminE2eTest() {
     fun matchTimeSettingsAreSavedWithTheNewTournament() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
-        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("90")
         c.clickButton("Finish the hand in play")
         c.field("Extra time (minutes)").performTextReplacementText("15")

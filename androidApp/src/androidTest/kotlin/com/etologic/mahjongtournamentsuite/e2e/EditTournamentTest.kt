@@ -23,6 +23,7 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun dialogShowsStoredValues() {
         openDialog()
+        c.clickButton("Venue")
         listOf("Eskalerria", "test-live@example.com", "Madrid").forEach { c.waitForText(it) }
         c.clickButton("Branding")
         c.waitForText("#D81B60")
@@ -141,24 +142,24 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun dialogShowsTheMatchTimeSettings() {
         openDialog()
-        c.clickButton("Match")
-        // The live tournament has no stored time zone, so the form suggests the zone of the device.
-        listOf("Match duration (minutes)", "120", "Time zone", java.util.TimeZone.getDefault().id, "Finish the hand in play")
-            .forEach { c.waitForText(it) }
+        // The match settings are on the General tab, where the dialog opens.
+        listOf("Match duration (minutes)", "120", "Finish the hand in play").forEach { c.waitForText(it) }
         c.assertNoText("Extra time (minutes)")
+        // The live tournament has no stored time zone, so the form suggests the zone of the device.
+        c.clickButton("Venue")
+        listOf("Time zone", java.util.TimeZone.getDefault().id).forEach { c.waitForText(it) }
     }
 
     @Test
     fun matchDurationZeroIsRefusedOnSave() {
         openDialog()
-        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("0")
         c.clickButton("Save")
         c.waitForText("Match duration must be a whole number of minutes from 1 to 600.")
         c.waitForText("Branding")
     }
 
-    /** The Match tab ends with three switches: finish the hand, best hands and chicken hands. The dialog is last in the tree. */
+    /** The General tab ends with three switches: finish the hand, best hands and chicken hands. The dialog is last in the tree. */
     private fun toggleFinishTheHand() {
         val switches = c.onAllNodes(isToggleable())
         switches[switches.fetchSemanticsNodes().size - 3].performClick()
@@ -167,7 +168,6 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun extraTimeZeroIsRefusedWhenTheHandIsFinished() {
         openDialog()
-        c.clickButton("Match")
         toggleFinishTheHand()
         c.field("Extra time (minutes)").performTextReplacementText("0")
         c.clickButton("Save")
@@ -177,7 +177,6 @@ class EditTournamentTest : AdminE2eTest() {
     @Test
     fun savedMatchTimeSettingsReachTheServer() {
         openDialog()
-        c.clickButton("Match")
         c.field("Match duration (minutes)").performTextReplacementText("95")
         toggleFinishTheHand()
         c.field("Extra time (minutes)").performTextReplacementText("20")

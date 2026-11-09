@@ -34,7 +34,7 @@ for path in glob.glob(sys.argv[1] + "/**/TEST-*.xml", recursive=True):
         text = (bad[0].text or "") if bad else ""
         flaky = any(h in text for h in harness)
         lines = [l for l in text.split("\n") if l.strip() and not l.strip().startswith("at ")]
-        message = " | ".join(lines[:12])[:900]
+        message = " | ".join(lines[:150])[:12000]
         print(f"{case.get('classname')}#{case.get('name')}\t{'FAIL' if bad else 'PASS'}\t{'harness' if flaky else 'real'}\t{message}")
 PY
 }
