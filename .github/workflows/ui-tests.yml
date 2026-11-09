@@ -1,6 +1,7 @@
 # Runs the instrumented UI tests against the local test backend, on an emulator in the GitHub runner (free) or in
 # Firebase Test Lab (billed above the daily free quota).
-# It runs in the pull request from develop to main (firebase.yml) and by hand (Actions > UI tests > Run workflow).
+# It runs by hand (Actions > UI tests > Run workflow). The pull request from develop to main does not run it until
+# the apps are in production.
 # See docs/instrumented-ui-tests.md.
 name: UI tests
 
