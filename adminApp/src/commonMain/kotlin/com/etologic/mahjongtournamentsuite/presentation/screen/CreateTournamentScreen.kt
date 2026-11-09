@@ -100,8 +100,10 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -463,7 +465,8 @@ fun CreateTournamentDialog(
                 ) {
                     is AppResult.Success -> {
                         store.addTournament(result.value)
-                        onCreated(result.value)
+                        // The creation suspends. The navigation of onCreated must run on the main thread.
+                        withContext(Dispatchers.Main) { onCreated(result.value) }
                     }
 
                     is AppResult.Failure -> {

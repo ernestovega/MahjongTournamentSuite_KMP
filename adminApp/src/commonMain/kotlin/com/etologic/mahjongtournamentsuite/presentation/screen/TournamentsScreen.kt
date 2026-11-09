@@ -112,7 +112,9 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands_header
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_header
@@ -596,8 +598,11 @@ private fun LogoutButton(
                 confirming = false
                 coroutineScope.launch {
                     presenter.signOut()
-                    navController.navigate(SignInRoute) {
-                        popUpTo(TournamentsRoute) { inclusive = true }
+                    // The sign out can suspend. The navigation must run on the main thread, also in the UI tests.
+                    withContext(Dispatchers.Main) {
+                        navController.navigate(SignInRoute) {
+                            popUpTo(TournamentsRoute) { inclusive = true }
+                        }
                     }
                 }
             },

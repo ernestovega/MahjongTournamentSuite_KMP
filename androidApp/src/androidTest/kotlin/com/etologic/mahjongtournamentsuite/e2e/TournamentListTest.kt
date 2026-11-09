@@ -52,7 +52,8 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
-        listOf("Logout", "Users", "System", "App errors", "Timer", "Statistics", "EMA players", "New tournament")
+        // "Admin" is the role under the name. It opens the profile, which holds the theme.
+        listOf("Logout", "Admin", "Users", "App errors", "Timer", "Statistics", "EMA players", "New tournament")
             .forEach { c.waitForText(it) }
     }
 

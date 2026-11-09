@@ -1,5 +1,11 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performClick
 import org.junit.Test
 
 class GlobalScreensTest : AdminE2eTest() {
@@ -92,10 +98,15 @@ class GlobalScreensTest : AdminE2eTest() {
         c.waitForText("All tournaments")
     }
 
+    /** The theme is chosen in the profile, which opens from the name and role in the top bar. */
     @Test
-    fun themeButtonCyclesTheTheme() {
+    fun themeChoiceInTheProfileChangesTheTheme() {
         start(E2eAccounts.ADMIN)
-        c.clickButton("System")
-        c.waitForText("Light")
+        c.clickButton("Admin")
+        c.waitForText("Theme")
+        val light = hasContentDescription("Light") and hasClickAction()
+        c.onAllNodes(light).onLast().assertIsNotSelected()
+        c.onAllNodes(light).onLast().performClick()
+        c.onAllNodes(light).onLast().assertIsSelected()
     }
 }
