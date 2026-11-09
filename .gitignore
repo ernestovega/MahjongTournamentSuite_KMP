@@ -42,6 +42,7 @@ firebase/functions/lib/
 /output/
 /tmp/
 /tools/
+__pycache__/
 
 # Android signing keys (never commit them)
 *.jks
