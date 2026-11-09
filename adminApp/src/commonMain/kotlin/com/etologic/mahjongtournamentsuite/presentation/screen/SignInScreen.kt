@@ -48,8 +48,11 @@ fun SignInScreen(
             password = savedPassword
         }
         if (authPresenter.hasActiveSession() && (authPresenter.isManager() as? AppResult.Success)?.value == true) {
-            navController.navigate(TournamentsRoute) {
-                popUpTo(SignInRoute) { inclusive = true }
+            // The check suspends. The navigation must run on the main thread, also in the UI tests.
+            withContext(Dispatchers.Main) {
+                navController.navigate(TournamentsRoute) {
+                    popUpTo(SignInRoute) { inclusive = true }
+                }
             }
         } else {
             emailRequester.requestFocus()

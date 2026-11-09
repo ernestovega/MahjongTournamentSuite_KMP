@@ -168,7 +168,8 @@ fun TournamentsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
     var editDialogTournament by remember { mutableStateOf<Tournament?>(null) }
-    var showCreateTournamentDialog by remember { mutableStateOf(false) }
+    // The form stays open when the activity is created again, for example after a rotation or a new window size.
+    var showCreateTournamentDialog by rememberSaveable { mutableStateOf(false) }
     var restoreNewTournamentFocus by remember { mutableStateOf(false) }
     var tournamentFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
