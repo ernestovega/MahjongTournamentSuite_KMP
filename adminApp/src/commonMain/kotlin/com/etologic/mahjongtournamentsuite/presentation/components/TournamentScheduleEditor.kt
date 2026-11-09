@@ -47,6 +47,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.schedule_format_note
 import mahjongtournamentsuite.adminapp.generated.resources.schedule_no_activities
 import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_invalid_date
 import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_invalid_time
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_missing_date
+import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_missing_time
 import mahjongtournamentsuite.adminapp.generated.resources.schedule_round_outside_range
 import mahjongtournamentsuite.adminapp.generated.resources.start
 import mahjongtournamentsuite.adminapp.generated.resources.tournament_schedule
@@ -441,14 +443,17 @@ fun tournamentScheduleEditorError(
     eventStartDate: String,
     eventEndDate: String,
 ): UiText? {
+    // Every round needs a date and a start time. The player app uses them to know when the tournament plays.
     roundRows.forEach { row ->
         val date = row.date.trim()
+        if (date.isEmpty()) return UiText.of(Res.string.schedule_round_missing_date, row.roundId)
         val isoDate = date.toIsoTournamentDateOrNull()
-        if (date.isNotEmpty() && isoDate == null) return UiText.of(Res.string.schedule_round_invalid_date, row.roundId)
-        if (isoDate != null && isoDate !in eventStartDate..eventEndDate) {
+            ?: return UiText.of(Res.string.schedule_round_invalid_date, row.roundId)
+        if (isoDate !in eventStartDate..eventEndDate) {
             return UiText.of(Res.string.schedule_round_outside_range, row.roundId)
         }
-        if (row.startTime.isNotBlank() && row.startTime.toTournamentTimeOrNull() == null) {
+        if (row.startTime.isBlank()) return UiText.of(Res.string.schedule_round_missing_time, row.roundId)
+        if (row.startTime.toTournamentTimeOrNull() == null) {
             return UiText.of(Res.string.schedule_round_invalid_time, row.roundId)
         }
     }

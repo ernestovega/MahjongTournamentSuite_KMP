@@ -6,13 +6,8 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun adminSeesTheTestTournamentsWithTheirDetails() {
         start(E2eAccounts.ADMIN)
-        c.waitForText("LIVE")
-        c.waitForText("LASTTABLE")
-        c.waitForText("LARGE")
-        c.waitForText("EXTREMES10")
-        c.waitForText("UPCOMING")
-        c.waitForText("INCOMPL")
-        c.waitForText("BARE")
+        // The list is lazy and has more tournaments than the screen, so the test scrolls to each one.
+        listOf("LIVE", "LASTTABLE", "LARGE", "EXTREMES10", "UPCOMING", "INCOMPL", "BARE").forEach { c.scrollListTo(it) }
     }
 
     @Test
@@ -52,7 +47,8 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
-        listOf("Logout", "Users", "System", "App usage", "Timer", "Statistics", "EMA players", "New tournament")
+        // "Admin" is the role under the name. It opens the profile, which holds the theme.
+        listOf("Logout", "Admin", "Users", "App errors", "Timer", "Statistics", "EMA players", "New tournament")
             .forEach { c.waitForText(it) }
     }
 
@@ -71,7 +67,7 @@ class TournamentListTest : AdminE2eTest() {
         start(E2eAccounts.EDITOR)
         c.waitForText("EMA players")
         c.assertNoText("New tournament")
-        c.assertNoText("App usage")
+        c.assertNoText("App errors")
     }
 
     @Test
@@ -79,27 +75,30 @@ class TournamentListTest : AdminE2eTest() {
         start(E2eAccounts.OUTSIDER, ready = "No tournaments yet")
     }
 
+    /** The admin app is for admins and editors. The splash screen signs a player out and shows the sign-in form. */
     @Test
-    fun playerSeesOnlyOwnTournamentAndNoActions() {
-        start(E2eAccounts.PLAYER)
-        c.assertNoText("Test - Large team tournament")
+    fun playerSessionIsSignedOutAtTheStart() {
+        start(E2eAccounts.PLAYER, ready = "Use your email to sign in. Accounts are invitation-only.")
+        c.assertNoText("Logout")
         c.assertNoText("New tournament")
-        c.assertNoText("App usage")
+        c.assertNoText("App errors")
     }
+
+    // A player cannot open the admin screens any more, so the next two tests ask the server directly.
 
     @Test
     fun playerOpeningAppUsersGetsAPermissionError() {
-        start(E2eAccounts.PLAYER)
-        c.clickButton("Users")
-        c.waitForText("You do not have permission to perform this action.")
-        c.waitForText("0 of 0 accounts")
+        val reply = E2eApi.call("GET", "/admin/users", E2eApi.signIn(E2eAccounts.PLAYER))
+        check(reply.status == 403) { "A player read the app users: ${reply.status} ${reply.body}" }
     }
 
     @Test
     fun playerSeesOnlyThePlayersOfOwnTournamentsInTheRegistry() {
-        start(E2eAccounts.PLAYER)
-        c.clickButton("EMA players")
-        c.waitForText("30 players · 7 countries")
+        val all = E2eApi.call("GET", "/ema-player-registry", E2eApi.signIn(E2eAccounts.ADMIN)).json().getJSONArray("players").length()
+        val reply = E2eApi.call("GET", "/ema-player-registry", E2eApi.signIn(E2eAccounts.PLAYER))
+        check(reply.status == 200) { "The registry read failed: ${reply.status} ${reply.body}" }
+        val seen = reply.json().getJSONArray("players").length()
+        check(seen in 1 until all) { "A player sees $seen of the $all registry players. It must be only the players of own tournaments." }
     }
 
     @Test

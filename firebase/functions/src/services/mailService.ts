@@ -1,7 +1,8 @@
-import nodemailer, { type Transporter } from "nodemailer";
+import type { Transporter } from "nodemailer";
 
 import { MAIL_SMTP_URI } from "../config";
 import { HttpError } from "../api/httpError";
+import { nodemailer } from "./lazyModules";
 
 export type OutgoingEmail = { to: string; subject: string; text: string; html: string };
 
@@ -20,7 +21,7 @@ export function setMailTransportForTests(transport: MailTransport | null): void 
 
 async function sendWithSmtp(email: OutgoingEmail): Promise<void> {
   // The connection is made on the first email. The SMTP address is a secret.
-  smtp ??= nodemailer.createTransport(MAIL_SMTP_URI.value());
+  smtp ??= nodemailer().createTransport(MAIL_SMTP_URI.value());
   await smtp.sendMail({
     from: process.env.MAIL_FROM?.trim() || DEFAULT_FROM,
     to: email.to,

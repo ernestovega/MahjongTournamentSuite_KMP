@@ -29,6 +29,7 @@ Several people can edit one tournament at the same time. This page describes how
 
 - `SessionRepositoryCache` returns a cached value for 10 seconds after the server confirmed it. After that it waits for one revision check. It never returns old data and refreshes in the background.
 - Cached requests of one screen share one manifest request for 2 seconds (`shared`).
+- A tournament manifest also answers the global revision checks for those 2 seconds (`sharedAndSeed`): the tournament list, the EMA players, the accounts and the profile do not ask `GET /sync/manifest` again. The player tournament screen first calls `prefetchRevisions`, so a refresh without changes costs **one request**, and a change costs that request plus the download of what changed. A write still drops every shared answer, and the next read asks again.
 - A save, a reset or a conflict marks the cached copies old.
 - `RefreshMode.CACHED` returns any held value and never asks the server. Only a write that made the value old, or an empty cache, causes a load.
 - `TournamentTableStore` holds all tables with their hands for the rankings. The first ranking load makes one request. After that the ranking makes **no request**, also when it opens again. The table editor keeps the store current: its saves, its loads and its polling feed it. When polling finds a change in a round that is not open, it loads that table too.
@@ -36,6 +37,15 @@ Several people can edit one tournament at the same time. This page describes how
 - Polling watches every revision. A higher number marks the cached copies that depend on it as old, and the next read fetches them. The editor reloads the player names (players or EMA players changed) and the tournament settings (tournaments changed) at once. A reload that fails is tried again at the next poll.
 - The generated files (ID cards, ID list, EMA report) follow the same rule. They are reused without any request until polling marks them old. The EMA export first runs one poll, then uses the held data like the ranking.
 - The ranking screen loads once and stays still while it is open. The EMA export forces a fresh load.
+
+## Answers saved on the device
+
+- Some answers are also saved on the device, so a new start of the app does not download them again: the tournaments list, the players and the teams of a tournament, the EMA players and all tables with their hands. The web apps use the local storage of the browser. Android uses the cache folder of the app, and the desktop app uses `~/.mahjongtournamentsuite/cache`.
+- A saved answer keeps the revision it was loaded at. After a new start, the app asks the server for the revision first (one manifest request) and uses the saved answer only when the revision is the same. The saved tables are compared table by table with `tableVersions`.
+- A saved answer is never fresh. `RefreshMode.CACHED` also checks its revision once, because polling does not know that it may be old.
+- Signing in or out removes every saved answer. The answers of one account are never read for another account.
+- When the local storage of the browser is full, the app removes its saved answers and saves the newest one. A failed read or write never stops the app. It only loads from the server.
+- Each saved answer records the field names of its type, also the nested ones. A new app version whose answer types have other fields ignores the old answers. The web cache uses at most about 3 MB of local storage, so the session and the settings always find room.
 
 ## Backend rules
 

@@ -317,4 +317,71 @@ class SessionRepositoryCacheTest {
 
         assertEquals("first", cache.getOrLoad("one", "players", RefreshMode.CACHED, { 1L }) { "first" })
     }
+
+    // --- One answer that also answers other keys ---
+
+    @Test
+    fun anAnswerAlsoAnswersTheKeysThatItSeeds() = runTest {
+        val cache = newCache(TestTimeSource())
+        var globalFetches = 0
+
+        cache.sharedAndSeed("tournament", 2.seconds, { mapOf("global" to "global from tournament") }) { "tournament" }
+        val global = cache.shared("global", 2.seconds) {
+            globalFetches++
+            "global fetched"
+        }
+
+        assertEquals("global from tournament", global)
+        assertEquals(0, globalFetches)
+    }
+
+    @Test
+    fun aSeededAnswerGetsOldWithTheAnswerThatSeededIt() = runTest {
+        val clock = TestTimeSource()
+        val cache = newCache(clock)
+
+        cache.sharedAndSeed("tournament", 2.seconds, { mapOf("global" to "seeded") }) { "tournament" }
+        clock += 3.seconds
+
+        assertEquals("fetched", cache.shared("global", 2.seconds) { "fetched" })
+    }
+
+    @Test
+    fun aWriteDuringTheRequestDropsTheSeededAnswersToo() = runTest {
+        val cache = newCache(TestTimeSource())
+        val answer = CompletableDeferred<String>()
+        val request = async {
+            cache.sharedAndSeed("tournament", 2.seconds, { mapOf("global" to "seeded before the write") }) { answer.await() }
+        }
+        runCurrent()
+
+        cache.markStale("anything")
+        answer.complete("tournament")
+        request.await()
+
+        assertEquals("after the write", cache.shared("global", 2.seconds) { "after the write" })
+        assertEquals("tournament again", cache.shared("tournament", 2.seconds) { "tournament again" })
+    }
+
+    @Test
+    fun aNewerAnswerReplacesAnOlderSeededKey() = runTest {
+        val clock = TestTimeSource()
+        val cache = newCache(clock)
+        cache.shared("global", 2.seconds) { "fetched" }
+        clock += 1.seconds
+
+        cache.sharedAndSeed("tournament", 2.seconds, { mapOf("global" to "newer") }) { "tournament" }
+
+        assertEquals("newer", cache.shared("global", 2.seconds) { "unused" })
+    }
+
+    @Test
+    fun signingOutDropsTheSeededAnswers() = runTest {
+        val cache = newCache(TestTimeSource())
+        cache.sharedAndSeed("tournament", 2.seconds, { mapOf("global" to "seeded") }) { "tournament" }
+
+        cache.clear()
+
+        assertEquals("fetched", cache.shared("global", 2.seconds) { "fetched" })
+    }
 }

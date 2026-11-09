@@ -4,6 +4,7 @@ import { before, describe, it } from "node:test";
 import { HttpError } from "../api/httpError";
 import { db } from "../firebase";
 import { requireEmulator } from "../testing/firestoreFixtures";
+import { fullRoundSchedules } from "../testing/schedule";
 import { createTournament, updateTournamentSettings } from "./tournamentsService";
 
 function createRequest(extra: Record<string, unknown> = {}) {
@@ -21,6 +22,7 @@ function createRequest(extra: Record<string, unknown> = {}) {
     numTries: 0,
     players: [1, 2, 3, 4].map((id) => ({ id, team: 0, name: `Player ${id}`, country: "ES" })),
     tables: [{ roundId: 1, tableId: 1, playerIds: [1, 2, 3, 4] }],
+    roundSchedules: fullRoundSchedules(1),
     createdByUid: "creator",
     ...extra,
   };
@@ -109,6 +111,36 @@ describe("tournament match settings", () => {
 
     await badRequest(updateTournamentSettings(updateRequest(created.id, { matchDurationMinutes: 601 })));
     await badRequest(updateTournamentSettings(updateRequest(created.id, { timeZone: "Nowhere/Land" })));
+  });
+
+  it("refuses an update that leaves a round without a date or a start time", async () => {
+    const created = await createTournament(createRequest());
+
+    await badRequest(updateTournamentSettings(updateRequest(created.id, {
+      roundSchedules: [{ roundId: 1, date: "2026-10-01", startTime: null }],
+    })));
+    await badRequest(updateTournamentSettings(updateRequest(created.id, { roundSchedules: [] })));
+    // New dates that leave the stored round outside the tournament also leave the round without a date.
+    await badRequest(updateTournamentSettings(updateRequest(created.id, {
+      eventStartDate: "2026-11-01", eventEndDate: "2026-11-02",
+    })));
+
+    const stored = (await db.doc(`tournaments/${created.id}`).get()).data() ?? {};
+    assert.deepEqual(stored.roundSchedules, [{ roundId: 1, date: "2026-10-01", startTime: "08:00" }]);
+  });
+
+  it("makes an old tournament without round times complete them on its next edit", async () => {
+    const created = await createTournament(createRequest());
+    await db.doc(`tournaments/${created.id}`).update({ roundSchedules: [] });
+
+    await badRequest(updateTournamentSettings(updateRequest(created.id, { name: "Renamed" })));
+
+    const completed = await updateTournamentSettings(updateRequest(created.id, {
+      name: "Renamed",
+      roundSchedules: [{ roundId: 1, date: "2026-10-02", startTime: "16:30" }],
+    }));
+    assert.equal(completed.name, "Renamed");
+    assert.deepEqual(completed.roundSchedules, [{ roundId: 1, date: "2026-10-02", startTime: "16:30" }]);
   });
 
   it("reads an old tournament document without the new fields", async () => {

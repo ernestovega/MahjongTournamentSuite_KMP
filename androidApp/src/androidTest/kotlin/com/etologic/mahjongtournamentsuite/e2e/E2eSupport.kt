@@ -30,6 +30,7 @@ import android.os.ParcelFileDescriptor
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isRoot
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestWatcher
@@ -63,7 +64,8 @@ object E2eAccounts {
 val E2E_BACKEND_URL: String =
     InstrumentationRegistry.getArguments().getString("e2eBackendUrl") ?: "http://10.0.2.2:5055/api"
 
-private const val WAIT_MS = 20_000L
+/** How long a test waits for a screen. The slow emulator of the CI runner gets more time with the `e2eWaitMs` argument. */
+private val WAIT_MS: Long = InstrumentationRegistry.getArguments().getString("e2eWaitMs")?.toLongOrNull() ?: 20_000L
 
 /** Starts every test with no saved session, and points the app to the local backend. */
 class FreshAppState : ExternalResource() {
@@ -99,6 +101,10 @@ class AdminAppRule {
 
     /** Starts the app with the backend address that the test has set. */
     fun launchKeepingBackend() {
+        // A build with Firebase settings asks for the analytics consent. The test accepts it before the start.
+        InstrumentationRegistry.getInstrumentation().targetContext
+            .getSharedPreferences("mts_telemetry", android.content.Context.MODE_PRIVATE)
+            .edit().putBoolean("consent", true).commit()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         // The first frame can come a little later than the launch. Wait until the app has a Compose screen.
         repeat(50) {
@@ -144,7 +150,12 @@ fun ComposeTestRule.clickButton(text: String) {
     // On a phone the keyboard can cover the button.
     runCatching { androidx.test.espresso.Espresso.closeSoftKeyboard() }
     val label = hasText(text) or hasContentDescription(text)
-    val merged = onAllNodes(label and hasClickAction())
+    // The screens turn their buttons off while they load. A tap on a button that is off does nothing.
+    if (onAllNodes(label and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
+        waitUntil(WAIT_MS) { onAllNodes(label and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+    }
+    val enabled = onAllNodes(label and hasClickAction() and isEnabled())
+    val merged = if (enabled.fetchSemanticsNodes().isNotEmpty()) enabled else onAllNodes(label and hasClickAction())
     val button = if (merged.fetchSemanticsNodes().isNotEmpty()) merged[0] else onAllNodes(label, useUnmergedTree = true)[0]
     // A button outside a scroll container is already visible.
     runCatching { button.performScrollTo() }
@@ -167,7 +178,8 @@ class FailureReport(private val compose: ComposeTestRule) : TestWatcher() {
                     shell("screencap -p /sdcard/Download/e2e/$name.png")
                 }
                 val screen = runCatching {
-                    compose.onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().joinToString("\n") { it.toDebugString() }
+                    // The top window, for example a dialog, comes first. A long screen is cut at the end of the report.
+                    compose.onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().reversed().joinToString("\n") { it.toDebugString() }
                 }.getOrElse { "(no screen: ${it.message})" }
                 throw AssertionError("${error.message}\n--- screen ---\n$screen", error)
             }
@@ -274,10 +286,10 @@ fun ComposeTestRule.waitForAnyText(vararg texts: String, timeoutMs: Long = WAIT_
     waitUntil(timeoutMs) { texts.any { isOnScreen(it) } }
 }
 
-/** Scrolls the lazy list of the screen until a text is composed. */
+/** Scrolls the lazy list of the screen until a text or an icon description is composed. */
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.scrollListTo(text: String, substring: Boolean = false) {
-    val matcher = hasText(text, substring = substring)
+    val matcher = hasText(text, substring = substring) or hasContentDescription(text, substring = substring)
     waitUntil(WAIT_MS) {
         if (onAllNodes(matcher).fetchSemanticsNodes().isEmpty()) {
             onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->

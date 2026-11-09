@@ -1,16 +1,15 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
-import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.RefreshRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.SignInRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateOwnAliasRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
-import kotlin.io.encoding.Base64
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UserProfileDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.data.session.AuthSessionStore
 import com.etologic.mahjongtournamentsuite.data.session.CredentialStore
 import com.etologic.mahjongtournamentsuite.data.session.SavedCredentials
@@ -18,9 +17,16 @@ import com.etologic.mahjongtournamentsuite.data.session.StoredAuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlin.io.encoding.Base64
+import kotlin.time.Duration.Companion.seconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 class DefaultAuthRepository(
     private val backendApi: FunctionsBackendApi,
@@ -31,6 +37,11 @@ class DefaultAuthRepository(
 ) : AuthRepository {
     private var loadedFromStore: Boolean = false
     private var session: AuthSession? = null
+
+    // A screen sends several requests at the same time. When the token expired, they all get 401 together.
+    // One refresh serves them all: the others wait for it and reuse its session.
+    private val refreshMutex = Mutex()
+    private var lastRefresh: Pair<TimeMark, AuthSession>? = null
 
     private suspend fun ensureLoadedFromStore() {
         if (loadedFromStore) return
@@ -84,7 +95,15 @@ class DefaultAuthRepository(
         },
     )
 
-    override suspend fun refreshSession(): AppResult<AuthSession> = runCatching {
+    override suspend fun refreshSession(): AppResult<AuthSession> = refreshMutex.withLock {
+        val recent = lastRefresh
+        if (recent != null && recent.second == session && recent.first.elapsedNow() < SHARED_REFRESH_WINDOW) {
+            return@withLock AppResult.Success(recent.second)
+        }
+        refreshSessionNow()
+    }
+
+    private suspend fun refreshSessionNow(): AppResult<AuthSession> = runCatching {
         ensureLoadedFromStore()
         val current = session ?: error("No active session")
         val response = backendApi.refresh(
@@ -98,6 +117,7 @@ class DefaultAuthRepository(
     }.fold(
         onSuccess = { newSession ->
             session = newSession
+            lastRefresh = TimeSource.Monotonic.markNow() to newSession
             sessionStore.save(newSession.toStored())
             AppResult.Success(newSession)
         },
@@ -126,7 +146,7 @@ class DefaultAuthRepository(
             refreshMode = refreshMode,
             revision = {
                 withFreshToken { token ->
-                    backendApi.globalDataVersions(token).resources["users"]?.revision ?: 0
+                    cache.globalManifest(backendApi, token).resources["users"]?.revision ?: 0
                 }
             },
             load = {
@@ -212,3 +232,5 @@ private fun AuthSession.toStored(): StoredAuthSession = StoredAuthSession(
     idToken = idToken,
     refreshToken = refreshToken,
 )
+
+private val SHARED_REFRESH_WINDOW = 10.seconds

@@ -8,6 +8,7 @@ import {
   normalizeRoundSchedules,
   readStoredMatchDuration,
   readStoredMatchEndMode,
+  requireCompleteRoundSchedules,
 } from "./tournamentSchedule";
 
 test("normalizes partial round schedules and keeps one row per round", () => {
@@ -85,4 +86,27 @@ test("match end mode defaults to STOP and rejects other values", () => {
   assert.equal(normalizeMatchEndMode("FINISH_HAND"), "FINISH_HAND");
   assert.throws(() => normalizeMatchEndMode("later"));
   assert.equal(readStoredMatchEndMode("later"), "STOP");
+});
+
+test("a complete schedule gives every round a date and a start time", () => {
+  const complete = normalizeRoundSchedules(
+    [{ roundId: 1, date: "2026-10-02", startTime: "09:30" }, { roundId: 2, date: "2026-10-03", startTime: "10:00" }],
+    2,
+    "2026-10-02",
+    "2026-10-04",
+  );
+  assert.doesNotThrow(() => requireCompleteRoundSchedules(complete, 2));
+
+  const noTime = normalizeRoundSchedules([{ roundId: 1, date: "2026-10-02" }], 1, "2026-10-02", "2026-10-04");
+  assert.throws(() => requireCompleteRoundSchedules(noTime, 1), /Every round needs a date and a start time/);
+  const noDate = normalizeRoundSchedules([{ roundId: 1, startTime: "09:30" }], 1, "2026-10-02", "2026-10-04");
+  assert.throws(() => requireCompleteRoundSchedules(noDate, 1), /Every round needs a date and a start time/);
+  const missingRound = normalizeRoundSchedules(
+    [{ roundId: 1, date: "2026-10-02", startTime: "09:30" }],
+    2,
+    "2026-10-02",
+    "2026-10-04",
+  );
+  assert.throws(() => requireCompleteRoundSchedules(missingRound, 2), /Every round needs a date and a start time/);
+  assert.throws(() => requireCompleteRoundSchedules([], 1), /Every round needs a date and a start time/);
 });

@@ -3,11 +3,9 @@ package com.etologic.mahjongtournamentsuite.player.e2e
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
+import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
-import androidx.compose.ui.test.click
-import androidx.compose.ui.test.performTouchInput
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -30,6 +28,7 @@ import android.os.ParcelFileDescriptor
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isRoot
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestWatcher
@@ -63,7 +62,8 @@ object E2eAccounts {
 val E2E_BACKEND_URL: String =
     InstrumentationRegistry.getArguments().getString("e2eBackendUrl") ?: "http://10.0.2.2:5055/api"
 
-private const val WAIT_MS = 20_000L
+/** How long a test waits for a screen. The slow emulator of the CI runner gets more time with the `e2eWaitMs` argument. */
+private val WAIT_MS: Long = InstrumentationRegistry.getArguments().getString("e2eWaitMs")?.toLongOrNull() ?: 20_000L
 
 /** Starts every test with no saved session, and points the app to the local backend. */
 class FreshAppState : ExternalResource() {
@@ -99,6 +99,10 @@ class PlayerAppRule {
 
     /** Starts the app with the backend address that the test has set. */
     fun launchKeepingBackend() {
+        // A build with Firebase settings asks for the analytics consent. The test accepts it before the start.
+        InstrumentationRegistry.getInstrumentation().targetContext
+            .getSharedPreferences("mts_telemetry", android.content.Context.MODE_PRIVATE)
+            .edit().putBoolean("consent", true).commit()
         scenario = ActivityScenario.launch(MainActivity::class.java)
         // The first frame can come a little later than the launch. Wait until the app has a Compose screen.
         repeat(50) {
@@ -144,7 +148,12 @@ fun ComposeTestRule.clickButton(text: String) {
     // On a phone the keyboard can cover the button.
     runCatching { androidx.test.espresso.Espresso.closeSoftKeyboard() }
     val label = hasText(text) or hasContentDescription(text)
-    val merged = onAllNodes(label and hasClickAction())
+    // The screens turn their buttons off while they load. A tap on a button that is off does nothing.
+    if (onAllNodes(label and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
+        waitUntil(WAIT_MS) { onAllNodes(label and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
+    }
+    val enabled = onAllNodes(label and hasClickAction() and isEnabled())
+    val merged = if (enabled.fetchSemanticsNodes().isNotEmpty()) enabled else onAllNodes(label and hasClickAction())
     val button = if (merged.fetchSemanticsNodes().isNotEmpty()) merged[0] else onAllNodes(label, useUnmergedTree = true)[0]
     // A button outside a scroll container is already visible.
     runCatching { button.performScrollTo() }
@@ -199,22 +208,16 @@ fun shell(command: String): String {
 }
 
 /**
- * Opens a row of the tournament list. The table scrolls sideways on a phone, so the middle of the row can be out of
- * the screen. The tap goes to the left side of the row.
+ * Opens a tournament of the list with the Open button of its card. A tap in the middle of the card can land on the
+ * Directions or Contact button, which open another app.
  */
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.openTournament(name: String) {
-    waitForText("Logout")
-    // The list is lazy. A row far down is not composed until the list scrolls to it.
-    waitUntil(WAIT_MS) {
-        if (onAllNodes(hasText(name)).fetchSemanticsNodes().isEmpty()) {
-            onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
-                runCatching { onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(hasText(name)) }
-            }
-        }
-        onAllNodes(hasText(name)).fetchSemanticsNodes().isNotEmpty()
-    }
-    onNode(hasClickAction() and hasAnyDescendant(hasText(name)), useUnmergedTree = true).performTouchInput { click(Offset(40f, height / 2f)) }
+    scrollListTo(name)
+    val open = hasText("Open") and hasClickAction() and hasAnyAncestor(hasText(name))
+    waitUntil(WAIT_MS) { onAllNodes(open).fetchSemanticsNodes().isNotEmpty() }
+    runCatching { onNode(open).performScrollTo() }
+    onNode(open).performClick()
 }
 
 /** Presses the chip of a table in the row of table chips. */

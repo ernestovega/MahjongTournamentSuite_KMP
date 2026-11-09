@@ -18,6 +18,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateSto
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
+import com.etologic.mahjongtournamentsuite.data.di.telemetry
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
@@ -38,6 +39,11 @@ import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.app_logo
 import org.jetbrains.compose.resources.painterResource
 import kotlinx.serialization.Serializable
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import org.koin.compose.getKoin
 import org.koin.compose.KoinApplication
 import org.koin.dsl.koinConfiguration
 import org.koin.dsl.module
@@ -75,15 +81,17 @@ data class StatisticsRoute(
 
 private val playerModule = module {
     // In the player app every account is a player, so the list holds only the tournaments where it plays.
-    single<TournamentRepository> { DefaultTournamentRepository(get(), get(), get(), get(), get(), playerScope = true) }
-    factory { PlayerSessionPresenter(get(), get()) }
+    single<TournamentRepository> {
+        DefaultTournamentRepository(get(), get(), get(), get(), get(), playerScope = true, persisted = get())
+    }
+    factory { PlayerSessionPresenter(get(), get(), telemetry()) }
     factory { CalculateTournamentRankingsUseCase() }
     factory { CalculateStatisticsUseCase() }
     factory { LoadStatisticsUseCase(get(), get(), get()) }
     factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
     factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
-    factory { PlayerTablePresenter(get()) }
-    factory { PlayerStatisticsPresenter(get(), get(), get(), get()) }
+    factory { PlayerTablePresenter(get(), telemetry()) }
+    factory { PlayerStatisticsPresenter(get(), get(), get(), get(), telemetry()) }
 }
 
 /**
@@ -100,6 +108,7 @@ fun PlayerApp(
     KoinApplication(configuration = koinConfiguration { modules(dataModule, playerModule) }) {
         val themeController = rememberThemeController()
         CompositionLocalProvider(
+            LocalTelemetry provides (getKoin().getOrNull<Telemetry>() ?: NoTelemetry),
             LocalThemeController provides themeController,
             LocalAppVersion provides appVersion,
             LocalScrollPositionStore provides remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } },
@@ -110,9 +119,12 @@ fun PlayerApp(
             },
         ) {
             ProvideAppLanguage {
-                MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-                    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        PlayerNavigation(openTournamentId, sessionStorage)
+                // The user cannot enter before accepting the anonymous analytics.
+                ConsentGate {
+                    MtsTheme(useDarkTheme = themeController.isDarkTheme) {
+                        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                            PlayerNavigation(openTournamentId, sessionStorage)
+                        }
                     }
                 }
             }
@@ -130,6 +142,7 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
         routePersistence ?: return@LaunchedEffect
         navController.currentBackStack.collect { routePersistence.save(it) }
     }
+
     NavHost(navController = navController, startDestination = SplashRoute) {
         screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes) }
         screen<SignInRoute> { entry ->

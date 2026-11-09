@@ -4,6 +4,7 @@ import { before, describe, it } from "node:test";
 import { db } from "../firebase";
 import { validDrawTables } from "../testing/draw";
 import { requireEmulator } from "../testing/firestoreFixtures";
+import { fullRoundSchedules } from "../testing/schedule";
 import { createTournament } from "./tournamentsService";
 
 function request(overrides: { numPlayers?: number; numRounds?: number; lastPlayerName?: string } = {}) {
@@ -30,6 +31,7 @@ function request(overrides: { numPlayers?: number; numRounds?: number; lastPlaye
     numTries: 0,
     players,
     tables,
+    roundSchedules: fullRoundSchedules(numRounds) as Array<{ roundId: number; date: string | null; startTime: string | null }>,
     createdByUid: "creator",
   };
 }
@@ -105,6 +107,33 @@ describe("tournament creation", () => {
     await assert.rejects(createTournament(bad));
 
     assert.deepEqual(await counts(), before);
+  });
+
+  it("refuses a tournament without a date and a start time for every round, before writing anything", async () => {
+    const before = await counts();
+
+    const withoutSchedules = { ...request(), roundSchedules: undefined };
+    await assert.rejects(createTournament(withoutSchedules), /Every round needs a date and a start time/);
+    const withoutTime = request();
+    withoutTime.roundSchedules[1] = { ...withoutTime.roundSchedules[1], startTime: null };
+    await assert.rejects(createTournament(withoutTime), /Every round needs a date and a start time/);
+    const withoutDate = request();
+    withoutDate.roundSchedules[0] = { ...withoutDate.roundSchedules[0], date: null };
+    await assert.rejects(createTournament(withoutDate), /Every round needs a date and a start time/);
+    const missingRound = request();
+    missingRound.roundSchedules.pop();
+    await assert.rejects(createTournament(missingRound), /Every round needs a date and a start time/);
+
+    assert.deepEqual(await counts(), before);
+  });
+
+  it("stores the date and the start time of every round", async () => {
+    const tournament = await createTournament(request());
+
+    assert.deepEqual(tournament.roundSchedules, [
+      { roundId: 1, date: "2026-10-01", startTime: "08:00" },
+      { roundId: 2, date: "2026-10-01", startTime: "09:00" },
+    ]);
   });
 
   it("refuses a draw where a player sits at two tables of one round", async () => {

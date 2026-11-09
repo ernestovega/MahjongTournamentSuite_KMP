@@ -152,15 +152,33 @@ export async function getAllTablesWithHands(params: {
   return readTablesWithHands(tablesSnap.docs);
 }
 
+// Firestore reads at most this many documents well in one batch call.
+const HAND_READ_BATCH = 500;
+
+/**
+ * Reads the hands of many tables by document id, in a few batch calls instead of one query per table.
+ * Every table has the hands 1 to 16, so the ids are known. A hand that does not exist is left out, like a query does.
+ */
 async function readTablesWithHands(
   tableDocs: FirebaseFirestore.QueryDocumentSnapshot[],
 ): Promise<{ table: TableState; hands: TableHand[] }[]> {
-  const tables = await Promise.all(tableDocs.map(async (tableSnap) => {
-    const handsSnap = await tableSnap.ref.collection("hands").get();
-    return {
-      table: tableStateFromData(tableSnap.data()),
-      hands: handsFromData(handsSnap.docs.map((doc) => doc.data())),
-    };
+  const handRefs = tableDocs.flatMap((tableSnap) => handRefsOf(tableSnap.ref));
+  const batches: FirebaseFirestore.DocumentReference[][] = [];
+  for (let start = 0; start < handRefs.length; start += HAND_READ_BATCH) {
+    batches.push(handRefs.slice(start, start + HAND_READ_BATCH));
+  }
+  const handSnaps = (await Promise.all(batches.map((refs) => db.getAll(...refs)))).flat();
+  const handsByTable = new Map<string, Array<Record<string, unknown>>>();
+  for (const handSnap of handSnaps) {
+    const tablePath = handSnap.ref.parent.parent?.path;
+    if (!handSnap.exists || tablePath == null) continue;
+    const hands = handsByTable.get(tablePath) ?? [];
+    hands.push(handSnap.data() ?? {});
+    handsByTable.set(tablePath, hands);
+  }
+  const tables = tableDocs.map((tableSnap) => ({
+    table: tableStateFromData(tableSnap.data()),
+    hands: handsFromData(handsByTable.get(tableSnap.ref.path) ?? []),
   }));
   return tables.sort((a, b) => a.table.roundId - b.table.roundId || a.table.tableId - b.table.tableId);
 }

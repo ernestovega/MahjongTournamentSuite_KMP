@@ -1,4 +1,4 @@
-import ExcelJS = require("exceljs");
+import { excelJs } from "./lazyModules";
 
 import { readSubstitution } from "./playerSubstitution";
 import { badRequest, notFound } from "../api/httpError";
@@ -90,7 +90,7 @@ export async function buildEmaReport(input: EmaReportInput): Promise<Buffer> {
   if (input.rows.some((row) => row.firstName.trim().length === 0 || row.lastName.trim().length === 0)) {
     throw badRequest("Every EMA report player needs a first name and last name");
   }
-  const workbook = new ExcelJS.Workbook();
+  const workbook = new (excelJs().Workbook)();
   const sheet = workbook.addWorksheet("MCR template", { views: [{ state: "frozen", ySplit: 1 }] });
   sheet.addRow([...EMA_REPORT_HEADERS]);
   const eventDate = dateFromIso(input.startDate);

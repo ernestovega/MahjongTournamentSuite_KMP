@@ -3,62 +3,70 @@ package com.etologic.mahjongtournamentsuite.data.repository
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
-import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayerDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundScheduleDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.CreateTournamentRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRankingRowDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.EmaReportRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPatchRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerSubstitutionDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundTablesWithHandsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TablePatchRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAgendaItemDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayerDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentPlayersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentRoundScheduleDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTableDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentTeamsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentsResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentSettingsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdateTournamentTeamRequestDto
+import com.etologic.mahjongtournamentsuite.data.cache.MANIFEST_SHARE_TIME
+import com.etologic.mahjongtournamentsuite.data.cache.PersistedValues
+import com.etologic.mahjongtournamentsuite.data.cache.Persistence
+import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
+import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
+import com.etologic.mahjongtournamentsuite.data.cache.tournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
-import com.etologic.mahjongtournamentsuite.domain.model.VenueLinkPlace
-import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
+import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
+import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
+import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.domain.model.TableKey
+import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentMember
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
-import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
-import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
-import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
-import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.SaveTableStateRequestDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TableHandPatchDto
-import com.etologic.mahjongtournamentsuite.data.backend.dto.TableWithHandsResponseDto
-import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
-import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
-import com.etologic.mahjongtournamentsuite.data.backend.dto.DataVersionsManifestDto
-import com.etologic.mahjongtournamentsuite.domain.model.TableHand
-import com.etologic.mahjongtournamentsuite.domain.model.TableKey
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
-import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import com.etologic.mahjongtournamentsuite.domain.model.VenueLinkPlace
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import io.ktor.http.HttpStatusCode
-import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
-import kotlin.io.encoding.Base64
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
+import kotlin.io.encoding.Base64
+import kotlin.time.Duration
 
 class DefaultTournamentRepository(
     private val backendApi: FunctionsBackendApi,
@@ -69,18 +77,27 @@ class DefaultTournamentRepository(
     private val tableStore: TournamentTableStore = TournamentTableStore(),
     /** The player app lists only the tournaments where the account is a player, whatever its role. */
     private val playerScope: Boolean = false,
+    /** Saves the tables on the device, so a new start of the app downloads only what changed. */
+    private val persisted: PersistedValues? = null,
 ) : TournamentRepository {
     private val lastPolledRevisions = mutableMapOf<String, Map<String, Long>>()
     private var lastPolledGlobalRevisions: Map<String, Long>? = null
 
-    override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = cachedRequest(
+    override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> = persistedRequest(
         action = "Listing tournaments",
         key = GLOBAL_TOURNAMENTS_CACHE_KEY,
         resource = "tournaments",
         refreshMode = refreshMode,
-    ) { idToken ->
-            backendApi.listTournaments(idToken, playerScope).tournaments.map { it.toDomain() }.sortedRecentFirst()
-    }
+        // The player list holds fewer tournaments than the full list, so it is saved under its own name.
+        persistence = Persistence(
+            if (playerScope) "$GLOBAL_TOURNAMENTS_CACHE_KEY:player" else GLOBAL_TOURNAMENTS_CACHE_KEY,
+            TournamentsResponseDto.serializer(),
+        ),
+        fetch = { idToken -> backendApi.listTournaments(idToken, playerScope) },
+        map = { response ->
+            response.tournaments.map { it.toDomain() }.sortedRecentFirst()
+        },
+    )
 
     override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
@@ -324,16 +341,16 @@ class DefaultTournamentRepository(
         tournamentId = tournamentId,
         refreshMode = refreshMode,
     ) { idToken ->
-            backendApi.listTournamentMembers(
-                idToken = idToken,
-                tournamentId = tournamentId,
-            ).members.map { dto ->
-                TournamentMember(
-                    uid = dto.uid,
-                    email = dto.email,
-                    role = GlobalUserRole.valueOf(dto.role.name),
-                )
-            }
+        backendApi.listTournamentMembers(
+            idToken = idToken,
+            tournamentId = tournamentId,
+        ).members.map { dto ->
+            TournamentMember(
+                uid = dto.uid,
+                email = dto.email,
+                role = GlobalUserRole.valueOf(dto.role.name),
+            )
+        }
     }
 
     override suspend fun upsertTournamentMember(
@@ -381,17 +398,16 @@ class DefaultTournamentRepository(
     override suspend fun listTournamentPlayers(
         tournamentId: String,
         refreshMode: RefreshMode,
-    ): AppResult<List<TournamentPlayer>> = cachedRequest(
+    ): AppResult<List<TournamentPlayer>> = persistedRequest(
         action = "Listing tournament players",
         key = "tournament:$tournamentId:players",
         resource = "players",
         tournamentId = tournamentId,
         refreshMode = refreshMode,
-    ) { idToken ->
-            backendApi.listTournamentPlayers(
-                idToken = idToken,
-                tournamentId = tournamentId,
-            ).players.map { dto ->
+        persistence = Persistence("tournament:$tournamentId:players", TournamentPlayersResponseDto.serializer()),
+        fetch = { idToken -> backendApi.listTournamentPlayers(idToken = idToken, tournamentId = tournamentId) },
+        map = { response ->
+            response.players.map { dto ->
                 TournamentPlayer(
                     id = dto.id,
                     name = "Player ${dto.id}",
@@ -407,29 +423,30 @@ class DefaultTournamentRepository(
                     updatedAt = dto.updatedAt,
                 )
             }
-    }
+        },
+    )
 
     override suspend fun listTournamentTeams(
         tournamentId: String,
         refreshMode: RefreshMode,
-    ): AppResult<List<TournamentTeam>> = cachedRequest(
+    ): AppResult<List<TournamentTeam>> = persistedRequest(
         action = "Listing tournament teams",
         key = "tournament:$tournamentId:teams",
         resource = "teams",
         tournamentId = tournamentId,
         refreshMode = refreshMode,
-    ) { idToken ->
-            backendApi.listTournamentTeams(
-                idToken = idToken,
-                tournamentId = tournamentId,
-            ).teams.map { dto ->
+        persistence = Persistence("tournament:$tournamentId:teams", TournamentTeamsResponseDto.serializer()),
+        fetch = { idToken -> backendApi.listTournamentTeams(idToken = idToken, tournamentId = tournamentId) },
+        map = { response ->
+            response.teams.map { dto ->
                 TournamentTeam(
                     id = dto.id,
                     name = dto.name,
                     playerIds = dto.playerIds,
                 )
             }
-    }
+        },
+    )
 
     override suspend fun updateTournamentTeam(
         tournamentId: String,
@@ -468,9 +485,9 @@ class DefaultTournamentRepository(
         resource = "countries",
         refreshMode = refreshMode,
     ) { idToken ->
-            backendApi.listCountries(idToken).countries.map { dto ->
-                Country(code = dto.code, name = dto.name)
-            }
+        backendApi.listCountries(idToken).countries.map { dto ->
+            Country(code = dto.code, name = dto.name)
+        }
     }
 
     override suspend fun resolveVenueLink(url: String): AppResult<ResolvedVenueLink> = runCatching {
@@ -565,10 +582,10 @@ class DefaultTournamentRepository(
         tournamentId = tournamentId,
         refreshMode = refreshMode,
     ) { idToken ->
-            backendApi.listTournamentRounds(
-                idToken = idToken,
-                tournamentId = tournamentId,
-            ).rounds.map { dto -> TournamentRound(roundId = dto.roundId) }
+        backendApi.listTournamentRounds(
+            idToken = idToken,
+            tournamentId = tournamentId,
+        ).rounds.map { dto -> TournamentRound(roundId = dto.roundId) }
     }
 
     override suspend fun listTournamentTables(
@@ -582,25 +599,25 @@ class DefaultTournamentRepository(
         tournamentId = tournamentId,
         refreshMode = refreshMode,
     ) { idToken ->
-            backendApi.listTournamentTables(
-                idToken = idToken,
-                tournamentId = tournamentId,
-                roundId = roundId,
-            ).tables.map { dto ->
-                TournamentTable(
-                    roundId = dto.roundId,
-                    tableId = dto.tableId,
-                    playerIds = dto.playerIds,
-                    isCompleted = dto.isCompleted,
-                    useTotalsOnly = dto.useTotalsOnly,
-                    hasProgress = dto.hasProgress,
-                    hasValidManualTotals = dto.hasValidManualTotals,
-                    completionStatus = dto.completionStatus,
-                    bestHandScores = dto.bestHandScores,
-                    chickenHandCount = dto.chickenHandCount,
-                    version = dto.version,
-                )
-            }
+        backendApi.listTournamentTables(
+            idToken = idToken,
+            tournamentId = tournamentId,
+            roundId = roundId,
+        ).tables.map { dto ->
+            TournamentTable(
+                roundId = dto.roundId,
+                tableId = dto.tableId,
+                playerIds = dto.playerIds,
+                isCompleted = dto.isCompleted,
+                useTotalsOnly = dto.useTotalsOnly,
+                hasProgress = dto.hasProgress,
+                hasValidManualTotals = dto.hasValidManualTotals,
+                completionStatus = dto.completionStatus,
+                bestHandScores = dto.bestHandScores,
+                chickenHandCount = dto.chickenHandCount,
+                version = dto.version,
+            )
+        }
     }
 
     override suspend fun getTableWithHands(
@@ -615,12 +632,12 @@ class DefaultTournamentRepository(
         tournamentId = tournamentId,
         refreshMode = refreshMode,
     ) { idToken ->
-            backendApi.getTableWithHands(
-                idToken = idToken,
-                tournamentId = tournamentId,
-                roundId = roundId,
-                tableId = tableId,
-            ).toDomain()
+        backendApi.getTableWithHands(
+            idToken = idToken,
+            tournamentId = tournamentId,
+            roundId = roundId,
+            tableId = tableId,
+        ).toDomain()
     }.also { result ->
         if (result is AppResult.Success) tableStore.put(tournamentId, result.value.first, result.value.second)
     }
@@ -651,23 +668,36 @@ class DefaultTournamentRepository(
         refreshMode: RefreshMode,
     ): AppResult<List<Pair<TableState, List<TableHand>>>> = runCatching {
         val session = authRepository.currentSession() ?: error("No active session")
+        // IF_CHANGED compares the table versions of the tournament manifest with the held tables,
+        // so a table that someone else saved is loaded again.
+        val hasNewerTables: suspend (Map<TableKey, Long>) -> Boolean = { known ->
+            withFreshIdToken { token ->
+                tournamentManifest(token, tournamentId).toDomain().tableVersions
+                    .any { (key, serverVersion) -> serverVersion > (known[key] ?: -1L) }
+            }
+        }
+        val persistedName = "tournament:$tournamentId:all-tables"
+        var answer: RoundTablesWithHandsResponseDto? = null
         tableStore.all(
             ownerUid = session.uid,
             tournamentId = tournamentId,
             reload = refreshMode == RefreshMode.FORCE,
-            // CACHED never asks the server. IF_CHANGED compares the table versions of the tournament manifest
-            // with the held tables, so a table that someone else saved is loaded again.
-            isOutdated = if (refreshMode == RefreshMode.IF_CHANGED) { known ->
-                withFreshIdToken { token ->
-                    tournamentManifest(token, tournamentId).toDomain().tableVersions
-                        .any { (key, serverVersion) -> serverVersion > (known[key] ?: -1L) }
+            // CACHED never asks the server, except to check tables that were saved on the device.
+            isOutdated = hasNewerTables.takeIf { refreshMode == RefreshMode.IF_CHANGED },
+            restore = persisted?.let { store ->
+                {
+                    store.read(session.uid, persistedName, RoundTablesWithHandsResponseDto.serializer())
+                        ?.let { (_, saved) -> runCatching { saved.tables.map { it.toDomain() } }.getOrNull() }
                 }
-            } else {
-                null
+            },
+            verifyRestored = hasNewerTables,
+            onFetched = {
+                // The table versions are inside the answer, so the saved revision is not used.
+                answer?.let { persisted?.write(session.uid, persistedName, 0, RoundTablesWithHandsResponseDto.serializer(), it) }
             },
             fetchAll = {
                 withFreshIdToken { token ->
-                    backendApi.getAllTablesWithHands(token, tournamentId).tables.map { it.toDomain() }
+                    backendApi.getAllTablesWithHands(token, tournamentId).also { answer = it }.tables.map { it.toDomain() }
                 }
             },
         )
@@ -754,6 +784,44 @@ class DefaultTournamentRepository(
         },
     )
 
+    /** Like [cachedRequest], and the server answer is also saved on the device. */
+    private suspend fun <D : Any, T : Any> persistedRequest(
+        action: String,
+        key: String,
+        resource: String,
+        refreshMode: RefreshMode,
+        persistence: Persistence<D>,
+        fetch: suspend (String) -> D,
+        tournamentId: String? = null,
+        map: (D) -> T,
+    ): AppResult<T> = runCatching {
+        val session = authRepository.currentSession() ?: error("No active session")
+        cache.getOrLoadPersisted(
+            ownerUid = session.uid,
+            key = key,
+            refreshMode = refreshMode,
+            revision = {
+                withFreshIdToken { token ->
+                    val manifest = if (tournamentId == null) {
+                        globalManifest(token)
+                    } else {
+                        tournamentManifest(token, tournamentId)
+                    }
+                    manifest.resources[resource]?.revision ?: 0
+                }
+            },
+            persistence = persistence,
+            load = { withFreshIdToken(fetch) },
+            map = map,
+        )
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "$action failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
     override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> = runCatching {
         withFreshIdToken { token ->
             tournamentManifest(token, tournamentId, maxAge = Duration.ZERO).toDomain()
@@ -803,17 +871,19 @@ class DefaultTournamentRepository(
         if (prefixes.isNotEmpty()) cache.markStale(*prefixes.toTypedArray())
     }
 
-    /** Cached requests of one screen ask for the same manifest many times. They share one answer. */
     private suspend fun tournamentManifest(
         token: String,
         tournamentId: String,
         maxAge: Duration = MANIFEST_SHARE_TIME,
-    ): DataVersionsManifestDto = cache.shared("manifest:tournament:$tournamentId", maxAge) {
-        backendApi.tournamentDataVersions(token, tournamentId)
-    }
+    ): DataVersionsManifestDto = cache.tournamentManifest(backendApi, token, tournamentId, maxAge)
 
-    private suspend fun globalManifest(token: String): DataVersionsManifestDto =
-        cache.shared("manifest:global", MANIFEST_SHARE_TIME) { backendApi.globalDataVersions(token) }
+    private suspend fun globalManifest(token: String): DataVersionsManifestDto = cache.globalManifest(backendApi, token)
+
+    override suspend fun prefetchRevisions(tournamentId: String) {
+        // A failure here only means that the reads ask for the revisions themselves, and report the error.
+        runCatching { withFreshIdToken { token -> tournamentManifest(token, tournamentId) } }
+            .onFailure { logger.w(it) { "Prefetching the tournament revisions failed." } }
+    }
 
     private suspend fun <T> withFreshIdToken(
         block: suspend (String) -> T,
@@ -836,7 +906,10 @@ class DefaultTournamentRepository(
         }
     }.fold(
         onSuccess = { AppResult.Success(it) },
-        onFailure = { AppResult.Failure(it.toAppError()) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Generating the ID card proof failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
     )
 }
 
@@ -851,8 +924,6 @@ private fun TournamentAgendaItem.toDto() = TournamentAgendaItemDto(
     date = date,
     startTime = startTime,
 )
-
-private val MANIFEST_SHARE_TIME = 2.seconds
 
 private fun DataVersionsManifestDto.toDomain(): TournamentManifest = TournamentManifest(
     tablesRevision = resources["tables"]?.revision ?: 0,
@@ -900,48 +971,46 @@ private fun Throwable.toTableSaveError(json: Json): AppError {
     )
 }
 
-private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHand>> =
-    TableState(
-        version = table.version,
-        roundId = table.roundId,
-        tableId = table.tableId,
-        playerIds = table.playerIds,
-        playerEastId = table.playerEastId,
-        playerSouthId = table.playerSouthId,
-        playerWestId = table.playerWestId,
-        playerNorthId = table.playerNorthId,
-        playerEastScore = table.playerEastScore,
-        playerSouthScore = table.playerSouthScore,
-        playerWestScore = table.playerWestScore,
-        playerNorthScore = table.playerNorthScore,
-        manualPlayerEastScore = table.manualPlayerEastScore,
-        manualPlayerSouthScore = table.manualPlayerSouthScore,
-        manualPlayerWestScore = table.manualPlayerWestScore,
-        manualPlayerNorthScore = table.manualPlayerNorthScore,
-        isCompleted = table.isCompleted,
-        useTotalsOnly = table.useTotalsOnly,
-        forcedZeroPlayerId = table.forcedZeroPlayerId,
-    ) to hands.map { hand ->
-        TableHand(
-            handId = hand.handId,
-            playerWinnerId = hand.playerWinnerId,
-            playerLooserId = hand.playerLooserId,
-            handScore = hand.handScore,
-            isChickenHand = hand.isChickenHand,
-            isDone = hand.isDone,
-            playerEastPenalty = hand.playerEastPenalty,
-            playerSouthPenalty = hand.playerSouthPenalty,
-            playerWestPenalty = hand.playerWestPenalty,
-            playerNorthPenalty = hand.playerNorthPenalty,
-        )
-    }
-
-internal fun List<Tournament>.sortedRecentFirst(): List<Tournament> =
-    sortedWith(
-        compareByDescending<Tournament> { it.createdAt ?: "" }
-            .thenBy { it.name.lowercase() }
-            .thenBy { it.id },
+private fun TableWithHandsResponseDto.toDomain(): Pair<TableState, List<TableHand>> = TableState(
+    version = table.version,
+    roundId = table.roundId,
+    tableId = table.tableId,
+    playerIds = table.playerIds,
+    playerEastId = table.playerEastId,
+    playerSouthId = table.playerSouthId,
+    playerWestId = table.playerWestId,
+    playerNorthId = table.playerNorthId,
+    playerEastScore = table.playerEastScore,
+    playerSouthScore = table.playerSouthScore,
+    playerWestScore = table.playerWestScore,
+    playerNorthScore = table.playerNorthScore,
+    manualPlayerEastScore = table.manualPlayerEastScore,
+    manualPlayerSouthScore = table.manualPlayerSouthScore,
+    manualPlayerWestScore = table.manualPlayerWestScore,
+    manualPlayerNorthScore = table.manualPlayerNorthScore,
+    isCompleted = table.isCompleted,
+    useTotalsOnly = table.useTotalsOnly,
+    forcedZeroPlayerId = table.forcedZeroPlayerId,
+) to hands.map { hand ->
+    TableHand(
+        handId = hand.handId,
+        playerWinnerId = hand.playerWinnerId,
+        playerLooserId = hand.playerLooserId,
+        handScore = hand.handScore,
+        isChickenHand = hand.isChickenHand,
+        isDone = hand.isDone,
+        playerEastPenalty = hand.playerEastPenalty,
+        playerSouthPenalty = hand.playerSouthPenalty,
+        playerWestPenalty = hand.playerWestPenalty,
+        playerNorthPenalty = hand.playerNorthPenalty,
     )
+}
+
+internal fun List<Tournament>.sortedRecentFirst(): List<Tournament> = sortedWith(
+    compareByDescending<Tournament> { it.createdAt ?: "" }
+        .thenBy { it.name.lowercase() }
+        .thenBy { it.id },
+)
 
 /** A refused player change shows the reason of the server, because the reason tells the editor what to do. */
 private fun PlayerSubstitutionDto.toDomain(): PlayerSubstitution? {
@@ -967,8 +1036,10 @@ private fun Throwable.toAppError(): AppError {
         }
         val looksLikeOutdatedServerSideScheduleGeneration =
             status == HttpStatusCode.BadRequest &&
-                (body.contains("\"maxTries\"", ignoreCase = true) ||
-                    body.contains("Unable to generate rounds/tables", ignoreCase = true))
+                (
+                    body.contains("\"maxTries\"", ignoreCase = true) ||
+                        body.contains("Unable to generate rounds/tables", ignoreCase = true)
+                    )
 
         if (looksLikeOutdatedServerSideScheduleGeneration) {
             return AppError.Unexpected(

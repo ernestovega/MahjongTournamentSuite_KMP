@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedTab
 
 /** The color of every tab row. It is the color of the top bar. */
 @Composable
@@ -21,7 +22,7 @@ internal fun tabRowColor(): Color = MaterialTheme.colorScheme.primaryContainer
 internal val TabContentColor: Color = Color.White
 
 /**
- * A low tab with the icon over the label. The height is fixed, so all tab rows have the same height.
+ * A low tab with the icon over the label. It counts a view in the analytics while it is selected. The height is fixed, so all tab rows have the same height.
  * A tab without an [icon] shows only the label.
  */
 @Composable
@@ -29,8 +30,11 @@ internal fun CompactTab(
     selected: Boolean,
     onClick: () -> Unit,
     title: String,
+    /** A fixed name for the analytics. It does not change with the language. */
+    trackingName: String,
     icon: (@Composable () -> Unit)? = null,
 ) {
+    if (selected) TrackedTab(trackingName)
     Tab(
         selected = selected,
         onClick = onClick,

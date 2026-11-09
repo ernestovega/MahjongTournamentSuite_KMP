@@ -78,7 +78,7 @@ import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.UsageRoute
+import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -112,7 +112,9 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands_header
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands_header
@@ -166,7 +168,8 @@ fun TournamentsScreen(
     var isLoading by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
     var editDialogTournament by remember { mutableStateOf<Tournament?>(null) }
-    var showCreateTournamentDialog by remember { mutableStateOf(false) }
+    // The form stays open when the activity is created again, for example after a rotation or a new window size.
+    var showCreateTournamentDialog by rememberSaveable { mutableStateOf(false) }
     var restoreNewTournamentFocus by remember { mutableStateOf(false) }
     var tournamentFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedTournamentId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -218,19 +221,13 @@ fun TournamentsScreen(
             when (val result = presenter.loadPlayers(tournament.id)) {
                 is AppResult.Success -> {
                     store.upsertPlayers(tournament.id, result.value)
-                    if (result.value.any { !it.isAssigned }) {
-                        navController.navigate(
-                            TournamentRoute(
-                                tournamentId = tournament.id,
-                            ),
-                        )
-                        navController.navigate(PlayersRoute(tournamentId = tournament.id))
-                    } else {
-                        navController.navigate(
-                            TournamentRoute(
-                                tournamentId = tournament.id,
-                            ),
-                        )
+                    // The load suspends. The navigation must run on the main thread, also in the UI tests.
+                    withContext(Dispatchers.Main) {
+                        navController.navigate(TournamentRoute(tournamentId = tournament.id))
+                        // A tournament with open slots opens on its players, so that the slots get filled first.
+                        if (result.value.any { !it.isAssigned }) {
+                            navController.navigate(PlayersRoute(tournamentId = tournament.id))
+                        }
                     }
                 }
 
@@ -343,8 +340,8 @@ fun TournamentsScreen(
                     null
                 },
                 onTimer = { openTimer(navController) },
-                onUsage = if (adminStatus?.isAdmin == true) {
-                    { navController.navigate(UsageRoute) }
+                onErrors = if (adminStatus?.isAdmin == true) {
+                    { navController.navigate(ErrorsRoute) }
                 } else {
                     null
                 },
@@ -596,8 +593,11 @@ private fun LogoutButton(
                 confirming = false
                 coroutineScope.launch {
                     presenter.signOut()
-                    navController.navigate(SignInRoute) {
-                        popUpTo(TournamentsRoute) { inclusive = true }
+                    // The sign out can suspend. The navigation must run on the main thread, also in the UI tests.
+                    withContext(Dispatchers.Main) {
+                        navController.navigate(SignInRoute) {
+                            popUpTo(TournamentsRoute) { inclusive = true }
+                        }
                     }
                 }
             },

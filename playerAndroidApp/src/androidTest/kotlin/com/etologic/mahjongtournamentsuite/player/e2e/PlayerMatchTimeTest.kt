@@ -24,8 +24,9 @@ class PlayerMatchTimeTest : PlayerE2eTest() {
 
     private fun openMyTable(account: String, tournament: String) {
         start(account, ready = "My tournaments")
-        c.clickButton(tournament)
-        c.waitForText("Me")
+        c.openTournament(tournament)
+        // The Me list has only the tables of the signed-in player.
+        c.clickButton("Me")
         c.waitForText("Table 1", substring = true)
         c.onAllNodes(hasText("Table 1", substring = true) and hasClickAction()).onFirst().performClick()
         c.waitForText("Round 1 - Table 1")
