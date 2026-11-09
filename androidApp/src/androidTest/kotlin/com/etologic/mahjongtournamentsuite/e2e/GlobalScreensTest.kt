@@ -13,9 +13,10 @@ class GlobalScreensTest : AdminE2eTest() {
     fun appUsersListsEveryAccountWithRoleAndStatus() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
-        c.waitForText("9 of 9 accounts")
+        c.waitForText("11 of 11 accounts")
+        // The list is lazy, so the test scrolls to each account.
         listOf("admin@e2e.test", "editor@e2e.test", "outsider@e2e.test", "disabled@e2e.test", "player@e2e.test", "stranger@e2e.test")
-            .forEach { c.waitForText(it) }
+            .forEach { c.scrollListTo(it) }
         c.waitForText("Disabled")
         c.waitForText("New user")
     }
@@ -24,17 +25,17 @@ class GlobalScreensTest : AdminE2eTest() {
     fun appUsersShowsEmaIdOfLinkedPlayers() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
-        c.waitForText("10000138")
-        c.waitForText("10000137")
+        c.scrollListTo("10000138")
+        c.scrollListTo("10000137")
     }
 
     @Test
     fun appUsersSearchFiltersByEmail() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
-        c.waitForText("9 of 9 accounts")
+        c.waitForText("11 of 11 accounts")
         c.field("Search").performTextInputText("editor@")
-        c.waitForText("1 of 9 accounts")
+        c.waitForText("1 of 11 accounts")
         c.waitForText("editor@e2e.test")
         c.assertNoText("admin@e2e.test")
     }
@@ -43,7 +44,8 @@ class GlobalScreensTest : AdminE2eTest() {
     fun appUsersBackReturnsToTheList() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Users")
-        c.waitForText("App users")
+        // The screen title is "Users", the same text as the button of the list, so the test waits for its own button.
+        c.waitForText("New user")
         c.clickButton("Back")
         c.waitForText("Test - Live ongoing tournament")
     }

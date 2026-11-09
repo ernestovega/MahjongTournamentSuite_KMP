@@ -1,9 +1,13 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasSetTextAction
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
@@ -19,12 +23,16 @@ class CreateTournamentTest : AdminE2eTest() {
         c.clickLastButton(name)
     }
 
-    /** The country is a select field on the Venue tab. The search field of its menu narrows the long list. */
+    /** The country is a select field on the Venue tab. Its menu lists every country, after a search field. */
     private fun chooseCountry(name: String) {
         c.selectField("Country").performClick()
-        c.onNode(hasTestTag("select-search")).performTextInputText(name)
-        c.onAllNodes(hasText(name) and hasClickAction()).onLast().performClick()
+        val option = hasText(name) and hasClickAction() and !hasSetTextAction() and !isDropdownList()
+        c.waitUntil(5_000) { c.onAllNodes(option).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(option).onLast().performClick()
+        c.waitUntil(5_000) { c.onAllNodes(hasText(name) and isDropdownList()).fetchSemanticsNodes().isNotEmpty() }
     }
+
+    private fun isDropdownList() = SemanticsMatcher.expectValue(SemanticsProperties.Role, Role.DropdownList)
 
     private fun fillValidForm(players: String, rounds: String) {
         c.field("Name").performTextInputText("E2E created")
@@ -52,6 +60,16 @@ class CreateTournamentTest : AdminE2eTest() {
             dates[index].performTextReplacement(today)
             times[index].performTextReplacement(if (index + 1 == skipStartTimeOfRound) "" else "${10 + index % 12}:00")
         }
+    }
+
+    /** Only the switch reacts to a tap. Its label is a plain text next to it. */
+    private fun toggleFinishTheHand() {
+        c.onAllNodes(isToggleable() and hasAnySibling(hasText("Finish the hand in play"))).onLast().performClick()
+    }
+
+    /** The form shows the zone of the device when its list has it, and "UTC" otherwise, for example for "Etc/UTC". */
+    private fun expectedTimeZone(): String = java.util.TimeZone.getDefault().id.let { zone ->
+        if (zone == "UTC" || (zone.contains('/') && !zone.startsWith("Etc/") && !zone.startsWith("SystemV/"))) zone else "UTC"
     }
 
     private fun openForm() {
@@ -190,15 +208,15 @@ class CreateTournamentTest : AdminE2eTest() {
         listOf("Match duration (minutes)", "120", "Finish the hand in play").forEach { c.waitForText(it) }
         c.assertNoText("Extra time (minutes)")
         openTab("Venue")
-        listOf("Time zone", java.util.TimeZone.getDefault().id).forEach { c.waitForText(it) }
+        listOf("Time zone", expectedTimeZone()).forEach { c.waitForText(it) }
     }
 
     @Test
     fun finishTheHandSwitchShowsTheExtraTimeField() {
         openForm()
-        c.clickButton("Finish the hand in play")
+        toggleFinishTheHand()
         c.waitForText("Extra time (minutes)")
-        c.clickButton("Finish the hand in play")
+        toggleFinishTheHand()
         c.waitForNoText("Extra time (minutes)")
     }
 
@@ -224,7 +242,7 @@ class CreateTournamentTest : AdminE2eTest() {
     fun extraTimeZeroIsRejectedWhenTheHandIsFinished() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
-        c.clickButton("Finish the hand in play")
+        toggleFinishTheHand()
         c.field("Extra time (minutes)").performTextReplacementText("0")
         c.clickButton("Create")
         c.waitForText("Use a whole number of minutes from 1 to 120.")
@@ -235,7 +253,7 @@ class CreateTournamentTest : AdminE2eTest() {
         openForm()
         fillValidForm(players = "16", rounds = "2")
         c.field("Match duration (minutes)").performTextReplacementText("90")
-        c.clickButton("Finish the hand in play")
+        toggleFinishTheHand()
         c.field("Extra time (minutes)").performTextReplacementText("15")
         c.clickButton("Create")
         c.waitForText("Tournament players", timeoutMs = 90_000)
@@ -243,6 +261,6 @@ class CreateTournamentTest : AdminE2eTest() {
         check(tournament.getInt("matchDurationMinutes") == 90) { "Duration: ${tournament.opt("matchDurationMinutes")}" }
         check(tournament.getString("matchEndMode") == "FINISH_HAND") { "End mode: ${tournament.opt("matchEndMode")}" }
         check(tournament.getInt("matchExtraMinutes") == 15) { "Extra time: ${tournament.opt("matchExtraMinutes")}" }
-        check(tournament.getString("timeZone") == java.util.TimeZone.getDefault().id) { "Time zone: ${tournament.opt("timeZone")}" }
+        check(tournament.getString("timeZone") == expectedTimeZone()) { "Time zone: ${tournament.opt("timeZone")}" }
     }
 }

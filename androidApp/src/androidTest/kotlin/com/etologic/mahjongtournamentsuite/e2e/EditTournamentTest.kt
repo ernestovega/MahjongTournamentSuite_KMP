@@ -147,7 +147,10 @@ class EditTournamentTest : AdminE2eTest() {
         c.assertNoText("Extra time (minutes)")
         // The live tournament has no stored time zone, so the form suggests the zone of the device.
         c.clickButton("Venue")
-        listOf("Time zone", java.util.TimeZone.getDefault().id).forEach { c.waitForText(it) }
+        // A zone that the list does not have, such as "Etc/UTC", shows as "UTC".
+        val zone = java.util.TimeZone.getDefault().id
+        val shown = if (zone == "UTC" || (zone.contains('/') && !zone.startsWith("Etc/") && !zone.startsWith("SystemV/"))) zone else "UTC"
+        listOf("Time zone", shown).forEach { c.waitForText(it) }
     }
 
     @Test

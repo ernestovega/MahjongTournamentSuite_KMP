@@ -172,7 +172,8 @@ class FailureReport(private val compose: ComposeTestRule) : TestWatcher() {
                     shell("screencap -p /sdcard/Download/e2e/$name.png")
                 }
                 val screen = runCatching {
-                    compose.onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().joinToString("\n") { it.toDebugString() }
+                    // The top window, for example a dialog, comes first. A long screen is cut at the end of the report.
+                    compose.onAllNodes(isRoot(), useUnmergedTree = true).fetchSemanticsNodes().reversed().joinToString("\n") { it.toDebugString() }
                 }.getOrElse { "(no screen: ${it.message})" }
                 throw AssertionError("${error.message}\n--- screen ---\n$screen", error)
             }

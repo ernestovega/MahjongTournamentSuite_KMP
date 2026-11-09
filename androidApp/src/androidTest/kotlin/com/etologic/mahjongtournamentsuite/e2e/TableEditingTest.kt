@@ -43,22 +43,28 @@ class TableEditingTest : AdminE2eTest() {
         c.onAllNodes(hasText(option) and hasClickAction()).onLast().performClick()
     }
 
-    private fun pickFromListStartingWith(prefix: String) {
-        c.onAllNodes(hasText(prefix, substring = true) and hasClickAction()).onLast().performClick()
+    /** A menu option or a cell that shows the player with this id, as "13 - NAME". */
+    private fun playerOption(id: String) = SemanticsMatcher("player $id") { node ->
+        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text.startsWith("$id - ") } == true
+    } and hasClickAction()
+
+    /** The open menu is the last one in the tree. */
+    private fun pickPlayer(id: String) {
+        c.onAllNodes(playerOption(id)).onLast().performClick()
     }
 
-    private fun chooseWinner(option: String = "", prefix: String = "") {
+    private fun chooseWinner(id: String) {
         val cells = c.onAllNodes(emptyChoice)
         val count = cells.fetchSemanticsNodes().size
         cells[count - 2].performScrollTo()
         cells[count - 2].performClick()
-        if (prefix.isEmpty()) pickFromList(option) else pickFromListStartingWith(prefix)
+        pickPlayer(id)
     }
 
-    private fun chooseLoser(option: String = "", prefix: String = "") {
+    private fun chooseLoser(id: String) {
         val cells = c.onAllNodes(emptyChoice)
         cells[cells.fetchSemanticsNodes().size - 1].performClick()
-        if (prefix.isEmpty()) pickFromList(option) else pickFromListStartingWith(prefix)
+        pickPlayer(id)
     }
 
     private fun typeScore(score: String) {
@@ -74,9 +80,14 @@ class TableEditingTest : AdminE2eTest() {
         c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState))[1].performClick()
     }
 
+    /** East and South of the last table. The seed decides who they are. */
+    private val seats by lazy { E2eApi.lastTableSeats() }
+    private val winner get() = seats[0]
+    private val loser get() = seats[1]
+
     private fun enterLastHand(done: Boolean) {
-        chooseWinner("17 - JORGE MARTIN 147")
-        chooseLoser("6 - RAUL RUIZ")
+        chooseWinner(winner)
+        chooseLoser(loser)
         typeScore("8")
         if (done) tickDone()
     }
@@ -132,7 +143,7 @@ class TableEditingTest : AdminE2eTest() {
     @Test
     fun changeByAnotherEditorListsTheValuesTheUserLost() {
         openLastTable()
-        chooseWinner("17 - JORGE MARTIN 147")
+        chooseWinner(winner)
         E2eApi.otherEditorFinishesLastHand()
         c.waitForText("Table updated", timeoutMs = 60_000)
         c.waitForText("Enter these values again if they are still correct:")
@@ -144,7 +155,7 @@ class TableEditingTest : AdminE2eTest() {
     fun savingAnOldVersionIsRefusedWithoutLosingTheNewData() {
         openLastTable()
         enterLastHand(done = true)
-        E2eApi.otherEditorFinishesLastHand(winner = "8", loser = "18", score = "12")
+        E2eApi.otherEditorFinishesLastHand(winner = seats[2], loser = seats[3], score = "12")
         c.clickButton("Save")
         c.waitForText("Table updated", timeoutMs = 60_000)
         c.clickButton("OK")
@@ -163,7 +174,7 @@ class TableEditingTest : AdminE2eTest() {
     @Test
     fun winnerWithoutScoreShowsMissingFields() {
         openLastTable()
-        chooseWinner("17 - JORGE MARTIN 147")
+        chooseWinner(winner)
         tickDone()
         c.waitForText("This hand is invalid and cannot be marked as done or completed.", substring = true)
         c.scrollListTo("There are missing fields.", substring = true)
@@ -172,8 +183,8 @@ class TableEditingTest : AdminE2eTest() {
     @Test
     fun scoreBelowEightShowsMinimumScore() {
         openLastTable()
-        chooseWinner("17 - JORGE MARTIN 147")
-        chooseLoser("6 - RAUL RUIZ")
+        chooseWinner(winner)
+        chooseLoser(loser)
         typeScore("5")
         c.scrollListTo("The minimum score to win a hand is 8.", substring = true)
     }
@@ -181,11 +192,11 @@ class TableEditingTest : AdminE2eTest() {
     @Test
     fun loserWithoutWinnerShowsMessage() {
         openLastTable()
-        chooseWinner("17 - JORGE MARTIN 147")
-        chooseLoser("6 - RAUL RUIZ")
+        chooseWinner(winner)
+        chooseLoser(loser)
         typeScore("8")
         // The loser list stays closed until a winner exists, so the winner is cleared after the loser is chosen.
-        c.onAllNodes(hasText("17 - JORGE MARTIN 147") and hasClickAction()).onLast().performClick()
+        c.onAllNodes(playerOption(winner)).onLast().performClick()
         pickFromList("-")
         c.scrollListTo("A loser cannot be selected without a winner.", substring = true)
     }
@@ -193,7 +204,7 @@ class TableEditingTest : AdminE2eTest() {
     @Test
     fun completedSwitchRefusesWhileAHandIsInvalid() {
         openLastTable()
-        chooseWinner("17 - JORGE MARTIN 147")
+        chooseWinner(winner)
         tickTableCompleted()
         c.waitForText("This hand is invalid and cannot be marked as done or completed.", substring = true)
         c.clickButton("Save")
@@ -202,14 +213,15 @@ class TableEditingTest : AdminE2eTest() {
 
     @Test
     fun chickenHandAboveTwelvePointsShowsMessage() {
-        // Table 8 of round 4 has four players and no hands. Players 37 and 20 sit at it.
+        // Table 8 of round 4 has four players and no hands.
+        val players = E2eApi.tableSeats("test-live-ongoing", 4, 8)
         start(E2eAccounts.ADMIN, ready = "Logout")
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.selectTable(8)
         c.waitForText("0 of 16 hands done.")
-        chooseWinner(prefix = "37 - ")
-        chooseLoser(prefix = "20 - ")
+        chooseWinner(players[0])
+        chooseLoser(players[1])
         typeScore("13")
         val toggles = c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState))
         toggles[toggles.fetchSemanticsNodes().size - 2].performClick()

@@ -17,7 +17,9 @@ class TeamsScreenTest : AdminE2eTest() {
     @Test
     fun listShowsTeamsWithTheirFourPlayers() {
         openTeams()
-        listOf("Team ID", "Name", "Players", "Aces", "Bamboo", "Circles", "Dragons").forEach { c.waitForText(it) }
+        listOf("ID", "Name", "Players", "Aces", "Bamboo", "Circles").forEach { c.waitForText(it) }
+        // The list is lazy. The fourth team is below the screen.
+        c.scrollListTo("Dragons")
         c.waitForText("LUCIA PEREZ")
         c.waitForText("JORGE MARTIN")
     }
@@ -48,9 +50,8 @@ class TeamsScreenTest : AdminE2eTest() {
     @Test
     fun teamNamesWithSpecialCharactersAreShown() {
         openTeams("Test - Teams with missing players")
-        c.waitForText("日本チーム")
-        c.waitForText("Ünïcödé Tèam")
-        c.waitForText("Los Dragones de Madrid y Alrededores")
+        // The list is lazy, so the test scrolls to each team.
+        listOf("Los Dragones de Madrid y Alrededores", "日本チーム", "Ünïcödé Tèam").forEach { c.scrollListTo(it) }
     }
 
     @Test
