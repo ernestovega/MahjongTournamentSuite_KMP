@@ -18,7 +18,9 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCred
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.sign_in_enter_email
 import mahjongtournamentsuite.adminapp.generated.resources.sign_in_no_manager_access
@@ -64,8 +66,11 @@ fun SignInScreen(
                 is AppResult.Success -> when (val manager = authPresenter.isManager()) {
                     is AppResult.Success -> if (manager.value) {
                         saveBrowserCredentials(email.trim(), password)
-                        navController.navigate(TournamentsRoute) {
-                            popUpTo(SignInRoute) { inclusive = true }
+                        // The sign in suspends. The navigation must run on the main thread, also in the UI tests.
+                        withContext(Dispatchers.Main) {
+                            navController.navigate(TournamentsRoute) {
+                                popUpTo(SignInRoute) { inclusive = true }
+                            }
                         }
                     } else {
                         authPresenter.signOut()

@@ -220,19 +220,13 @@ fun TournamentsScreen(
             when (val result = presenter.loadPlayers(tournament.id)) {
                 is AppResult.Success -> {
                     store.upsertPlayers(tournament.id, result.value)
-                    if (result.value.any { !it.isAssigned }) {
-                        navController.navigate(
-                            TournamentRoute(
-                                tournamentId = tournament.id,
-                            ),
-                        )
-                        navController.navigate(PlayersRoute(tournamentId = tournament.id))
-                    } else {
-                        navController.navigate(
-                            TournamentRoute(
-                                tournamentId = tournament.id,
-                            ),
-                        )
+                    // The load suspends. The navigation must run on the main thread, also in the UI tests.
+                    withContext(Dispatchers.Main) {
+                        navController.navigate(TournamentRoute(tournamentId = tournament.id))
+                        // A tournament with open slots opens on its players, so that the slots get filled first.
+                        if (result.value.any { !it.isAssigned }) {
+                            navController.navigate(PlayersRoute(tournamentId = tournament.id))
+                        }
                     }
                 }
 
