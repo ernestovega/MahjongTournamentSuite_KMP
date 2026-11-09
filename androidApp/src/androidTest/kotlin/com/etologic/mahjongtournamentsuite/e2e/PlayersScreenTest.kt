@@ -16,7 +16,7 @@ class PlayersScreenTest : AdminE2eTest() {
     fun listShowsHeadersAndRows() {
         openPlayers()
         listOf("ID", "EMA number", "Country", "Photo", "Name", "Team", "Tables", "Account").forEach { c.waitForText(it) }
-        c.waitForText("LUCIA PEREZ")
+        c.waitForText("Lucia\nPEREZ")
         c.waitForText("10000055")
         c.waitForText("Aces")
     }
@@ -33,49 +33,51 @@ class PlayersScreenTest : AdminE2eTest() {
     fun searchByName() {
         openPlayers()
         c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("CARMEN GOMEZ")
-        c.waitForText("CARMEN GOMEZ")
-        c.waitForNoText("LUCIA PEREZ")
+        c.waitForText("Carmen\nGOMEZ")
+        c.waitForNoText("Lucia\nPEREZ")
     }
 
     @Test
     fun searchByEmaNumber() {
         openPlayers()
         c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("10000055")
-        c.waitForText("LUCIA PEREZ")
-        c.waitForNoText("JORGE MARTIN")
+        c.waitForText("Lucia\nPEREZ")
+        c.waitForNoText("Jorge\nMARTIN")
     }
 
     @Test
     fun searchByTeam() {
         openPlayers()
         c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("Bamboo")
-        c.waitForText("CARMEN LOPEZ 142")
-        c.waitForNoText("LUCIA PEREZ")
+        c.waitForText("Carmen\nLOPEZ 142")
+        c.waitForNoText("Lucia\nPEREZ")
     }
 
     @Test
     fun searchWithoutMatchesShowsNoRows() {
         openPlayers()
         c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("zzzzzz")
-        c.waitForNoText("LUCIA PEREZ")
-        c.waitForNoText("CARMEN GOMEZ")
+        c.waitForNoText("Lucia\nPEREZ")
+        c.waitForNoText("Carmen\nGOMEZ")
     }
 
     @Test
     fun filterByCountry() {
         openPlayers()
         c.clickButton("Filter by SUI")
-        c.waitForText("LUCIA PEREZ")
-        c.waitForNoText("JORGE MARTIN")
+        c.waitForText("Lucia\nPEREZ")
+        c.waitForNoText("Jorge\nMARTIN")
     }
 
     @Test
     fun accountColumnOffersInviteToPlayersWithoutAccountAndShowsLinkedAccounts() {
         openPlayers()
-        c.waitForText("Invite")
-        c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("10000138")
-        c.waitForText("Has account")
-        c.waitForNoText("Invite")
+        // The invitation moved to the "Player actions" menu and the Invitations dialog. The column shows the account state.
+        c.waitForText("No account")
+        c.waitForText("Player actions")
+        // A linked account shows its email under the state.
+        c.scrollListTo("Has account")
+        c.scrollListTo("@e2e.test", substring = true)
     }
 
     @Test
@@ -88,13 +90,13 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun editorCanOpenPlayersOfAssignedTournament() {
         openPlayers(account = E2eAccounts.EDITOR)
-        c.waitForText("LUCIA PEREZ")
+        c.waitForText("Lucia\nPEREZ")
     }
 
     @Test
     fun playerToolsAreInTheTopBar() {
         openPlayers()
-        listOf("ID cards", "ID list", "Invitations", "Statistics", "Back").forEach { c.waitForText(it) }
+        listOf("ID cards", "ID list", "Invitations", "Import", "Export", "Back").forEach { c.waitForText(it) }
     }
 
     @Test

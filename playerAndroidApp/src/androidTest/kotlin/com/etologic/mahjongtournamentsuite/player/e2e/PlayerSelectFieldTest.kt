@@ -12,7 +12,7 @@ import org.junit.Test
 class PlayerSelectFieldTest : PlayerE2eTest() {
     private fun openRanking() {
         start(E2eAccounts.PLAYER, ready = "My tournaments")
-        c.clickButton("Test - Live ongoing tournament")
+        c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Me")
         c.clickButton("Ranking")
         c.waitForNoText("No ranking yet")
@@ -38,11 +38,11 @@ class PlayerSelectFieldTest : PlayerE2eTest() {
     @Test
     fun fieldShowsAllNamesWithoutKeyboard() {
         openRanking()
-        val anna = count("ANNA ROSSI")
-        val luc = count("LUC DUBOIS")
+        val carmen = count("CARMEN ALVAREZ")
+        val lucia = count("LUCIA DIAZ")
         pause()
         c.onNode(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.DropdownList)).performClick()
-        c.waitUntil(5_000) { count("ANNA ROSSI") > anna && count("LUC DUBOIS") > luc }
+        c.waitUntil(5_000) { count("CARMEN ALVAREZ") > carmen && count("LUCIA DIAZ") > lucia }
         pause()
         check(!keyboardShown()) { "The keyboard must stay closed after a tap on the field." }
     }
@@ -50,13 +50,13 @@ class PlayerSelectFieldTest : PlayerE2eTest() {
     @Test
     fun searchFieldOfTheMenuFilters() {
         openRanking()
-        val anna = count("ANNA ROSSI")
-        val luc = count("LUC DUBOIS")
+        val carmen = count("CARMEN ALVAREZ")
+        val lucia = count("LUCIA DIAZ")
         c.onNode(androidx.compose.ui.test.SemanticsMatcher.expectValue(androidx.compose.ui.semantics.SemanticsProperties.Role, androidx.compose.ui.semantics.Role.DropdownList)).performClick()
-        c.waitUntil(5_000) { count("LUC DUBOIS") > luc }
+        c.waitUntil(5_000) { count("LUCIA DIAZ") > lucia }
         c.onNode(hasTestTag("select-search")).performClick()
         c.onNode(hasTestTag("select-search")).performTextInputText("luc")
-        c.waitUntil(5_000) { count("ANNA ROSSI") == anna }
+        c.waitUntil(5_000) { count("CARMEN ALVAREZ") == carmen }
         pause()
     }
 }

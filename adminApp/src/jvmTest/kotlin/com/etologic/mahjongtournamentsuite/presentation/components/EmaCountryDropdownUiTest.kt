@@ -88,6 +88,19 @@ class EmaCountryDropdownUiTest {
     }
 
     @Test
+    fun withoutACountryListAHostCountryFieldGivesTheTwoLetterCode() = runComposeUiTest {
+        var code by mutableStateOf("")
+        setContent {
+            EmaCountryDropdown(selectedCode = code, onCountrySelected = { code = it }, twoLetterCodes = true, modifier = Modifier.testTag(FIELD))
+        }
+        openField("Spain")
+        item("Spain").performClick()
+        waitForIdle()
+        assertEquals("ES", code)
+        assertEquals(1, count("Spain"))
+    }
+
+    @Test
     fun aCodeThatIsNotInTheListShowsTheCode() = runComposeUiTest {
         setContent { EmaCountryDropdown(selectedCode = "ZZZ", onCountrySelected = {}, countries = countries, modifier = Modifier.testTag(FIELD)) }
         assertEquals(1, count("ZZZ"))

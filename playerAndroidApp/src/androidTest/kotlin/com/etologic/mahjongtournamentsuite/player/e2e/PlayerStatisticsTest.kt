@@ -6,7 +6,7 @@ import org.junit.Test
 class PlayerStatisticsTest : PlayerE2eTest() {
     private fun openTournamentStatistics() {
         start(E2eAccounts.PLAYER, ready = "My tournaments")
-        c.clickButton("Test - Live ongoing tournament")
+        c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Me")
         c.clickButton("Statistics")
     }
@@ -75,7 +75,9 @@ class PlayerStatisticsTest : PlayerE2eTest() {
         openMyStatistics()
         c.scrollListTo("Totals")
         c.waitForText("Totals")
-        c.waitForText("48")
+        // The seed gives the player 6 finished tables of 16 hands.
+        listOf("Tournaments", "Tables", "Hands").forEach { c.waitForText(it) }
+        c.waitForText("96")
     }
 
     @Test

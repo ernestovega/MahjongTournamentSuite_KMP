@@ -229,6 +229,8 @@ fun TournamentPlaceFields(
                 errorMessage = countryError,
                 label = stringResource(Res.string.country),
                 required = true,
+                // The server stores the host country of a tournament with a two-letter code.
+                twoLetterCodes = true,
             )
             OutlinedTextField(
                 value = hostCity,

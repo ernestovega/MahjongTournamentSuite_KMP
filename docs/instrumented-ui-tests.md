@@ -40,7 +40,7 @@ A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The er
 
 ## Run the tests on GitHub
 
-The workflow `.github/workflows/ui-tests.yml` runs the same tests from GitHub. It runs in the pull request to `main`. You can also start it in **Actions > UI tests > Run workflow**. Pick where it runs, the app, and optionally test classes.
+The workflow `.github/workflows/ui-tests.yml` runs the same tests from GitHub. Until the apps are in production it runs only by hand, in **Actions > UI tests > Run workflow**. Pick where it runs, the app, and optionally test classes.
 In both cases the runner starts the local backend on the emulators, like `npm run e2e:backend`. No test touches the production project.
 
 ### On an emulator in the GitHub runner (default)
@@ -63,7 +63,7 @@ In both cases the runner starts the local backend on the emulators, like `npm ru
 
 ### On the pull request to main
 
-The job **UI tests** of `.github/workflows/firebase.yml` runs this workflow on the GitHub emulator for both apps. It runs at the same time as the other checks. A pull request from `develop` to `main` cannot merge until it passes.
+The pull request from `develop` to `main` does not run the UI tests until the apps are in production, because a run of both apps takes close to an hour. Run them by hand before a release that changes the apps. To run them again in the pull request, add the job `ui-tests` back to `.github/workflows/firebase.yml` (it calls this workflow with `runner: github-emulator` and `app: both`) and add it to the `needs` of **Build and test**.
 
 ## What the tests cover
 

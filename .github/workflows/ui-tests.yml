@@ -1,6 +1,7 @@
 # Runs the instrumented UI tests against the local test backend, on an emulator in the GitHub runner (free) or in
 # Firebase Test Lab (billed above the daily free quota).
-# It runs in the pull request from develop to main (firebase.yml) and by hand (Actions > UI tests > Run workflow).
+# It runs by hand (Actions > UI tests > Run workflow). The pull request from develop to main does not run it until
+# the apps are in production.
 # See docs/instrumented-ui-tests.md.
 name: UI tests
 
@@ -207,6 +208,18 @@ jobs:
             --results-history-name "$MODULE" \
             --results-dir "ui-tests/${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}/$MODULE" \
             "${targets[@]}"
+
+      # The artifacts cannot always be downloaded, so the errors of the backend and the app go to the job log too.
+      - name: Show the backend and app errors
+        if: failure() && inputs.runner == 'github-emulator'
+        run: |
+          echo "::group::Backend errors"
+          grep -aiE "E2E request refused|error|exception" "$RUNNER_TEMP/e2e-backend.log" | grep -avE "MetadataLookupWarning|trace-warnings" | tail -n 300 || true
+          echo "::endgroup::"
+          echo "::group::App errors"
+          # The app logs with its own tag. The exception of a warning follows on the next lines with the same tag.
+          grep -aE "/MahjongTournamentSuite|AndroidRuntime" build/e2e-logcat.txt | grep -avE " [DIV]/" | tail -n 400 || true
+          echo "::endgroup::"
 
       # Test Lab keeps its own results, videos and screenshots in the Firebase console.
       - name: Upload the results

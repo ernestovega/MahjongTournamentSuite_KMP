@@ -13,7 +13,9 @@ class TableStatesTest : AdminE2eTest() {
 
     @Test
     fun penaltiesAreExplainedInTheScoreCheck() {
-        open("Test - One table left, broken logo, chicken hands off")
+        // Table 1 of round 1 of this tournament has the "penalties" style of the seed.
+        open("Test - Draws and penalties")
+        c.selectTable(1)
         c.waitForText("rather than 0, but this matches the penalties.", substring = true)
         c.waitForText("has a penalty of", substring = true)
     }
@@ -37,7 +39,14 @@ class TableStatesTest : AdminE2eTest() {
     fun totalsTableWithValidSumShowsATick() {
         open("Test - Tables with only totals")
         c.waitForText("Manual scores")
-        c.waitForText("The four scores add up to 0.")
+        // The seed draws random hands, and some of them carry penalties. The test looks for a table of round 1 whose
+        // scores add up to 0.
+        val tick = "The four scores add up to 0."
+        val found = (1..4).any { table ->
+            c.selectTable(table)
+            runCatching { c.waitForText(tick, timeoutMs = 5_000) }.isSuccess
+        }
+        check(found) { "No table of round 1 shows \"$tick\"" }
     }
 
     @Test

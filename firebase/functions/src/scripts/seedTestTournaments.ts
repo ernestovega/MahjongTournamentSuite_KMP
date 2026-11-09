@@ -971,7 +971,10 @@ function buildTable(params: {
     table = withScores(table, totals == null ? ["", "", "", ""] : totals.map(String));
     version = Math.max(1, mode.done);
   } else if (mode.kind === "totals") {
-    const scores = sumChanges(randomTable(strength, rng, HANDS_PER_TABLE)).map(String);
+    // Typed totals add up to 0 unless the mode asks for a bad sum. A penalty would break the sum, so the hands of a
+    // totals table carry none.
+    const hands = randomTable(strength, rng, HANDS_PER_TABLE).map((hand) => ({ ...hand, penalties: [0, 0, 0, 0] as SeatNumbers }));
+    const scores = sumChanges(hands).map(String);
     if (mode.badSum) scores[0] = String(Number(scores[0]) + 7);
     table = {
       ...table,

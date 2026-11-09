@@ -48,7 +48,7 @@ class SelectFieldsTest : AdminE2eTest() {
         c.clickButton("Venue")
         val spain = count("Spain")
         pause()
-        c.selectField("Host country").performClick()
+        c.selectField("Country").performClick()
         c.waitUntil(5_000) { count("Spain") > spain && count("Italy") > 0 }
         pause()
         check(!keyboardShown()) { "The keyboard must stay closed after a tap on the field." }
@@ -59,7 +59,7 @@ class SelectFieldsTest : AdminE2eTest() {
         openForm()
         c.clickButton("Venue")
         val italy = count("Italy")
-        c.selectField("Host country").performClick()
+        c.selectField("Country").performClick()
         c.waitUntil(5_000) { count("Italy") > italy }
         val spain = count("Spain")
         c.onNode(androidx.compose.ui.test.hasTestTag("select-search")).performClick()
