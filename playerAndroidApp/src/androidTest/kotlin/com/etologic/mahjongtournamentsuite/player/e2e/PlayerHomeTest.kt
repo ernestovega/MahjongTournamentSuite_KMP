@@ -1,5 +1,11 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.performClick
 import org.junit.Test
 
 class PlayerHomeTest : PlayerE2eTest() {
@@ -22,10 +28,11 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("Open directions in Google Maps")
     }
 
+    /** The place of the player is a tag at the top right of the card, read out as "Position N". */
     @Test
     fun cardShowsThePlayerPlace() {
         home(E2eAccounts.PLAYER)
-        c.waitForText("Place")
+        c.waitForText("Position ", substring = true)
     }
 
     @Test
@@ -68,18 +75,25 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.assertNoText("Test - Minimum 16 players")
     }
 
+    /** The theme is chosen in the profile, which opens from the Profile button of the top bar. */
     @Test
-    fun themeButtonChangesTheTheme() {
+    fun themeChoiceInTheProfileChangesTheTheme() {
         home(E2eAccounts.PLAYER)
-        c.waitForText("Theme: System")
-        c.clickButton("Theme: System")
-        c.waitForText("Theme: Light")
+        c.clickButton("Profile")
+        c.waitForText("Theme")
+        val light = hasContentDescription("Light") and hasClickAction()
+        c.waitUntil(5_000) { c.onAllNodes(light).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(light).onLast().assertIsNotSelected()
+        c.onAllNodes(light).onLast().performClick()
+        c.onAllNodes(light).onLast().assertIsSelected()
     }
 
+    /** The Logout button is in the profile. */
     @Test
     fun signOutReturnsToSignIn() {
         home(E2eAccounts.PLAYER)
-        c.clickButton("Sign out")
+        c.clickButton("Profile")
+        c.clickButton("Logout")
         c.waitForText("Do you want to sign out?")
         c.clickButton("Yes, sign out")
         c.waitForText("Sign in")

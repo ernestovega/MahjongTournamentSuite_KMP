@@ -5,7 +5,7 @@ import org.junit.Test
 class PlayerTournamentTest : PlayerE2eTest() {
     private fun open(email: String = E2eAccounts.PLAYER) {
         start(email, ready = "My tournaments")
-        c.clickButton("Test - Live ongoing tournament")
+        c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Me")
     }
 

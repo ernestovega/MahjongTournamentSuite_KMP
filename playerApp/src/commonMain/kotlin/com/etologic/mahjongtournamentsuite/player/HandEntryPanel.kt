@@ -163,7 +163,13 @@ fun HandEntryPanel(
     val mine = view.mySlotId
     val seats = table.seatIds()
     // Only a player of the table can write for it. A table takes hands only while it is ongoing.
-    if (mine == null || mine !in table.table.playerIds || table.isComplete) return
+    if (mine == null || mine !in table.table.playerIds) return
+    if (table.isComplete) {
+        // The app closes a table with hands left when its time is over. The player learns why the buttons are gone.
+        val closedByTime = table.doneHands < table.hands.size && view.matchPhaseOf(table.roundId, now) == MatchPhase.OVER
+        if (closedByTime) Text(stringResource(Res.string.entry_time_over), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
     val seatsAssigned = seats.none { it == null }
     val seatIds = seats.filterNotNull()
 
