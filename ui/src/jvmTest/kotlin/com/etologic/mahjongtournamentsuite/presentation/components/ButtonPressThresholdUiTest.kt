@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.test.ComposeUiTest
@@ -17,10 +18,13 @@ import androidx.compose.ui.test.runComposeUiTest
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TestTimeSource
 
 /**
  * Every kind of button ignores a second press within 500 ms, so a double click cannot run an action twice,
- * and takes a press again after that time.
+ * and takes a press again after that time. The buttons read a test clock that only the test moves, so the
+ * time that the presses take on a slow machine does not count.
  */
 @OptIn(ExperimentalTestApi::class)
 class ButtonPressThresholdUiTest {
@@ -28,14 +32,15 @@ class ButtonPressThresholdUiTest {
 
     private fun ComposeUiTest.assertThreshold(button: @Composable (onClick: () -> Unit) -> Unit) {
         var presses = 0
-        setContent { MtsTheme(useDarkTheme = false) { button { presses += 1 } } }
+        val clock = TestTimeSource()
+        setContent { CompositionLocalProvider(LocalPressTimeSource provides clock) { MtsTheme(useDarkTheme = false) { button { presses += 1 } } } }
 
         onNodeWithTag(tag).performClick()
         onNodeWithTag(tag).performClick()
         onNodeWithTag(tag).performClick()
         assertEquals(1, presses, "A fast double or triple press counts once.")
 
-        Thread.sleep(600)
+        clock += 600.milliseconds
         onNodeWithTag(tag).performClick()
         assertEquals(2, presses, "A press after the threshold counts.")
     }
@@ -71,13 +76,14 @@ class ButtonPressThresholdUiTest {
         ).forEachIndexed { index, button ->
             runComposeUiTest {
                 var presses = 0
-                setContent { MtsTheme(useDarkTheme = false) { button { presses += 1 } } }
+                val clock = TestTimeSource()
+                setContent { CompositionLocalProvider(LocalPressTimeSource provides clock) { MtsTheme(useDarkTheme = false) { button { presses += 1 } } } }
                 val node = if (index == 0) onNodeWithText("Go") else onNodeWithContentDescription("Go")
 
                 node.performClick()
                 node.performClick()
                 assertEquals(1, presses)
-                Thread.sleep(600)
+                clock += 600.milliseconds
                 node.performClick()
                 assertEquals(2, presses)
             }

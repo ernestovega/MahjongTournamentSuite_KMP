@@ -1,4 +1,5 @@
-# Runs every test on the pull request from develop to main and deploys Firebase when main changes.
+# Runs every test on the pull request from develop to main. When main changes, deploys Firebase and publishes the
+# Android apps that have a new version code on Google Play (docs/android-release.md).
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
 # The name says what it does, not where: the tests run in GitHub runners, only the deploy goes to Firebase.
 name: Tests and deploy
@@ -123,6 +124,7 @@ jobs:
       - name: Test scripts and start diagnostics
         run: |
           node --test scripts/recovery.test.mjs
+          python3 -m unittest discover -s scripts -p "*_test.py"
           node --test playerApp/diagnostics-test/*.test.mjs
 
   web:
@@ -212,3 +214,92 @@ jobs:
           --project "$FIREBASE_PROJECT"
           --non-interactive
           --force
+
+  # Runs next to the Firebase deploy. Setup of Google Play and the upload keystores: docs/android-release.md.
+  play:
+    name: Publish to Google Play
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      # Repository variables can change the track or the status. See docs/android-release.md.
+      PLAY_TRACK: ${{ vars.PLAY_TRACK || 'internal' }}
+      PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'completed' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install the Google Play client
+        run: pip install --quiet google-auth google-api-python-client
+
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      # Only an app whose version code is not on Google Play yet is built and uploaded.
+      - name: Find the apps with a new version
+        id: pending
+        run: python3 scripts/play.py pending
+
+      - uses: actions/setup-java@v4
+        if: steps.pending.outputs.admin == 'true' || steps.pending.outputs.player == 'true'
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+        if: steps.pending.outputs.admin == 'true' || steps.pending.outputs.player == 'true'
+
+      # The upload keystores come from secrets of the environment "production". The build reads them through the
+      # variables MTS_ADMIN_SIGNING_* and MTS_PLAYER_SIGNING_*.
+      - name: Build the admin app
+        if: steps.pending.outputs.admin == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MTS_ADMIN_UPLOAD_KEYSTORE_BASE64 }}
+          MTS_ADMIN_SIGNING_STORE_PASSWORD: ${{ secrets.MTS_ADMIN_UPLOAD_STORE_PASSWORD }}
+          MTS_ADMIN_SIGNING_KEY_PASSWORD: ${{ secrets.MTS_ADMIN_UPLOAD_KEY_PASSWORD }}
+          MTS_ADMIN_SIGNING_KEY_ALIAS: ${{ secrets.MTS_ADMIN_UPLOAD_KEY_ALIAS || 'upload' }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$MTS_ADMIN_SIGNING_STORE_PASSWORD" ]; then
+            echo "::error::The admin upload keystore secrets are missing. See docs/android-release.md."
+            exit 1
+          fi
+          export MTS_ADMIN_SIGNING_STORE_FILE="$RUNNER_TEMP/mts-admin-upload.jks"
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$MTS_ADMIN_SIGNING_STORE_FILE"
+          ./gradlew :androidApp:bundleRelease
+
+      - name: Build the player app
+        if: steps.pending.outputs.player == 'true'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.MTS_PLAYER_UPLOAD_KEYSTORE_BASE64 }}
+          MTS_PLAYER_SIGNING_STORE_PASSWORD: ${{ secrets.MTS_PLAYER_UPLOAD_STORE_PASSWORD }}
+          MTS_PLAYER_SIGNING_KEY_PASSWORD: ${{ secrets.MTS_PLAYER_UPLOAD_KEY_PASSWORD }}
+          MTS_PLAYER_SIGNING_KEY_ALIAS: ${{ secrets.MTS_PLAYER_UPLOAD_KEY_ALIAS || 'upload' }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$MTS_PLAYER_SIGNING_STORE_PASSWORD" ]; then
+            echo "::error::The player upload keystore secrets are missing. See docs/android-release.md."
+            exit 1
+          fi
+          export MTS_PLAYER_SIGNING_STORE_FILE="$RUNNER_TEMP/mts-player-upload.jks"
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$MTS_PLAYER_SIGNING_STORE_FILE"
+          ./gradlew :playerAndroidApp:bundleRelease
+
+      - name: Upload the admin app
+        if: steps.pending.outputs.admin == 'true'
+        run: python3 scripts/play.py upload admin androidApp/build/outputs/bundle/release/*.aab
+
+      - name: Upload the player app
+        if: steps.pending.outputs.player == 'true'
+        run: python3 scripts/play.py upload player playerAndroidApp/build/outputs/bundle/release/*.aab
+
+      - name: Remove the keystores
+        if: always()
+        run: rm -f "$RUNNER_TEMP"/mts-*-upload.jks

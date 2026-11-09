@@ -133,8 +133,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.withTimeoutOrNull
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -747,13 +746,17 @@ private fun rememberTournamentView(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(tournamentId, reloadKey, tableRoundId) {
         // Only the first load after a manual reload reads everything again. The later checks ask for changes only.
-        var forceNext = reloadKey > 0
-        while (true) {
-            // A hidden tab or an app in the background does not check the server. The checks go on when it returns.
-            lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.STARTED) }
-            val mode = if (forceNext) RefreshMode.FORCE else RefreshMode.IF_CHANGED
-            forceNext = false
-            when (val result = presenter.load(tournamentId, mode)) {
+        // A hidden tab or an app in the background does not check the server. The checks go on when it returns.
+        pollForChanges(
+            isStarted = lifecycle.currentStateFlow.map { it.isAtLeast(Lifecycle.State.STARTED) },
+            forceFirst = reloadKey > 0,
+            load = { mode -> presenter.load(tournamentId, mode) },
+            nextDelay = {
+                val tournament = view?.tournament
+                PollSchedule.nextDelay(tournament, tableRoundId, tournament?.currentVenueDateTime() ?: currentLocalDateTime())
+            },
+        ) { result ->
+            when (result) {
                 is AppResult.Success -> {
                     view = result.value
                     message = null
@@ -768,12 +771,6 @@ private fun rememberTournamentView(
                         message = UiText.of(Res.string.data_stale, lastUpdate.elapsedNow().toAgeText())
                     }
                 }
-            }
-            val tournament = view?.tournament
-            val wait = PollSchedule.nextDelay(tournament, tableRoundId, tournament?.currentVenueDateTime() ?: currentLocalDateTime())
-            // Waits for the next check. Going to the background ends the wait, so the return checks at once.
-            withTimeoutOrNull(wait ?: Duration.INFINITE) {
-                lifecycle.currentStateFlow.first { !it.isAtLeast(Lifecycle.State.STARTED) }
             }
         }
     }

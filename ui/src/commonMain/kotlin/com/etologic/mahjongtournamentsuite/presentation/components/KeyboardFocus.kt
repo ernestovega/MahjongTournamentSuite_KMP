@@ -59,15 +59,19 @@ private val ButtonPressThreshold = 500.milliseconds
 /** Controls buttons in the current app screen. The back button is outside this scope. */
 val LocalAppButtonsEnabled = staticCompositionLocalOf { true }
 
+/** The clock of the press threshold. Tests give a clock that they move by hand, so a slow machine cannot change the result. */
+val LocalPressTimeSource = staticCompositionLocalOf<TimeSource> { TimeSource.Monotonic }
+
 @Composable
 internal fun rememberThresholdOnClick(onClick: () -> Unit): () -> Unit {
     val currentOnClick by rememberUpdatedState(onClick)
-    return remember {
+    val timeSource = LocalPressTimeSource.current
+    return remember(timeSource) {
         var lastPress: TimeMark? = null
         {
             val previousPress = lastPress
             if (previousPress == null || previousPress.elapsedNow() >= ButtonPressThreshold) {
-                lastPress = TimeSource.Monotonic.markNow()
+                lastPress = timeSource.markNow()
                 currentOnClick()
             }
         }
