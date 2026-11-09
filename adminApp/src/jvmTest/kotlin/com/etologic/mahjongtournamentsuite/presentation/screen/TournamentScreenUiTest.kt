@@ -44,6 +44,13 @@ import kotlin.test.assertTrue
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 import kotlin.time.TestTimeSource
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 
 /**
  * Drives the real tournament screen with a fake server. The virtual clock of the test moves the polling,
@@ -125,8 +132,16 @@ private class ScreenHarness(private val role: GlobalUserRole? = null) {
     }
 }
 
-@OptIn(ExperimentalTestApi::class)
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 class TournamentScreenUiTest {
+    // The screen goes back to the main thread before it navigates after a save. The JVM tests have no UI thread of
+    // their own, so the main dispatcher runs the work right away.
+    @BeforeTest
+    fun useATestMainDispatcher() = Dispatchers.setMain(UnconfinedTestDispatcher())
+
+    @AfterTest
+    fun resetTheMainDispatcher() = Dispatchers.resetMain()
+
     @Test
     fun theScreenLoadsTheFirstTableOfTheRound() = runComposeUiTest {
         with(ScreenHarness()) {
