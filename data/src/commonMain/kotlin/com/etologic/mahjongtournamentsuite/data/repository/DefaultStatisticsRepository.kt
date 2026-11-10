@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.data.repository
 
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
+import com.etologic.mahjongtournamentsuite.data.backend.PUBLIC_TOKEN
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DigestResultDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -21,6 +22,11 @@ class DefaultStatisticsRepository(
     private val backendApi: FunctionsBackendApi,
     private val authRepository: AuthRepository,
     private val logger: Logger,
+    /**
+     * The player app reads the statistics through the public routes, with or without an account. A public read needs
+     * the EMA number of the person: it has no "me".
+     */
+    private val publicReads: Boolean = false,
 ) : StatisticsRepository {
     override suspend fun loadOverview(): AppResult<StatisticsOverview> =
         request("Loading the statistics overview") { idToken ->
@@ -57,6 +63,7 @@ class DefaultStatisticsRepository(
 
     override suspend fun loadPerson(emaId: String?): AppResult<List<PersonTournamentDigest>> =
         request("Loading the person statistics") { idToken ->
+            check(!publicReads || emaId != null) { "A public read needs the EMA number" }
             backendApi.personStatistics(idToken, emaId).tournaments.map { tournament ->
                 PersonTournamentDigest(
                     tournamentId = tournament.tournamentId,
@@ -67,6 +74,7 @@ class DefaultStatisticsRepository(
 
     override suspend fun loadStandings(emaId: String?, tournamentIds: List<String>): AppResult<Map<String, Standing>> =
         request("Loading the standings") { idToken ->
+            check(!publicReads || emaId != null) { "A public read needs the EMA number" }
             if (tournamentIds.isEmpty()) {
                 emptyMap()
             } else {
@@ -76,7 +84,7 @@ class DefaultStatisticsRepository(
         }
 
     private suspend fun <T> request(action: String, block: suspend (String) -> T): AppResult<T> = runCatching {
-        authRepository.withFreshIdToken(block)
+        if (publicReads) block(PUBLIC_TOKEN) else authRepository.withFreshIdToken(block)
     }.fold(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->

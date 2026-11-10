@@ -77,6 +77,8 @@ fun SignInForm(
     onForgotPassword: () -> Unit,
     onErrorDismiss: () -> Unit,
     description: String = stringResource(Res.string.sign_in_description),
+    /** Set when the sign-in is optional: the back button returns to the screen that asked for it. */
+    onBack: (() -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val passwordRequester = remember { FocusRequester() }
@@ -89,6 +91,7 @@ fun SignInForm(
         autoFocusFirst = false,
         showBackgroundLogo = false,
         leadingActions = { AppTopBarLeadingActions(showThemeToggle = true) },
+        onBack = onBack,
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             ScreenColumn(

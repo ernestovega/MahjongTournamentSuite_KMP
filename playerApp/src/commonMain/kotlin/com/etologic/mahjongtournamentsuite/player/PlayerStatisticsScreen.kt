@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -119,10 +120,13 @@ private fun ReportLoading(loading: Boolean, onChange: (Boolean) -> Unit) {
 @Composable
 fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
+    val session = koinInject<PlayerSessionPresenter>()
+    // Without an account there are no own statistics. Everything else is public.
+    val signedIn by produceState(true) { value = session.hasSession() }
     val hasTournament = route.tournamentId != null
     val scopes = buildList {
-        add(StatisticsScope.PERSON)
-        add(StatisticsScope.PERSON_TOURNAMENTS)
+        if (signedIn) add(StatisticsScope.PERSON)
+        if (signedIn) add(StatisticsScope.PERSON_TOURNAMENTS)
         if (hasTournament) add(StatisticsScope.TOURNAMENT)
         if (hasTournament) add(StatisticsScope.PLAYER)
     }
@@ -132,6 +136,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
         mutableStateOf(scopes.firstOrNull { it.name == scopeName } ?: StatisticsScope.PERSON)
     }
     LaunchedEffect(scope) { scopeName = scope.name }
+    LaunchedEffect(scopes) { if (scope !in scopes) scopes.firstOrNull()?.let { scope = it } }
     var person by remember { mutableStateOf<PersonStatisticsData?>(null) }
     var tournament by remember { mutableStateOf<TournamentStatisticsData?>(null) }
     var mySlotId by remember { mutableStateOf<Int?>(null) }
@@ -149,7 +154,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     // The tournament shows as soon as it is ready. "My statistics" loads at the same time.
     LaunchedEffect(route.tournamentId) {
         coroutineScope {
-            val personRequest = async { presenter.me() }
+            val personRequest = async { if (session.hasSession()) presenter.me() else null }
             route.tournamentId?.let { id ->
                 when (val result = presenter.tournament(id)) {
                     is AppResult.Success -> tournament = result.value
@@ -158,6 +163,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                 tournamentFinished = true
             }
             when (val result = personRequest.await()) {
+                null -> Unit
                 is AppResult.Success -> {
                     person = result.value
                     mySlotId = tournament?.slots.orEmpty().firstOrNull { it.assignedEmaId == result.value.emaId }?.id
@@ -432,15 +438,23 @@ private val StatisticsTabWidth = 260.dp
 @Composable
 fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
+    val session = koinInject<PlayerSessionPresenter>()
     var person by remember { mutableStateOf<PersonStatisticsData?>(null) }
     var message by remember { mutableStateOf<UiText?>(null) }
     var finished by remember { mutableStateOf(false) }
     var othersLoading by remember { mutableStateOf(false) }
-    val tabs = MyStatisticsKind.entries
+    // Without an account only "Others" is there: anyone can look at the statistics of any player.
+    var signedIn by remember { mutableStateOf(true) }
+    val tabs = if (signedIn) MyStatisticsKind.entries else listOf(MyStatisticsKind.OTHERS)
     var tabName by rememberPersistentText("my-statistics-tab", MyStatisticsKind.ME.name)
-    val tab = tabs.firstOrNull { it.name == tabName } ?: MyStatisticsKind.ME
+    val tab = tabs.firstOrNull { it.name == tabName } ?: tabs.first()
     var otherEma by rememberPersistentText("others-player", null)
     LaunchedEffect(Unit) {
+        signedIn = session.hasSession()
+        if (!signedIn) {
+            finished = true
+            return@LaunchedEffect
+        }
         when (val result = presenter.me()) {
             is AppResult.Success -> person = result.value
             is AppResult.Failure -> message = result.error.toUiText()
@@ -614,14 +628,14 @@ private fun OthersStatistics(
                 when (view) {
                     OthersView.BY_TOURNAMENTS -> PlayerTournamentsSection(
                         loaded.tournaments,
-                        loadStandings = { ids -> presenter.standings(loaded.emaId, ids, own = false) },
+                        loadStandings = { ids -> presenter.standings(loaded.emaId, ids) },
                     )
                     OthersView.OVERALL -> PlayerStatisticsPanel(
                         loaded.overall,
                         tournaments = loaded.tournaments.map { it.first },
                         rivalNames = loaded.rivalNames,
                         onOpenRival = onEmaIdChange,
-                        loadStandings = { ids -> presenter.standings(loaded.emaId, ids, own = false) },
+                        loadStandings = { ids -> presenter.standings(loaded.emaId, ids) },
                     )
                 }
             }

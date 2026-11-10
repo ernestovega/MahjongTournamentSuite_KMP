@@ -16,6 +16,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.IdCardProofRequestDt
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUserDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ManagedUsersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.MembersResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.MyTournamentsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.OkResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PasswordResetsRequestDto
@@ -86,6 +87,26 @@ class FunctionsBackendApi(
 ) {
     private fun url(path: String): String = apiConfiguration.baseUrl.trimEnd('/') + path
 
+    /**
+     * The URL of a read. A read with [PUBLIC_TOKEN] goes to the public route of the same data, which needs no account
+     * and never shows emails or accounts.
+     */
+    private fun readUrl(path: String, idToken: String?): String = url(if (idToken == PUBLIC_TOKEN) publicPath(path) else path)
+
+    private fun publicPath(path: String): String = when {
+        path == "/tournaments" || path.startsWith("/tournaments?") -> "/public/tournaments"
+        path.startsWith("/tournaments/statistics/") -> "/public/statistics/" + path.removePrefix("/tournaments/statistics/")
+        path == "/ema-player-registry" -> "/public/players"
+        else -> "/public$path"
+    }
+
+    private fun io.ktor.client.request.HttpRequestBuilder.bearer(idToken: String?) {
+        if (!idToken.isNullOrEmpty()) header(HttpHeaders.Authorization, "Bearer $idToken")
+    }
+
+    /** The EMA number of the signed-in account, and its slot and team in each tournament. */
+    suspend fun myTournaments(idToken: String): MyTournamentsResponseDto = get(path = "/me", idToken = idToken)
+
     suspend fun featureFlags(): FeatureFlagsDto = get(path = "/config")
 
     suspend fun signIn(request: SignInRequestDto): SignInResponseDto = post(path = "/auth/signIn", requestBody = request)
@@ -118,8 +139,8 @@ class FunctionsBackendApi(
     suspend fun personStatistics(idToken: String, emaId: String?): PersonStatisticsDto = get(path = "/tournaments/statistics/${statisticsOwner(emaId)}", idToken = idToken)
 
     suspend fun personStandings(idToken: String, emaId: String?, tournamentIds: List<String>): StandingsResponseDto {
-        val response = httpClient.get(url("/tournaments/statistics/${statisticsOwner(emaId)}/standings")) {
-            header(HttpHeaders.Authorization, "Bearer $idToken")
+        val response = httpClient.get(readUrl("/tournaments/statistics/${statisticsOwner(emaId)}/standings", idToken)) {
+            bearer(idToken)
             parameter("tournaments", tournamentIds.joinToString(","))
         }
         return response.requireSuccessBody()
@@ -535,8 +556,8 @@ class FunctionsBackendApi(
         tournamentId: String,
         roundId: Int? = null,
     ): TournamentTablesResponseDto {
-        val response = httpClient.get(url("/tournaments/$tournamentId/tables")) {
-            header(HttpHeaders.Authorization, "Bearer $idToken")
+        val response = httpClient.get(readUrl("/tournaments/$tournamentId/tables", idToken)) {
+            bearer(idToken)
             if (roundId != null) parameter("roundId", roundId)
         }
         return response.requireSuccessBody()
@@ -586,10 +607,8 @@ class FunctionsBackendApi(
         path: String,
         idToken: String? = null,
     ): TResponse {
-        val response = httpClient.get(url(path)) {
-            if (idToken != null) {
-                header(HttpHeaders.Authorization, "Bearer $idToken")
-            }
+        val response = httpClient.get(readUrl(path, idToken)) {
+            bearer(idToken)
         }
         return response.requireSuccessBody()
     }
@@ -632,6 +651,9 @@ class FunctionsBackendApi(
 }
 
 /** The server accepts at most 200 entries in one page. The app reads the next page until none is left. */
+/** The token of a read without an account. Such a read goes to the public routes. */
+const val PUBLIC_TOKEN = ""
+
 private const val ERROR_PAGE_SIZE = 200
 private const val ERROR_REPORTS_PAGE_SIZE = 50
 

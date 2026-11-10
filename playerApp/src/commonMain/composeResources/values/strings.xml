@@ -160,4 +160,17 @@
     <string name="progress_tables_label">Tables</string>
     <string name="progress_ongoing_label">Ongoing</string>
     <string name="tab_stats">Stats</string>
+    <string name="menu_sign_in">Sign in</string>
+    <string name="tournaments_title">Tournaments</string>
+    <string name="tournaments_no_match">No tournament matches the filters.</string>
+    <string name="tournament_you_play">You play in this tournament</string>
+    <string name="table_sign_in_to_enter_hands">Sign in to write down the hands of your table</string>
+    <string name="filter_search">Search by name, city or venue</string>
+    <string name="filter_individual">Individual</string>
+    <string name="filter_teams">Teams</string>
+    <string name="filter_country">Country</string>
+    <string name="filter_all_countries">All countries</string>
+    <string name="filter_year">Year</string>
+    <string name="filter_all_years">All years</string>
+    <string name="filter_clear">Clear filters</string>
 </resources>

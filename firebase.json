@@ -202,6 +202,15 @@
           ]
         },
         {
+          "source": "/t/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
           "source": "**/*.js",
           "headers": [
             {

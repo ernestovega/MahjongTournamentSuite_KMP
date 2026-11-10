@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.Login
+import androidx.compose.runtime.LaunchedEffect
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,6 +19,7 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.menu_profile
+import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
 import org.jetbrains.compose.resources.stringResource
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
@@ -36,6 +39,8 @@ class AccountActions(
     private var profile by mutableStateOf<UserProfile?>(null)
     private var error by mutableStateOf<UiText?>(null)
     private var confirmingSignOut by mutableStateOf(false)
+    /** Null until the session is known. Without an account the button opens the sign-in. */
+    private var signedIn by mutableStateOf<Boolean?>(null)
 
     private fun openProfile() {
         scope.launch {
@@ -46,10 +51,22 @@ class AccountActions(
         }
     }
 
-    /** The Profile button left of the title. The Exit button is inside the profile dialog. */
+    /**
+     * The Profile button left of the title. The Exit button is inside the profile dialog.
+     * Without an account it is the Sign in button: everything can be read without one.
+     */
     @Composable
     fun Buttons() {
-        AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
+        LaunchedEffect(Unit) { signedIn = session.hasSession() }
+        when (signedIn) {
+            null -> Unit
+            true -> AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
+            false -> AppTopBarButton(
+                text = stringResource(Res.string.menu_sign_in),
+                icon = Icons.AutoMirrored.Filled.Login,
+                onClick = { navController.navigate(SignInRoute()) },
+            )
+        }
     }
 
     @Composable
@@ -60,7 +77,8 @@ class AccountActions(
                     confirmingSignOut = false
                     scope.launch {
                         session.signOut()
-                        navController.navigate(SignInRoute()) { popUpTo(0) }
+                        // The same screens stay open, now without the own player.
+                        navController.reopen(navController.openRoutes())
                     }
                 },
                 onDismiss = { confirmingSignOut = false },

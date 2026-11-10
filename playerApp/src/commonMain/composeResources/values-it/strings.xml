@@ -160,4 +160,17 @@
     <string name="progress_tables_label">Tavoli</string>
     <string name="progress_ongoing_label">In corso</string>
     <string name="tab_stats">Stat.</string>
+    <string name="menu_sign_in">Accedi</string>
+    <string name="tournaments_title">Tornei</string>
+    <string name="tournaments_no_match">Nessun torneo corrisponde ai filtri.</string>
+    <string name="tournament_you_play">Giochi in questo torneo</string>
+    <string name="table_sign_in_to_enter_hands">Accedi per segnare le mani del tuo tavolo</string>
+    <string name="filter_search">Cerca per nome, città o sede</string>
+    <string name="filter_individual">Individuale</string>
+    <string name="filter_teams">A squadre</string>
+    <string name="filter_country">Paese</string>
+    <string name="filter_all_countries">Tutti i paesi</string>
+    <string name="filter_year">Anno</string>
+    <string name="filter_all_years">Tutti gli anni</string>
+    <string name="filter_clear">Rimuovi filtri</string>
 </resources>

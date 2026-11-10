@@ -16,3 +16,17 @@ data class DataVersionsManifestDto(
     /** Exact version of each saved table. The key is `<roundId>_<tableId>`. Only tournaments have it. */
     val tableVersions: Map<String, Long> = emptyMap(),
 )
+
+/** The answer of `GET /me`: who the signed-in account is in the tournaments. */
+@Serializable
+data class MyTournamentsResponseDto(
+    val emaId: String = "",
+    val tournaments: List<MyTournamentSlotDto> = emptyList(),
+)
+
+@Serializable
+data class MyTournamentSlotDto(
+    val tournamentId: String,
+    val playerId: Int,
+    val teamId: Int = 0,
+)

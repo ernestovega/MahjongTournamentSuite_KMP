@@ -21,6 +21,15 @@ import com.etologic.mahjongtournamentsuite.data.di.dataModule
 import com.etologic.mahjongtournamentsuite.data.di.telemetry
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.data.repository.DefaultTournamentRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultStatisticsRepository
+import com.etologic.mahjongtournamentsuite.data.repository.DefaultPlayerHandRepository
+import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
+import com.etologic.mahjongtournamentsuite.data.cache.SessionRepositoryCache
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerHandRepository
+import org.koin.core.qualifier.named
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
@@ -79,11 +88,18 @@ data class StatisticsRoute(
     val slotId: Int? = null,
 )
 
+/** The cache of the public answers. They are the same for everyone, so signing in or out keeps them. */
+private val PublicCache = named("publicCache")
+
 private val playerModule = module {
-    // In the player app every account is a player, so the list holds only the tournaments where it plays.
+    // Everyone reads every public tournament without an account. The account only writes hands and marks the own player.
+    single<RepositoryCache>(PublicCache) { SessionRepositoryCache(logger = get(), persisted = get()) }
     single<TournamentRepository> {
-        DefaultTournamentRepository(get(), get(), get(), get(), get(), playerScope = true, persisted = get())
+        DefaultTournamentRepository(get(), get(), get(), get(PublicCache), get(), persisted = get(), publicReads = true)
     }
+    single<PlayerRepository> { DefaultPlayerRepository(get(), get(), get(), get(PublicCache), publicReads = true) }
+    single<StatisticsRepository> { DefaultStatisticsRepository(get(), get(), get(), publicReads = true) }
+    single<PlayerHandRepository> { DefaultPlayerHandRepository(get(), get(), get(), get(PublicCache)) }
     factory { PlayerSessionPresenter(get(), get(), telemetry()) }
     factory { CalculateTournamentRankingsUseCase() }
     factory { CalculateStatisticsUseCase() }

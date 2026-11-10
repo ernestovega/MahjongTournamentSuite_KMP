@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavGraph
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.toRoute
@@ -83,4 +84,19 @@ internal class RoutePersistence(private val storage: SessionStateStorage) {
     private companion object {
         const val STORAGE_NAME = "routes"
     }
+}
+
+/** The screens of the back stack that can open again, from the bottom to the top. Sign-in and splash are left out. */
+internal fun NavHostController.openRoutes(): List<Any> = currentBackStack.value
+    .filter { it.destination !is NavGraph }
+    .mapNotNull { entry -> savedKinds.firstNotNullOfOrNull { kind -> kind.read(entry) } }
+
+/**
+ * Opens [routes] again from scratch, with the tournament list at the bottom. After a sign-in or a sign-out the screens
+ * load again, so they mark the own player of the new account, or nobody.
+ */
+internal fun NavHostController.reopen(routes: List<Any>) {
+    val stack = routes.dropWhile { it == TournamentsRoute }
+    navigate(TournamentsRoute) { popUpTo(0) { inclusive = true } }
+    stack.forEach { navigate(it) }
 }

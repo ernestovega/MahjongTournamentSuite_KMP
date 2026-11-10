@@ -41,6 +41,8 @@ import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
@@ -125,6 +127,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
@@ -168,7 +171,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
 import mahjongtournamentsuite.playerapp.generated.resources.round_n
 import mahjongtournamentsuite.playerapp.generated.resources.schedule_hide
 import mahjongtournamentsuite.playerapp.generated.resources.scope_me
-import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
 import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
@@ -207,6 +209,11 @@ import mahjongtournamentsuite.playerapp.generated.resources.team_show_players
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_logo_of
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.tournaments_title
+import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_you_play
+import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
+import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -223,22 +230,16 @@ fun SplashScreen(
     /** The screens that were open before a page refresh, from the first to the last. */
     restoredRoutes: List<Any> = emptyList(),
 ) {
-    val presenter = koinInject<PlayerSessionPresenter>()
     LaunchedEffect(Unit) {
-        val next: Any = when {
-            presenter.hasSession() -> TournamentsRoute
-            else -> SignInRoute(openTournamentId = openTournamentId)
-        }
-        navController.navigate(next) { popUpTo(SplashRoute) { inclusive = true } }
-        if (next == TournamentsRoute) {
-            val restored = restoredRoutes.filterNot { it == TournamentsRoute }
-            if (restored.isNotEmpty()) {
-                // A page refresh returns to the screen that was open.
-                restored.forEach { navController.navigate(it) }
-            } else if (openTournamentId != null) {
-                // The link of a registration email goes on to the tournament. Back returns to the list.
-                navController.navigate(TournamentRoute(openTournamentId))
-            }
+        // Everything is public, so the app opens on the tournaments with or without an account.
+        navController.navigate(TournamentsRoute) { popUpTo(SplashRoute) { inclusive = true } }
+        val restored = restoredRoutes.filterNot { it == TournamentsRoute }
+        if (restored.isNotEmpty()) {
+            // A page refresh returns to the screen that was open.
+            restored.forEach { navController.navigate(it) }
+        } else if (openTournamentId != null) {
+            // A shared link or the link of a registration email goes on to the tournament. Back returns to the list.
+            navController.navigate(TournamentRoute(openTournamentId))
         }
     }
     Column(Modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterHorizontally) { CircularProgressIndicator() }
@@ -272,10 +273,9 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
             when (val result = presenter.signIn(email, password)) {
                 is AppResult.Success -> {
                     saveBrowserCredentials(email.trim(), password)
-                    navController.navigate(TournamentsRoute) { popUpTo(0) }
-                    if (openTournamentId != null) {
-                        navController.navigate(TournamentRoute(openTournamentId))
-                    }
+                    // Back to the screens that were open, loaded again for the account.
+                    val routes = navController.openRoutes()
+                    navController.reopen(if (openTournamentId != null) routes + TournamentRoute(openTournamentId) else routes)
                 }
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
@@ -315,6 +315,7 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         onForgotPassword = ::requestPasswordReset,
         onErrorDismiss = { errorMessage = null },
         description = stringResource(Res.string.sign_in_player_description),
+        onBack = { if (!navController.popBackStack()) navController.reopen(emptyList()) },
     )
 }
 
@@ -331,18 +332,32 @@ fun TournamentsScreen(navController: NavHostController) {
     var tab by rememberPersistentInt("tournaments-tab", 0)
     // The statistics tab tells this screen when it loads, so the progress bar under the top bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
+    // Every public tournament shows. With an account, its own tournaments are marked and can be filtered.
+    var signedIn by remember { mutableStateOf(false) }
+    var mine by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var myEmaId by remember { mutableStateOf<String?>(null) }
+    var filterText by rememberPersistentText("tournaments-filter", null)
+    val filter = TournamentFilter.decode(filterText)
 
+    LaunchedEffect(Unit) {
+        signedIn = session.hasSession()
+        if (signedIn) {
+            mine = tournaments.myTournamentIds()
+            myEmaId = session.myEmaId()
+        }
+    }
     LaunchedEffect(Unit) {
         when (val result = tournaments.listTournaments(RefreshMode.FORCE)) {
             is AppResult.Success -> items = result.value
             is AppResult.Failure -> message = result.error.toUiText()
         }
     }
-    LaunchedEffect(items) {
-        // The server keeps the places of the player. One call gets them for all tournaments that started.
-        val started = items.orEmpty().filter { statusOf(it).let { status -> status != null && status != TournamentStatus.UPCOMING } }
+    LaunchedEffect(items, mine, myEmaId) {
+        // The server keeps the places of the player. One call gets them for all own tournaments that started.
+        val emaId = myEmaId ?: return@LaunchedEffect
+        val started = items.orEmpty().filter { it.id in mine && statusOf(it).let { status -> status != null && status != TournamentStatus.UPCOMING } }
         if (started.isEmpty()) return@LaunchedEffect
-        val places = statistics.standings("", started.map { it.id })
+        val places = statistics.standings(emaId, started.map { it.id })
         standings = started.mapNotNull { tournament ->
             val place = places[tournament.id] ?: return@mapNotNull null
             tournament.id to tournamentStandingOf(
@@ -361,7 +376,7 @@ fun TournamentsScreen(navController: NavHostController) {
     account.Dialogs()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
-        title = stringResource(Res.string.scope_my_tournaments),
+        title = stringResource(Res.string.tournaments_title),
         isLoading = (items == null && message == null) || (tab == 1 && statisticsLoading),
         autoFocusFirst = false,
     ) {
@@ -379,12 +394,12 @@ fun TournamentsScreen(navController: NavHostController) {
                             indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
                             modifier = Modifier.widthIn(max = 720.dp),
                         ) {
-                            listOf(stringResource(Res.string.scope_my_tournaments), stringResource(Res.string.stats_title)).forEachIndexed { index, title ->
+                            listOf(stringResource(Res.string.tournaments_title), stringResource(Res.string.stats_title)).forEachIndexed { index, title ->
                                 CompactTab(
                                     selected = tab == index,
                                     onClick = { tab = index },
                                     title = title,
-                                    trackingName = if (index == 0) "MyTournaments" else "Statistics",
+                                    trackingName = if (index == 0) "Tournaments" else "Statistics",
                                     icon = {
                                         Icon(
                                             if (index == 0) Icons.Default.EmojiEvents else StatisticsIcon,
@@ -413,14 +428,31 @@ fun TournamentsScreen(navController: NavHostController) {
                             EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_empty_title), stringResource(Res.string.tournaments_empty_message))
                         }
                         // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
-                        else -> LazyColumn(
-                            state = rememberPersistentLazyListState("tournaments"),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-                        ) {
-                            // The tournaments in progress come first. The sort is stable, so the other tournaments keep their order.
-                            items(list.sortedBy { if (statusOf(it) == TournamentStatus.IN_PROGRESS) 0 else 1 }, key = { it.id }) { tournament ->
-                                TournamentCard(tournament, standings[tournament.id]) { navController.navigate(TournamentRoute(tournament.id)) }
+                        else -> {
+                            val shown = list.filter { filter.accepts(it, statusOf(it), mine) }.sortedForList(::statusOf)
+                            LazyColumn(
+                                state = rememberPersistentLazyListState("tournaments"),
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                            ) {
+                                item(key = "filters") {
+                                    TournamentFilterBar(
+                                        filter = filter,
+                                        onChange = { filterText = it.encode() },
+                                        tournaments = list,
+                                        signedIn = signedIn,
+                                    )
+                                }
+                                if (shown.isEmpty()) {
+                                    item(key = "no-match") {
+                                        EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_no_match), "")
+                                    }
+                                }
+                                items(shown, key = { it.id }) { tournament ->
+                                    TournamentCard(tournament, standings[tournament.id], mine = tournament.id in mine) {
+                                        navController.navigate(TournamentRoute(tournament.id))
+                                    }
+                                }
                             }
                         }
                     }
@@ -435,7 +467,7 @@ private fun EmptyState(icon: ImageVector, title: String, message: String) {
     AppEmptyState(icon, title, message, compact = true)
 }
 
-private enum class TournamentStatus(val label: StringResource) {
+internal enum class TournamentStatus(val label: StringResource) {
     UPCOMING(Res.string.status_upcoming),
     IN_PROGRESS(Res.string.status_in_progress),
     FINISHED(Res.string.status_finished),
@@ -470,7 +502,7 @@ internal fun tournamentStandingOf(
 )
 
 /** The status comes from the dates. It is null when the tournament has no dates. */
-private fun statusOf(tournament: Tournament): TournamentStatus? {
+internal fun statusOf(tournament: Tournament): TournamentStatus? {
     if (tournament.isCompleted) return TournamentStatus.FINISHED
     val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
     val start = tournament.eventStartDate?.let { runCatching { LocalDate.parse(it) }.getOrNull() }
@@ -556,7 +588,7 @@ private fun TournamentLogo(tournament: Tournament) {
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?, onClick: () -> Unit) {
+private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?, mine: Boolean = false, onClick: () -> Unit) {
     var expanded by remember(tournament.id) { mutableStateOf(false) }
     val status = statusOf(tournament)
     // A tournament in progress and an upcoming tournament have an accent color. A finished tournament has none.
@@ -626,6 +658,15 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                     if (status != null || dates != null) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             if (status != null) StatusChip(status)
+                            // The own tournaments are marked, so they stand out in the list of all tournaments.
+                            if (mine) {
+                                Icon(
+                                    Icons.Default.Person,
+                                    contentDescription = stringResource(Res.string.tournament_you_play),
+                                    Modifier.size(18.dp),
+                                    tint = MaterialTheme.colorScheme.primary,
+                                )
+                            }
                             if (dates != null) {
                                 Text(dates, color = MaterialTheme.colorScheme.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium)
                             }
@@ -1497,6 +1538,10 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
         }
     }
 
+    val session = koinInject<PlayerSessionPresenter>()
+    // Anyone can follow the table. Writing hands needs the account of a player who sits at it.
+    val signedIn by produceState(true) { value = session.hasSession() }
+
     val account = rememberAccountActions(navController)
     account.Dialogs()
     AppScaffold(
@@ -1554,6 +1599,12 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 onPreselectHandled = { preselectWinner = null },
                 onSaved = { reloadKey++ },
             )
+            if (!signedIn && view.isOngoing(table, now) && !table.table.useTotalsOnly) {
+                OutlinedButton(onClick = { navController.navigate(SignInRoute()) }, Modifier.fillMaxWidth()) {
+                    Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
+                    Text(stringResource(Res.string.table_sign_in_to_enter_hands), Modifier.padding(start = 8.dp))
+                }
+            }
             HandHistory(view, table, details) { details = it }
         }
     }

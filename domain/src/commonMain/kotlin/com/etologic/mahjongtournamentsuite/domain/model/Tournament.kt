@@ -119,3 +119,10 @@ data class TournamentMember(
     val email: String,
     val role: GlobalUserRole,
 )
+
+/** The slot and the team of the signed-in player in one tournament. */
+data class MyTournamentSlot(
+    val tournamentId: String,
+    val playerId: Int,
+    val teamId: Int,
+)

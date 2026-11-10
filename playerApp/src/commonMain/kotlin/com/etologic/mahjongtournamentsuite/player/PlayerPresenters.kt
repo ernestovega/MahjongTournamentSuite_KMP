@@ -38,6 +38,12 @@ class PlayerSessionPresenter(
 ) {
     suspend fun hasSession(): Boolean = authRepository.currentSession() != null
 
+    /** The EMA number of the signed-in player, or null without an account or without a linked player. */
+    suspend fun myEmaId(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): String? {
+        if (!hasSession()) return null
+        return (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.emaId?.takeIf { it.isNotBlank() }
+    }
+
     suspend fun signIn(email: String, password: String): AppResult<Unit> = when (val result = authRepository.signIn(email.trim(), password).track(telemetry, TelemetryEvent.LOGIN)) {
         is AppResult.Success -> AppResult.Success(Unit)
         is AppResult.Failure -> result
@@ -71,6 +77,10 @@ class PlayerTournamentPresenter(
 ) {
     suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
 
+    /** The ids of the tournaments where the signed-in account plays. Empty without an account. */
+    suspend fun myTournamentIds(): Set<String> =
+        (tournamentRepository.listMyTournamentSlots() as? AppResult.Success)?.value.orEmpty().mapTo(mutableSetOf()) { it.tournamentId }
+
     /**
      * Loads the tournament. The repositories check the revision first and load only what changed.
      * The requests run at the same time, so the screen waits for the slowest one and not for all of them in a row.
@@ -85,7 +95,8 @@ class PlayerTournamentPresenter(
         val slotsRequest = async { tournamentRepository.listTournamentPlayers(tournamentId, refreshMode) }
         val registryRequest = async { playerRepository.listPlayers(refreshMode) }
         val tablesRequest = async { tournamentRepository.getAllTablesWithHands(tournamentId, refreshMode) }
-        val meRequest = async { authRepository.getMe(refreshMode) }
+        // Without an account nobody is marked as the own player.
+        val meRequest = async { if (authRepository.currentSession() == null) null else authRepository.getMe(refreshMode) }
 
         val tournament = when (val result = tournamentsRequest.await()) {
             is AppResult.Success -> result.value.firstOrNull { it.id == tournamentId }
@@ -168,17 +179,19 @@ class PlayerStatisticsPresenter(
             is AppResult.Success -> result.value.emaId
             is AppResult.Failure -> return result
         } ?: return AppResult.Failure(AppError.Unexpected("Your account is not linked to a player yet."))
-        return loadStored.person(emaId, own = true, refreshMode = refreshMode).viewed("me")
+        // The statistics are public, so the own ones are read by the EMA number like those of anyone else.
+        return loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("me")
     }
 
-    /** The players that the signed-in player plays with, from the tournaments that the account can see. */
+    /** The players of the EMA registry. */
     suspend fun players(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Player>> = playerRepository.listPlayers(refreshMode)
 
-    /** The statistics of another player, in the tournaments that the account can see. */
+    /** The statistics of another player, in the public tournaments. */
     suspend fun person(emaId: String, refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> = loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("person")
 
     /** The final places of a player in some tournaments. The list shows them for the tournaments on screen. */
-    suspend fun standings(emaId: String, tournamentIds: List<String>, own: Boolean = true): Map<String, Standing> = (loadStored.standings(emaId, own = own, tournamentIds) as? AppResult.Success)?.value.orEmpty()
+    suspend fun standings(emaId: String, tournamentIds: List<String>): Map<String, Standing> =
+        if (emaId.isBlank()) emptyMap() else (loadStored.standings(emaId, own = false, tournamentIds) as? AppResult.Success)?.value.orEmpty()
 
     private fun <T> AppResult<T>.viewed(scope: String) = track(telemetry, TelemetryEvent.STATISTICS_VIEWED, mapOf(TelemetryParam.SCOPE to scope))
 }

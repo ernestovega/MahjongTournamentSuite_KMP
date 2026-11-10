@@ -2,6 +2,7 @@ package com.etologic.mahjongtournamentsuite.data.repository
 
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
+import com.etologic.mahjongtournamentsuite.data.backend.PUBLIC_TOKEN
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PlayersResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
@@ -22,6 +23,8 @@ class DefaultPlayerRepository(
     private val authRepository: AuthRepository,
     private val logger: Logger,
     private val cache: RepositoryCache,
+    /** The player app reads the registry through the public route, with or without an account. */
+    private val publicReads: Boolean = false,
 ) : PlayerRepository {
     override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> =
         cachedRequest("Listing shared players", refreshMode)
@@ -71,19 +74,19 @@ class DefaultPlayerRepository(
         action: String,
         refreshMode: RefreshMode,
     ): AppResult<List<Player>> = runCatching {
-        val session = authRepository.currentSession() ?: error("No active session")
+        val owner = if (publicReads) PUBLIC_CACHE_OWNER else authRepository.currentSession()?.uid ?: error("No active session")
         // The answer is also saved on the device, so a new start of the app does not download it again.
         cache.getOrLoadPersisted(
-            ownerUid = session.uid,
+            ownerUid = owner,
             key = PLAYERS_CACHE_KEY,
             refreshMode = refreshMode,
             revision = {
-                withFreshIdToken { token ->
+                withReadToken { token ->
                     cache.globalManifest(backendApi, token).resources["emaPlayers"]?.revision ?: 0
                 }
             },
             persistence = Persistence(PLAYERS_CACHE_KEY, PlayersResponseDto.serializer()),
-            load = { withFreshIdToken { token -> backendApi.listPlayers(token) } },
+            load = { withReadToken { token -> backendApi.listPlayers(token) } },
             map = { response -> response.players.map { it.toPlayer() } },
         )
     }.fold(
@@ -96,6 +99,9 @@ class DefaultPlayerRepository(
 
     private suspend fun <T> withFreshIdToken(block: suspend (String) -> T): T =
         authRepository.withFreshIdToken(block)
+
+    private suspend fun <T> withReadToken(block: suspend (String) -> T): T =
+        if (publicReads) block(PUBLIC_TOKEN) else withFreshIdToken(block)
 
     private fun com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto.toPlayer() = Player(
         emaId = emaId,
