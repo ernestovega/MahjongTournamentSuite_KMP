@@ -136,6 +136,7 @@ private class GatedTournamentRepository(private val server: GatedServer) : Tourn
         matchEndMode: MatchEndMode?,
         matchExtraMinutes: Int?,
         timeZone: String?,
+        isPublic: Boolean?,
     ) = unusedFakeResult<Tournament>()
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedFakeResult<ByteArray>()

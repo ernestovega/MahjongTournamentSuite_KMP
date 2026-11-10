@@ -162,6 +162,7 @@ private class RecordingTournamentRepository(
         matchEndMode: MatchEndMode?,
         matchExtraMinutes: Int?,
         timeZone: String?,
+        isPublic: Boolean?,
     ) = unusedResult<Tournament>()
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = unusedResult<ByteArray>()

@@ -188,6 +188,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         matchEndMode: MatchEndMode?,
         matchExtraMinutes: Int?,
         timeZone: String?,
+        isPublic: Boolean?,
     ) = writeResult(Tournament(id = tournamentId, name = name, isTeams = false, numPlayers = 0, numRounds = 0))
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = writeResult(ByteArray(0))

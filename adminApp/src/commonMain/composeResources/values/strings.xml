@@ -677,4 +677,6 @@
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <string name="errors_loading_count">Loading… %1$d problems so far</string>
     <string name="errors_load_more_reports">Load more reports</string>
+    <string name="public_tournament">Public tournament</string>
+    <string name="public_tournament_description">Anyone can see the tournament, its results and its statistics without an account. Turn it off for a test tournament: only its staff will see it.</string>
 </resources>

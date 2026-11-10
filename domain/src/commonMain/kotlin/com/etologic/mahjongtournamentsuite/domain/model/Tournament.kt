@@ -35,6 +35,8 @@ data class Tournament(
     val timeZone: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
+    /** False hides a test tournament from the public list. Only its staff see it. */
+    val isPublic: Boolean = true,
     val createdByUid: String? = null,
     val createdByName: String? = null,
     val createdAt: String? = null,

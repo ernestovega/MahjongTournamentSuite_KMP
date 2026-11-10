@@ -62,6 +62,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
+import mahjongtournamentsuite.adminapp.generated.resources.public_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.public_tournament_description
 import mahjongtournamentsuite.adminapp.generated.resources.choose_end_date
 import mahjongtournamentsuite.adminapp.generated.resources.choose_start_date
 import mahjongtournamentsuite.adminapp.generated.resources.completed
@@ -180,6 +182,7 @@ fun EditTournamentDialog(
     var settingsVenue by remember(tournament.id) { mutableStateOf(tournament.venue) }
     var settingsCountBestHands by remember(tournament.id) { mutableStateOf(tournament.countBestHands) }
     var settingsCountChickenHands by remember(tournament.id) { mutableStateOf(tournament.countChickenHands) }
+    var settingsIsPublic by remember(tournament.id) { mutableStateOf(tournament.isPublic) }
     var settingsMatchDurationText by remember(tournament.id) { mutableStateOf(tournament.matchDurationMinutes.toString()) }
     var settingsMatchExtraText by remember(tournament.id) { mutableStateOf(tournament.matchExtraMinutes.toString()) }
     // An old tournament has no time zone. The form suggests the zone of this device, so the server can check the time.
@@ -394,6 +397,13 @@ fun EditTournamentDialog(
                                         checked = settingsCountChickenHands,
                                         enabled = !isLoading,
                                         onCheckedChange = { settingsCountChickenHands = it },
+                                    )
+                                    TournamentOptionSwitch(
+                                        label = stringResource(Res.string.public_tournament),
+                                        description = stringResource(Res.string.public_tournament_description),
+                                        checked = settingsIsPublic,
+                                        enabled = !isLoading,
+                                        onCheckedChange = { settingsIsPublic = it },
                                     )
                                 }
                                 EditTournamentTab.VENUE -> {
@@ -867,6 +877,7 @@ fun EditTournamentDialog(
                                         matchEndMode = if (settingsFinishHand) MatchEndMode.FINISH_HAND else MatchEndMode.STOP,
                                         matchExtraMinutes = validMatchExtra ?: tournament.matchExtraMinutes,
                                         timeZone = settingsTimeZone.trim(),
+                                        isPublic = settingsIsPublic,
                                     )
                                 ) {
                                     is AppResult.Success -> {

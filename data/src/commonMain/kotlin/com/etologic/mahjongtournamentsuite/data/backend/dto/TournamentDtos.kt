@@ -32,6 +32,8 @@ data class TournamentDto(
     val timeZone: String? = null,
     val numTries: Long = 0,
     val isCompleted: Boolean = false,
+    /** False hides the tournament from everyone without an account in it. */
+    val isPublic: Boolean = true,
     val createdByUid: String? = null,
     val createdByName: String? = null,
     val createdAt: String? = null,
@@ -96,6 +98,7 @@ data class UpdateTournamentSettingsRequestDto(
     /** Null keeps the stored value. */
     val countBestHands: Boolean? = null,
     val countChickenHands: Boolean? = null,
+    val isPublic: Boolean? = null,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
     val associationLogoSourceTournamentId: String? = null,

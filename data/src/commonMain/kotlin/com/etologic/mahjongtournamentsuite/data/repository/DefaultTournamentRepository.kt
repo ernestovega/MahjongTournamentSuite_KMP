@@ -202,6 +202,7 @@ class DefaultTournamentRepository(
         matchEndMode: MatchEndMode?,
         matchExtraMinutes: Int?,
         timeZone: String?,
+        isPublic: Boolean?,
     ): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
             val dto = backendApi.updateTournamentSettings(
@@ -231,6 +232,7 @@ class DefaultTournamentRepository(
                     matchEndMode = matchEndMode?.name,
                     matchExtraMinutes = matchExtraMinutes,
                     timeZone = timeZone?.trim(),
+                    isPublic = isPublic,
                 ),
             )
             val tournament = dto.toDomain()

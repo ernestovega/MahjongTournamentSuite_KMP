@@ -677,4 +677,6 @@
     <string name="filter_chip_count">%1$s (%2$d)</string>
     <string name="errors_loading_count">Caricamento… %1$d problemi finora</string>
     <string name="errors_load_more_reports">Carica altri rapporti</string>
+    <string name="public_tournament">Torneo pubblico</string>
+    <string name="public_tournament_description">Chiunque può vedere il torneo, i risultati e le statistiche senza account. Disattivalo per un torneo di prova: lo vedrà solo il suo staff.</string>
 </resources>

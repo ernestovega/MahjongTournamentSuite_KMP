@@ -56,6 +56,8 @@ interface TournamentRepository {
         matchEndMode: MatchEndMode? = null,
         matchExtraMinutes: Int? = null,
         timeZone: String? = null,
+        /** Null keeps the stored value. */
+        isPublic: Boolean? = null,
     ): AppResult<Tournament>
 
     /** Creates the ID cards PDF. Without a sheet layout, the PDF has one card side on each page. */
