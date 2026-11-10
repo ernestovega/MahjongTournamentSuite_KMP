@@ -55,7 +55,7 @@
         <item quantity="one">%1$d ora</item>
         <item quantity="other">%1$d ore</item>
     </plurals>
-    <string name="sign_in_player_description">Accedi con la tua email. Se non hai ancora una password, usa il link di reimpostazione per sceglierne una.</string>
+    <string name="sign_in_player_description">Accedi con la tua email. Se non hai ancora una password, usa il link di reimpostazione per sceglierne una.\n\nTornei, risultati e statistiche sono pubblici. Mostrano nome, paese e numero EMA di ogni giocatore, mai email né foto. Se non vuoi comparire, chiedilo all\'organizzazione: verrai mostrato solo come un numero.</string>
     <string name="field_password">Password</string>
     <string name="tournaments_empty_title">Ancora nessun torneo</string>
     <string name="tournaments_empty_message">Non sei ancora iscritto a nessun torneo.</string>
@@ -173,4 +173,5 @@
     <string name="filter_year">Anno</string>
     <string name="filter_all_years">Tutti gli anni</string>
     <string name="filter_clear">Rimuovi filtri</string>
+    <string name="privacy_public_notice">Tornei, risultati e statistiche sono pubblici. Mostrano nome, paese e numero EMA di ogni giocatore, mai email né foto. Se non vuoi comparire, chiedilo all\'organizzazione: verrai mostrato solo come un numero.</string>
 </resources>

@@ -55,7 +55,7 @@
         <item quantity="one">%1$d hour</item>
         <item quantity="other">%1$d hours</item>
     </plurals>
-    <string name="sign_in_player_description">Sign in with your email. If you have no password yet, use the password reset link to choose one.</string>
+    <string name="sign_in_player_description">Sign in with your email. If you have no password yet, use the password reset link to choose one.\n\nTournaments, results and statistics are public. They show the name, country and EMA number of each player, never emails or photos. If you do not want to appear, ask the organisers: you will be shown only as a number.</string>
     <string name="field_password">Password</string>
     <string name="tournaments_empty_title">No tournaments yet</string>
     <string name="tournaments_empty_message">You are not registered in any tournament yet.</string>
@@ -173,4 +173,5 @@
     <string name="filter_year">Year</string>
     <string name="filter_all_years">All years</string>
     <string name="filter_clear">Clear filters</string>
+    <string name="privacy_public_notice">Tournaments, results and statistics are public. They show the name, country and EMA number of each player, never emails or photos. If you do not want to appear, ask the organisers: you will be shown only as a number.</string>
 </resources>

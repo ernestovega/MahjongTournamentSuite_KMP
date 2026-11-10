@@ -211,6 +211,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_me
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
+import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_you_play
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
 import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
@@ -452,6 +453,14 @@ fun TournamentsScreen(navController: NavHostController) {
                                     TournamentCard(tournament, standings[tournament.id], mine = tournament.id in mine) {
                                         navController.navigate(TournamentRoute(tournament.id))
                                     }
+                                }
+                                item(key = "privacy") {
+                                    Text(
+                                        text = stringResource(Res.string.privacy_public_notice),
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                                    )
                                 }
                             }
                         }
