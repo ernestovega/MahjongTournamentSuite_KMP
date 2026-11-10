@@ -67,6 +67,8 @@ export type Tournament = {
   timeZone: string | null;
   numTries: number;
   isCompleted: boolean;
+  /** Everyone sees a public tournament without signing in. An admin hides test tournaments. Old documents are public. */
+  isPublic: boolean;
   createdByUid: string | null;
   createdByName: string | null;
   createdAt: string | null;
@@ -146,6 +148,7 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     timeZone: readStoredTimeZone(d.get("timeZone")),
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
+    isPublic: d.get("isPublic") !== false,
     createdByUid,
     createdByName,
     createdAt: toIsoString(d.get("createdAt")),
@@ -381,6 +384,12 @@ export async function createTournament(params: {
   return mapTournamentDoc(snap);
 }
 
+/** One tournament, or null when it does not exist. */
+export async function getTournament(tournamentId: string): Promise<Tournament | null> {
+  const snap = await db.collection("tournaments").doc(tournamentId).get();
+  return snap.exists ? mapTournamentDoc(snap) : null;
+}
+
 export async function listAllTournaments(): Promise<Tournament[]> {
   const snap = await db.collection("tournaments").orderBy("updatedAt", "desc").get();
   return Promise.all(snap.docs.map((d) => mapTournamentDoc(d)));
@@ -492,6 +501,7 @@ export async function updateTournamentSettings(params: {
   contactEmail?: string;
   countBestHands?: boolean;
   countChickenHands?: boolean;
+  isPublic?: boolean;
   associationLogoContentType?: string | null;
   associationLogoDataBase64?: string | null;
   associationLogoSourceTournamentId?: string | null;
@@ -562,6 +572,7 @@ export async function updateTournamentSettings(params: {
   if (params.timeZone !== undefined) update.timeZone = normalizeTimeZone(params.timeZone);
   if (params.countBestHands !== undefined) update.countBestHands = params.countBestHands;
   if (params.countChickenHands !== undefined) update.countChickenHands = params.countChickenHands;
+  if (params.isPublic !== undefined) update.isPublic = params.isPublic;
   if (logo !== undefined) {
     update.associationLogoPath = logo?.path ?? null;
     update.associationLogoUrl = logo?.url ?? null;

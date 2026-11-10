@@ -90,6 +90,23 @@ const MATRIX: Array<[string, string, Access]> = [
   ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/hands", "PLAYER"],
   ["PUT", "/tournaments/:tournamentId/tables/:roundId/:tableId/state", "MEMBER"],
   ["GET", "/tournaments/:tournamentId", "MEMBER"],
+  ["GET", "/public/sync/manifest", "PUBLIC"],
+  ["GET", "/public/tournaments", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/sync/manifest", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/players", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/teams", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/rounds", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/tables", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/tables-with-hands", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", "PUBLIC"],
+  ["GET", "/public/tournaments/:tournamentId/tables/:roundId/:tableId", "PUBLIC"],
+  ["GET", "/public/statistics/overview", "PUBLIC"],
+  ["GET", "/public/statistics/persons/:emaId", "PUBLIC"],
+  ["GET", "/public/statistics/persons/:emaId/standings", "PUBLIC"],
+  ["GET", "/public/players", "PUBLIC"],
+  ["GET", "/public/countries", "PUBLIC"],
+  ["GET", "/me/", "SIGNED_IN"],
 ];
 
 function actualGuards(): Map<string, Access> {

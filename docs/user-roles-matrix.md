@@ -25,6 +25,10 @@ An editor needs a membership document for each tournament. An admin has implicit
 | Delete a tournament | — | Manage |
 | Edit the shared EMA player registry | — | Manage |
 
+## Everyone, without an account
+
+Anyone can read the public tournaments: players, teams, rounds, tables, hands, rankings and statistics, and the statistics of every person. Emails, accounts and photos stay private. See [public-data.md](public-data.md).
+
 ## Player
 
 A player account has no access to the management routes. It can do the following in the tournaments where it is registered:

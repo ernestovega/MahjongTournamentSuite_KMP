@@ -15,6 +15,8 @@ export const api = onRequest(
     region: "europe-southwest1",
     // The code needs about 170 MB just to load. The default of 256 MiB is too small and the container is killed at start.
     memory: "512MiB",
+    // A brake on the bill: the public routes are open to everyone, and a flood of requests must not scale without end.
+    maxInstances: 20,
     secrets: [ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY],
   },
   app,

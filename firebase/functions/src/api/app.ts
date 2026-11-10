@@ -10,6 +10,7 @@ import { configRouter } from "./routes/config.routes";
 import { countriesRouter } from "./routes/countries.routes";
 import { playerRouter } from "./routes/player.routes";
 import { playersRouter } from "./routes/players.routes";
+import { meRouter, publicRouter } from "./routes/public.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { telemetryRouter } from "./routes/telemetry.routes";
@@ -30,6 +31,8 @@ export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
   ["/tournaments", tournamentsRouter],
   ["/venues", venuesRouter],
   ["/telemetry", telemetryRouter],
+  ["/public", publicRouter],
+  ["/me", meRouter],
 ];
 
 export function buildApp(): express.Express {
