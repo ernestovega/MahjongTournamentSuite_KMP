@@ -54,10 +54,11 @@ export function playersRouter(): Router {
       const country = String(req.body?.country ?? "").trim().toUpperCase();
       if (!firstName || !lastName) throw badRequest("First name and last name are required");
       if (!/^[A-Z]{3}$/.test(country)) throw badRequest("Player country must use a three-letter EMA code");
-      await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country });
+      const hiddenFromPublic = typeof req.body?.hiddenFromPublic === "boolean" ? req.body.hiddenFromPublic : undefined;
+      await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country, hiddenFromPublic });
       await recordActivity({
         action: "registry.update", actor: actorFromToken(res.locals.auth), target: `EMA ${emaId}`,
-        details: { emaId: newEmaId, firstName, lastName, country },
+        details: { emaId: newEmaId, firstName, lastName, country, hiddenFromPublic },
       });
       res.status(200).json({ ok: true });
     } catch (error) {

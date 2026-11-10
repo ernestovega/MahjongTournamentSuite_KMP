@@ -64,6 +64,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
+import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_public
+import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_public_description
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
@@ -163,6 +166,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     var lastName by remember { mutableStateOf("") }
     var country by remember { mutableStateOf("") }
     var photoUrl by remember { mutableStateOf("") }
+    var hiddenFromPublic by remember { mutableStateOf(false) }
     var pendingPhoto by remember { mutableStateOf<SelectedImage?>(null) }
     var showNewPlayerDialog by remember { mutableStateOf(false) }
     var showSaveConfirmation by remember { mutableStateOf(false) }
@@ -186,6 +190,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             firstName.trim() != player.firstName ||
             lastName.trim() != player.lastName ||
             country.trim() != player.country ||
+            hiddenFromPublic != player.hiddenFromPublic ||
             pendingPhoto != null
     } == true
     var countries by remember { mutableStateOf<List<Country>>(emptyList()) }
@@ -231,6 +236,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         lastName = player?.lastName.orEmpty()
         country = player?.country.orEmpty()
         photoUrl = player?.photoUrl.orEmpty()
+        hiddenFromPublic = player?.hiddenFromPublic == true
         pendingPhoto = null
     }
     fun upsertPlayerLocally(previousEmaId: String, player: Player) {
@@ -304,6 +310,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             lastName = lastName.trim(),
             country = country.trim().uppercase(),
             photoUrl = currentPlayer.photoUrl,
+            hiddenFromPublic = hiddenFromPublic,
         )
         val savedPlayer = when (val result = presenter.updatePlayer(currentPlayer.emaId, player)) {
             is AppResult.Success -> player
@@ -798,6 +805,13 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     enabled = canEdit,
                                     label = stringResource(Res.string.country),
                                     modifier = Modifier.fillMaxWidth(),
+                                )
+                                TournamentOptionSwitch(
+                                    label = stringResource(Res.string.player_hidden_from_public),
+                                    description = stringResource(Res.string.player_hidden_from_public_description),
+                                    checked = hiddenFromPublic,
+                                    enabled = canEdit && !saving,
+                                    onCheckedChange = { hiddenFromPublic = it },
                                 )
                                 val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
                                 PlayerPhotoPreview(

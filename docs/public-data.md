@@ -30,7 +30,21 @@ A hidden tournament answers 404 on every public route.
 ## Hidden tournaments
 
 `isPublic` on the tournament document. A missing value means public. An admin sets it to `false` through
-`PUT /tournaments/:id/settings` to hide a test tournament.
+`PUT /tournaments/:id/settings` to hide a test tournament. The admin app has a "Public tournament" switch in the
+settings of the tournament. A signed-in player of a hidden tournament does not see it in the Player app either,
+because the Player app reads only `/public`.
+
+## People who ask to stay hidden
+
+`hiddenFromPublic` on the EMA registry record (`emaPlayerRegistry/{emaId}`). Only an admin changes it, with the
+"Hide from the public" switch on the registry screen (`PUT /ema-player-registry/:emaId`). Then the public routes:
+
+- show the slot as `#<slot id>`, with no country and no EMA number, in `/public/tournaments/:id/players`;
+- leave the person out of `/public/players` and of the leaderboards of `/public/statistics/overview`;
+- answer 404 on `/public/statistics/persons/:emaId` and its standings.
+
+`/me` still gives the person the own slots, so the app marks them when the person signs in. Changing the switch
+bumps the `players` revision of every tournament of the person.
 
 ## Limits
 

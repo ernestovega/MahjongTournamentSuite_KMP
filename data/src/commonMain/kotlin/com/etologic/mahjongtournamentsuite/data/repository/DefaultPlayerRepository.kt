@@ -40,7 +40,7 @@ class DefaultPlayerRepository(
         backendApi.updatePlayer(
             token,
             previousEmaId,
-            UpdatePlayerRequestDto(player.emaId, player.firstName, player.lastName, player.country),
+            UpdatePlayerRequestDto(player.emaId, player.firstName, player.lastName, player.country, player.hiddenFromPublic),
         )
         cache.markStale(PLAYERS_CACHE_KEY)
     }
@@ -109,6 +109,7 @@ class DefaultPlayerRepository(
         lastName = lastName,
         country = country.toPlayerCountryCode(),
         photoUrl = photoUrl,
+        hiddenFromPublic = hiddenFromPublic,
         createdAt = createdAt,
         updatedAt = updatedAt,
     )

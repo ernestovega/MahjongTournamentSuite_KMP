@@ -241,6 +241,7 @@ data class PlayerDto(
     val lastName: String,
     val country: String = "",
     val photoUrl: String? = null,
+    val hiddenFromPublic: Boolean = false,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
@@ -264,6 +265,7 @@ data class UpdatePlayerRequestDto(
     val firstName: String,
     val lastName: String,
     val country: String,
+    val hiddenFromPublic: Boolean = false,
 )
 
 @Serializable

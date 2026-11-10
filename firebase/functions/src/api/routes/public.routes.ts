@@ -3,7 +3,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import { db } from "../../firebase";
 import { listCountries } from "../../services/countriesService";
 import { getGlobalDataVersions, getTournamentManifest } from "../../services/dataVersionsService";
-import { listPlayers } from "../../services/playersService";
+import { listHiddenEmaIds, listPlayers } from "../../services/playersService";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
 import {
   getAllTablesWithHands,
@@ -129,11 +129,19 @@ export function publicRouter(): Router {
   }));
 
   router.get("/tournaments/:tournamentId/players", handle(async (req, res) => {
-    const players = await listTournamentPlayers(pathParam(req, "tournamentId"), { withAccounts: false });
+    const [players, hidden] = await Promise.all([
+      listTournamentPlayers(pathParam(req, "tournamentId"), { withAccounts: false }),
+      listHiddenEmaIds(),
+    ]);
     tournamentCache(res);
-    // Who plays and where. Never the accounts or the emails.
+    // Who plays and where. Never the accounts or the emails. A person who asked to stay hidden is only a number.
     res.status(200).json({
-      players: players.map((player) => ({ ...player, accountUid: null, hasAccount: false, email: null, hasEmail: false })),
+      players: players.map((player) => {
+        const open = { ...player, accountUid: null, hasAccount: false, email: null, hasEmail: false };
+        return player.assignedEmaId != null && hidden.has(player.assignedEmaId)
+          ? { ...open, name: `#${player.id}`, country: "", assignedEmaId: null }
+          : open;
+      }),
     });
   }));
 
@@ -179,13 +187,15 @@ export function publicRouter(): Router {
 
   // The sums and leaderboards of all tournaments.
   router.get("/statistics/overview", handle(async (_req, res) => {
+    const [overview, hidden] = await Promise.all([loadOverview(), listHiddenEmaIds()]);
     cacheFor(res, PUBLIC_CACHE_SECONDS.lists);
-    res.status(200).json(await loadOverview());
+    res.status(200).json({ ...overview, players: overview.players.filter((player) => !hidden.has(player.emaId)) });
   }));
 
   // The results of one person in the public tournaments.
   router.get("/statistics/persons/:emaId", handle(async (req, res) => {
     const emaId = readEmaParam(pathParam(req, "emaId"));
+    if ((await listHiddenEmaIds()).has(emaId)) throw notFound("Player not found");
     cacheFor(res, PUBLIC_CACHE_SECONDS.lists);
     res.status(200).json(await loadPersonStatistics(emaId, await publicTournamentIds()));
   }));
@@ -194,6 +204,7 @@ export function publicRouter(): Router {
     const emaId = readEmaParam(pathParam(req, "emaId"));
     const ids = String(req.query.tournaments ?? "").split(",").map((id) => id.trim()).filter((id) => id !== "");
     if (ids.length > MAX_STANDINGS_PER_REQUEST) throw badRequest("Too many tournaments", { max: MAX_STANDINGS_PER_REQUEST });
+    if ((await listHiddenEmaIds()).has(emaId)) throw notFound("Player not found");
     const allowed = await publicTournamentIds();
     cacheFor(res, PUBLIC_CACHE_SECONDS.lists);
     res.status(200).json({ standings: await loadStandings(emaId, ids.filter((id) => allowed.has(id))) });
@@ -201,7 +212,9 @@ export function publicRouter(): Router {
 
   // The EMA registry: name, country and number. The photos stay private.
   router.get("/players", handle(async (_req, res) => {
-    const players = (await listPlayers()).map((player) => ({ ...player, photoUrl: null }));
+    const players = (await listPlayers())
+      .filter((player) => !player.hiddenFromPublic)
+      .map((player) => ({ ...player, photoUrl: null }));
     cacheFor(res, PUBLIC_CACHE_SECONDS.registry);
     res.status(200).json({ players });
   }));

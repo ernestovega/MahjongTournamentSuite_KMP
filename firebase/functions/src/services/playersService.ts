@@ -15,6 +15,8 @@ export type Player = {
   lastName: string;
   country: string;
   photoUrl: string | null;
+  /** The person asked not to be shown publicly. The public routes show the slot number and no profile. */
+  hiddenFromPublic: boolean;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -31,6 +33,7 @@ export function toPlayer(emaId: string, data: FirebaseFirestore.DocumentData): P
     lastName: normalizePlayerNamePart(String(data.lastName ?? "")),
     country: storedCountry === "EU" ? "" : storedCountry,
     photoUrl: typeof data.photoUrl === "string" ? data.photoUrl : null,
+    hiddenFromPublic: data.hiddenFromPublic === true,
     createdAt: timestampToIso(data.createdAt),
     updatedAt: timestampToIso(data.updatedAt),
   };
@@ -94,6 +97,8 @@ export async function updatePlayer(params: {
   firstName: string;
   lastName: string;
   country: string;
+  /** Undefined keeps the stored value. */
+  hiddenFromPublic?: boolean;
 }): Promise<void> {
   const previousRef = db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(params.previousEmaId);
   const previousSnapshot = await previousRef.get();
@@ -108,10 +113,14 @@ export async function updatePlayer(params: {
     firstName: normalizePlayerNamePart(params.firstName),
     lastName: normalizePlayerNamePart(params.lastName),
     country: params.country,
+    ...(params.hiddenFromPublic === undefined ? {} : { hiddenFromPublic: params.hiddenFromPublic }),
     updatedAt: FieldValue.serverTimestamp(),
   };
+  const visibilityChanged = params.hiddenFromPublic !== undefined
+    && params.hiddenFromPublic !== (previousSnapshot.get("hiddenFromPublic") === true);
   if (params.previousEmaId === params.emaId) {
     await previousRef.update(update);
+    if (visibilityChanged) await bumpTournamentsOf(params.emaId);
     await bumpGlobalDataVersion("emaPlayers");
     return;
   }
@@ -142,6 +151,19 @@ export async function updatePlayer(params: {
   // Clients keep the slots in a cache until the revision of the players changes.
   await Promise.all([...tournamentIds].map((id) => bumpTournamentDataVersion(id, "players")));
   await bumpGlobalDataVersion("emaPlayers");
+}
+
+/** The public slot lists show a name or a number, so the tournaments of the person must load again. */
+async function bumpTournamentsOf(emaId: string): Promise<void> {
+  const slots = await db.collectionGroup("players").where("assignedEmaId", "==", emaId).select().get();
+  const ids = new Set(slots.docs.map((slot) => slot.ref.parent.parent?.id).filter((id): id is string => id != null));
+  await Promise.all([...ids].map((id) => bumpTournamentDataVersion(id, "players")));
+}
+
+/** The EMA numbers of the people who asked not to be shown publicly. */
+export async function listHiddenEmaIds(): Promise<Set<string>> {
+  const snapshot = await db.collection(EMA_PLAYER_REGISTRY_COLLECTION).where("hiddenFromPublic", "==", true).select().get();
+  return new Set(snapshot.docs.map((doc) => doc.id));
 }
 
 const photoExtensions: Record<string, string> = {

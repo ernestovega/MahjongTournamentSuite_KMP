@@ -104,4 +104,21 @@ describe("what anyone can read without an account", () => {
 
     assert.deepEqual(body, { emaId: "", tournaments: [] });
   });
+  it("shows a person who asked to stay hidden only as a number", async () => {
+    await db.doc("emaPlayerRegistry/20000001").update({ hiddenFromPublic: true });
+    try {
+      const slot = (await get(`/public/tournaments/${open}/players`)).body.players.find((p: { id: number }) => p.id === 1);
+      assert.equal(slot.name, "#1");
+      assert.equal(slot.assignedEmaId, null);
+      assert.equal(slot.country, "");
+      const registry = (await get("/public/players")).body.players;
+      assert.ok(!registry.some((p: { emaId: string }) => p.emaId === "20000001"));
+      assert.equal((await get("/public/statistics/persons/20000001")).status, 404);
+      assert.equal((await get(`/public/statistics/persons/20000001/standings?tournaments=${open}`)).status, 404);
+      // The person still finds the own slot when signed in.
+      assert.deepEqual((await get("/me", player.token)).body.tournaments, [{ tournamentId: open, playerId: 1, teamId: 2 }]);
+    } finally {
+      await db.doc("emaPlayerRegistry/20000001").update({ hiddenFromPublic: false });
+    }
+  });
 });

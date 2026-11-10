@@ -79,6 +79,8 @@ data class Player(
     val lastName: String,
     val country: String = "",
     val photoUrl: String? = null,
+    /** The person asked not to be shown publicly: everyone without an account sees "#<slot>" and no profile. */
+    val hiddenFromPublic: Boolean = false,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
