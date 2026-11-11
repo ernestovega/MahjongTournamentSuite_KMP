@@ -300,6 +300,7 @@ fun TournamentStatisticsTab(
     var tabName by rememberPersistentText("tournament-statistics-tab", TournamentStatisticsKind.TOURNAMENT.name)
     val tab = tabs.firstOrNull { it.name == tabName } ?: TournamentStatisticsKind.TOURNAMENT
     var chosenSlotText by rememberPersistentText("tournament-statistics-player", null)
+    var changing by remember { mutableStateOf(false) }
     LaunchedEffect(tournamentId) {
         when (val result = presenter.tournament(tournamentId)) {
             is AppResult.Success -> data = result.value
@@ -310,8 +311,14 @@ fun TournamentStatisticsTab(
     // The scroll starts at the line under the tabs. The padding is inside the scroll, so the content moves under that line.
     Column(Modifier.fillMaxSize()) {
         // The tab row is as wide as the tabs of the tournament, like the rows of Tables and Ranking. The content uses all the width.
-        HideOnScrollTabs(tab) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        val loadedData = data
+        val shownSlotId = loadedData?.let { chosenSlotText?.toIntOrNull() ?: mySlotId ?: it.slots.firstOrNull()?.id }
+        // The bar with the chosen player, like in "Others" of the general statistics.
+        val shownProfile = loadedData?.let { loaded ->
+            shownSlotId?.let { id -> loaded.profiles[id] ?: loaded.names[id]?.let { name -> PlayerProfile(name, "", "", null) } }
+        }
+        HideOnScrollTabs(tab to shownSlotId) {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 PrimaryTabRow(
                     selectedTabIndex = tabs.indexOf(tab),
                     containerColor = tabRowColor(),
@@ -328,6 +335,9 @@ fun TournamentStatisticsTab(
                             icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
                         )
                     }
+                }
+                if (tab == TournamentStatisticsKind.PLAYERS && shownProfile != null && !changing) {
+                    OthersPlayerBar(shownProfile) { changing = true }
                 }
             }
         }
@@ -351,20 +361,32 @@ fun TournamentStatisticsTab(
                     },
                 )
                 TournamentStatisticsKind.PLAYERS -> {
-                    val slotId = chosenSlotText?.toIntOrNull() ?: mySlotId ?: loaded.slots.firstOrNull()?.id
-                    PlayerDropdownField(
-                        names = loaded.names,
-                        selectedId = slotId,
-                        onChoose = { chosenSlotText = it.toString() },
-                        modifier = Modifier.widthIn(max = 520.dp).fillMaxWidth().align(Alignment.CenterHorizontally),
-                    )
+                    val slotId = shownSlotId
+                    if (shownProfile == null || changing) {
+                        Row(
+                            Modifier.widthIn(max = 520.dp).fillMaxWidth().align(Alignment.CenterHorizontally),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            PlayerDropdownField(
+                                names = loaded.names,
+                                selectedId = slotId,
+                                onChoose = {
+                                    chosenSlotText = it.toString()
+                                    changing = false
+                                },
+                                modifier = Modifier.weight(1f),
+                            )
+                            if (shownProfile != null) TextButton(onClick = { changing = false }) { Text(stringResource(Res.string.action_cancel)) }
+                        }
+                    }
                     val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
                     if (stats == null) {
                         AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
                     } else {
+                        // The bar above names the player, so the panel has no header.
                         PlayerStatisticsPanel(
                             stats,
-                            header = loaded.profiles[slotId]?.let { profile -> { PlayerStatisticsHeader(profile) } },
                             tournaments = listOf(loaded.tournament),
                             rivalNames = loaded.rivalNames,
                         )
