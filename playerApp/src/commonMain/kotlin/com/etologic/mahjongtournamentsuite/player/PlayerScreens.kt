@@ -843,6 +843,9 @@ private fun Duration.toAgeText(): UiText {
     }
 }
 
+/** The width of the tab rows and of the tabs of a tournament, except the statistics, on a wide screen. */
+internal val TournamentColumnWidth = 720.dp
+
 @Composable
 fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     val (view, message) = rememberTournamentView(tournamentId)
@@ -874,38 +877,45 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The provider is outside the column, so all the tab rows use the same state.
         CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
-            ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+            // The screen uses the full width. The tab rows and the other tabs keep a narrow column. The statistics use all the width.
+            ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
                 if (view == null) {
                     MessageDialog(message)
                     return@ScreenColumn
                 }
                 HideOnScrollTabs(tab) {
-                    PrimaryTabRow(
-                        selectedTabIndex = tab,
-                        containerColor = tabRowColor(),
-                        contentColor = TabContentColor,
-                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
-                    ) {
-                        listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_ranking), stringResource(Res.string.stats_title), stringResource(Res.string.tab_info)).forEachIndexed { index, title ->
-                            CompactTab(
-                                selected = tab == index,
-                                onClick = { tab = index },
-                                title = title,
-                                trackingName = listOf("Tables", "Ranking", "Statistics", "Info")[index],
-                                icon = {
-                                    val icon = when (index) {
-                                        0 -> Icons.Default.People
-                                        1 -> Icons.Default.Leaderboard
-                                        2 -> StatisticsIcon
-                                        else -> Icons.Default.Info
-                                    }
-                                    Icon(icon, contentDescription = null, Modifier.size(20.dp))
-                                },
-                            )
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        PrimaryTabRow(
+                            selectedTabIndex = tab,
+                            containerColor = tabRowColor(),
+                            contentColor = TabContentColor,
+                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
+                            modifier = Modifier.widthIn(max = TournamentColumnWidth),
+                        ) {
+                            listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_ranking), stringResource(Res.string.stats_title), stringResource(Res.string.tab_info)).forEachIndexed { index, title ->
+                                CompactTab(
+                                    selected = tab == index,
+                                    onClick = { tab = index },
+                                    title = title,
+                                    trackingName = listOf("Tables", "Ranking", "Statistics", "Info")[index],
+                                    icon = {
+                                        val icon = when (index) {
+                                            0 -> Icons.Default.People
+                                            1 -> Icons.Default.Leaderboard
+                                            2 -> StatisticsIcon
+                                            else -> Icons.Default.Info
+                                        }
+                                        Icon(icon, contentDescription = null, Modifier.size(20.dp))
+                                    },
+                                )
+                            }
                         }
                     }
                 }
-                Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
+                Column(
+                    Modifier.weight(1f).align(Alignment.CenterHorizontally).hideOnScroll(hideOnScroll)
+                        .then(if (tab == 2) Modifier.fillMaxWidth() else Modifier.widthIn(max = TournamentColumnWidth).fillMaxWidth()),
+                ) {
                     MessageDialog(message)
                     val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
                     when (tab) {

@@ -309,22 +309,25 @@ fun TournamentStatisticsTab(
     ReportLoading(data == null && message == null, onLoadingChange)
     // The scroll starts at the line under the tabs. The padding is inside the scroll, so the content moves under that line.
     Column(Modifier.fillMaxSize()) {
-        // The tab row is as wide as the tabs of the tournament, like the rows of Tables and Ranking.
+        // The tab row is as wide as the tabs of the tournament, like the rows of Tables and Ranking. The content uses all the width.
         HideOnScrollTabs(tab) {
-            PrimaryTabRow(
-                selectedTabIndex = tabs.indexOf(tab),
-                containerColor = tabRowColor(),
-                contentColor = TabContentColor,
-                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
-            ) {
-                tabs.forEach { item ->
-                    CompactTab(
-                        selected = item == tab,
-                        onClick = { tabName = item.name },
-                        title = stringResource(item.title),
-                        trackingName = item.name,
-                        icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
-                    )
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                PrimaryTabRow(
+                    selectedTabIndex = tabs.indexOf(tab),
+                    containerColor = tabRowColor(),
+                    contentColor = TabContentColor,
+                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
+                    modifier = Modifier.widthIn(max = TournamentColumnWidth),
+                ) {
+                    tabs.forEach { item ->
+                        CompactTab(
+                            selected = item == tab,
+                            onClick = { tabName = item.name },
+                            title = stringResource(item.title),
+                            trackingName = item.name,
+                            icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
+                        )
+                    }
                 }
             }
         }
