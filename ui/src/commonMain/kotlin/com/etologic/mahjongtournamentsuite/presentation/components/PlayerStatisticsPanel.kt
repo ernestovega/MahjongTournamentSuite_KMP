@@ -75,6 +75,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
@@ -590,7 +591,7 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
         if (maxWidth >= 520.dp) {
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(40.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 chart()
@@ -1317,6 +1318,27 @@ private fun tableLabel(result: TableResult, tournaments: List<Tournament>): Stri
     return listOf(name, stringResource(Res.string.round_n, result.roundId), stringResource(Res.string.table_n, result.tableId)).filter { it.isNotBlank() }.joinToString(" - ")
 }
 
+/** The space above the first place line of the place history. With several tournaments it holds their names. */
+private val PlaceHistoryTop = 12.dp
+private val PlaceHistoryGroupedTop = 28.dp
+
+/** A run of tables of one tournament in the place history, from the index [first] to the index [last]. */
+internal data class TournamentRun(val tournamentId: String, val first: Int, val last: Int)
+
+/** The runs of tables that follow each other in the same tournament. */
+internal fun tournamentRuns(results: List<TableResult>): List<TournamentRun> {
+    val runs = mutableListOf<TournamentRun>()
+    results.forEachIndexed { index, result ->
+        val previous = runs.lastOrNull()
+        if (previous != null && previous.tournamentId == result.tournamentId) {
+            runs[runs.lastIndex] = previous.copy(last = index)
+        } else {
+            runs += TournamentRun(result.tournamentId, index, index)
+        }
+    }
+    return runs
+}
+
 @Composable
 private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournament>, showTitle: Boolean = true) {
     val places = results.map { it.position }
@@ -1325,6 +1347,14 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
     val tips = results.mapIndexed { index, result -> tableLabel(result, tournaments) + "\n" + times[index].replace('\n', ' ') }
     if (showTitle) Text(stringResource(Res.string.places_history_title, places.size), Modifier.padding(top = 16.dp), style = MaterialTheme.typography.titleSmall)
     val pointColors = (1..4).map { positionColor(it) }
+    // The tables of one tournament follow each other. Each run of tables gets a band of its own color behind it,
+    // with the short name of the tournament on top, so the chart shows where each tournament starts and ends.
+    val groups = tournamentRuns(results)
+    val grouped = groups.size > 1
+    val bandColors = listOf(MaterialTheme.colorScheme.primary, MaterialTheme.colorScheme.tertiary, MaterialTheme.colorScheme.secondary)
+    val groupNames = groups.map { run ->
+        tournaments.firstOrNull { it.id == run.tournamentId }?.let { it.shortName.ifBlank { it.name } }.orEmpty()
+    }
     val grid = MaterialTheme.colorScheme.outlineVariant
     val line = MaterialTheme.colorScheme.onSurfaceVariant
     val measurer = rememberTextMeasurer()
@@ -1333,15 +1363,36 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
         fontSize = MaterialTheme.typography.labelSmall.fontSize,
         textAlign = TextAlign.Center,
     )
-    BoxWithConstraints(Modifier.fillMaxWidth().height(230.dp)) {
+    val topPad = if (grouped) PlaceHistoryGroupedTop else PlaceHistoryTop
+    BoxWithConstraints(Modifier.fillMaxWidth().height(230.dp + topPad - PlaceHistoryTop)) {
     Canvas(Modifier.fillMaxSize()) {
         val left = 36.dp.toPx()
         val pad = 12.dp.toPx()
+        val top = topPad.toPx()
         val bottom = 44.dp.toPx()
         val width = size.width - left - pad * 2
-        val height = size.height - pad - bottom
-        fun y(place: Int) = pad + height * (place - 1) / 3f
+        val height = size.height - top - bottom
+        fun y(place: Int) = top + height * (place - 1) / 3f
         fun x(step: Int) = left + if (places.size == 1) width / 2f else width * step / (places.size - 1)
+        if (grouped) {
+            val half = if (places.size > 1) width / (places.size - 1) / 2f else 0f
+            groups.forEachIndexed { index, run ->
+                val color = bandColors[index % bandColors.size]
+                val start = (x(run.first) - half).coerceAtLeast(left - pad)
+                val end = (x(run.last) + half).coerceAtMost(size.width - pad)
+                // The band covers the plot. A stronger strip under it marks the dates of the same tournament.
+                drawRect(color.copy(alpha = 0.08f), Offset(start, top - pad), androidx.compose.ui.geometry.Size(end - start, height + pad * 2))
+                drawRect(color.copy(alpha = 0.55f), Offset(start, size.height - bottom + 4.dp.toPx()), androidx.compose.ui.geometry.Size(end - start, 3.dp.toPx()))
+                val name = groupNames[index]
+                if (name.isNotBlank()) {
+                    val layout = measurer.measure(name, labelStyle.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis,
+                        constraints = androidx.compose.ui.unit.Constraints(maxWidth = (end - start).toInt().coerceAtLeast(1)))
+                    if (layout.size.width <= end - start) {
+                        drawText(layout, topLeft = Offset(start + (end - start - layout.size.width) / 2f, 2.dp.toPx()))
+                    }
+                }
+            }
+        }
         (1..4).forEach { place ->
             drawLine(grid, Offset(left, y(place)), Offset(size.width - pad, y(place)), strokeWidth = 1.dp.toPx())
             val layout = measurer.measure(placeNames[place - 1], labelStyle)
@@ -1368,10 +1419,10 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
     }
     // Each dot has a transparent box over it. The box shows the tournament, round, table, date and time in a tooltip.
     val plotWidth = maxWidth - 36.dp - 24.dp
-    val plotHeight = maxHeight - 12.dp - 44.dp
+    val plotHeight = maxHeight - topPad - 44.dp
     places.forEachIndexed { step, place ->
         val centerX = 36.dp + if (places.size == 1) plotWidth / 2f else plotWidth * step / (places.size - 1)
-        val centerY = 12.dp + plotHeight * (place - 1) / 3f
+        val centerY = topPad + plotHeight * (place - 1) / 3f
         // The offset sits on a wrapper. The tooltip box must be the 24 dp box itself, or its anchor is not the dot.
         Box(Modifier.offset(centerX - 12.dp, centerY - 12.dp).size(24.dp)) {
             HoverTip(tips[step], Modifier.size(24.dp)) { Box(Modifier.size(24.dp)) }
