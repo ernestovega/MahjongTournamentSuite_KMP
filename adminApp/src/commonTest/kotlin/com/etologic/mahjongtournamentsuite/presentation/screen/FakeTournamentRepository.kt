@@ -17,6 +17,9 @@ internal class FakeTournamentRepository : TournamentRepository {
     var tournamentsRevision = 1L
     var failPlayers = false
 
+    /** The visibility that the last settings save sent. */
+    var savedIsPublic: Boolean? = null
+
     /** When true, the write methods (settings, players, teams, files) work. Otherwise they fail, like an unused method. */
     var writesSucceed = false
 
@@ -189,7 +192,10 @@ internal class FakeTournamentRepository : TournamentRepository {
         matchExtraMinutes: Int?,
         timeZone: String?,
         isPublic: Boolean?,
-    ) = writeResult(Tournament(id = tournamentId, name = name, isTeams = false, numPlayers = 0, numRounds = 0))
+    ): AppResult<Tournament> {
+        savedIsPublic = isPublic
+        return writeResult(Tournament(id = tournamentId, name = name, isTeams = false, numPlayers = 0, numRounds = 0, isPublic = isPublic ?: true))
+    }
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?) = writeResult(ByteArray(0))
     override suspend fun generateIdCardProof(request: IdCardProofRequest) = writeResult(ByteArray(0))

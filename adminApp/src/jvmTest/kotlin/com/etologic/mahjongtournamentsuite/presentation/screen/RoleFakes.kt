@@ -159,8 +159,13 @@ internal class FakeSignedInAuthRepository : AuthRepository {
 }
 
 internal class FakePlayerRepository(private val players: List<Player> = emptyList()) : PlayerRepository {
+    /** The players that the screen saved, in order. */
+    val saved = mutableListOf<Player>()
     override suspend fun listPlayers(refreshMode: RefreshMode) = AppResult.Success(players)
     override suspend fun createPlayer(player: Player): AppResult<Player> = error("unused")
-    override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> = error("unused")
+    override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> {
+        saved += player
+        return AppResult.Success(Unit)
+    }
     override suspend fun updatePlayerPhoto(emaId: String, contentType: String, bytes: ByteArray): AppResult<Player> = error("unused")
 }

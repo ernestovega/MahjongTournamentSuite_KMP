@@ -12,6 +12,13 @@ import androidx.compose.ui.test.getUnclippedBoundsInRoot
 import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isToggleable
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextReplacement
@@ -61,7 +68,12 @@ class RoleGatingUiTest {
         val accounts = FakePlayerAccountRepository()
     }
 
-    private fun ComposeUiTest.show(world: World, players: List<Player> = emptyList(), content: @Composable () -> Unit) {
+    private fun ComposeUiTest.show(
+        world: World,
+        players: List<Player> = emptyList(),
+        registry: FakePlayerRepository = FakePlayerRepository(players),
+        content: @Composable () -> Unit,
+    ) {
         setContent {
             val themeController = ThemeController(ThemePreference.Light, false, {})
             val koin = remember {
@@ -72,7 +84,7 @@ class RoleGatingUiTest {
                             single<TournamentRepository> { world.server }
                             single<AdminRepository> { world.admin }
                             single<AuthRepository> { FakeSignedInAuthRepository() }
-                            single<PlayerRepository> { FakePlayerRepository(players) }
+                            single<PlayerRepository> { registry }
                             single<PlayerAccountRepository> { world.accounts }
                             single { world.store }
                             factory { TournamentsPresenter(get(), get(), get()) }
@@ -182,6 +194,39 @@ class RoleGatingUiTest {
         waitForIdle()
 
         onAllNodesWithText("Save").assertCountEquals(0)
+    }
+
+    @Test
+    fun adminHidesAnEmaPlayerFromThePublic() = runComposeUiTest {
+        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        // The save checks the three-letter EMA country code.
+        val registry = FakePlayerRepository(listOf(player.copy(country = "GBR")))
+        show(world, registry = registry) { PlayerBaseScreen(rememberNavController()) }
+
+        awaitText("10001")
+        onAllNodesWithText("10001", substring = true).onFirst().performClick()
+        waitForIdle()
+        onNodeWithText("Hide from the public").performScrollTo()
+        onAllNodes(isToggleable()).onFirst().assertIsOff().performClick()
+        waitForIdle()
+        onNodeWithText("Save").performScrollTo().performClick()
+        awaitText("Save player changes")
+        onNode(hasText("Save") and hasAnyAncestor(isDialog())).performClick()
+        waitUntil(timeoutMillis = 5_000) { registry.saved.isNotEmpty() }
+
+        assertTrue(registry.saved.single().hiddenFromPublic)
+    }
+
+    @Test
+    fun editorCannotHideAnEmaPlayer() = runComposeUiTest {
+        val world = World(GlobalUserRole.EDITOR, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.EDITOR) }
+        show(world, listOf(player.copy(hiddenFromPublic = true))) { PlayerBaseScreen(rememberNavController()) }
+
+        awaitText("10001")
+        onAllNodesWithText("10001", substring = true).onFirst().performClick()
+        waitForIdle()
+
+        onAllNodes(isToggleable()).onFirst().assertIsOn().assertIsNotEnabled()
     }
 
     // ---------------------------------------------------------------- accounts
