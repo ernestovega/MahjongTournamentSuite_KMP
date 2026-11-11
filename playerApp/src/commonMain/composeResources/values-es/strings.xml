@@ -85,7 +85,7 @@
     <string name="ranking_chicken_hands">Manos de pollo</string>
     <string name="ranking_chicken_short">Pollo</string>
     <string name="ranking_best_hands">Mejores manos</string>
-    <string name="ranking_best_short">Mejores</string>
+    <string name="ranking_best_short">Mejor mano</string>
     <string name="field_search">Buscar</string>
     <string name="team_hide_players">Ocultar jugadores</string>
     <string name="team_show_players">Mostrar jugadores</string>
@@ -166,12 +166,15 @@
     <string name="tournament_you_play">Juegas en este torneo</string>
     <string name="table_sign_in_to_enter_hands">Inicia sesión para apuntar las manos de tu mesa</string>
     <string name="filter_search">Buscar por nombre, ciudad o sede</string>
-    <string name="filter_individual">Individual</string>
-    <string name="filter_teams">Por equipos</string>
     <string name="filter_country">País</string>
     <string name="filter_all_countries">Todos los países</string>
     <string name="filter_year">Año</string>
     <string name="filter_all_years">Todos los años</string>
     <string name="filter_clear">Quitar filtros</string>
     <string name="privacy_public_notice">Los torneos, los resultados y las estadísticas son públicos. Muestran el nombre, el país y el número EMA de cada jugador, nunca correos ni fotos. Si no quieres aparecer, pídeselo a la organización: se te mostrará solo como un número.</string>
+    <string name="filter_status">Estado</string>
+    <string name="filter_all_statuses">Todos los estados</string>
+    <string name="sign_in_needed_title">Inicia sesión para ver lo tuyo</string>
+    <string name="tables_me_sign_in">Inicia sesión para ver tus mesas en este torneo. Todas las mesas están en la pestaña Todas.</string>
+    <string name="tables_team_sign_in">Inicia sesión para ver las mesas de tu equipo. Todas las mesas están en la pestaña Todas.</string>
 </resources>

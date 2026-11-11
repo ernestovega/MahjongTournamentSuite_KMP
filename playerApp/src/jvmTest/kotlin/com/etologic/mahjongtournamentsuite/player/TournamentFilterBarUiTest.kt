@@ -6,6 +6,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.width
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasSetTextAction
@@ -32,7 +36,10 @@ class TournamentFilterBarUiTest {
 
     private fun ComposeUiTest.show(signedIn: Boolean) = setContent {
         MtsTheme(useDarkTheme = false) {
-            TournamentFilterBar(filter = filter, onChange = { filter = it }, tournaments = tournaments, signedIn = signedIn)
+            // The width of a phone: the three dropdowns still share one row.
+            Box(Modifier.width(360.dp)) {
+                TournamentFilterBar(filter = filter, onChange = { filter = it }, tournaments = tournaments, signedIn = signedIn)
+            }
         }
     }
 
@@ -45,10 +52,11 @@ class TournamentFilterBarUiTest {
     }
 
     @Test
-    fun aGuestHasNoMyTournamentsChip() = runComposeUiTest {
+    fun aGuestHasNoMyTournamentsChipAndNoKindChips() = runComposeUiTest {
         show(signedIn = false)
         onNodeWithText("My tournaments").assertDoesNotExist()
-        onNodeWithText("In progress").assertExists()
+        onNodeWithText("Individual").assertDoesNotExist()
+        onNodeWithText("Teams").assertDoesNotExist()
     }
 
     @Test
@@ -61,27 +69,19 @@ class TournamentFilterBarUiTest {
     }
 
     @Test
-    fun theStatusChipsAddUpAndTheKindChipsExcludeEachOther() = runComposeUiTest {
-        show(signedIn = false)
-        onNodeWithText("Upcoming").performClick()
-        onNodeWithText("Finished").performClick()
-        onNodeWithText("Individual").performClick()
-        onNodeWithText("Teams").performClick()
-        waitForIdle()
-        assertEquals(setOf(TournamentStatus.UPCOMING, TournamentStatus.FINISHED), filter.statuses)
-        assertEquals(TournamentKind.TEAMS, filter.kind)
-        onNodeWithText("Individual").assertIsNotSelected()
-        onNodeWithText("Teams").performClick()
-        waitForIdle()
-        assertEquals(null, filter.kind)
-    }
-
-    @Test
-    fun theCountryAndYearComeFromTheTournamentsAndClearResetsEverything() = runComposeUiTest {
+    fun theStatusCountryAndYearAreDropdownsInOneRowAndClearResetsEverything() = runComposeUiTest {
         show(signedIn = false)
         onNodeWithText("Clear filters").assertDoesNotExist()
+        val status = onNodeWithText("All statuses").fetchSemanticsNode().boundsInRoot
+        val country = onNodeWithText("All countries").fetchSemanticsNode().boundsInRoot
+        val year = onNodeWithText("All years").fetchSemanticsNode().boundsInRoot
+        assertTrue(status.right <= country.left && country.right <= year.left, "status, country, year")
+        assertEquals(status.top, country.top, "the same row")
+        assertEquals(country.top, year.top, "the same row")
+        pick("All statuses", "Finished")
         pick("All countries", "ITA")
         pick("All years", "2025")
+        assertEquals(TournamentStatus.FINISHED, filter.status)
         assertEquals("ITA", filter.country)
         assertEquals(2025, filter.year)
         onNodeWithText("Clear filters").performClick()

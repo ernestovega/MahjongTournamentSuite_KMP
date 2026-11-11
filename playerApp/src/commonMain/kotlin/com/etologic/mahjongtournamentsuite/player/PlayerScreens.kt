@@ -211,6 +211,9 @@ import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_me
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
+import mahjongtournamentsuite.playerapp.generated.resources.tables_me_sign_in
+import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
+import mahjongtournamentsuite.playerapp.generated.resources.sign_in_needed_title
 import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_you_play
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
@@ -843,6 +846,9 @@ private fun Duration.toAgeText(): UiText {
 @Composable
 fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     val (view, message) = rememberTournamentView(tournamentId)
+    val session = koinInject<PlayerSessionPresenter>()
+    // Null until the session is known, so a guest never sees the empty texts of an account for a moment.
+    val signedIn by produceState<Boolean?>(null) { value = session.hasSession() }
     // An account that is not linked to a player has no own tables. It starts on All tables.
     // A negative value means that the player did not choose a tab.
     var tab by rememberPersistentInt("mainTab", 0)
@@ -930,7 +936,15 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                     }
                                 }
                             }
-                            if (tablesTabId == 0) {
+                            if (signedIn == null && tablesTabId != 1) {
+                                Unit
+                            } else if (signedIn == false && tablesTabId != 1) {
+                                // A guest has no own tables or team. The tab says how to get them.
+                                SignInPrompt(
+                                    message = stringResource(if (tablesTabId == 0) Res.string.tables_me_sign_in else Res.string.tables_team_sign_in),
+                                    onSignIn = { navController.navigate(SignInRoute()) },
+                                )
+                            } else if (tablesTabId == 0) {
                                 TableList(
                                     view,
                                     view.myTables,
@@ -1002,6 +1016,22 @@ private fun PlayerTable.seatsFor(view: PlayerTournamentView, withLevelChange: Bo
         seat(t.playerWestId, scores[2], points[2], penalty { it.playerWestPenalty }),
         seat(t.playerNorthId, scores[3], points[3], penalty { it.playerNorthPenalty }),
     )
+}
+
+/** The empty state of a tab that needs an account, with the button that opens the sign-in. */
+@Composable
+private fun SignInPrompt(message: String, onSignIn: () -> Unit) {
+    Column(
+        Modifier.fillMaxWidth().padding(start = 16.dp, top = 12.dp, end = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        EmptyState(Icons.AutoMirrored.Filled.Login, stringResource(Res.string.sign_in_needed_title), message)
+        Button(onClick = onSignIn) {
+            Icon(Icons.AutoMirrored.Filled.Login, contentDescription = null, Modifier.size(18.dp))
+            Text(stringResource(Res.string.menu_sign_in), Modifier.padding(start = 8.dp))
+        }
+    }
 }
 
 @Composable

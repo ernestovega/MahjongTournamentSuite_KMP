@@ -14,8 +14,7 @@ class TournamentFilterTest {
     fun encodeAndDecodeKeepEveryFilter() {
         val filter = TournamentFilter(
             query = "open madrid",
-            statuses = setOf(TournamentStatus.UPCOMING, TournamentStatus.FINISHED),
-            kind = TournamentKind.TEAMS,
+            status = TournamentStatus.UPCOMING,
             country = "IT",
             year = 2026,
             mineOnly = true,
@@ -30,12 +29,13 @@ class TournamentFilterTest {
     fun filtersCombine() {
         val open = tournament("a", name = "Madrid Open", country = "es", start = "2026-05-01")
         val teams = tournament("b", name = "Copa Equipos", teams = true, country = "IT", start = "2025-03-01")
-        val filter = TournamentFilter(query = "madrid", kind = TournamentKind.INDIVIDUAL, country = "ES", year = 2026)
+        val filter = TournamentFilter(query = "madrid", status = TournamentStatus.FINISHED, country = "ES", year = 2026)
         assertTrue(filter.accepts(open, TournamentStatus.FINISHED, emptySet()))
         assertFalse(filter.accepts(teams, TournamentStatus.FINISHED, emptySet()))
         assertFalse(TournamentFilter(mineOnly = true).accepts(open, null, setOf("b")))
         assertTrue(TournamentFilter(mineOnly = true).accepts(teams, null, setOf("b")))
-        assertFalse(TournamentFilter(statuses = setOf(TournamentStatus.IN_PROGRESS)).accepts(open, TournamentStatus.FINISHED, emptySet()))
+        assertFalse(TournamentFilter(status = TournamentStatus.IN_PROGRESS).accepts(open, TournamentStatus.FINISHED, emptySet()))
+        assertFalse(filter.accepts(open, TournamentStatus.UPCOMING, emptySet()))
     }
 
     @Test

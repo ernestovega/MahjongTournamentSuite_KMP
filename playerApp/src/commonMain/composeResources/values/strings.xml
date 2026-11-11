@@ -85,7 +85,7 @@
     <string name="ranking_chicken_hands">Chicken hands</string>
     <string name="ranking_chicken_short">Chicken</string>
     <string name="ranking_best_hands">Best hands</string>
-    <string name="ranking_best_short">Best</string>
+    <string name="ranking_best_short">Best hand</string>
     <string name="field_search">Search</string>
     <string name="team_hide_players">Hide players</string>
     <string name="team_show_players">Show players</string>
@@ -166,12 +166,15 @@
     <string name="tournament_you_play">You play in this tournament</string>
     <string name="table_sign_in_to_enter_hands">Sign in to write down the hands of your table</string>
     <string name="filter_search">Search by name, city or venue</string>
-    <string name="filter_individual">Individual</string>
-    <string name="filter_teams">Teams</string>
     <string name="filter_country">Country</string>
     <string name="filter_all_countries">All countries</string>
     <string name="filter_year">Year</string>
     <string name="filter_all_years">All years</string>
     <string name="filter_clear">Clear filters</string>
     <string name="privacy_public_notice">Tournaments, results and statistics are public. They show the name, country and EMA number of each player, never emails or photos. If you do not want to appear, ask the organisers: you will be shown only as a number.</string>
+    <string name="filter_status">Status</string>
+    <string name="filter_all_statuses">All statuses</string>
+    <string name="sign_in_needed_title">Sign in to see yours</string>
+    <string name="tables_me_sign_in">Sign in to see your tables in this tournament. All the tables are in the All tab.</string>
+    <string name="tables_team_sign_in">Sign in to see the tables of your team. All the tables are in the All tab.</string>
 </resources>

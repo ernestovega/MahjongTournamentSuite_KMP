@@ -4,9 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
@@ -31,24 +31,20 @@ import mahjongtournamentsuite.playerapp.generated.resources.filter_all_countries
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_years
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_country
-import mahjongtournamentsuite.playerapp.generated.resources.filter_individual
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search
-import mahjongtournamentsuite.playerapp.generated.resources.filter_teams
+import mahjongtournamentsuite.playerapp.generated.resources.filter_status
+import mahjongtournamentsuite.playerapp.generated.resources.filter_all_statuses
 import mahjongtournamentsuite.playerapp.generated.resources.filter_year
 import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
 import org.jetbrains.compose.resources.stringResource
 
-/** Individual or team tournaments. */
-internal enum class TournamentKind { INDIVIDUAL, TEAMS }
-
 /**
  * The filters of the tournament list. They combine: a tournament shows when it passes all of them.
- * An empty set or a null value lets every tournament through.
+ * A null value lets every tournament through.
  */
 internal data class TournamentFilter(
     val query: String = "",
-    val statuses: Set<TournamentStatus> = emptySet(),
-    val kind: TournamentKind? = null,
+    val status: TournamentStatus? = null,
     val country: String? = null,
     val year: Int? = null,
     val mineOnly: Boolean = false,
@@ -58,8 +54,7 @@ internal data class TournamentFilter(
     /** A short text for the saved state of the screen. */
     fun encode(): String = listOf(
         query.replace('|', ' '),
-        statuses.joinToString(",") { it.name },
-        kind?.name.orEmpty(),
+        status?.name.orEmpty(),
         country.orEmpty(),
         year?.toString().orEmpty(),
         mineOnly.toString(),
@@ -68,14 +63,13 @@ internal data class TournamentFilter(
     companion object {
         fun decode(text: String?): TournamentFilter {
             val parts = text?.split('|') ?: return TournamentFilter()
-            if (parts.size != 6) return TournamentFilter()
+            if (parts.size != 5) return TournamentFilter()
             return TournamentFilter(
                 query = parts[0],
-                statuses = parts[1].split(',').mapNotNull { name -> TournamentStatus.entries.firstOrNull { it.name == name } }.toSet(),
-                kind = TournamentKind.entries.firstOrNull { it.name == parts[2] },
-                country = parts[3].ifBlank { null },
-                year = parts[4].toIntOrNull(),
-                mineOnly = parts[5] == "true",
+                status = TournamentStatus.entries.firstOrNull { it.name == parts[1] },
+                country = parts[2].ifBlank { null },
+                year = parts[3].toIntOrNull(),
+                mineOnly = parts[4] == "true",
             )
         }
     }
@@ -89,8 +83,7 @@ internal fun TournamentFilter.accepts(tournament: Tournament, status: Tournament
     val text = listOf(tournament.name, tournament.shortName, tournament.hostCity, tournament.venue.name)
         .joinToString(" ").lowercase()
     return words.all { it in text } &&
-        (statuses.isEmpty() || status in statuses) &&
-        (kind == null || (kind == TournamentKind.TEAMS) == tournament.isTeams) &&
+        (this.status == null || status == this.status) &&
         (country == null || tournament.hostCountry.equals(country, ignoreCase = true)) &&
         (year == null || tournament.year() == year) &&
         (!mineOnly || tournament.id in mine)
@@ -119,7 +112,7 @@ internal fun List<Tournament>.sortedForList(statusOf: (Tournament) -> Tournament
     )
 }
 
-/** The search field and the filter chips above the tournament list. */
+/** The search field, the status, country and year dropdowns and the "My tournaments" chip above the tournament list. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun TournamentFilterBar(
@@ -146,31 +139,19 @@ internal fun TournamentFilterBar(
             },
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         )
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (signedIn) {
-                Chip(stringResource(Res.string.scope_my_tournaments), filter.mineOnly) { onChange(filter.copy(mineOnly = !filter.mineOnly)) }
-            }
-            listOf(TournamentStatus.IN_PROGRESS, TournamentStatus.UPCOMING, TournamentStatus.FINISHED).forEach { status ->
-                Chip(stringResource(status.label), status in filter.statuses) {
-                    onChange(filter.copy(statuses = if (status in filter.statuses) filter.statuses - status else filter.statuses + status))
-                }
-            }
-            Chip(stringResource(Res.string.filter_individual), filter.kind == TournamentKind.INDIVIDUAL) {
-                onChange(filter.copy(kind = if (filter.kind == TournamentKind.INDIVIDUAL) null else TournamentKind.INDIVIDUAL))
-            }
-            Chip(stringResource(Res.string.filter_teams), filter.kind == TournamentKind.TEAMS) {
-                onChange(filter.copy(kind = if (filter.kind == TournamentKind.TEAMS) null else TournamentKind.TEAMS))
-            }
-        }
-        FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            itemVerticalAlignment = Alignment.CenterVertically,
-        ) {
+        // The three dropdowns share one row, also on a phone.
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            val allStatuses = stringResource(Res.string.filter_all_statuses)
+            val statusOptions = listOf(TournamentStatus.IN_PROGRESS, TournamentStatus.UPCOMING, TournamentStatus.FINISHED)
+                .map { it.name to stringResource(it.label) }
+            SelectField(
+                label = stringResource(Res.string.filter_status),
+                options = listOf("" to allStatuses) + statusOptions,
+                selected = filter.status?.name.orEmpty(),
+                onSelect = { name -> onChange(filter.copy(status = TournamentStatus.entries.firstOrNull { it.name == name })) },
+                modifier = Modifier.weight(1f),
+                compact = true,
+            )
             val allCountries = stringResource(Res.string.filter_all_countries)
             val countries = tournaments.map { it.hostCountry.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
             SelectField(
@@ -178,7 +159,7 @@ internal fun TournamentFilterBar(
                 options = listOf("" to allCountries) + countries.map { it to it },
                 selected = filter.country.orEmpty(),
                 onSelect = { onChange(filter.copy(country = it.ifBlank { null })) },
-                modifier = Modifier.widthIn(min = 150.dp, max = 200.dp),
+                modifier = Modifier.weight(1f),
                 compact = true,
             )
             val allYears = stringResource(Res.string.filter_all_years)
@@ -188,11 +169,21 @@ internal fun TournamentFilterBar(
                 options = listOf(0 to allYears) + years.map { it to it.toString() },
                 selected = filter.year ?: 0,
                 onSelect = { onChange(filter.copy(year = it.takeIf { year -> year > 0 })) },
-                modifier = Modifier.widthIn(min = 130.dp, max = 170.dp),
+                modifier = Modifier.weight(1f),
                 compact = true,
             )
-            if (filter.isActive) {
-                TextButton(onClick = { onChange(TournamentFilter()) }) { Text(stringResource(Res.string.filter_clear)) }
+        }
+        if (signedIn || filter.isActive) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) {
+                if (signedIn) {
+                    Chip(stringResource(Res.string.scope_my_tournaments), filter.mineOnly) { onChange(filter.copy(mineOnly = !filter.mineOnly)) }
+                }
+                if (filter.isActive) {
+                    TextButton(onClick = { onChange(TournamentFilter()) }) { Text(stringResource(Res.string.filter_clear)) }
+                }
             }
         }
     }

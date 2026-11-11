@@ -70,7 +70,7 @@ class RankingTabsUiTest {
     fun theTabsShowOnlyTheRankingsThatTheTournamentHas() {
         show(view(teams = true, chicken = true, best = false))
         listOf("Players", "Teams", "Chicken").forEach { rule.onNodeWithText(it).assertIsDisplayed() }
-        rule.onNodeWithText("Best").assertDoesNotExist()
+        rule.onNodeWithText("Best hand").assertDoesNotExist()
     }
 
     @Test
@@ -84,7 +84,7 @@ class RankingTabsUiTest {
     fun aTabChangesTheRanking() {
         show(view(teams = true, chicken = true, best = true))
         rule.onNodeWithText("Player 1").assertIsDisplayed()
-        rule.onNodeWithText("Best").performClick()
+        rule.onNodeWithText("Best hand").performClick()
         rule.onNodeWithText("80").assertIsDisplayed()
         rule.onNodeWithText("Chicken").performClick()
         rule.onNodeWithText("3").assertIsDisplayed()

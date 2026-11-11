@@ -85,7 +85,7 @@
     <string name="ranking_chicken_hands">Mains poule</string>
     <string name="ranking_chicken_short">Poule</string>
     <string name="ranking_best_hands">Meilleures mains</string>
-    <string name="ranking_best_short">Meilleures</string>
+    <string name="ranking_best_short">Meilleure main</string>
     <string name="field_search">Rechercher</string>
     <string name="team_hide_players">Masquer les joueurs</string>
     <string name="team_show_players">Afficher les joueurs</string>
@@ -166,12 +166,15 @@
     <string name="tournament_you_play">Vous jouez dans ce tournoi</string>
     <string name="table_sign_in_to_enter_hands">Connectez-vous pour noter les mains de votre table</string>
     <string name="filter_search">Rechercher par nom, ville ou lieu</string>
-    <string name="filter_individual">Individuel</string>
-    <string name="filter_teams">Par équipes</string>
     <string name="filter_country">Pays</string>
     <string name="filter_all_countries">Tous les pays</string>
     <string name="filter_year">Année</string>
     <string name="filter_all_years">Toutes les années</string>
     <string name="filter_clear">Effacer les filtres</string>
     <string name="privacy_public_notice">Les tournois, les résultats et les statistiques sont publics. Ils montrent le nom, le pays et le numéro EMA de chaque joueur, jamais les e-mails ni les photos. Si vous ne voulez pas apparaître, demandez-le aux organisateurs : vous serez affiché seulement comme un numéro.</string>
+    <string name="filter_status">Statut</string>
+    <string name="filter_all_statuses">Tous les statuts</string>
+    <string name="sign_in_needed_title">Connectez-vous pour voir les vôtres</string>
+    <string name="tables_me_sign_in">Connectez-vous pour voir vos tables dans ce tournoi. Toutes les tables sont dans l\'onglet Toutes.</string>
+    <string name="tables_team_sign_in">Connectez-vous pour voir les tables de votre équipe. Toutes les tables sont dans l\'onglet Toutes.</string>
 </resources>
