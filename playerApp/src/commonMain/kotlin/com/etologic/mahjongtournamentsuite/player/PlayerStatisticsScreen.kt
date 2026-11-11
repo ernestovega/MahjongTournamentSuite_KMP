@@ -480,7 +480,8 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
                         CompactTab(
                             selected = item == tab,
                             onClick = { tabName = item.name },
-                            title = stringResource(item.title),
+                            // Without an account there is no "Me", so the other players are just the players.
+                            title = stringResource(if (item == MyStatisticsKind.OTHERS && !signedIn) Res.string.scope_players else item.title),
                             trackingName = item.name,
                             icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
                         )
