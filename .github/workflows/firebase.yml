@@ -215,10 +215,12 @@ jobs:
           --non-interactive
           --force
 
-  # Runs next to the Firebase deploy. Setup of Google Play and the upload keystores: docs/android-release.md.
+  # Setup of Google Play and the upload keystores: docs/android-release.md.
+  # Paused on push (Ernesto, 2026-11-11): small changes must not reach Google Play. It runs only when the workflow is
+  # started by hand on main, from the Actions tab. To publish on every push again, put back `github.event_name != 'pull_request'`.
   play:
     name: Publish to Google Play
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     environment: production

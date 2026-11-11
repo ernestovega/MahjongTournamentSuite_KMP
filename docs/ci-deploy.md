@@ -22,7 +22,7 @@ The workflow `.github/workflows/firebase.yml` (shown in GitHub as **Tests and de
   The last job, named **Build and test**, fails when any check fails. The ruleset of `main` requires only this job. Nothing is deployed.
 - **Deploy to Firebase** runs on every push to `main`. It can also be started by hand from the Actions tab. It runs the functions tests and then deploys hosting (both sites), functions, Firestore rules and indexes, and Storage rules. The `predeploy` steps in `firebase.json` build the web apps and the functions.
 
-- **Publish to Google Play** runs on every push to `main`, next to the deploy. It builds and uploads each Android app whose version code is not on Google Play yet. See [android-release.md](android-release.md#automatic-upload-to-google-play).
+- **Publish to Google Play** runs only when the workflow is started by hand on `main` (Actions > Tests and deploy > Run workflow). The upload on every push is paused since 2026-11-11. It builds and uploads each Android app whose version code is not on Google Play yet. See [android-release.md](android-release.md#automatic-upload-to-google-play).
 
 The deploy uses `--force`, so a function removed from the code is also deleted in Firebase. Two deploys never run at the same time: a newer push waits for the running one.
 
