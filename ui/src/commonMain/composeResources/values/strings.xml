@@ -332,5 +332,6 @@
     <string name="consent_withdraw_info">The app stops the analytics and asks you again. You cannot use the app until you accept.</string>
     <string name="stat_best_hand_points">Best hand (points won)</string>
     <string name="stat_best_hand_points_info">The most points that one winning hand added to its winner: by discard, the hand plus 24; by self-draw, the hand plus 8, three times. Penalties do not count.</string>
-    <string name="stat_average_hands_per_table">Hands per table</string>
+    <string name="stat_average_hands_per_table">Avg. hands per table</string>
+    <string name="stat_average_hands_per_table_info">The average number of hands completed at each finished table with hands. For example, a table with 16 hands and another with 14 give 15.</string>
 </resources>

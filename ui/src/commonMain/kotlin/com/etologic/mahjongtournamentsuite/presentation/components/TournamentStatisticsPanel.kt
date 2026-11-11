@@ -63,6 +63,7 @@ import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points
 import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table
+import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table_info
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points_info
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
 import org.jetbrains.compose.resources.stringResource
@@ -180,7 +181,11 @@ private fun TournamentHandsCard(statistics: TournamentStatistics) {
         }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
         StatGrid(Modifier.fillMaxWidth()) {
-            BigNumber(stringResource(Res.string.stat_average_hands_per_table), statistics.averageHandsPerTable.decimal())
+            BigNumber(
+                stringResource(Res.string.stat_average_hands_per_table),
+                statistics.averageHandsPerTable.decimal(),
+                info = stringResource(Res.string.stat_average_hands_per_table_info),
+            )
             BigNumber(stringResource(Res.string.stat_average_winning_hand), statistics.averageHandScore.decimal())
             if (statistics.penaltyCount > 0) {
                 val points = statistics.penaltyPoints
