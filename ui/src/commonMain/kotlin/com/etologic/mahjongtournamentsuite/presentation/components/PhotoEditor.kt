@@ -39,6 +39,7 @@ import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.photo_crop_hint
 import mahjongtournamentsuite.ui.generated.resources.photo_crop_title
+import mahjongtournamentsuite.ui.generated.resources.photo_custom_info
 import mahjongtournamentsuite.ui.generated.resources.photo_ema_info
 import mahjongtournamentsuite.ui.generated.resources.photo_edit
 import mahjongtournamentsuite.ui.generated.resources.photo_error_size
@@ -55,7 +56,8 @@ private val SUPPORTED_PHOTO_TYPES = setOf("image/jpeg", "image/png", "image/webp
  * The photo of an account with the buttons to change it. The user picks an image and crops it.
  * [onUpload] and [onRemove] save the change. They return an error text, or null when the save worked.
  * The caller shows the new photo through [photoUrl] after a save.
- * Without an own photo, [photoUrl] can be the photo of the EMA player. Then an info icon explains it and the remove button is hidden.
+ * Without an own photo, [photoUrl] can be the photo of the EMA player. Then the remove button is hidden.
+ * An info icon says if the photo is the photo of the EMA player or the photo that the user uploaded.
  * The remove button restores the photo of the EMA player.
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,18 +94,24 @@ fun PhotoEditor(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         val usesEmaPhoto = !hasOwnPhoto && !photoUrl.isNullOrBlank()
+        // The info says where the photo comes from: the EMA player, or the photo that the user uploaded.
+        val info = when {
+            hasOwnPhoto -> Res.string.photo_custom_info
+            usesEmaPhoto -> Res.string.photo_ema_info
+            else -> null
+        }
         Box {
             ProfilePhoto(photoUrl = photoUrl, name = name)
-            if (usesEmaPhoto) {
+            if (info != null) {
                 TooltipBox(
                     positionProvider = rememberAppTooltipPositionProvider(),
-                    tooltip = { AppPlainTooltip { Text(stringResource(Res.string.photo_ema_info)) } },
+                    tooltip = { AppPlainTooltip { Text(stringResource(info)) } },
                     state = rememberTooltipState(),
                     modifier = Modifier.align(Alignment.BottomEnd),
                 ) {
                     Icon(
                         Icons.Outlined.Info,
-                        contentDescription = stringResource(Res.string.photo_ema_info),
+                        contentDescription = stringResource(info),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(24.dp),
                     )

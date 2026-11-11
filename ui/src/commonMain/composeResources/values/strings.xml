@@ -35,7 +35,8 @@
     <string name="photo_error_type">Choose a JPEG, PNG, WebP, or GIF image.</string>
     <string name="photo_error_size">Choose a photo that is 5 MB or smaller.</string>
     <string name="photo_edit">Edit photo</string>
-    <string name="photo_ema_info">This is the photo of your EMA player.\nRemove your own photo to use it again.</string>
+    <string name="photo_ema_info">This is your EMA player photo.\nUpload a new one if you want.</string>
+    <string name="photo_custom_info">This is your custom photo.\nYou can remove it to restore your EMA photo.</string>
     <string name="photo_remove">Remove photo</string>
     <string name="photo_crop_title">Crop photo</string>
     <string name="photo_crop_hint">Drag the image or use the controls. The circle shows the area that the apps show.</string>

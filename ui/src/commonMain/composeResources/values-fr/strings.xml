@@ -35,7 +35,8 @@
     <string name="photo_error_type">Choisissez une image JPEG, PNG, WebP ou GIF.</string>
     <string name="photo_error_size">Choisissez une photo de 5 Mo maximum.</string>
     <string name="photo_edit">Modifier la photo</string>
-    <string name="photo_ema_info">Ceci est la photo de votre joueur EMA.\nSupprimez votre propre photo pour l\'utiliser de nouveau.</string>
+    <string name="photo_ema_info">Ceci est votre photo de joueur EMA.\nTéléchargez-en une nouvelle si vous voulez.</string>
+    <string name="photo_custom_info">Ceci est votre photo personnalisée.\nVous pouvez la supprimer pour retrouver votre photo EMA.</string>
     <string name="photo_remove">Supprimer la photo</string>
     <string name="photo_crop_title">Recadrer la photo</string>
     <string name="photo_crop_hint">Faites glisser l'image ou utilisez les commandes. Le cercle montre la zone affichée dans les apps.</string>
