@@ -43,6 +43,9 @@ class CalculateStatisticsUseCaseTest {
         assertEquals(1, result.drawnHands)
         assertEquals(20, result.highestHand)
         assertEquals(1, result.tablesWithHands)
+        // The self-draw of 20 adds (20 + 8) x 3 to its winner, more than the discard win of 10 (10 + 24).
+        assertEquals(84, result.highestHandGain)
+        assertEquals(4.0, result.averageHandsPerTable)
     }
 
     @Test

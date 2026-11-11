@@ -205,7 +205,6 @@
     <string name="hands_won_by_discard">Gagnées sur défausse</string>
     <string name="hands_won_by_self_draw">Gagnées du mur</string>
     <string name="hands_drawn">Nulles</string>
-    <string name="stat_draw_rate">Taux de mains nulles</string>
     <string name="stat_average_winning_hand">Main gagnante moyenne</string>
     <string name="actions">Actions</string>
     <string name="scope_me">Moi</string>
@@ -331,4 +330,7 @@
     <string name="consent_declined_note">Vous ne pouvez pas utiliser l\'application sans l\'analyse anonyme. Vous pouvez fermer l\'application ou accepter pour continuer.</string>
     <string name="consent_withdraw">Retirer le consentement à l\'analyse</string>
     <string name="consent_withdraw_info">L\'application arrête l\'analyse et vous pose la question de nouveau. Vous ne pouvez pas utiliser l\'application tant que vous n\'acceptez pas.</string>
+    <string name="stat_best_hand_points">Meilleure main (points gagnés)</string>
+    <string name="stat_best_hand_points_info">Le plus de points qu\'une main gagnante a ajoutés à son gagnant : sur défausse, la main plus 24 ; en tirant seul, la main plus 8, trois fois. Les pénalités ne comptent pas.</string>
+    <string name="stat_average_hands_per_table">Mains par table</string>
 </resources>

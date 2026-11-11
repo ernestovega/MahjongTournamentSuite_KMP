@@ -205,7 +205,6 @@
     <string name="hands_won_by_discard">Vinte su scarto</string>
     <string name="hands_won_by_self_draw">Vinte dal muro</string>
     <string name="hands_drawn">Patte</string>
-    <string name="stat_draw_rate">Percentuale di patte</string>
     <string name="stat_average_winning_hand">Mano vincente media</string>
     <string name="actions">Azioni</string>
     <string name="scope_me">Io</string>
@@ -331,4 +330,7 @@
     <string name="consent_declined_note">Non puoi usare l\'app senza l\'analisi anonima. Puoi chiudere l\'app oppure accettare per continuare.</string>
     <string name="consent_withdraw">Ritira il consenso all\'analisi</string>
     <string name="consent_withdraw_info">L\'app interrompe l\'analisi e te lo chiede di nuovo. Non puoi usare l\'app finché non accetti.</string>
+    <string name="stat_best_hand_points">Mano migliore (punti vinti)</string>
+    <string name="stat_best_hand_points_info">I punti più alti che una mano vincente ha dato al vincitore: su scarto, la mano più 24; in autopescata, la mano più 8, tre volte. Le penalità non contano.</string>
+    <string name="stat_average_hands_per_table">Mani per tavolo</string>
 </resources>

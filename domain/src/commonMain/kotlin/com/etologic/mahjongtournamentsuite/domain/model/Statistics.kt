@@ -327,6 +327,8 @@ data class TournamentStatistics(
     val selfDraws: Int,
     val averageHandScore: Double?,
     val highestHand: Int?,
+    /** The most points that one winning hand added to its winner, without penalties. Null when it is not known. */
+    val highestHandGain: Int? = null,
     val chickenHands: Int,
     val penaltyCount: Int,
     /** The penalty points of all counted hands, as a positive number. Null when the source has only the number of penalties. */
@@ -334,6 +336,9 @@ data class TournamentStatistics(
     val tables: List<TableStatistics>,
 ) {
     val drawRate: Double? get() = if (handsPlayed > 0) drawnHands.toDouble() / handsPlayed else null
+
+    /** The hands that a completed table with hands played, on average. */
+    val averageHandsPerTable: Double? get() = if (tablesWithHands > 0) handsPlayed.toDouble() / tablesWithHands else null
 
     private val eligible get() = players.filter { it.handsPlayed >= MIN_HANDS_FOR_LEADERBOARD }
 

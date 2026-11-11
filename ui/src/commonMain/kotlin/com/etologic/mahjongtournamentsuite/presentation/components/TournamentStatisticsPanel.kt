@@ -44,7 +44,6 @@ import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
 import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws_info
 import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.stat_average_winning_hand
-import mahjongtournamentsuite.ui.generated.resources.stat_draw_rate
 import mahjongtournamentsuite.ui.generated.resources.stat_hands
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_without_dealin
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_on_table
@@ -62,6 +61,9 @@ import mahjongtournamentsuite.ui.generated.resources.stats_hand_stats_missing
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_values_use
 import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
+import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points
+import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table
+import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points_info
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
 import org.jetbrains.compose.resources.stringResource
 
@@ -178,7 +180,7 @@ private fun TournamentHandsCard(statistics: TournamentStatistics) {
         }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
         StatGrid(Modifier.fillMaxWidth()) {
-            BigNumber(stringResource(Res.string.stat_draw_rate), statistics.drawRate.percent())
+            BigNumber(stringResource(Res.string.stat_average_hands_per_table), statistics.averageHandsPerTable.decimal())
             BigNumber(stringResource(Res.string.stat_average_winning_hand), statistics.averageHandScore.decimal())
             if (statistics.penaltyCount > 0) {
                 val points = statistics.penaltyPoints
@@ -204,6 +206,9 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
     StatCard(stringResource(Res.string.stats_records), Modifier.fillMaxWidth()) {
         StatGrid(Modifier.fillMaxWidth()) {
             BigNumber(stringResource(Res.string.stat_highest_hand_score), statistics.highestHand.text())
+            statistics.highestHandGain?.let { gain ->
+                BigNumber(stringResource(Res.string.stat_best_hand_points), gain.toString(), info = stringResource(Res.string.stat_best_hand_points_info))
+            }
             if (!playersAreSums) {
                 BigNumber(stringResource(Res.string.stat_highest_table_score), players.mapNotNull { it.bestTableScore }.maxOrNull().text())
                 BigNumber(stringResource(Res.string.stat_hands_won_on_table), players.mapNotNull { it.mostHandsWonAtATable }.maxOrNull().text())

@@ -205,7 +205,6 @@
     <string name="hands_won_by_discard">Won by discard</string>
     <string name="hands_won_by_self_draw">Won by self-draw</string>
     <string name="hands_drawn">Drawn</string>
-    <string name="stat_draw_rate">Draw rate</string>
     <string name="stat_average_winning_hand">Average winning hand</string>
     <string name="actions">Actions</string>
     <string name="scope_me">Me</string>
@@ -331,4 +330,7 @@
     <string name="consent_declined_note">You cannot use the app without the anonymous analytics. You can close the app, or you can accept to continue.</string>
     <string name="consent_withdraw">Withdraw analytics consent</string>
     <string name="consent_withdraw_info">The app stops the analytics and asks you again. You cannot use the app until you accept.</string>
+    <string name="stat_best_hand_points">Best hand (points won)</string>
+    <string name="stat_best_hand_points_info">The most points that one winning hand added to its winner: by discard, the hand plus 24; by self-draw, the hand plus 8, three times. Penalties do not count.</string>
+    <string name="stat_average_hands_per_table">Hands per table</string>
 </resources>

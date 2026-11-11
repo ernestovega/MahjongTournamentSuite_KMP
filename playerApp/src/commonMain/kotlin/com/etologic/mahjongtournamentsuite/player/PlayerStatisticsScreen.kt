@@ -309,24 +309,22 @@ fun TournamentStatisticsTab(
     ReportLoading(data == null && message == null, onLoadingChange)
     // The scroll starts at the line under the tabs. The padding is inside the scroll, so the content moves under that line.
     Column(Modifier.fillMaxSize()) {
+        // The tab row is as wide as the tabs of the tournament, like the rows of Tables and Ranking.
         HideOnScrollTabs(tab) {
-            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                PrimaryTabRow(
-                    selectedTabIndex = tabs.indexOf(tab),
-                    containerColor = tabRowColor(),
-                    contentColor = TabContentColor,
-                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
-                    modifier = Modifier.widthIn(max = StatisticsTabWidth * tabs.size),
-                ) {
-                    tabs.forEach { item ->
-                        CompactTab(
-                            selected = item == tab,
-                            onClick = { tabName = item.name },
-                            title = stringResource(item.title),
-                            trackingName = item.name,
-                            icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
-                        )
-                    }
+            PrimaryTabRow(
+                selectedTabIndex = tabs.indexOf(tab),
+                containerColor = tabRowColor(),
+                contentColor = TabContentColor,
+                indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
+            ) {
+                tabs.forEach { item ->
+                    CompactTab(
+                        selected = item == tab,
+                        onClick = { tabName = item.name },
+                        title = stringResource(item.title),
+                        trackingName = item.name,
+                        icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
+                    )
                 }
             }
         }
@@ -426,9 +424,6 @@ private enum class MyStatisticsKind(val title: StringResource, val icon: ImageVe
     MY_TOURNAMENTS(Res.string.scope_my_tournaments, Icons.Default.EmojiEvents),
     OTHERS(Res.string.scope_others, Icons.Default.Group),
 }
-
-/** The width of one tab on a wide screen. */
-private val StatisticsTabWidth = 260.dp
 
 /**
  * The statistics tab of the tournaments screen. It has three tabs inside:

@@ -84,6 +84,7 @@ class CalculateStatisticsUseCase {
             selfDraws = playerStatistics.sumOf { it.selfDraws },
             averageHandScore = winningScores.takeIf { it.isNotEmpty() }?.average(),
             highestHand = winningScores.maxOrNull(),
+            highestHandGain = handTables.flatMap { it.winningGains }.maxOrNull(),
             chickenHands = handTables.sumOf { it.chickenHands },
             penaltyCount = handTables.sumOf { table -> table.results.sumOf { it.second.penaltyCount } },
             penaltyPoints = handTables.sumOf { table -> table.results.sumOf { it.second.penaltyPoints } },
@@ -99,6 +100,8 @@ class CalculateStatisticsUseCase {
         val results: List<Pair<Int, TableResult>>,
         val swing: List<TableScoreSwing>,
         val winningScores: List<Int>,
+        /** The points that the winner added with each winning hand, without the penalties. */
+        val winningGains: List<Int>,
         val drawnHands: Int,
         val selfDraws: Int,
         val dealIns: Int,
@@ -110,7 +113,7 @@ class CalculateStatisticsUseCase {
         val seatIds = seatIds(table)
         val seatScores = table.seatScores.map { it.trim().toIntOrNull() }
         val seatPoints = table.seatPoints.map { it.replace(',', '.').toDoubleOrNull() ?: 0.0 }
-        val empty = TableAnalysis(rankingTable, false, emptyList(), emptyList(), emptyList(), emptyList(), 0, 0, 0, 0)
+        val empty = TableAnalysis(rankingTable, false, emptyList(), emptyList(), emptyList(), emptyList(), emptyList(), 0, 0, 0, 0)
         if (!table.isCompleted || seatIds == null || seatScores.any { it == null }) return empty
 
         val scores = seatScores.map { it!! }
@@ -138,6 +141,7 @@ class CalculateStatisticsUseCase {
         val wonFlags = List(4) { mutableListOf<Boolean>() }
         val noDealInFlags = List(4) { mutableListOf<Boolean>() }
         val winningScores = mutableListOf<Int>()
+        val winningGains = mutableListOf<Int>()
         var drawn = 0
         var tableSelfDraws = 0
         var tableDealIns = 0
@@ -165,6 +169,7 @@ class CalculateStatisticsUseCase {
                 return@forEach
             }
             winningScores += hand.score
+            winningGains += hand.change[winner] - hand.penalties[winner]
             won[winner]++
             winSum[winner] += hand.score
             if (hand.score > best[winner]) best[winner] = hand.score
@@ -238,6 +243,7 @@ class CalculateStatisticsUseCase {
             results = results,
             swing = (0..3).map { TableScoreSwing(seatIds[it], swing[it]) },
             winningScores = winningScores,
+            winningGains = winningGains,
             drawnHands = drawn,
             selfDraws = tableSelfDraws,
             dealIns = tableDealIns,

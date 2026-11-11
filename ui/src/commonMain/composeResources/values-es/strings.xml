@@ -205,7 +205,6 @@
     <string name="hands_won_by_discard">Ganadas por descarte</string>
     <string name="hands_won_by_self_draw">Ganadas del muro</string>
     <string name="hands_drawn">Empates</string>
-    <string name="stat_draw_rate">Tasa de empates</string>
     <string name="stat_average_winning_hand">Mano ganadora media</string>
     <string name="actions">Acciones</string>
     <string name="scope_me">Yo</string>
@@ -331,4 +330,7 @@
     <string name="consent_declined_note">No puedes usar la aplicación sin la analítica anónima. Puedes cerrar la aplicación o aceptar para continuar.</string>
     <string name="consent_withdraw">Retirar el consentimiento de analítica</string>
     <string name="consent_withdraw_info">La aplicación detiene la analítica y te lo pregunta de nuevo. No puedes usar la aplicación hasta que aceptes.</string>
+    <string name="stat_best_hand_points">Mejor mano (puntos ganados)</string>
+    <string name="stat_best_hand_points_info">Los puntos que más sumó una mano ganadora a su ganador: por descarte, la mano más 24; por automano, la mano más 8, tres veces. Las penalizaciones no cuentan.</string>
+    <string name="stat_average_hands_per_table">Manos por mesa</string>
 </resources>
