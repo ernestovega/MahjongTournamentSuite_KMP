@@ -334,5 +334,4 @@
     <string name="stat_best_hand_points">Meilleure main (points gagnés)</string>
     <string name="stat_best_hand_points_info">Le plus de points qu\'une main gagnante a ajoutés à son gagnant : sur défausse, la main plus 24 ; en tirant seul, la main plus 8, trois fois. Les pénalités ne comptent pas.</string>
     <string name="stat_average_hands_per_table">Moy. mains par table</string>
-    <string name="stat_average_hands_per_table_info">La moyenne des mains terminées à chaque table finie avec des mains. Par exemple, une table avec 16 mains et une autre avec 14 donnent 15.</string>
 </resources>

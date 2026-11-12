@@ -334,5 +334,4 @@
     <string name="stat_best_hand_points">Mejor mano (puntos ganados)</string>
     <string name="stat_best_hand_points_info">Los puntos que más sumó una mano ganadora a su ganador: por descarte, la mano más 24; por automano, la mano más 8, tres veces. Las penalizaciones no cuentan.</string>
     <string name="stat_average_hands_per_table">Media de manos por mesa</string>
-    <string name="stat_average_hands_per_table_info">La media de manos completadas en cada mesa terminada con manos. Por ejemplo, una mesa con 16 manos y otra con 14 dan 15.</string>
 </resources>

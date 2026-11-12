@@ -334,5 +334,4 @@
     <string name="stat_best_hand_points">Mano migliore (punti vinti)</string>
     <string name="stat_best_hand_points_info">I punti più alti che una mano vincente ha dato al vincitore: su scarto, la mano più 24; in autopescata, la mano più 8, tre volte. Le penalità non contano.</string>
     <string name="stat_average_hands_per_table">Media mani per tavolo</string>
-    <string name="stat_average_hands_per_table_info">La media delle mani completate in ogni tavolo concluso con mani. Per esempio, un tavolo con 16 mani e un altro con 14 danno 15.</string>
 </resources>
