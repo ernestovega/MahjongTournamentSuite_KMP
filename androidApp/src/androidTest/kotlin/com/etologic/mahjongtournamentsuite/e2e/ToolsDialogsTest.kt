@@ -5,7 +5,7 @@ import org.junit.Test
 /** The ID card and invitation dialogs of the players screen. */
 class ToolsDialogsTest : AdminE2eTest() {
     private fun openPlayers(tournament: String = "Test - Live ongoing tournament") {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(tournament)
         // A tournament with open slots opens on the players screen, so that the slots get filled first.
         c.waitForAnyText("Players & results", "Tournament players")

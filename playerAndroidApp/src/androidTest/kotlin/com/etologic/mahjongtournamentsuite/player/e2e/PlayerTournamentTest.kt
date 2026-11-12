@@ -52,7 +52,7 @@ class PlayerTournamentTest : PlayerE2eTest() {
         open()
         c.clickButton("Ranking")
         c.waitForNoText("No ranking yet")
-        listOf("Players", "Teams", "Chicken", "Best", "Me").forEach { c.waitForText(it) }
+        listOf("Players", "Teams", "Chicken", "Best hand", "Me").forEach { c.waitForText(it) }
     }
 
     @Test

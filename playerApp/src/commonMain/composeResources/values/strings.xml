@@ -100,7 +100,7 @@
     <string name="jump_to_me">Jump to me</string>
     <string name="entry_totals_only">The organizers enter only the final scores of this table. You cannot add hands here.</string>
     <string name="entry_round_not_started">This round has not started yet. You can add hands when it starts.</string>
-    <string name="entry_seats_not_assigned">The seats of this table are not set yet. You can add hands when an organizer sets the four seats.</string>
+    <string name="entry_seats_not_assigned">The seats of this table are not set yet. You can add hands when the four seats are set.</string>
     <string name="entry_time_over">The time of this match is over. You cannot add hands now. The organizers enter the missing data.</string>
     <string name="entry_extra_time">The time is over. You can add the hand in play. After it, the table is completed.</string>
     <string name="entry_add_draw">Add draw</string>

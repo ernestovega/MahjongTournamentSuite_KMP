@@ -8,6 +8,9 @@ import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.performClick
 import org.junit.Test
 
+/** The buttons of the app ignore a second press within 500 ms. See DebouncedButtons.kt. */
+private const val BUTTON_PRESS_THRESHOLD_MS = 700L
+
 class PlayerHomeTest : PlayerE2eTest() {
     private fun home(email: String) = start(email, ready = "My tournaments")
 
@@ -35,19 +38,29 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("Position ", substring = true)
     }
 
+    /** The buttons ignore a second press within 500 ms, so the test waits a moment before it hides the schedule. */
     @Test
     fun scheduleCanBeShownAndHidden() {
         home(E2eAccounts.PLAYER)
         c.clickButton("Schedule")
         c.waitForText("Hide schedule")
+        Thread.sleep(BUTTON_PRESS_THRESHOLD_MS)
         c.clickButton("Hide schedule")
+        c.waitForNoText("Hide schedule")
         c.waitForText("Schedule")
     }
 
+    /**
+     * Every tournament is public, so the list shows them all. The "My tournaments" filter leaves none for an account
+     * that does not play in any, and the list says that no tournament matches.
+     */
     @Test
     fun playerWithoutTournamentsSeesAMessage() {
         home(E2eAccounts.STRANGER)
-        c.waitForText("You are not registered in any tournament yet.")
+        c.waitForText("Test - Live ongoing tournament")
+        c.clickButton("My tournaments")
+        c.waitForText("No tournament matches the filters.")
+        c.waitForNoText("Test - Live ongoing tournament")
     }
 
     @Test
@@ -88,16 +101,25 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.onAllNodes(light).onLast().assertIsSelected()
     }
 
-    /** The Logout button is in the profile. */
+    /**
+     * The Logout button is in the profile. The public tournament list stays on screen, without the data of the
+     * account, and the top bar shows the Sign in button again, which opens the sign-in form.
+     */
     @Test
     fun signOutReturnsToSignIn() {
         home(E2eAccounts.PLAYER)
+        c.waitForText("You play in this tournament")
         c.clickButton("Profile")
         c.clickButton("Logout")
         c.waitForText("Do you want to sign out?")
         c.clickButton("Yes, sign out")
         c.waitForText("Sign in")
-        c.waitForText("Email")
+        c.waitForNoText("Profile")
+        c.waitForNoText("My tournaments")
+        c.waitForNoText("You play in this tournament")
+        c.waitForText("Test - Live ongoing tournament")
+        c.openSignIn()
+        c.waitForText("Password")
     }
 
     @Test

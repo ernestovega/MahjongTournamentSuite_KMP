@@ -4,7 +4,7 @@ import org.junit.Test
 
 class PlayersScreenTest : AdminE2eTest() {
     private fun openPlayers(tournament: String = "Test - Live ongoing tournament", account: String = E2eAccounts.ADMIN) {
-        start(account, ready = "Logout")
+        start(account, ready = PROFILE_BUTTON)
         c.openTournament(tournament)
         // A tournament with open slots opens on the players screen, so that the slots get filled first.
         c.waitForAnyText("Players & results", "Tournament players")

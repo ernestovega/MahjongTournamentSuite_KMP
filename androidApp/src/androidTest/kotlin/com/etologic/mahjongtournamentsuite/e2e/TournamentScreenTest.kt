@@ -8,7 +8,7 @@ import org.junit.Test
 /** The tournament screen for the seeded scenarios. It opens on the first table that needs work. */
 class TournamentScreenTest : AdminE2eTest() {
     private fun open(name: String, signedInAs: String = E2eAccounts.ADMIN, ready: String = name) {
-        start(signedInAs, ready = "Logout")
+        start(signedInAs, ready = PROFILE_BUTTON)
         c.openTournament(name)
         c.waitForText("Players & results")
     }

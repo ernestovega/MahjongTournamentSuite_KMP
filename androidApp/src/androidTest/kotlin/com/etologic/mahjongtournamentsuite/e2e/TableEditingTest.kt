@@ -29,7 +29,7 @@ class TableEditingTest : AdminE2eTest() {
     }
 
     private fun openLastTable(account: String = E2eAccounts.ADMIN) {
-        start(account, ready = "Logout")
+        start(account, ready = PROFILE_BUTTON)
         c.openTournament("Test - One table left, broken logo, chicken hands off")
         c.waitForText("Players & results")
         c.clickButton("Next round")
@@ -215,7 +215,7 @@ class TableEditingTest : AdminE2eTest() {
     fun chickenHandAboveTwelvePointsShowsMessage() {
         // Table 8 of round 4 has four players and no hands.
         val players = E2eApi.tableSeats("test-live-ongoing", 4, 8)
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.selectTable(8)

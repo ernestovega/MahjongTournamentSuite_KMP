@@ -15,8 +15,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -103,12 +101,7 @@ fun PhotoEditor(
         Box {
             ProfilePhoto(photoUrl = photoUrl, name = name)
             if (info != null) {
-                TooltipBox(
-                    positionProvider = rememberAppTooltipPositionProvider(),
-                    tooltip = { AppPlainTooltip { Text(stringResource(info)) } },
-                    state = rememberTooltipState(),
-                    modifier = Modifier.align(Alignment.BottomEnd),
-                ) {
+                AppTooltipBox(stringResource(info), Modifier.align(Alignment.BottomEnd)) {
                     Icon(
                         Icons.Outlined.Info,
                         contentDescription = stringResource(info),
