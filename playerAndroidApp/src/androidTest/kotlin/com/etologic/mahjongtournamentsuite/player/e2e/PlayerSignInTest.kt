@@ -25,7 +25,7 @@ class PlayerSignInTest : PlayerE2eTest() {
     fun playerIsNotAskedWhichAppToOpen() {
         app.launch()
         c.signIn(E2eAccounts.PLAYER)
-        c.waitForText("My tournaments")
+        c.waitForText("Test - Live ongoing tournament")
         c.assertNoText("What do you want to open?")
         c.assertNoText("Management")
     }
@@ -40,7 +40,7 @@ class PlayerSignInTest : PlayerE2eTest() {
     @Test
     fun emptyFieldsAskForEmailAndPassword() {
         app.launch()
-        c.waitForText("Sign in")
+        c.openSignIn()
         c.clickButton("Sign in")
         c.waitForText("Enter your email and password.")
     }
@@ -55,6 +55,7 @@ class PlayerSignInTest : PlayerE2eTest() {
     @Test
     fun forgotPasswordNeedsAnEmailFirst() {
         app.launch()
+        c.openSignIn()
         c.waitForText("Forgot password?")
         c.clickButton("Forgot password?")
         c.waitForText("Enter your email address first.")

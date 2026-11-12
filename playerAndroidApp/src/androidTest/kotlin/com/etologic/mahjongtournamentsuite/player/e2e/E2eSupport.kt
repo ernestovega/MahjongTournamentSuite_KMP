@@ -135,9 +135,20 @@ fun ComposeTestRule.waitForNoText(text: String, substring: Boolean = false, time
 fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = false): SemanticsNodeInteraction =
     onNodeWithText(text, substring = substring)
 
+/**
+ * Opens the sign-in form. Everything is public, so the app opens on the tournament list and the Sign in button of the
+ * top bar opens the form.
+ */
+fun ComposeTestRule.openSignIn() {
+    val emailField = hasSetTextAction() and hasText("Email")
+    waitForText("Sign in")
+    if (onAllNodes(emailField).fetchSemanticsNodes().isEmpty()) clickButton("Sign in")
+    waitUntil(WAIT_MS) { onAllNodes(emailField).fetchSemanticsNodes().isNotEmpty() }
+}
+
 /** Types into the sign-in form and presses the button. */
 fun ComposeTestRule.signIn(email: String, password: String = E2eAccounts.PASSWORD) {
-    waitForText("Sign in")
+    openSignIn()
     onNodeWithText("Email").performTextInput(email)
     onNodeWithText("Password").performTextInput(password)
     clickButton("Sign in")
