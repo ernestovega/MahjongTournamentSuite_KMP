@@ -348,7 +348,7 @@ private fun CardTitle(
  * The [suffix] follows the value in a smaller size, for example " of 40".
  */
 @Composable
-internal fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info: String? = null, suffix: String? = null) {
+fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info: String? = null, suffix: String? = null) {
     Surface(modifier, shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
         Column(
             Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 12.dp),
