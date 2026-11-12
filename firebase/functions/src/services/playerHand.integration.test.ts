@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { before, describe, it } from "node:test";
+import { after, before, describe, it } from "node:test";
 
 import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
@@ -17,6 +17,8 @@ import {
   recordHand,
 } from "./playerHandService";
 import { saveTableState } from "./tableManagerService";
+import { setRoundCloseEnqueuer } from "./matchTimeTaskService";
+import { updateRoundClock } from "./roundClockService";
 
 type Fixture = { tournamentId: string; uid: string; otherUid: string };
 
@@ -61,6 +63,9 @@ async function rejects(promise: Promise<unknown>, status: number): Promise<void>
 
 describe("hand entry by a player", () => {
   before(requireEmulator);
+  // A Play plans the close of the round. These tests plan nothing.
+  before(() => setRoundCloseEnqueuer(async () => undefined));
+  after(() => setRoundCloseEnqueuer());
 
   it("previews the hand and the table totals without writing", async () => {
     const fixture = await seedTable();
@@ -151,6 +156,25 @@ describe("hand entry by a player", () => {
       await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 403);
       await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 }), 403);
     }
+  });
+
+  it("follows the clock of the server: a reset stops the hands until the next Play", async () => {
+    const fixture = await seedTable();
+    await previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") });
+
+    await updateRoundClock({ tournamentId: fixture.tournamentId, roundId: 1, action: { kind: "reset" }, force: true, actor: null });
+    await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 409);
+    await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 }), 409);
+
+    await updateRoundClock({ tournamentId: fixture.tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null });
+    await previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") });
+  });
+
+  it("refuses the hands of a completed tournament", async () => {
+    const fixture = await seedTable();
+    await db.doc(`tournaments/${fixture.tournamentId}`).update({ isCompleted: true });
+
+    await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 }), 409);
   });
 
   it("refuses totals-only tables and tables without four seats", async () => {
@@ -323,6 +347,16 @@ describe("seats set by a player", () => {
 
     await rejects(assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 1 }), 409);
     await rejects(assignSeats({ ...at(penalized), uid: penalized.uid, seats, expectedVersion: 1 }), 409);
+  });
+
+  it("refuses the seats after the match time and in a completed tournament", async () => {
+    const over = await seedTable({ seats: false, startedMinutesAgo: 200 });
+    const completed = await seedTable({ seats: false });
+    await db.doc(`tournaments/${completed.tournamentId}`).update({ isCompleted: true });
+
+    await rejects(assignSeats({ ...at(over), uid: over.uid, seats, expectedVersion: 0 }), 409);
+    await rejects(assignSeats({ ...at(completed), uid: completed.uid, seats, expectedVersion: 0 }), 409);
+    assert.equal((await readTable(over.tournamentId, 1, 1)).version, 0);
   });
 
   it("refuses other players, a player who is not at the table and an old version", async () => {

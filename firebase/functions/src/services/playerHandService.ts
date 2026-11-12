@@ -128,6 +128,7 @@ async function loadTableOf(
     throw forbidden("You are not registered in this tournament");
   }
   if (!tableSnap.exists) throw notFound("Table not found");
+  if (tournamentSnap.get("isCompleted") === true) throw conflict("This tournament is completed");
   const table: Data = tableSnap.data() ?? {};
   if (Boolean(table.isCompleted)) throw conflict("This table is already completed");
   if (Boolean(table.useTotalsOnly ?? false)) throw conflict("This table uses totals only. An editor enters its results");

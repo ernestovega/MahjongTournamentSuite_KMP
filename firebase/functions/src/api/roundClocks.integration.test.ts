@@ -169,3 +169,73 @@ describe("the clock routes", () => {
     assert.equal((await call("POST", `/tournaments/${tournamentId}/rounds/1/clock`, null, { action: "start" })).status, 401);
   });
 });
+
+describe("the clock routes cannot be tricked", () => {
+  let server: TestServer;
+  let tournamentId = "";
+  let editor: TestAccount;
+
+  const post = async (body: unknown, token: string | null = editor.token) => {
+    const response = await fetch(`${server.baseUrl}/tournaments/${tournamentId}/rounds/1/clock`, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...(token ? { authorization: `Bearer ${token}` } : {}) },
+      body: JSON.stringify(body),
+    });
+    return { status: response.status, body: await response.json() as any };
+  };
+
+  before(async () => {
+    requireAuthEmulator();
+    setRoundCloseEnqueuer(async () => undefined);
+    server = await startServer();
+    tournamentId = await seedClockTournament();
+    editor = await createAccount({ role: "EDITOR", memberOf: [tournamentId] });
+  });
+  after(async () => {
+    setRoundCloseEnqueuer();
+    await server.close();
+  });
+
+  it("takes the time of the server and ignores instants sent by the app", async () => {
+    const before = Date.now();
+    const started = await post({ action: "start", startedAtMs: 1, pausedMs: 999_999_999, adjustMs: 999_999_999 });
+
+    assert.equal(started.status, 200);
+    const clock = started.body.roundClocks[0];
+    assert.ok(clock.startedAtMs >= before - 1000 && clock.startedAtMs <= Date.now());
+    assert.equal(clock.pausedMs, 0);
+    assert.equal(clock.adjustMs, 0);
+    // The stored clock is the same as the answer.
+    const stored = (await readTournament(tournamentId)).roundClocks as Record<string, { startedAtMs: number }>;
+    assert.equal(stored["1"].startedAtMs, clock.startedAtMs);
+  });
+
+  it("refuses times that are not numbers, negative or too long", async () => {
+    for (const body of [
+      { action: "pause", agoSeconds: "abc" },
+      { action: "pause", agoSeconds: -60 },
+      { action: "resume", agoSeconds: "1e400" },
+      { action: "setRemaining", remainingSeconds: -1 },
+      { action: "setRemaining", remainingSeconds: 13 * 3600 },
+      { action: "setRemaining", remainingSeconds: "ten" },
+    ]) {
+      assert.equal((await post(body)).status, 400, JSON.stringify(body));
+    }
+  });
+
+  it("caps a late pause at 10 minutes, so the app cannot rewrite the past", async () => {
+    const before = await readTournament(tournamentId);
+    const startedAtMs = (before.roundClocks as Record<string, { startedAtMs: number }>)["1"].startedAtMs;
+    const paused = await post({ action: "pause", agoSeconds: 24 * 3600 });
+
+    assert.equal(paused.status, 200);
+    const clock = paused.body.roundClocks[0];
+    assert.ok(clock.pausedAtMs >= Math.max(startedAtMs, paused.body.serverNowMs - 10 * 60_000));
+  });
+
+  it("refuses a body without a token or with a forged token", async () => {
+    assert.equal((await post({ action: "reset", force: true }, null)).status, 401);
+    assert.equal((await post({ action: "reset", force: true }, "not-a-token")).status, 401);
+    assert.equal((await readTournament(tournamentId)).roundClocks != null, true);
+  });
+});
