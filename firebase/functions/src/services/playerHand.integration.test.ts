@@ -315,11 +315,14 @@ describe("seats set by a player", () => {
     assert.equal((await readTable(fixture.tournamentId, 1, 1)).playerEastId, "3");
   });
 
-  it("refuses the seats after the first hand", async () => {
+  it("refuses the seats after the first hand or the first penalty", async () => {
     const fixture = await seedTable();
     await recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 });
+    const penalized = await seedTable();
+    await addPenalties({ ...at(penalized), uid: penalized.uid, penalties: ["", "-5", "", ""], expectedVersion: 0 });
 
     await rejects(assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 1 }), 409);
+    await rejects(assignSeats({ ...at(penalized), uid: penalized.uid, seats, expectedVersion: 1 }), 409);
   });
 
   it("refuses other players, a player who is not at the table and an old version", async () => {

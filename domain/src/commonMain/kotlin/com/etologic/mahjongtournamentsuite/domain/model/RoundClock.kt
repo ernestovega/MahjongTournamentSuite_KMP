@@ -51,3 +51,6 @@ sealed interface RoundClockAction {
     /** "Set time": the remaining time from now on. */
     data class SetRemaining(val remainingSeconds: Long) : RoundClockAction
 }
+
+/** The message of the [AppError.Conflict] of a reset of a round with saved hands. The Timer asks for a confirmation. */
+const val ROUND_HAS_HANDS = "ROUND_HAS_HANDS"

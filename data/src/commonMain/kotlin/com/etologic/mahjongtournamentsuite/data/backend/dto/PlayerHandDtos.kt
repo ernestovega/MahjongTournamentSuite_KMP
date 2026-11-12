@@ -31,3 +31,17 @@ data class HandPreviewDto(
     val tablePoints: List<String>,
     val tableVersion: Long,
 )
+
+@Serializable
+data class SeatsRequestDto(
+    val playerEastId: String,
+    val playerSouthId: String,
+    val playerWestId: String,
+    val playerNorthId: String,
+    val expectedVersion: Long,
+)
+
+@Serializable
+data class SeatsResponseDto(
+    val tableVersion: Long,
+)

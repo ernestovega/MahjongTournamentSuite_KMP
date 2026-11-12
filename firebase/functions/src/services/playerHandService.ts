@@ -357,7 +357,13 @@ export async function assignSeats(
       if ([...params.seats].sort().join(",") !== [...drawn].sort().join(",")) {
         throw badRequest("The seats must hold the four players of the table");
       }
-      if (hands.some((hand) => hand.isDone)) throw conflict("The seats cannot change after the first hand");
+      // Penalties belong to a seat, so a penalty also fixes the seats.
+      const penalized = (hand: (typeof hands)[number]) => [
+        hand.playerEastPenalty, hand.playerSouthPenalty, hand.playerWestPenalty, hand.playerNorthPenalty,
+      ].some((value) => String(value ?? "").trim() !== "");
+      if (hands.some((hand) => hand.isDone || penalized(hand))) {
+        throw conflict("The seats cannot change after the first hand or penalty");
+      }
       if (!seatingIsOpen(tournament, params.roundId, Date.now())) {
         throw conflict("The seats open a few minutes before the start of the round");
       }

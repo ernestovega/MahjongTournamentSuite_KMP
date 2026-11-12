@@ -1,9 +1,12 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -11,12 +14,18 @@ import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 class PollScheduleTest {
-    /** Two days. Round 1 on day one at 10:00 and round 2 at 15:00, 115 minutes each, with 15 extra minutes. */
+    private fun ms(dateTime: String) = at(dateTime).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+
+    /**
+     * Two days. Round 1 on day one at 10:00 and round 2 at 15:00, 115 minutes each, with 15 extra minutes.
+     * The Timer started both rounds on time, unless [round2Started] is false.
+     */
     private fun tournament(
         start: String? = "2026-10-10",
         end: String? = "2026-10-11",
         completed: Boolean = false,
         mode: MatchEndMode = MatchEndMode.FINISH_HAND,
+        round2Started: Boolean = true,
     ) = Tournament(
         id = "t",
         name = "T",
@@ -28,6 +37,10 @@ class PollScheduleTest {
         roundSchedules = listOf(
             TournamentRoundSchedule(1, "2026-10-10", "10:00"),
             TournamentRoundSchedule(2, "2026-10-10", "15:00"),
+        ),
+        roundClocks = listOfNotNull(
+            RoundClock(roundId = 1, startedAtMs = ms("2026-10-10T10:00")),
+            RoundClock(roundId = 2, startedAtMs = ms("2026-10-10T15:00")).takeIf { round2Started },
         ),
         matchDurationMinutes = 115,
         matchEndMode = mode,
@@ -80,9 +93,17 @@ class PollScheduleTest {
 
     @Test
     fun aTableWhoseRoundDidNotStartOrIsOverIsCheckedEvery15Seconds() {
-        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), 2, at("2026-10-10T10:30")))
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(round2Started = false), 2, at("2026-10-10T10:30")))
         assertEquals(15.seconds, PollSchedule.nextDelay(tournament(), 1, at("2026-10-10T15:30")))
         assertEquals(5.seconds, PollSchedule.nextDelay(tournament(), 2, at("2026-10-10T15:30")))
+    }
+
+    @Test
+    fun aTableThatWaitsForTheGongIsCheckedEvery5Seconds() {
+        // The seats open 10 minutes before the planned start, and the table waits for the Play from then on.
+        assertEquals(15.seconds, PollSchedule.nextDelay(tournament(round2Started = false), 2, at("2026-10-10T14:49")))
+        assertEquals(5.seconds, PollSchedule.nextDelay(tournament(round2Started = false), 2, at("2026-10-10T14:50")))
+        assertEquals(5.seconds, PollSchedule.nextDelay(tournament(round2Started = false), 2, at("2026-10-10T15:40")))
     }
 
     @Test

@@ -99,7 +99,7 @@
     <string name="tables_player_empty_message">This player has no table in this tournament yet.</string>
     <string name="jump_to_me">Jump to me</string>
     <string name="entry_totals_only">The organizers enter only the final scores of this table. You cannot add hands here.</string>
-    <string name="entry_round_not_started">This round has not started yet. You can add hands when it starts.</string>
+    <string name="entry_round_not_started">Waiting for the starting gong. The hand buttons appear when the round starts.</string>
     <string name="entry_time_over">The time of this match is over. You cannot add hands now. The organizers enter the missing data.</string>
     <string name="entry_extra_time">The time is over. You can add the hand in play. After it, the table is completed.</string>
     <string name="entry_add_draw">Add draw</string>
@@ -176,4 +176,14 @@
     <string name="sign_in_needed_title">Sign in to see yours</string>
     <string name="tables_me_sign_in">Sign in to see your tables in this tournament. All the tables are in the All tab.</string>
     <string name="tables_team_sign_in">Sign in to see the tables of your team. All the tables are in the All tab.</string>
+    <string name="seats_assign">Set the seats</string>
+    <string name="seats_change">Change the seats</string>
+    <string name="seats_title">Seats of the table</string>
+    <string name="seats_who_sits">Who sits at %1$s?</string>
+    <string name="seats_save">Save the seats</string>
+    <string name="seats_restart">Start again</string>
+    <string name="entry_seats_first">Set the seats of the table to start entering hands.</string>
+    <string name="round_clock_remaining">Time left: %1$s</string>
+    <string name="round_clock_paused">Paused · Time left: %1$s</string>
+    <string name="round_clock_over">The match time is over.</string>
 </resources>

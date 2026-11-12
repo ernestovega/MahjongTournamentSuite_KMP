@@ -733,4 +733,15 @@
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
     <string name="activity_action_script_run">Maintenance script run</string>
+    <string name="timer_waiting_gong">Press Play when the starting gong sounds. The players can add hands from then on.</string>
+    <string name="timer_paused">Paused. The players can still add hands.</string>
+    <string name="timer_offline">No connection. The Timer sends the change when the network is back.</string>
+    <string name="timer_load_failed">The tournament could not be loaded. The Timer tries again.</string>
+    <string name="timer_started_ago">The round started earlier</string>
+    <string name="timer_started_ago_title">When did the round start?</string>
+    <string name="timer_started_ago_message">Minutes since the starting gong. The match time counts from then.</string>
+    <string name="timer_reset_confirm_title">Reset the round clock?</string>
+    <string name="timer_reset_confirm_message">This round has saved hands. They stay, but the players cannot add more until you press Play again.</string>
+    <string name="timer_reset_confirm">Reset</string>
+    <string name="activity_action_round_clock">Round clock changed</string>
 </resources>

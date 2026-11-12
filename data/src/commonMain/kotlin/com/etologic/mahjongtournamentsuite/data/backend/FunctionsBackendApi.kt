@@ -1,6 +1,10 @@
 package com.etologic.mahjongtournamentsuite.data.backend
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.ActivityPageDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
@@ -501,6 +505,38 @@ class FunctionsBackendApi(
         request: HandRequestDto,
     ): HandPreviewDto = post(
         path = "${playerTablePath(tournamentId, roundId, tableId)}/hands",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    suspend fun assignSeats(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        request: SeatsRequestDto,
+    ): SeatsResponseDto = post(
+        path = "${playerTablePath(tournamentId, roundId, tableId)}/seats",
+        requestBody = request,
+        idToken = idToken,
+    )
+
+    /** The clocks of the rounds. The public answer stays a few seconds in the CDN. */
+    suspend fun roundClocks(
+        idToken: String,
+        tournamentId: String,
+    ): RoundClocksResponseDto = get(
+        path = "/tournaments/$tournamentId/round-clocks",
+        idToken = idToken,
+    )
+
+    suspend fun updateRoundClock(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        request: RoundClockActionRequestDto,
+    ): RoundClocksResponseDto = post(
+        path = "/tournaments/$tournamentId/rounds/$roundId/clock",
         requestBody = request,
         idToken = idToken,
     )

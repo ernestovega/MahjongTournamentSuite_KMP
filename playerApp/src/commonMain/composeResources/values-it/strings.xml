@@ -99,7 +99,7 @@
     <string name="tables_player_empty_message">Questo giocatore non ha ancora un tavolo in questo torneo.</string>
     <string name="jump_to_me">Vai a me</string>
     <string name="entry_totals_only">Gli organizzatori inseriscono solo i punteggi finali di questo tavolo. Non puoi aggiungere mani qui.</string>
-    <string name="entry_round_not_started">Questo turno non è ancora iniziato. Potrai aggiungere mani quando inizierà.</string>
+    <string name="entry_round_not_started">In attesa del gong iniziale. I pulsanti per aggiungere mani appaiono quando inizia il turno.</string>
     <string name="entry_time_over">Il tempo di questa partita è finito. Ora non puoi aggiungere mani. Gli organizzatori inseriscono i dati mancanti.</string>
     <string name="entry_extra_time">Il tempo è finito. Puoi aggiungere la mano in corso. Dopo di essa, il tavolo è completato.</string>
     <string name="entry_add_draw">Aggiungi patta</string>
@@ -176,4 +176,14 @@
     <string name="sign_in_needed_title">Accedi per vedere i tuoi</string>
     <string name="tables_me_sign_in">Accedi per vedere i tuoi tavoli in questo torneo. Tutti i tavoli sono nella scheda Tutti.</string>
     <string name="tables_team_sign_in">Accedi per vedere i tavoli della tua squadra. Tutti i tavoli sono nella scheda Tutti.</string>
+    <string name="seats_assign">Assegna i posti</string>
+    <string name="seats_change">Cambia i posti</string>
+    <string name="seats_title">Posti del tavolo</string>
+    <string name="seats_who_sits">Chi siede a %1$s?</string>
+    <string name="seats_save">Salva i posti</string>
+    <string name="seats_restart">Ricomincia</string>
+    <string name="entry_seats_first">Assegna i posti del tavolo per iniziare ad aggiungere mani.</string>
+    <string name="round_clock_remaining">Tempo rimasto: %1$s</string>
+    <string name="round_clock_paused">In pausa · Tempo rimasto: %1$s</string>
+    <string name="round_clock_over">Il tempo di gioco è finito.</string>
 </resources>

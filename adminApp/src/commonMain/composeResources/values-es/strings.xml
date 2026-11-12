@@ -733,4 +733,15 @@
     <string name="activity_action_table_reset">Mesa reiniciada</string>
     <string name="activity_action_table_conflict">Guardado rechazado: la mesa había cambiado</string>
     <string name="activity_action_script_run">Script de mantenimiento ejecutado</string>
+    <string name="timer_waiting_gong">Pulsa Play cuando suene el gong inicial. Desde ese momento los jugadores pueden añadir manos.</string>
+    <string name="timer_paused">En pausa. Los jugadores pueden seguir añadiendo manos.</string>
+    <string name="timer_offline">Sin conexión. El temporizador enviará el cambio cuando vuelva la red.</string>
+    <string name="timer_load_failed">No se pudo cargar el torneo. El temporizador lo vuelve a intentar.</string>
+    <string name="timer_started_ago">La ronda empezó antes</string>
+    <string name="timer_started_ago_title">¿Cuándo empezó la ronda?</string>
+    <string name="timer_started_ago_message">Minutos desde el gong inicial. El tiempo de juego cuenta desde entonces.</string>
+    <string name="timer_reset_confirm_title">¿Reiniciar el reloj de la ronda?</string>
+    <string name="timer_reset_confirm_message">Esta ronda tiene manos guardadas. Se conservan, pero los jugadores no podrán añadir más hasta que vuelvas a pulsar Play.</string>
+    <string name="timer_reset_confirm">Reiniciar</string>
+    <string name="activity_action_round_clock">Reloj de ronda cambiado</string>
 </resources>

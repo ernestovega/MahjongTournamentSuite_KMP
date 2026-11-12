@@ -99,7 +99,7 @@
     <string name="tables_player_empty_message">Este jugador aún no tiene mesa en este torneo.</string>
     <string name="jump_to_me">Ir a mi posición</string>
     <string name="entry_totals_only">Los organizadores solo introducen las puntuaciones finales de esta mesa. No puedes añadir manos aquí.</string>
-    <string name="entry_round_not_started">Esta ronda aún no ha empezado. Podrás añadir manos cuando empiece.</string>
+    <string name="entry_round_not_started">Esperando al gong inicial. Los botones para añadir manos aparecen cuando empieza la ronda.</string>
     <string name="entry_time_over">El tiempo de esta partida ha terminado. Ya no puedes añadir manos. Los organizadores introducen los datos que faltan.</string>
     <string name="entry_extra_time">El tiempo ha terminado. Puedes añadir la mano en juego. Después, la mesa queda completada.</string>
     <string name="entry_add_draw">Añadir empate</string>
@@ -176,4 +176,14 @@
     <string name="sign_in_needed_title">Inicia sesión para ver lo tuyo</string>
     <string name="tables_me_sign_in">Inicia sesión para ver tus mesas en este torneo. Todas las mesas están en la pestaña Todas.</string>
     <string name="tables_team_sign_in">Inicia sesión para ver las mesas de tu equipo. Todas las mesas están en la pestaña Todas.</string>
+    <string name="seats_assign">Asignar los asientos</string>
+    <string name="seats_change">Cambiar los asientos</string>
+    <string name="seats_title">Asientos de la mesa</string>
+    <string name="seats_who_sits">¿Quién se sienta en %1$s?</string>
+    <string name="seats_save">Guardar los asientos</string>
+    <string name="seats_restart">Empezar de nuevo</string>
+    <string name="entry_seats_first">Asigna los asientos de la mesa para empezar a añadir manos.</string>
+    <string name="round_clock_remaining">Tiempo restante: %1$s</string>
+    <string name="round_clock_paused">En pausa · Tiempo restante: %1$s</string>
+    <string name="round_clock_over">El tiempo de juego ha terminado.</string>
 </resources>

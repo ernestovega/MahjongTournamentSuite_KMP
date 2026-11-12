@@ -109,6 +109,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_remove_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review
 import mahjongtournamentsuite.playerapp.generated.resources.entry_round_not_started
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_hand
+import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_first
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_self_draw
 import mahjongtournamentsuite.playerapp.generated.resources.entry_share
@@ -143,7 +144,8 @@ private enum class EntryMode { WIN, DRAW, PENALTY }
  * Entry for the player who writes the scores down. It has three buttons: add a win, add a draw and add a penalty.
  * A win or a draw ends the hand in play. A penalty does not end it.
  * The player enters the data, reviews it with everyone at the table and then confirms.
- * The seats come from the staff. The player cannot change them.
+ * Before the first hand, a player of the table sets the seats ([SeatsAssignment]). The hand buttons appear with the
+ * Play of the Timer, the starting gong.
  */
 @Composable
 fun HandEntryPanel(
@@ -267,8 +269,11 @@ fun HandEntryPanel(
         Text(stringResource(Res.string.entry_totals_only), color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
-    if (!view.roundHasStarted(table.roundId, now)) {
+    // The players set the seats from a few minutes before the planned start until the first hand or penalty.
+    val seatsEditable = table.doneHands == 0 && table.penaltyCount == 0 && view.tournament.seatingIsOpen(table.roundId, now)
+    if (phase == MatchPhase.NOT_STARTED) {
         Text(stringResource(Res.string.entry_round_not_started), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (seatsEditable) SeatsAssignment(tournamentId, view, table, onSaved)
         return
     }
     if (phase == MatchPhase.OVER) {
@@ -278,7 +283,14 @@ fun HandEntryPanel(
         )
         return
     }
-    if (!seatsAssigned) return
+    if (!seatsAssigned) {
+        if (seatsEditable) {
+            Text(stringResource(Res.string.entry_seats_first), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            SeatsAssignment(tournamentId, view, table, onSaved)
+        }
+        return
+    }
+    if (seatsEditable) SeatsAssignment(tournamentId, view, table, onSaved)
     if (extraTime) {
         Text(
             stringResource(Res.string.entry_extra_time),

@@ -50,6 +50,7 @@ object TelemetryEvent {
     const val HAND_PREVIEWED = "hand_previewed"
     const val HAND_RECORDED = "hand_recorded"
     const val PENALTY_ADDED = "penalty_added"
+    const val SEATS_ASSIGNED = "seats_assigned"
 
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
@@ -74,6 +75,7 @@ object TelemetryEvent {
         HAND_PREVIEWED,
         HAND_RECORDED,
         PENALTY_ADDED,
+        SEATS_ASSIGNED,
     )
 }
 

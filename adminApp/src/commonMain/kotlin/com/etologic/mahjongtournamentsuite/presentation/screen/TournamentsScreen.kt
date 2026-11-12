@@ -104,7 +104,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusI
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPlayerApp
-import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -334,7 +333,6 @@ fun TournamentsScreen(
                 } else {
                     null
                 },
-                onTimer = { openTimer(navController) },
                 onErrors = if (adminStatus?.isAdmin == true) {
                     { navController.navigate(ErrorsRoute) }
                 } else {

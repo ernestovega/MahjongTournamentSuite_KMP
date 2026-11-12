@@ -733,4 +733,15 @@
     <string name="activity_action_table_reset">Tavolo azzerato</string>
     <string name="activity_action_table_conflict">Salvataggio rifiutato: il tavolo era cambiato</string>
     <string name="activity_action_script_run">Script di manutenzione eseguito</string>
+    <string name="timer_waiting_gong">Premi Play al suono del gong iniziale. Da quel momento i giocatori possono aggiungere mani.</string>
+    <string name="timer_paused">In pausa. I giocatori possono ancora aggiungere mani.</string>
+    <string name="timer_offline">Nessuna connessione. Il timer invierà la modifica quando torna la rete.</string>
+    <string name="timer_load_failed">Impossibile caricare il torneo. Il timer riprova.</string>
+    <string name="timer_started_ago">Il turno è iniziato prima</string>
+    <string name="timer_started_ago_title">Quando è iniziato il turno?</string>
+    <string name="timer_started_ago_message">Minuti dal gong iniziale. Il tempo di gioco conta da allora.</string>
+    <string name="timer_reset_confirm_title">Azzerare l'orologio del turno?</string>
+    <string name="timer_reset_confirm_message">Questo turno ha mani salvate. Restano, ma i giocatori non possono aggiungerne altre finché non premi di nuovo Play.</string>
+    <string name="timer_reset_confirm">Azzera</string>
+    <string name="activity_action_round_clock">Orologio del turno modificato</string>
 </resources>

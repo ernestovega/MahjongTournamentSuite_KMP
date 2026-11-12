@@ -158,10 +158,6 @@ data class PlayerTournamentView(
     /** The first name of a player, without the surname. */
     fun firstNameOf(slotId: Int?): String = slotId?.let { players[it]?.firstName }?.let(PlaceholderNames::localize) ?: "-"
 
-    /** True when the round has started at [now]. A round with no date counts as started. */
-    fun roundHasStarted(roundId: Int, now: LocalDateTime): Boolean =
-        tournament.matchPhase(roundId, now) != MatchPhase.NOT_STARTED
-
     fun matchPhaseOf(roundId: Int, now: LocalDateTime): MatchPhase = tournament.matchPhase(roundId, now)
 
     /** True when the table is complete, or when its time is over and the players played hands. */

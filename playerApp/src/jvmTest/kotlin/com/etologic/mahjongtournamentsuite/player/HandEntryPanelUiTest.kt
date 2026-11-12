@@ -23,6 +23,9 @@ import kotlinx.datetime.LocalDateTime
 import org.koin.compose.KoinApplication
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlin.test.AfterTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -54,6 +57,15 @@ private class RecordingHandRepository : PlayerHandRepository {
     override suspend fun recordHand(
         tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal, expectedVersion: Long,
     ): AppResult<HandPreview> = previewHand(tournamentId, roundId, tableId, proposal)
+
+    val seats = mutableListOf<List<Int>>()
+
+    override suspend fun assignSeats(
+        tournamentId: String, roundId: Int, tableId: Int, seats: List<Int>, expectedVersion: Long,
+    ): AppResult<Unit> {
+        this.seats += seats
+        return AppResult.Success(Unit)
+    }
 }
 
 @OptIn(ExperimentalTestApi::class)
@@ -70,16 +82,28 @@ class HandEntryPanelUiTest {
     private fun androidx.compose.ui.test.ComposeUiTest.awaitText(text: String) =
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty() }
 
-    /** The round starts on 2026-10-10 at 10:00. The match lasts 120 minutes and the extra time lasts 15 minutes. */
-    private fun view(mode: MatchEndMode, doneHands: Int = 0, now: String? = null): PlayerTournamentView {
+    /**
+     * The round is planned on 2026-10-10 at 10:00, and the Timer started it then unless [started] is false.
+     * The match lasts 120 minutes and the extra time lasts 15 minutes.
+     */
+    private fun view(
+        mode: MatchEndMode,
+        doneHands: Int = 0,
+        now: String? = null,
+        started: Boolean = true,
+        seats: Boolean = true,
+    ): PlayerTournamentView {
+        val start = LocalDateTime.parse("2026-10-10T10:00").toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
         val tournament = Tournament(
             id = "t", name = "T", isTeams = false, numPlayers = 4, numRounds = 1,
             roundSchedules = listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00")),
+            roundClocks = if (started) listOf(RoundClock(roundId = 1, startedAtMs = start)) else emptyList(),
             matchDurationMinutes = 120, matchEndMode = mode, matchExtraMinutes = 15,
         )
+        val seatIds = if (seats) listOf("1", "2", "3", "4") else listOf("", "", "", "")
         val table = TableState(
             roundId = 1, tableId = 1, playerIds = listOf(1, 2, 3, 4),
-            playerEastId = "1", playerSouthId = "2", playerWestId = "3", playerNorthId = "4",
+            playerEastId = seatIds[0], playerSouthId = seatIds[1], playerWestId = seatIds[2], playerNorthId = seatIds[3],
             playerEastScore = "", playerSouthScore = "", playerWestScore = "", playerNorthScore = "",
             isCompleted = false, useTotalsOnly = false,
         )
@@ -105,8 +129,10 @@ class HandEntryPanelUiTest {
         time: String,
         repository: RecordingHandRepository = RecordingHandRepository(),
         doneHands: Int = 0,
+        started: Boolean = true,
+        seats: Boolean = true,
     ) {
-        val view = view(mode, doneHands, time)
+        val view = view(mode, doneHands, time, started, seats)
         setContent {
             MtsTheme(useDarkTheme = false) {
                 KoinApplication(application = { modules(module { single { PlayerTablePresenter(repository) } }) }) {
@@ -234,5 +260,65 @@ class HandEntryPanelUiTest {
         } finally {
             com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames.playerTemplate = null
         }
+    }
+
+    @Test
+    fun beforeTheGongThePlayersWaitAndCanSetTheSeats() = runComposeUiTest {
+        val repository = RecordingHandRepository()
+        show(MatchEndMode.STOP, "09:55", repository, started = false, seats = false)
+
+        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("Add win").assertDoesNotExist()
+        onNodeWithText("Set the seats").performClick()
+        // East, South and West are asked. North takes the player who is left.
+        onNodeWithText("Who sits at East?").assertIsDisplayed()
+        onNodeWithText("Player 3").performClick()
+        onNodeWithText("Who sits at South?").assertIsDisplayed()
+        onNodeWithText("Player 1").performClick()
+        onNodeWithText("Player 4").performClick()
+        onNodeWithText("Save the seats").performClick()
+        waitUntil(timeoutMillis = 5_000) { repository.seats.isNotEmpty() }
+
+        assertEquals(listOf(listOf(3, 1, 4, 2)), repository.seats)
+    }
+
+    @Test
+    fun longBeforeThePlannedStartTheSeatsAreClosed() = runComposeUiTest {
+        show(MatchEndMode.STOP, "09:00", started = false, seats = false)
+
+        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("Set the seats").assertDoesNotExist()
+    }
+
+    @Test
+    fun aLateRoundStaysWaitingUntilThePlay() = runComposeUiTest {
+        show(MatchEndMode.STOP, "11:00", started = false)
+
+        onNodeWithText("Waiting for the starting gong. The hand buttons appear when the round starts.").assertIsDisplayed()
+        onNodeWithText("Add win").assertDoesNotExist()
+        onNodeWithText("Change the seats").assertIsDisplayed()
+    }
+
+    @Test
+    fun afterThePlayATableWithoutSeatsAsksForThem() = runComposeUiTest {
+        show(MatchEndMode.STOP, "10:05", seats = false)
+
+        onNodeWithText("Set the seats of the table to start entering hands.").assertIsDisplayed()
+        onNodeWithText("Set the seats").assertIsDisplayed()
+        onNodeWithText("Add win").assertDoesNotExist()
+    }
+
+    @Test
+    fun theSeatsCanChangeUntilTheFirstHand() = runComposeUiTest {
+        show(MatchEndMode.STOP, "10:05")
+        onNodeWithText("Change the seats").assertIsDisplayed()
+        onNodeWithText("Add win").assertIsDisplayed()
+    }
+
+    @Test
+    fun afterTheFirstHandTheSeatsAreFixed() = runComposeUiTest {
+        show(MatchEndMode.STOP, "10:30", doneHands = 1)
+        onNodeWithText("Add win").assertIsDisplayed()
+        onNodeWithText("Change the seats").assertDoesNotExist()
     }
 }

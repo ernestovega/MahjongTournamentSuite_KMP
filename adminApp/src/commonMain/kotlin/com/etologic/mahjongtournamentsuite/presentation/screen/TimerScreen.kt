@@ -13,6 +13,24 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.History
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberCoroutineScope
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import kotlin.time.Clock
+import kotlinx.coroutines.launch
+import org.koin.compose.koinInject
+import mahjongtournamentsuite.adminapp.generated.resources.timer_load_failed
+import mahjongtournamentsuite.adminapp.generated.resources.timer_offline
+import mahjongtournamentsuite.adminapp.generated.resources.timer_paused
+import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm
+import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_message
+import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm_title
+import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago
+import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_message
+import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_title
+import mahjongtournamentsuite.adminapp.generated.resources.timer_waiting_gong
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
@@ -52,8 +70,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Devices
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,15 +103,18 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 
 @Composable
 fun TimerStandaloneScreen(
+    tournamentId: String,
     initialRound: Int = 1,
 ) {
     val themeController = rememberScreenThemeController()
+    val repository = koinInject<TournamentRepository>()
+    val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound) }
 
     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
         Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
             Box(modifier = Modifier.fillMaxSize()) {
                 TimerContent(
-                    initialRound = initialRound,
+                    controller = controller,
                     themePreference = themeController.preference,
                     onToggleTheme = themeController.onTogglePreference,
                 )
@@ -104,55 +123,49 @@ fun TimerStandaloneScreen(
     }
 }
 
+/** How often the Timer reads the clocks of the server, to follow a Play or a Pause on another Timer. */
+private const val CLOCK_POLL_MS = 5_000L
+
 @Composable
-private fun TimerContent(
-    initialRound: Int,
+internal fun TimerContent(
+    controller: RoundTimerController,
     themePreference: ThemePreference,
     onToggleTheme: () -> Unit,
+    deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
+    val scope = rememberCoroutineScope()
+    val state by controller.state.collectAsState()
     val roundDownFocusRequester = remember { FocusRequester() }
     val roundUpFocusRequester = remember { FocusRequester() }
     val startFocusRequester = remember { FocusRequester() }
     val resetFocusRequester = remember { FocusRequester() }
     val setTimeFocusRequester = remember { FocusRequester() }
     val themeFocusRequester = remember { FocusRequester() }
-    var isRunning by remember { mutableStateOf(false) }
-    var roundNum by remember { mutableStateOf(initialRound) }
 
-    LaunchedEffect(initialRound) {
-        roundNum = initialRound
-    }
-
-    var maxTimeSeconds by remember { mutableStateOf(DEFAULT_MAX_TIME_SECONDS) }
-    var timeLeftSeconds by remember { mutableStateOf(DEFAULT_MAX_TIME_SECONDS) }
-
-    var isSetTimeDialogOpen by remember { mutableStateOf(false) }
-    var minutesValue by remember {
-        mutableStateOf(TextFieldValue((maxTimeSeconds / 60).toString()))
-    }
-
-    val hasFinished = timeLeftSeconds <= 0L
-
-    fun applyRemainingTime() {
-        val minutes = minutesValue.text.trim().toLongOrNull()
-        if (minutes != null && minutes > 0) {
-            maxTimeSeconds = minutes * 60L
-            timeLeftSeconds = maxTimeSeconds
-            isRunning = false
-            isSetTimeDialogOpen = false
+    LaunchedEffect(controller) {
+        while (true) {
+            controller.refresh()
+            delay(CLOCK_POLL_MS)
         }
     }
+    val now by produceState(deviceNowMs()) {
+        while (true) {
+            delay(200)
+            value = deviceNowMs()
+        }
+    }
+
+    val isRunning = state.isRunning
+    val isStarted = state.isStarted
+    val roundNum = state.roundId
+    val maxTimeSeconds = state.totalSeconds()
+    val timeLeftSeconds = state.remainingSeconds(now)
+    val hasFinished = isStarted && timeLeftSeconds <= 0L
+
+    var dialog by remember { mutableStateOf<TimerDialog?>(null) }
 
     LaunchedEffect(Unit) {
         startFocusRequester.requestFocus()
-    }
-
-    LaunchedEffect(isRunning, maxTimeSeconds) {
-        while (isRunning) {
-            delay(1_000)
-            timeLeftSeconds = (timeLeftSeconds - 1L).coerceAtLeast(0L)
-            if (timeLeftSeconds <= 0L) isRunning = false
-        }
     }
 
     val progress = if (maxTimeSeconds <= 0L) {
@@ -161,8 +174,7 @@ private fun TimerContent(
         ((maxTimeSeconds - timeLeftSeconds).toFloat() / maxTimeSeconds.toFloat()).coerceIn(0f, 1f)
     }
 
-    val isWarning = maxTimeSeconds >= 3600L && timeLeftSeconds == 900L
-    val isRed = (maxTimeSeconds >= 3600L && timeLeftSeconds <= 900L) || isWarning
+    val isRed = maxTimeSeconds >= 3600L && isStarted && timeLeftSeconds <= 900L
     val timeColor = if (isRed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
 
     val gangFontFamily = GangOfThreeFontFamily()
@@ -173,105 +185,49 @@ private fun TimerContent(
         "${"8".repeat(digits)}:88:88"
     }
 
-    if (isSetTimeDialogOpen) {
-        val timeFieldFocusRequester = remember { FocusRequester() }
-        val setFocusRequester = remember { FocusRequester() }
-        val cancelFocusRequester = remember { FocusRequester() }
+    when (val open = dialog) {
+        TimerDialog.SetTime -> MinutesDialog(
+            name = "SetRemainingTime",
+            title = stringResource(Res.string.remaining_time),
+            message = stringResource(Res.string.enter_remaining_time_in_minutes),
+            initialMinutes = ((timeLeftSeconds + 59) / 60).coerceAtLeast(1),
+            allowZero = false,
+            onApply = { minutes ->
+                dialog = null
+                scope.launch { controller.setRemainingMinutes(minutes) }
+            },
+            onDismiss = { dialog = null },
+        )
+        TimerDialog.StartedAgo -> MinutesDialog(
+            name = "RoundStartedAgo",
+            title = stringResource(Res.string.timer_started_ago_title),
+            message = stringResource(Res.string.timer_started_ago_message),
+            initialMinutes = 0,
+            allowZero = true,
+            onApply = { minutes ->
+                dialog = null
+                scope.launch { controller.startedMinutesAgo(minutes.toInt()) }
+            },
+            onDismiss = { dialog = null },
+        )
+        null -> Unit
+    }
 
-        LaunchedEffect(Unit) {
-            minutesValue = minutesValue.copy(
-                selection = TextRange(0, minutesValue.text.length),
-            )
-            timeFieldFocusRequester.requestFocus()
-        }
-
-        TrackedDialog("SetRemainingTime") {
+    if (state.confirmReset) {
+        TrackedDialog("ConfirmRoundReset") {
             AlertDialog(
                 modifier = Modifier.appFocusGroup(),
-                onDismissRequest = { isSetTimeDialogOpen = false },
+                onDismissRequest = { controller.dismissResetConfirmation() },
+                title = { Text(stringResource(Res.string.timer_reset_confirm_title)) },
+                text = { Text(stringResource(Res.string.timer_reset_confirm_message)) },
                 confirmButton = {
-                    Button(
-                        focusRequester = setFocusRequester,
-                        buttonModifier = Modifier.focusLoop(
-                            previous = timeFieldFocusRequester,
-                            next = cancelFocusRequester,
-                        ),
-                        onClick = { applyRemainingTime() },
-                    ) {
-                        Text(stringResource(Res.string.set))
+                    Button(onClick = { scope.launch { controller.reset(force = true) } }) {
+                        Text(stringResource(Res.string.timer_reset_confirm))
                     }
                 },
                 dismissButton = {
-                    Button(
-                        onClick = { isSetTimeDialogOpen = false },
-                        focusRequester = cancelFocusRequester,
-                        buttonModifier = Modifier.focusLoop(
-                            previous = setFocusRequester,
-                            next = timeFieldFocusRequester,
-                        ),
-                    ) {
+                    Button(onClick = { controller.dismissResetConfirmation() }) {
                         Text(stringResource(Res.string.cancel))
-                    }
-                },
-                title = { Text(stringResource(Res.string.remaining_time)) },
-                text = {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        Text(stringResource(Res.string.enter_remaining_time_in_minutes))
-                        OutlinedTextField(
-                            value = minutesValue,
-                            onValueChange = { typed ->
-                                val text = typed.text.toDigitsInput()
-                                minutesValue = typed.copy(
-                                    text = text,
-                                    selection = TextRange(
-                                        typed.selection.start.coerceAtMost(text.length),
-                                        typed.selection.end.coerceAtMost(text.length),
-                                    ),
-                                )
-                            },
-                            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                imeAction = ImeAction.Done,
-                            ),
-                            keyboardActions = androidx.compose.foundation.text.KeyboardActions(
-                                onDone = { applyRemainingTime() },
-                            ),
-                            singleLine = true,
-                            modifier = Modifier
-                                .focusRequester(timeFieldFocusRequester)
-                                .focusProperties {
-                                    previous = cancelFocusRequester
-                                    next = setFocusRequester
-                                }
-                                .onPreviewKeyEvent { event ->
-                                    if (event.type != KeyEventType.KeyDown) {
-                                        return@onPreviewKeyEvent false
-                                    }
-                                    when (event.key) {
-                                        Key.Tab -> {
-                                            if (event.isShiftPressed) {
-                                                cancelFocusRequester.requestFocus()
-                                            } else {
-                                                setFocusRequester.requestFocus()
-                                            }
-                                            true
-                                        }
-                                        Key.DirectionUp -> {
-                                            cancelFocusRequester.requestFocus()
-                                            true
-                                        }
-                                        Key.DirectionDown -> {
-                                            setFocusRequester.requestFocus()
-                                            true
-                                        }
-                                        Key.Enter, Key.NumPadEnter -> {
-                                            applyRemainingTime()
-                                            true
-                                        }
-                                        else -> false
-                                    }
-                                },
-                        )
                     }
                 },
             )
@@ -290,8 +246,8 @@ private fun TimerContent(
         ) {
             if (!isRunning) {
                 FocusedIconButton(
-                    enabled = roundNum > 0,
-                    onClick = { roundNum -= 1 },
+                    enabled = roundNum > 1,
+                    onClick = { controller.selectRound(roundNum - 1) },
                     focusRequester = roundDownFocusRequester,
                     buttonModifier = Modifier
                         .size(32.dp)
@@ -307,23 +263,22 @@ private fun TimerContent(
                     )
                 }
             }
-            if (roundNum > 0) {
-                Text(
-                    text = stringResource(Res.string.round_n, roundNum),
-                    style = MaterialTheme.typography.headlineLarge.copy(fontSize = 64.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                )
-            }
+            Text(
+                text = stringResource(Res.string.round_n, roundNum),
+                style = MaterialTheme.typography.headlineLarge.copy(fontSize = 64.sp),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            )
             if (!isRunning) {
                 FocusedIconButton(
-                    onClick = { roundNum += 1 },
+                    enabled = roundNum < state.numRounds,
+                    onClick = { controller.selectRound(roundNum + 1) },
                     focusRequester = roundUpFocusRequester,
                     buttonModifier = Modifier
                         .size(32.dp)
                         .focusLoop(
-                            previous = if (roundNum > 0) roundDownFocusRequester else themeFocusRequester,
+                            previous = roundDownFocusRequester,
                             next = startFocusRequester,
                         ),
                 ) {
@@ -394,11 +349,20 @@ private fun TimerContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            if (hasFinished) {
+            val status = when {
+                state.loadFailed && state.tournament == null -> stringResource(Res.string.timer_load_failed)
+                state.isOffline -> stringResource(Res.string.timer_offline)
+                hasFinished -> stringResource(Res.string.time_is_up)
+                isStarted && !isRunning -> stringResource(Res.string.timer_paused)
+                !isStarted -> stringResource(Res.string.timer_waiting_gong)
+                else -> null
+            }
+            if (status != null) {
                 Text(
-                    text = stringResource(Res.string.time_is_up),
+                    text = status,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.error,
+                    color = if (hasFinished || state.isOffline || state.loadFailed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
                 )
             }
 
@@ -406,12 +370,8 @@ private fun TimerContent(
                 FocusedIconButton(
                     focusRequester = startFocusRequester,
                     showFocusHighlight = !isRunning,
-                    onClick = {
-                        if (hasFinished) {
-                            timeLeftSeconds = maxTimeSeconds
-                        }
-                        isRunning = !isRunning
-                    },
+                    enabled = state.tournament != null,
+                    onClick = { scope.launch { if (isRunning) controller.pause() else controller.play() } },
                     modifier = Modifier
                         .align(Alignment.Center)
                         .alpha(if (isRunning) 0.5f else 1f),
@@ -437,38 +397,31 @@ private fun TimerContent(
                     ) {
                         FocusedIconButton(
                             focusRequester = resetFocusRequester,
+                            enabled = isStarted,
                             buttonModifier = Modifier.focusLoop(
                                 previous = startFocusRequester,
                                 next = setTimeFocusRequester,
                             ),
-                            onClick = {
-                                isRunning = false
-                                timeLeftSeconds = maxTimeSeconds
-                            },
+                            onClick = { scope.launch { controller.reset() } },
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,
                                 contentDescription = stringResource(Res.string.reset_timer),
                             )
                         }
+                        // A started round can change its remaining time. A round that is not started can start earlier.
                         FocusedIconButton(
                             focusRequester = setTimeFocusRequester,
+                            enabled = state.tournament != null,
                             buttonModifier = Modifier.focusLoop(
                                 previous = resetFocusRequester,
                                 next = themeFocusRequester,
                             ),
-                            onClick = {
-                                val minutesText = (maxTimeSeconds / 60).toString()
-                                minutesValue = TextFieldValue(
-                                    text = minutesText,
-                                    selection = TextRange(0, minutesText.length),
-                                )
-                                isSetTimeDialogOpen = true
-                            },
+                            onClick = { dialog = if (isStarted) TimerDialog.SetTime else TimerDialog.StartedAgo },
                         ) {
                             Icon(
-                                imageVector = Icons.Default.AccessTime,
-                                contentDescription = stringResource(Res.string.set_time),
+                                imageVector = if (isStarted) Icons.Default.AccessTime else Icons.Default.History,
+                                contentDescription = stringResource(if (isStarted) Res.string.set_time else Res.string.timer_started_ago),
                             )
                         }
                         FocusedIconButton(
@@ -476,7 +429,7 @@ private fun TimerContent(
                             focusRequester = themeFocusRequester,
                             buttonModifier = Modifier.focusLoop(
                                 previous = setTimeFocusRequester,
-                                next = if (roundNum > 0) roundDownFocusRequester else roundUpFocusRequester,
+                                next = roundDownFocusRequester,
                             ),
                         ) {
                             Icon(
@@ -491,7 +444,128 @@ private fun TimerContent(
     }
 }
 
-private const val DEFAULT_MAX_TIME_SECONDS: Long = 6900L // 1h 55m
+private enum class TimerDialog { SetTime, StartedAgo }
+
+/** Asks for a whole number of minutes. Enter, Numpad Enter and the Done action apply it. */
+@Composable
+private fun MinutesDialog(
+    name: String,
+    title: String,
+    message: String,
+    initialMinutes: Long,
+    allowZero: Boolean,
+    onApply: (Long) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val timeFieldFocusRequester = remember { FocusRequester() }
+    val setFocusRequester = remember { FocusRequester() }
+    val cancelFocusRequester = remember { FocusRequester() }
+    var minutesValue by remember {
+        val text = initialMinutes.toString()
+        mutableStateOf(TextFieldValue(text, selection = TextRange(0, text.length)))
+    }
+
+    fun apply() {
+        val minutes = minutesValue.text.trim().toLongOrNull() ?: return
+        if (minutes > 0 || (allowZero && minutes == 0L)) onApply(minutes)
+    }
+
+    LaunchedEffect(Unit) {
+        timeFieldFocusRequester.requestFocus()
+    }
+
+    TrackedDialog(name) {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                Button(
+                    focusRequester = setFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = timeFieldFocusRequester,
+                        next = cancelFocusRequester,
+                    ),
+                    onClick = { apply() },
+                ) {
+                    Text(stringResource(Res.string.set))
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = onDismiss,
+                    focusRequester = cancelFocusRequester,
+                    buttonModifier = Modifier.focusLoop(
+                        previous = setFocusRequester,
+                        next = timeFieldFocusRequester,
+                    ),
+                ) {
+                    Text(stringResource(Res.string.cancel))
+                }
+            },
+            title = { Text(title) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text(message)
+                    OutlinedTextField(
+                        value = minutesValue,
+                        onValueChange = { typed ->
+                            val text = typed.text.toDigitsInput()
+                            minutesValue = typed.copy(
+                                text = text,
+                                selection = TextRange(
+                                    typed.selection.start.coerceAtMost(text.length),
+                                    typed.selection.end.coerceAtMost(text.length),
+                                ),
+                            )
+                        },
+                        keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = androidx.compose.foundation.text.KeyboardActions(
+                            onDone = { apply() },
+                        ),
+                        singleLine = true,
+                        modifier = Modifier
+                            .focusRequester(timeFieldFocusRequester)
+                            .focusProperties {
+                                previous = cancelFocusRequester
+                                next = setFocusRequester
+                            }
+                            .onPreviewKeyEvent { event ->
+                                if (event.type != KeyEventType.KeyDown) {
+                                    return@onPreviewKeyEvent false
+                                }
+                                when (event.key) {
+                                    Key.Tab -> {
+                                        if (event.isShiftPressed) {
+                                            cancelFocusRequester.requestFocus()
+                                        } else {
+                                            setFocusRequester.requestFocus()
+                                        }
+                                        true
+                                    }
+                                    Key.DirectionUp -> {
+                                        cancelFocusRequester.requestFocus()
+                                        true
+                                    }
+                                    Key.DirectionDown -> {
+                                        setFocusRequester.requestFocus()
+                                        true
+                                    }
+                                    Key.Enter, Key.NumPadEnter -> {
+                                        apply()
+                                        true
+                                    }
+                                    else -> false
+                                }
+                            },
+                    )
+                }
+            },
+        )
+    }
+}
 
 private fun findLargestFittingFontSize(
     textMeasurer: androidx.compose.ui.text.TextMeasurer,
@@ -530,12 +604,4 @@ private fun formatHms(totalSeconds: Long): String {
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
     return "$hours:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
-}
-
-@Preview(device = Devices.DESKTOP)
-@Composable
-private fun TimerStandaloneScreenPreview() {
-    MtsTheme(useDarkTheme = false) {
-        TimerStandaloneScreen()
-    }
 }

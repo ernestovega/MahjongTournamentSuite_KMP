@@ -733,4 +733,15 @@
     <string name="activity_action_table_reset">Table réinitialisée</string>
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
     <string name="activity_action_script_run">Script de maintenance exécuté</string>
+    <string name="timer_waiting_gong">Appuyez sur Play au son du gong de départ. Les joueurs peuvent ensuite ajouter des mains.</string>
+    <string name="timer_paused">En pause. Les joueurs peuvent encore ajouter des mains.</string>
+    <string name="timer_offline">Pas de connexion. Le minuteur enverra le changement au retour du réseau.</string>
+    <string name="timer_load_failed">Le tournoi n'a pas pu être chargé. Le minuteur réessaie.</string>
+    <string name="timer_started_ago">Le tour a commencé plus tôt</string>
+    <string name="timer_started_ago_title">Quand le tour a-t-il commencé ?</string>
+    <string name="timer_started_ago_message">Minutes depuis le gong de départ. Le temps de jeu compte à partir de ce moment.</string>
+    <string name="timer_reset_confirm_title">Réinitialiser l'horloge du tour ?</string>
+    <string name="timer_reset_confirm_message">Ce tour a des mains enregistrées. Elles restent, mais les joueurs ne peuvent plus en ajouter avant un nouveau Play.</string>
+    <string name="timer_reset_confirm">Réinitialiser</string>
+    <string name="activity_action_round_clock">Horloge du tour modifiée</string>
 </resources>

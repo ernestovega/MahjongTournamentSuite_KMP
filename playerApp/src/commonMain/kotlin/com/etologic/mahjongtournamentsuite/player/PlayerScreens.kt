@@ -139,12 +139,16 @@ import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.delay
+import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.round_clock_over
+import mahjongtournamentsuite.playerapp.generated.resources.round_clock_paused
+import mahjongtournamentsuite.playerapp.generated.resources.round_clock_remaining
 import mahjongtournamentsuite.playerapp.generated.resources.action_open
 import mahjongtournamentsuite.playerapp.generated.resources.age_hours
 import mahjongtournamentsuite.playerapp.generated.resources.age_minutes
@@ -1607,11 +1611,12 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     var preselectWinner by remember { mutableStateOf<Int?>(null) }
     // The detailed list of hands refers to the players by id, so the seats show the ids while it is on.
     var details by rememberSaveable { mutableStateOf(false) }
-    // The clock moves on, so a table that starts while the screen is open opens for hands.
+    // The clock moves on, so a table whose time ends while the screen is open closes for hands. The Play of the
+    // Timer comes with the next check of the server.
     val now by produceState(currentLocalDateTime()) {
         while (true) {
-            delay(30_000)
-            value = currentLocalDateTime()
+            delay(5_000)
+            value = view?.tournament?.currentVenueDateTime() ?: currentLocalDateTime()
         }
     }
 
@@ -1646,6 +1651,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 textAlign = TextAlign.Center,
             )
             val complete = view.isFinished(table, now)
+            if (!complete) RoundClockLine(view.tournament, roundId)
             val handNumber = minOf(table.doneHands + 1, 16)
             TableSeatsView(
                 seats = table.seatsFor(view, withLevelChange = true),
@@ -1988,4 +1994,40 @@ private val WinnerColor = Color(0xFF00934C)
 private fun MessageDialog(message: UiText?) {
     var seen by remember(message != null) { mutableStateOf(false) }
     if (message != null && !seen) AppErrorDialog(message, onDismiss = { seen = true })
+}
+
+/** The time left of the round, every second, from the clock that the Timer started. Nothing before the Play. */
+@Composable
+private fun RoundClockLine(tournament: Tournament, roundId: Int) {
+    val clock = tournament.clockOf(roundId) ?: return
+    val nowMs by produceState(Clock.System.now().toEpochMilliseconds(), clock) {
+        while (true) {
+            value = Clock.System.now().toEpochMilliseconds()
+            delay(1_000)
+        }
+    }
+    val remaining = clock.remainingMs(tournament.matchDurationMinutes, nowMs)
+    val text = when {
+        remaining <= 0 -> stringResource(Res.string.round_clock_over)
+        clock.isPaused -> stringResource(Res.string.round_clock_paused, formatClock(remaining))
+        else -> stringResource(Res.string.round_clock_remaining, formatClock(remaining))
+    }
+    val red = remaining <= 15 * 60_000L
+    Text(
+        text,
+        Modifier.fillMaxWidth().testTag("round-clock"),
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center,
+        color = if (red) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** Milliseconds as "h:mm:ss", rounded up, so the line shows 0:00:00 only at the end. */
+internal fun formatClock(ms: Long): String {
+    val seconds = (ms.coerceAtLeast(0) + 999) / 1000
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val secs = seconds % 60
+    return "$hours:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}"
 }

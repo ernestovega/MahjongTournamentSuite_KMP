@@ -6,9 +6,11 @@ import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
 
 actual fun openTimer(
     navController: NavHostController,
+    tournamentId: String,
     initialRound: Int,
 ) {
     startStandaloneActivity(TIMER_ACTIVITY) {
+        putExtra(EXTRA_TOURNAMENT_ID, tournamentId)
         putExtra(EXTRA_INITIAL_ROUND, initialRound)
     }
 }

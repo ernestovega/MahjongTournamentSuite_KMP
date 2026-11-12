@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -370,7 +371,7 @@ fun TournamentScreen(
                     },
                 )
             }
-            RoundEditorAction.Timer -> openTimer(navController, allTables.maxOfOrNull { it.roundId }?.plus(1) ?: 1)
+            RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound() ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
         }
     }
@@ -511,4 +512,15 @@ fun TournamentScreen(
         }
     }
     }
+}
+
+/**
+ * The round that the Timer opens at: the round whose clock runs, or else the first round that has not started.
+ * After the last round it opens at the last round.
+ */
+internal fun Tournament.timerRound(nowMs: Long = kotlin.time.Clock.System.now().toEpochMilliseconds()): Int {
+    val running = roundClocks.filter { it.remainingMs(matchDurationMinutes, nowMs) > 0 }.maxOfOrNull { it.roundId }
+    if (running != null) return running
+    val started = roundClocks.map { it.roundId }.toSet()
+    return (1..numRounds).firstOrNull { it !in started } ?: numRounds.coerceAtLeast(1)
 }

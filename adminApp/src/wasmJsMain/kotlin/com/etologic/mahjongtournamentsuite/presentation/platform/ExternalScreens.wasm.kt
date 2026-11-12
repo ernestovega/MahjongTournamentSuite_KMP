@@ -5,9 +5,10 @@ import kotlinx.browser.window
 
 actual fun openTimer(
     navController: NavHostController,
+    tournamentId: String,
     initialRound: Int,
 ) {
-    window.open("${window.location.pathname}?standalone=timer&initialRound=$initialRound", "_blank")
+    window.open("${window.location.pathname}?standalone=timer&tournamentId=$tournamentId&initialRound=$initialRound", "_blank")
 }
 
 actual fun openRankings(

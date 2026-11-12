@@ -160,6 +160,46 @@ internal class FakeTournamentRepository : TournamentRepository {
     var rounds: List<TournamentRound> = listOf(TournamentRound(1))
     var countries: List<Country> = emptyList()
 
+    /** The clocks of the rounds on the fake server, and its time. */
+    var roundClocks: List<RoundClock> = emptyList()
+    var serverNowMs: Long = 0
+    val clockActions = mutableListOf<Pair<Int, RoundClockAction>>()
+
+    /** Fails the clock requests with this error, for example [AppError.Network]. */
+    var clockError: AppError? = null
+
+    /** A reset without force of a round with hands answers with a conflict, as the server does. */
+    var roundsWithHands: Set<Int> = emptySet()
+
+    override suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> {
+        calls += "round clocks"
+        clockError?.let { return AppResult.Failure(it) }
+        return AppResult.Success(RoundClocks(roundClocks, serverNowMs))
+    }
+
+    override suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> {
+        clockError?.let { return AppResult.Failure(it) }
+        clockActions += roundId to action
+        val current = roundClocks.firstOrNull { it.roundId == roundId }
+        val duration = tournaments.firstOrNull { it.id == tournamentId }?.matchDurationMinutes ?: 120
+        val updated: RoundClock? = when (action) {
+            is RoundClockAction.Start -> current ?: RoundClock(roundId, serverNowMs - action.agoSeconds * 1000)
+            is RoundClockAction.Pause -> current?.let { if (it.isPaused) it else it.copy(pausedAtMs = serverNowMs - action.agoSeconds * 1000) }
+            is RoundClockAction.Resume -> current?.let { clock ->
+                clock.pausedAtMs?.let { clock.copy(pausedAtMs = null, pausedMs = clock.pausedMs + serverNowMs - action.agoSeconds * 1000 - it) } ?: clock
+            }
+            is RoundClockAction.Reset -> {
+                if (!action.force && roundId in roundsWithHands) return AppResult.Failure(AppError.Conflict(ROUND_HAS_HANDS))
+                null
+            }
+            is RoundClockAction.SetRemaining -> current?.let {
+                it.copy(adjustMs = it.elapsedMs(serverNowMs) + action.remainingSeconds * 1000 - duration * 60_000L)
+            }
+        }
+        roundClocks = (roundClocks.filter { it.roundId != roundId } + listOfNotNull(updated)).sortedBy { it.roundId }
+        return AppResult.Success(RoundClocks(roundClocks, serverNowMs))
+    }
+
     override suspend fun listTournaments(refreshMode: RefreshMode): AppResult<List<Tournament>> {
         calls += "tournaments $refreshMode"
         return AppResult.Success(tournaments)

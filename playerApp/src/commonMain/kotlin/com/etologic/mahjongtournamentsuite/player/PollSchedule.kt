@@ -42,7 +42,7 @@ internal object PollSchedule {
     /**
      * The time until the next check, or null when the screen does not check again (a finished tournament).
      * [tableRoundId] is the round of the table on screen, null on the other screens. While its matches are played,
-     * including the extra time to finish the hand, the table checks every [TABLE_IN_PLAY].
+     * including the extra time to finish the hand, and while it waits for the starting gong, the table checks every [TABLE_IN_PLAY].
      * A return from the background always checks at once, whatever this says.
      */
     fun nextDelay(tournament: Tournament?, tableRoundId: Int?, now: LocalDateTime): Duration? {
@@ -51,8 +51,11 @@ internal object PollSchedule {
             PollPhase.FINISHED -> null
             PollPhase.NOT_STARTED -> NOT_STARTED
             PollPhase.ONGOING -> {
-                val inPlay = tableRoundId != null &&
-                    tournament.matchPhase(tableRoundId, now).let { it == MatchPhase.PLAYING || it == MatchPhase.EXTRA_TIME }
+                // A table also checks often while it waits for the starting gong, so the hand buttons appear soon after the Play.
+                val inPlay = tableRoundId != null && tournament.matchPhase(tableRoundId, now).let { phase ->
+                    phase == MatchPhase.PLAYING || phase == MatchPhase.EXTRA_TIME ||
+                        (phase == MatchPhase.NOT_STARTED && tournament.seatingIsOpen(tableRoundId, now))
+                }
                 if (inPlay) TABLE_IN_PLAY else ONGOING
             }
         }

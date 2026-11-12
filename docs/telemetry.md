@@ -51,6 +51,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `statistics_viewed` | Statistics load | `scope`: `tournament`, `overview`, `person`, `me` |
 | `admin_action` | An administrator or editor tries to change or export something (admin app). One event for each try | `action`, one word of the list below. `outcome`: `ok` or `failed` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
+| `seats_assigned` | A player sets the seats of the table before the first hand (player app) | |
 | `action_failed` | Any request fails | `action`, `reason` |
 | `app_error` | The app caught a bug | `report_id`, `action`, `kind`, `reason` |
 | `app_crash` | The app stopped | `report_id`, `kind` |

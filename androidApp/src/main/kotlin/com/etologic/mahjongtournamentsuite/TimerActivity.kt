@@ -11,11 +11,15 @@ class TimerActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         initAndroidApp(applicationContext)
         setContent {
-            TimerApp(initialRound = intent.getIntExtra(EXTRA_INITIAL_ROUND, 1))
+            TimerApp(
+                tournamentId = intent.getStringExtra(EXTRA_TOURNAMENT_ID).orEmpty(),
+                initialRound = intent.getIntExtra(EXTRA_INITIAL_ROUND, 1),
+            )
         }
     }
 
     private companion object {
+        const val EXTRA_TOURNAMENT_ID = "tournamentId"
         const val EXTRA_INITIAL_ROUND = "initialRound"
     }
 }

@@ -41,7 +41,6 @@ import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TablesRoute
-import com.etologic.mahjongtournamentsuite.presentation.TimerRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.di.presentationModule
@@ -126,9 +125,9 @@ private fun AppWithModules(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun TimerApp(initialRound: Int = 1) {
+fun TimerApp(tournamentId: String, initialRound: Int = 1) {
     AppWithModules {
-        TrackedScreen("Timer") { TimerStandaloneScreen(initialRound = initialRound) }
+        TrackedScreen("Timer") { TimerStandaloneScreen(tournamentId = tournamentId, initialRound = initialRound) }
     }
 }
 
@@ -200,7 +199,6 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                         tournamentId = args.tournamentId,
                     )
                 }
-                screen<TimerRoute> { TimerStandaloneScreen() }
                 screen<ErrorsRoute> { ErrorsScreen(navController) }
                 screen<ActivityRoute> { ActivityScreen(navController) }
                 screen<StatisticsRoute> { backStackEntry ->

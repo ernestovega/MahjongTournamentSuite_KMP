@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -11,12 +12,22 @@ import kotlinx.datetime.toInstant
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class MatchTimeTest {
-    private fun tournament(mode: MatchEndMode, minutes: Int = 115, schedule: Boolean = true) = Tournament(
+    private fun ms(time: String) = at(time).toInstant(TimeZone.currentSystemDefault()).toEpochMilliseconds()
+
+    /** Planned at 10:00. Without [clock] the Timer started the round at 10:00. */
+    private fun tournament(
+        mode: MatchEndMode,
+        minutes: Int = 115,
+        schedule: Boolean = true,
+        clock: RoundClock? = RoundClock(roundId = 1, startedAtMs = ms("10:00")),
+    ) = Tournament(
         id = "t", name = "T", isTeams = false, numPlayers = 4, numRounds = 1,
         roundSchedules = if (schedule) listOf(TournamentRoundSchedule(1, "2026-10-10", "10:00")) else emptyList(),
+        roundClocks = listOfNotNull(clock),
         matchDurationMinutes = minutes,
         matchEndMode = mode,
         matchExtraMinutes = 15,
@@ -41,7 +52,7 @@ class MatchTimeTest {
     fun stopModeEndsAtTheEndTime() {
         val t = tournament(MatchEndMode.STOP)
 
-        assertEquals(MatchPhase.NOT_STARTED, t.matchPhase(1, at("09:59")))
+        assertEquals(MatchPhase.NOT_STARTED, tournament(MatchEndMode.STOP, clock = null).matchPhase(1, at("09:59")))
         assertEquals(MatchPhase.PLAYING, t.matchPhase(1, at("10:00")))
         assertEquals(MatchPhase.PLAYING, t.matchPhase(1, at("11:54")))
         assertEquals(MatchPhase.OVER, t.matchPhase(1, at("11:55")))
@@ -58,10 +69,43 @@ class MatchTimeTest {
     }
 
     @Test
-    fun aRoundWithoutDateIsAlwaysPlaying() {
-        val t = tournament(MatchEndMode.STOP, schedule = false)
+    fun aRoundWithoutThePlayOfTheTimerHasNotStarted() {
+        val t = tournament(MatchEndMode.STOP, clock = null)
+
+        assertEquals(MatchPhase.NOT_STARTED, t.matchPhase(1, at("11:00")))
+        assertEquals(MatchPhase.NOT_STARTED, t.matchPhase(1, at("23:00")))
+        assertNull(t.remainingMs(1, at("11:00")))
+    }
+
+    @Test
+    fun aLatePlayMovesTheEnd() {
+        val t = tournament(MatchEndMode.STOP, clock = RoundClock(roundId = 1, startedAtMs = ms("10:20")))
+
+        assertEquals(MatchPhase.NOT_STARTED, tournament(MatchEndMode.STOP, clock = null).matchPhase(1, at("10:10")))
+        assertEquals(MatchPhase.PLAYING, t.matchPhase(1, at("12:14")))
+        assertEquals(MatchPhase.OVER, t.matchPhase(1, at("12:15")))
+        assertEquals(60 * 60_000L, t.remainingMs(1, at("11:15")))
+    }
+
+    @Test
+    fun aPauseStopsTheTime() {
+        val paused = RoundClock(roundId = 1, startedAtMs = ms("10:00"), pausedAtMs = ms("11:00"))
+        val t = tournament(MatchEndMode.STOP, clock = paused)
 
         assertEquals(MatchPhase.PLAYING, t.matchPhase(1, at("23:00")))
+        assertEquals(55 * 60_000L, t.remainingMs(1, at("23:00")))
+    }
+
+    @Test
+    fun theSeatsOpenTenMinutesBeforeThePlannedStart() {
+        val waiting = tournament(MatchEndMode.STOP, clock = null)
+
+        assertFalse(waiting.seatingIsOpen(1, at("09:49")))
+        assertTrue(waiting.seatingIsOpen(1, at("09:50")))
+        assertTrue(waiting.seatingIsOpen(1, at("10:30")))
+        assertTrue(tournament(MatchEndMode.STOP).seatingIsOpen(1, at("11:00")))
+        assertFalse(tournament(MatchEndMode.STOP).seatingIsOpen(1, at("11:55")))
+        assertTrue(tournament(MatchEndMode.STOP, schedule = false, clock = null).seatingIsOpen(1, at("01:00")))
     }
 
     @Test

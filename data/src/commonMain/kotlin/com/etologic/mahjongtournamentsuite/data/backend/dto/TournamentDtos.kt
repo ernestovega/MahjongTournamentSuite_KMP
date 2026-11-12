@@ -24,6 +24,7 @@ data class TournamentDto(
     val eventStartDate: String? = null,
     val eventEndDate: String? = null,
     val roundSchedules: List<TournamentRoundScheduleDto> = emptyList(),
+    val roundClocks: List<RoundClockDto> = emptyList(),
     val agendaItems: List<TournamentAgendaItemDto> = emptyList(),
     val matchDurationMinutes: Int = 120,
     /** "STOP" or "FINISH_HAND". */
@@ -461,4 +462,27 @@ data class SaveTableStateRequestDto(
     val expectedVersion: Long,
     val tablePatch: TablePatchRequestDto,
     val handPatches: List<TableHandPatchDto>,
+)
+
+@Serializable
+data class RoundClockDto(
+    val roundId: Int,
+    val startedAtMs: Long,
+    val pausedAtMs: Long? = null,
+    val pausedMs: Long = 0,
+    val adjustMs: Long = 0,
+)
+
+@Serializable
+data class RoundClocksResponseDto(
+    val roundClocks: List<RoundClockDto> = emptyList(),
+    val serverNowMs: Long,
+)
+
+@Serializable
+data class RoundClockActionRequestDto(
+    val action: String,
+    val agoSeconds: Long? = null,
+    val remainingSeconds: Long? = null,
+    val force: Boolean? = null,
 )

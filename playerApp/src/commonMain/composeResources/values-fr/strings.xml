@@ -99,7 +99,7 @@
     <string name="tables_player_empty_message">Ce joueur n'a pas encore de table dans ce tournoi.</string>
     <string name="jump_to_me">Aller à moi</string>
     <string name="entry_totals_only">Les organisateurs saisissent seulement les scores finaux de cette table. Vous ne pouvez pas ajouter de mains ici.</string>
-    <string name="entry_round_not_started">Ce tour n'a pas encore commencé. Vous pourrez ajouter des mains quand il commencera.</string>
+    <string name="entry_round_not_started">En attente du gong de départ. Les boutons pour ajouter des mains apparaissent au début du tour.</string>
     <string name="entry_time_over">Le temps de cette partie est écoulé. Vous ne pouvez plus ajouter de mains. Les organisateurs saisissent les données manquantes.</string>
     <string name="entry_extra_time">Le temps est écoulé. Vous pouvez ajouter la main en cours. Après elle, la table est terminée.</string>
     <string name="entry_add_draw">Ajouter une main nulle</string>
@@ -176,4 +176,14 @@
     <string name="sign_in_needed_title">Connectez-vous pour voir les vôtres</string>
     <string name="tables_me_sign_in">Connectez-vous pour voir vos tables dans ce tournoi. Toutes les tables sont dans l\'onglet Toutes.</string>
     <string name="tables_team_sign_in">Connectez-vous pour voir les tables de votre équipe. Toutes les tables sont dans l\'onglet Toutes.</string>
+    <string name="seats_assign">Placer les joueurs</string>
+    <string name="seats_change">Changer les places</string>
+    <string name="seats_title">Places de la table</string>
+    <string name="seats_who_sits">Qui s'assoit à %1$s ?</string>
+    <string name="seats_save">Enregistrer les places</string>
+    <string name="seats_restart">Recommencer</string>
+    <string name="entry_seats_first">Placez les joueurs de la table pour commencer à ajouter des mains.</string>
+    <string name="round_clock_remaining">Temps restant : %1$s</string>
+    <string name="round_clock_paused">En pause · Temps restant : %1$s</string>
+    <string name="round_clock_over">Le temps de jeu est écoulé.</string>
 </resources>

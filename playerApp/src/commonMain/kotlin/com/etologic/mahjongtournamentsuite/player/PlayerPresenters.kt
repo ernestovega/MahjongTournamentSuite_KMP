@@ -105,11 +105,16 @@ class PlayerTournamentPresenter(
         // Without an account nobody is marked as the own player.
         val meRequest = async { if (authRepository.currentSession() == null) null else authRepository.getMe(refreshMode) }
 
-        val tournament = when (val result = tournamentsRequest.await()) {
+        // The tournament list can be a minute old. The clocks come fresh, so the hand buttons appear soon after the Play.
+        val clocksRequest = async {
+            if (refreshMode == RefreshMode.CACHED) null else tournamentRepository.getRoundClocks(tournamentId) as? AppResult.Success
+        }
+        val listed = when (val result = tournamentsRequest.await()) {
             is AppResult.Success -> result.value.firstOrNull { it.id == tournamentId }
                 ?: return@coroutineScope AppResult.Failure(AppError.Unexpected("Tournament not found"))
             is AppResult.Failure -> return@coroutineScope result
         }
+        val tournament = clocksRequest.await()?.let { listed.copy(roundClocks = it.value.clocks) } ?: listed
         // Only a team tournament has teams, so this request waits for the tournament.
         val teamsRequest = async {
             if (tournament.isTeams) {
@@ -155,6 +160,16 @@ class PlayerTablePresenter(
         expectedVersion: Long,
     ): AppResult<Unit> = handRepository.addPenalties(tournamentId, roundId, tableId, penalties, expectedVersion)
         .track(telemetry, TelemetryEvent.PENALTY_ADDED, mapOf(TelemetryParam.HANDS to penalties.size))
+
+    /** Sets the four seats of the table: slot ids in the order east, south, west, north. */
+    suspend fun assignSeats(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        seats: List<Int>,
+        expectedVersion: Long,
+    ): AppResult<Unit> = handRepository.assignSeats(tournamentId, roundId, tableId, seats, expectedVersion)
+        .track(telemetry, TelemetryEvent.SEATS_ASSIGNED)
 
     suspend fun preview(tournamentId: String, roundId: Int, tableId: Int, proposal: HandProposal): AppResult<HandPreview> = handRepository.previewHand(tournamentId, roundId, tableId, proposal).track(telemetry, TelemetryEvent.HAND_PREVIEWED)
 

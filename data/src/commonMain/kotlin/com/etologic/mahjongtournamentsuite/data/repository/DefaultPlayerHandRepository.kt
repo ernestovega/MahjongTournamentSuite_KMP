@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandPreviewDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.HandRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.PenaltiesRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.SeatsRequestDto
 import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.backend.BackendHttpException
@@ -63,6 +64,30 @@ class DefaultPlayerHandRepository(
     ): AppResult<HandPreview> = request("Recording hand") { token ->
         backendApi.recordHand(token, tournamentId, roundId, tableId, proposal.toDto(expectedVersion)).toDomain()
             .also { cache.markStale("tournament:$tournamentId:tables") }
+    }
+
+    override suspend fun assignSeats(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        seats: List<Int>,
+        expectedVersion: Long,
+    ): AppResult<Unit> = request("Assigning seats") { token ->
+        require(seats.size == 4) { "A table has four seats" }
+        backendApi.assignSeats(
+            idToken = token,
+            tournamentId = tournamentId,
+            roundId = roundId,
+            tableId = tableId,
+            request = SeatsRequestDto(
+                playerEastId = seats[0].toString(),
+                playerSouthId = seats[1].toString(),
+                playerWestId = seats[2].toString(),
+                playerNorthId = seats[3].toString(),
+                expectedVersion = expectedVersion,
+            ),
+        )
+        cache.markStale("tournament:$tournamentId:tables")
     }
 
     private suspend fun <T : Any> request(action: String, block: suspend (String) -> T): AppResult<T> =

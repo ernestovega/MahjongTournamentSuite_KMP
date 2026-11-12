@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -13,8 +14,9 @@ import kotlinx.datetime.atTime
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 
-/** Where a match is in time. The phase comes from the start of the round and the match duration of the tournament. */
+/** Where a match is in time. The Play of the Timer starts the match, and the match duration of the tournament ends it. */
 enum class MatchPhase {
+    /** Nobody pressed Play yet. The players wait for the starting gong. */
     NOT_STARTED,
     PLAYING,
 
@@ -25,23 +27,28 @@ enum class MatchPhase {
     OVER,
 }
 
+/** Minutes before the planned start of a round in which the players can set the seats of their table, as on the server. */
+const val SEATING_LEAD_MINUTES = 10
+
 /** The local date and time of the device. */
 internal fun currentLocalDateTime(): LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+
+/** The time zone of the venue. Without a valid one, the zone of the device. */
+internal fun Tournament.venueZone(): TimeZone =
+    timeZone?.let { id -> runCatching { TimeZone.of(id) }.getOrNull() } ?: TimeZone.currentSystemDefault()
 
 /**
  * The current local time at the venue of the tournament. The round times are local times of the venue,
  * so a player in another time zone still sees the right phase. Without a valid time zone, it is the time of the device.
  */
-internal fun Tournament.currentVenueDateTime(): LocalDateTime {
-    val zone = timeZone?.let { id -> runCatching { TimeZone.of(id) }.getOrNull() } ?: TimeZone.currentSystemDefault()
-    return Clock.System.now().toLocalDateTime(zone)
-}
+internal fun Tournament.currentVenueDateTime(): LocalDateTime = Clock.System.now().toLocalDateTime(venueZone())
 
-private fun LocalDateTime.epochSeconds(): Long = toInstant(TimeZone.UTC).epochSeconds
+/** A local time of the venue as milliseconds since the epoch. */
+internal fun Tournament.epochMsAt(venueTime: LocalDateTime): Long = venueTime.toInstant(venueZone()).toEpochMilliseconds()
 
 /**
- * Date and start time of a round. Null when the round has no valid date.
- * A date with no start time starts at midnight.
+ * Planned date and start time of a round. Null when the round has no valid date.
+ * A date with no start time starts at midnight. The real start is the Play of the Timer.
  */
 fun Tournament.roundStartTime(roundId: Int): LocalDateTime? {
     val schedule = roundSchedules.firstOrNull { it.roundId == roundId }
@@ -52,16 +59,33 @@ fun Tournament.roundStartTime(roundId: Int): LocalDateTime? {
     return date.atTime(time)
 }
 
-/** The phase of the matches of a round at [now]. A round with no date is always playing. */
+fun Tournament.clockOf(roundId: Int): RoundClock? = roundClocks.firstOrNull { it.roundId == roundId }
+
+/** The phase of the matches of a round at [now], a local time of the venue. A round without a clock has not started. */
 fun Tournament.matchPhase(roundId: Int, now: LocalDateTime): MatchPhase {
-    val start = roundStartTime(roundId) ?: return MatchPhase.PLAYING
-    val nowSeconds = now.epochSeconds()
-    val startSeconds = start.epochSeconds()
-    if (nowSeconds < startSeconds) return MatchPhase.NOT_STARTED
-    val endSeconds = startSeconds + matchDurationMinutes * 60L
-    if (nowSeconds < endSeconds) return MatchPhase.PLAYING
-    val extraSeconds = if (matchEndMode == MatchEndMode.FINISH_HAND) matchExtraMinutes * 60L else 0L
-    return if (nowSeconds < endSeconds + extraSeconds) MatchPhase.EXTRA_TIME else MatchPhase.OVER
+    val clock = clockOf(roundId) ?: return MatchPhase.NOT_STARTED
+    val nowMs = epochMsAt(now)
+    val elapsed = clock.elapsedMs(nowMs)
+    val duration = clock.durationMs(matchDurationMinutes)
+    if (elapsed < duration) return MatchPhase.PLAYING
+    val extra = if (matchEndMode == MatchEndMode.FINISH_HAND) matchExtraMinutes * 60_000L else 0L
+    return if (elapsed < duration + extra) MatchPhase.EXTRA_TIME else MatchPhase.OVER
+}
+
+/** Milliseconds left of the match time of a round at [now]. Null before the Play. */
+fun Tournament.remainingMs(roundId: Int, now: LocalDateTime): Long? =
+    clockOf(roundId)?.remainingMs(matchDurationMinutes, epochMsAt(now))
+
+/**
+ * True when the players of a round can set the seats of their tables at [now]: from [SEATING_LEAD_MINUTES] before the
+ * planned start, or as soon as the round started, until its time is over. The first hand of a table closes its seats.
+ */
+fun Tournament.seatingIsOpen(roundId: Int, now: LocalDateTime): Boolean {
+    val phase = matchPhase(roundId, now)
+    if (phase == MatchPhase.OVER) return false
+    if (phase != MatchPhase.NOT_STARTED) return true
+    val planned = roundStartTime(roundId) ?: return true
+    return epochMsAt(now) >= epochMsAt(planned) - SEATING_LEAD_MINUTES * 60_000L
 }
 
 /**

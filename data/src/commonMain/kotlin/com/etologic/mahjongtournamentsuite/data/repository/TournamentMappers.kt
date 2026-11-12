@@ -1,6 +1,12 @@
 package com.etologic.mahjongtournamentsuite.data.repository
 
 import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockActionRequestDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClockDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.RoundClocksResponseDto
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_DURATION_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.DEFAULT_MATCH_EXTRA_MINUTES
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
@@ -38,6 +44,7 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
             startTime = schedule.startTime.normalizedOrNull(),
         )
     },
+    roundClocks = roundClocks.map { it.toDomain() },
     agendaItems = agendaItems.map { item ->
         TournamentAgendaItem(
             title = item.title.trim(),
@@ -59,3 +66,24 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
 )
 
 private fun String?.normalizedOrNull(): String? = this?.trim()?.takeIf(String::isNotBlank)
+
+internal fun RoundClockDto.toDomain() = RoundClock(
+    roundId = roundId,
+    startedAtMs = startedAtMs,
+    pausedAtMs = pausedAtMs,
+    pausedMs = pausedMs,
+    adjustMs = adjustMs,
+)
+
+internal fun RoundClocksResponseDto.toDomain() = RoundClocks(
+    clocks = roundClocks.map { it.toDomain() },
+    serverNowMs = serverNowMs,
+)
+
+internal fun RoundClockAction.toDto(): RoundClockActionRequestDto = when (this) {
+    is RoundClockAction.Start -> RoundClockActionRequestDto(action = "start", agoSeconds = agoSeconds)
+    is RoundClockAction.Pause -> RoundClockActionRequestDto(action = "pause", agoSeconds = agoSeconds)
+    is RoundClockAction.Resume -> RoundClockActionRequestDto(action = "resume", agoSeconds = agoSeconds)
+    is RoundClockAction.Reset -> RoundClockActionRequestDto(action = "reset", force = force)
+    is RoundClockAction.SetRemaining -> RoundClockActionRequestDto(action = "setRemaining", remainingSeconds = remainingSeconds)
+}

@@ -34,6 +34,9 @@ import com.etologic.mahjongtournamentsuite.data.cache.TournamentTableStore
 import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
 import com.etologic.mahjongtournamentsuite.data.cache.tournamentManifest
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
+import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
@@ -824,6 +827,34 @@ class DefaultTournamentRepository(
         onFailure = { throwable ->
             logger.w(throwable) { "$action failed." }
             AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> = runCatching {
+        withReadToken { token -> backendApi.roundClocks(token, tournamentId).toDomain() }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Reading the round clocks failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun updateRoundClock(
+        tournamentId: String,
+        roundId: Int,
+        action: RoundClockAction,
+    ): AppResult<RoundClocks> = runCatching {
+        withFreshIdToken { token -> backendApi.updateRoundClock(token, tournamentId, roundId, action.toDto()).toDomain() }
+            // The tournament list carries the clocks too.
+            .also { cache.markStale(GLOBAL_TOURNAMENTS_CACHE_KEY) }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Changing the round clock failed." }
+            val roundHasHands = (throwable as? BackendHttpException)
+                ?.takeIf { it.status == HttpStatusCode.Conflict && it.responseBody.contains(ROUND_HAS_HANDS) }
+            AppResult.Failure(if (roundHasHands != null) AppError.Conflict(ROUND_HAS_HANDS) else throwable.toAppError())
         },
     )
 
