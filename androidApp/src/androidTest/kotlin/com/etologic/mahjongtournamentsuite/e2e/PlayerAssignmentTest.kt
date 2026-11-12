@@ -9,7 +9,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
     fun restoreData() = E2eApi.reset("test-live-ongoing")
 
     private fun openPlayers() {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.clickButton("Players")
@@ -23,7 +23,7 @@ class PlayerAssignmentTest : AdminE2eTest() {
     }
 
     private fun openTeams() {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.clickButton("Teams")

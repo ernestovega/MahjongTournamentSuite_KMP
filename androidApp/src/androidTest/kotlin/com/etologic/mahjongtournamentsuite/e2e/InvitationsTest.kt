@@ -25,7 +25,7 @@ class InvitationsTest : AdminE2eTest() {
 
     /** Opens the invitations dialog and selects the last player of the list "No account". */
     private fun openDialogWithOnePlayerSelected() {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.clickButton("Players")

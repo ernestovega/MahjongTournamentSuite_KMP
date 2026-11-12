@@ -16,7 +16,7 @@ class EditTournamentTest : AdminE2eTest() {
     fun restoreData() = E2eApi.reset("test-live-ongoing", "test-no-extras")
 
     private fun openDialog(name: String = "Test - Live ongoing tournament") {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(name)
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
@@ -95,7 +95,7 @@ class EditTournamentTest : AdminE2eTest() {
 
     @Test
     fun editorSaveIsRefusedByTheServer() {
-        start(E2eAccounts.EDITOR, ready = "Logout")
+        start(E2eAccounts.EDITOR, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
@@ -135,7 +135,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.clickButton("Delete")
         c.waitForText("Delete tournament")
         pressDeleteInConfirmation()
-        c.waitForText("Logout")
+        c.waitForText(PROFILE_BUTTON)
         c.waitForNoText(name)
     }
 

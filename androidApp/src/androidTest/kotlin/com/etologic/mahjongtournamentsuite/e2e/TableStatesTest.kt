@@ -5,7 +5,7 @@ import org.junit.Test
 /** What the table editor shows for the different table states of the seeded tournaments. */
 class TableStatesTest : AdminE2eTest() {
     private fun open(name: String) {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(name)
         c.waitForAnyText("Players & results", "Tournament players")
         c.waitForText("Players & results")

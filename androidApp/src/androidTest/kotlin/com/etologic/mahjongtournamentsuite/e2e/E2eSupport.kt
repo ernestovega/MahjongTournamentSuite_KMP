@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.SemanticsNodeInteraction
 import androidx.compose.ui.test.SemanticsNodeInteractionsProvider
 import androidx.compose.ui.test.hasAnyDescendant
@@ -124,14 +125,28 @@ class AdminAppRule {
     }
 }
 
+/**
+ * The click label of the profile button of the top bar: the photo, alias and role of the signed-in user. It opens the
+ * profile, which holds the Logout button. It shows when the tournament list has loaded for an admin or an editor.
+ */
+const val PROFILE_BUTTON = "Open profile"
+
+/** A node whose click action has this label, such as the profile button, which has no text of its own to match. */
+fun hasClickLabel(label: String): SemanticsMatcher =
+    SemanticsMatcher("OnClick label = '$label'") { it.config.getOrNull(SemanticsActions.OnClick)?.label == label }
+
+/** A node that shows the text, or describes itself with it, or has it as the label of its click action. */
+private fun hasLabel(text: String, substring: Boolean = false): SemanticsMatcher =
+    hasText(text, substring = substring) or hasContentDescription(text, substring = substring) or hasClickLabel(text)
+
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.waitForText(text: String, substring: Boolean = false, timeoutMs: Long = WAIT_MS) {
-    waitUntilAtLeastOneExists(hasText(text, substring = substring) or hasContentDescription(text, substring = substring), timeoutMs)
+    waitUntilAtLeastOneExists(hasLabel(text, substring), timeoutMs)
 }
 
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.waitForNoText(text: String, substring: Boolean = false, timeoutMs: Long = WAIT_MS) {
-    waitUntilDoesNotExist(hasText(text, substring = substring) or hasContentDescription(text, substring = substring), timeoutMs)
+    waitUntilDoesNotExist(hasLabel(text, substring), timeoutMs)
 }
 
 fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = false): SemanticsNodeInteraction =
@@ -149,7 +164,7 @@ fun ComposeTestRule.signIn(email: String, password: String = E2eAccounts.PASSWOR
 fun ComposeTestRule.clickButton(text: String) {
     // On a phone the keyboard can cover the button.
     runCatching { androidx.test.espresso.Espresso.closeSoftKeyboard() }
-    val label = hasText(text) or hasContentDescription(text)
+    val label = hasLabel(text)
     // The screens turn their buttons off while they load. A tap on a button that is off does nothing.
     if (onAllNodes(label and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
         waitUntil(WAIT_MS) { onAllNodes(label and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
@@ -216,7 +231,7 @@ fun shell(command: String): String {
  */
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.openTournament(name: String) {
-    waitForText("Logout")
+    waitForText(PROFILE_BUTTON)
     // The list is lazy. A row far down is not composed until the list scrolls to it.
     waitUntil(WAIT_MS) {
         if (onAllNodes(hasText(name)).fetchSemanticsNodes().isEmpty()) {
@@ -245,7 +260,7 @@ fun ComposeTestRule.settle(frames: Int = 6) {
 
 @OptIn(ExperimentalTestApi::class)
 fun ComposeTestRule.assertNoText(text: String, substring: Boolean = false) {
-    onAllNodes(hasText(text, substring = substring) or hasContentDescription(text, substring = substring)).assertCountEquals(0)
+    onAllNodes(hasLabel(text, substring)).assertCountEquals(0)
 }
 
 /** The editable field that has this label. */

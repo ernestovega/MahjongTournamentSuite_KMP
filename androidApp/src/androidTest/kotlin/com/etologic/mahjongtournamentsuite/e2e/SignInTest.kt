@@ -76,6 +76,8 @@ class SignInTest : AdminE2eTest() {
     @Test
     fun logoutReturnsToSignIn() {
         start(E2eAccounts.ADMIN)
+        // The Logout button is in the profile, which the profile button of the top bar opens.
+        c.clickButton(PROFILE_BUTTON)
         c.clickButton("Logout")
         c.waitForText("Do you want to sign out?")
         c.clickButton("Yes, sign out")
