@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AdminPanelSettings
-import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Smartphone
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
@@ -44,7 +44,7 @@ import org.jetbrains.compose.resources.stringResource
 /** The icon of each application, the same on the switch button and in the chooser. */
 private val SuiteApp.icon: ImageVector
     get() = when (this) {
-        SuiteApp.PLAYER -> Icons.Default.EmojiEvents
+        SuiteApp.PLAYER -> Icons.Default.Smartphone
         SuiteApp.ADMIN -> Icons.Default.AdminPanelSettings
     }
 
