@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -47,5 +48,21 @@ fun FocusRequester.requestFocusIfAttached() {
     try {
         requestFocus()
     } catch (_: IllegalStateException) {
+    }
+}
+
+/**
+ * Asks for focus when a screen or a dialog opens. The control can attach a few frames after the first composition
+ * (for example inside a BoxWithConstraints or a dialog window), so it tries again on the next frames.
+ */
+suspend fun FocusRequester.requestFocusOnOpen(maxFrames: Int = 10) {
+    repeat(maxFrames) {
+        withFrameNanos { }
+        val focused = try {
+            requestFocus()
+        } catch (_: IllegalStateException) {
+            false
+        }
+        if (focused) return
     }
 }

@@ -11,6 +11,7 @@ internal fun syncTable(
     east: String = "1",
     eastScore: String = "",
     isCompleted: Boolean = false,
+    useTotalsOnly: Boolean = false,
 ) = TableState(
     version = version,
     roundId = roundId,
@@ -25,7 +26,7 @@ internal fun syncTable(
     playerWestScore = "",
     playerNorthScore = "",
     isCompleted = isCompleted,
-    useTotalsOnly = false,
+    useTotalsOnly = useTotalsOnly,
 )
 
 internal fun syncHands(score: String = "", count: Int = 16): List<TableHand> = (1..count).map { id ->

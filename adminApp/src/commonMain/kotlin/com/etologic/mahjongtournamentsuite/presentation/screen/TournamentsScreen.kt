@@ -100,6 +100,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsSco
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusOnOpen
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPlayerApp
@@ -255,8 +256,12 @@ fun TournamentsScreen(
         tournaments.map { FocusRequester() }
     }
 
-    LaunchedEffect(isRefreshing, tournaments.map { it.id }) {
-        if (!tournamentFocusApplied && !isRefreshing) {
+    val tournamentIds = tournaments.map { it.id }
+    LaunchedEffect(isRefreshing, tournamentIds) {
+        // The refresh can end one frame before the new list reaches this composition. That run still holds the old
+        // list and its focus requesters, so it waits, and the next run, with the new list, places the focus.
+        val listIsCurrent = store.tournaments.value.map { it.id } == tournamentIds
+        if (!tournamentFocusApplied && !isRefreshing && listIsCurrent) {
             withFrameNanos { }
             when (lastFocusedControl) {
                 "player-base" -> playerBaseFocusRequester.requestFocusIfAttached()
@@ -273,7 +278,7 @@ fun TournamentsScreen(
                 else -> {
                     if (tournamentFocusRequesters.isNotEmpty()) {
                         val index = tournaments.indexOfFirst { it.id == lastFocusedTournamentId }.coerceAtLeast(0)
-                        tournamentFocusRequesters.getOrNull(index)?.requestFocus()
+                        tournamentFocusRequesters.getOrNull(index)?.requestFocusOnOpen()
                     } else {
                         usersFocusRequester.requestFocusIfAttached()
                     }
