@@ -177,4 +177,10 @@
     <string name="sign_in_needed_title">Accedi per vedere i tuoi</string>
     <string name="tables_me_sign_in">Accedi per vedere i tuoi tavoli in questo torneo. Tutti i tavoli sono nella scheda Tutti.</string>
     <string name="tables_team_sign_in">Accedi per vedere i tavoli della tua squadra. Tutti i tavoli sono nella scheda Tutti.</string>
+    <string name="filter_table_search">N. tavolo o giocatore</string>
+    <string name="filter_round">Turno</string>
+    <string name="filter_all_rounds">Tutti i turni</string>
+    <string name="table_status_not_started">Non iniziato</string>
+    <string name="table_status_playing">In corso</string>
+    <string name="tables_no_match">Nessun tavolo corrisponde ai filtri</string>
 </resources>

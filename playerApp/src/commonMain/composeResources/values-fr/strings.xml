@@ -177,4 +177,10 @@
     <string name="sign_in_needed_title">Connectez-vous pour voir les vôtres</string>
     <string name="tables_me_sign_in">Connectez-vous pour voir vos tables dans ce tournoi. Toutes les tables sont dans l\'onglet Toutes.</string>
     <string name="tables_team_sign_in">Connectez-vous pour voir les tables de votre équipe. Toutes les tables sont dans l\'onglet Toutes.</string>
+    <string name="filter_table_search">N° de table ou joueur</string>
+    <string name="filter_round">Tour</string>
+    <string name="filter_all_rounds">Tous les tours</string>
+    <string name="table_status_not_started">Pas commencée</string>
+    <string name="table_status_playing">En cours</string>
+    <string name="tables_no_match">Aucune table ne correspond aux filtres</string>
 </resources>

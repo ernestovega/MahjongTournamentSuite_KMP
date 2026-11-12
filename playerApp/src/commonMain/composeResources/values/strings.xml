@@ -177,4 +177,10 @@
     <string name="sign_in_needed_title">Sign in to see yours</string>
     <string name="tables_me_sign_in">Sign in to see your tables in this tournament. All the tables are in the All tab.</string>
     <string name="tables_team_sign_in">Sign in to see the tables of your team. All the tables are in the All tab.</string>
+    <string name="filter_table_search">Table number or player</string>
+    <string name="filter_round">Round</string>
+    <string name="filter_all_rounds">All rounds</string>
+    <string name="table_status_not_started">Not started</string>
+    <string name="table_status_playing">Playing</string>
+    <string name="tables_no_match">No table matches the filters</string>
 </resources>

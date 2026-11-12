@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -108,6 +109,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
@@ -207,6 +209,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.table_n
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
 import mahjongtournamentsuite.playerapp.generated.resources.tables_all_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.tables_no_match
 import mahjongtournamentsuite.playerapp.generated.resources.tables_me_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.tables_mine_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_not_linked
@@ -1004,9 +1007,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                     view.teamTables,
                                     stringResource(Res.string.tables_team_empty),
                                     open,
+                                    filterName = "team",
                                 )
                             } else {
-                                TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open)
+                                TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open, filterName = "all")
                             }
                         }
                         1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
@@ -1077,35 +1081,83 @@ private fun SignInPrompt(message: String, onSignIn: () -> Unit) {
 }
 
 @Composable
-private fun TableList(
+internal fun TableList(
     view: PlayerTournamentView,
     tables: List<PlayerTable>,
     emptyText: String,
     onOpen: (PlayerTable) -> Unit,
     stickyRounds: Boolean = true,
+    filterName: String? = null,
 ) {
     if (tables.isEmpty()) {
         Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), emptyText) }
         return
     }
-    val rounds = tables.sortedBy { it.roundId }.groupBy { it.roundId }
-    // The list uses all the width. Its padding is inside, so it ends at the tabs and at the bottom of the screen.
-    LazyColumn(
-        state = rememberPersistentLazyListState("tables-" + emptyText),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-    ) {
-        rounds.forEach { (roundId, roundTables) ->
-            // In the sticky case, the title of a round stays at the top while its tables scroll under it.
-            if (stickyRounds) {
-                stickyHeader(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
-            } else {
-                item(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
-            }
-            items(roundTables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                TableSummaryCard(view, table, highlightSlot = view.mySlotId, onClick = { onOpen(table) })
+    // A long list has filters on top. They hide with the tabs when the list scrolls down.
+    var filterText by rememberPersistentText("table-filter-" + filterName.orEmpty(), null)
+    val filter = if (filterName == null) TableFilter() else TableFilter.decode(filterText)
+    val shown = filter.apply(view, tables)
+    val rounds = shown.sortedBy { it.roundId }.groupBy { it.roundId }
+    Column {
+        if (filterName != null) {
+            HideOnScrollTabs {
+                TableFilterBar(
+                    filter = filter,
+                    onChange = { filterText = it.encode() },
+                    rounds = tables.map { it.roundId }.distinct().sorted(),
+                    modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                )
             }
         }
+        if (shown.isEmpty()) {
+            Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) {
+                EmptyState(Icons.Default.People, stringResource(Res.string.tables_no_match), "")
+            }
+            return@Column
+        }
+        val state = rememberPersistentLazyListState("tables-" + emptyText)
+        // A new filter starts the list at the top. The restored filter keeps the restored position.
+        var lastFilter by remember { mutableStateOf(filter) }
+        LaunchedEffect(filter) {
+            if (filter != lastFilter) {
+                lastFilter = filter
+                state.scrollToItem(0)
+            }
+        }
+        Box(Modifier.weight(1f)) {
+            // The list uses all the width. Its padding is inside, so it ends at the tabs and at the bottom of the screen.
+            LazyColumn(
+                state = state,
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+            ) {
+                rounds.forEach { (roundId, roundTables) ->
+                    // In the sticky case, the title of a round stays at the top while its tables scroll under it.
+                    if (stickyRounds) {
+                        stickyHeader(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
+                    } else {
+                        item(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
+                    }
+                    items(roundTables, key = { "${it.roundId}_${it.tableId}" }) { table ->
+                        TableSummaryCard(view, table, highlightSlot = view.mySlotId, onClick = { onOpen(table) })
+                    }
+                }
+            }
+            TableScrollbar(state, shown, Modifier.align(Alignment.CenterEnd))
+        }
+    }
+}
+
+/** The scrollbar of a table list. While the person drags it, a bubble says which round and table show. */
+@Composable
+internal fun TableScrollbar(state: LazyListState, tables: List<PlayerTable>, modifier: Modifier = Modifier) {
+    val roundNames = tables.map { it.roundId }.distinct().associateWith { stringResource(Res.string.round_n, it) }
+    val tableNames = tables.map { it.tableId }.distinct().associateWith { stringResource(Res.string.table_n, it) }
+    DraggableScrollbar(state, modifier) { item ->
+        val ids = (item.key as? String)?.split('_')?.mapNotNull { it.toIntOrNull() }
+        if (ids == null || ids.size != 2) return@DraggableScrollbar null
+        listOfNotNull(roundNames[ids[0]], tableNames[ids[1]]).joinToString(" · ").ifEmpty { null }
     }
 }
 
@@ -1979,16 +2031,21 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
                         Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message)) }
                     } else {
                         // The padding is inside the list, so the list ends at the tab row and at the bottom of the screen.
-                        LazyColumn(
-                            state = rememberPersistentLazyListState("tables"),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = PaddingValues(16.dp),
-                        ) {
-                            items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                                TableSummaryCard(view, table, highlightSlot = slotId) {
-                                    navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                        val state = rememberPersistentLazyListState("tables")
+                        Box(Modifier.weight(1f)) {
+                            LazyColumn(
+                                state = state,
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(16.dp),
+                            ) {
+                                items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
+                                    TableSummaryCard(view, table, highlightSlot = slotId) {
+                                        navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                                    }
                                 }
                             }
+                            TableScrollbar(state, tables, Modifier.align(Alignment.CenterEnd))
                         }
                     }
                 }
