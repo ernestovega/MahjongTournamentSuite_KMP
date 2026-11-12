@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
@@ -143,7 +144,7 @@ fun AppTooltipBox(
         positionProvider = rememberAppTooltipPositionProvider(alignEnd),
         tooltip = tooltip,
         state = state,
-        modifier = if (enabled) modifier.showTooltipWhileTouched(state, scope, anchorScope) else modifier,
+        modifier = if (enabled) modifier.showTooltipWhileTouched(state, scope, anchorScope).hideTooltipOnMouseExit(state) else modifier,
         enableUserInput = enabled,
     ) { anchorScope.content() }
 }
@@ -186,6 +187,20 @@ private fun Modifier.showTooltipWhileTouched(
         } finally {
             anchorScope.lastTouchUp = TimeSource.Monotonic.markNow()
             state.dismiss()
+        }
+    }
+}
+
+/**
+ * Hides the tooltip when the mouse leaves the anchor. The tooltip state is persistent, for the long touches,
+ * and the hover of a persistent tooltip does not hide it on its own.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun Modifier.hideTooltipOnMouseExit(state: TooltipState): Modifier = pointerInput(state) {
+    awaitPointerEventScope {
+        while (true) {
+            val event = awaitPointerEvent()
+            if (event.type == PointerEventType.Exit && event.changes.any { it.type == PointerType.Mouse }) state.dismiss()
         }
     }
 }
