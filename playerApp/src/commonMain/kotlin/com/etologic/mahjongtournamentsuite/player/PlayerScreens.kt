@@ -1678,10 +1678,12 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     var details by rememberSaveable { mutableStateOf(false) }
     // The clock moves on, so a table whose time ends while the screen is open closes for hands. The Play of the
     // Timer comes with the next check of the server.
-    val now by produceState(currentLocalDateTime()) {
+    // The time of the venue from the first frame: a device in another zone would show another phase for a moment.
+    val venue = view?.tournament
+    val now by produceState(venue?.currentVenueDateTime() ?: currentLocalDateTime(), venue) {
         while (true) {
+            value = venue?.currentVenueDateTime() ?: currentLocalDateTime()
             delay(5_000)
-            value = view?.tournament?.currentVenueDateTime() ?: currentLocalDateTime()
         }
     }
 
