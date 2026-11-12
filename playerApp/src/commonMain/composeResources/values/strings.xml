@@ -92,7 +92,7 @@
     <string name="table_hand_progress">Hand\n%1$d/%2$d</string>
     <string name="stat_hands">Hands</string>
     <string name="table_details">Details</string>
-    <string name="hand_penalty">Penalty</string>
+    <string name="hand_penalty">Pen.</string>
     <string name="hand_self_pick">Self-pick</string>
     <string name="hand_discard">Discard</string>
     <string name="hand_draw">Draw</string>

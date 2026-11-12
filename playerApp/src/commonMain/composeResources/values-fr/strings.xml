@@ -92,7 +92,7 @@
     <string name="table_hand_progress">Main\n%1$d/%2$d</string>
     <string name="stat_hands">Mains</string>
     <string name="table_details">Détails</string>
-    <string name="hand_penalty">Pénalité</string>
+    <string name="hand_penalty">Pén.</string>
     <string name="hand_self_pick">Du mur</string>
     <string name="hand_discard">Défausse</string>
     <string name="hand_draw">Nulle</string>

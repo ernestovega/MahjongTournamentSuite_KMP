@@ -1818,27 +1818,32 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId
             if (handId != null) HandNumber(handId)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            values.forEachIndexed { seat, value ->
-                if (value == 0) return@forEachIndexed
-                val slot = seatSlots.getOrNull(seat)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    // The chip is on the line of the penalized player. The players who receive points have no chip.
-                    if (value < 0) {
-                        HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), MaterialTheme.colorScheme.error)
-                    }
+            // The penalized players come first with a red chip. The players who receive points come under them,
+            // smaller, slightly indented and with a green chip.
+            val lines = values.withIndex().filter { it.value != 0 }.sortedBy { it.value > 0 }
+            lines.forEach { (seat, value) ->
+                val receives = value > 0
+                val accent = if (receives) WinnerColor else MaterialTheme.colorScheme.error
+                Row(
+                    Modifier.padding(start = if (receives) 16.dp else 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), accent, small = receives)
                     Text(
-                        view.nameOf(slot),
+                        view.nameOf(seatSlots.getOrNull(seat)),
                         Modifier.weight(1f),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = if (receives) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     // The invisible outline gives the value the size of the score pill of a hand, so both line up.
                     ScorePill(
-                        if (value > 0) "+$value" else "$value",
-                        color = if (value > 0) WinnerColor else MaterialTheme.colorScheme.error,
+                        if (receives) "+$value" else "$value",
+                        color = accent,
                         outline = Color.Transparent,
+                        small = receives,
                     )
                 }
             }
@@ -1930,12 +1935,12 @@ private fun HandNumber(handId: Int) {
 
 /** A score in a round outline. The score of a hand and the value of a penalty use it, so they have the same size. */
 @Composable
-private fun ScorePill(text: String, color: Color, outline: Color) {
+private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean = false) {
     Surface(shape = RoundedCornerShape(50), color = Color.Transparent, border = BorderStroke(1.5.dp, outline)) {
         Text(
             text,
-            Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.titleLarge,
+            Modifier.padding(horizontal = 16.dp, vertical = if (small) 2.dp else 6.dp),
+            style = if (small) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = color,
         )
@@ -1958,15 +1963,20 @@ private fun WinTypePill(kind: HandKind, accent: Color) {
 
 /** A small colored chip with an icon and a text, like the way of winning or a penalty. */
 @Composable
-private fun HandChip(icon: ImageVector, text: String, accent: Color) {
+private fun HandChip(icon: ImageVector, text: String, accent: Color, small: Boolean = false) {
     Surface(shape = RoundedCornerShape(50), color = accent.copy(alpha = 0.18f)) {
         Row(
-            Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            Modifier.padding(horizontal = if (small) 8.dp else 10.dp, vertical = if (small) 2.dp else 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Icon(icon, contentDescription = null, Modifier.size(16.dp), tint = accent)
-            Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = accent)
+            Icon(icon, contentDescription = null, Modifier.size(if (small) 13.dp else 16.dp), tint = accent)
+            Text(
+                text,
+                style = if (small) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = accent,
+            )
         }
     }
 }

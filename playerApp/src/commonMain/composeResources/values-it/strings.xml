@@ -92,7 +92,7 @@
     <string name="table_hand_progress">Mano\n%1$d/%2$d</string>
     <string name="stat_hands">Mani</string>
     <string name="table_details">Dettagli</string>
-    <string name="hand_penalty">Penalità</string>
+    <string name="hand_penalty">Penal.</string>
     <string name="hand_self_pick">Dal muro</string>
     <string name="hand_discard">Scarto</string>
     <string name="hand_draw">Patta</string>
