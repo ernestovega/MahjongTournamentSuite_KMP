@@ -1826,7 +1826,6 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId
                     if (value < 0) {
                         HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), MaterialTheme.colorScheme.error)
                     }
-                    PlayerFlag(view.players[slot]?.country, width = 24.dp)
                     Text(
                         view.nameOf(slot),
                         Modifier.weight(1f),
@@ -1869,7 +1868,6 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (kind != HandKind.DRAW) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    PlayerFlag(view.players[winnerSlot]?.country, width = 24.dp)
                     Text(
                         view.nameOf(winnerSlot),
                         Modifier.weight(1f, fill = false),
@@ -1889,7 +1887,6 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        PlayerFlag(view.players[loserSlot]?.country, width = 20.dp)
                         Text(
                             view.nameOf(loserSlot),
                             Modifier.weight(1f, fill = false),
