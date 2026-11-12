@@ -27,7 +27,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.Check
@@ -84,7 +83,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -133,7 +131,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.features
 import mahjongtournamentsuite.adminapp.generated.resources.from_to
 import mahjongtournamentsuite.adminapp.generated.resources.logo
 import mahjongtournamentsuite.adminapp.generated.resources.logo_for
-import mahjongtournamentsuite.adminapp.generated.resources.logout
 import mahjongtournamentsuite.adminapp.generated.resources.name
 import mahjongtournamentsuite.adminapp.generated.resources.no_host_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_logo_for
@@ -324,12 +321,7 @@ fun TournamentsScreen(
         isLoading = isRefreshing || isLoading,
         showBackgroundLogo = false,
         navigationIcon = {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                LogoutButton(coroutineScope, presenter, navController)
-                ProfileInfo(profile, roleLabel)
-            }
+            ProfileInfo(profile, roleLabel, navController)
         },
         leadingActions = {
             AppTopBarLeadingActions(
@@ -521,13 +513,20 @@ fun TournamentsScreen(
     }
 }
 
-/** The alias and role of the signed-in user. A click opens the profile, where the user can change the alias. */
+/**
+ * The alias and role of the signed-in user. A click opens the profile, where the user can change the alias
+ * and sign out, as in the player app.
+ */
 @Composable
 fun ProfileInfo(
     profile: UserProfile?,
-    roleLabel: String?
+    roleLabel: String?,
+    navController: NavHostController,
 ) {
     var showProfile by remember { mutableStateOf(false) }
+    var confirmingSignOut by remember { mutableStateOf(false) }
+    // Outlives the confirmation dialog, so that the sign out is not cancelled when the dialog closes.
+    val coroutineScope = rememberCoroutineScope()
     profile?.let { user ->
         Spacer(modifier = Modifier.width(16.dp))
         Row(
@@ -573,42 +572,46 @@ fun ProfileInfo(
                 onRemovePhoto = presenter::removePhoto,
                 onSaved = { store.profile.value = it },
                 onDismiss = { showProfile = false },
+                onSignOut = {
+                    showProfile = false
+                    confirmingSignOut = true
+                },
+            )
+        }
+        if (confirmingSignOut) {
+            SignOutConfirm(
+                coroutineScope = coroutineScope,
+                navController = navController,
+                onDismiss = { confirmingSignOut = false },
             )
         }
     }
 }
 
 @Composable
-private fun LogoutButton(
+private fun SignOutConfirm(
     coroutineScope: CoroutineScope,
-    presenter: TournamentsPresenter,
-    navController: NavHostController
+    navController: NavHostController,
+    onDismiss: () -> Unit,
 ) {
-    var confirming by remember { mutableStateOf(false) }
-    AppTopBarButton(
-        text = stringResource(Res.string.logout),
-        icon = Icons.AutoMirrored.Filled.Logout,
-        onClick = { confirming = true },
-    )
-    if (confirming) {
-        SignOutConfirmDialog(
-            onConfirm = {
-                confirming = false
-                coroutineScope.launch {
-                    presenter.signOut()
-                    // On the web the player app of the site takes over, without a session.
-                    if (leaveAdminForPlayerApp(signIn = false)) return@launch
-                    // The sign out can suspend. The navigation must run on the main thread, also in the UI tests.
-                    withContext(Dispatchers.Main) {
-                        navController.navigate(SignInRoute) {
-                            popUpTo(TournamentsRoute) { inclusive = true }
-                        }
+    val presenter = koinInject<TournamentsPresenter>()
+    SignOutConfirmDialog(
+        onConfirm = {
+            onDismiss()
+            coroutineScope.launch {
+                presenter.signOut()
+                // On the web the player app of the site takes over, without a session.
+                if (leaveAdminForPlayerApp(signIn = false)) return@launch
+                // The sign out can suspend. The navigation must run on the main thread, also in the UI tests.
+                withContext(Dispatchers.Main) {
+                    navController.navigate(SignInRoute) {
+                        popUpTo(TournamentsRoute) { inclusive = true }
                     }
                 }
-            },
-            onDismiss = { confirming = false },
-        )
-    }
+            }
+        },
+        onDismiss = onDismiss,
+    )
 }
 
 @Composable
