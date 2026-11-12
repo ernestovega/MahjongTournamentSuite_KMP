@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
@@ -131,7 +132,7 @@ internal fun TournamentFilterBar(
                     onValueChange = { onChange(filter.copy(query = it)) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
-                    placeholder = { Text(stringResource(Res.string.filter_search)) },
+                    placeholder = { Text(stringResource(Res.string.filter_search), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 )
@@ -159,7 +160,7 @@ internal fun TournamentFilterBar(
                     selected = filter.status?.name.orEmpty(),
                     onSelect = { name -> onChange(filter.copy(status = TournamentStatus.entries.firstOrNull { it.name == name })) },
                     modifier = Modifier.weight(1f),
-                    compact = true,
+                    compact = false,
                 )
                 val allCountries = stringResource(Res.string.filter_all_countries)
                 val countries = tournaments.map { it.hostCountry.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
@@ -169,7 +170,7 @@ internal fun TournamentFilterBar(
                     selected = filter.country.orEmpty(),
                     onSelect = { onChange(filter.copy(country = it.ifBlank { null })) },
                     modifier = Modifier.weight(1f),
-                    compact = true,
+                    compact = false,
                 )
                 val allYears = stringResource(Res.string.filter_all_years)
                 val years = tournaments.mapNotNull { it.year() }.distinct().sortedDescending()
@@ -179,7 +180,7 @@ internal fun TournamentFilterBar(
                     selected = filter.year ?: 0,
                     onSelect = { onChange(filter.copy(year = it.takeIf { year -> year > 0 })) },
                     modifier = Modifier.weight(1f),
-                    compact = true,
+                    compact = false,
                 )
             }
         }

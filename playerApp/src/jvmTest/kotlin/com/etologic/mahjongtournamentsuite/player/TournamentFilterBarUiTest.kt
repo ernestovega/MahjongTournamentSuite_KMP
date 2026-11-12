@@ -75,15 +75,15 @@ class TournamentFilterBarUiTest {
     fun theStatusCountryAndYearAreDropdownsInOneRowAndClearResetsEverything() = runComposeUiTest {
         show(signedIn = false)
         onNode(clearButton).assertDoesNotExist()
-        val status = onNodeWithText("All statuses").fetchSemanticsNode().boundsInRoot
-        val country = onNodeWithText("All countries").fetchSemanticsNode().boundsInRoot
-        val year = onNodeWithText("All years").fetchSemanticsNode().boundsInRoot
+        val status = onNodeWithText("Status").fetchSemanticsNode().boundsInRoot
+        val country = onNodeWithText("Country").fetchSemanticsNode().boundsInRoot
+        val year = onNodeWithText("Year").fetchSemanticsNode().boundsInRoot
         assertTrue(status.right <= country.left && country.right <= year.left, "status, country, year")
         assertEquals(status.top, country.top, "the same row")
         assertEquals(country.top, year.top, "the same row")
-        pick("All statuses", "Finished")
-        pick("All countries", "ITA")
-        pick("All years", "2025")
+        pick("Status", "Finished")
+        pick("Country", "ITA")
+        pick("Year", "2025")
         assertEquals(TournamentStatus.FINISHED, filter.status)
         assertEquals("ITA", filter.country)
         assertEquals(2025, filter.year)

@@ -83,6 +83,8 @@ internal fun scrollbarMetricsOf(
  */
 internal fun scrollbarTargetIndex(fraction: Float, totalItems: Int, visibleItems: Float): Int {
     if (totalItems <= 0) return 0
+    // The end goes to the last item: the list stops at its end, whatever the estimate of the visible items.
+    if (fraction >= 1f) return totalItems - 1
     val scrollable = (totalItems - visibleItems).coerceAtLeast(0f)
     return (fraction.coerceIn(0f, 1f) * scrollable).roundToInt().coerceIn(0, totalItems - 1)
 }

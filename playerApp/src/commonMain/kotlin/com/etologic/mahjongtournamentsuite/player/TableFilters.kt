@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
@@ -109,7 +110,7 @@ internal fun TableFilterBar(
             onValueChange = { onChange(filter.copy(query = it)) },
             modifier = Modifier.fillMaxWidth().testTag(TABLE_SEARCH_TAG),
             singleLine = true,
-            placeholder = { Text(stringResource(Res.string.filter_table_search)) },
+            placeholder = { Text(stringResource(Res.string.filter_table_search), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = if (!filter.isActive) {
                 null
@@ -132,7 +133,7 @@ internal fun TableFilterBar(
                 selected = filter.round ?: 0,
                 onSelect = { onChange(filter.copy(round = it.takeIf { round -> round > 0 })) },
                 modifier = Modifier.weight(1f),
-                compact = true,
+                compact = false,
             )
             val allStatuses = stringResource(Res.string.filter_all_statuses)
             val statusOptions = TableStatus.entries.map { it.name to stringResource(it.label) }
@@ -142,7 +143,7 @@ internal fun TableFilterBar(
                 selected = filter.status?.name.orEmpty(),
                 onSelect = { name -> onChange(filter.copy(status = TableStatus.entries.firstOrNull { it.name == name })) },
                 modifier = Modifier.weight(1f),
-                compact = true,
+                compact = false,
             )
         }
     }

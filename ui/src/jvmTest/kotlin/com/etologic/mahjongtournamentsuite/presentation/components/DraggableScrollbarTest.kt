@@ -42,7 +42,8 @@ class DraggableScrollbarTest {
     @Test
     fun aDragGoesToTheMatchingItem() {
         assertEquals(0, scrollbarTargetIndex(0f, totalItems = 100, visibleItems = 3f))
-        assertEquals(97, scrollbarTargetIndex(1f, totalItems = 100, visibleItems = 3f))
+        assertEquals(99, scrollbarTargetIndex(1f, totalItems = 100, visibleItems = 3f))
+        assertEquals(96, scrollbarTargetIndex(0.99f, totalItems = 100, visibleItems = 3f))
         assertEquals(50, scrollbarTargetIndex(0.5f, totalItems = 103, visibleItems = 3f))
     }
 }
