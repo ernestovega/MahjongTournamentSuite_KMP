@@ -33,7 +33,8 @@ import { runScript } from "./scriptRun";
  *   every table. Every table ends completed.
  * - Legacy tournaments: tables that have only totals get hands that add up to the same totals. Tables whose
  *   hands do not add up to the totals get the missing hands. When the hands match the totals, the table
- *   leaves the manual totals mode and becomes completed.
+ *   leaves the manual totals mode and becomes completed. When no hands can fix the totals, the table becomes
+ *   completed in the manual totals mode, with its totals as the manual totals, and keeps its real hands.
  *
  * It previews by default. Add --apply to write. Add --from-dump=<file> to preview from a saved dump.
  * Add --only=<tournamentId> to run one tournament.
@@ -145,7 +146,7 @@ type TablePlan = {
   /** Hand documents of the table after the plan. */
   hands: Data[];
   table: Data;
-  kind: "generated" | "matched" | "filled" | "failed" | "skipped";
+  kind: "generated" | "matched" | "filled" | "totals" | "failed" | "skipped";
   note?: string;
   penaltyAmount?: number;
   bestScoresBroken?: boolean;
@@ -228,6 +229,41 @@ function finishTable(params: {
   return { operations, hands: finalHands, table: { ...merged, ...summary, version }, kind: "generated" };
 }
 
+/**
+ * Completes a table in the manual totals mode, with its totals as the manual totals. It is for a legacy table whose
+ * real hands do not add up to its totals, and no new hands can fix that. The hands stay as they are, and the
+ * statistics count the totals.
+ */
+function finishWithTotals(params: {
+  tournamentId: string;
+  tableDocId: string;
+  entry: TableEntry;
+  target: SeatNumbers;
+  note: string;
+}): TablePlan {
+  const { entry } = params;
+  const tablePath = `tournaments/${params.tournamentId}/tables/${params.tableDocId}`;
+  const scores = scoreTexts(params.target);
+  const totals: Data = {
+    playerEastScore: scores[0], playerSouthScore: scores[1], playerWestScore: scores[2], playerNorthScore: scores[3],
+    manualPlayerEastScore: scores[0], manualPlayerSouthScore: scores[1], manualPlayerWestScore: scores[2], manualPlayerNorthScore: scores[3],
+    useTotalsOnly: true,
+    isCompleted: true,
+  };
+  const merged: Data = { ...entry.table, ...totals };
+  const points = tablePointsOf(merged);
+  const summary = calculateTableSummary({ ...merged, ...points }, entry.hands);
+  const version = Number(entry.table.version ?? 0) + 1;
+  const patch: Data = { ...totals, ...points, ...summary, version };
+  return {
+    operations: [{ path: tablePath, kind: "update", data: { ...patch, updatedAt: FieldValue.serverTimestamp() } }],
+    hands: entry.hands,
+    table: { ...merged, ...points, ...summary, version },
+    kind: "totals",
+    note: params.note,
+  };
+}
+
 function seatTargets(table: Data): SeatNumbers | null {
   const read = (fields: string[]) => {
     const values = fields.map((field) => text(table[field]));
@@ -275,7 +311,7 @@ function planLegacyTable(snapshot: TournamentSnapshot, tableDocId: string, rng: 
     rng,
   });
   if (result == null) {
-    return { operations: [], hands: entry.hands, table: entry.table, kind: "failed", note: `${tableLabel}: no hands fit ${target.join(",")} with ${kept.size} kept hands` };
+    return finishWithTotals({ tournamentId: snapshot.id, tableDocId, entry, target, note: `${tableLabel}: no hands fit ${target.join(",")} with ${kept.size} kept hands, so the table keeps its totals` });
   }
   const order = shuffled(result.hands, rng);
   const generated = new Map<number, SynthHand>();
