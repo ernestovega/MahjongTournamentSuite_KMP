@@ -70,4 +70,14 @@ class TableManagerPresenter(
             handPatches = handPatches,
         ).track(telemetry, TelemetryEvent.TABLE_SAVED, mapOf(TelemetryParam.HANDS to handPatches.size))
     }
+
+    /** Empties the table on the server: seats, scores and hands. Only admins can do it. */
+    suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Pair<TableState, List<TableHand>>> {
+        logger.i { "Resetting table." }
+        return tournamentRepository.resetTable(tournamentId = tournamentId, roundId = roundId, tableId = tableId)
+    }
 }

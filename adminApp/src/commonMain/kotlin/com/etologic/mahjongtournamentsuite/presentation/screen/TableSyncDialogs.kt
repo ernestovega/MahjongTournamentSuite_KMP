@@ -32,6 +32,17 @@ import mahjongtournamentsuite.adminapp.generated.resources.table_headline_reject
 import mahjongtournamentsuite.adminapp.generated.resources.table_headline_replaced
 import mahjongtournamentsuite.adminapp.generated.resources.table_updated
 import mahjongtournamentsuite.adminapp.generated.resources.tables_updated
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DeleteSweep
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.ui.platform.testTag
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
+import mahjongtournamentsuite.adminapp.generated.resources.cancel
+import mahjongtournamentsuite.adminapp.generated.resources.reset_table
+import mahjongtournamentsuite.adminapp.generated.resources.reset_table_confirm_text
+import mahjongtournamentsuite.adminapp.generated.resources.reset_table_confirm_title
 import org.jetbrains.compose.resources.stringResource
 
 /** The headline of one notice. The wording tells the user what happened to the typed values. */
@@ -79,6 +90,38 @@ internal fun TableUpdatesDialog(
             confirmButton = {
                 FocusedButton(onClick = onDismiss, focusRequester = okFocusRequester) { Text(stringResource(Res.string.ok)) }
             },
+        )
+    }
+}
+
+/** Asks before an admin empties a table: seats, scores and hands. The server keeps a record of who did it. */
+@Composable
+internal fun ResetTableDialog(
+    roundId: Int,
+    tableId: Int,
+    busy: Boolean,
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    TrackedDialog("ResetTable") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = { if (!busy) onDismiss() },
+            icon = { Icon(Icons.Default.DeleteSweep, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+            title = { Text(stringResource(Res.string.reset_table_confirm_title, roundId, tableId)) },
+            text = { Text(stringResource(Res.string.reset_table_confirm_text)) },
+            confirmButton = {
+                Button(
+                    enabled = !busy,
+                    onClick = onConfirm,
+                    modifier = Modifier.testTag("resetTableConfirm"),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError,
+                    ),
+                ) { Text(stringResource(Res.string.reset_table)) }
+            },
+            dismissButton = { TextButton(enabled = !busy, onClick = onDismiss) { Text(stringResource(Res.string.cancel)) } },
         )
     }
 }

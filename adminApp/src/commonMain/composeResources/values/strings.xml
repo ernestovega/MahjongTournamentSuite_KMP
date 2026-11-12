@@ -733,4 +733,7 @@
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
     <string name="activity_action_script_run">Maintenance script run</string>
+    <string name="reset_table">Clear table</string>
+    <string name="reset_table_confirm_title">Clear round %1$d · table %2$d?</string>
+    <string name="reset_table_confirm_text">This removes the seat assignments, the scores and every hand of this table. The players of the table stay, so you can seat them again. Unsaved changes to this table are lost. The change is recorded in the activity log.</string>
 </resources>

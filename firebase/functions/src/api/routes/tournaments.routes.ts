@@ -992,13 +992,15 @@ export function tournamentsRouter(): Router {
           throw badRequest("roundId and tableId must be positive integers");
         }
 
+        const tournamentId = pathParam(req, "tournamentId");
         await resetTable({
-          tournamentId: pathParam(req, "tournamentId"),
+          tournamentId,
           roundId,
           tableId,
           actor: actorFromToken(res.locals.auth),
         });
-        res.status(200).json({ ok: true });
+        // The admin app shows the empty table at once, so the answer carries it like a save does.
+        res.status(200).json(await getTableWithHands({ tournamentId, roundId, tableId }));
       } catch (e) {
         next(e);
       }

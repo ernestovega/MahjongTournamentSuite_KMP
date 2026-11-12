@@ -24,13 +24,16 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateBefore
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.DeleteSweep
 import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -69,6 +72,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.next_round
 import mahjongtournamentsuite.adminapp.generated.resources.preview_tournament
 import mahjongtournamentsuite.adminapp.generated.resources.previous_round
+import mahjongtournamentsuite.adminapp.generated.resources.reset_table
 import mahjongtournamentsuite.adminapp.generated.resources.round_n
 import mahjongtournamentsuite.adminapp.generated.resources.round_n_text
 import mahjongtournamentsuite.adminapp.generated.resources.round_table_header
@@ -93,6 +97,9 @@ internal fun TournamentContent(
     onSelectTable: (Int) -> Unit,
     onSave: (Int) -> Unit,
     onSaveAndNext: (Int) -> Unit,
+    /** Admins can empty a table. Editors do not see the button. */
+    canResetTable: Boolean = false,
+    onResetTable: (Int) -> Unit = {},
 ) {
     val selectedEditor = selectedTableId?.let { tableEditors[it] }
     val roundTableCount = allTables.count { it.roundId == selectedRoundId }
@@ -112,13 +119,29 @@ internal fun TournamentContent(
             onSelectTable = onSelectTable,
         )
         if (selectedEditor != null) {
-            Text(
-                text = stringResource(Res.string.round_table_header, selectedEditor.roundId, selectedEditor.tableId),
-                modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
+            // The same space on both sides keeps the title centred when the admin button shows.
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Spacer(Modifier.weight(1f))
+                Text(
+                    text = stringResource(Res.string.round_table_header, selectedEditor.roundId, selectedEditor.tableId),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                    if (canResetTable) {
+                        OutlinedButton(
+                            onClick = { onResetTable(selectedEditor.tableId) },
+                            enabled = enabled,
+                            modifier = Modifier.testTag("resetTableButton"),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        ) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = null, Modifier.size(18.dp))
+                            Text(stringResource(Res.string.reset_table), Modifier.padding(start = 8.dp))
+                        }
+                    }
+                }
+            }
         }
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             if (selectedEditor != null) {

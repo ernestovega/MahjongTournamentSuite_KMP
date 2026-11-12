@@ -22,6 +22,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/health", "PUBLIC"],
   ["GET", "/config/", "PUBLIC"],
   ["POST", "/telemetry/errors", "PUBLIC"],
+  ["GET", "/admin/activity", "ADMIN"],
   ["GET", "/admin/error-groups", "ADMIN"],
   ["GET", "/admin/error-groups/:id", "ADMIN"],
   ["POST", "/auth/signIn", "PUBLIC"],
@@ -514,7 +515,13 @@ describe("tournament rules for assigned editors", () => {
     const path = `/tournaments/${t1}/tables/1/1/reset`;
 
     assert.equal((await server.request("POST", path, { token: member.token })).status, 403);
-    assert.equal((await server.request("POST", path, { token: admin.token })).status, 200);
+    const response = await server.request("POST", path, { token: admin.token });
+    assert.equal(response.status, 200);
+    // The answer carries the empty table, so the admin app shows it without another request.
+    const body = response.body as { table: { playerEastId: string; version: number }; hands: unknown[] };
+    assert.equal(body.table.playerEastId, "");
+    assert.ok(body.table.version > 0);
+    assert.ok(Array.isArray(body.hands));
   });
 
   it("the change log names the editor who saved", async () => {

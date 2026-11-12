@@ -158,6 +158,35 @@ internal class RoundEditorSync(
         return allSaved
     }
 
+    /**
+     * Empties a table on the server and shows the empty table. Typed values that were not saved are dropped, because
+     * the admin asked to clear everything. Returns true if it worked.
+     */
+    suspend fun resetTable(tableId: Int): Boolean {
+        val editor = tableEditors[tableId] ?: return false
+        isLoading = true
+        try {
+            return when (val result = tablePresenter.resetTable(tournamentId, editor.roundId, tableId)) {
+                is AppResult.Success -> {
+                    val reset = TableManagerEditorState.from(result.value.first, result.value.second)
+                    tableEditors = tableEditors + (tableId to reset)
+                    allTables = allTables.map { summary ->
+                        if (summary.roundId == reset.roundId && summary.tableId == tableId) reset.applyTo(summary) else summary
+                    }
+                    if (tableId == selectedTableId()) focusToken++
+                    true
+                }
+
+                is AppResult.Failure -> {
+                    errorMessage = result.error.toUiText()
+                    false
+                }
+            }
+        } finally {
+            isLoading = false
+        }
+    }
+
     /** Loads the tables that someone else saved and replaces them. Other rounds only refresh their rows. */
     suspend fun applyServerChanges(changed: Set<TableKey>) {
         val roundId = selectedRoundId()

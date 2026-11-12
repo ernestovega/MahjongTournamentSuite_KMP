@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.domain.repository
 
+import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.Country
@@ -184,6 +185,16 @@ interface TournamentRepository {
         tablePatch: Map<String, Any?>,
         handPatches: Map<Int, Map<String, Any?>>,
     ): AppResult<Pair<TableState, List<TableHand>>>
+
+    /**
+     * Empties a table on the server: the seat assignments, the scores and every hand. Only admins can do it, and the
+     * server records it in the change log. It returns the empty table as the server holds it now.
+     */
+    suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Pair<TableState, List<TableHand>>> = AppResult.Failure(AppError.Unexpected("Reset is not supported"))
 
     /**
      * Asks the backend for the current table versions. It always makes a request, and it costs one

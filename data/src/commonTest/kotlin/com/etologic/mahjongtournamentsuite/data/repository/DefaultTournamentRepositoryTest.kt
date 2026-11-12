@@ -89,7 +89,7 @@ class DefaultTournamentRepositoryTest {
                     respond(ByteReadChannel("file"), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/octet-stream"))
                 path == "/tournaments" -> jsonResponse("""{"tournaments":[]}""")
                 path == "/countries" -> jsonResponse("""{"countries":[]}""")
-                path.endsWith("/reset") -> jsonResponse("""{"ok":true}""")
+                path.endsWith("/reset") -> jsonResponse(server.tableJson(version = server.tableVersion + 1, east = ""))
                 path.endsWith("/tables-with-hands") ->
                     jsonResponse("""{"tables":[${server.tableJson()}]}""")
                 path.endsWith("/tables/1/1") -> jsonResponse(server.tableJson())
@@ -246,6 +246,21 @@ class DefaultTournamentRepositoryTest {
         val result = assertIs<AppResult.Success<Pair<TableState, *>>>(repository(server).save(expectedVersion = 1))
 
         assertEquals(2, result.value.first.version)
+    }
+
+    @Test
+    fun resetReturnsTheEmptyTableAndMarksTheCachedCopiesOld() = runTest {
+        val server = FakeTournamentServer()
+        val repository = repository(server)
+        repository.table()
+
+        val result = assertIs<AppResult.Success<Pair<TableState, *>>>(repository.resetTable("t1", 1, 1))
+
+        assertEquals(2, result.value.first.version)
+        assertEquals("", result.value.first.playerEastId)
+        assertEquals(1, server.count("/tables/1/1/reset"))
+        repository.table()
+        assertEquals(2, server.count("/tables/1/1"))
     }
 
     @Test
