@@ -34,6 +34,8 @@ data class TournamentDto(
     val isCompleted: Boolean = false,
     /** False hides the tournament from everyone without an account in it. */
     val isPublic: Boolean = true,
+    /** False hides the differences button on the table screen of the player app. */
+    val showTableDiffs: Boolean = true,
     val createdByUid: String? = null,
     val createdByName: String? = null,
     val createdAt: String? = null,
@@ -99,6 +101,7 @@ data class UpdateTournamentSettingsRequestDto(
     val countBestHands: Boolean? = null,
     val countChickenHands: Boolean? = null,
     val isPublic: Boolean? = null,
+    val showTableDiffs: Boolean? = null,
     val associationLogoContentType: String? = null,
     val associationLogoDataBase64: String? = null,
     val associationLogoSourceTournamentId: String? = null,

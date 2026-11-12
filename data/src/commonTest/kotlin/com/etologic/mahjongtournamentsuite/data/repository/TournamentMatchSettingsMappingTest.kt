@@ -9,7 +9,9 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class TournamentMatchSettingsMappingTest {
     private val json = Json {
@@ -90,5 +92,34 @@ class TournamentMatchSettingsMappingTest {
         assertEquals("STOP", request.matchEndMode)
         assertEquals(15, request.matchExtraMinutes)
         assertNull(request.timeZone)
+    }
+
+    @Test
+    fun theTableDiffsShowUnlessTheTournamentHidesThem() {
+        val old = json.decodeFromString<TournamentDto>(
+            """{"id":"t","name":"T","isTeams":false,"numPlayers":4,"numRounds":1}""",
+        ).toDomain()
+        val hidden = json.decodeFromString<TournamentDto>(
+            """{"id":"t","name":"T","isTeams":false,"numPlayers":4,"numRounds":1,"showTableDiffs":false}""",
+        ).toDomain()
+
+        assertTrue(old.showTableDiffs)
+        assertFalse(hidden.showTableDiffs)
+    }
+
+    @Test
+    fun anEditWithoutTheDiffsChoiceDoesNotSendIt() {
+        val request = UpdateTournamentSettingsRequestDto(
+            name = "T",
+            shortName = "T",
+            primaryColor = "#02B16B",
+            eventStartDate = "2026-10-01",
+            eventEndDate = "2026-10-01",
+            hostCountry = "ES",
+            hostCity = "Madrid",
+        )
+
+        assertFalse("showTableDiffs" in json.encodeToString(request))
+        assertTrue("\"showTableDiffs\":false" in json.encodeToString(request.copy(showTableDiffs = false)))
     }
 }

@@ -37,6 +37,8 @@ data class Tournament(
     val isCompleted: Boolean = false,
     /** False hides a test tournament from the public list. Only its staff see it. */
     val isPublic: Boolean = true,
+    /** False hides the differences button on the table screen of the player app. */
+    val showTableDiffs: Boolean = true,
     val createdByUid: String? = null,
     val createdByName: String? = null,
     val createdAt: String? = null,

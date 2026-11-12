@@ -85,6 +85,23 @@ class TableSeatsUiTest {
     }
 
     @Test
+    fun hidesTheDiffsSwitchWhenTheDifferencesAreNotAvailable() = runComposeUiTest {
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                TableSeatsView(
+                    seats = seats,
+                    handNumber = 5,
+                    centerLabel = "Hand\n5/16",
+                    showPoints = false,
+                    diffsAvailable = false,
+                )
+            }
+        }
+        onNodeWithText("Bruno Díaz").assertIsDisplayed()
+        assertEquals(0, onAllNodesWithTextCount("Diffs"))
+    }
+
+    @Test
     fun showsTheTablePointsBelowTheScoreWhenTheTableIsComplete() = runComposeUiTest {
         setContent {
             MtsTheme(useDarkTheme = true) {
