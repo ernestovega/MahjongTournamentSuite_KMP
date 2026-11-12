@@ -77,6 +77,8 @@ class PlayerHomeTest : PlayerE2eTest() {
     fun playerDoesNotSeeOtherTournaments() {
         home(E2eAccounts.PLAYER)
         c.scrollListTo("Test - Minimum 16 players")
+        // The filters are the first item of the list. With the chip on, the short list is on the screen at once.
+        c.scrollListTo("Search by name, city or venue")
         c.clickButton("My tournaments")
         c.waitForNoText("Test - Minimum 16 players")
         c.assertNoText("Test - Large team tournament")
