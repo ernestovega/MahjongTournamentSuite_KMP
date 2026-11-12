@@ -48,8 +48,8 @@ fun AppTopBarLeadingActions(
         if (showThemeToggle) {
             ThemeModeToggleButton()
         }
-        onErrors?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_errors), Icons.Default.BugReport, it, errorsFocusRequester) }
         onActivity?.let { AppTopBarButton(stringResource(Res.string.top_bar_activity), Icons.Default.History, it) }
+        onErrors?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_errors), Icons.Default.BugReport, it, errorsFocusRequester) }
         onTimer?.let { AppTopBarButton(stringResource(Res.string.top_bar_timer), Icons.Default.AccessTime, it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton(stringResource(Res.string.top_bar_ranking), Icons.Default.Leaderboard, it, rankingFocusRequester) }
     }
