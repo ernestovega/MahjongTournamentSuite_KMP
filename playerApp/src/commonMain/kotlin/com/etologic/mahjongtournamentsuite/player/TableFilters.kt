@@ -9,17 +9,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_rounds
@@ -42,6 +45,14 @@ internal enum class TableStatus(val label: StringResource) {
     NOT_STARTED(Res.string.table_status_not_started),
     PLAYING(Res.string.table_status_playing),
     FINISHED(Res.string.status_finished),
+}
+
+/** The text color of a table status. It matches the header of the table cards. */
+@Composable
+internal fun TableStatus.color(): Color = when (this) {
+    TableStatus.NOT_STARTED -> MaterialTheme.colorScheme.onSurfaceVariant
+    TableStatus.PLAYING -> MaterialTheme.colorScheme.tertiary
+    TableStatus.FINISHED -> MaterialTheme.colorScheme.primary
 }
 
 internal val PlayerTable.status: TableStatus
@@ -139,14 +150,15 @@ internal fun TableFilterBar(
                 compact = false,
             )
             val allStatuses = stringResource(Res.string.filter_all_statuses)
-            val statusOptions = TableStatus.entries.map { it.name to stringResource(it.label) }
+            // Each status has the color of the header of its table cards, in the menu and in the field.
+            val statusOptions = TableStatus.entries.map { SelectOption(it.name, stringResource(it.label), color = it.color()) }
             SelectField(
                 label = stringResource(Res.string.filter_status),
-                options = listOf("" to allStatuses) + statusOptions,
+                options = listOf(SelectOption("", allStatuses)) + statusOptions,
                 selected = filter.status?.name.orEmpty(),
                 onSelect = { name -> onChange(filter.copy(status = TableStatus.entries.firstOrNull { it.name == name })) },
                 modifier = Modifier.weight(1f),
-                compact = false,
+                textStyle = MaterialTheme.typography.bodyLarge.copy(color = filter.status?.color() ?: Color.Unspecified),
             )
         }
     }

@@ -588,13 +588,17 @@ private fun upcomingBlue(): Color = if (MaterialTheme.colorScheme.surface.lumina
 @Composable
 private fun onUpcomingBlue(): Color = if (upcomingBlue().luminance() > 0.4f) Color.Black else Color.White
 
+/** The color of a tournament status, in the chips of the cards and in the status filter. */
+@Composable
+internal fun statusColor(status: TournamentStatus): Color = when (status) {
+    TournamentStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
+    TournamentStatus.UPCOMING -> upcomingBlue()
+    TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
+}
+
 @Composable
 private fun StatusChip(status: TournamentStatus) {
-    val color = when (status) {
-        TournamentStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
-        TournamentStatus.UPCOMING -> upcomingBlue()
-        TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
-    }
+    val color = statusColor(status)
     OutlinedTag(color) {
         Text(stringResource(status.label), style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
     }

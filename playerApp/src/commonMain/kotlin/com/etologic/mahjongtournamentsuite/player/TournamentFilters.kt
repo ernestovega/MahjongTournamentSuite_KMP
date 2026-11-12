@@ -14,16 +14,21 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_countries
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_statuses
@@ -155,25 +160,31 @@ internal fun TournamentFilterBar(
             // The three dropdowns share one row, also on a phone.
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 val allStatuses = stringResource(Res.string.filter_all_statuses)
+                // Each status has the color of its chip on the tournament cards, in the menu and in the field.
                 val statusOptions = listOf(TournamentStatus.IN_PROGRESS, TournamentStatus.UPCOMING, TournamentStatus.FINISHED)
-                    .map { it.name to stringResource(it.label) }
+                    .map { SelectOption(it.name, stringResource(it.label), color = statusColor(it)) }
+                val selectedStatusColor = filter.status?.let { statusColor(it) } ?: Color.Unspecified
                 SelectField(
                     label = stringResource(Res.string.filter_status),
-                    options = listOf("" to allStatuses) + statusOptions,
+                    options = listOf(SelectOption("", allStatuses)) + statusOptions,
                     selected = filter.status?.name.orEmpty(),
                     onSelect = { name -> onChange(filter.copy(status = TournamentStatus.entries.firstOrNull { it.name == name })) },
                     modifier = Modifier.weight(1f),
-                    compact = false,
+                    textStyle = MaterialTheme.typography.bodyLarge.copy(color = selectedStatusColor),
                 )
                 val allCountries = stringResource(Res.string.filter_all_countries)
                 val countries = tournaments.map { it.hostCountry.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
+                val countryName = rememberCountryNames()
+                // Each country shows its flag. The search of the menu also finds a country by its name.
+                val countryOptions = listOf(SelectOption("", allCountries)) + countries.map { code ->
+                    SelectOption(code, code, searchText = countryName(code, code), leadingIcon = { PlayerFlag(code) })
+                }
                 SelectField(
                     label = stringResource(Res.string.filter_country),
-                    options = listOf("" to allCountries) + countries.map { it to it },
+                    options = countryOptions,
                     selected = filter.country.orEmpty(),
                     onSelect = { onChange(filter.copy(country = it.ifBlank { null })) },
                     modifier = Modifier.weight(1f),
-                    compact = false,
                 )
                 val allYears = stringResource(Res.string.filter_all_years)
                 val years = tournaments.mapNotNull { it.year() }.distinct().sortedDescending()
