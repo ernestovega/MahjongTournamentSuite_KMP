@@ -41,6 +41,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -259,6 +260,22 @@ private fun RoundTableStrip(
     val tables = allTables.filter { it.roundId == selectedRoundId }.sortedBy { it.tableId }
     val roundIndex = rounds.indexOfFirst { it.roundId == selectedRoundId }
     val chipsState = rememberLazyListState()
+    val selectedChipIndex = tables.indexOfFirst { it.tableId == selectedTableId }
+    // Bring the selected table into view, e.g. when entering a tournament with a table saved from before.
+    LaunchedEffect(selectedRoundId, selectedChipIndex) {
+        if (selectedChipIndex < 0) return@LaunchedEffect
+        val layout = chipsState.layoutInfo
+        val visible = layout.visibleItemsInfo.firstOrNull { it.index == selectedChipIndex }
+        val fullyVisible = visible != null &&
+            visible.offset >= layout.viewportStartOffset &&
+            visible.offset + visible.size <= layout.viewportEndOffset
+        when {
+            fullyVisible -> Unit
+            // First layout (just entered the tournament): jump straight there.
+            layout.visibleItemsInfo.isEmpty() -> chipsState.scrollToItem(selectedChipIndex)
+            else -> chipsState.animateScrollToItem(selectedChipIndex)
+        }
+    }
     val roundMenu = rememberSelectMenuState()
     val roundStatus = roundCompletionStatus(tables)
     Card(modifier = Modifier.fillMaxWidth().appFocusGroup(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
