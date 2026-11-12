@@ -135,13 +135,30 @@ fun ComposeTestRule.waitForNoText(text: String, substring: Boolean = false, time
 fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = false): SemanticsNodeInteraction =
     onNodeWithText(text, substring = substring)
 
-/** Types into the sign-in form and presses the button. */
-fun ComposeTestRule.signIn(email: String, password: String = E2eAccounts.PASSWORD) {
+/**
+ * Opens the sign-in form. The app starts on the public tournament list, and a guest opens the form with the Sign in
+ * button of the top bar.
+ */
+fun ComposeTestRule.openSignInForm() {
+    val emailField = hasSetTextAction() and hasText("Email")
     waitForText("Sign in")
-    onNodeWithText("Email").performTextInput(email)
-    onNodeWithText("Password").performTextInput(password)
+    if (onAllNodes(emailField).fetchSemanticsNodes().isEmpty()) clickButton("Sign in")
+    waitUntil(WAIT_MS) { onAllNodes(emailField).fetchSemanticsNodes().isNotEmpty() }
+}
+
+/** Opens the sign-in form, types into it and presses the button. */
+fun ComposeTestRule.signIn(email: String, password: String = E2eAccounts.PASSWORD) {
+    openSignInForm()
+    field("Email").performTextInput(email)
+    field("Password").performTextInput(password)
     clickButton("Sign in")
 }
+
+/** When the test pressed the last button. See [clickButton]. */
+private var lastPressMillis = 0L
+
+/** Every button ignores a second press within 500 ms. A test waits a little longer, like a person. */
+private const val PRESS_GAP_MS = 600L
 
 /** Presses a button by its text. A screen title can have the same text, so only nodes that click are used. */
 fun ComposeTestRule.clickButton(text: String) {
@@ -152,12 +169,27 @@ fun ComposeTestRule.clickButton(text: String) {
     if (onAllNodes(label and hasClickAction()).fetchSemanticsNodes().isNotEmpty()) {
         waitUntil(WAIT_MS) { onAllNodes(label and hasClickAction() and isEnabled()).fetchSemanticsNodes().isNotEmpty() }
     }
-    val enabled = onAllNodes(label and hasClickAction() and isEnabled())
-    val merged = if (enabled.fetchSemanticsNodes().isNotEmpty()) enabled else onAllNodes(label and hasClickAction())
-    val button = if (merged.fetchSemanticsNodes().isNotEmpty()) merged[0] else onAllNodes(label, useUnmergedTree = true)[0]
-    // A button outside a scroll container is already visible.
-    runCatching { button.performScrollTo() }
-    button.performClick()
+    val wait = lastPressMillis + PRESS_GAP_MS - android.os.SystemClock.uptimeMillis()
+    if (wait > 0) Thread.sleep(wait)
+    // A screen that loads again can replace the button between the search and the tap. The tap then reaches no node
+    // and nothing happens, so the test finds the new button and taps it.
+    var attempt = 0
+    while (true) {
+        val enabled = onAllNodes(label and hasClickAction() and isEnabled())
+        val merged = if (enabled.fetchSemanticsNodes().isNotEmpty()) enabled else onAllNodes(label and hasClickAction())
+        val button = if (merged.fetchSemanticsNodes().isNotEmpty()) merged[0] else onAllNodes(label, useUnmergedTree = true)[0]
+        // A button outside a scroll container is already visible.
+        runCatching { button.performScrollTo() }
+        val result = runCatching { button.performClick() }
+        val error = result.exceptionOrNull()
+        val replaced = error is AssertionError && error.message.orEmpty().contains("Failed to inject touch input")
+        if (!replaced || ++attempt >= 3) {
+            lastPressMillis = android.os.SystemClock.uptimeMillis()
+            result.getOrThrow()
+            return
+        }
+        waitForIdle()
+    }
 }
 
 /**

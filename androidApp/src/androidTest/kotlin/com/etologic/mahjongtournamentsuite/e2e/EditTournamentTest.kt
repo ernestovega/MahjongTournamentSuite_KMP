@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -164,10 +165,12 @@ class EditTournamentTest : AdminE2eTest() {
         c.waitForText("Branding")
     }
 
-    /** The General tab ends with three switches: finish the hand, best hands and chicken hands. The dialog is last in the tree. */
+    /**
+     * The General tab has several switches: finish the hand, best hands, chicken hands and public tournament. The switch
+     * is found by its label, because new switches change the order. The dialog is last in the tree.
+     */
     private fun toggleFinishTheHand() {
-        val switches = c.onAllNodes(isToggleable())
-        switches[switches.fetchSemanticsNodes().size - 3].performClick()
+        c.onAllNodes(isToggleable() and hasAnySibling(hasText("Finish the hand in play"))).onLast().performClick()
     }
 
     @Test

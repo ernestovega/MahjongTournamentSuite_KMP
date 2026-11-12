@@ -25,7 +25,9 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import org.koin.compose.koinInject
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * The Exit and Profile buttons and their dialogs. The screen owns the state, so the dialogs stay open
@@ -77,8 +79,9 @@ class AccountActions(
                     confirmingSignOut = false
                     scope.launch {
                         session.signOut()
-                        // The same screens stay open, now without the own player.
-                        navController.reopen(navController.openRoutes())
+                        // The same screens stay open, now without the own player. The navigation runs on the main
+                        // thread, because the sign-out can resume on another thread.
+                        withContext(Dispatchers.Main) { navController.reopen(navController.openRoutes()) }
                     }
                 },
                 onDismiss = { confirmingSignOut = false },

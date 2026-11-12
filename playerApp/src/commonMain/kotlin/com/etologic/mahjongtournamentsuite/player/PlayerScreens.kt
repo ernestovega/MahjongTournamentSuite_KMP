@@ -135,9 +135,11 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -277,9 +279,12 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
             when (val result = presenter.signIn(email, password)) {
                 is AppResult.Success -> {
                     saveBrowserCredentials(email.trim(), password)
-                    // Back to the screens that were open, loaded again for the account.
-                    val routes = navController.openRoutes()
-                    navController.reopen(if (openTournamentId != null) routes + TournamentRoute(openTournamentId) else routes)
+                    // Back to the screens that were open, loaded again for the account. The navigation runs on the
+                    // main thread, because the sign-in can resume on another thread.
+                    withContext(Dispatchers.Main) {
+                        val routes = navController.openRoutes()
+                        navController.reopen(if (openTournamentId != null) routes + TournamentRoute(openTournamentId) else routes)
+                    }
                 }
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
             }

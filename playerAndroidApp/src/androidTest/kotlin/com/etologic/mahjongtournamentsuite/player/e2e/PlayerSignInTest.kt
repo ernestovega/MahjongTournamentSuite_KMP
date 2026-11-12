@@ -21,7 +21,7 @@ class PlayerSignInTest : PlayerE2eTest() {
     @Test
     fun emptyFieldsAskForEmailAndPassword() {
         app.launch()
-        c.waitForText("Sign in")
+        c.openSignInForm()
         c.clickButton("Sign in")
         c.waitForText("Enter your email and password.")
     }
@@ -36,6 +36,7 @@ class PlayerSignInTest : PlayerE2eTest() {
     @Test
     fun forgotPasswordNeedsAnEmailFirst() {
         app.launch()
+        c.openSignInForm()
         c.waitForText("Forgot password?")
         c.clickButton("Forgot password?")
         c.waitForText("Enter your email address first.")

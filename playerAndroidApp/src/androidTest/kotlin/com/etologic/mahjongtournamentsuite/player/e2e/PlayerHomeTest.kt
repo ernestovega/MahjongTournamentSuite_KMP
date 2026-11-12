@@ -44,10 +44,14 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("Schedule")
     }
 
+    /** Every tournament is public, so an account without tournaments sees the list. Its own tournaments are none. */
     @Test
     fun playerWithoutTournamentsSeesAMessage() {
         home(E2eAccounts.STRANGER)
-        c.waitForText("You are not registered in any tournament yet.")
+        c.waitForText("Test - Live ongoing tournament")
+        c.clickButton("My tournaments")
+        c.waitForText("No tournament matches the filters.")
+        c.assertNoText("Test - Live ongoing tournament")
     }
 
     @Test
@@ -68,11 +72,15 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.waitForText("Test - Live ongoing tournament")
     }
 
+    /** The "My tournaments" chip leaves only the tournaments where the account plays. */
     @Test
     fun playerDoesNotSeeOtherTournaments() {
         home(E2eAccounts.PLAYER)
+        c.scrollListTo("Test - Minimum 16 players")
+        c.clickButton("My tournaments")
+        c.waitForNoText("Test - Minimum 16 players")
         c.assertNoText("Test - Large team tournament")
-        c.assertNoText("Test - Minimum 16 players")
+        c.waitForText("Test - Live ongoing tournament")
     }
 
     /** The theme is chosen in the profile, which opens from the Profile button of the top bar. */
@@ -96,8 +104,10 @@ class PlayerHomeTest : PlayerE2eTest() {
         c.clickButton("Logout")
         c.waitForText("Do you want to sign out?")
         c.clickButton("Yes, sign out")
+        // The same screens stay open for a guest, who gets the Sign in button instead of Profile.
+        c.waitForNoText("Profile")
         c.waitForText("Sign in")
-        c.waitForText("Email")
+        c.waitForText("Test - Live ongoing tournament")
     }
 
     @Test
