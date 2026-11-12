@@ -3,7 +3,8 @@ import { FieldValue } from "firebase-admin/firestore";
 import { db, firebaseProjectId } from "../firebase";
 import { ownershipAction } from "../services/emaIdOwnership";
 import { globalVersionUpdate } from "../services/dataVersionsService";
-import { isSelectableTimeZone } from "../services/matchTime";
+import { isSelectableTimeZone, plannedRoundClocks } from "../services/matchTime";
+import { scheduleRoundCloses } from "../services/matchTimeTaskService";
 import { handScoreTotals, tablePointsOf } from "../services/handScoring";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { drawProblem } from "../services/tournamentDraw";
@@ -1244,6 +1245,9 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       tableVersions,
     },
   };
+  // The rounds whose planned start is past were started by the Timer at that time, so they are in play or over.
+  const clocks = plannedRoundClocks(tournament, Date.now());
+  if (clocks.size > 0) tournament.roundClocks = Object.fromEntries([...clocks].map(([roundId, clock]) => [String(roundId), clock]));
   return { id: spec.id, writes, tournament, summary: { tables: kinds, players: numPlayers, ema, open, completed: allCompleted } };
 }
 
@@ -1328,6 +1332,8 @@ async function main(): Promise<void> {
     await writer.close();
     // The tournament document comes last. A tournament without its document is invisible.
     await ref.set(built.tournament);
+    // The close of a round in play is planned at its Play. These rounds had no Play, so the seed plans it.
+    await scheduleRoundCloses(spec.id, built.tournament);
     created += 1;
     console.log("  written");
   }

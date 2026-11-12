@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -40,6 +41,9 @@ import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
+
+/** The buttons with the names of the players that the seats dialog offers. */
+const val SEAT_OPTION_TAG = "seat-option"
 
 /**
  * A player of the table sets the four seats before the first hand: East, South, West and North, one after the other.
@@ -98,7 +102,7 @@ internal fun SeatsAssignment(
                             Text(stringResource(Res.string.seats_who_sits, wind.label()), style = MaterialTheme.typography.titleSmall)
                         }
                         left.forEach { slot ->
-                            OutlinedButton(onClick = { picks.add(slot) }, modifier = Modifier.fillMaxWidth()) { Text(view.nameOf(slot)) }
+                            OutlinedButton(onClick = { picks.add(slot) }, modifier = Modifier.fillMaxWidth().testTag(SEAT_OPTION_TAG)) { Text(view.nameOf(slot)) }
                         }
                     }
                 }

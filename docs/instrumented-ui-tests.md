@@ -67,7 +67,7 @@ The pull request from `develop` to `main` does not run the UI tests until the ap
 
 ## What the tests cover
 
-189 tests: 138 for the admin app and 51 for the player app. All pass on the emulator.
+193 tests: 140 for the admin app and 53 for the player app. All pass on the emulator.
 
 | Class | Tests | Area |
 | --- | ---: | --- |
@@ -85,12 +85,13 @@ The pull request from `develop` to `main` does not run the UI tests until the ap
 | `InvitationsTest` | 4 | Send from the invitations dialog: the dialog asks for a missing email, a typed email, a valid email, email refused by the mailbox. |
 | `GlobalScreensTest` | 11 | App users, App errors, EMA registry, statistics, theme. |
 | `StatisticsTest` | 6 | Tournament statistics tabs. |
-| `RankingAndTimerTest` | 10 | Ranking board paging and rows, timer round and countdown. |
+| `RankingAndTimerTest` | 12 | Ranking board paging and rows. The Timer opens from a tournament, waits for the gong, and Play and Pause change the clock of the round on the server. |
 | `PlayerSignInTest` | 6 | Player app sign in and errors. |
 | `PlayerHomeTest` | 12 | Tournament card, schedule, roles, theme, sign out. |
 | `PlayerTournamentTest` | 13 | Tabs, my tables, all tables, ranking, info. |
 | `PlayerStatisticsTest` | 10 | Tournament and personal statistics, and the message for an account with no EMA number. |
 | `PlayerHandEntryTest` | 10 | Add draw, add win (discard and self draw), penalty dialog, review, cancel. |
+| `PlayerRoundStartTest` | 2 | Waiting for the gong until the Timer starts the round, and a player who sets the seats of a table without seats. |
 
 ## Test accounts
 

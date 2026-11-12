@@ -171,3 +171,23 @@ export function seatingIsOpen(tournament: Data, roundId: number, nowMs: number):
   const planned = roundStartMs(schedule, rules.timeZone);
   return planned == null || nowMs >= planned - SEATING_LEAD_MINUTES * 60_000;
 }
+
+/**
+ * Clocks for the rounds that should have started by [nowMs] but have none: each starts at its planned time. The seed
+ * of the test tournaments and the move of stored tournaments to the clocks of the Timer use it, so a round that was
+ * played before the Timer counted keeps its phase. A completed tournament gets no clock: it takes no hands anyway.
+ */
+export function plannedRoundClocks(tournament: Data, nowMs: number): Map<number, RoundClock> {
+  const missing = new Map<number, RoundClock>();
+  if (tournament.isCompleted === true) return missing;
+  const existing = readStoredRoundClocks(tournament);
+  const numRounds = Number(tournament.numRounds ?? 0);
+  for (let roundId = 1; roundId <= numRounds; roundId++) {
+    if (existing.has(roundId)) continue;
+    const { rules, schedule } = matchTimeOfTournament(tournament, roundId);
+    const startedAtMs = roundStartMs(schedule, rules.timeZone);
+    if (startedAtMs == null || startedAtMs <= 0 || startedAtMs > nowMs) continue;
+    missing.set(roundId, { startedAtMs, pausedAtMs: null, pausedMs: 0, adjustMs: 0 });
+  }
+  return missing;
+}

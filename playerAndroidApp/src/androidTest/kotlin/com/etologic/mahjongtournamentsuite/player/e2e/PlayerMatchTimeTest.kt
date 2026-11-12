@@ -9,8 +9,9 @@ import org.junit.Before
 import org.junit.Test
 
 /**
- * The match time of a tournament. Round 1 of both tournaments started 40 minutes before the seed run and a match lasts
- * 30 minutes. In "test-match-extra-time" the players can still add the hand in play. In "test-match-over" they cannot.
+ * The match time of a tournament. The seed starts the clock of round 1 of both tournaments at its planned time, 40 minutes
+ * before the seed run, and a match lasts 30 minutes. In "test-match-extra-time" the players can still add the hand in play.
+ * In "test-match-over" they cannot.
  */
 class PlayerMatchTimeTest : PlayerE2eTest() {
     private val extraTimeTournament = "Test - Match time over, extra time running"

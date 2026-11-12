@@ -21,10 +21,10 @@ Phases 1 and 2 are built and tested. Phase 3 (schedules and notifications) is no
 
 - **Platforms:** Android and web. No desktop app and no iOS app. On iOS, players use the web app.
 - **Visibility:** a player sees all tables and rankings of the tournaments where the player is registered. A player never sees emails or accounts of other players.
-- **Hand entry:** one player who sits at the table writes the hands down. There is no start step and no confirmation by the other players. A table is ready when the editor assigned its four seats. An editor can still enter hands directly.
+- **Hand entry:** one player who sits at the table writes the hands down. There is no start step and no confirmation by the other players. A table is ready when its four seats are set, by an editor or by a player of the table, and the round started with the Play of the Timer (see [timer.md](timer.md)). An editor can still enter hands directly.
 - **Review step:** before saving, the app shows the winner, the loser, the hand score, the score change of every seat and the new table totals. The player shows this to the table and then confirms.
 - **Hands mode is the default** for new tables, in both apps. An editor can still switch a table to totals-only.
-- **Seats:** a player of the table assigns the four seats, until the first hand is saved.
+- **Seats:** a player of the table assigns the four seats, from 10 minutes before the planned start of the round until the first hand or penalty is saved.
 - **Table changed:** the save carries the table version of the review. If the table changed in between (for example a staff member saved the hand), the server answers `409`. The app keeps the entered hand and opens a window with the server data and the hand of the player. The player closes it to go on, or calls a staff member first.
 - **Corrections, penalties and totals-only tables:** editor-only. Hand entry needs `useTotalsOnly = false`.
 - **No legacy handling:** an account with no claim has no capability. The app is not in production, so old accounts are fixed by saving them once in the accounts screen.

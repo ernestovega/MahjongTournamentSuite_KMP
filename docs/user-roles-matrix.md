@@ -12,6 +12,7 @@ An editor needs a membership document for each tournament. An admin has implicit
 | View tournament content | View | View |
 | Assign EMA players to tournament slots | Edit | Edit |
 | Edit tables, hands, scores, and results | Edit, until the tournament is completed | Edit |
+| Start, pause, reset or set the time of a round with the Timer | Use, until the tournament is completed | Use |
 | View and export EMA reports | Use | Use |
 | List tournament accounts | Manage | Manage |
 | Assign or remove tournament editors | — | Manage |
@@ -38,7 +39,8 @@ A player account has no access to the management routes. It can do the following
 | List the tournaments where the player is registered | View |
 | View players, teams, rounds, tables, hands and rankings of those tournaments | View |
 | See emails or accounts of other players | — |
-| Write down the hands of a table where the player sits (hands mode) | Use |
+| Write down the hands of a table where the player sits (hands mode), once the Timer started the round | Use |
+| Set the seats of a table where the player sits, before its first hand or penalty | Use |
 | Edit tables, results, penalties or players directly | — |
 | Use any other tournament | — |
 

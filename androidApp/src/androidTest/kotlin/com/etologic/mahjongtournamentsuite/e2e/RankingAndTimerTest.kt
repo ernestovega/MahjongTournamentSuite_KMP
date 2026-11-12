@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import org.junit.After
 import org.junit.Test
 
 /** The ranking board and the timer open in their own window, so they can run on a second screen. */
@@ -58,18 +59,31 @@ class RankingAndTimerTest : AdminE2eTest() {
         c.waitForText("Start automatic paging")
     }
 
-    @Test
-    fun timerShowsRoundAndTime() {
-        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
+    /** The Timer opens from a tournament. Its round has not started, so it waits for the gong. */
+    private fun openTimer(account: String = E2eAccounts.ADMIN, tournament: String = UPCOMING) {
+        if (account == E2eAccounts.ADMIN) start(account, ready = PROFILE_BUTTON) else start(account)
+        c.openTournament(tournament)
+        c.waitForText("Players & results")
         c.clickButton("Timer")
-        listOf("Round 1", "1:55:00", "Start timer", "Reset timer", "Set time", "Increase round", "Decrease round")
+    }
+
+    @Test
+    fun theTournamentListHasNoTimer() {
+        start(E2eAccounts.ADMIN)
+        c.assertNoText("Timer")
+    }
+
+    @Test
+    fun timerOfARoundNotStartedWaitsForTheGong() {
+        openTimer()
+        listOf("Round 1", "2:00:00", "Start timer", "Reset timer", "The round started earlier", "Increase round", "Decrease round")
             .forEach { c.waitForText(it) }
+        c.waitForText("Press Play when the starting gong sounds", substring = true)
     }
 
     @Test
     fun timerRoundCanChange() {
-        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
-        c.clickButton("Timer")
+        openTimer()
         c.waitForText("Round 1")
         c.clickButton("Increase round")
         c.waitForText("Round 2")
@@ -78,18 +92,39 @@ class RankingAndTimerTest : AdminE2eTest() {
     }
 
     @Test
-    fun timerCountsDownAfterStart() {
-        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
-        c.clickButton("Timer")
-        c.waitForText("1:55:00")
+    fun playStartsTheRoundOnTheServerAndPauseStopsIt() {
+        openTimer()
+        c.waitForText("2:00:00")
         c.clickButton("Start timer")
-        c.waitForNoText("1:55:00")
+        c.waitForNoText("2:00:00")
+        c.waitForNoText("Press Play when the starting gong sounds", substring = true)
+        // The server keeps the clock: the tournament carries it for every Timer and every player.
+        val clocks = E2eApi.call("GET", "/public/tournaments/$UPCOMING_ID/round-clocks", null).json().getJSONArray("roundClocks")
+        check(clocks.length() == 1 && clocks.getJSONObject(0).getInt("roundId") == 1) { "Round 1 has no clock: $clocks" }
+        c.clickButton("Pause timer")
+        c.waitForText("Paused. The players can still add hands.")
+        c.waitForText("Set time")
+    }
+
+    @Test
+    fun aRoundInPlayOpensWithItsClock() {
+        openTimer(tournament = "Test - Live ongoing tournament")
+        // Round 4 of the live tournament started at its planned time, so the Timer opens on it and runs.
+        c.waitForText("Round 4")
+        c.waitForText("Pause timer")
     }
 
     @Test
     fun editorCanOpenTheTimer() {
-        start(E2eAccounts.EDITOR)
-        c.clickButton("Timer")
-        c.waitForText("Start timer")
+        openTimer(E2eAccounts.EDITOR, "Test - Live ongoing tournament")
+        c.waitForText("Pause timer")
+    }
+
+    @After
+    fun restoreClocks() = E2eApi.reset(UPCOMING_ID)
+
+    private companion object {
+        const val UPCOMING = "Test - Registered, not started"
+        const val UPCOMING_ID = "test-registration-open"
     }
 }

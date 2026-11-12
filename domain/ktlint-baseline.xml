@@ -47,6 +47,8 @@
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/domain/repository/TournamentRepository.kt">
         <error line="3" column="1" source="standard:import-ordering" />
+        <error line="205" column="79" source="standard:function-signature" />
+        <error line="209" column="121" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/domain/usecase/CalculateStatisticsUseCase.kt">
         <error line="3" column="1" source="standard:import-ordering" />

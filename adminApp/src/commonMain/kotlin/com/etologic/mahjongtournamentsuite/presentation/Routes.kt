@@ -45,9 +45,6 @@ data class TablesRoute(
 )
 
 @Serializable
-data object TimerRoute
-
-@Serializable
 data class RankingsRoute(
     val tournamentId: String,
 )

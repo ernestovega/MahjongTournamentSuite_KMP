@@ -6,6 +6,7 @@ import {
   matchPhaseAt,
   normalizeMatchExtraMinutes,
   normalizeTimeZone,
+  plannedRoundClocks,
   seatingIsOpen,
   tournamentMatchPhase,
   zonedEpochMs,
@@ -131,4 +132,24 @@ test("only region zones and UTC are offered", () => {
   assert.equal(isSelectableTimeZone("Etc/UTC"), false);
   assert.equal(isSelectableTimeZone("Madrid"), false);
   assert.equal(isSelectableTimeZone("EST"), false);
+});
+
+test("gives a clock at the planned start to each past round without one", () => {
+  const tournament = {
+    numRounds: 4,
+    timeZone: "UTC",
+    roundSchedules: [
+      { roundId: 1, date: "2026-10-10", startTime: "10:00" },
+      { roundId: 2, date: "2026-10-10", startTime: "12:00" },
+      { roundId: 3, date: "2026-10-10", startTime: "14:00" },
+    ],
+    roundClocks: { 2: { startedAtMs: Date.UTC(2026, 9, 10, 12, 7), pausedAtMs: null, pausedMs: 0, adjustMs: 0 } },
+  };
+
+  const clocks = plannedRoundClocks(tournament, Date.UTC(2026, 9, 10, 13, 0));
+
+  // Round 2 keeps its own clock, round 3 has not reached its start and round 4 has no date.
+  assert.deepEqual([...clocks.entries()], [[1, { startedAtMs: Date.UTC(2026, 9, 10, 10, 0), pausedAtMs: null, pausedMs: 0, adjustMs: 0 }]]);
+  assert.equal(plannedRoundClocks({ ...tournament, isCompleted: true }, Date.UTC(2026, 9, 10, 13, 0)).size, 0);
+  assert.equal(plannedRoundClocks({ ...tournament, timeZone: "" }, Date.UTC(2026, 9, 10, 13, 0)).size, 0);
 });
