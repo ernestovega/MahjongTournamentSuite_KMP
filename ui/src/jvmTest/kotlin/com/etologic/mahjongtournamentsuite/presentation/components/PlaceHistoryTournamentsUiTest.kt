@@ -25,7 +25,14 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalTestApi::class)
 class PlaceHistoryTournamentsUiTest {
     private fun result(tournament: String, round: Int, position: Int) = TableResult(
-        tournamentId = tournament, roundId = round, tableId = 1, seat = 0, position = position, score = 0, points = 0.0, hasHands = false,
+        tournamentId = tournament,
+        roundId = round,
+        tableId = 1,
+        seat = 0,
+        position = position,
+        score = 0,
+        points = 0.0,
+        hasHands = false,
     )
 
     private val results = listOf(

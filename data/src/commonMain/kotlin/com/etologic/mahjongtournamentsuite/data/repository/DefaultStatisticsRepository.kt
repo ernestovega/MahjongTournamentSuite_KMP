@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.data.backend.FunctionsBackendApi
 import com.etologic.mahjongtournamentsuite.data.backend.PUBLIC_TOKEN
 import com.etologic.mahjongtournamentsuite.data.backend.dto.DigestResultDto
+import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingDto
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.DigestResult
@@ -15,7 +16,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
-import com.etologic.mahjongtournamentsuite.data.backend.dto.StandingDto
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 
 class DefaultStatisticsRepository(
@@ -28,60 +28,57 @@ class DefaultStatisticsRepository(
      */
     private val publicReads: Boolean = false,
 ) : StatisticsRepository {
-    override suspend fun loadOverview(): AppResult<StatisticsOverview> =
-        request("Loading the statistics overview") { idToken ->
-            val dto = backendApi.statisticsOverview(idToken)
-            StatisticsOverview(
-                tournaments = dto.tournaments,
-                tablesCompleted = dto.tablesCompleted,
-                tablesWithHands = dto.tablesWithHands,
-                handsPlayed = dto.handsPlayed,
-                drawnHands = dto.drawnHands,
-                winningHands = dto.winningHands,
-                selfDraws = dto.selfDraws,
-                winningScoreSum = dto.winningScoreSum,
-                chickenHands = dto.chickenHands,
-                penaltyCount = dto.penaltyCount,
-                highestHand = dto.highestHand,
-                playerCount = dto.playerCount,
-                players = dto.players.map {
-                    PlayerTotals(
-                        emaId = it.emaId,
-                        tables = it.tables,
-                        points = it.points,
-                        score = it.score,
-                        tablesWithHands = it.tablesWithHands,
-                        handsPlayed = it.handsPlayed,
-                        handsWon = it.handsWon,
-                        selfDraws = it.selfDraws,
-                        dealIns = it.dealIns,
-                        penaltyCount = it.penaltyCount,
-                    )
-                },
+    override suspend fun loadOverview(): AppResult<StatisticsOverview> = request("Loading the statistics overview") { idToken ->
+        val dto = backendApi.statisticsOverview(idToken)
+        StatisticsOverview(
+            tournaments = dto.tournaments,
+            tablesCompleted = dto.tablesCompleted,
+            tablesWithHands = dto.tablesWithHands,
+            handsPlayed = dto.handsPlayed,
+            drawnHands = dto.drawnHands,
+            winningHands = dto.winningHands,
+            selfDraws = dto.selfDraws,
+            winningScoreSum = dto.winningScoreSum,
+            chickenHands = dto.chickenHands,
+            penaltyCount = dto.penaltyCount,
+            highestHand = dto.highestHand,
+            playerCount = dto.playerCount,
+            players = dto.players.map {
+                PlayerTotals(
+                    emaId = it.emaId,
+                    tables = it.tables,
+                    points = it.points,
+                    score = it.score,
+                    tablesWithHands = it.tablesWithHands,
+                    handsPlayed = it.handsPlayed,
+                    handsWon = it.handsWon,
+                    selfDraws = it.selfDraws,
+                    dealIns = it.dealIns,
+                    penaltyCount = it.penaltyCount,
+                )
+            },
+        )
+    }
+
+    override suspend fun loadPerson(emaId: String?): AppResult<List<PersonTournamentDigest>> = request("Loading the person statistics") { idToken ->
+        check(!publicReads || emaId != null) { "A public read needs the EMA number" }
+        backendApi.personStatistics(idToken, emaId).tournaments.map { tournament ->
+            PersonTournamentDigest(
+                tournamentId = tournament.tournamentId,
+                results = tournament.results.map { it.toDomain(tournament.tournamentId) },
             )
         }
+    }
 
-    override suspend fun loadPerson(emaId: String?): AppResult<List<PersonTournamentDigest>> =
-        request("Loading the person statistics") { idToken ->
-            check(!publicReads || emaId != null) { "A public read needs the EMA number" }
-            backendApi.personStatistics(idToken, emaId).tournaments.map { tournament ->
-                PersonTournamentDigest(
-                    tournamentId = tournament.tournamentId,
-                    results = tournament.results.map { it.toDomain(tournament.tournamentId) },
-                )
-            }
+    override suspend fun loadStandings(emaId: String?, tournamentIds: List<String>): AppResult<Map<String, Standing>> = request("Loading the standings") { idToken ->
+        check(!publicReads || emaId != null) { "A public read needs the EMA number" }
+        if (tournamentIds.isEmpty()) {
+            emptyMap()
+        } else {
+            backendApi.personStandings(idToken, emaId, tournamentIds).standings
+                .associate { it.tournamentId to it.toStanding() }
         }
-
-    override suspend fun loadStandings(emaId: String?, tournamentIds: List<String>): AppResult<Map<String, Standing>> =
-        request("Loading the standings") { idToken ->
-            check(!publicReads || emaId != null) { "A public read needs the EMA number" }
-            if (tournamentIds.isEmpty()) {
-                emptyMap()
-            } else {
-                backendApi.personStandings(idToken, emaId, tournamentIds).standings
-                    .associate { it.tournamentId to it.toStanding() }
-            }
-        }
+    }
 
     private suspend fun <T> request(action: String, block: suspend (String) -> T): AppResult<T> = runCatching {
         if (publicReads) block(PUBLIC_TOKEN) else authRepository.withFreshIdToken(block)

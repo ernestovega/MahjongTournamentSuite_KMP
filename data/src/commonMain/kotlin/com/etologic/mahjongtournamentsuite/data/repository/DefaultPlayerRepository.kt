@@ -26,8 +26,7 @@ class DefaultPlayerRepository(
     /** The player app reads the registry through the public route, with or without an account. */
     private val publicReads: Boolean = false,
 ) : PlayerRepository {
-    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> =
-        cachedRequest("Listing shared players", refreshMode)
+    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> = cachedRequest("Listing shared players", refreshMode)
 
     override suspend fun createPlayer(player: Player): AppResult<Player> = request("Creating shared player") { token ->
         backendApi.createPlayer(
@@ -97,11 +96,9 @@ class DefaultPlayerRepository(
         },
     )
 
-    private suspend fun <T> withFreshIdToken(block: suspend (String) -> T): T =
-        authRepository.withFreshIdToken(block)
+    private suspend fun <T> withFreshIdToken(block: suspend (String) -> T): T = authRepository.withFreshIdToken(block)
 
-    private suspend fun <T> withReadToken(block: suspend (String) -> T): T =
-        if (publicReads) block(PUBLIC_TOKEN) else withFreshIdToken(block)
+    private suspend fun <T> withReadToken(block: suspend (String) -> T): T = if (publicReads) block(PUBLIC_TOKEN) else withFreshIdToken(block)
 
     private fun com.etologic.mahjongtournamentsuite.data.backend.dto.PlayerDto.toPlayer() = Player(
         emaId = emaId,
@@ -117,7 +114,6 @@ class DefaultPlayerRepository(
 
 private const val PLAYERS_CACHE_KEY = "global:emaPlayers"
 
-private fun String.toPlayerCountryCode(): String =
-    trim().uppercase().takeUnless { it == "EU" }.orEmpty()
+private fun String.toPlayerCountryCode(): String = trim().uppercase().takeUnless { it == "EU" }.orEmpty()
 
 private fun Throwable.toAppError(): AppError = toRepositoryAppError("Shared player request failed.")

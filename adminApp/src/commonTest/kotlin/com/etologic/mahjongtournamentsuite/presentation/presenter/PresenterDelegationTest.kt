@@ -5,9 +5,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.*
 import com.etologic.mahjongtournamentsuite.domain.repository.*
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.GenerateTournamentScheduleBruteForceParallelUseCase
+import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlinx.coroutines.test.runTest
 
 class PresenterDelegationTest {
     @Test
@@ -215,9 +215,7 @@ private class RecordingTournamentRepository(
         refreshMode: RefreshMode,
     ) = unusedResult<List<Pair<TableState, List<TableHand>>>>()
 
-    override suspend fun getAllTablesWithHands(tournamentId: String, refreshMode: RefreshMode) =
-        unusedResult<List<Pair<TableState, List<TableHand>>>>()
-
+    override suspend fun getAllTablesWithHands(tournamentId: String, refreshMode: RefreshMode) = unusedResult<List<Pair<TableState, List<TableHand>>>>()
 
     override suspend fun saveTableState(
         tournamentId: String,
@@ -227,7 +225,6 @@ private class RecordingTournamentRepository(
         tablePatch: Map<String, Any?>,
         handPatches: Map<Int, Map<String, Any?>>,
     ) = unusedResult<Pair<TableState, List<TableHand>>>()
-
 
     override suspend fun getTournamentManifest(tournamentId: String) = unusedResult<TournamentManifest>()
 }
@@ -262,5 +259,4 @@ private class RecordingAuthRepository(
     override suspend fun removePhoto() = unusedResult<UserProfile>()
 }
 
-private fun <T> unusedResult(): AppResult<T> =
-    AppResult.Failure(AppError.Unexpected("Unused test repository method"))
+private fun <T> unusedResult(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Unused test repository method"))

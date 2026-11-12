@@ -4,11 +4,11 @@ import com.etologic.mahjongtournamentsuite.domain.model.HandRun
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.RivalTally
+import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableScoreSwing
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
-import com.etologic.mahjongtournamentsuite.domain.model.SubstitutionReason
 import com.etologic.mahjongtournamentsuite.domain.model.TableStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
@@ -42,8 +42,11 @@ class CalculateStatisticsUseCase {
                 substitution?.substitutePlays(result.roundId) == true || substitution?.excludedFromStatistics == true
             }
             .map { (slotId, result) ->
-                if (substitutions[slotId]?.reason == SubstitutionReason.DISQUALIFIED) slotId to result.copy(points = 0.0, score = 0)
-                else slotId to result
+                if (substitutions[slotId]?.reason == SubstitutionReason.DISQUALIFIED) {
+                    slotId to result.copy(points = 0.0, score = 0)
+                } else {
+                    slotId to result
+                }
             }
             .groupBy { it.first }
         val playerStatistics = players.map { player ->
@@ -269,11 +272,10 @@ class CalculateStatisticsUseCase {
         return ids.takeIf { it.toSet().size == 4 }
     }
 
-    private fun countedHands(hands: List<TableHand>, tableCompleted: Boolean, seatIds: List<Int>): List<CountedHand> =
-        hands.sortedBy { it.handId }.mapNotNull { hand ->
-            if (!hand.isDone && !tableCompleted) return@mapNotNull null
-            countedHand(hand, seatIds)
-        }
+    private fun countedHands(hands: List<TableHand>, tableCompleted: Boolean, seatIds: List<Int>): List<CountedHand> = hands.sortedBy { it.handId }.mapNotNull { hand ->
+        if (!hand.isDone && !tableCompleted) return@mapNotNull null
+        countedHand(hand, seatIds)
+    }
 
     private fun countedHand(hand: TableHand, seatIds: List<Int>): CountedHand? {
         val winnerText = hand.playerWinnerId.trim()
@@ -312,12 +314,10 @@ class CalculateStatisticsUseCase {
     }
 
     /** A penalty text can hold several values separated by semicolons. A bad part counts as zero. */
-    private fun penaltyOf(text: String): Int =
-        text.split(';').sumOf { it.trim().toIntOrNull() ?: 0 }
+    private fun penaltyOf(text: String): Int = text.split(';').sumOf { it.trim().toIntOrNull() ?: 0 }
 
     /** The biggest single penalty of a penalty text, as a positive number. Only negative values are penalties. */
-    private fun worstPenaltyOf(text: String): Int =
-        text.split(';').maxOfOrNull { -(it.trim().toIntOrNull() ?: 0) }?.coerceAtLeast(0) ?: 0
+    private fun worstPenaltyOf(text: String): Int = text.split(';').maxOfOrNull { -(it.trim().toIntOrNull() ?: 0) }?.coerceAtLeast(0) ?: 0
 
     private companion object {
         const val MIN_HAND_SCORE = 8
