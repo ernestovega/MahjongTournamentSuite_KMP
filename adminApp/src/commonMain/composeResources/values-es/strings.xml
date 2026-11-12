@@ -733,6 +733,11 @@
     <string name="activity_action_table_reset">Mesa reiniciada</string>
     <string name="activity_action_table_conflict">Guardado rechazado: la mesa había cambiado</string>
     <string name="activity_action_script_run">Script de mantenimiento ejecutado</string>
+    <string name="activity_origin_all">Todos los orígenes</string>
+    <string name="activity_period_from">Desde: %1$s</string>
+    <string name="activity_period_to">Hasta: %1$s</string>
+    <string name="activity_period_any">cualquier fecha</string>
+    <string name="activity_period_clear">Quitar fechas</string>
     <string name="reset_table">Vaciar mesa</string>
     <string name="reset_table_confirm_title">¿Vaciar la ronda %1$d · mesa %2$d?</string>
     <string name="reset_table_confirm_text">Se borran las asignaciones de asientos, las puntuaciones y todas las manos de esta mesa. Los jugadores de la mesa se mantienen, así que puedes volver a sentarlos. Los cambios sin guardar de esta mesa se pierden. El cambio queda registrado en la actividad.</string>

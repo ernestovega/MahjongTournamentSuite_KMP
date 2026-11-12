@@ -16,7 +16,23 @@ export const CHANGES_COLLECTION = "changes";
 export type FeedSource = "all" | "tables" | "other";
 export const FEED_SOURCES: readonly FeedSource[] = ["all", "tables", "other"];
 
-export type FeedFilter = { tournamentId?: string; uid?: string; source: FeedSource };
+/** Where a change came from: the admin app, the player app, or the server and the maintenance scripts. */
+export type FeedOrigin = "admin" | "player" | "system";
+export const FEED_ORIGINS: readonly FeedOrigin[] = ["admin", "player", "system"];
+
+/** The uid of the activity records of the maintenance scripts. */
+export const SCRIPT_UID = "script";
+
+export type FeedFilter = {
+  tournamentId?: string;
+  uid?: string;
+  source: FeedSource;
+  origin?: FeedOrigin;
+  /** Milliseconds since the epoch. Keeps the records written at this time or later. */
+  fromMs?: number;
+  /** Milliseconds since the epoch. Keeps the records written before this time. */
+  toMs?: number;
+};
 
 /** One value of a change, as text. Null when the field had no value. */
 export type FeedFieldChange = { field: string; from: string | null; to: string | null; handId?: number };
@@ -148,7 +164,13 @@ export function tableEntryFrom(id: string, tournamentId: string, data: DocumentD
   };
 }
 
-type LogRead = { docs: QueryDocumentSnapshot[]; place: LogPlace; isGroup: boolean };
+/**
+ * [docs] are the records that pass the filters, [raw] all the records that the query read. A filter that the query
+ * cannot apply removes records from [docs] only, so the place of the log still moves past them.
+ */
+type LogRead = { docs: QueryDocumentSnapshot[]; raw: QueryDocumentSnapshot[]; place: LogPlace; isGroup: boolean };
+
+const NO_READ = (isGroup: boolean): LogRead => ({ docs: [], raw: [], place: "end", isGroup });
 
 function newestFirst(query: Query): Query {
   return query.orderBy("at", "desc").orderBy(FieldPath.documentId(), "desc");
@@ -158,24 +180,43 @@ function after(query: Query, place: LogPlace): Query {
   return place && place !== "end" ? query.startAfter(new Timestamp(place.s, place.n), place.p) : query;
 }
 
-async function readActivity(filter: FeedFilter, place: LogPlace, limit: number): Promise<LogRead> {
-  if (place === "end" || filter.source === "tables") return { docs: [], place: "end", isGroup: false };
-  let query: Query = db.collection(ACTIVITY_COLLECTION);
-  if (filter.tournamentId) query = query.where("tournamentId", "==", filter.tournamentId);
-  if (filter.uid) query = query.where("uid", "==", filter.uid);
-  const snapshot = await after(newestFirst(query), place).limit(limit + 1).get();
-  return { docs: snapshot.docs, place, isGroup: false };
+function inPeriod(query: Query, filter: FeedFilter): Query {
+  let result = query;
+  if (filter.fromMs !== undefined) result = result.where("at", ">=", Timestamp.fromMillis(filter.fromMs));
+  if (filter.toMs !== undefined) result = result.where("at", "<", Timestamp.fromMillis(filter.toMs));
+  return result;
 }
 
+/**
+ * The activity log holds the changes made in the admin app and the runs of the maintenance scripts. The player app
+ * writes only table saves, so it has no records here.
+ */
+async function readActivity(filter: FeedFilter, place: LogPlace, limit: number): Promise<LogRead> {
+  if (place === "end" || filter.source === "tables" || filter.origin === "player") return NO_READ(false);
+  const uid = filter.origin === "system" ? SCRIPT_UID : filter.uid;
+  if (filter.origin === "system" && filter.uid && filter.uid !== SCRIPT_UID) return NO_READ(false);
+  let query: Query = db.collection(ACTIVITY_COLLECTION);
+  if (filter.tournamentId) query = query.where("tournamentId", "==", filter.tournamentId);
+  if (uid) query = query.where("uid", "==", uid);
+  const snapshot = await after(newestFirst(inPeriod(query, filter)), place).limit(limit + 1).get();
+  // Firestore cannot leave out one uid and keep the order by time, so the script runs leave here.
+  const docs = filter.origin === "admin" ? snapshot.docs.filter((doc) => doc.get("uid") !== SCRIPT_UID) : snapshot.docs;
+  return { docs, raw: snapshot.docs, place, isGroup: false };
+}
+
+/** The origin of a table save as the change log stores it. */
+const TABLE_SOURCE: Record<FeedOrigin, string> = { admin: "editor", player: "player", system: "system" };
+
 async function readTables(filter: FeedFilter, place: LogPlace, limit: number): Promise<LogRead> {
-  if (place === "end" || filter.source === "other") return { docs: [], place: "end", isGroup: true };
+  if (place === "end" || filter.source === "other") return NO_READ(true);
   const isGroup = !filter.tournamentId;
   let query: Query = isGroup
     ? db.collectionGroup(CHANGES_COLLECTION)
     : db.collection("tournaments").doc(filter.tournamentId as string).collection(CHANGES_COLLECTION);
+  if (filter.origin) query = query.where("source", "==", TABLE_SOURCE[filter.origin]);
   if (filter.uid) query = query.where("uid", "==", filter.uid);
-  const snapshot = await after(newestFirst(query), place).limit(limit + 1).get();
-  return { docs: snapshot.docs, place, isGroup };
+  const snapshot = await after(newestFirst(inPeriod(query, filter)), place).limit(limit + 1).get();
+  return { docs: snapshot.docs, raw: snapshot.docs, place, isGroup };
 }
 
 /** A collection group query needs the full path of the document as its cursor, a collection query only its id. */
@@ -204,8 +245,11 @@ export function mergeLogs(activity: LogRead, tables: LogRead, limit: number) {
   const nextPlace = (read: LogRead, log: "a" | "t"): LogPlace => {
     if (read.place === "end") return "end";
     const mine = taken.filter((item) => item.log === log);
-    const ended = mine.length === read.docs.length && read.docs.length <= limit;
-    if (ended) return "end";
+    if (mine.length === read.docs.length) {
+      // Every record that passed the filters is on the page, so the log moves past everything it read.
+      if (read.raw.length <= limit) return "end";
+      return placeOf(read.raw[read.raw.length - 1], read.isGroup);
+    }
     const last = mine[mine.length - 1];
     return last ? placeOf(last.doc, read.isGroup) : read.place;
   };

@@ -145,8 +145,42 @@ describe("activity feed API", () => {
     assert.deepEqual(other.map((entry) => entry.kind), ["activity", "activity"]);
   });
 
-  it("refuses a bad cursor or source", async () => {
-    for (const query of ["cursor=nope", "source=x", `cursor=${Buffer.from("{\"a\":1}").toString("base64url")}`]) {
+  it("filters by origin: admin app, player app, or the server and the scripts", async () => {
+    await activity(1000, "player.assign", T1, "u1");
+    await activity(2000, "script.run", null, "script");
+    await tableSave(3000, T1, "u2", "player");
+    await tableSave(4000, T1, "u1", "editor");
+    await tableSave(5000, T2, "system", "system");
+    // Many script runs between admin records: the admin pages must still reach the oldest admin record.
+    for (let i = 0; i < 5; i += 1) await activity(500 + i, "script.run", null, "script");
+    await activity(100, "team.update", T1, "u1");
+
+    for (const limit of [1, 2, 50]) {
+      const admin = mine((await readAll("&origin=admin", limit)).flat());
+      assert.deepEqual(admin.map((entry) => entry.at - BASE), [4000, 1000, 100], `admin limit ${limit}`);
+    }
+    const player = mine((await readAll("&origin=player", 2)).flat());
+    assert.deepEqual(player.map((entry) => entry.at - BASE), [3000]);
+    const system = mine((await readAll("&origin=system", 2)).flat());
+    assert.deepEqual(system.map((entry) => entry.at - BASE), [5000, 2000, 504, 503, 502, 501, 500]);
+    const adminOfOne = mine((await readAll("&origin=admin&uid=u1", 1)).flat());
+    assert.deepEqual(adminOfOne.map((entry) => entry.at - BASE), [4000, 1000, 100]);
+  });
+
+  it("keeps only the records of the period, from inclusive to exclusive", async () => {
+    await activity(1000, "player.assign", T1);
+    await tableSave(2000, T1);
+    await activity(3000, "team.update", T1);
+    await tableSave(4000, T1);
+
+    const period = mine((await readAll(`&from=${BASE + 2000}&to=${BASE + 4000}`, 1)).flat());
+    assert.deepEqual(period.map((entry) => entry.at - BASE), [3000, 2000]);
+    const since = mine((await readAll(`&from=${BASE + 3000}`, 50)).flat());
+    assert.deepEqual(since.map((entry) => entry.at - BASE), [4000, 3000]);
+  });
+
+  it("refuses a bad cursor, source, origin or period", async () => {
+    for (const query of ["cursor=nope", "source=x", "origin=x", "from=abc", "from=-1", "from=10&to=5", `cursor=${Buffer.from("{\"a\":1}").toString("base64url")}`]) {
       const response = await server.request("GET", `/admin/activity?${query}`, { token: admin.token });
       assert.equal(response.status, 400, query);
     }

@@ -14,6 +14,7 @@ import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityEntry
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFieldChange
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityOrigin
 import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -104,7 +105,8 @@ class ActivityScreenUiTest {
     fun theListShowsWhoDidWhatAndWhere() = runComposeUiTest {
         show()
         onNodeWithText("Player 123").assertExists()
-        onNodeWithText("Player app").assertExists()
+        // The origin filter chip and the row of the table save.
+        onAllNodesWithText("Player app").assertCountEquals(2)
         onNodeWithText("Madrid Open · Round 2 · Table 4").assertExists()
         onNodeWithText("Player assigned").assertExists()
         onNodeWithText("Ana Admin").assertExists()
@@ -118,6 +120,15 @@ class ActivityScreenUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Player assigned").fetchSemanticsNodes().isEmpty() }
         assertEquals(ActivitySource.TABLES, admin.activityRequests.last().first.source)
         assertEquals(null, admin.activityRequests.last().second)
+    }
+
+    @Test
+    fun anOriginFilterAsksTheServerAgain() = runComposeUiTest {
+        val admin = show()
+        onAllNodesWithText("Player app").onFirst().performClick()
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.origin == ActivityOrigin.PLAYER_APP }
+        onNodeWithText("All origins").performClick()
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.origin == null }
     }
 
     @Test

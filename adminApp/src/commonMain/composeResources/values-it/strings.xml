@@ -733,6 +733,11 @@
     <string name="activity_action_table_reset">Tavolo azzerato</string>
     <string name="activity_action_table_conflict">Salvataggio rifiutato: il tavolo era cambiato</string>
     <string name="activity_action_script_run">Script di manutenzione eseguito</string>
+    <string name="activity_origin_all">Tutte le origini</string>
+    <string name="activity_period_from">Dal: %1$s</string>
+    <string name="activity_period_to">Fino al: %1$s</string>
+    <string name="activity_period_any">qualsiasi data</string>
+    <string name="activity_period_clear">Cancella date</string>
     <string name="reset_table">Svuota tavolo</string>
     <string name="reset_table_confirm_title">Svuotare il turno %1$d · tavolo %2$d?</string>
     <string name="reset_table_confirm_text">Vengono eliminati l’assegnazione dei posti, i punteggi e tutte le mani di questo tavolo. I giocatori del tavolo restano, quindi puoi farli sedere di nuovo. Le modifiche non salvate di questo tavolo vanno perse. La modifica viene registrata nell’attività.</string>

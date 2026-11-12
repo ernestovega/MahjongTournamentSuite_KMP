@@ -1019,7 +1019,7 @@ private fun datesOf(tournament: Tournament): String? = formatLocalizedDateRange(
 
 /**
  * The four players of a table in the order of hand 1 (East, South, West, North).
- * Before the players set the seats, the list has the players of the draw and the order has no meaning.
+ * Before any seat is set, the list has the players of the draw and the order has no meaning.
  */
 private fun PlayerTable.seatsFor(view: PlayerTournamentView, withLevelChange: Boolean = false): List<SeatDisplay> {
     val t = table
@@ -1042,7 +1042,9 @@ private fun PlayerTable.seatsFor(view: PlayerTournamentView, withLevelChange: Bo
             levelChange = if (withLevelChange && table.isCompleted) view.levelChangeAt(slot, roundId) else null,
         )
     }
-    if (!seatsAssigned) {
+    // With no seat set, the table shows the players of the draw. Once an organizer sets a seat, the table shows the
+    // seats as they are stored, with the empty ones blank, so the player app matches what the admin app shows.
+    if (!hasAnySeat) {
         return (0 until 4).map { seat(t.playerIds.getOrNull(it)?.toString().orEmpty(), "", "", 0) }
     }
     // The table points come only from the scores of the table.
@@ -1652,7 +1654,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 handNumber = handNumber,
                 centerLabel = if (complete) stringResource(Res.string.table_done) else stringResource(Res.string.table_hand_progress, handNumber, table.hands.size),
                 showPoints = complete,
-                windsKnown = table.seatsAssigned,
+                windsKnown = table.hasAnySeat,
                 showIds = details,
                 // The differences make sense only while the table is in play: it has hands and it is not finished.
                 diffsAvailable = !complete && table.doneHands > 0,
@@ -1731,33 +1733,32 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
         ) {
             if (hand.isDone) HandRow(view, hand, dark)
             penalties.forEachIndexed { index, values ->
-                if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
-                PenaltyRow(view, table.seatIds(), hand.handId, values)
+                val first = !hand.isDone && index == 0
+                if (!first) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
+                // The hand number is only on the first line of the card.
+                PenaltyRow(view, table.seatIds(), hand.handId.takeIf { first }, values)
             }
         }
     }
 }
 
 /**
- * One penalty. The text is at the start and the values are at the end, in the same column as the score of a hand.
- * The penalized players are red and the players who receive points are green.
+ * One penalty. A red "Penalty" chip is at the top and each player with points is on a line under it. The values are
+ * at the end, in the same column and size as the score of a hand. [handId] is null when a hand is above the penalty,
+ * so the number is not repeated, but its column keeps the content aligned with the hand.
  */
 @Composable
-private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId: Int, values: List<Int>) {
+private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId: Int?, values: List<Int>) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                "$handId",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Icon(Icons.Default.Warning, contentDescription = stringResource(Res.string.hand_penalty), Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+        Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) {
+            if (handId != null) HandNumber(handId)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), MaterialTheme.colorScheme.error)
             values.forEachIndexed { seat, value ->
                 if (value == 0) return@forEachIndexed
                 val slot = seatSlots.getOrNull(seat)
@@ -1771,11 +1772,11 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
+                    // The invisible outline gives the value the size of the score pill of a hand, so both line up.
+                    ScorePill(
                         if (value > 0) "+$value" else "$value",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
                         color = if (value > 0) WinnerColor else MaterialTheme.colorScheme.error,
+                        outline = Color.Transparent,
                     )
                 }
             }
@@ -1799,11 +1800,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
     ) {
         // The hand number has the wind and the place in the round under it, so the row keeps its width.
         Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                "${hand.handId}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            HandNumber(hand.handId)
             HandLabel(hand.handId)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1844,43 +1841,61 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
             }
         }
         if (kind != HandKind.DRAW) {
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = Color.Transparent,
-                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurface),
-            ) {
-                Text(
-                    hand.handScore,
-                    Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
         }
+    }
+}
+
+/** The number of a hand, with the normal font and a "#" in front. */
+@Composable
+private fun HandNumber(handId: Int) {
+    Text(
+        "#$handId",
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** A score in a round outline. The score of a hand and the value of a penalty use it, so they have the same size. */
+@Composable
+private fun ScorePill(text: String, color: Color, outline: Color) {
+    Surface(shape = RoundedCornerShape(50), color = Color.Transparent, border = BorderStroke(1.5.dp, outline)) {
+        Text(
+            text,
+            Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = color,
+        )
     }
 }
 
 /** The way the hand was won. Only this pill has color, so the type reads at once without coloring the whole item. */
 @Composable
 private fun WinTypePill(kind: HandKind, accent: Color) {
+    HandChip(
+        kind.icon(),
+        when (kind) {
+            HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
+            HandKind.DISCARD -> stringResource(Res.string.hand_discard)
+            HandKind.DRAW -> stringResource(Res.string.hand_draw)
+        },
+        accent,
+    )
+}
+
+/** A small colored chip with an icon and a text, like the way of winning or a penalty. */
+@Composable
+private fun HandChip(icon: ImageVector, text: String, accent: Color) {
     Surface(shape = RoundedCornerShape(50), color = accent.copy(alpha = 0.18f)) {
         Row(
             Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Icon(kind.icon(), contentDescription = null, Modifier.size(16.dp), tint = accent)
-            Text(
-                when (kind) {
-                    HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
-                    HandKind.DISCARD -> stringResource(Res.string.hand_discard)
-                    HandKind.DRAW -> stringResource(Res.string.hand_draw)
-                },
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = accent,
-            )
+            Icon(icon, contentDescription = null, Modifier.size(16.dp), tint = accent)
+            Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = accent)
         }
     }
 }
