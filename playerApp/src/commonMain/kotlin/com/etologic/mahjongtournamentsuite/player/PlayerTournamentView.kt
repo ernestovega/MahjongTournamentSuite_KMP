@@ -92,6 +92,18 @@ data class PlayerTournamentView(
         )
     }
 
+    /** The winner and score of the hands in the best hands ranking, when the tournament counts best hands. */
+    private val bestHandKeys: Set<Pair<Int, Int>> by lazy {
+        if (tournament.countBestHands) rankings.bestHands.map { it.playerId to it.handScore }.toSet() else emptySet()
+    }
+
+    /** True when [hand] is one of the best hands of the tournament. */
+    fun isBestHand(hand: TableHand): Boolean {
+        val winner = hand.playerWinnerId.trim().toIntOrNull() ?: return false
+        val score = hand.handScore.trim().toIntOrNull() ?: return false
+        return hand.isDone && (winner to score) in bestHandKeys
+    }
+
     private fun statisticsOf(slotId: Int?): PlayerStatistics? =
         slotId?.let { id -> statistics.players.firstOrNull { it.playerId == id } }
 

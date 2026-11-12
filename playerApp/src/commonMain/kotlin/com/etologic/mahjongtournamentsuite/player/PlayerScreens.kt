@@ -1812,11 +1812,14 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId
             if (handId != null) HandNumber(handId)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), MaterialTheme.colorScheme.error)
             values.forEachIndexed { seat, value ->
                 if (value == 0) return@forEachIndexed
                 val slot = seatSlots.getOrNull(seat)
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    // The chip is on the line of the penalized player. The players who receive points have no chip.
+                    if (value < 0) {
+                        HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), MaterialTheme.colorScheme.error)
+                    }
                     PlayerFlag(view.players[slot]?.country, width = 24.dp)
                     Text(
                         view.nameOf(slot),
@@ -1863,6 +1866,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
                     PlayerFlag(view.players[winnerSlot]?.country, width = 24.dp)
                     Text(
                         view.nameOf(winnerSlot),
+                        Modifier.weight(1f, fill = false),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = WinnerColor,
@@ -1891,8 +1895,12 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
                         )
                     }
                 }
-                if (hand.isChickenHand) ChickenIcon()
             }
+        }
+        // The chicken and the best hand mark the winning hand, so they go before its score.
+        if (hand.isChickenHand) ChickenIcon()
+        if (view.isBestHand(hand)) {
+            Icon(Icons.Default.PanTool, contentDescription = stringResource(Res.string.standing_best_hand), Modifier.size(20.dp))
         }
         if (kind != HandKind.DRAW) {
             ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
