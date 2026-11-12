@@ -17,8 +17,6 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -165,11 +163,7 @@ fun ProfileDialog(
                             onValueChange = {},
                             label = { Text(stringResource(Res.string.profile_ema_number)) },
                             trailingIcon = {
-                                TooltipBox(
-                                    positionProvider = rememberAppTooltipPositionProvider(),
-                                    tooltip = { AppPlainTooltip { Text(stringResource(Res.string.profile_ema_number_info)) } },
-                                    state = rememberTooltipState(),
-                                ) {
+                                AppTooltipBox(stringResource(Res.string.profile_ema_number_info)) {
                                     Icon(
                                         Icons.Outlined.Info,
                                         contentDescription = stringResource(Res.string.profile_ema_number_info),

@@ -37,8 +37,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -380,19 +378,13 @@ fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info:
     }
 }
 
-/** Shows [text] in a tooltip on hover or on a long press of [content]. */
+/** Shows [text] in a tooltip on hover, or while a finger touches [content]. */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun HoverTip(text: String, modifier: Modifier = Modifier, content: @Composable () -> Unit) {
-    TooltipBox(
-        positionProvider = rememberAppTooltipPositionProvider(),
-        tooltip = { AppPlainTooltip { Text(text) } },
-        state = rememberTooltipState(),
-        modifier = modifier,
-    ) { content() }
+    AppTooltipBox(text, modifier) { content() }
 }
 
-/** A small info icon. The tooltip shows [text] on hover or on a long press. */
+/** A small info icon. The tooltip shows [text] on hover, or while a finger touches the icon. */
 @Composable
 internal fun InfoTip(text: String, modifier: Modifier = Modifier) {
     HoverTip(text, modifier) {
@@ -921,11 +913,7 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
                 skills.forEachIndexed { i, skill -> drawCircle(primary, 3.5.dp.toPx(), point(i, skill.fraction)) }
             }
             skills.forEach { skill ->
-                TooltipBox(
-                    positionProvider = rememberAppTooltipPositionProvider(),
-                    tooltip = { AppPlainTooltip { Text(skill.explanation) } },
-                    state = rememberTooltipState(),
-                ) {
+                AppTooltipBox(skill.explanation) {
                     Column(
                         Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
