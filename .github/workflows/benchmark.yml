@@ -1,6 +1,6 @@
 # Measures the response times of the public API and the load times of the screens of the player web app, in
 # production. It runs after each deploy of main, every morning, and by hand. It fails when a time is over its budget
-# (benchmarks/budgets.json) or clearly slower than in the previous run. See docs/benchmark.md.
+# (benchmarks/budgets.json) or clearly slower than the recent runs, twice in a row. See docs/benchmark.md.
 name: Benchmark
 
 on:
@@ -68,24 +68,30 @@ jobs:
           cp scripts/benchmark/screens.mjs "$RUNNER_TEMP/pw/screens.mjs"
           node "$RUNNER_TEMP/pw/screens.mjs" --samples "${{ inputs.samples || '3' }}" ${TOURNAMENT:+--tournament "$TOURNAMENT"} --out "$GITHUB_WORKSPACE/screens-results.json"
 
-      - name: Results of the previous run
+      - name: Results of the recent runs
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          previous=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow benchmark.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
-          if [ -n "$previous" ]; then
-            gh run download "$previous" --repo "$GITHUB_REPOSITORY" --name benchmark-results --dir previous || echo "The previous run has no results."
-          else
-            echo "No previous run."
-          fi
+          # The last runs with results, newest first, whatever their conclusion: comparing only with the runs that
+          # passed would keep the luckiest times as the baseline.
+          ids=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow benchmark.yml --branch main --limit 30 \
+            --json databaseId,conclusion --jq ".[] | select(.databaseId != ${{ github.run_id }}) | select(.conclusion == \"success\" or .conclusion == \"failure\") | .databaseId")
+          index=0
+          for id in $ids; do
+            if gh run download "$id" --repo "$GITHUB_REPOSITORY" --name benchmark-results --dir "previous/$((index + 1))" 2>/dev/null; then
+              index=$((index + 1))
+            fi
+            [ "$index" -ge 6 ] && break
+          done
+          echo "Results of $index recent runs."
 
-      - name: Compare with the budgets and the previous run
+      - name: Compare with the budgets and the recent runs
         if: always()
         run: |
           node scripts/benchmark/compare.mjs \
             --current backend-results.json --current screens-results.json \
-            --previous previous/backend-results.json --previous previous/screens-results.json
+            --history previous
 
       - name: Keep the results
         if: always()
