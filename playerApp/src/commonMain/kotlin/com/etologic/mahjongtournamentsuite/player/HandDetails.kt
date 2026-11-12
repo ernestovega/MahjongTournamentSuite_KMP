@@ -36,7 +36,6 @@ import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
@@ -114,18 +113,20 @@ private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> 
     val rows = mutableListOf<DetailRow>()
     val totals = MutableList(4) { 0 }
     table.hands.sortedBy { it.handId }.forEach { hand ->
-        // The penalties were given before the result of the hand, so they come first.
-        hand.penaltyRows().forEach { values ->
+        val penalties = hand.penaltyRows()
+        if (hand.isDone) {
+            val change = hand.resultChange(seatIds)
+            val winnerSeat = seatIds.indexOf(hand.playerWinnerId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
+            val loserSeat = seatIds.indexOf(hand.playerLooserId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
+            rows += DetailRow.Result(hand, change, winnerSeat, loserSeat)
+            change?.forEachIndexed { seat, value -> totals[seat] += value }
+        }
+        // The penalties of a hand go under its result and above its subtotal, which counts them.
+        penalties.forEach { values ->
             rows += DetailRow.Penalty(hand.handId, values, counted = hand.isDone)
             if (hand.isDone) values.forEachIndexed { seat, value -> totals[seat] += value }
         }
-        if (!hand.isDone) return@forEach
-        val change = hand.resultChange(seatIds)
-        val winnerSeat = seatIds.indexOf(hand.playerWinnerId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
-        val loserSeat = seatIds.indexOf(hand.playerLooserId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
-        rows += DetailRow.Result(hand, change, winnerSeat, loserSeat)
-        change?.forEachIndexed { seat, value -> totals[seat] += value }
-        rows += DetailRow.Subtotal(totals.toList())
+        if (hand.isDone) rows += DetailRow.Subtotal(totals.toList())
     }
     return rows
 }
@@ -248,8 +249,7 @@ private fun ResultLine(row: DetailRow.Result) {
     val bodyStyle = MaterialTheme.typography.bodyMedium
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(HAND_WEIGHT), horizontalAlignment = Alignment.CenterHorizontally) {
-            HandLabel(hand.handId)
-            Text("#${hand.handId}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("#${hand.handId}", style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
         }
         Text(hand.playerWinnerId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
         Text(hand.playerLooserId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)

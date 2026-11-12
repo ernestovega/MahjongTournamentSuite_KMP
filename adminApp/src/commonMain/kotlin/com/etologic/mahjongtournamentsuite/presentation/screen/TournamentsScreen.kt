@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -90,9 +89,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfilePhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -101,6 +100,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsSco
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
+import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusOnOpen
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPlayerApp
@@ -255,8 +255,12 @@ fun TournamentsScreen(
         tournaments.map { FocusRequester() }
     }
 
-    LaunchedEffect(isRefreshing, tournaments.map { it.id }) {
-        if (!tournamentFocusApplied && !isRefreshing) {
+    val tournamentIds = tournaments.map { it.id }
+    LaunchedEffect(isRefreshing, tournamentIds) {
+        // The refresh can end one frame before the new list reaches this composition. That run still holds the old
+        // list and its focus requesters, so it waits, and the next run, with the new list, places the focus.
+        val listIsCurrent = store.tournaments.value.map { it.id } == tournamentIds
+        if (!tournamentFocusApplied && !isRefreshing && listIsCurrent) {
             withFrameNanos { }
             when (lastFocusedControl) {
                 "player-base" -> playerBaseFocusRequester.requestFocusIfAttached()
@@ -273,7 +277,7 @@ fun TournamentsScreen(
                 else -> {
                     if (tournamentFocusRequesters.isNotEmpty()) {
                         val index = tournaments.indexOfFirst { it.id == lastFocusedTournamentId }.coerceAtLeast(0)
-                        tournamentFocusRequesters.getOrNull(index)?.requestFocus()
+                        tournamentFocusRequesters.getOrNull(index)?.requestFocusOnOpen()
                     } else {
                         usersFocusRequester.requestFocusIfAttached()
                     }
@@ -467,12 +471,10 @@ fun TournamentsScreen(
                                             tableContent(Modifier.width(baseMinWidth))
                                         }
 
-                                        PlatformVerticalScrollbar(
-                                            listState = listState,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterEnd)
-                                                .fillMaxHeight()
-                                                .width(12.dp),
+                                        // The same draggable scrollbar on every platform, also for a finger.
+                                        DraggableScrollbar(
+                                            state = listState,
+                                            modifier = Modifier.align(Alignment.CenterEnd),
                                         )
 
                                         PlatformHorizontalScrollbar(
@@ -485,14 +487,13 @@ fun TournamentsScreen(
                                     }
                                 } else {
                                     Box(modifier = Modifier.fillMaxWidth()) {
-                                        tableContent(Modifier.fillMaxWidth())
+                                        // The rows end before the scrollbar strip, so the scrollbar does not cover the edit button.
+                                        tableContent(Modifier.fillMaxWidth().padding(end = 20.dp))
 
-                                        PlatformVerticalScrollbar(
-                                            listState = listState,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterEnd)
-                                                .fillMaxHeight()
-                                                .width(12.dp),
+                                        // The same draggable scrollbar on every platform, also for a finger.
+                                        DraggableScrollbar(
+                                            state = listState,
+                                            modifier = Modifier.align(Alignment.CenterEnd),
                                         )
                                     }
                                 }

@@ -72,6 +72,8 @@ export type Tournament = {
   isCompleted: boolean;
   /** Everyone sees a public tournament without signing in. An admin hides test tournaments. Old documents are public. */
   isPublic: boolean;
+  /** The player app shows the differences button on the table screen. Old documents show it. */
+  showTableDiffs: boolean;
   createdByUid: string | null;
   createdByName: string | null;
   createdAt: string | null;
@@ -153,6 +155,7 @@ async function mapTournamentDoc(d: FirebaseFirestore.DocumentSnapshot): Promise<
     numTries: (d.get("numTries") as number) ?? 0,
     isCompleted: (d.get("isCompleted") as boolean) ?? false,
     isPublic: d.get("isPublic") !== false,
+    showTableDiffs: d.get("showTableDiffs") !== false,
     createdByUid,
     createdByName,
     createdAt: toIsoString(d.get("createdAt")),
@@ -505,6 +508,7 @@ export async function updateTournamentSettings(params: {
   countBestHands?: boolean;
   countChickenHands?: boolean;
   isPublic?: boolean;
+  showTableDiffs?: boolean;
   associationLogoContentType?: string | null;
   associationLogoDataBase64?: string | null;
   associationLogoSourceTournamentId?: string | null;
@@ -576,6 +580,7 @@ export async function updateTournamentSettings(params: {
   if (params.countBestHands !== undefined) update.countBestHands = params.countBestHands;
   if (params.countChickenHands !== undefined) update.countChickenHands = params.countChickenHands;
   if (params.isPublic !== undefined) update.isPublic = params.isPublic;
+  if (params.showTableDiffs !== undefined) update.showTableDiffs = params.showTableDiffs;
   if (logo !== undefined) {
     update.associationLogoPath = logo?.path ?? null;
     update.associationLogoUrl = logo?.url ?? null;

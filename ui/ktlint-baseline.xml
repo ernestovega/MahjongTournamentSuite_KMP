@@ -443,7 +443,7 @@
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TableSeatsUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="12" column="1" source="standard:no-unused-imports" />
-        <error line="107" column="100" source="standard:function-signature" />
+        <error line="124" column="100" source="standard:function-signature" />
     </file>
     <file name="src/jvmTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TooltipLayoutUiTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />

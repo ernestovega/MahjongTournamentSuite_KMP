@@ -61,6 +61,8 @@ interface TournamentRepository {
         timeZone: String? = null,
         /** Null keeps the stored value. */
         isPublic: Boolean? = null,
+        /** Null keeps the stored value. */
+        showTableDiffs: Boolean? = null,
     ): AppResult<Tournament>
 
     /** Creates the ID cards PDF. Without a sheet layout, the PDF has one card side on each page. */
@@ -189,6 +191,16 @@ interface TournamentRepository {
     ): AppResult<Pair<TableState, List<TableHand>>>
 
     /**
+     * Empties a table on the server: the seat assignments, the scores and every hand. Only admins can do it, and the
+     * server records it in the change log. It returns the empty table as the server holds it now.
+     */
+    suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Pair<TableState, List<TableHand>>> = AppResult.Failure(AppError.Unexpected("Reset is not supported"))
+
+    /**
      * Asks the backend for the current table versions. It always makes a request, and it costs one
      * remote read. Other cached requests of the tournament reuse the answer for a short time.
      */
@@ -202,12 +214,10 @@ interface TournamentRepository {
     suspend fun prefetchRevisions(tournamentId: String) {}
 
     /** The clocks of the rounds, read fresh from the server. The tournament list can be a minute old. */
-    suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> =
-        AppResult.Failure(AppError.Unexpected("The round clocks are not available"))
+    suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> = AppResult.Failure(AppError.Unexpected("The round clocks are not available"))
 
     /** Play, Pause, Resume, Reset or "Set time" of the Timer. A reset of a round with hands fails with [AppError.Conflict]. */
-    suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> =
-        AppResult.Failure(AppError.Unexpected("The round clocks are not available"))
+    suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> = AppResult.Failure(AppError.Unexpected("The round clocks are not available"))
 
     /** The tournaments where the signed-in account plays, with its slot and team. Empty without an account. */
     suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = AppResult.Success(emptyList())

@@ -679,6 +679,8 @@
     <string name="errors_load_more_reports">Cargar más informes</string>
     <string name="public_tournament">Torneo público</string>
     <string name="public_tournament_description">Cualquiera puede ver el torneo, sus resultados y sus estadísticas sin cuenta. Desactívalo en un torneo de prueba: solo lo verá su equipo organizador.</string>
+    <string name="show_table_diffs">Diferencias en las mesas</string>
+    <string name="show_table_diffs_description">Los jugadores ven el botón que muestra las diferencias en la pantalla de la mesa. La app de jugadores recibe el cambio en un minuto como mucho, sin publicar una versión nueva.</string>
     <string name="player_hidden_from_public">Ocultar al público</string>
     <string name="player_hidden_from_public_description">Si la persona lo pide: sin cuenta, los torneos muestran el número de plaza en lugar del nombre, y no hay ficha ni estadísticas públicas.</string>
     <string name="app_activity">Actividad</string>
@@ -745,8 +747,14 @@
     <string name="timer_reset_confirm">Reiniciar</string>
     <string name="activity_action_round_clock">Reloj de ronda cambiado</string>
     <string name="activity_origin_all">Todos los orígenes</string>
-    <string name="activity_period_from">Desde: %1$s</string>
-    <string name="activity_period_to">Hasta: %1$s</string>
-    <string name="activity_period_any">cualquier fecha</string>
     <string name="activity_period_clear">Quitar fechas</string>
+    <string name="reset_table">Vaciar mesa</string>
+    <string name="reset_table_confirm_title">¿Vaciar la ronda %1$d · mesa %2$d?</string>
+    <string name="reset_table_confirm_text">Se borran las asignaciones de asientos, las puntuaciones y todas las manos de esta mesa. Los jugadores de la mesa se mantienen, así que puedes volver a sentarlos. Los cambios sin guardar de esta mesa se pierden. El cambio queda registrado en la actividad.</string>
+    <string name="activity_filter_kind">Tipo</string>
+    <string name="activity_filter_origin">Origen</string>
+    <string name="activity_filter_period">Periodo</string>
+    <string name="activity_filter_person">Persona</string>
+    <string name="activity_period_from_short">Desde</string>
+    <string name="activity_period_to_short">Hasta</string>
 </resources>

@@ -92,7 +92,7 @@
     <string name="table_hand_progress">Mano\n%1$d/%2$d</string>
     <string name="stat_hands">Mani</string>
     <string name="table_details">Dettagli</string>
-    <string name="hand_penalty">Penalità</string>
+    <string name="hand_penalty">Penal.</string>
     <string name="hand_self_pick">Dal muro</string>
     <string name="hand_discard">Scarto</string>
     <string name="hand_draw">Patta</string>
@@ -167,13 +167,13 @@
     <string name="table_sign_in_to_enter_hands">Accedi per segnare le mani del tuo tavolo</string>
     <string name="filter_search">Cerca per nome, città o sede</string>
     <string name="filter_country">Paese</string>
-    <string name="filter_all_countries">Tutti i paesi</string>
+    <string name="filter_all_countries">Tutti</string>
     <string name="filter_year">Anno</string>
-    <string name="filter_all_years">Tutti gli anni</string>
+    <string name="filter_all_years">Tutti</string>
     <string name="filter_clear">Rimuovi filtri</string>
     <string name="privacy_public_notice">Tornei, risultati e statistiche sono pubblici. Mostrano nome, paese e numero EMA di ogni giocatore, mai email né foto. Se non vuoi comparire, chiedilo all\'organizzazione: verrai mostrato solo come un numero.</string>
     <string name="filter_status">Stato</string>
-    <string name="filter_all_statuses">Tutti gli stati</string>
+    <string name="filter_all_statuses">Tutti</string>
     <string name="sign_in_needed_title">Accedi per vedere i tuoi</string>
     <string name="tables_me_sign_in">Accedi per vedere i tuoi tavoli in questo torneo. Tutti i tavoli sono nella scheda Tutti.</string>
     <string name="tables_team_sign_in">Accedi per vedere i tavoli della tua squadra. Tutti i tavoli sono nella scheda Tutti.</string>
@@ -189,8 +189,9 @@
     <string name="round_clock_over">Il tempo di gioco è finito.</string>
     <string name="filter_table_search">N. tavolo o giocatore</string>
     <string name="filter_round">Turno</string>
-    <string name="filter_all_rounds">Tutti i turni</string>
+    <string name="filter_all_rounds">Tutti</string>
     <string name="table_status_not_started">Non iniziato</string>
     <string name="table_status_playing">In corso</string>
     <string name="tables_no_match">Nessun tavolo corrisponde ai filtri</string>
+    <string name="filter_search_label">Cerca</string>
 </resources>

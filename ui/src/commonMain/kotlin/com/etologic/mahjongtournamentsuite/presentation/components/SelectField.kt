@@ -38,6 +38,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.graphicsLayer
@@ -85,6 +87,8 @@ class SelectOption<out K>(
     val searchText: String = "",
     val leadingIcon: (@Composable () -> Unit)? = null,
     val trailingIcon: (@Composable () -> Unit)? = null,
+    /** The color of [label] in the menu. Unspecified keeps the color of the menu. */
+    val color: Color = Color.Unspecified,
 )
 
 /** The menus show a search field as first item when they have more options than this. */
@@ -296,7 +300,8 @@ private fun ExposedDropdownMenuBoxScope.SelectFieldBox(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val focus = remember { FocusRequester() }
-    val textColor = MaterialTheme.colorScheme.onSurface.let { if (enabled) it else it.copy(alpha = DISABLED_ALPHA) }
+    // A color in the text style wins, for example the color of a status. The default is the color of the surface.
+    val textColor = textStyle.color.takeOrElse { MaterialTheme.colorScheme.onSurface }.let { if (enabled) it else it.copy(alpha = DISABLED_ALPHA) }
     Box(
         modifier = Modifier
             .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = canOpen)
@@ -404,7 +409,7 @@ private fun <K> ColumnScope.SelectMenuItems(
     }
     shown.forEach { option ->
         DropdownMenuItem(
-            text = { if (fontFamily == null) Text(option.label) else Text(option.label, fontFamily = fontFamily) },
+            text = { Text(option.label, color = option.color, fontFamily = fontFamily) },
             leadingIcon = option.leadingIcon,
             trailingIcon = option.trailingIcon,
             enabled = option.enabled,

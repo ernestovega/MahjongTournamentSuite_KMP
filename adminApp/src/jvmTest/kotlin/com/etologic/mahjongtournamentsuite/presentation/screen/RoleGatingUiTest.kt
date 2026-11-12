@@ -15,6 +15,9 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.isFocused
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.assertIsOff
 import androidx.compose.ui.test.assertIsOn
@@ -109,6 +112,21 @@ class RoleGatingUiTest {
     }
 
     // ---------------------------------------------------------------- tournament list
+
+    @Test
+    fun enteringTheTournamentListFocusesTheFirstTournament() = runComposeUiTest {
+        val world = World(GlobalUserRole.ADMIN, emptyList()).apply {
+            server.tournaments = listOf(
+                Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1),
+                Tournament(id = "t2", name = "Cup", isTeams = false, numPlayers = 8, numRounds = 1),
+            )
+        }
+        show(world) { TournamentsScreen(rememberNavController()) }
+        awaitText("Cup")
+
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(isFocused()).fetchSemanticsNodes().isNotEmpty() }
+        onNode(isFocused()).assert(hasAnyDescendant(hasText("Open")) or hasText("Open"))
+    }
 
     @Test
     fun adminSeesCreateEditAndUserManagementOnTheTournamentList() = runComposeUiTest {

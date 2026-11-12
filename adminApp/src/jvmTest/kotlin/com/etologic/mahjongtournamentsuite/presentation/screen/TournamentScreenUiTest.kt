@@ -5,10 +5,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasSetTextAction
+import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsFocused
+import androidx.compose.ui.test.assertIsNotDisplayed
+import androidx.compose.ui.test.isFocused
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onLast
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
@@ -28,6 +34,9 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRan
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
+import com.etologic.mahjongtournamentsuite.presentation.platform.LocalScrollPositionStore
+import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionStore
+import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.sync.ActivityTracker
 import com.etologic.mahjongtournamentsuite.presentation.sync.PollSchedule
@@ -57,12 +66,18 @@ import kotlin.test.BeforeTest
  * and the test clock of the activity tracker moves with it.
  */
 @OptIn(ExperimentalTestApi::class)
-private class ScreenHarness(private val role: GlobalUserRole? = null) {
+private class ScreenHarness(
+    private val role: GlobalUserRole? = null,
+    tableCount: Int = 2,
+    /** The table saved from an earlier visit, restored as after a page refresh. */
+    private val savedTableId: Int? = null,
+    /** Tables that take only the final scores, without hands. */
+    useTotalsOnly: Boolean = false,
+) {
     val server = FakeTournamentRepository().apply {
         tournaments = listOf(Tournament(id = "t1", name = "Open", isTeams = false, numPlayers = 8, numRounds = 1))
         players = (1..8).map { TournamentPlayer(id = it, name = "Player $it", team = 0) }
-        seed(syncTable(version = 1, roundId = 1, tableId = 1))
-        seed(syncTable(version = 1, roundId = 1, tableId = 2))
+        (1..tableCount).forEach { seed(syncTable(version = 1, roundId = 1, tableId = it, useTotalsOnly = useTotalsOnly)) }
     }
     val clock = TestTimeSource()
     val activity = ActivityTracker(clock)
@@ -99,8 +114,24 @@ private class ScreenHarness(private val role: GlobalUserRole? = null) {
                     )
                 }.koin
             }
+            val scrollPositions = remember {
+                savedTableId?.let { tableId ->
+                    ScrollPositionStore(
+                        object : SessionStateStorage {
+                            private val saved = mutableMapOf("scrollPositions" to "1,0,/value:round\n$tableId,0,/value:table")
+                            override fun read(name: String) = saved[name]
+                            override fun write(name: String, value: String) {
+                                saved[name] = value
+                            }
+                        },
+                    )
+                }
+            }
             KoinContext(koin) {
-                CompositionLocalProvider(LocalThemeController provides themeController) {
+                CompositionLocalProvider(
+                    LocalThemeController provides themeController,
+                    LocalScrollPositionStore provides scrollPositions,
+                ) {
                     MtsTheme(useDarkTheme = false) {
                         TournamentScreen(
                             navController = rememberNavController(),
@@ -126,9 +157,10 @@ private class ScreenHarness(private val role: GlobalUserRole? = null) {
         waitForIdle()
     }
 
-    fun ComposeUiTest.loadScreen() {
+    fun ComposeUiTest.loadScreen(tableId: Int = 1) {
         show()
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Round 1 • Table 1").fetchSemanticsNodes().isNotEmpty() }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Round 1 • Table $tableId").fetchSemanticsNodes().isNotEmpty() }
+        waitForIdle()
     }
 }
 
@@ -148,6 +180,48 @@ class TournamentScreenUiTest {
             loadScreen()
 
             onNodeWithText("Round 1 • Table 1").assertExistsOnScreen()
+        }
+    }
+
+    @Test
+    fun enteringWithASavedTableScrollsTheTableStripToIt() = runComposeUiTest {
+        // Far more tables than fit in the strip, so the saved one starts out of view.
+        with(ScreenHarness(tableCount = 40, savedTableId = 38)) {
+            loadScreen(tableId = 38)
+
+            onNodeWithTag("table-chip-38").assertIsDisplayed()
+            assertNotOnScreen("table-chip-1")
+        }
+    }
+
+    @Test
+    fun enteringWithoutASavedTableShowsTheStripFromTheStart() = runComposeUiTest {
+        with(ScreenHarness(tableCount = 40)) {
+            loadScreen()
+
+            onNodeWithTag("table-chip-1").assertIsDisplayed()
+            assertNotOnScreen("table-chip-38")
+        }
+    }
+
+    @Test
+    fun enteringATotalsOnlyTableGivesTheFirstScoreFieldTheFocus() = runComposeUiTest {
+        with(ScreenHarness(useTotalsOnly = true)) {
+            loadScreen()
+
+            waitUntil(timeoutMillis = 5_000) { onAllNodes(isFocused()).fetchSemanticsNodes().isNotEmpty() }
+            onNode(isFocused()).assert(hasSetTextAction())
+            onAllNodes(hasSetTextAction())[0].assertIsFocused()
+        }
+    }
+
+    @Test
+    fun enteringWithASavedTotalsOnlyTableGivesItsFirstScoreFieldTheFocus() = runComposeUiTest {
+        with(ScreenHarness(tableCount = 40, savedTableId = 38, useTotalsOnly = true)) {
+            loadScreen(tableId = 38)
+
+            waitUntil(timeoutMillis = 5_000) { onAllNodes(isFocused()).fetchSemanticsNodes().isNotEmpty() }
+            onAllNodes(hasSetTextAction())[0].assertIsFocused()
         }
     }
 
@@ -486,6 +560,12 @@ class TournamentScreenUiTest {
             assertTrue(server.calls.none { it == "all FORCE" })
         }
     }
+}
+
+/** A lazy list does not compose the items out of view, so a chip out of view may not exist at all. */
+@OptIn(ExperimentalTestApi::class)
+private fun ComposeUiTest.assertNotOnScreen(tag: String) {
+    if (onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty()) onNodeWithTag(tag).assertIsNotDisplayed()
 }
 
 private fun androidx.compose.ui.test.SemanticsNodeInteraction.assertExistsOnScreen() = assertExists()

@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
@@ -12,6 +13,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -63,6 +65,20 @@ class TableListUiTest {
     fun aLongListHasAScrollbar() = runComposeUiTest {
         show()
         onNodeWithTag(DRAGGABLE_SCROLLBAR_TAG).assertIsDisplayed()
+    }
+
+    @Test
+    fun draggingTheThumbGoesThroughTheWholeTournament() = runComposeUiTest {
+        show()
+        // Rounds and cards have different heights, so the thumb must keep its size and the drag must not stop halfway.
+        onNodeWithTag(DRAGGABLE_SCROLLBAR_TAG).performTouchInput {
+            down(center)
+            repeat(40) { moveBy(Offset(0f, 25f)) }
+            up()
+        }
+        waitForIdle()
+        onNodeWithText("Round 6").assertIsDisplayed()
+        onNodeWithText("Table 10").assertIsDisplayed()
     }
 
     @Test

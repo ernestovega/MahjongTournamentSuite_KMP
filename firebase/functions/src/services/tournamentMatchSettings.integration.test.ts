@@ -49,6 +49,20 @@ async function badRequest(promise: Promise<unknown>): Promise<void> {
 describe("tournament match settings", () => {
   before(requireEmulator);
 
+  it("shows the table differences until an edit hides them, and keeps the choice on later edits", async () => {
+    const tournament = await createTournament(createRequest());
+    assert.equal(tournament.showTableDiffs, true);
+
+    const hidden = await updateTournamentSettings(updateRequest(tournament.id, { showTableDiffs: false }));
+    assert.equal(hidden.showTableDiffs, false);
+
+    const kept = await updateTournamentSettings(updateRequest(tournament.id));
+    assert.equal(kept.showTableDiffs, false);
+
+    const shown = await updateTournamentSettings(updateRequest(tournament.id, { showTableDiffs: true }));
+    assert.equal(shown.showTableDiffs, true);
+  });
+
   it("uses the defaults when the request has no match settings", async () => {
     const tournament = await createTournament(createRequest());
 

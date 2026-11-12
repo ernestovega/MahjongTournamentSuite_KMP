@@ -679,6 +679,8 @@
     <string name="errors_load_more_reports">Charger plus de rapports</string>
     <string name="public_tournament">Tournoi public</string>
     <string name="public_tournament_description">Tout le monde peut voir le tournoi, ses résultats et ses statistiques sans compte. Désactivez-le pour un tournoi de test : seule son équipe le verra.</string>
+    <string name="show_table_diffs">Différences aux tables</string>
+    <string name="show_table_diffs_description">Les joueurs voient le bouton qui affiche les différences sur l\'écran de la table. L\'app des joueurs reçoit le changement en une minute environ, sans nouvelle version.</string>
     <string name="player_hidden_from_public">Masquer au public</string>
     <string name="player_hidden_from_public_description">À la demande de la personne : sans compte, les tournois affichent le numéro de place au lieu du nom, et il n\'y a ni fiche ni statistiques publiques.</string>
     <string name="app_activity">Activité</string>
@@ -745,8 +747,14 @@
     <string name="timer_reset_confirm">Réinitialiser</string>
     <string name="activity_action_round_clock">Horloge du tour modifiée</string>
     <string name="activity_origin_all">Toutes les origines</string>
-    <string name="activity_period_from">Du : %1$s</string>
-    <string name="activity_period_to">Jusqu\'au : %1$s</string>
-    <string name="activity_period_any">toute date</string>
     <string name="activity_period_clear">Effacer les dates</string>
+    <string name="reset_table">Vider la table</string>
+    <string name="reset_table_confirm_title">Vider le tour %1$d · table %2$d ?</string>
+    <string name="reset_table_confirm_text">Cela supprime l’attribution des places, les scores et toutes les mains de cette table. Les joueurs de la table restent, vous pouvez donc les placer à nouveau. Les modifications non enregistrées de cette table sont perdues. Le changement est enregistré dans l’activité.</string>
+    <string name="activity_filter_kind">Type</string>
+    <string name="activity_filter_origin">Origine</string>
+    <string name="activity_filter_period">Période</string>
+    <string name="activity_filter_person">Personne</string>
+    <string name="activity_period_from_short">Du</string>
+    <string name="activity_period_to_short">Jusqu\'au</string>
 </resources>

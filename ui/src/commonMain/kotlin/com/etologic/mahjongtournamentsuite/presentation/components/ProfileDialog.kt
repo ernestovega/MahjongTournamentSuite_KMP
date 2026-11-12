@@ -81,7 +81,7 @@ fun ProfileDialog(
     val trimmedAlias = alias.trim()
     val canSave = !saving && trimmedAlias.isNotEmpty() && trimmedAlias != profile.alias.trim()
 
-    LaunchedEffect(Unit) { aliasFocusRequester.requestFocus() }
+    LaunchedEffect(Unit) { aliasFocusRequester.requestFocusOnOpen() }
 
     // The function reads the state when it runs. A callback that captured older values could save a stale alias.
     fun save() {

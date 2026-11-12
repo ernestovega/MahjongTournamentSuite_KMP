@@ -73,7 +73,7 @@ fun SupportForm(
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
 
     LaunchedEffect(Unit) {
-        if (email.isEmpty()) emailRequester.requestFocus() else messageRequester.requestFocus()
+        if (email.isEmpty()) emailRequester.requestFocusOnOpen() else messageRequester.requestFocusOnOpen()
     }
 
     fun submit() {

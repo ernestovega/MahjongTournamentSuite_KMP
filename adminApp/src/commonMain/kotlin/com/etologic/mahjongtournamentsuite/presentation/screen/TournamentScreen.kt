@@ -150,6 +150,8 @@ fun TournamentScreen(
     var tableEditors by sync::tableEditors
     var playerNamesById by sync::playerNamesById
     var pendingAction by remember { mutableStateOf<RoundEditorAction?>(null) }
+    // The table the admin asked to empty. A dialog asks before the server clears it.
+    var tableToReset by remember { mutableStateOf<Int?>(null) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
 
@@ -411,6 +413,20 @@ fun TournamentScreen(
             saveFocusRequester.requestFocus()
         }
     }
+    tableToReset?.let { tableId ->
+        ResetTableDialog(
+            roundId = selectedRoundId ?: 0,
+            tableId = tableId,
+            busy = isLoading,
+            onConfirm = {
+                scope.launch {
+                    sync.resetTable(tableId)
+                    tableToReset = null
+                }
+            },
+            onDismiss = { tableToReset = null },
+        )
+    }
     if (sync.updateNotices.isNotEmpty()) {
         TableUpdatesDialog(notices = sync.updateNotices, onDismiss = sync::dismissNotices)
     }
@@ -506,6 +522,8 @@ fun TournamentScreen(
             onSelectTable = { requestAction(RoundEditorAction.SelectTable(it)) },
             onSave = { requestSave(tableIds = listOf(it)) },
             onSaveAndNext = { requestSave(RoundEditorAction.NextTable(it), listOf(it)) },
+            canResetTable = adminStatus?.isAdmin == true,
+            onResetTable = { if (!isLoading) tableToReset = it },
         )
         }
         }

@@ -29,6 +29,9 @@ import kotlin.test.assertTrue
 class TournamentFilterBarUiTest {
     private var filter by mutableStateOf(TournamentFilter())
 
+    /** A text button on a wide screen, an icon on a phone. */
+    private val clearButton = hasText("Clear filters") or hasContentDescription("Clear filters")
+
     private val tournaments = listOf(
         Tournament(id = "a", name = "Madrid Open", isTeams = false, numPlayers = 16, numRounds = 4, hostCountry = "ESP", eventStartDate = "2026-05-01"),
         Tournament(id = "b", name = "Copa Equipos", isTeams = true, numPlayers = 16, numRounds = 4, hostCountry = "ITA", eventStartDate = "2025-03-01"),
@@ -71,23 +74,23 @@ class TournamentFilterBarUiTest {
     @Test
     fun theStatusCountryAndYearAreDropdownsInOneRowAndClearResetsEverything() = runComposeUiTest {
         show(signedIn = false)
-        onNodeWithText("Clear filters").assertDoesNotExist()
-        val status = onNodeWithText("All statuses").fetchSemanticsNode().boundsInRoot
-        val country = onNodeWithText("All countries").fetchSemanticsNode().boundsInRoot
-        val year = onNodeWithText("All years").fetchSemanticsNode().boundsInRoot
+        onNode(clearButton).assertDoesNotExist()
+        val status = onNodeWithText("Status").fetchSemanticsNode().boundsInRoot
+        val country = onNodeWithText("Country").fetchSemanticsNode().boundsInRoot
+        val year = onNodeWithText("Year").fetchSemanticsNode().boundsInRoot
         assertTrue(status.right <= country.left && country.right <= year.left, "status, country, year")
         assertEquals(status.top, country.top, "the same row")
         assertEquals(country.top, year.top, "the same row")
-        pick("All statuses", "Finished")
-        pick("All countries", "ITA")
-        pick("All years", "2025")
+        pick("Status", "Finished")
+        pick("Country", "ITA")
+        pick("Year", "2025")
         assertEquals(TournamentStatus.FINISHED, filter.status)
         assertEquals("ITA", filter.country)
         assertEquals(2025, filter.year)
-        onNodeWithText("Clear filters").performClick()
+        onNode(clearButton).performClick()
         waitForIdle()
         assertEquals(TournamentFilter(), filter)
-        onNodeWithText("Clear filters").assertDoesNotExist()
+        onNode(clearButton).assertDoesNotExist()
     }
 
     @Test
@@ -96,8 +99,21 @@ class TournamentFilterBarUiTest {
         onNode(hasSetTextAction()).performTextInput("madrid")
         waitForIdle()
         assertEquals("madrid", filter.query)
-        onNode(hasContentDescription("Clear filters")).performClick()
+        onNode(clearButton).performClick()
         waitForIdle()
         assertEquals("", filter.query)
+    }
+
+    @Test
+    fun myTournamentsAndClearAreOnTheRowOfTheSearchField() = runComposeUiTest {
+        show(signedIn = true)
+        filter = TournamentFilter(query = "madrid")
+        waitForIdle()
+        val search = onNode(hasSetTextAction()).fetchSemanticsNode().boundsInRoot
+        val mine = onNodeWithText("My tournaments").fetchSemanticsNode().boundsInRoot
+        val clear = onNode(clearButton).fetchSemanticsNode().boundsInRoot
+        assertTrue(search.right <= mine.left && mine.right <= clear.left, "search, my tournaments, clear")
+        assertTrue(mine.top < search.bottom && mine.bottom > search.top, "my tournaments on the search row")
+        assertTrue(clear.top < search.bottom && clear.bottom > search.top, "clear on the search row")
     }
 }

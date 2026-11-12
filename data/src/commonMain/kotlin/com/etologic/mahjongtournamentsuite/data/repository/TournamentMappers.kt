@@ -59,6 +59,7 @@ internal fun TournamentDto.toDomain(): Tournament = Tournament(
     numTries = numTries,
     isCompleted = isCompleted,
     isPublic = isPublic,
+    showTableDiffs = showTableDiffs,
     createdByUid = createdByUid.normalizedOrNull(),
     createdByName = createdByName.normalizedOrNull(),
     createdAt = createdAt.normalizedOrNull(),

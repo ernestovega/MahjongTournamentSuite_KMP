@@ -126,4 +126,22 @@ class TooltipLayoutUiTest {
         mainClock.advanceTimeBy(1_000)
         assertTrue(onAllNodesWithText("Short info").fetchSemanticsNodes().isEmpty(), "The tooltip stays after the finger lifts")
     }
+
+    /** The mouse shows the tooltip while it is over the icon, and moving it away hides it. */
+    @Test
+    fun mouseExitHidesTheTooltip() = runDesktopComposeUiTest(320, 568) {
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Box(Modifier.fillMaxSize()) { Box(Modifier.align(Alignment.Center)) { InfoTip("Short info") } }
+            }
+        }
+        onNodeWithContentDescription("More information").performMouseInput { moveTo(center) }
+        mainClock.advanceTimeBy(1_000)
+        waitForIdle()
+        assertTrue(onAllNodesWithText("Short info").fetchSemanticsNodes().isNotEmpty(), "The tooltip does not show on hover")
+        onNodeWithContentDescription("More information").performMouseInput { moveTo(androidx.compose.ui.geometry.Offset(-200f, -200f)) }
+        mainClock.advanceTimeBy(1_000)
+        waitForIdle()
+        assertTrue(onAllNodesWithText("Short info").fetchSemanticsNodes().isEmpty(), "The tooltip stays after the mouse leaves")
+    }
 }

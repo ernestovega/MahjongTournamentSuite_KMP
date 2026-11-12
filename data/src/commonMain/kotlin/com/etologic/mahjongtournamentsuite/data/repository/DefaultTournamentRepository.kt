@@ -206,6 +206,7 @@ class DefaultTournamentRepository(
         matchExtraMinutes: Int?,
         timeZone: String?,
         isPublic: Boolean?,
+        showTableDiffs: Boolean?,
     ): AppResult<Tournament> = runCatching {
         withFreshIdToken { idToken ->
             val dto = backendApi.updateTournamentSettings(
@@ -236,6 +237,7 @@ class DefaultTournamentRepository(
                     matchExtraMinutes = matchExtraMinutes,
                     timeZone = timeZone?.trim(),
                     isPublic = isPublic,
+                    showTableDiffs = showTableDiffs,
                 ),
             )
             val tournament = dto.toDomain()
@@ -758,6 +760,27 @@ class DefaultTournamentRepository(
                 error.currentTable?.let { tableStore.put(tournamentId, it, error.currentHands) }
             }
             AppResult.Failure(error)
+        },
+    )
+
+    override suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Pair<TableState, List<TableHand>>> = runCatching {
+        withFreshIdToken { idToken ->
+            val dto = backendApi.resetTable(idToken = idToken, tournamentId = tournamentId, roundId = roundId, tableId = tableId)
+            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
+            dto.toDomain()
+        }
+    }.fold(
+        onSuccess = { reset ->
+            tableStore.put(tournamentId, reset.first, reset.second)
+            AppResult.Success(reset)
+        },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Resetting table failed." }
+            AppResult.Failure(throwable.toAppError())
         },
     )
 

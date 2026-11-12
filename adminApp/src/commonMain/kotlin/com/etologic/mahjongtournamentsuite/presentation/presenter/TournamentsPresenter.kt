@@ -76,6 +76,7 @@ class TournamentsPresenter(
         matchExtraMinutes: Int? = null,
         timeZone: String? = null,
         isPublic: Boolean? = null,
+        showTableDiffs: Boolean? = null,
     ): AppResult<Tournament> = tournamentRepository.updateTournamentSettings(
         tournamentId = tournamentId,
         name = name,
@@ -99,6 +100,7 @@ class TournamentsPresenter(
         matchExtraMinutes = matchExtraMinutes,
         timeZone = timeZone,
         isPublic = isPublic,
+        showTableDiffs = showTableDiffs,
     ).trackAction(telemetry, TelemetryAction.TOURNAMENT_SETTINGS_UPDATED)
 
     suspend fun signOut() = authRepository.signOut()

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -108,7 +109,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
@@ -473,37 +473,42 @@ fun TournamentsScreen(navController: NavHostController) {
                         // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
                         else -> {
                             val shown = list.filter { filter.accepts(it, statusOf(it), mine) }.sortedForList(::statusOf)
-                            LazyColumn(
-                                state = rememberPersistentLazyListState("tournaments"),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-                            ) {
-                                item(key = "filters") {
-                                    TournamentFilterBar(
-                                        filter = filter,
-                                        onChange = { filterText = it.encode() },
-                                        tournaments = list,
-                                        signedIn = signedIn,
-                                    )
-                                }
-                                if (shown.isEmpty()) {
-                                    item(key = "no-match") {
-                                        EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_no_match), "")
+                            val listState = rememberPersistentLazyListState("tournaments")
+                            Box(Modifier.weight(1f)) {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                                ) {
+                                    item(key = "filters") {
+                                        TournamentFilterBar(
+                                            filter = filter,
+                                            onChange = { filterText = it.encode() },
+                                            tournaments = list,
+                                            signedIn = signedIn,
+                                        )
+                                    }
+                                    if (shown.isEmpty()) {
+                                        item(key = "no-match") {
+                                            EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_no_match), "")
+                                        }
+                                    }
+                                    items(shown, key = { it.id }) { tournament ->
+                                        TournamentCard(tournament, standings[tournament.id], mine = tournament.id in mine) {
+                                            navController.navigate(TournamentRoute(tournament.id))
+                                        }
+                                    }
+                                    item(key = "privacy") {
+                                        Text(
+                                            text = stringResource(Res.string.privacy_public_notice),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                                        )
                                     }
                                 }
-                                items(shown, key = { it.id }) { tournament ->
-                                    TournamentCard(tournament, standings[tournament.id], mine = tournament.id in mine) {
-                                        navController.navigate(TournamentRoute(tournament.id))
-                                    }
-                                }
-                                item(key = "privacy") {
-                                    Text(
-                                        text = stringResource(Res.string.privacy_public_notice),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                                    )
-                                }
+                                DraggableScrollbar(listState, Modifier.align(Alignment.CenterEnd))
                             }
                         }
                     }
@@ -587,13 +592,17 @@ private fun upcomingBlue(): Color = if (MaterialTheme.colorScheme.surface.lumina
 @Composable
 private fun onUpcomingBlue(): Color = if (upcomingBlue().luminance() > 0.4f) Color.Black else Color.White
 
+/** The color of a tournament status, in the chips of the cards and in the status filter. */
+@Composable
+internal fun statusColor(status: TournamentStatus): Color = when (status) {
+    TournamentStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
+    TournamentStatus.UPCOMING -> upcomingBlue()
+    TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
+}
+
 @Composable
 private fun StatusChip(status: TournamentStatus) {
-    val color = when (status) {
-        TournamentStatus.IN_PROGRESS -> MaterialTheme.colorScheme.tertiary
-        TournamentStatus.UPCOMING -> upcomingBlue()
-        TournamentStatus.FINISHED -> MaterialTheme.colorScheme.secondary
-    }
+    val color = statusColor(status)
     OutlinedTag(color) {
         Text(stringResource(status.label), style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
     }
@@ -1717,7 +1726,8 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 windsKnown = table.seatsAssigned,
                 showIds = details,
                 // The differences make sense only while the table is in play: it has hands and it is not finished.
-                diffsAvailable = !complete && table.doneHands > 0,
+                // The organizers can also hide them for the whole tournament.
+                diffsAvailable = view.tournament.showTableDiffs && !complete && table.doneHands > 0,
                 // On a table that takes hands, a tap on a player starts a hand won by that player.
                 onPlayerClick = { slot ->
                     if (view.canAddHands(table, now)) {
@@ -1791,12 +1801,19 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         ) {
-            if (hand.isDone) HandRow(view, hand, dark)
-            penalties.forEachIndexed { index, values ->
-                val first = !hand.isDone && index == 0
-                if (!first) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
-                // The hand number is only on the first line of the card.
-                PenaltyRow(view, table.seatIds(), hand.handId.takeIf { first }, values)
+            // The hand number is in a narrow column at the start, centered on the whole card. The dividers stay in
+            // the content column, so they do not cross the column of the number.
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.padding(start = 8.dp).widthIn(min = 32.dp), contentAlignment = Alignment.Center) {
+                    HandNumber(hand.handId)
+                }
+                Column(Modifier.weight(1f)) {
+                    if (hand.isDone) HandRow(view, hand, dark)
+                    penalties.forEachIndexed { index, values ->
+                        if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(start = 8.dp, end = 12.dp))
+                        PenaltyRow(view, table.seatIds(), values)
+                    }
+                }
             }
         }
     }
@@ -1804,39 +1821,42 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
 
 /**
  * One penalty. A red "Penalty" chip is at the top and each player with points is on a line under it. The values are
- * at the end, in the same column and size as the score of a hand. [handId] is null when a hand is above the penalty,
- * so the number is not repeated, but its column keeps the content aligned with the hand.
+ * at the end, in the same column and size as the score of a hand.
  */
 @Composable
-private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId: Int?, values: List<Int>) {
+private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values: List<Int>) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 8.dp, top = 14.dp, end = 12.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) {
-            if (handId != null) HandNumber(handId)
-        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), MaterialTheme.colorScheme.error)
-            values.forEachIndexed { seat, value ->
-                if (value == 0) return@forEachIndexed
-                val slot = seatSlots.getOrNull(seat)
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    PlayerFlag(view.players[slot]?.country, width = 24.dp)
+            // The penalized players come first with a red chip. The players who receive points come under them,
+            // smaller, slightly indented and with a green chip.
+            val lines = values.withIndex().filter { it.value != 0 }.sortedBy { it.value > 0 }
+            lines.forEach { (seat, value) ->
+                val receives = value > 0
+                val accent = if (receives) WinnerColor else MaterialTheme.colorScheme.error
+                Row(
+                    Modifier.padding(start = if (receives) 16.dp else 0.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), accent, small = receives)
                     Text(
-                        view.nameOf(slot),
+                        view.nameOf(seatSlots.getOrNull(seat)),
                         Modifier.weight(1f),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = if (receives) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                     // The invisible outline gives the value the size of the score pill of a hand, so both line up.
                     ScorePill(
-                        if (value > 0) "+$value" else "$value",
-                        color = if (value > 0) WinnerColor else MaterialTheme.colorScheme.error,
+                        if (receives) "+$value" else "$value",
+                        color = accent,
                         outline = Color.Transparent,
+                        small = receives,
                     )
                 }
             }
@@ -1854,21 +1874,16 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
     val loserSlot = hand.playerLooserId.toIntOrNull()
     val kind = hand.kind()
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 8.dp, top = 14.dp, end = 12.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // The hand number has the wind and the place in the round under it, so the row keeps its width.
-        Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            HandNumber(hand.handId)
-            HandLabel(hand.handId)
-        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (kind != HandKind.DRAW) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    PlayerFlag(view.players[winnerSlot]?.country, width = 24.dp)
                     Text(
                         view.nameOf(winnerSlot),
+                        Modifier.weight(1f, fill = false),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         color = WinnerColor,
@@ -1885,7 +1900,6 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
-                        PlayerFlag(view.players[loserSlot]?.country, width = 20.dp)
                         Text(
                             view.nameOf(loserSlot),
                             Modifier.weight(1f, fill = false),
@@ -1897,11 +1911,21 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
                         )
                     }
                 }
-                if (hand.isChickenHand) ChickenIcon()
             }
         }
-        if (kind != HandKind.DRAW) {
-            ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
+        // The chicken and the best hand mark the winning hand, so they go under its score, which saves width.
+        // The best hand is a gold, silver or bronze trophy for the three best hands of the tournament.
+        val bestHandRank = view.bestHandRank(hand)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (kind != HandKind.DRAW) {
+                ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
+            }
+            if (hand.isChickenHand || bestHandRank != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (hand.isChickenHand) ChickenIcon()
+                    bestHandRank?.let { PositionTrophy(it, size = 24.dp) }
+                }
+            }
         }
     }
 }
@@ -1911,20 +1935,19 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
 private fun HandNumber(handId: Int) {
     Text(
         "#$handId",
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Medium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Bold,
     )
 }
 
 /** A score in a round outline. The score of a hand and the value of a penalty use it, so they have the same size. */
 @Composable
-private fun ScorePill(text: String, color: Color, outline: Color) {
+private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean = false) {
     Surface(shape = RoundedCornerShape(50), color = Color.Transparent, border = BorderStroke(1.5.dp, outline)) {
         Text(
             text,
-            Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-            style = MaterialTheme.typography.titleLarge,
+            Modifier.padding(horizontal = 16.dp, vertical = if (small) 2.dp else 6.dp),
+            style = if (small) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             color = color,
         )
@@ -1947,15 +1970,20 @@ private fun WinTypePill(kind: HandKind, accent: Color) {
 
 /** A small colored chip with an icon and a text, like the way of winning or a penalty. */
 @Composable
-private fun HandChip(icon: ImageVector, text: String, accent: Color) {
+private fun HandChip(icon: ImageVector, text: String, accent: Color, small: Boolean = false) {
     Surface(shape = RoundedCornerShape(50), color = accent.copy(alpha = 0.18f)) {
         Row(
-            Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            Modifier.padding(horizontal = if (small) 8.dp else 10.dp, vertical = if (small) 2.dp else 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Icon(icon, contentDescription = null, Modifier.size(16.dp), tint = accent)
-            Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = accent)
+            Icon(icon, contentDescription = null, Modifier.size(if (small) 13.dp else 16.dp), tint = accent)
+            Text(
+                text,
+                style = if (small) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = accent,
+            )
         }
     }
 }
