@@ -1,0 +1,143 @@
+package com.etologic.mahjongtournamentsuite.presentation.screen
+
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
+import androidx.compose.ui.test.ComposeUiTest
+import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.runComposeUiTest
+import androidx.navigation.compose.rememberNavController
+import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityEntry
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityFieldChange
+import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
+import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
+import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
+import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
+import org.koin.compose.KoinContext
+import org.koin.dsl.koinApplication
+import org.koin.dsl.module
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.time.Clock
+
+/** An administrator reads who wrote what and when: the list, the filters, the next page and one entry. */
+@OptIn(ExperimentalTestApi::class)
+class ActivityScreenUiTest {
+    private val now = Clock.System.now().toEpochMilliseconds()
+
+    private fun entry(
+        id: String,
+        action: String,
+        uid: String,
+        name: String,
+        isTableSave: Boolean = false,
+        changes: List<ActivityFieldChange> = emptyList(),
+    ) = ActivityEntry(
+        id = id,
+        isTableSave = isTableSave,
+        at = now - id.length * 1_000L,
+        action = action,
+        uid = uid,
+        name = name,
+        source = if (isTableSave) "player" else null,
+        tournamentId = "t1",
+        tournamentName = "Madrid Open",
+        target = if (isTableSave) null else "player 5",
+        details = if (isTableSave) emptyList() else listOf("teamId" to "3"),
+        roundId = if (isTableSave) 2 else null,
+        tableId = if (isTableSave) 4 else null,
+        version = if (isTableSave) 7 else null,
+        changes = changes,
+    )
+
+    private val save = entry(
+        "a",
+        "table.save",
+        "u2",
+        "Player 123",
+        isTableSave = true,
+        changes = listOf(ActivityFieldChange("handScore", null, "8", handId = 3)),
+    )
+    private val assign = entry("bb", "player.assign", "u1", "Ana Admin")
+
+    private fun ComposeUiTest.show(entries: List<ActivityEntry> = listOf(save, assign), pageSize: Int = Int.MAX_VALUE): FakeAdminRepository {
+        val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply {
+            activity = entries
+            activityPageSize = pageSize
+        }
+        setContent {
+            val themeController = ThemeController(ThemePreference.Light, false, {})
+            val koin = remember {
+                koinApplication {
+                    modules(
+                        module {
+                            single { Logger.withTag("ui-test") }
+                            single<AdminRepository> { admin }
+                            single { AppMemoryStore() }
+                            factory { ActivityPresenter(get()) { AppResult.Success(emptyList()) } }
+                        },
+                    )
+                }.koin
+            }
+            KoinContext(koin) {
+                CompositionLocalProvider(LocalThemeController provides themeController) {
+                    MtsTheme(useDarkTheme = false) { ActivityScreen(rememberNavController()) }
+                }
+            }
+        }
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Table saved").fetchSemanticsNodes().isNotEmpty() }
+        return admin
+    }
+
+    @Test
+    fun theListShowsWhoDidWhatAndWhere() = runComposeUiTest {
+        show()
+        onNodeWithText("Player 123").assertExists()
+        onNodeWithText("Player app").assertExists()
+        onNodeWithText("Madrid Open · Round 2 · Table 4").assertExists()
+        onNodeWithText("Player assigned").assertExists()
+        onNodeWithText("Ana Admin").assertExists()
+    }
+
+    @Test
+    fun aSourceFilterAsksTheServerAgain() = runComposeUiTest {
+        val admin = show()
+        onNodeWithText("Table saves").performClick()
+        waitForIdle()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Player assigned").fetchSemanticsNodes().isEmpty() }
+        assertEquals(ActivitySource.TABLES, admin.activityRequests.last().first.source)
+        assertEquals(null, admin.activityRequests.last().second)
+    }
+
+    @Test
+    fun loadMoreReadsTheNextPage() = runComposeUiTest {
+        val admin = show(pageSize = 1)
+        onAllNodesWithText("Player assigned").assertCountEquals(0)
+        onNodeWithText("Load more").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Player assigned").fetchSemanticsNodes().isNotEmpty() }
+        assertEquals("1", admin.activityRequests.last().second)
+        onAllNodesWithText("Load more").assertCountEquals(0)
+    }
+
+    @Test
+    fun anEntryShowsItsChangesAndCanFilterByItsPerson() = runComposeUiTest {
+        val admin = show()
+        onAllNodesWithText("Table saved").onFirst().performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("– → 8").fetchSemanticsNodes().isNotEmpty() }
+        onNodeWithText("Hand 3 · handScore").assertExists()
+        onNodeWithText("Show only this person").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Person: Player 123").fetchSemanticsNodes().isNotEmpty() }
+        assertEquals("u2", admin.activityRequests.last().first.uid)
+    }
+}

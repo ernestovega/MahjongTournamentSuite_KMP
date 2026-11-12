@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.BugReport
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import com.etologic.mahjongtournamentsuite.presentation.theme.icon
 import com.etologic.mahjongtournamentsuite.presentation.theme.label
 import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.top_bar_activity
 import mahjongtournamentsuite.ui.generated.resources.top_bar_app_errors
 import mahjongtournamentsuite.ui.generated.resources.top_bar_app_users
 import mahjongtournamentsuite.ui.generated.resources.top_bar_ranking
@@ -30,6 +32,8 @@ fun AppTopBarLeadingActions(
     onTimer: (() -> Unit)? = null,
     onRanking: (() -> Unit)? = null,
     onErrors: (() -> Unit)? = null,
+    /** Who wrote what and when. Only for administrators. */
+    onActivity: (() -> Unit)? = null,
     onAppUsers: (() -> Unit)? = null,
     timerFocusRequester: FocusRequester? = null,
     rankingFocusRequester: FocusRequester? = null,
@@ -45,6 +49,7 @@ fun AppTopBarLeadingActions(
             ThemeModeToggleButton()
         }
         onErrors?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_errors), Icons.Default.BugReport, it, errorsFocusRequester) }
+        onActivity?.let { AppTopBarButton(stringResource(Res.string.top_bar_activity), Icons.Default.History, it) }
         onTimer?.let { AppTopBarButton(stringResource(Res.string.top_bar_timer), Icons.Default.AccessTime, it, timerFocusRequester) }
         onRanking?.let { AppTopBarButton(stringResource(Res.string.top_bar_ranking), Icons.Default.Leaderboard, it, rankingFocusRequester) }
     }

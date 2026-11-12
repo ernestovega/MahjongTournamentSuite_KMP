@@ -71,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
+import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
@@ -336,6 +337,11 @@ fun TournamentsScreen(
                 onTimer = { openTimer(navController) },
                 onErrors = if (adminStatus?.isAdmin == true) {
                     { navController.navigate(ErrorsRoute) }
+                } else {
+                    null
+                },
+                onActivity = if (adminStatus?.isAdmin == true) {
+                    { navController.navigate(ActivityRoute) }
                 } else {
                     null
                 },

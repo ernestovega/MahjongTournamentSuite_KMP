@@ -11,6 +11,8 @@ import com.etologic.mahjongtournamentsuite.data.backend.dto.TournamentAssignment
 import com.etologic.mahjongtournamentsuite.data.backend.dto.UpdatePlayerPhotoRequestDto
 import com.etologic.mahjongtournamentsuite.data.cache.RepositoryCache
 import com.etologic.mahjongtournamentsuite.data.cache.globalManifest
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
@@ -56,6 +58,18 @@ class DefaultAdminRepository(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
             logger.w(throwable) { "Loading the error log failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
+    override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> = runCatching {
+        withFreshIdToken { idToken ->
+            backendApi.activity(idToken, filter.tournamentId, filter.uid, filter.source.wire, cursor).toDomain()
+        }
+    }.fold(
+        onSuccess = { AppResult.Success(it) },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Loading the activity log failed." }
             AppResult.Failure(throwable.toAppError())
         },
     )

@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.data.backend
 
+import com.etologic.mahjongtournamentsuite.data.backend.dto.ActivityPageDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.AssignTournamentPlayerRequestDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CountriesResponseDto
 import com.etologic.mahjongtournamentsuite.data.backend.dto.CreatePlayerRequestDto
@@ -133,6 +134,12 @@ class FunctionsBackendApi(
     suspend fun whoAmI(idToken: String): WhoAmIResponseDto = get(path = "/admin/whoami", idToken = idToken)
 
     suspend fun errorGroups(idToken: String, sinceMillis: Long?, cursor: ErrorLogCursorDto?): ErrorGroupsResponseDto = get(path = "/admin/error-groups?limit=$ERROR_PAGE_SIZE" + sinceMillis.sinceQuery() + cursor.cursorQuery(), idToken = idToken)
+
+    suspend fun activity(idToken: String, tournamentId: String?, uid: String?, source: String, cursor: String?): ActivityPageDto = get(
+        path = "/admin/activity?limit=$ACTIVITY_PAGE_SIZE&source=$source" +
+            tournamentId.query("tournamentId") + uid.query("uid") + cursor.query("cursor"),
+        idToken = idToken,
+    )
 
     suspend fun errorGroup(idToken: String, id: String, cursor: ErrorLogCursorDto?): ErrorGroupDetailDto = get(path = "/admin/error-groups/$id?limit=$ERROR_REPORTS_PAGE_SIZE" + cursor.cursorQuery(), idToken = idToken)
 
@@ -658,7 +665,10 @@ class FunctionsBackendApi(
 const val PUBLIC_TOKEN = ""
 
 private const val ERROR_PAGE_SIZE = 200
+private const val ACTIVITY_PAGE_SIZE = 50
 private const val ERROR_REPORTS_PAGE_SIZE = 50
+
+private fun String?.query(name: String) = if (this.isNullOrEmpty()) "" else "&$name=${encodeURLParameter()}"
 
 private fun Long?.sinceQuery() = if (this == null) "" else "&since=$this"
 

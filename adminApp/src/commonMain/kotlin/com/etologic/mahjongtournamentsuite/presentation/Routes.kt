@@ -69,3 +69,7 @@ data class StatisticsRoute(
 /** The error log of the apps. Only administrators can open it. */
 @Serializable
 data object ErrorsRoute
+
+/** Who wrote what and when in the database. Only administrators can open it. */
+@Serializable
+data object ActivityRoute

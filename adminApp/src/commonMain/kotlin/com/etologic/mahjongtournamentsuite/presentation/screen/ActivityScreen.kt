@@ -1,0 +1,509 @@
+package com.etologic.mahjongtournamentsuite.presentation.screen
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityEntry
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityFieldChange
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
+import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
+import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlinx.coroutines.launch
+import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_account_send
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_member_add
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_member_remove
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_assign
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_clear_substitution
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_email
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_import
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_player_substitute
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_create
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_photo
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_update
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_table_conflict
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_table_reset
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_table_save
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_team_update
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_create
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_delete
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_rename
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_update
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_create
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_disable
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_enable
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_password_reset
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_photo
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_photo_remove
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_update
+import mahjongtournamentsuite.adminapp.generated.resources.activity_all_tournaments
+import mahjongtournamentsuite.adminapp.generated.resources.activity_changes
+import mahjongtournamentsuite.adminapp.generated.resources.activity_changes_count
+import mahjongtournamentsuite.adminapp.generated.resources.activity_col_what
+import mahjongtournamentsuite.adminapp.generated.resources.activity_col_when
+import mahjongtournamentsuite.adminapp.generated.resources.activity_col_who
+import mahjongtournamentsuite.adminapp.generated.resources.activity_details
+import mahjongtournamentsuite.adminapp.generated.resources.activity_from_editor
+import mahjongtournamentsuite.adminapp.generated.resources.activity_from_player
+import mahjongtournamentsuite.adminapp.generated.resources.activity_from_system
+import mahjongtournamentsuite.adminapp.generated.resources.activity_hand
+import mahjongtournamentsuite.adminapp.generated.resources.activity_load_more
+import mahjongtournamentsuite.adminapp.generated.resources.activity_loaded_count
+import mahjongtournamentsuite.adminapp.generated.resources.activity_no_changes
+import mahjongtournamentsuite.adminapp.generated.resources.activity_none
+import mahjongtournamentsuite.adminapp.generated.resources.activity_only_person
+import mahjongtournamentsuite.adminapp.generated.resources.activity_person_filter
+import mahjongtournamentsuite.adminapp.generated.resources.activity_source_all
+import mahjongtournamentsuite.adminapp.generated.resources.activity_source_other
+import mahjongtournamentsuite.adminapp.generated.resources.activity_source_tables
+import mahjongtournamentsuite.adminapp.generated.resources.activity_table
+import mahjongtournamentsuite.adminapp.generated.resources.activity_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.activity_unknown_person
+import mahjongtournamentsuite.adminapp.generated.resources.activity_version
+import mahjongtournamentsuite.adminapp.generated.resources.app_activity
+import mahjongtournamentsuite.adminapp.generated.resources.close
+import mahjongtournamentsuite.adminapp.generated.resources.errors_reload
+import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
+import kotlin.time.Instant
+
+private val WhenColumnWidth = 150.dp
+
+/** The key of the "all tournaments" option of the tournament filter. */
+private const val ALL_TOURNAMENTS = ""
+
+/** Who wrote what and when, for administrators: table saves and every other change, newest first, with filters. */
+@Composable
+fun ActivityScreen(navController: NavHostController) {
+    val presenter = koinInject<ActivityPresenter>()
+    var entries by remember { mutableStateOf<List<ActivityEntry>>(emptyList()) }
+    var nextCursor by remember { mutableStateOf<String?>(null) }
+    var loading by remember { mutableStateOf(true) }
+    var error by remember { mutableStateOf<UiText?>(null) }
+    var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
+    var tournamentId by rememberSaveable { mutableStateOf(ALL_TOURNAMENTS) }
+    var sourceName by rememberSaveable { mutableStateOf(ActivitySource.ALL.name) }
+    val source = ActivitySource.valueOf(sourceName)
+    var personUid by rememberSaveable { mutableStateOf<String?>(null) }
+    var personName by rememberSaveable { mutableStateOf<String?>(null) }
+    var openEntryId by rememberSaveable { mutableStateOf<String?>(null) }
+    var restoreEntryId by remember { mutableStateOf<String?>(null) }
+    var reloadCount by remember { mutableStateOf(0) }
+    val scope = rememberCoroutineScope()
+    val reloadFocusRequester = remember { FocusRequester() }
+    val rowFocusRequesters = remember(entries.map(ActivityEntry::id)) { entries.associate { it.id to FocusRequester() } }
+    val filter = ActivityFilter(tournamentId = tournamentId.ifEmpty { null }, uid = personUid, source = source)
+
+    LaunchedEffect(Unit) {
+        when (val result = presenter.loadTournaments()) {
+            is AppResult.Success -> tournaments = result.value.sortedBy { it.name.lowercase() }
+            // The filter then offers only "all tournaments". The list still works.
+            is AppResult.Failure -> Unit
+        }
+    }
+
+    suspend fun loadPage(cursor: String?) {
+        loading = true
+        when (val result = presenter.loadPage(filter, cursor)) {
+            is AppResult.Success -> {
+                entries = if (cursor == null) result.value.entries else entries + result.value.entries
+                nextCursor = result.value.nextCursor
+            }
+            is AppResult.Failure -> error = result.error.toUiText()
+        }
+        loading = false
+    }
+
+    // A change of a filter reads the list again from the newest entry.
+    LaunchedEffect(filter, reloadCount) {
+        entries = emptyList()
+        nextCursor = null
+        loadPage(null)
+    }
+
+    LaunchedEffect(openEntryId, loading) {
+        if (openEntryId == null && !loading) {
+            val id = restoreEntryId
+            if (id != null) rowFocusRequesters[id]?.requestFocus() else reloadFocusRequester.requestFocus()
+            restoreEntryId = null
+        }
+    }
+
+    AppScaffold(
+        title = stringResource(Res.string.app_activity),
+        isLoading = loading && entries.isEmpty(),
+        showProgress = loading,
+        showBackgroundLogo = loading && entries.isEmpty(),
+        autoFocusFirst = false,
+        onBack = { navController.popBackStack() },
+    ) {
+        ScreenColumn(
+            maxWidth = 1200.dp,
+            contentPadding = PaddingValues(24.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            error?.let { AppErrorDialog(it, onDismiss = { error = null }) }
+            ActivityFiltersBar(
+                tournaments = tournaments,
+                tournamentId = tournamentId,
+                onTournament = { tournamentId = it },
+                source = source,
+                onSource = { sourceName = it.name },
+                personName = if (personUid == null) null else personName ?: personUid,
+                onClearPerson = {
+                    personUid = null
+                    personName = null
+                },
+                reloadFocusRequester = reloadFocusRequester,
+                onReload = { reloadCount++ },
+                reloadEnabled = !loading,
+            )
+            SectionCard(
+                title = stringResource(Res.string.app_activity),
+                subtitle = stringResource(Res.string.activity_loaded_count, entries.size),
+            ) {
+                ActivityTable(
+                    entries = entries,
+                    showEmpty = !loading,
+                    rowFocusRequesters = rowFocusRequesters,
+                    hasMore = nextCursor != null,
+                    loading = loading,
+                    onLoadMore = { scope.launch { loadPage(nextCursor) } },
+                    onOpen = {
+                        restoreEntryId = it.id
+                        openEntryId = it.id
+                    },
+                )
+            }
+        }
+    }
+
+    entries.firstOrNull { it.id == openEntryId }?.let { entry ->
+        ActivityEntryDialog(
+            entry = entry,
+            canFilterByPerson = entry.uid != null && entry.uid != personUid,
+            onFilterByPerson = {
+                personUid = entry.uid
+                personName = entry.name
+                restoreEntryId = null
+                openEntryId = null
+            },
+            onDismiss = { openEntryId = null },
+        )
+    }
+}
+
+@Composable
+private fun ActivityFiltersBar(
+    tournaments: List<Tournament>,
+    tournamentId: String,
+    onTournament: (String) -> Unit,
+    source: ActivitySource,
+    onSource: (ActivitySource) -> Unit,
+    personName: String?,
+    onClearPerson: () -> Unit,
+    reloadFocusRequester: FocusRequester,
+    onReload: () -> Unit,
+    reloadEnabled: Boolean,
+) {
+    val allLabel = stringResource(Res.string.activity_all_tournaments)
+    val options = remember(tournaments, allLabel) { listOf(ALL_TOURNAMENTS to allLabel) + tournaments.map { it.id to it.name } }
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.appFocusGroup()) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            SelectField(
+                label = stringResource(Res.string.activity_tournament),
+                options = options,
+                selected = tournamentId,
+                onSelect = onTournament,
+                modifier = Modifier.weight(1f),
+            )
+            FocusedButton(onClick = onReload, enabled = reloadEnabled, focusRequester = reloadFocusRequester) {
+                Text(stringResource(Res.string.errors_reload))
+            }
+        }
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            ActivitySource.entries.forEach { value ->
+                FilterChip(selected = source == value, onClick = { onSource(value) }, label = { Text(sourceLabel(value)) })
+            }
+            if (personName != null) {
+                FilterChip(
+                    selected = true,
+                    onClick = onClearPerson,
+                    label = { Text(stringResource(Res.string.activity_person_filter, personName)) },
+                    trailingIcon = { Text("×") },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivityTable(
+    entries: List<ActivityEntry>,
+    showEmpty: Boolean,
+    rowFocusRequesters: Map<String, FocusRequester>,
+    hasMore: Boolean,
+    loading: Boolean,
+    onLoadMore: () -> Unit,
+    onOpen: (ActivityEntry) -> Unit,
+) {
+    if (entries.isEmpty()) {
+        if (showEmpty) Text(stringResource(Res.string.activity_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
+    LazyColumnWithScrollbar(
+        state = rememberPersistentLazyListState("activity"),
+        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+    ) {
+        item {
+            DataTableHeaderRow {
+                Text(stringResource(Res.string.activity_col_when), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.activity_col_who), modifier = Modifier.weight(0.6f), style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(Res.string.activity_col_what), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+            }
+            DataTableDivider()
+        }
+        items(entries, key = { it.id }) { entry ->
+            DataTableRow(
+                modifier = rowFocusRequesters[entry.id]?.let { Modifier.focusRequester(it) } ?: Modifier,
+                onClick = { onOpen(entry) },
+            ) {
+                Text(dateTime(entry.at), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.bodySmall)
+                Column(Modifier.weight(0.6f)) {
+                    Text(personLabel(entry), style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    entry.source?.let {
+                        Text(originLabel(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+                    }
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(
+                        actionLabel(entry.action),
+                        fontWeight = FontWeight.SemiBold,
+                        color = if (entry.action == "table.conflict") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    val where = whereLabel(entry)
+                    if (where.isNotBlank()) {
+                        Text(where, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                    }
+                    if (entry.isTableSave && entry.changes.isNotEmpty()) {
+                        Text(stringResource(Res.string.activity_changes_count, entry.changes.size), style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+            DataTableDivider()
+        }
+        if (hasMore) {
+            item {
+                FocusedOutlinedButton(onClick = onLoadMore, enabled = !loading, modifier = Modifier.padding(12.dp)) {
+                    Text(stringResource(Res.string.activity_load_more))
+                }
+            }
+        }
+    }
+}
+
+/** A routine detail dialog, so it keeps the standard platform width and scrolls its content. */
+@Composable
+private fun ActivityEntryDialog(
+    entry: ActivityEntry,
+    canFilterByPerson: Boolean,
+    onFilterByPerson: () -> Unit,
+    onDismiss: () -> Unit,
+) {
+    val closeFocus = remember { FocusRequester() }
+    val personFocus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { closeFocus.requestFocus() }
+    TrackedDialog("ActivityEntry") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup(),
+            onDismissRequest = onDismiss,
+            title = { Text(actionLabel(entry.action), maxLines = 2, overflow = TextOverflow.Ellipsis) },
+            text = {
+                ScrollableColumnWithScrollbar(state = rememberScrollState(), modifier = Modifier.fillMaxWidth().heightIn(max = 480.dp)) {
+                    SelectionContainer {
+                        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(dateTime(entry.at), style = MaterialTheme.typography.bodyMedium)
+                            Text(
+                                listOfNotNull(personLabel(entry), entry.source?.let { originLabel(it) }).joinToString(" · "),
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                            entry.uid?.let { Text(it, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace) }
+                            val where = whereLabel(entry)
+                            if (where.isNotBlank()) Text(where, style = MaterialTheme.typography.bodyMedium)
+                            entry.version?.let { Text(stringResource(Res.string.activity_version, it), style = MaterialTheme.typography.bodySmall) }
+                            if (entry.details.isNotEmpty()) {
+                                Text(stringResource(Res.string.activity_details), style = MaterialTheme.typography.titleSmall)
+                                entry.details.forEach { (key, value) -> KeyValueRow(key, value) }
+                            }
+                            if (entry.isTableSave) {
+                                Text(stringResource(Res.string.activity_changes), style = MaterialTheme.typography.titleSmall)
+                                if (entry.changes.isEmpty()) {
+                                    Text(stringResource(Res.string.activity_no_changes), style = MaterialTheme.typography.bodySmall)
+                                } else {
+                                    entry.changes.forEach { ChangeRow(it) }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            dismissButton = {
+                if (canFilterByPerson) {
+                    FocusedTextButton(
+                        onClick = onFilterByPerson,
+                        focusRequester = personFocus,
+                        buttonModifier = Modifier.focusLoop(previous = closeFocus, next = closeFocus),
+                    ) { Text(stringResource(Res.string.activity_only_person)) }
+                }
+            },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onDismiss,
+                    focusRequester = closeFocus,
+                    buttonModifier = if (canFilterByPerson) Modifier.focusLoop(previous = personFocus, next = personFocus) else Modifier,
+                ) { Text(stringResource(Res.string.close)) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun KeyValueRow(key: String, value: String) {
+    Text("$key: $value", style = MaterialTheme.typography.bodySmall)
+}
+
+@Composable
+private fun ChangeRow(change: ActivityFieldChange) {
+    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)) {
+            val field = change.handId?.let { "${stringResource(Res.string.activity_hand, it)} · ${change.field}" } ?: change.field
+            Text(field, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
+            Text("${change.from ?: "–"} → ${change.to ?: "–"}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+        }
+    }
+}
+
+@Composable
+private fun personLabel(entry: ActivityEntry): String = entry.name ?: entry.uid ?: stringResource(Res.string.activity_unknown_person)
+
+/** The tournament, and the table or the target of the change. */
+@Composable
+private fun whereLabel(entry: ActivityEntry): String {
+    val roundId = entry.roundId
+    val tableId = entry.tableId
+    val table = if (roundId != null && tableId != null) stringResource(Res.string.activity_table, roundId, tableId) else null
+    return listOfNotNull(entry.tournamentName ?: entry.tournamentId, table, entry.target).joinToString(" · ")
+}
+
+@Composable
+private fun sourceLabel(source: ActivitySource): String = stringResource(
+    when (source) {
+        ActivitySource.ALL -> Res.string.activity_source_all
+        ActivitySource.TABLES -> Res.string.activity_source_tables
+        ActivitySource.OTHER -> Res.string.activity_source_other
+    },
+)
+
+@Composable
+private fun originLabel(source: String): String = when (source) {
+    "editor" -> stringResource(Res.string.activity_from_editor)
+    "player" -> stringResource(Res.string.activity_from_player)
+    "system" -> stringResource(Res.string.activity_from_system)
+    else -> source
+}
+
+private val ACTION_LABELS: Map<String, StringResource> = mapOf(
+    "tournament.create" to Res.string.activity_action_tournament_create,
+    "tournament.update" to Res.string.activity_action_tournament_update,
+    "tournament.rename" to Res.string.activity_action_tournament_rename,
+    "tournament.delete" to Res.string.activity_action_tournament_delete,
+    "player.assign" to Res.string.activity_action_player_assign,
+    "player.import" to Res.string.activity_action_player_import,
+    "player.substitute" to Res.string.activity_action_player_substitute,
+    "player.clearSubstitution" to Res.string.activity_action_player_clear_substitution,
+    "team.update" to Res.string.activity_action_team_update,
+    "member.add" to Res.string.activity_action_member_add,
+    "member.remove" to Res.string.activity_action_member_remove,
+    "account.send" to Res.string.activity_action_account_send,
+    "player.email" to Res.string.activity_action_player_email,
+    "user.create" to Res.string.activity_action_user_create,
+    "user.passwordReset" to Res.string.activity_action_user_password_reset,
+    "user.update" to Res.string.activity_action_user_update,
+    "user.disable" to Res.string.activity_action_user_disable,
+    "user.enable" to Res.string.activity_action_user_enable,
+    "user.photo" to Res.string.activity_action_user_photo,
+    "user.photo.remove" to Res.string.activity_action_user_photo_remove,
+    "registry.create" to Res.string.activity_action_registry_create,
+    "registry.update" to Res.string.activity_action_registry_update,
+    "registry.photo" to Res.string.activity_action_registry_photo,
+    "table.save" to Res.string.activity_action_table_save,
+    "table.reset" to Res.string.activity_action_table_reset,
+    "table.conflict" to Res.string.activity_action_table_conflict,
+)
+
+/** A new action of the server shows its code until the app has a text for it. */
+@Composable
+private fun actionLabel(action: String): String = ACTION_LABELS[action]?.let { stringResource(it) } ?: action
+
+private fun dateTime(millis: Long): String = localizedDateTimeOrNull(Instant.fromEpochMilliseconds(millis).toString()).orEmpty()

@@ -346,4 +346,5 @@
     <string name="app_switch_to_player">Vue joueur</string>
     <string name="app_chooser_title">Que voulez-vous ouvrir ?</string>
     <string name="app_chooser_hint">Vous pourrez ensuite passer d\'une app à l\'autre à tout moment avec le bouton de la barre du haut.</string>
+    <string name="top_bar_activity">Activité</string>
 </resources>
