@@ -358,8 +358,12 @@ private fun ActivityFiltersBar(
 ) {
     val allLabel = stringResource(Res.string.activity_all_tournaments)
     val options = remember(tournaments, allLabel) { listOf(ALL_TOURNAMENTS to allLabel) + tournaments.map { it.id to it.name } }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.appFocusGroup()) {
-        // Each row wraps when its groups do not fit in the width, for example on a phone.
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth().appFocusGroup(),
+    ) {
+        // Each row is centered and wraps when its groups do not fit in the width, for example on a phone.
         FiltersRow {
             SelectField(
                 label = stringResource(Res.string.activity_tournament),
@@ -418,7 +422,8 @@ private fun ActivityFiltersBar(
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun FiltersRow(content: @Composable () -> Unit) {
     androidx.compose.foundation.layout.FlowRow(
-        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         itemVerticalAlignment = Alignment.Bottom,
     ) { content() }
@@ -627,7 +632,7 @@ private fun sourceLabel(source: ActivitySource): String = stringResource(
 
 @Composable
 private fun originLabel(source: String): String = when (source) {
-    "editor" -> stringResource(Res.string.activity_from_editor)
+    "editor", "admin" -> stringResource(Res.string.activity_from_editor)
     "player" -> stringResource(Res.string.activity_from_player)
     "system" -> stringResource(Res.string.activity_from_system)
     else -> source

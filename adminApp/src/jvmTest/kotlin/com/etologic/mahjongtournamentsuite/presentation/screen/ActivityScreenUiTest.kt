@@ -1,15 +1,22 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityEntry
@@ -28,6 +35,8 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import org.koin.compose.KoinContext
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
+import java.io.File
+import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.time.Clock
@@ -72,7 +81,11 @@ class ActivityScreenUiTest {
     )
     private val assign = entry("bb", "player.assign", "u1", "Ana Admin")
 
-    private fun ComposeUiTest.show(entries: List<ActivityEntry> = listOf(save, assign), pageSize: Int = Int.MAX_VALUE): FakeAdminRepository {
+    private fun ComposeUiTest.show(
+        entries: List<ActivityEntry> = listOf(save, assign),
+        pageSize: Int = Int.MAX_VALUE,
+        widthDp: Int? = null,
+    ): FakeAdminRepository {
         val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply {
             activity = entries
             activityPageSize = pageSize
@@ -93,7 +106,13 @@ class ActivityScreenUiTest {
             }
             KoinContext(koin) {
                 CompositionLocalProvider(LocalThemeController provides themeController) {
-                    MtsTheme(useDarkTheme = false) { ActivityScreen(rememberNavController()) }
+                    MtsTheme(useDarkTheme = false) {
+                        if (widthDp == null) {
+                            ActivityScreen(rememberNavController())
+                        } else {
+                            Box(Modifier.size(widthDp.dp, 760.dp)) { ActivityScreen(rememberNavController()) }
+                        }
+                    }
                 }
             }
         }
@@ -150,5 +169,20 @@ class ActivityScreenUiTest {
         onNodeWithText("Show only this person").performClick()
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Person: Player 123").fetchSemanticsNodes().isNotEmpty() }
         assertEquals("u2", admin.activityRequests.last().first.uid)
+    }
+
+    /** With MTS_SCREENSHOT_DIR set, saves the screen at a desktop and a phone width to check the filters by eye. */
+    @Test
+    fun theFiltersFitAtDesktopAndPhoneWidth() {
+        for (width in listOf(1280, 400)) {
+            runComposeUiTest {
+                show(entries = listOf(save, assign, entry("ccc", "tournament.update", "u1", "Ana Admin")), pageSize = 2, widthDp = width)
+                waitForIdle()
+                System.getenv("MTS_SCREENSHOT_DIR")?.let { dir ->
+                    ImageIO.write(onAllNodes(isRoot())[0].captureToImage().toAwtImage(), "png", File(dir, "activity-$width.png"))
+                }
+                onNodeWithText("Origin").assertExists()
+            }
+        }
     }
 }
