@@ -33,7 +33,8 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun veryLongTournamentNameIsInTheList() {
         start(E2eAccounts.ADMIN)
-        c.waitForText("Test - Extreme scores, penalties and a very long tournament name to check wrapping everywhere")
+        // Other tests seed tournaments again, which moves them to the top. The list may need a scroll.
+        c.scrollListTo("Test - Extreme scores, penalties and a very long tournament name to check wrapping everywhere")
     }
 
     @Test
@@ -48,8 +49,10 @@ class TournamentListTest : AdminE2eTest() {
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
         // "Admin" is the role under the name. It opens the profile, which holds the theme and the Logout button.
-        listOf(PROFILE_BUTTON, "Admin", "Users", "App errors", "Timer", "Statistics", "EMA players", "New tournament")
+        listOf(PROFILE_BUTTON, "Admin", "Users", "App errors", "Statistics", "EMA players", "New tournament")
             .forEach { c.waitForText(it) }
+        // The Timer opens from a tournament only.
+        c.assertNoText("Timer")
     }
 
     @Test
