@@ -39,10 +39,4 @@ private fun openSuiteApp(context: Context, app: SuiteApp) {
     }
 }
 
-actual fun canRememberSuiteApp(): Boolean = false
-
-actual fun loadPreferredSuiteApp(): SuiteApp? = null
-
-actual fun savePreferredSuiteApp(app: SuiteApp?) = Unit
-
 actual fun leaveAdminForPlayerApp(signIn: Boolean): Boolean = false

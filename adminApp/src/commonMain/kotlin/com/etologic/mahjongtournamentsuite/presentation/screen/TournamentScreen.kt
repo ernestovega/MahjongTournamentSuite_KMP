@@ -433,7 +433,7 @@ fun TournamentScreen(
         showProgress = isLoading || isLoadingRest,
         onBack = { requestAction(RoundEditorAction.Back) },
         leadingActions = {
-            ProfileInfo(profile, roleLabel)
+            ProfileInfo(profile, roleLabel, navController)
             AppTopBarLeadingActions(
                 onTimer = { requestAction(RoundEditorAction.Timer) },
                 onRanking = { requestAction(RoundEditorAction.Rankings) },

@@ -345,9 +345,5 @@
     <string name="app_switch_to_admin">Management</string>
     <string name="app_switch_to_player">Player view</string>
     <string name="app_chooser_title">What do you want to open?</string>
-    <string name="app_chooser_player">Tournaments</string>
-    <string name="app_chooser_player_text">See the tournaments and results, and write down the hands of your table.</string>
-    <string name="app_chooser_admin">Management</string>
-    <string name="app_chooser_admin_text">Run your tournaments: players, tables, results and accounts.</string>
-    <string name="app_chooser_remember">Remember my choice on this device</string>
+    <string name="app_chooser_hint">You can switch between the apps at any time with the button in the top bar.</string>
 </resources>

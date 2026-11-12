@@ -20,18 +20,6 @@
     <link type="text/css" rel="stylesheet" href="styles.css">
 </head>
 <body style="text-align: center; align-content: center">
-<script>
-  // An admin or an editor who chose to open the admin app on this device goes there at once, before the player app loads.
-  // Only the bare address does: shared links such as /t/<id> and ?tournament=<id> stay in the player app.
-  // The admin app is at /admin/. See SuiteApps.wasm.kt for the keys.
-  try {
-    if (location.pathname === "/" && !location.search &&
-        localStorage.getItem("mahjongTournamentSuite.preferredApp") === "ADMIN" &&
-        localStorage.getItem("mahjongTournamentSuite.authSession")) {
-      location.replace("/admin/");
-    }
-  } catch (e) {}
-</script>
 <script src="raf-fix.js"></script>
 <script src="webkit-warning.js"></script>
 <script src="diagnostics.js"></script>

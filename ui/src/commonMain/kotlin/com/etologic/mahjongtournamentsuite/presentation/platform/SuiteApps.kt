@@ -24,15 +24,6 @@ val LocalSuiteAppSwitcher = staticCompositionLocalOf<((SuiteApp) -> Unit)?> { nu
 @Composable
 fun currentAppSwitcher(): ((SuiteApp) -> Unit)? = LocalSuiteAppSwitcher.current ?: rememberAppSwitcher()
 
-/** True where the device can remember which application a manager opens after the sign-in. Only the web can. */
-expect fun canRememberSuiteApp(): Boolean
-
-/** The application that the manager chose to open after the sign-in on this device, or null. */
-expect fun loadPreferredSuiteApp(): SuiteApp?
-
-/** Saves the application to open after the sign-in on this device. Null forgets it. */
-expect fun savePreferredSuiteApp(app: SuiteApp?)
-
 /**
  * The admin app on the web has no sign-in of its own: the site signs in through the player app. Goes to the player
  * app, to its sign-in when [signIn] is true, and returns true. Returns false where the admin app keeps its own sign-in:

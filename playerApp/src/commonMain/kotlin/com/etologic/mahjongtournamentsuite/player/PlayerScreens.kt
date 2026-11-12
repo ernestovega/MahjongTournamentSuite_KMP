@@ -133,9 +133,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.currentAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
-import com.etologic.mahjongtournamentsuite.presentation.platform.loadPreferredSuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
-import com.etologic.mahjongtournamentsuite.presentation.platform.savePreferredSuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -302,14 +300,7 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
             when (val result = presenter.signIn(email, password)) {
                 is AppResult.Success -> {
                     saveBrowserCredentials(email.trim(), password)
-                    val preferred = loadPreferredSuiteApp()
-                    when {
-                        appSwitcher == null || !presenter.canManage(RefreshMode.FORCE) -> continueInPlayerApp()
-                        // The manager chose an app on this device before: no question.
-                        preferred == SuiteApp.ADMIN -> openAdminApp(appSwitcher)
-                        preferred == SuiteApp.PLAYER -> continueInPlayerApp()
-                        else -> choosingApp = true
-                    }
+                    if (appSwitcher != null && presenter.canManage(RefreshMode.FORCE)) choosingApp = true else continueInPlayerApp()
                 }
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
@@ -337,9 +328,8 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
     }
 
     if (choosingApp && appSwitcher != null) {
-        SuiteAppChooserDialog { app, rememberChoice ->
+        SuiteAppChooserDialog { app ->
             choosingApp = false
-            if (rememberChoice) savePreferredSuiteApp(app)
             if (app == SuiteApp.ADMIN) openAdminApp(appSwitcher) else continueInPlayerApp()
         }
     }

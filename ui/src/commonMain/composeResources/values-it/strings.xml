@@ -345,9 +345,5 @@
     <string name="app_switch_to_admin">Gestione</string>
     <string name="app_switch_to_player">Vista giocatore</string>
     <string name="app_chooser_title">Cosa vuoi aprire?</string>
-    <string name="app_chooser_player">Tornei</string>
-    <string name="app_chooser_player_text">Guarda i tornei e i risultati, e annota le mani del tuo tavolo.</string>
-    <string name="app_chooser_admin">Gestione</string>
-    <string name="app_chooser_admin_text">Gestisci i tuoi tornei: giocatori, tavoli, risultati e account.</string>
-    <string name="app_chooser_remember">Ricorda la mia scelta su questo dispositivo</string>
+    <string name="app_chooser_hint">Potrai poi passare da un\'app all\'altra in qualsiasi momento con il pulsante della barra in alto.</string>
 </resources>
