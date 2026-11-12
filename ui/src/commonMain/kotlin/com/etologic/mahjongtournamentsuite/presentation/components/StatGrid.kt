@@ -15,7 +15,7 @@ import kotlin.math.min
  * The cells never grow wider than [maxCellWidth]. The grid sits in the middle of the available width.
  */
 @Composable
-internal fun StatGrid(
+fun StatGrid(
     modifier: Modifier = Modifier,
     minCellWidth: Dp = 140.dp,
     maxCellWidth: Dp = 240.dp,

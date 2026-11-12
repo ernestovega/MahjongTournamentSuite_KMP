@@ -41,6 +41,12 @@ object TelemetryEvent {
     /** How long a screen, a dialog or a tab stayed open. */
     const val VIEW_TIME = "view_time"
 
+    /**
+     * How long a screen took to show its content, in [TelemetryParam.MILLISECONDS]. [TelemetryParam.KIND] is "open" for
+     * the first load of the screen and "tab" for a later load, for example after a tab change.
+     */
+    const val SCREEN_LOAD = "screen_load"
+
     const val HAND_PREVIEWED = "hand_previewed"
     const val HAND_RECORDED = "hand_recorded"
     const val PENALTY_ADDED = "penalty_added"
@@ -64,6 +70,7 @@ object TelemetryEvent {
         DIALOG_VIEW,
         TAB_VIEW,
         VIEW_TIME,
+        SCREEN_LOAD,
         HAND_PREVIEWED,
         HAND_RECORDED,
         PENALTY_ADDED,
@@ -87,6 +94,7 @@ object TelemetryParam {
     const val DIALOG = "dialog"
     const val TAB = "tab"
     const val SECONDS = "seconds"
+    const val MILLISECONDS = "ms"
 
     /** The id of an error. The same id is in the error log of the API. It joins the log with Analytics. */
     const val REPORT_ID = "report_id"
@@ -109,6 +117,7 @@ object TelemetryParam {
         DIALOG,
         TAB,
         SECONDS,
+        MILLISECONDS,
         REPORT_ID,
     )
 }

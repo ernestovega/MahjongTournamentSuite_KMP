@@ -40,6 +40,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `dialog_view` | A dialog opens | `dialog`, `screen` |
 | `tab_view` | A tab is selected | `tab`, `screen` |
 | `view_time` | A screen, dialog or tab closes | `kind` (`screen`, `dialog` or `tab`), `view`, `screen`, `seconds` |
+| `screen_load` | A screen shows its content after loading | `kind` (`open` for the first load of the screen, `tab` for a later load such as a tab change), `screen`, `tab` (the open tab, if any), `ms` |
 | `login`, `logout` | Sign in worked, sign out | none |
 | `password_reset_requested` | A reset email went out | `kind=bulk`, `players` for the mass reset |
 | `tournament_created` | A tournament is created | `players`, `rounds`, `is_teams` |
@@ -175,7 +176,7 @@ Open Admin > Custom definitions > Create custom dimension.
 | Environment | User | `env` |
 | Language | User | `language` |
 
-Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds`, `hands` and `seconds`. Use "Seconds" as the unit of `seconds`.
+Create custom metrics (scope "Event", unit "Standard") for `players`, `rounds`, `hands`, `seconds` and `ms`. Use "Seconds" as the unit of `seconds` and "Milliseconds" as the unit of `ms`.
 
 ### 7. Check the data
 

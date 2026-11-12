@@ -33,7 +33,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import com.etologic.mahjongtournamentsuite.presentation.components.BigNumber
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.StatGrid
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,7 +53,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
-import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.info_contact
@@ -70,10 +71,9 @@ import org.jetbrains.compose.resources.stringResource
 data class AgendaDay(val date: String?, val items: List<TournamentAgendaItem>)
 
 /** Groups the agenda by day. The days are in date order and the items are in time order. Items without a date come last. */
-fun agendaByDay(items: List<TournamentAgendaItem>): List<AgendaDay> =
-    items.groupBy { it.date }
-        .map { (date, dayItems) -> AgendaDay(date, dayItems.sortedBy { it.startTime ?: "99:99" }) }
-        .sortedWith(compareBy<AgendaDay> { it.date == null }.thenBy { it.date.orEmpty() })
+fun agendaByDay(items: List<TournamentAgendaItem>): List<AgendaDay> = items.groupBy { it.date }
+    .map { (date, dayItems) -> AgendaDay(date, dayItems.sortedBy { it.startTime ?: "99:99" }) }
+    .sortedWith(compareBy<AgendaDay> { it.date == null }.thenBy { it.date.orEmpty() })
 
 /** The venue, the contact and the schedule of the tournament. The tab scrolls when its content is taller than the screen. */
 @Composable
@@ -104,29 +104,16 @@ fun TournamentInfoTab(view: PlayerTournamentView) {
     }
 }
 
-/** How far the tournament is: finished rounds, finished tables and ongoing tables, in large numbers. */
+/** How far the tournament is: finished rounds, finished tables and ongoing tables, as mini cards like the statistics. */
 @Composable
 private fun ProgressCard(progress: TournamentProgress) {
     InfoCard(stringResource(Res.string.progress_title), Icons.Default.Timeline) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ProgressStat(stringResource(Res.string.progress_rounds_label), "${progress.completedRounds}/${progress.totalRounds}", Modifier.weight(1f))
-            ProgressStat(stringResource(Res.string.progress_tables_label), "${progress.completedTables}/${progress.totalTables}", Modifier.weight(1f))
-            ProgressStat(stringResource(Res.string.progress_ongoing_label), "${progress.ongoingTables}", Modifier.weight(1f))
+        // The three cells fit in one row on a phone.
+        StatGrid(Modifier.fillMaxWidth(), minCellWidth = 88.dp, gap = 8.dp) {
+            BigNumber(stringResource(Res.string.progress_rounds_label), "${progress.completedRounds}/${progress.totalRounds}")
+            BigNumber(stringResource(Res.string.progress_tables_label), "${progress.completedTables}/${progress.totalTables}")
+            BigNumber(stringResource(Res.string.progress_ongoing_label), "${progress.ongoingTables}")
         }
-    }
-}
-
-@Composable
-private fun ProgressStat(label: String, value: String, modifier: Modifier = Modifier) {
-    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(
-            value,
-            style = MaterialTheme.typography.headlineMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            maxLines = 1,
-        )
-        Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -239,8 +226,7 @@ private fun scheduleByDay(tournament: Tournament): List<Pair<String?, List<Sched
 }
 
 /** True when the schedule has at least one entry. */
-fun hasSchedule(tournament: Tournament): Boolean =
-    tournament.roundSchedules.any { it.date != null || it.startTime != null } || tournament.agendaItems.isNotEmpty()
+fun hasSchedule(tournament: Tournament): Boolean = tournament.roundSchedules.any { it.date != null || it.startTime != null } || tournament.agendaItems.isNotEmpty()
 
 /** Percent-encodes a text for a query value of a link. */
 private fun encodeQueryValue(text: String): String = buildString {
@@ -269,12 +255,11 @@ fun venueDirectionsLink(tournament: Tournament): String? {
 }
 
 /** The venue name and address in one text, for a short view. */
-fun venueSummary(tournament: Tournament): String =
-    listOf(tournament.venue.name, tournament.venue.address).filter { it.isNotBlank() }.joinToString(" - ")
+fun venueSummary(tournament: Tournament): String = listOf(tournament.venue.name, tournament.venue.address).filter { it.isNotBlank() }.joinToString(" - ")
 
 /**
  * The schedule of a tournament: the rounds and the agenda events in chronological order.
- * Each day has a tinted title bar over the full width. Each row has the name on the left
+ * Each day has a tinted title bar over the full width, with the full weekday and month in the middle. Each row has the name on the left
  * and the time on the right, so the row uses the whole width. Days are separated by a large space.
  */
 @Composable
@@ -284,13 +269,14 @@ fun TournamentSchedule(tournament: Tournament, modifier: Modifier = Modifier) {
         scheduleByDay(tournament).forEach { (date, entries) ->
             Column(Modifier.fillMaxWidth()) {
                 Text(
-                    date?.let { formatLocalizedDate(it, withWeekday = true) } ?: stringResource(Res.string.info_no_date),
+                    date?.let { formatLocalizedDate(it, withWeekday = true, fullNames = true) } ?: stringResource(Res.string.info_no_date),
                     Modifier.fillMaxWidth()
                         .clip(RoundedCornerShape(8.dp))
                         .background(colors.primary.copy(alpha = 0.14f))
-                        .padding(horizontal = 12.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.titleSmall,
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
                 )
                 entries.forEachIndexed { index, entry ->
                     if (index > 0) HorizontalDivider(color = colors.outlineVariant.copy(alpha = 0.6f))

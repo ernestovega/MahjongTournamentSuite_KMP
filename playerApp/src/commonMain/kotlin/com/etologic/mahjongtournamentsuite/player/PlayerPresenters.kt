@@ -78,8 +78,7 @@ class PlayerTournamentPresenter(
     suspend fun listTournaments(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<List<Tournament>> = tournamentRepository.listTournaments(refreshMode)
 
     /** The ids of the tournaments where the signed-in account plays. Empty without an account. */
-    suspend fun myTournamentIds(): Set<String> =
-        (tournamentRepository.listMyTournamentSlots() as? AppResult.Success)?.value.orEmpty().mapTo(mutableSetOf()) { it.tournamentId }
+    suspend fun myTournamentIds(): Set<String> = (tournamentRepository.listMyTournamentSlots() as? AppResult.Success)?.value.orEmpty().mapTo(mutableSetOf()) { it.tournamentId }
 
     /**
      * Loads the tournament. The repositories check the revision first and load only what changed.
@@ -190,8 +189,7 @@ class PlayerStatisticsPresenter(
     suspend fun person(emaId: String, refreshMode: RefreshMode = RefreshMode.IF_CHANGED): AppResult<PersonStatisticsData> = loadStored.person(emaId, own = false, refreshMode = refreshMode).viewed("person")
 
     /** The final places of a player in some tournaments. The list shows them for the tournaments on screen. */
-    suspend fun standings(emaId: String, tournamentIds: List<String>): Map<String, Standing> =
-        if (emaId.isBlank()) emptyMap() else (loadStored.standings(emaId, own = false, tournamentIds) as? AppResult.Success)?.value.orEmpty()
+    suspend fun standings(emaId: String, tournamentIds: List<String>): Map<String, Standing> = if (emaId.isBlank()) emptyMap() else (loadStored.standings(emaId, own = false, tournamentIds) as? AppResult.Success)?.value.orEmpty()
 
     private fun <T> AppResult<T>.viewed(scope: String) = track(telemetry, TelemetryEvent.STATISTICS_VIEWED, mapOf(TelemetryParam.SCOPE to scope))
 }

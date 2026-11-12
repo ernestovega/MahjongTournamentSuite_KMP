@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +13,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -29,7 +27,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.LocalFireDepartment
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.UnfoldLess
 import androidx.compose.material.icons.filled.UnfoldMore
 import androidx.compose.material.icons.outlined.Info
@@ -37,13 +34,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
@@ -75,11 +68,11 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -87,7 +80,6 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
-import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
@@ -97,16 +89,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.SkillScale
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
-import kotlin.coroutines.cancellation.CancellationException
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.max
-import kotlin.math.min
-import kotlin.math.roundToInt
-import kotlin.math.sin
+import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.card_fold
 import mahjongtournamentsuite.ui.generated.resources.card_unfold
+import mahjongtournamentsuite.ui.generated.resources.column_points
+import mahjongtournamentsuite.ui.generated.resources.column_score
 import mahjongtournamentsuite.ui.generated.resources.date_from
 import mahjongtournamentsuite.ui.generated.resources.date_to
 import mahjongtournamentsuite.ui.generated.resources.field_tournament
@@ -178,8 +166,6 @@ import mahjongtournamentsuite.ui.generated.resources.stat_highest_rank
 import mahjongtournamentsuite.ui.generated.resources.stat_highest_table_score
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties_info
-import mahjongtournamentsuite.ui.generated.resources.column_points
-import mahjongtournamentsuite.ui.generated.resources.column_score
 import mahjongtournamentsuite.ui.generated.resources.stat_rank
 import mahjongtournamentsuite.ui.generated.resources.stat_tables
 import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
@@ -199,6 +185,15 @@ import mahjongtournamentsuite.ui.generated.resources.tournaments_show_more
 import mahjongtournamentsuite.ui.generated.resources.tournaments_showing
 import mahjongtournamentsuite.ui.generated.resources.unfold_all
 import org.jetbrains.compose.resources.stringResource
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.max
+import kotlin.math.min
+import kotlin.math.roundToInt
+import kotlin.math.sin
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** Two cards side by side need at least this width. Narrower screens stack the cards. */
 private val WideLayoutWidth = 760.dp
@@ -353,7 +348,7 @@ private fun CardTitle(
  * The [suffix] follows the value in a smaller size, for example " of 40".
  */
 @Composable
-internal fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info: String? = null, suffix: String? = null) {
+fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info: String? = null, suffix: String? = null) {
     Surface(modifier, shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
         Column(
             Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 12.dp),
@@ -411,8 +406,7 @@ internal fun InfoTip(text: String, modifier: Modifier = Modifier) {
 }
 
 /** A count with its share of the played hands. */
-private fun count(value: Int, of: Int): String =
-    if (of > 0) "$value (${(value * 100.0 / of).roundToInt()}%)" else value.toString()
+private fun count(value: Int, of: Int): String = if (of > 0) "$value (${(value * 100.0 / of).roundToInt()}%)" else value.toString()
 
 /** The best values of the player: the highest scores, the most hands at one table, the biggest penalty and the longest runs. */
 @Composable
@@ -443,8 +437,6 @@ private fun RecordsCard(
         }
     }
 }
-
-
 
 /** The opponents who did the most harm to the player. The rule and the weights are in `RivalWeights`. */
 @Composable
@@ -549,8 +541,7 @@ private fun OverviewCard(statistics: PlayerStatistics, modifier: Modifier) {
 }
 
 /** The number of penalties with the penalty points in brackets, for example "2 (20)". */
-private fun penaltiesText(s: PlayerStatistics): String =
-    if (s.tablesWithHands > 0) "${s.penaltyCount} (${s.penaltyPoints})" else EMPTY
+private fun penaltiesText(s: PlayerStatistics): String = if (s.tablesWithHands > 0) "${s.penaltyCount} (${s.penaltyPoints})" else EMPTY
 
 /** The hands won, lost and neutral (drawn, or won by a third player with a discard) in the inner ring. The way of each win or loss in the outer ring. */
 @Composable
@@ -558,6 +549,7 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
     val won = MaterialTheme.colorScheme.primary
     val lost = MaterialTheme.colorScheme.error
     val neutral = MaterialTheme.colorScheme.outline
+
     // [inOuter] parts are the sectors of the outer ring.
     class Part(val label: String, val value: Int, val color: Color, val sub: Boolean, val inOuter: Boolean = sub)
     val parts = listOf(
@@ -578,9 +570,13 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
             Column(m, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 parts.forEach { part ->
                     LegendRow(
-                        part.color, part.label, count(part.value, s.handsPlayed),
+                        part.color,
+                        part.label,
+                        count(part.value, s.handsPlayed),
                         Modifier.padding(start = if (part.sub) 20.dp else 0.dp),
                         bold = !part.sub,
+                        // The ways of a win or a loss are details of the row above: normal weight and a smaller text.
+                        detail = part.sub,
                     )
                 }
             }
@@ -607,11 +603,20 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
 }
 
 @Composable
-internal fun LegendRow(color: Color, label: String, value: String, modifier: Modifier = Modifier, bold: Boolean = false) {
+internal fun LegendRow(
+    color: Color,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    bold: Boolean = false,
+    /** A detail row has a smaller text and its value is not bold. */
+    detail: Boolean = false,
+) {
+    val style = if (detail) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(Modifier.size(12.dp).background(color, CircleShape))
-        Text(label, Modifier.weight(1f).padding(end = 12.dp), style = MaterialTheme.typography.bodyMedium, fontWeight = if (bold) FontWeight.Bold else null)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+        Box(Modifier.size(if (detail) 10.dp else 12.dp).background(color, CircleShape))
+        Text(label, Modifier.weight(1f).padding(end = 12.dp), style = style, fontWeight = if (bold) FontWeight.Bold else null)
+        Text(value, style = style, fontWeight = if (detail) null else FontWeight.Bold)
     }
 }
 
@@ -725,22 +730,34 @@ private class Skill(
 private fun skillsOf(s: PlayerStatistics): List<Skill> = listOf(
     // Share of the played hands that the player won. A strong player wins about 4 hands in 10.
     Skill(
-        stringResource(Res.string.skill_win_rate), s.winRate, SkillScale.WIN_RATE_FULL, s.winRate.percent(),
+        stringResource(Res.string.skill_win_rate),
+        s.winRate,
+        SkillScale.WIN_RATE_FULL,
+        s.winRate.percent(),
         stringResource(Res.string.skill_win_rate_info),
     ),
     // Share of the won hands that came from a self-draw. Half of the wins fills the axis.
     Skill(
-        stringResource(Res.string.skill_self_draw), s.selfDrawRate, SkillScale.SELF_DRAW_RATE_FULL, s.selfDrawRate.percent(),
+        stringResource(Res.string.skill_self_draw),
+        s.selfDrawRate,
+        SkillScale.SELF_DRAW_RATE_FULL,
+        s.selfDrawRate.percent(),
         stringResource(Res.string.skill_self_draw_info),
     ),
     // Share of the played hands that the player lost by discarding the winning tile. Lower is better.
     Skill(
-        stringResource(Res.string.skill_deal_in_rate), s.dealInRate, SkillScale.DEAL_IN_RATE_FULL, s.dealInRate.percent(),
+        stringResource(Res.string.skill_deal_in_rate),
+        s.dealInRate,
+        SkillScale.DEAL_IN_RATE_FULL,
+        s.dealInRate.percent(),
         stringResource(Res.string.skill_deal_in_rate_info),
     ),
     // Average points of the won hands, counted above the 8 point minimum.
     Skill(
-        stringResource(Res.string.skill_hand_value), s.averageWinningScore, SkillScale.HAND_VALUE_FULL, s.averageWinningScore.decimal(),
+        stringResource(Res.string.skill_hand_value),
+        s.averageWinningScore,
+        SkillScale.HAND_VALUE_FULL,
+        s.averageWinningScore.decimal(),
         stringResource(Res.string.skill_hand_value_info),
         empty = SkillScale.HAND_VALUE_EMPTY,
         subLabel = stringResource(Res.string.skill_sub_avg),
@@ -826,8 +843,11 @@ private fun LevelBadge(statistics: PlayerStatistics) {
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        if (score == null) stringResource(Res.string.level_needs_hands, MIN_HANDS_FOR_LEADERBOARD.toString())
-                        else stringResource(Res.string.level_skill_score_of, score.roundToInt()),
+                        if (score == null) {
+                            stringResource(Res.string.level_needs_hands, MIN_HANDS_FOR_LEADERBOARD.toString())
+                        } else {
+                            stringResource(Res.string.level_skill_score_of, score.roundToInt())
+                        },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -959,12 +979,14 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
 }
 
 /** The radius leaves room for the names and values around the chart. */
-private fun radiusFor(width: Float, height: Float, density: Float): Float =
-    min(width / 2f - 90f * density, height / 2f - 44f * density).coerceAtLeast(40f * density)
+private fun radiusFor(width: Float, height: Float, density: Float): Float = min(width / 2f - 90f * density, height / 2f - 44f * density).coerceAtLeast(40f * density)
 
 @Composable
 private fun placeNames(): List<String> = listOf(
-    stringResource(Res.string.place_1st), stringResource(Res.string.place_2nd), stringResource(Res.string.place_3rd), stringResource(Res.string.place_4th),
+    stringResource(Res.string.place_1st),
+    stringResource(Res.string.place_2nd),
+    stringResource(Res.string.place_3rd),
+    stringResource(Res.string.place_4th),
 )
 private val ChartSizes = listOf(10, 20, 50)
 
@@ -1004,7 +1026,9 @@ private fun PlaceSectors(statistics: PlayerStatistics, size: Dp, modifier: Modif
     val chart: @Composable () -> Unit = {
         SectorChart(
             counts.mapIndexed { index, value -> Slice(value, positionColor(index + 1)) },
-            null, size, 0.26f,
+            null,
+            size,
+            0.26f,
             centerValue = statistics.averagePosition.decimal(),
             centerLabel = stringResource(Res.string.places_avg_place),
         )
@@ -1113,8 +1137,7 @@ fun PlayerTournamentsSection(
     var placeholderInSection by remember { mutableStateOf(0) }
     var barHeight by remember { mutableStateOf(0) }
 
-    fun contentY(coordinates: LayoutCoordinates): Float =
-        coordinates.positionInRoot().y - (screen?.viewportTop ?: 0f) + (screen?.state?.value ?: 0)
+    fun contentY(coordinates: LayoutCoordinates): Float = coordinates.positionInRoot().y - (screen?.viewportTop ?: 0f) + (screen?.state?.value ?: 0)
 
     LaunchedEffect(selectedId) {
         val index = sorted.indexOfFirst { it.first.id == selectedId }
@@ -1159,7 +1182,10 @@ fun PlayerTournamentsSection(
             ) {
                 val options = remember(sorted) { sorted.map { it.first.id to it.first.name } }
                 SelectField(
-                    stringResource(Res.string.field_tournament), options, selectedId, { selectedId = it },
+                    stringResource(Res.string.field_tournament),
+                    options,
+                    selectedId,
+                    { selectedId = it },
                     Modifier.widthIn(min = 240.dp).weight(1f),
                 )
                 // The two dates stay in one line. On a narrow screen they share the full width.
@@ -1213,8 +1239,10 @@ fun PlayerTournamentsSection(
                         add { m -> TitledBlock(stringResource(Res.string.stats_places), m) { PlaceSectors(stats, 170.dp, Modifier.fillMaxWidth()) } }
                         // The place history goes after the places, so it sits at the right of the places in the second row.
                         // It has no title: the title of the places block gives the context.
-                        if (stats.results.size > 1) add { m ->
-                            Column(m) { PlaceHistory(stats.results, listOf(tournament), showTitle = false) }
+                        if (stats.results.size > 1) {
+                            add { m ->
+                                Column(m) { PlaceHistory(stats.results, listOf(tournament), showTitle = false) }
+                            }
                         }
                     }
                     val gap = 24.dp
@@ -1240,13 +1268,15 @@ fun PlayerTournamentsSection(
                 textAlign = TextAlign.Center,
             )
             if (visible.size > 1) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { foldAllButton() }
-        } else ShowMoreTournaments(
-            shown = visible.size,
-            total = sorted.size,
-            onShowMore = { shown = (shown + TOURNAMENTS_STEP).coerceAtMost(sorted.size) },
-            onShowAll = { shown = sorted.size },
-            foldAll = if (visible.size > 1) foldAllButton else null,
-        )
+        } else {
+            ShowMoreTournaments(
+                shown = visible.size,
+                total = sorted.size,
+                onShowMore = { shown = (shown + TOURNAMENTS_STEP).coerceAtMost(sorted.size) },
+                onShowAll = { shown = sorted.size },
+                foldAll = if (visible.size > 1) foldAllButton else null,
+            )
+        }
     }
 }
 
@@ -1365,68 +1395,73 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
     )
     val topPad = if (grouped) PlaceHistoryGroupedTop else PlaceHistoryTop
     BoxWithConstraints(Modifier.fillMaxWidth().height(230.dp + topPad - PlaceHistoryTop)) {
-    Canvas(Modifier.fillMaxSize()) {
-        val left = 36.dp.toPx()
-        val pad = 12.dp.toPx()
-        val top = topPad.toPx()
-        val bottom = 44.dp.toPx()
-        val width = size.width - left - pad * 2
-        val height = size.height - top - bottom
-        fun y(place: Int) = top + height * (place - 1) / 3f
-        fun x(step: Int) = left + if (places.size == 1) width / 2f else width * step / (places.size - 1)
-        if (grouped) {
-            val half = if (places.size > 1) width / (places.size - 1) / 2f else 0f
-            groups.forEachIndexed { index, run ->
-                val color = bandColors[index % bandColors.size]
-                val start = (x(run.first) - half).coerceAtLeast(left - pad)
-                val end = (x(run.last) + half).coerceAtMost(size.width - pad)
-                // The band covers the plot. A stronger strip under it marks the dates of the same tournament.
-                drawRect(color.copy(alpha = 0.08f), Offset(start, top - pad), androidx.compose.ui.geometry.Size(end - start, height + pad * 2))
-                drawRect(color.copy(alpha = 0.55f), Offset(start, size.height - bottom + 4.dp.toPx()), androidx.compose.ui.geometry.Size(end - start, 3.dp.toPx()))
-                val name = groupNames[index]
-                if (name.isNotBlank()) {
-                    val layout = measurer.measure(name, labelStyle.copy(color = color), maxLines = 1, overflow = TextOverflow.Ellipsis,
-                        constraints = androidx.compose.ui.unit.Constraints(maxWidth = (end - start).toInt().coerceAtLeast(1)))
-                    if (layout.size.width <= end - start) {
-                        drawText(layout, topLeft = Offset(start + (end - start - layout.size.width) / 2f, 2.dp.toPx()))
+        Canvas(Modifier.fillMaxSize()) {
+            val left = 36.dp.toPx()
+            val pad = 12.dp.toPx()
+            val top = topPad.toPx()
+            val bottom = 44.dp.toPx()
+            val width = size.width - left - pad * 2
+            val height = size.height - top - bottom
+            fun y(place: Int) = top + height * (place - 1) / 3f
+            fun x(step: Int) = left + if (places.size == 1) width / 2f else width * step / (places.size - 1)
+            if (grouped) {
+                val half = if (places.size > 1) width / (places.size - 1) / 2f else 0f
+                groups.forEachIndexed { index, run ->
+                    val color = bandColors[index % bandColors.size]
+                    val start = (x(run.first) - half).coerceAtLeast(left - pad)
+                    val end = (x(run.last) + half).coerceAtMost(size.width - pad)
+                    // The band covers the plot. A stronger strip under it marks the dates of the same tournament.
+                    drawRect(color.copy(alpha = 0.08f), Offset(start, top - pad), androidx.compose.ui.geometry.Size(end - start, height + pad * 2))
+                    drawRect(color.copy(alpha = 0.55f), Offset(start, size.height - bottom + 4.dp.toPx()), androidx.compose.ui.geometry.Size(end - start, 3.dp.toPx()))
+                    val name = groupNames[index]
+                    if (name.isNotBlank()) {
+                        val layout = measurer.measure(
+                            name,
+                            labelStyle.copy(color = color),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            constraints = androidx.compose.ui.unit.Constraints(maxWidth = (end - start).toInt().coerceAtLeast(1)),
+                        )
+                        if (layout.size.width <= end - start) {
+                            drawText(layout, topLeft = Offset(start + (end - start - layout.size.width) / 2f, 2.dp.toPx()))
+                        }
                     }
                 }
             }
+            (1..4).forEach { place ->
+                drawLine(grid, Offset(left, y(place)), Offset(size.width - pad, y(place)), strokeWidth = 1.dp.toPx())
+                val layout = measurer.measure(placeNames[place - 1], labelStyle)
+                drawText(layout, topLeft = Offset(0f, y(place) - layout.size.height / 2f))
+            }
+            val path = Path()
+            places.forEachIndexed { step, place ->
+                if (step == 0) path.moveTo(x(step), y(place)) else path.lineTo(x(step), y(place))
+            }
+            drawPath(path, line.copy(alpha = 0.6f), style = Stroke(width = 1.5.dp.toPx(), cap = StrokeCap.Round))
+            places.forEachIndexed { step, place ->
+                drawCircle(pointColors[place - 1], 5.dp.toPx(), Offset(x(step), y(place)))
+            }
+            // Show a date only when it has room. Crowded charts show every second, third, ... date.
+            val spacing = if (places.size > 1) width / (places.size - 1) else width
+            val stride = kotlin.math.ceil(54.dp.toPx() / spacing).toInt().coerceAtLeast(1)
+            times.forEachIndexed { step, text ->
+                if (step % stride != 0 && step != places.lastIndex) return@forEachIndexed
+                if (step != places.lastIndex && places.lastIndex - step < stride) return@forEachIndexed
+                val layout = measurer.measure(text, labelStyle)
+                val labelX = (x(step) - layout.size.width / 2f).coerceIn(0f, size.width - layout.size.width)
+                drawText(layout, topLeft = Offset(labelX, size.height - bottom + 10.dp.toPx()))
+            }
         }
-        (1..4).forEach { place ->
-            drawLine(grid, Offset(left, y(place)), Offset(size.width - pad, y(place)), strokeWidth = 1.dp.toPx())
-            val layout = measurer.measure(placeNames[place - 1], labelStyle)
-            drawText(layout, topLeft = Offset(0f, y(place) - layout.size.height / 2f))
-        }
-        val path = Path()
+        // Each dot has a transparent box over it. The box shows the tournament, round, table, date and time in a tooltip.
+        val plotWidth = maxWidth - 36.dp - 24.dp
+        val plotHeight = maxHeight - topPad - 44.dp
         places.forEachIndexed { step, place ->
-            if (step == 0) path.moveTo(x(step), y(place)) else path.lineTo(x(step), y(place))
+            val centerX = 36.dp + if (places.size == 1) plotWidth / 2f else plotWidth * step / (places.size - 1)
+            val centerY = topPad + plotHeight * (place - 1) / 3f
+            // The offset sits on a wrapper. The tooltip box must be the 24 dp box itself, or its anchor is not the dot.
+            Box(Modifier.offset(centerX - 12.dp, centerY - 12.dp).size(24.dp)) {
+                HoverTip(tips[step], Modifier.size(24.dp)) { Box(Modifier.size(24.dp)) }
+            }
         }
-        drawPath(path, line.copy(alpha = 0.6f), style = Stroke(width = 1.5.dp.toPx(), cap = StrokeCap.Round))
-        places.forEachIndexed { step, place ->
-            drawCircle(pointColors[place - 1], 5.dp.toPx(), Offset(x(step), y(place)))
-        }
-        // Show a date only when it has room. Crowded charts show every second, third, ... date.
-        val spacing = if (places.size > 1) width / (places.size - 1) else width
-        val stride = kotlin.math.ceil(54.dp.toPx() / spacing).toInt().coerceAtLeast(1)
-        times.forEachIndexed { step, text ->
-            if (step % stride != 0 && step != places.lastIndex) return@forEachIndexed
-            if (step != places.lastIndex && places.lastIndex - step < stride) return@forEachIndexed
-            val layout = measurer.measure(text, labelStyle)
-            val labelX = (x(step) - layout.size.width / 2f).coerceIn(0f, size.width - layout.size.width)
-            drawText(layout, topLeft = Offset(labelX, size.height - bottom + 10.dp.toPx()))
-        }
-    }
-    // Each dot has a transparent box over it. The box shows the tournament, round, table, date and time in a tooltip.
-    val plotWidth = maxWidth - 36.dp - 24.dp
-    val plotHeight = maxHeight - topPad - 44.dp
-    places.forEachIndexed { step, place ->
-        val centerX = 36.dp + if (places.size == 1) plotWidth / 2f else plotWidth * step / (places.size - 1)
-        val centerY = topPad + plotHeight * (place - 1) / 3f
-        // The offset sits on a wrapper. The tooltip box must be the 24 dp box itself, or its anchor is not the dot.
-        Box(Modifier.offset(centerX - 12.dp, centerY - 12.dp).size(24.dp)) {
-            HoverTip(tips[step], Modifier.size(24.dp)) { Box(Modifier.size(24.dp)) }
-        }
-    }
     }
 }

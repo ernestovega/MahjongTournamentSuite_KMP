@@ -62,6 +62,12 @@ class Ga4ValidationSmokeTest {
             TelemetryParam.SCREEN to "Tables",
             TelemetryParam.SECONDS to 42,
         ),
+        TelemetryEvent.SCREEN_LOAD to mapOf(
+            TelemetryParam.KIND to "open",
+            TelemetryParam.SCREEN to "Tournament",
+            TelemetryParam.TAB to "Ranking",
+            TelemetryParam.MILLISECONDS to 840,
+        ),
         TelemetryEvent.PASSWORD_RESET_REQUESTED to mapOf(TelemetryParam.KIND to "bulk", TelemetryParam.PLAYERS to 3),
         TelemetryEvent.PENALTY_ADDED to mapOf(TelemetryParam.HANDS to 2),
     )

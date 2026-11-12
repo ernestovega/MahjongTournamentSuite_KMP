@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformLibrary)
     alias(libs.plugins.kotlinSerialization)
+    alias(libs.plugins.kover)
 }
 
 // The API secret of the GA4 Measurement Protocol for the desktop app. The repository is public, so the secret is not

@@ -1,33 +1,33 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.automirrored.filled.Login
-import androidx.compose.runtime.LaunchedEffect
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import mahjongtournamentsuite.playerapp.generated.resources.Res
-import mahjongtournamentsuite.playerapp.generated.resources.menu_profile
-import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
-import org.jetbrains.compose.resources.stringResource
-import androidx.navigation.NavHostController
-import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
-import org.koin.compose.koinInject
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import mahjongtournamentsuite.playerapp.generated.resources.Res
+import mahjongtournamentsuite.playerapp.generated.resources.menu_profile
+import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
+import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 
 /**
  * The Exit and Profile buttons and their dialogs. The screen owns the state, so the dialogs stay open
@@ -41,6 +41,7 @@ class AccountActions(
     private var profile by mutableStateOf<UserProfile?>(null)
     private var error by mutableStateOf<UiText?>(null)
     private var confirmingSignOut by mutableStateOf(false)
+
     /** Null until the session is known. Without an account the button opens the sign-in. */
     private var signedIn by mutableStateOf<Boolean?>(null)
 

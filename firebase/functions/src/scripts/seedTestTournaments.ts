@@ -648,14 +648,18 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
 
 /**
  * The tournaments that stay in production. They look like real events, with real EMA players, team names by country
- * and no "Test" in any text. The testers play in all of them. The ongoing one is a big tournament in its third
- * day: the finished rounds are complete, the round that plays now has hands in some tables, the later rounds are empty.
+ * and no "Test" in any text. The testers play in all of them. The ongoing one is a big tournament that starts on the
+ * day of the seed run and lasts 4 days. Its rounds start every 2 hours and 30 minutes, from 10:00 to 23:00, so the
+ * testers can play a round in the morning, in the afternoon and at night. The rounds that started before the seed run
+ * are complete, the last one of them has hands in some tables, the later rounds are empty.
  */
 const PROD_TIMES = ["09:00", "11:30", "14:00", "16:30"];
-const PROD_ROUNDS_PER_DAY = 4;
-const PROD_DAYS = 6;
-const PROD_START = addDays(TESTER_START, -2);
-const PROD_NOW_ROUND = 2 * PROD_ROUNDS_PER_DAY + 3;
+const ONGOING_TIMES = ["10:00", "12:30", "15:00", "18:00", "20:30", "23:00"];
+const ONGOING_DAYS = 4;
+const ONGOING_START = TESTER_START;
+const ONGOING_ROUNDS = ONGOING_TIMES.length * ONGOING_DAYS;
+/** The round that plays at the time of the seed run. Round 1 when no round started yet. */
+const ONGOING_NOW_ROUND = Math.max(1, ONGOING_TIMES.filter((time) => time <= localSlot(new Date()).startTime).length);
 
 /** Slots (counted from 1) of the testers. Edgar and Edu share team 1. Héctor and Raúl share team 2. */
 const PROD_TESTER_SLOTS: Record<number, string> = {
@@ -701,25 +705,24 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     name: "Madrid Mahjong Open 2026",
     shortName: "MMO 2026",
     primaryColor: "#B71C1C",
-    startDate: PROD_START, endDate: addDays(PROD_START, PROD_DAYS - 1),
+    startDate: ONGOING_START, endDate: addDays(ONGOING_START, ONGOING_DAYS - 1),
     hostCountry: "ES", hostCity: "Madrid",
     venue: ESKALERRIA, contactEmail: "organizacion@madridmahjongopen.example",
     isTeams: true,
     teamNames: MADRID_OPEN_TEAMS,
-    numRounds: PROD_ROUNDS_PER_DAY * PROD_DAYS,
+    numRounds: ONGOING_ROUNDS,
     // 96 Spanish players (24 teams) and 104 players from seven countries (26 teams).
     players: playersByCountry([["ESP", 96], ["FRA", 36], ["ITA", 16], ["GER", 16], ["NED", 12], ["POL", 8], ["SWE", 8], ["FIN", 8]]),
     countBestHands: true, countChickenHands: true,
-    schedule: spread(PROD_ROUNDS_PER_DAY * PROD_DAYS, PROD_START, PROD_ROUNDS_PER_DAY, PROD_TIMES),
+    schedule: spread(ONGOING_ROUNDS, ONGOING_START, ONGOING_TIMES.length, ONGOING_TIMES),
+    // The rounds leave a free time only between 17:15 and 18:00.
     agenda: [
-      { title: "Registration and welcome coffee", date: PROD_START, startTime: "08:00" },
-      ...Array.from({ length: PROD_DAYS }, (_, day) => ({ title: "Lunch break", date: addDays(PROD_START, day), startTime: "13:30" })),
-      { title: "Group dinner", date: addDays(PROD_START, 2), startTime: "21:00" },
-      { title: "Awards ceremony", date: addDays(PROD_START, PROD_DAYS - 1), startTime: "19:00" },
+      { title: "Registration and welcome coffee", date: ONGOING_START, startTime: "09:15" },
+      ...Array.from({ length: ONGOING_DAYS }, (_, day) => ({ title: "Dinner break", date: addDays(ONGOING_START, day), startTime: "17:15" })),
     ],
     mode: (round, table) => {
-      if (round < PROD_NOW_ROUND) return { kind: "full", style: table % 17 === 0 ? "penalties" : table % 11 === 0 ? "draws" : "normal" };
-      if (round > PROD_NOW_ROUND) return { kind: "empty" };
+      if (round < ONGOING_NOW_ROUND) return { kind: "full", style: table % 17 === 0 ? "penalties" : table % 11 === 0 ? "draws" : "normal" };
+      if (round > ONGOING_NOW_ROUND) return { kind: "empty" };
       if (table <= 30) return { kind: "partial", done: cycle([3, 5, 6, 4, 7, 2], table - 1) };
       return table <= 42 ? { kind: "seats" } : { kind: "empty" };
     },

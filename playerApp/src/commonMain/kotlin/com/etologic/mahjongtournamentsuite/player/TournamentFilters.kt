@@ -15,10 +15,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,15 +26,17 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_countries
+import mahjongtournamentsuite.playerapp.generated.resources.filter_all_statuses
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_years
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_country
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search
 import mahjongtournamentsuite.playerapp.generated.resources.filter_status
-import mahjongtournamentsuite.playerapp.generated.resources.filter_all_statuses
 import mahjongtournamentsuite.playerapp.generated.resources.filter_year
 import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /**
  * The filters of the tournament list. They combine: a tournament shows when it passes all of them.
@@ -130,7 +130,9 @@ internal fun TournamentFilterBar(
             singleLine = true,
             placeholder = { Text(stringResource(Res.string.filter_search)) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            trailingIcon = if (filter.query.isEmpty()) null else {
+            trailingIcon = if (filter.query.isEmpty()) {
+                null
+            } else {
                 {
                     IconButton(onClick = { onChange(filter.copy(query = "")) }) {
                         Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.filter_clear))

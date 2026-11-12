@@ -435,7 +435,6 @@ fun TournamentScreen(
         leadingActions = {
             ProfileInfo(profile, roleLabel)
             AppTopBarLeadingActions(
-                showThemeToggle = true,
                 onTimer = { requestAction(RoundEditorAction.Timer) },
                 onRanking = { requestAction(RoundEditorAction.Rankings) },
             )

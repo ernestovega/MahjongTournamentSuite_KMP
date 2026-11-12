@@ -7,8 +7,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class TournamentFilterTest {
-    private fun tournament(id: String, name: String = id, teams: Boolean = false, country: String = "ES", start: String? = null) =
-        Tournament(id = id, name = name, isTeams = teams, numPlayers = 16, numRounds = 4, hostCountry = country, eventStartDate = start)
+    private fun tournament(id: String, name: String = id, teams: Boolean = false, country: String = "ES", start: String? = null) = Tournament(id = id, name = name, isTeams = teams, numPlayers = 16, numRounds = 4, hostCountry = country, eventStartDate = start)
 
     @Test
     fun encodeAndDecodeKeepEveryFilter() {

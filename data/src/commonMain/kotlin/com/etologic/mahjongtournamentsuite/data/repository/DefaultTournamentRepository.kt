@@ -41,6 +41,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardProofRequest
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.MatchEndMode
+import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
@@ -59,7 +60,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTeam
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentVenue
 import com.etologic.mahjongtournamentsuite.domain.model.VenueLinkPlace
-import com.etologic.mahjongtournamentsuite.domain.model.MyTournamentSlot
 import com.etologic.mahjongtournamentsuite.domain.repository.AuthRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -895,12 +895,10 @@ class DefaultTournamentRepository(
     ): T = authRepository.withFreshIdToken(block)
 
     /** The token of a read: none for public reads, else the token of the account. */
-    private suspend fun <T> withReadToken(block: suspend (String) -> T): T =
-        if (publicReads) block(PUBLIC_TOKEN) else withFreshIdToken(block)
+    private suspend fun <T> withReadToken(block: suspend (String) -> T): T = if (publicReads) block(PUBLIC_TOKEN) else withFreshIdToken(block)
 
     /** Whose cache a read fills. Public answers are the same for everyone. */
-    private suspend fun readOwner(): String =
-        if (publicReads) PUBLIC_CACHE_OWNER else authRepository.currentSession()?.uid ?: error("No active session")
+    private suspend fun readOwner(): String = if (publicReads) PUBLIC_CACHE_OWNER else authRepository.currentSession()?.uid ?: error("No active session")
 
     override suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = runCatching {
         if (authRepository.currentSession() == null) return AppResult.Success(emptyList())

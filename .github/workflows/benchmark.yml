@@ -1,0 +1,99 @@
+# Measures the response times of the public API and the load times of the screens of the player web app, in
+# production. It runs after each deploy of main, every morning, and by hand. It fails when a time is over its budget
+# (benchmarks/budgets.json) or clearly slower than in the previous run. See docs/benchmark.md.
+name: Benchmark
+
+on:
+  workflow_run:
+    workflows: ["Tests and deploy"]
+    types: [completed]
+    branches: [main]
+  schedule:
+    # 05:00 UTC, when nobody plays.
+    - cron: "0 5 * * *"
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Player web app"
+        default: "https://mtsplayer.mahjongmadrid.com"
+      tournament:
+        description: "Tournament id to measure (empty: the finished one with the most players)"
+        default: ""
+      runs:
+        description: "Calls to each endpoint"
+        default: "15"
+      samples:
+        description: "Visits of each screen"
+        default: "3"
+
+concurrency:
+  group: benchmark
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  benchmark:
+    name: Benchmark
+    # After a deploy, only when the deploy worked.
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      BENCH_PLAYER_URL: ${{ inputs.url || 'https://mtsplayer.mahjongmadrid.com' }}
+      BENCH_API_BASE: ${{ inputs.url || 'https://mtsplayer.mahjongmadrid.com' }}/api
+      TOURNAMENT: ${{ inputs.tournament || '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Backend response times
+        run: node scripts/benchmark/backend.mjs --runs "${{ inputs.runs || '15' }}" ${TOURNAMENT:+--tournament "$TOURNAMENT"} --out backend-results.json
+
+      - name: Install Chromium
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/pw" playwright@1.63.0
+          "$RUNNER_TEMP/pw/node_modules/.bin/playwright" install --with-deps chromium
+
+      - name: Screen load times
+        env:
+          NODE_PATH: ${{ runner.temp }}/pw/node_modules
+        run: |
+          # An ES module does not read NODE_PATH, so the script runs from a copy next to the package.
+          cp scripts/benchmark/screens.mjs "$RUNNER_TEMP/pw/screens.mjs"
+          node "$RUNNER_TEMP/pw/screens.mjs" --samples "${{ inputs.samples || '3' }}" ${TOURNAMENT:+--tournament "$TOURNAMENT"} --out "$GITHUB_WORKSPACE/screens-results.json"
+
+      - name: Results of the previous run
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          previous=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow benchmark.yml --branch main --status success --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+          if [ -n "$previous" ]; then
+            gh run download "$previous" --repo "$GITHUB_REPOSITORY" --name benchmark-results --dir previous || echo "The previous run has no results."
+          else
+            echo "No previous run."
+          fi
+
+      - name: Compare with the budgets and the previous run
+        if: always()
+        run: |
+          node scripts/benchmark/compare.mjs \
+            --current backend-results.json --current screens-results.json \
+            --previous previous/backend-results.json --previous previous/screens-results.json
+
+      - name: Keep the results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: |
+            backend-results.json
+            screens-results.json
+            benchmark-report.md
+          retention-days: 90
