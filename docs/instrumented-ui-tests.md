@@ -13,6 +13,7 @@ No test touches the production project.
 | Admin app tests | `androidApp/src/androidTest/.../e2e` | Compose UI tests of the admin app. |
 | Player app tests | `playerAndroidApp/src/androidTest/.../player/e2e` | Compose UI tests of the player app, including hand entry. |
 | Test runner script | `scripts/run-e2e-tests.sh` | Runs the tests and starts again the tests that hit the harness error. |
+| Parallel runner | `scripts/run-e2e-parallel.py` | Runs both apps on several emulators at once, each with its own local backend. |
 | Backend address | `BackendUrlOverride` in `data/src/androidMain` | Tests point the app to `http://10.0.2.2:5055/api`. Release builds never set it. |
 | Debug network rule | `androidApp/src/debug/res/xml/network_security_config.xml` | Allows plain http to `10.0.2.2` in debug builds only. |
 
@@ -34,6 +35,31 @@ No test touches the production project.
    - Set `ANDROID_SERIAL` when more than one emulator runs.
 
 The plain Gradle task `./gradlew :androidApp:connectedDebugAndroidTest` also works. It does not start failed tests again.
+
+## Run the tests on several emulators at once
+
+`scripts/run-e2e-parallel.py` does all the steps above by itself and splits the tests over several emulators.
+Use JDK 21 and run it from the repository root on the Mac. Do not start `npm run e2e:backend` first: the script starts its own backends.
+
+- Both apps on 3 new emulators: `scripts/run-e2e-parallel.py`
+- One app, 2 emulators: `scripts/run-e2e-parallel.py --app player -n 2` (`--app admin` for the admin app)
+- Some classes or methods: `--tests com.etologic.mahjongtournamentsuite.e2e.SignInTest,com.etologic.mahjongtournamentsuite.player.e2e.PlayerHomeTest`
+- Emulators that already run: `--serials emulator-5554,emulator-5556`. The script then only changes their screen size, and resets it at the end.
+- `--show` shows the emulator windows, `--avd NAME` picks the AVD, `--no-build` skips Gradle, `--keep` leaves emulators and backends running.
+
+How it works:
+
+- It boots N emulators of one AVD with `-read-only`, so the same AVD runs several times. The default AVD is the first with "tablet" in its name.
+- Every emulator gets its own backend: Auth and Firestore emulators on ports 9300+10·i, API on port 5060+i, project `demo-mts-e2e-<i+1>`.
+  The tests reset the `test-*` tournaments, so two emulators on one backend would break each other's tests.
+  The app gets the address in the `e2eBackendUrl` argument (`http://10.0.2.2:506i/api`).
+- The tests go out in groups of 5 from one queue. An emulator that finishes takes the next group, so both apps share the emulators.
+  Before an admin group the screen becomes a landscape tablet (1920x1200, density 240). Before a player group it becomes a phone (1080x2400, density 420).
+- It runs the AndroidX Test Orchestrator with `adb shell am instrument`, not Gradle, because one Gradle build cannot run different tests on different devices.
+  It takes the orchestrator and test services APKs from the Gradle cache, or from Google Maven.
+- Tests that hit the harness error run again, up to four times, as with `run-e2e-tests.sh`.
+- Everything goes to `build/e2e-parallel/`: `results.tsv`, the backend logs, the raw output and logcat of every emulator, and the screenshots of failed tests.
+- Every emulator needs about 2 to 4 GB of memory and every backend about 1 GB. Three emulators fit on a Mac with 16 GB.
 
 The tests use the AndroidX Test Orchestrator. Every test starts in a new process with empty app data.
 A failed test saves a screenshot in `/sdcard/Download/e2e` on the device. The error message also lists the texts that were on the screen.

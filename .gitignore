@@ -47,3 +47,6 @@ __pycache__/
 # Android signing keys (never commit them)
 *.jks
 *.keystore
+
+# Backend configs written by scripts/run-e2e-parallel.py
+/firebase.e2e.parallel-*.json
