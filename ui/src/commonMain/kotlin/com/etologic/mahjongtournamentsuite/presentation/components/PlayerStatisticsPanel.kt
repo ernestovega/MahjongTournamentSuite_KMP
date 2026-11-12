@@ -581,6 +581,8 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
                         part.color, part.label, count(part.value, s.handsPlayed),
                         Modifier.padding(start = if (part.sub) 20.dp else 0.dp),
                         bold = !part.sub,
+                        // The ways of a win or a loss are details of the row above: normal weight and a smaller text.
+                        detail = part.sub,
                     )
                 }
             }
@@ -607,11 +609,20 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
 }
 
 @Composable
-internal fun LegendRow(color: Color, label: String, value: String, modifier: Modifier = Modifier, bold: Boolean = false) {
+internal fun LegendRow(
+    color: Color,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier,
+    bold: Boolean = false,
+    /** A detail row has a smaller text and its value is not bold. */
+    detail: Boolean = false,
+) {
+    val style = if (detail) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(Modifier.size(12.dp).background(color, CircleShape))
-        Text(label, Modifier.weight(1f).padding(end = 12.dp), style = MaterialTheme.typography.bodyMedium, fontWeight = if (bold) FontWeight.Bold else null)
-        Text(value, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
+        Box(Modifier.size(if (detail) 10.dp else 12.dp).background(color, CircleShape))
+        Text(label, Modifier.weight(1f).padding(end = 12.dp), style = style, fontWeight = if (bold) FontWeight.Bold else null)
+        Text(value, style = style, fontWeight = if (detail) null else FontWeight.Bold)
     }
 }
 
