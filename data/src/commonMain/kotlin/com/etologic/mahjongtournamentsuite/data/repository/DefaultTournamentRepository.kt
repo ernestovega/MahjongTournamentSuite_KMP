@@ -758,6 +758,27 @@ class DefaultTournamentRepository(
         },
     )
 
+    override suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Pair<TableState, List<TableHand>>> = runCatching {
+        withFreshIdToken { idToken ->
+            val dto = backendApi.resetTable(idToken = idToken, tournamentId = tournamentId, roundId = roundId, tableId = tableId)
+            cache.markStale("tournament:$tournamentId:table", "tournament:$tournamentId:tables")
+            dto.toDomain()
+        }
+    }.fold(
+        onSuccess = { reset ->
+            tableStore.put(tournamentId, reset.first, reset.second)
+            AppResult.Success(reset)
+        },
+        onFailure = { throwable ->
+            logger.w(throwable) { "Resetting table failed." }
+            AppResult.Failure(throwable.toAppError())
+        },
+    )
+
     private suspend fun <T : Any> cachedRequest(
         action: String,
         key: String,

@@ -623,6 +623,18 @@ class FunctionsBackendApi(
         idToken = idToken,
     )
 
+    /** Empties the table on the server (admins only). The answer is the empty table with its hands. */
+    suspend fun resetTable(
+        idToken: String,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): TableWithHandsResponseDto = post(
+        path = "/tournaments/$tournamentId/tables/$roundId/$tableId/reset",
+        requestBody = emptyMap<String, String>(),
+        idToken = idToken,
+    )
+
     private suspend inline fun <reified TResponse> get(
         path: String,
         idToken: String? = null,

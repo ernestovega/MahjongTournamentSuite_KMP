@@ -140,6 +140,37 @@ internal class FakeTournamentRepository : TournamentRepository {
         return AppResult.Success(savedTable to savedHands)
     }
 
+    /** Makes every reset fail with this error. */
+    var resetError: AppError? = null
+
+    override suspend fun resetTable(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+    ): AppResult<Pair<TableState, List<TableHand>>> {
+        val key = TableKey(roundId, tableId)
+        calls += "reset $roundId/$tableId"
+        resetError?.let { return AppResult.Failure(it) }
+        val (table, hands) = tables[key] ?: return AppResult.Failure(AppError.Unexpected("Table not found"))
+        // Like the server: the players of the table stay, everything else is empty.
+        val emptyTable = table.copy(
+            version = table.version + 1,
+            playerEastId = "",
+            playerSouthId = "",
+            playerWestId = "",
+            playerNorthId = "",
+            playerEastScore = "",
+            playerSouthScore = "",
+            playerWestScore = "",
+            playerNorthScore = "",
+            isCompleted = false,
+            useTotalsOnly = false,
+        )
+        val emptyHands = syncHands(count = hands.size)
+        tables[key] = emptyTable to emptyHands
+        return AppResult.Success(emptyTable to emptyHands)
+    }
+
     override suspend fun getTournamentManifest(tournamentId: String): AppResult<TournamentManifest> {
         calls += "manifest"
         beforeManifest()

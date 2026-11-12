@@ -61,6 +61,51 @@ private fun FakeTournamentRepository.withTables(vararg ids: Int, roundId: Int = 
 }
 
 class RoundEditorSyncTest {
+    // ------------------------------------------------------------------ reset
+
+    @Test
+    fun resetEmptiesTheTableAndDropsTheTypedValues() = runTest {
+        val server = FakeTournamentRepository().apply {
+            seed(syncTable(version = 3, isCompleted = true), syncHands(score = "24"))
+            seed(syncTable(version = 1, tableId = 2))
+        }
+        val user = TestUser(server).also { it.open(1, 2) }
+        user.typeHandScore("16")
+
+        assertTrue(user.sync.resetTable(1))
+
+        assertEquals("reset 1/1", server.calls.single())
+        val editor = user.editor()
+        assertEquals(4L, editor.version)
+        assertEquals(listOf("", "", "", ""), listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId))
+        assertTrue(editor.hands.all { it.handScore.isEmpty() })
+        assertFalse(editor.isCompleted)
+        assertFalse(user.sync.hasUnsavedChanges)
+        // The players of the table stay, so the admin can seat them again.
+        assertEquals(listOf(1, 2, 3, 4), editor.playerIds)
+        val row = user.sync.allTables.first { it.tableId == 1 }
+        assertEquals(4L, row.version)
+        assertFalse(row.isCompleted)
+        // The other table is untouched, and the next check finds nothing to load.
+        assertEquals("1", user.editor(2).playerEastId)
+        user.sync.checkForChanges()
+        assertTrue(user.sync.updateNotices.isEmpty())
+        assertFalse(user.sync.isLoading)
+    }
+
+    @Test
+    fun aFailedResetKeepsTheTableAndShowsTheError() = runTest {
+        val server = FakeTournamentRepository().withTables(1)
+        server.resetError = com.etologic.mahjongtournamentsuite.domain.model.AppError.Network
+        val user = TestUser(server).also { it.open(1) }
+
+        assertFalse(user.sync.resetTable(1))
+
+        assertEquals("1", user.editor().playerEastId)
+        assertNotNull(user.sync.errorMessage)
+        assertFalse(user.sync.isLoading)
+    }
+
     // ------------------------------------------------------------------ polling
 
     @Test
