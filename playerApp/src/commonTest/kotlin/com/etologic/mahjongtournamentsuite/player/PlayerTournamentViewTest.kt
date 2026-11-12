@@ -69,6 +69,21 @@ class PlayerTournamentViewTest {
     }
 
     @Test
+    fun aTableWithSomeSeatsSetShowsTheSeatsButTakesNoHands() {
+        // An organizer cleared three seats of a table: only East keeps a player.
+        val partly = table(5, 1, 2, 3, 4).copy(playerSouthId = "", playerWestId = "", playerNorthId = "")
+        val view = buildPlayerTournamentView(tournament, slots, registry, listOf(partly to emptyList()), rankings, myEmaId = "10000001")
+        val seated = view.myTables.single()
+
+        assertEquals(true, seated.hasAnySeat)
+        assertEquals(false, seated.seatsAssigned)
+        assertEquals(listOf(1, null, null, null), seated.seatIds())
+        // The player still belongs to the table by the draw, but the table takes no hands without the four seats.
+        assertEquals(listOf(1, 2, 3, 4), seated.playerSlots())
+        assertEquals(false, view.canAddHands(seated, kotlinx.datetime.LocalDateTime(2026, 1, 1, 12, 0)))
+    }
+
+    @Test
     fun withoutEmaIdThereIsNoSlot() {
         val view = buildPlayerTournamentView(tournament, slots, registry, emptyList(), rankings, myEmaId = null)
 

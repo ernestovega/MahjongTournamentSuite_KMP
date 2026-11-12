@@ -60,6 +60,9 @@ data class PlayerTable(
     /** True when the players set the four seats. Before that, the table only has the players of the draw. */
     val seatsAssigned: Boolean get() = seatIds().none { it == null }
 
+    /** True when an organizer set at least one seat. The table then shows the seats, even while some are empty. */
+    val hasAnySeat: Boolean get() = seatIds().any { it != null }
+
     /** The players of the table: the seats when they are set, otherwise the players of the draw. */
     fun playerSlots(): List<Int> = if (seatsAssigned) seatIds().filterNotNull() else table.playerIds
 }
