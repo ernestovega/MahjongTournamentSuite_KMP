@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -108,7 +109,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
-import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
@@ -1795,21 +1795,19 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         ) {
-            // The hand number and its wind are the title of the card, so the lines under it use the whole width.
-            Row(
-                Modifier.padding(start = 12.dp, top = 10.dp, end = 12.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                HandNumber(hand.handId)
-                HandLabel(hand.handId)
-            }
-            // The first line is close to the title. The lines after a divider keep their space.
-            if (hand.isDone) HandRow(view, hand, dark, top = 8.dp)
-            penalties.forEachIndexed { index, values ->
-                val first = !hand.isDone && index == 0
-                if (!first) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
-                PenaltyRow(view, table.seatIds(), values, top = if (first) 8.dp else 14.dp)
+            // The hand number is in a narrow column at the start, centered on the whole card. The dividers stay in
+            // the content column, so they do not cross the column of the number.
+            Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.padding(start = 8.dp).widthIn(min = 32.dp), contentAlignment = Alignment.Center) {
+                    HandNumber(hand.handId)
+                }
+                Column(Modifier.weight(1f)) {
+                    if (hand.isDone) HandRow(view, hand, dark)
+                    penalties.forEachIndexed { index, values ->
+                        if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(start = 8.dp, end = 12.dp))
+                        PenaltyRow(view, table.seatIds(), values)
+                    }
+                }
             }
         }
     }
@@ -1820,9 +1818,9 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
  * at the end, in the same column and size as the score of a hand.
  */
 @Composable
-private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values: List<Int>, top: Dp) {
+private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values: List<Int>) {
     Row(
-        Modifier.fillMaxWidth().padding(start = 12.dp, top = top, end = 12.dp, bottom = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 8.dp, top = 14.dp, end = 12.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -1865,12 +1863,12 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values
  * chicken are on the second line. The score is at the end of the row.
  */
 @Composable
-private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean, top: Dp) {
+private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) {
     val winnerSlot = hand.playerWinnerId.toIntOrNull()
     val loserSlot = hand.playerLooserId.toIntOrNull()
     val kind = hand.kind()
     Row(
-        Modifier.fillMaxWidth().padding(start = 12.dp, top = top, end = 12.dp, bottom = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 8.dp, top = 14.dp, end = 12.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
