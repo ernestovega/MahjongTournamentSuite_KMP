@@ -4,7 +4,7 @@ import { MAIL_SMTP_URI } from "../config";
 import { HttpError } from "../api/httpError";
 import { nodemailer } from "./lazyModules";
 
-export type OutgoingEmail = { to: string; subject: string; text: string; html: string };
+export type OutgoingEmail = { to: string; subject: string; text: string; html: string; replyTo?: string };
 
 /** Sends one email. Tests replace it. */
 export type MailTransport = (email: OutgoingEmail) => Promise<void>;
@@ -25,6 +25,7 @@ async function sendWithSmtp(email: OutgoingEmail): Promise<void> {
   await smtp.sendMail({
     from: process.env.MAIL_FROM?.trim() || DEFAULT_FROM,
     to: email.to,
+    replyTo: email.replyTo,
     subject: email.subject,
     text: email.text,
     html: email.html,

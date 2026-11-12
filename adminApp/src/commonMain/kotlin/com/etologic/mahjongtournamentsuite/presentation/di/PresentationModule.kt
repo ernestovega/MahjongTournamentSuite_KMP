@@ -12,6 +12,7 @@ import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresente
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
+import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.IdCardProofPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -20,6 +21,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUse
 import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateTournamentRankingsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.data.di.telemetry
 import org.koin.dsl.module
 
@@ -44,4 +46,5 @@ val presentationModule = module {
     factory { RankingPresenter(get(), get(), get(), get(), telemetry()) }
     factory { IdCardProofPresenter(get(), telemetry()) }
     factory { ErrorsPresenter(get()) }
+    factory { ActivityPresenter(get()) { get<TournamentRepository>().listTournaments() } }
 }

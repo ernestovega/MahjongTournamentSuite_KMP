@@ -3,7 +3,7 @@ import { recordActivity } from "../../services/activityLog";
 import { actorFromToken } from "../../services/changeLog";
 
 import { auth, db } from "../../firebase";
-import { badRequest, forbidden, notFound } from "../httpError";
+import { assertSafeDocumentId, badRequest, forbidden, notFound } from "../httpError";
 import { readContentType, readPhotoData } from "./auth.routes";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireAuth } from "../middleware/requireAuth";
@@ -32,6 +32,7 @@ import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
 import { pathParam } from "../pathParam";
 import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
+import { FEED_SOURCES, listActivityFeed, type FeedSource } from "../../services/activityFeed";
 import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
 
 type Actor = { uid: string; admin?: boolean };
@@ -103,6 +104,24 @@ export function adminRouter(): Router {
       const group = await loadErrorGroup(pathParam(req, "id"), limit, cursorQuery(req.query));
       if (!group) throw notFound("Error group not found");
       res.status(200).json(group);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * Who wrote what and when: the activity log and the table saves of every tournament in one list, newest first.
+   * Filters: `tournamentId`, `uid` and `source` (`all`, `tables` or `other`). Send `nextCursor` back as `cursor`.
+   */
+  router.get("/activity", requireAuth, requireAdmin, async (req, res, next) => {
+    try {
+      const limit = limitQuery(req.query.limit, 50);
+      const source = (req.query.source ?? "all") as FeedSource;
+      if (!FEED_SOURCES.includes(source)) throw badRequest("source must be all, tables or other");
+      const tournamentId = typeof req.query.tournamentId === "string" && req.query.tournamentId ? req.query.tournamentId : undefined;
+      if (tournamentId) assertSafeDocumentId(tournamentId, "tournament id");
+      const uid = typeof req.query.uid === "string" && req.query.uid ? req.query.uid : undefined;
+      res.status(200).json(await listActivityFeed({ tournamentId, uid, source }, limit, req.query.cursor));
     } catch (error) {
       next(error);
     }

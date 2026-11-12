@@ -1,7 +1,9 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
+import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -36,6 +38,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
@@ -46,6 +49,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.app_logo
+import mahjongtournamentsuite.playerapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import kotlinx.serialization.Serializable
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
@@ -62,6 +66,10 @@ data object SplashRoute
 
 @Serializable
 data class SignInRoute(val openTournamentId: String? = null)
+
+/** The "Need help?" form of the sign-in. [email] is the email that the sign-in had, to fill the form. */
+@Serializable
+data class SupportRoute(val email: String = "")
 
 @Serializable
 data object TournamentsRoute
@@ -131,6 +139,7 @@ fun PlayerApp(
             LocalAppVersion provides appVersion,
             LocalScrollPositionStore provides remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } },
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
+            LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value
@@ -166,6 +175,15 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
         screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
             SignInScreen(navController, route.openTournamentId)
+        }
+        screen<SupportRoute> { entry ->
+            val supportRepository = koinInject<SupportRepository>()
+            SupportForm(
+                app = "player",
+                initialEmail = entry.toRoute<SupportRoute>().email,
+                onSend = supportRepository::send,
+                onBack = { navController.popBackStack() },
+            )
         }
         screen<TournamentsRoute> { TournamentsScreen(navController) }
         screen<TournamentRoute> { entry ->

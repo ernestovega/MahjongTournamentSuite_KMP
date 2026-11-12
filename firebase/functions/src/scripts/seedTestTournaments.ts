@@ -18,6 +18,7 @@ import {
   type SynthHand,
 } from "../services/handSynthesis";
 import { calculateTableSummary, defaultHand, HANDS_PER_TABLE } from "../services/tableManagerService";
+import { runScript } from "./scriptRun";
 
 /**
  * Creates 10 test tournaments for edge cases and 1 ongoing tournament for the live features.
@@ -1335,7 +1336,4 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+runScript("seedTestTournaments", main, applyChanges);

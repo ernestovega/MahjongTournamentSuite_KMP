@@ -17,6 +17,8 @@ export const api = onRequest(
     memory: "512MiB",
     // A brake on the bill: the public routes are open to everyone, and a flood of requests must not scale without end.
     maxInstances: 20,
+    // MTS_SUPPORT_EMAIL (the mailbox of the "Need help?" form) is added here once the secret exists in Secret Manager:
+    // a deploy fails when a bound secret is missing.
     secrets: [ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY],
   },
   app,

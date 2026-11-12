@@ -1,4 +1,5 @@
 import { runEmaPlayerRegistrySync } from "../services/playerSyncService";
+import { runScript } from "./scriptRun";
 async function configureLocalExecution(): Promise<void> {
   const localSourceDir = process.env.EMA_LOCAL_SOURCE_DIR?.trim();
   if (localSourceDir) {
@@ -12,10 +13,9 @@ async function configureLocalExecution(): Promise<void> {
   }
 }
 
-configureLocalExecution()
-  .then(() => runEmaPlayerRegistrySync("seed"))
-  .then((report) => console.log(`Seed completed: ${report.additions.length} additions, ${report.updates.length} updates.`))
-  .catch((error: unknown) => {
-    console.error("Player seed failed.", error);
-    process.exitCode = 1;
-  });
+runScript("seedPlayers", async () => {
+  await configureLocalExecution();
+  const report = await runEmaPlayerRegistrySync("seed");
+  console.log(`Seed completed: ${report.additions.length} additions, ${report.updates.length} updates.`);
+  return { additions: report.additions.length, updates: report.updates.length };
+}, true);

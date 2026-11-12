@@ -12,6 +12,7 @@ import { playerRouter } from "./routes/player.routes";
 import { playersRouter } from "./routes/players.routes";
 import { meRouter, publicRouter } from "./routes/public.routes";
 import { tournamentsRouter } from "./routes/tournaments.routes";
+import { supportRouter } from "./routes/support.routes";
 import { syncRouter } from "./routes/sync.routes";
 import { telemetryRouter } from "./routes/telemetry.routes";
 import { venuesRouter } from "./routes/venues.routes";
@@ -22,6 +23,7 @@ const WRITES_PER_MINUTE = 120;
 /** The route groups of the API and where each one is mounted. A test reads this list to check every route. */
 export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
   ["/auth", authRouter],
+  ["/support", supportRouter],
   ["/config", configRouter],
   ["/countries", countriesRouter],
   ["/ema-player-registry", playersRouter],

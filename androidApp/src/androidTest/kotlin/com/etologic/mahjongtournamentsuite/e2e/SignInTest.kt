@@ -79,11 +79,11 @@ class SignInTest : AdminE2eTest() {
         c.clickButton("Logout")
         c.waitForText("Do you want to sign out?")
         c.clickButton("Yes, sign out")
-        c.waitForText("Use your email to sign in. Accounts are invitation-only.")
+        c.waitForText("Need help?")
         // The session is gone: a restart shows the sign-in screen again.
         app.close()
         app.launch()
-        c.waitForText("Use your email to sign in. Accounts are invitation-only.")
+        c.waitForText("Need help?")
     }
 
     @Test

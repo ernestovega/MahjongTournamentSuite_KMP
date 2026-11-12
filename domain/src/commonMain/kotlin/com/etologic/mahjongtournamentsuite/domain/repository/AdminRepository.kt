@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.domain.repository
 
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityPage
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
@@ -52,4 +54,11 @@ interface AdminRepository {
 
     /** One problem with its stack trace and one page of its newest reports. Only an administrator can load it. Never cached. */
     suspend fun loadErrorGroup(id: String, reportCursor: ErrorLogCursor? = null): AppResult<ErrorGroupDetail>
+
+    /**
+     * One page of the write log: who changed what and when, newest first. It joins the table saves and the other
+     * changes. Pass the [ActivityPage.nextCursor] of a page as [cursor] to read the next one. Only an administrator
+     * can load it. Never cached.
+     */
+    suspend fun loadActivity(filter: ActivityFilter, cursor: String? = null): AppResult<ActivityPage>
 }

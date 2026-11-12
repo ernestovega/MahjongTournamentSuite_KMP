@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite
 
+import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
+import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -8,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
@@ -15,6 +19,7 @@ import androidx.compose.runtime.produceState
 import org.koin.compose.koinInject
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_logo
+import mahjongtournamentsuite.adminapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -35,6 +40,7 @@ import com.etologic.mahjongtournamentsuite.presentation.RankingsRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
+import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TablesRoute
 import com.etologic.mahjongtournamentsuite.presentation.TimerRoute
@@ -49,6 +55,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandalone
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SplashScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TablesScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneScreen
@@ -109,6 +116,7 @@ private fun AppWithModules(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalTelemetry provides telemetry,
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
+            LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value
@@ -153,6 +161,15 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
             ) {
                 screen<SplashRoute> { SplashScreen(navController = navController, restoredRoutes = restoredRoutes) }
                 screen<SignInRoute> { SignInScreen(navController = navController) }
+                screen<SupportRoute> { backStackEntry ->
+                    val supportRepository = koinInject<SupportRepository>()
+                    SupportForm(
+                        app = "admin",
+                        initialEmail = backStackEntry.toRoute<SupportRoute>().email,
+                        onSend = supportRepository::send,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
                 screen<TournamentsRoute> { TournamentsScreen(navController = navController) }
                 screen<PlayerBaseRoute> { PlayerBaseScreen(navController = navController) }
                 screen<TournamentRoute> { backStackEntry ->
@@ -188,6 +205,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                 }
                 screen<TimerRoute> { TimerStandaloneScreen() }
                 screen<ErrorsRoute> { ErrorsScreen(navController) }
+                screen<ActivityRoute> { ActivityScreen(navController) }
                 screen<StatisticsRoute> { backStackEntry ->
                     StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())
                 }

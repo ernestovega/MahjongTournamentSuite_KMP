@@ -164,8 +164,11 @@ class CreateTournamentDialogUiTest {
         /** Color. */
         const val BrandingRequiredFieldCount = 1
 
-        /** From, to. */
-        const val ScheduleRequiredFieldCount = 2
+        /** The 7 rounds of a new tournament. */
+        const val DefaultRoundCount = 7
+
+        /** From, to, and the date and the start time of each round. */
+        const val ScheduleRequiredFieldCount = 2 + 2 * DefaultRoundCount
     }
 
     @Test

@@ -11,6 +11,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
+import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
@@ -25,7 +26,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.sign_in_enter_email
 import mahjongtournamentsuite.adminapp.generated.resources.sign_in_no_manager_access
 import mahjongtournamentsuite.adminapp.generated.resources.sign_in_reset_sent
-import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 @Composable
@@ -125,5 +125,6 @@ fun SignInScreen(
         onSubmit = ::submit,
         onForgotPassword = ::requestPasswordReset,
         onErrorDismiss = { errorMessage = null },
+        onNeedHelp = { navController.navigate(SupportRoute(email = email.trim())) },
     )
 }

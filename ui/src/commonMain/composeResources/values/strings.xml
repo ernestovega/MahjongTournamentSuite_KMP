@@ -8,13 +8,21 @@
     <string name="sign_out_message">Do you want to sign out?</string>
     <string name="sign_out_confirm">Yes, sign out</string>
     <string name="action_ok">OK</string>
-    <string name="sign_in_description">Use your email to sign in. Accounts are invitation-only.</string>
     <string name="sign_in_title">Sign in</string>
     <string name="field_email">Email</string>
     <string name="field_password">Password</string>
     <string name="password_hide">Hide password</string>
     <string name="password_show">Show password</string>
     <string name="sign_in_forgot_password">Forgot password?</string>
+    <string name="sign_in_need_help">Need help?</string>
+    <string name="support_title">Support</string>
+    <string name="support_intro">Write to us and we will answer you by email.</string>
+    <string name="support_field_name">Name (optional)</string>
+    <string name="support_field_message">Message</string>
+    <string name="support_send">Send</string>
+    <string name="support_sent">Message sent. We will answer you by email as soon as we can.</string>
+    <string name="support_message_missing">Write your message.</string>
+    <string name="support_email_missing">Enter your email, so we can answer you.</string>
     <string name="sign_in_button">Sign in</string>
     <string name="app_logo_description">Mahjong Tournament Suite logo</string>
     <string name="top_bar_app_users">Users</string>
@@ -338,4 +346,5 @@
     <string name="app_switch_to_player">Player view</string>
     <string name="app_chooser_title">What do you want to open?</string>
     <string name="app_chooser_hint">You can switch between the apps at any time with the button in the top bar.</string>
+    <string name="top_bar_activity">Activity</string>
 </resources>

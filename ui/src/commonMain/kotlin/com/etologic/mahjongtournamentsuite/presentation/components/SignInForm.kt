@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -53,8 +54,8 @@ import mahjongtournamentsuite.ui.generated.resources.ic_visibility_off
 import mahjongtournamentsuite.ui.generated.resources.password_hide
 import mahjongtournamentsuite.ui.generated.resources.password_show
 import mahjongtournamentsuite.ui.generated.resources.sign_in_button
-import mahjongtournamentsuite.ui.generated.resources.sign_in_description
 import mahjongtournamentsuite.ui.generated.resources.sign_in_forgot_password
+import mahjongtournamentsuite.ui.generated.resources.sign_in_need_help
 import mahjongtournamentsuite.ui.generated.resources.sign_in_title
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
@@ -76,7 +77,8 @@ fun SignInForm(
     onSubmit: () -> Unit,
     onForgotPassword: () -> Unit,
     onErrorDismiss: () -> Unit,
-    description: String = stringResource(Res.string.sign_in_description),
+    /** Opens the support form. */
+    onNeedHelp: () -> Unit,
     /** Set when the sign-in is optional: the back button returns to the screen that asked for it. */
     onBack: (() -> Unit)? = null,
 ) {
@@ -101,12 +103,6 @@ fun SignInForm(
                 contentPadding = PaddingValues(horizontal = 24.dp, vertical = 32.dp),
             ) {
                 AppLogo(size = 144.dp)
-
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
 
                 Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                     Column(
@@ -222,11 +218,27 @@ fun SignInForm(
                             )
                         }
 
-                        FocusedTextButton(
-                            enabled = !isLoading,
-                            onClick = onForgotPassword,
+                        // On a narrow screen the first text wraps, so both buttons stay on one line.
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Text(stringResource(Res.string.sign_in_forgot_password))
+                            FocusedTextButton(
+                                modifier = Modifier.weight(1f, fill = false),
+                                enabled = !isLoading,
+                                onClick = onForgotPassword,
+                                contentPadding = LinkButtonPadding,
+                            ) {
+                                Text(stringResource(Res.string.sign_in_forgot_password))
+                            }
+                            FocusedTextButton(
+                                enabled = !isLoading,
+                                onClick = onNeedHelp,
+                                contentPadding = LinkButtonPadding,
+                            ) {
+                                Text(stringResource(Res.string.sign_in_need_help))
+                            }
                         }
 
                         FocusedButton(
@@ -255,3 +267,6 @@ fun SignInForm(
         }
     }
 }
+
+/** The two text buttons above the sign-in button share one line, so they use little padding. */
+private val LinkButtonPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)

@@ -2,6 +2,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 
 import { db, firebaseProjectId } from "../firebase";
 import { deleteTournament } from "../services/tournamentsService";
+import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
 
@@ -40,7 +41,4 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+runScript("removeTestTournaments", main, applyChanges);

@@ -8,13 +8,21 @@
     <string name="sign_out_message">Voulez-vous vous déconnecter ?</string>
     <string name="sign_out_confirm">Oui, me déconnecter</string>
     <string name="action_ok">OK</string>
-    <string name="sign_in_description">Utilisez votre adresse e-mail pour vous connecter. Les comptes se créent uniquement sur invitation.</string>
     <string name="sign_in_title">Connexion</string>
     <string name="field_email">E-mail</string>
     <string name="field_password">Mot de passe</string>
     <string name="password_hide">Masquer le mot de passe</string>
     <string name="password_show">Afficher le mot de passe</string>
     <string name="sign_in_forgot_password">Mot de passe oublié ?</string>
+    <string name="sign_in_need_help">Besoin d’aide ?</string>
+    <string name="support_title">Assistance</string>
+    <string name="support_intro">Écrivez-nous et nous vous répondrons par e-mail.</string>
+    <string name="support_field_name">Nom (facultatif)</string>
+    <string name="support_field_message">Message</string>
+    <string name="support_send">Envoyer</string>
+    <string name="support_sent">Message envoyé. Nous vous répondrons par e-mail dès que possible.</string>
+    <string name="support_message_missing">Écrivez votre message.</string>
+    <string name="support_email_missing">Indiquez votre e-mail pour que nous puissions vous répondre.</string>
     <string name="sign_in_button">Se connecter</string>
     <string name="app_logo_description">Logo de Mahjong Tournament Suite</string>
     <string name="top_bar_app_users">Utilisateurs</string>
@@ -338,4 +346,5 @@
     <string name="app_switch_to_player">Vue joueur</string>
     <string name="app_chooser_title">Que voulez-vous ouvrir ?</string>
     <string name="app_chooser_hint">Vous pourrez ensuite passer d\'une app à l\'autre à tout moment avec le bouton de la barre du haut.</string>
+    <string name="top_bar_activity">Activité</string>
 </resources>

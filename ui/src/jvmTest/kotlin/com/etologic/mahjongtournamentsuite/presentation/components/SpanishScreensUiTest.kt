@@ -95,14 +95,14 @@ class SpanishScreensUiTest {
             SignInForm(
                 email = "", onEmailChange = {}, password = "", onPasswordChange = {}, isLoading = false,
                 errorMessage = null, infoMessage = null, emailRequester = FocusRequester(),
-                onSubmit = {}, onForgotPassword = {}, onErrorDismiss = {},
+                onSubmit = {}, onForgotPassword = {}, onErrorDismiss = {}, onNeedHelp = {},
             )
             }
         }
         awaitText("Contraseña")
         onNodeWithText("Correo electrónico").assertExists()
         onNodeWithText("¿Has olvidado la contraseña?").assertExists()
-        onNodeWithText("Usa tu correo electrónico para iniciar sesión. Las cuentas son solo por invitación.").assertExists()
+        onNodeWithText("¿Necesitas ayuda?").assertExists()
         onNodeWithContentDescription("Mostrar contraseña").assertExists()
     }
 
