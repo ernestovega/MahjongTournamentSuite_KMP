@@ -65,9 +65,11 @@ class PlayerRoundStartTest : PlayerE2eTest() {
 
         c.clickButton("Set the seats")
         c.waitForText("Who sits at East?")
-        repeat(3) { c.onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick() }
-        // The fourth player takes North without a question.
-        c.waitForText("Save the seats")
+        // Each pick asks for the next wind. The fourth player takes North without a question.
+        listOf("South", "West", "North").forEach { next ->
+            c.onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick()
+            c.waitForText(if (next == "North") "North:" else "Who sits at $next?", substring = next == "North")
+        }
         c.clickButton("Save the seats")
 
         listOf("Add draw", "Add win", "Add penalty", "Change the seats").forEach { c.waitForText(it) }
