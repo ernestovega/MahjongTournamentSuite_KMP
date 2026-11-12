@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -108,11 +106,7 @@ fun CountryFlag(
         FlagBox(code, modifier, width, contentDescription)
         return
     }
-    TooltipBox(
-        positionProvider = rememberAppTooltipPositionProvider(),
-        tooltip = { AppPlainTooltip { Text(countryName) } },
-        state = rememberTooltipState(),
-    ) {
+    AppTooltipBox(countryName) {
         FlagBox(code, modifier, width, contentDescription)
     }
 }

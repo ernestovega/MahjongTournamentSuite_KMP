@@ -1,14 +1,24 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.ProvideTextStyle
+import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipScope
+import androidx.compose.material3.TooltipState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.unit.Dp
@@ -18,6 +28,11 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /** The widest tooltip. A narrower window makes it narrower. */
 val TooltipMaxWidth = 320.dp
@@ -80,5 +95,97 @@ fun rememberAppTooltipPositionProvider(alignEnd: Boolean = false): PopupPosition
     val density = LocalDensity.current
     return remember(density, alignEnd) {
         with(density) { AppTooltipPositionProvider(spacing = 4.dp.roundToPx(), margin = TooltipWindowMargin.roundToPx(), alignEnd = alignEnd) }
+    }
+}
+
+/**
+ * The anchor of [AppTooltipBox]. A button of the anchor calls [toggleTooltip] on click, so the keyboard and the mouse
+ * can also open the tooltip. A click that ends a touch does nothing: the finger already showed the tooltip, and lifting
+ * the finger hides it.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+class AppTooltipAnchorScope internal constructor(
+    private val state: TooltipState,
+    private val scope: CoroutineScope,
+) {
+    internal var lastTouchUp: TimeMark? = null
+
+    fun toggleTooltip() {
+        if (lastTouchUp?.let { it.elapsedNow() < TouchClickWindow } == true) return
+        if (state.isVisible) state.dismiss() else scope.launch { state.show() }
+    }
+}
+
+/** A click that comes this soon after a touch ends belongs to that touch. */
+private val TouchClickWindow = 500.milliseconds
+
+/**
+ * The tooltip box of both apps.
+ * - Touch: the tooltip shows as soon as the finger touches the anchor, with no long press, and hides when the finger lifts.
+ * - Mouse: the tooltip shows while the pointer is over the anchor.
+ * Taps and clicks still reach the anchor, so a button inside still works.
+ * When [enabled] is false, the anchor shows no tooltip.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppTooltipBox(
+    tooltip: @Composable TooltipScope.() -> Unit,
+    modifier: Modifier = Modifier,
+    alignEnd: Boolean = false,
+    enabled: Boolean = true,
+    content: @Composable AppTooltipAnchorScope.() -> Unit,
+) {
+    // Persistent, so a long touch keeps the tooltip until the finger lifts.
+    val state = rememberTooltipState(isPersistent = true)
+    val scope = rememberCoroutineScope()
+    val anchorScope = remember(state, scope) { AppTooltipAnchorScope(state, scope) }
+    TooltipBox(
+        positionProvider = rememberAppTooltipPositionProvider(alignEnd),
+        tooltip = tooltip,
+        state = state,
+        modifier = if (enabled) modifier.showTooltipWhileTouched(state, scope, anchorScope) else modifier,
+        enableUserInput = enabled,
+    ) { anchorScope.content() }
+}
+
+/** [AppTooltipBox] with a plain [text]. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun AppTooltipBox(
+    text: String,
+    modifier: Modifier = Modifier,
+    alignEnd: Boolean = false,
+    enabled: Boolean = true,
+    content: @Composable AppTooltipAnchorScope.() -> Unit,
+) = AppTooltipBox(
+    tooltip = { AppPlainTooltip { Text(text) } },
+    modifier = modifier,
+    alignEnd = alignEnd,
+    enabled = enabled,
+    content = content,
+)
+
+/**
+ * Shows the tooltip while a finger or a pen touches the anchor. It watches the events before the anchor does and
+ * consumes none of them, so the anchor and its parents still get the taps and the scrolls.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+private fun Modifier.showTooltipWhileTouched(
+    state: TooltipState,
+    scope: CoroutineScope,
+    anchorScope: AppTooltipAnchorScope,
+): Modifier = pointerInput(state) {
+    awaitEachGesture {
+        val down = awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        if (down.type == PointerType.Mouse) return@awaitEachGesture
+        scope.launch { state.show() }
+        try {
+            do {
+                val event = awaitPointerEvent(PointerEventPass.Initial)
+            } while (event.changes.any { it.pressed })
+        } finally {
+            anchorScope.lastTouchUp = TimeSource.Monotonic.markNow()
+            state.dismiss()
+        }
     }
 }

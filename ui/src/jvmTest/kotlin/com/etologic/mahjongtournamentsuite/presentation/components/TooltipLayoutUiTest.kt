@@ -8,8 +8,8 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.DesktopComposeUiTest
-import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performMouseInput
 import androidx.compose.ui.test.performTouchInput
@@ -36,9 +36,9 @@ class TooltipLayoutUiTest {
         Alignment.TopCenter, Alignment.BottomCenter, Alignment.CenterStart, Alignment.CenterEnd,
     )
 
-    /** Hovers the info icon, then checks that the tooltip that starts with [firstLine] is inside the window. */
+    /** Touches the info icon and keeps the finger on it, then checks that the tooltip that starts with [firstLine] is inside the window. */
     private fun DesktopComposeUiTest.checkTooltip(width: Int, height: Int, firstLine: String) {
-        onNodeWithContentDescription("More information").performTouchInput { longClick() }
+        onNodeWithContentDescription("More information").performTouchInput { down(center) }
         mainClock.advanceTimeBy(2_000)
         waitForIdle()
         val bounds = onNodeWithText(firstLine, substring = true).fetchSemanticsNode().boundsInRoot
@@ -48,6 +48,7 @@ class TooltipLayoutUiTest {
         assertTrue(bounds.top >= 0f, "Tooltip starts above the window: $bounds")
         assertTrue(bounds.right <= windowWidth, "Tooltip ends right of the window: $bounds, window $windowWidth")
         assertTrue(bounds.bottom <= windowHeight, "Tooltip ends under the window: $bounds, window $windowHeight")
+        onNodeWithContentDescription("More information").performTouchInput { up() }
     }
 
     private fun check(width: Int, height: Int, alignment: Alignment, firstLine: String, text: @androidx.compose.runtime.Composable () -> String) =
@@ -103,5 +104,26 @@ class TooltipLayoutUiTest {
         val text = tooltip.config.getOrNull(SemanticsProperties.Text)?.joinToString("") { it.text }.orEmpty()
         assertTrue(text.contains(".\nIt is provisional"), "The provisional note is not on its own line: $text")
         assertTrue(tooltip.boundsInRoot.right <= density.density * 320, "Tooltip ends right of the window: ${tooltip.boundsInRoot}")
+    }
+
+    /** A touch shows the tooltip at once, with no long press, and lifting the finger hides it. */
+    @Test
+    fun touchShowsTheTooltipAtOnceAndReleaseHidesIt() = runDesktopComposeUiTest(320, 568) {
+        mainClock.autoAdvance = false
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                Box(Modifier.fillMaxSize()) { InfoTip("Short info") }
+            }
+        }
+        mainClock.advanceTimeBy(100)
+        assertTrue(onAllNodesWithText("Short info").fetchSemanticsNodes().isEmpty(), "The tooltip shows before the touch")
+        onNodeWithContentDescription("More information").performTouchInput { down(center) }
+        mainClock.advanceTimeBy(300)
+        assertTrue(onAllNodesWithText("Short info").fetchSemanticsNodes().isNotEmpty(), "The tooltip does not show while the finger touches")
+        mainClock.advanceTimeBy(3_000)
+        assertTrue(onAllNodesWithText("Short info").fetchSemanticsNodes().isNotEmpty(), "The tooltip hides while the finger still touches")
+        onNodeWithContentDescription("More information").performTouchInput { up() }
+        mainClock.advanceTimeBy(1_000)
+        assertTrue(onAllNodesWithText("Short info").fetchSemanticsNodes().isEmpty(), "The tooltip stays after the finger lifts")
     }
 }
