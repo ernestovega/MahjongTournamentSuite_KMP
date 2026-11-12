@@ -1023,7 +1023,7 @@ private fun datesOf(tournament: Tournament): String? = formatLocalizedDateRange(
 
 /**
  * The four players of a table in the order of hand 1 (East, South, West, North).
- * Before any seat is set, the list has the players of the draw and the order has no meaning.
+ * Before the players set the seats, the list has the players of the draw and the order has no meaning.
  */
 private fun PlayerTable.seatsFor(view: PlayerTournamentView, withLevelChange: Boolean = false): List<SeatDisplay> {
     val t = table
@@ -1046,9 +1046,7 @@ private fun PlayerTable.seatsFor(view: PlayerTournamentView, withLevelChange: Bo
             levelChange = if (withLevelChange && table.isCompleted) view.levelChangeAt(slot, roundId) else null,
         )
     }
-    // With no seat set, the table shows the players of the draw. Once an organizer sets a seat, the table shows the
-    // seats as they are stored, with the empty ones blank, so the player app matches what the admin app shows.
-    if (!hasAnySeat) {
+    if (!seatsAssigned) {
         return (0 until 4).map { seat(t.playerIds.getOrNull(it)?.toString().orEmpty(), "", "", 0) }
     }
     // The table points come only from the scores of the table.
@@ -1658,7 +1656,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 handNumber = handNumber,
                 centerLabel = if (complete) stringResource(Res.string.table_done) else stringResource(Res.string.table_hand_progress, handNumber, table.hands.size),
                 showPoints = complete,
-                windsKnown = table.hasAnySeat,
+                windsKnown = table.seatsAssigned,
                 showIds = details,
                 // The differences make sense only while the table is in play: it has hands and it is not finished.
                 diffsAvailable = !complete && table.doneHands > 0,
