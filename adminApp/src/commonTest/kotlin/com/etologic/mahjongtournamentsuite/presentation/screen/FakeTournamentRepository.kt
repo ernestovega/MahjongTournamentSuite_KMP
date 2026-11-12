@@ -223,6 +223,7 @@ internal class FakeTournamentRepository : TournamentRepository {
         matchExtraMinutes: Int?,
         timeZone: String?,
         isPublic: Boolean?,
+        showTableDiffs: Boolean?,
     ): AppResult<Tournament> {
         savedIsPublic = isPublic
         return writeResult(Tournament(id = tournamentId, name = name, isTeams = false, numPlayers = 0, numRounds = 0, isPublic = isPublic ?: true))

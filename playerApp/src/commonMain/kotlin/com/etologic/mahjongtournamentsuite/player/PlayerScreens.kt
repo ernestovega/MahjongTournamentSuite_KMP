@@ -1711,7 +1711,8 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 windsKnown = table.seatsAssigned,
                 showIds = details,
                 // The differences make sense only while the table is in play: it has hands and it is not finished.
-                diffsAvailable = !complete && table.doneHands > 0,
+                // The organizers can also hide them for the whole tournament.
+                diffsAvailable = view.tournament.showTableDiffs && !complete && table.doneHands > 0,
                 // On a table that takes hands, a tap on a player starts a hand won by that player.
                 onPlayerClick = { slot ->
                     if (view.canAddHands(table, now)) {

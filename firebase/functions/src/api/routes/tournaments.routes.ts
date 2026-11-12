@@ -561,6 +561,7 @@ export function tournamentsRouter(): Router {
         countBestHands: typeof body.countBestHands === "boolean" ? body.countBestHands : undefined,
         countChickenHands: typeof body.countChickenHands === "boolean" ? body.countChickenHands : undefined,
         isPublic: typeof body.isPublic === "boolean" ? body.isPublic : undefined,
+        showTableDiffs: typeof body.showTableDiffs === "boolean" ? body.showTableDiffs : undefined,
         removeAssociationLogo: body.removeAssociationLogo === true,
         roundSchedules: body.roundSchedules,
         agendaItems: body.agendaItems,
@@ -575,6 +576,7 @@ export function tournamentsRouter(): Router {
         details: {
           shortName, primaryColor, eventStartDate, eventEndDate, hostCountry, hostCity,
           countBestHands: body.countBestHands, countChickenHands: body.countChickenHands, isPublic: body.isPublic,
+          showTableDiffs: body.showTableDiffs,
           matchDurationMinutes: body.matchDurationMinutes, matchEndMode: body.matchEndMode,
           matchExtraMinutes: body.matchExtraMinutes, timeZone: body.timeZone,
           logo: body.removeAssociationLogo === true ? "removed"

@@ -679,6 +679,8 @@
     <string name="errors_load_more_reports">Load more reports</string>
     <string name="public_tournament">Public tournament</string>
     <string name="public_tournament_description">Anyone can see the tournament, its results and its statistics without an account. Turn it off for a test tournament: only its staff will see it.</string>
+    <string name="show_table_diffs">Differences on tables</string>
+    <string name="show_table_diffs_description">Players see the button that shows the differences on the table screen. The player app gets the change in about a minute, without a new release.</string>
     <string name="player_hidden_from_public">Hide from the public</string>
     <string name="player_hidden_from_public_description">At the person\'s request: without an account, the tournaments show the slot number instead of the name, and there is no public profile or statistics.</string>
     <string name="app_activity">Activity</string>

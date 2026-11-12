@@ -679,6 +679,8 @@
     <string name="errors_load_more_reports">Cargar más informes</string>
     <string name="public_tournament">Torneo público</string>
     <string name="public_tournament_description">Cualquiera puede ver el torneo, sus resultados y sus estadísticas sin cuenta. Desactívalo en un torneo de prueba: solo lo verá su equipo organizador.</string>
+    <string name="show_table_diffs">Diferencias en las mesas</string>
+    <string name="show_table_diffs_description">Los jugadores ven el botón que muestra las diferencias en la pantalla de la mesa. La app de jugadores recibe el cambio en un minuto como mucho, sin publicar una versión nueva.</string>
     <string name="player_hidden_from_public">Ocultar al público</string>
     <string name="player_hidden_from_public_description">Si la persona lo pide: sin cuenta, los torneos muestran el número de plaza en lugar del nombre, y no hay ficha ni estadísticas públicas.</string>
     <string name="app_activity">Actividad</string>

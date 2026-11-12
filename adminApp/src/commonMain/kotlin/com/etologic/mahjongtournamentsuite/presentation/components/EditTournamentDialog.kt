@@ -104,6 +104,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.reuse
 import mahjongtournamentsuite.adminapp.generated.resources.rounds
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.short_name
+import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs
+import mahjongtournamentsuite.adminapp.generated.resources.show_table_diffs_description
 import mahjongtournamentsuite.adminapp.generated.resources.tab_branding
 import mahjongtournamentsuite.adminapp.generated.resources.tab_data
 import mahjongtournamentsuite.adminapp.generated.resources.tab_general
@@ -183,6 +185,7 @@ fun EditTournamentDialog(
     var settingsCountBestHands by remember(tournament.id) { mutableStateOf(tournament.countBestHands) }
     var settingsCountChickenHands by remember(tournament.id) { mutableStateOf(tournament.countChickenHands) }
     var settingsIsPublic by remember(tournament.id) { mutableStateOf(tournament.isPublic) }
+    var settingsShowTableDiffs by remember(tournament.id) { mutableStateOf(tournament.showTableDiffs) }
     var settingsMatchDurationText by remember(tournament.id) { mutableStateOf(tournament.matchDurationMinutes.toString()) }
     var settingsMatchExtraText by remember(tournament.id) { mutableStateOf(tournament.matchExtraMinutes.toString()) }
     // An old tournament has no time zone. The form suggests the zone of this device, so the server can check the time.
@@ -404,6 +407,13 @@ fun EditTournamentDialog(
                                         checked = settingsIsPublic,
                                         enabled = !isLoading,
                                         onCheckedChange = { settingsIsPublic = it },
+                                    )
+                                    TournamentOptionSwitch(
+                                        label = stringResource(Res.string.show_table_diffs),
+                                        description = stringResource(Res.string.show_table_diffs_description),
+                                        checked = settingsShowTableDiffs,
+                                        enabled = !isLoading,
+                                        onCheckedChange = { settingsShowTableDiffs = it },
                                     )
                                 }
                                 EditTournamentTab.VENUE -> {
@@ -878,6 +888,7 @@ fun EditTournamentDialog(
                                         matchExtraMinutes = validMatchExtra ?: tournament.matchExtraMinutes,
                                         timeZone = settingsTimeZone.trim(),
                                         isPublic = settingsIsPublic,
+                                        showTableDiffs = settingsShowTableDiffs,
                                     )
                                 ) {
                                     is AppResult.Success -> {

@@ -59,6 +59,8 @@ interface TournamentRepository {
         timeZone: String? = null,
         /** Null keeps the stored value. */
         isPublic: Boolean? = null,
+        /** Null keeps the stored value. */
+        showTableDiffs: Boolean? = null,
     ): AppResult<Tournament>
 
     /** Creates the ID cards PDF. Without a sheet layout, the PDF has one card side on each page. */
