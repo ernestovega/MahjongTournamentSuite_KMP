@@ -177,4 +177,10 @@
     <string name="sign_in_needed_title">Inicia sesión para ver lo tuyo</string>
     <string name="tables_me_sign_in">Inicia sesión para ver tus mesas en este torneo. Todas las mesas están en la pestaña Todas.</string>
     <string name="tables_team_sign_in">Inicia sesión para ver las mesas de tu equipo. Todas las mesas están en la pestaña Todas.</string>
+    <string name="filter_table_search">Nº de mesa o jugador</string>
+    <string name="filter_round">Ronda</string>
+    <string name="filter_all_rounds">Todas las rondas</string>
+    <string name="table_status_not_started">Sin empezar</string>
+    <string name="table_status_playing">En juego</string>
+    <string name="tables_no_match">Ninguna mesa coincide con los filtros</string>
 </resources>
