@@ -147,7 +147,8 @@ fun TournamentScheduleEditor(
                             )
                         },
                         modifier = Modifier.weight(1f),
-                        label = { Text(stringResource(Res.string.date)) },
+                        // Every round needs a date and a start time, so both fields carry the required star.
+                        label = { RequiredLabel(stringResource(Res.string.date)) },
                         placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                         trailingIcon = {
                             FocusedIconButton(
@@ -179,7 +180,7 @@ fun TournamentScheduleEditor(
                             )
                         },
                         modifier = Modifier.width(128.dp),
-                        label = { Text(stringResource(Res.string.start)) },
+                        label = { RequiredLabel(stringResource(Res.string.start)) },
                         placeholder = { Text(stringResource(Res.string.hh_mm)) },
                         trailingIcon = {
                             FocusedIconButton(
