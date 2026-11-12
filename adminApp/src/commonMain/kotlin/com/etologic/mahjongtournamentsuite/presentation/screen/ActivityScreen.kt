@@ -37,6 +37,7 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityEntry
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFieldChange
 import com.etologic.mahjongtournamentsuite.domain.model.ActivityFilter
+import com.etologic.mahjongtournamentsuite.domain.model.ActivityOrigin
 import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
@@ -53,15 +54,25 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTimePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTournamentDate
+import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
+import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_account_send
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_member_add
@@ -106,6 +117,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_loaded_count
 import mahjongtournamentsuite.adminapp.generated.resources.activity_no_changes
 import mahjongtournamentsuite.adminapp.generated.resources.activity_none
 import mahjongtournamentsuite.adminapp.generated.resources.activity_only_person
+import mahjongtournamentsuite.adminapp.generated.resources.activity_origin_all
+import mahjongtournamentsuite.adminapp.generated.resources.activity_period_any
+import mahjongtournamentsuite.adminapp.generated.resources.activity_period_clear
+import mahjongtournamentsuite.adminapp.generated.resources.activity_period_from
+import mahjongtournamentsuite.adminapp.generated.resources.activity_period_to
 import mahjongtournamentsuite.adminapp.generated.resources.activity_person_filter
 import mahjongtournamentsuite.adminapp.generated.resources.activity_source_all
 import mahjongtournamentsuite.adminapp.generated.resources.activity_source_other
@@ -120,9 +136,46 @@ import mahjongtournamentsuite.adminapp.generated.resources.errors_reload
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
 import kotlin.time.Instant
 
 private val WhenColumnWidth = 150.dp
+private const val MILLIS_PER_MINUTE = 60_000L
+
+/** The uid of the activity records of the maintenance scripts. */
+private const val SCRIPT_UID = "script"
+
+internal enum class PeriodEnd { FROM, TO }
+
+/** Asks for a day and then for a time. The result is a local time of this device, in milliseconds since the epoch. */
+@Composable
+private fun PeriodPicker(initialMillis: Long?, onDismiss: () -> Unit, onPicked: (Long) -> Unit) {
+    val zone = remember { TimeZone.currentSystemDefault() }
+    val initial = remember(initialMillis) {
+        Instant.fromEpochMilliseconds(initialMillis ?: Clock.System.now().toEpochMilliseconds()).toLocalDateTime(zone)
+    }
+    var pickedDate by remember { mutableStateOf<LocalDate?>(null) }
+    val date = pickedDate
+    if (date == null) {
+        TournamentDatePickerDialog(
+            selectedDisplayDate = initial.date.toString().toDisplayTournamentDate(),
+            onDismiss = onDismiss,
+            onDateSelected = { display -> pickedDate = display.toIsoTournamentDateOrNull()?.let(LocalDate::parse) },
+        )
+    } else {
+        val hour = initial.hour.toString().padStart(2, '0')
+        val minute = initial.minute.toString().padStart(2, '0')
+        TournamentTimePickerDialog(
+            selectedTime = "$hour:$minute",
+            onDismiss = onDismiss,
+            onTimeSelected = { time ->
+                val parts = time.split(':')
+                val localTime = LocalTime(parts[0].toInt(), parts.getOrNull(1)?.toIntOrNull() ?: 0)
+                onPicked(LocalDateTime(date, localTime).toInstant(zone).toEpochMilliseconds())
+            },
+        )
+    }
+}
 
 /** The key of the "all tournaments" option of the tournament filter. */
 private const val ALL_TOURNAMENTS = ""
@@ -139,6 +192,11 @@ fun ActivityScreen(navController: NavHostController) {
     var tournamentId by rememberSaveable { mutableStateOf(ALL_TOURNAMENTS) }
     var sourceName by rememberSaveable { mutableStateOf(ActivitySource.ALL.name) }
     val source = ActivitySource.valueOf(sourceName)
+    var originName by rememberSaveable { mutableStateOf<String?>(null) }
+    val origin = originName?.let { ActivityOrigin.valueOf(it) }
+    var fromMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    var toMillis by rememberSaveable { mutableStateOf<Long?>(null) }
+    var periodPicker by remember { mutableStateOf<PeriodEnd?>(null) }
     var personUid by rememberSaveable { mutableStateOf<String?>(null) }
     var personName by rememberSaveable { mutableStateOf<String?>(null) }
     var openEntryId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -147,7 +205,14 @@ fun ActivityScreen(navController: NavHostController) {
     val scope = rememberCoroutineScope()
     val reloadFocusRequester = remember { FocusRequester() }
     val rowFocusRequesters = remember(entries.map(ActivityEntry::id)) { entries.associate { it.id to FocusRequester() } }
-    val filter = ActivityFilter(tournamentId = tournamentId.ifEmpty { null }, uid = personUid, source = source)
+    val filter = ActivityFilter(
+        tournamentId = tournamentId.ifEmpty { null },
+        uid = personUid,
+        source = source,
+        origin = origin,
+        fromMillis = fromMillis,
+        toMillis = toMillis,
+    )
 
     LaunchedEffect(Unit) {
         when (val result = presenter.loadTournaments()) {
@@ -204,6 +269,15 @@ fun ActivityScreen(navController: NavHostController) {
                 onTournament = { tournamentId = it },
                 source = source,
                 onSource = { sourceName = it.name },
+                origin = origin,
+                onOrigin = { originName = it?.name },
+                fromMillis = fromMillis,
+                toMillis = toMillis,
+                onPickPeriod = { periodPicker = it },
+                onClearPeriod = {
+                    fromMillis = null
+                    toMillis = null
+                },
                 personName = if (personUid == null) null else personName ?: personUid,
                 onClearPerson = {
                     personUid = null
@@ -233,6 +307,18 @@ fun ActivityScreen(navController: NavHostController) {
         }
     }
 
+    periodPicker?.let { end ->
+        PeriodPicker(
+            initialMillis = if (end == PeriodEnd.FROM) fromMillis else toMillis?.minus(MILLIS_PER_MINUTE),
+            onDismiss = { periodPicker = null },
+            onPicked = { millis ->
+                // "Until 15:00" keeps the changes of the minute 15:00, so the end of the period is one minute later.
+                if (end == PeriodEnd.FROM) fromMillis = millis else toMillis = millis + MILLIS_PER_MINUTE
+                periodPicker = null
+            },
+        )
+    }
+
     entries.firstOrNull { it.id == openEntryId }?.let { entry ->
         ActivityEntryDialog(
             entry = entry,
@@ -255,6 +341,12 @@ private fun ActivityFiltersBar(
     onTournament: (String) -> Unit,
     source: ActivitySource,
     onSource: (ActivitySource) -> Unit,
+    origin: ActivityOrigin?,
+    onOrigin: (ActivityOrigin?) -> Unit,
+    fromMillis: Long?,
+    toMillis: Long?,
+    onPickPeriod: (PeriodEnd) -> Unit,
+    onClearPeriod: () -> Unit,
     personName: String?,
     onClearPerson: () -> Unit,
     reloadFocusRequester: FocusRequester,
@@ -283,6 +375,36 @@ private fun ActivityFiltersBar(
         ) {
             ActivitySource.entries.forEach { value ->
                 FilterChip(selected = source == value, onClick = { onSource(value) }, label = { Text(sourceLabel(value)) })
+            }
+        }
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            FilterChip(selected = origin == null, onClick = { onOrigin(null) }, label = { Text(stringResource(Res.string.activity_origin_all)) })
+            ActivityOrigin.entries.forEach { value ->
+                FilterChip(selected = origin == value, onClick = { onOrigin(value) }, label = { Text(originLabel(value.wire)) })
+            }
+        }
+        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            val anyTime = stringResource(Res.string.activity_period_any)
+            FilterChip(
+                selected = fromMillis != null,
+                onClick = { onPickPeriod(PeriodEnd.FROM) },
+                label = { Text(stringResource(Res.string.activity_period_from, fromMillis?.let(::dateTime) ?: anyTime)) },
+            )
+            FilterChip(
+                selected = toMillis != null,
+                onClick = { onPickPeriod(PeriodEnd.TO) },
+                label = { Text(stringResource(Res.string.activity_period_to, toMillis?.let { dateTime(it - MILLIS_PER_MINUTE) } ?: anyTime)) },
+            )
+            if (fromMillis != null || toMillis != null) {
+                FilterChip(selected = false, onClick = onClearPeriod, label = { Text(stringResource(Res.string.activity_period_clear)) })
             }
             if (personName != null) {
                 FilterChip(
@@ -330,9 +452,7 @@ private fun ActivityTable(
                 Text(dateTime(entry.at), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.bodySmall)
                 Column(Modifier.weight(0.6f)) {
                     Text(personLabel(entry), style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    entry.source?.let {
-                        Text(originLabel(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
-                    }
+                    Text(originLabel(originOf(entry)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
@@ -385,7 +505,7 @@ private fun ActivityEntryDialog(
                         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(dateTime(entry.at), style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                listOfNotNull(personLabel(entry), entry.source?.let { originLabel(it) }).joinToString(" · "),
+                                listOf(personLabel(entry), originLabel(originOf(entry))).joinToString(" · "),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.SemiBold,
                             )
@@ -444,6 +564,9 @@ private fun ChangeRow(change: ActivityFieldChange) {
         }
     }
 }
+
+/** A change of the activity log comes from the admin app, or from a maintenance script. */
+private fun originOf(entry: ActivityEntry): String = entry.source ?: if (entry.uid == SCRIPT_UID) ActivityOrigin.AUTOMATIC.wire else ActivityOrigin.ADMIN_APP.wire
 
 @Composable
 private fun personLabel(entry: ActivityEntry): String = entry.name ?: entry.uid ?: stringResource(Res.string.activity_unknown_person)

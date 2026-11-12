@@ -100,6 +100,7 @@
     <string name="jump_to_me">Vai a me</string>
     <string name="entry_totals_only">Gli organizzatori inseriscono solo i punteggi finali di questo tavolo. Non puoi aggiungere mani qui.</string>
     <string name="entry_round_not_started">Questo turno non è ancora iniziato. Potrai aggiungere mani quando inizierà.</string>
+    <string name="entry_seats_not_assigned">I posti di questo tavolo non sono ancora assegnati. Potrai aggiungere mani quando un organizzatore assegnerà i quattro posti.</string>
     <string name="entry_time_over">Il tempo di questa partita è finito. Ora non puoi aggiungere mani. Gli organizzatori inseriscono i dati mancanti.</string>
     <string name="entry_extra_time">Il tempo è finito. Puoi aggiungere la mano in corso. Dopo di essa, il tavolo è completato.</string>
     <string name="entry_add_draw">Aggiungi patta</string>

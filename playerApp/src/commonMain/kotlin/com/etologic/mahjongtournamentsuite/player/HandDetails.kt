@@ -182,7 +182,7 @@ fun HandDetailsTable(table: PlayerTable, windOf: (Int) -> SeatWind?) {
                         Text(
                             "$id",
                             Modifier.padding(start = 2.dp),
-                            style = MaterialTheme.typography.labelMedium,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold,
                         )
                     }
@@ -249,7 +249,7 @@ private fun ResultLine(row: DetailRow.Result) {
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(HAND_WEIGHT), horizontalAlignment = Alignment.CenterHorizontally) {
             HandLabel(hand.handId)
-            Text("#${hand.handId}", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("#${hand.handId}", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Text(hand.playerWinnerId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)
         Text(hand.playerLooserId.ifBlank { "-" }, Modifier.weight(ID_WEIGHT), style = bodyStyle, textAlign = TextAlign.Center)

@@ -32,7 +32,7 @@ import { bumpGlobalDataVersion } from "../../services/dataVersionsService";
 import { assertEmaIdAvailable, setAccountEmaId } from "../../services/playerAccountsService";
 import { pathParam } from "../pathParam";
 import { listErrorGroups, loadErrorGroup } from "../../services/errorReports";
-import { FEED_SOURCES, listActivityFeed, type FeedSource } from "../../services/activityFeed";
+import { FEED_ORIGINS, FEED_SOURCES, listActivityFeed, type FeedOrigin, type FeedSource } from "../../services/activityFeed";
 import { cursorQuery, limitQuery, numberQuery } from "../pageQuery";
 
 type Actor = { uid: string; admin?: boolean };
@@ -111,7 +111,8 @@ export function adminRouter(): Router {
 
   /**
    * Who wrote what and when: the activity log and the table saves of every tournament in one list, newest first.
-   * Filters: `tournamentId`, `uid` and `source` (`all`, `tables` or `other`). Send `nextCursor` back as `cursor`.
+   * Filters: `tournamentId`, `uid`, `source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`)
+   * and the period `from` (inclusive) and `to` (exclusive) in milliseconds. Send `nextCursor` back as `cursor`.
    */
   router.get("/activity", requireAuth, requireAdmin, async (req, res, next) => {
     try {
@@ -121,7 +122,12 @@ export function adminRouter(): Router {
       const tournamentId = typeof req.query.tournamentId === "string" && req.query.tournamentId ? req.query.tournamentId : undefined;
       if (tournamentId) assertSafeDocumentId(tournamentId, "tournament id");
       const uid = typeof req.query.uid === "string" && req.query.uid ? req.query.uid : undefined;
-      res.status(200).json(await listActivityFeed({ tournamentId, uid, source }, limit, req.query.cursor));
+      const origin = req.query.origin === undefined || req.query.origin === "" ? undefined : req.query.origin as FeedOrigin;
+      if (origin !== undefined && !FEED_ORIGINS.includes(origin)) throw badRequest("origin must be admin, player or system");
+      const fromMs = req.query.from === undefined ? undefined : numberQuery(req.query.from, "from");
+      const toMs = req.query.to === undefined ? undefined : numberQuery(req.query.to, "to");
+      if (fromMs !== undefined && toMs !== undefined && toMs <= fromMs) throw badRequest("to must be after from");
+      res.status(200).json(await listActivityFeed({ tournamentId, uid, source, origin, fromMs, toMs }, limit, req.query.cursor));
     } catch (error) {
       next(error);
     }

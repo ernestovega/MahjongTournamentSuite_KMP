@@ -733,4 +733,9 @@
     <string name="activity_action_table_reset">Mesa reiniciada</string>
     <string name="activity_action_table_conflict">Guardado rechazado: la mesa había cambiado</string>
     <string name="activity_action_script_run">Script de mantenimiento ejecutado</string>
+    <string name="activity_origin_all">Todos los orígenes</string>
+    <string name="activity_period_from">Desde: %1$s</string>
+    <string name="activity_period_to">Hasta: %1$s</string>
+    <string name="activity_period_any">cualquier fecha</string>
+    <string name="activity_period_clear">Quitar fechas</string>
 </resources>
