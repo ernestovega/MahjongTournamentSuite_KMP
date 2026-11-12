@@ -15,7 +15,7 @@ on:
     inputs:
       url:
         description: "Player web app"
-        default: "https://mtsplayer.mahjongmadrid.com"
+        default: "https://mts.mahjongmadrid.com"
       tournament:
         description: "Tournament id to measure (empty: the finished one with the most players)"
         default: ""
@@ -42,8 +42,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
-      BENCH_PLAYER_URL: ${{ inputs.url || 'https://mtsplayer.mahjongmadrid.com' }}
-      BENCH_API_BASE: ${{ inputs.url || 'https://mtsplayer.mahjongmadrid.com' }}/api
+      BENCH_PLAYER_URL: ${{ inputs.url || 'https://mts.mahjongmadrid.com' }}
+      BENCH_API_BASE: ${{ inputs.url || 'https://mts.mahjongmadrid.com' }}/api
       TOURNAMENT: ${{ inputs.tournament || '' }}
     steps:
       - uses: actions/checkout@v4
