@@ -120,6 +120,8 @@ fun PlayerApp(
     openTournamentId: String? = null,
     sessionStorage: SessionStateStorage? = null,
     appVersion: String = AppVersion.player,
+    /** True when the admin app sent the user here to sign in. */
+    openSignIn: Boolean = false,
 ) {
     KoinApplication(configuration = koinConfiguration { modules(dataModule, playerModule) }) {
         val themeController = rememberThemeController()
@@ -139,7 +141,7 @@ fun PlayerApp(
                 ConsentGate {
                     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                            PlayerNavigation(openTournamentId, sessionStorage)
+                            PlayerNavigation(openTournamentId, sessionStorage, openSignIn)
                         }
                     }
                 }
@@ -149,7 +151,7 @@ fun PlayerApp(
 }
 
 @Composable
-private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionStateStorage?) {
+private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionStateStorage?, openSignIn: Boolean) {
     val navController = rememberNavController()
     val routePersistence = remember(sessionStorage) { sessionStorage?.let { RoutePersistence(it) } }
     // The saved routes are read one time, before the first navigation changes them.
@@ -160,7 +162,7 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
     }
 
     NavHost(navController = navController, startDestination = SplashRoute) {
-        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes) }
+        screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn) }
         screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
             SignInScreen(navController, route.openTournamentId)

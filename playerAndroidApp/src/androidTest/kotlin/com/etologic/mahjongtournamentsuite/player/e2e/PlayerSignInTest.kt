@@ -12,6 +12,25 @@ class PlayerSignInTest : PlayerE2eTest() {
     }
 
     @Test
+    fun editorChoosesThePlayerAppAfterTheSignIn() {
+        app.launch()
+        c.signIn(E2eAccounts.EDITOR)
+        c.waitForText("What do you want to open?")
+        c.clickButton("Tournaments")
+        c.waitForText("Test - Live ongoing tournament")
+        c.assertNoText("What do you want to open?")
+    }
+
+    @Test
+    fun playerIsNotAskedWhichAppToOpen() {
+        app.launch()
+        c.signIn(E2eAccounts.PLAYER)
+        c.waitForText("My tournaments")
+        c.assertNoText("What do you want to open?")
+        c.assertNoText("Management")
+    }
+
+    @Test
     fun wrongPasswordShowsMessage() {
         app.launch()
         c.signIn(E2eAccounts.PLAYER, password = "wrong-password")

@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.player
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
 import com.etologic.mahjongtournamentsuite.domain.model.HandPreview
 import com.etologic.mahjongtournamentsuite.domain.model.HandProposal
 import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
@@ -42,6 +43,13 @@ class PlayerSessionPresenter(
     suspend fun myEmaId(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): String? {
         if (!hasSession()) return null
         return (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.emaId?.takeIf { it.isNotBlank() }
+    }
+
+    /** True when the account is also an admin or an editor, so it can open the admin app. */
+    suspend fun canManage(refreshMode: RefreshMode = RefreshMode.IF_CHANGED): Boolean {
+        if (!hasSession()) return false
+        val roles = (authRepository.getMe(refreshMode) as? AppResult.Success)?.value?.roles.orEmpty()
+        return roles.any { it == GlobalUserRole.ADMIN || it == GlobalUserRole.EDITOR }
     }
 
     suspend fun signIn(email: String, password: String): AppResult<Unit> = when (val result = authRepository.signIn(email.trim(), password).track(telemetry, TelemetryEvent.LOGIN)) {

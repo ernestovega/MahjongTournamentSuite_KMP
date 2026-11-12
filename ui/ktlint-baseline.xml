@@ -202,9 +202,9 @@
         <error line="3" column="1" source="standard:import-ordering" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppTopBarLeadingActions.kt">
-        <error line="3" column="1" source="standard:import-ordering" />
-        <error line="39" column="32" source="standard:statement-wrapping" />
-        <error line="39" column="56" source="standard:statement-wrapping" />
+        <error line="4" column="1" source="standard:import-ordering" />
+        <error line="43" column="32" source="standard:statement-wrapping" />
+        <error line="43" column="56" source="standard:statement-wrapping" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/AppVersionLabel.kt">
         <error line="3" column="1" source="standard:import-ordering" />

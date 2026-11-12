@@ -28,14 +28,21 @@
   "hosting": [
     {
       "site": "mahjong-tournament-suite",
-      "public": "adminApp/build/dist/wasmJs/productionExecutable",
+      "public": "build/hosting",
       "predeploy": [
-        "./gradlew :adminApp:wasmJsBrowserDistribution"
+        "./scripts/assemble-web-hosting.sh"
       ],
       "ignore": [
         "firebase.json",
         "**/.*",
         "**/node_modules/**"
+      ],
+      "redirects": [
+        {
+          "source": "/admin",
+          "destination": "/admin/",
+          "type": 301
+        }
       ],
       "rewrites": [
         {
@@ -46,115 +53,8 @@
           }
         },
         {
-          "source": "**",
-          "destination": "/index.html"
-        }
-      ],
-      "headers": [
-        {
-          "source": "**",
-          "headers": [
-            {
-              "key": "X-Content-Type-Options",
-              "value": "nosniff"
-            },
-            {
-              "key": "Referrer-Policy",
-              "value": "strict-origin-when-cross-origin"
-            },
-            {
-              "key": "Content-Security-Policy",
-              "value": "frame-ancestors 'none'"
-            },
-            {
-              "key": "Permissions-Policy",
-              "value": "camera=(), microphone=(), geolocation=()"
-            }
-          ]
-        },
-        {
-          "source": "/index.html",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
-        },
-        {
-          "source": "/",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
-        },
-        {
-          "source": "**/*.js",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
-        },
-        {
-          "source": "**/*.css",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
-        },
-        {
-          "source": "**/*.wasm",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
-        },
-        {
-          "source": "**/composeResources/**",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
-        },
-        {
-          "source": "/favicon.svg",
-          "headers": [
-            {
-              "key": "Cache-Control",
-              "value": "no-cache"
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "site": "mahjong-tournament-suite-player",
-      "public": "playerApp/build/dist/wasmJs/productionExecutable",
-      "predeploy": [
-        "./gradlew :playerApp:wasmJsBrowserDistribution"
-      ],
-      "ignore": [
-        "firebase.json",
-        "**/.*",
-        "**/node_modules/**"
-      ],
-      "rewrites": [
-        {
-          "source": "/api/**",
-          "function": {
-            "functionId": "api",
-            "region": "europe-southwest1"
-          }
+          "source": "/admin/**",
+          "destination": "/admin/index.html"
         },
         {
           "source": "**",
@@ -203,6 +103,24 @@
         },
         {
           "source": "/t/**",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/admin/",
+          "headers": [
+            {
+              "key": "Cache-Control",
+              "value": "no-cache"
+            }
+          ]
+        },
+        {
+          "source": "/admin/index.html",
           "headers": [
             {
               "key": "Cache-Control",

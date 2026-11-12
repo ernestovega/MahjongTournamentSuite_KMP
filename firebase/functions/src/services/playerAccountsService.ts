@@ -10,7 +10,7 @@ import { assertEmailAvailable, createUserProfile, grantPlayerCapability, revokeP
 
 /** Where a player opens the tournament after the reminder. Set PLAYER_APP_URL to the player web site. */
 function playerAppUrl(): string {
-  return (process.env.PLAYER_APP_URL ?? "https://mtsplayer.mahjongmadrid.com").replace(/\/$/, "");
+  return (process.env.PLAYER_APP_URL ?? "https://mts.mahjongmadrid.com").replace(/\/$/, "");
 }
 
 /** The data of an account that the tournament screens need. The email lives only in the account. */

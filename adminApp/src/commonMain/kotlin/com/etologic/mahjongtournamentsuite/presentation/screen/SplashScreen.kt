@@ -9,21 +9,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.SplashRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppBackground
+import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPlayerApp
 import com.etologic.mahjongtournamentsuite.presentation.presenter.AuthPresenter
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.mahjong_tournament_suite
 import org.jetbrains.compose.resources.stringResource
@@ -42,9 +43,15 @@ fun SplashScreen(
         if (hasSession) {
             // Only a loaded profile of an admin or an editor passes. When the profile cannot load, the session stays.
             val manager = authPresenter.isManager()
-            if (manager is AppResult.Success && !manager.value) authPresenter.signOut()
+            if (manager is AppResult.Success && !manager.value) {
+                // On the web the session belongs to the whole site: a player keeps it and goes to the player app.
+                if (leaveAdminForPlayerApp(signIn = false)) return@LaunchedEffect
+                authPresenter.signOut()
+            }
             hasSession = manager is AppResult.Success && manager.value
         }
+        // On the web the site has one sign-in, the one of the player app. It then offers this app to admins and editors.
+        if (!hasSession && leaveAdminForPlayerApp(signIn = true)) return@LaunchedEffect
         val nextRoute = if (hasSession) TournamentsRoute else SignInRoute
 
         // The check above can suspend. The navigation must run on the main thread, also in the UI tests.

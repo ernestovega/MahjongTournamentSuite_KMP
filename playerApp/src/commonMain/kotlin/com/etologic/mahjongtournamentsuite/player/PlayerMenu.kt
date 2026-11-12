@@ -17,6 +17,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppSwitchButton
+import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.CoroutineScope
@@ -43,6 +45,9 @@ class AccountActions(
     /** Null until the session is known. Without an account the button opens the sign-in. */
     private var signedIn by mutableStateOf<Boolean?>(null)
 
+    /** True for an admin or an editor, who also gets the button that opens the admin app. */
+    private var canManage by mutableStateOf(false)
+
     private fun openProfile() {
         scope.launch {
             when (val result = session.loadProfile()) {
@@ -58,10 +63,16 @@ class AccountActions(
      */
     @Composable
     fun Buttons() {
-        LaunchedEffect(Unit) { signedIn = session.hasSession() }
+        LaunchedEffect(Unit) {
+            signedIn = session.hasSession()
+            canManage = signedIn == true && session.canManage()
+        }
         when (signedIn) {
             null -> Unit
-            true -> AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
+            true -> {
+                AppTopBarButton(text = stringResource(Res.string.menu_profile), icon = Icons.Default.Person, onClick = ::openProfile)
+                if (canManage) SuiteAppSwitchButton(SuiteApp.ADMIN)
+            }
             false -> AppTopBarButton(
                 text = stringResource(Res.string.menu_sign_in),
                 icon = Icons.AutoMirrored.Filled.Login,

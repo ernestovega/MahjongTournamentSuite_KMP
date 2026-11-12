@@ -334,4 +334,12 @@
     <string name="stat_best_hand_points">Meilleure main (points gagnés)</string>
     <string name="stat_best_hand_points_info">Le plus de points qu\'une main gagnante a ajoutés à son gagnant : sur défausse, la main plus 24 ; en tirant seul, la main plus 8, trois fois. Les pénalités ne comptent pas.</string>
     <string name="stat_average_hands_per_table">Moy. mains par table</string>
+    <string name="app_switch_to_admin">Gestion</string>
+    <string name="app_switch_to_player">Vue joueur</string>
+    <string name="app_chooser_title">Que voulez-vous ouvrir ?</string>
+    <string name="app_chooser_player">Tournois</string>
+    <string name="app_chooser_player_text">Consultez les tournois et les résultats, et notez les mains de votre table.</string>
+    <string name="app_chooser_admin">Gestion</string>
+    <string name="app_chooser_admin_text">Gérez vos tournois : joueurs, tables, résultats et comptes.</string>
+    <string name="app_chooser_remember">Mémoriser mon choix sur cet appareil</string>
 </resources>

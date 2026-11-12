@@ -4,7 +4,7 @@
 // This script opens the screens in Chromium, on a desktop and on a throttled phone, and reads those times.
 //
 //   npm install --no-save playwright@1.63.0 && npx playwright install chromium
-//   node scripts/benchmark/screens.mjs [--url https://mtsplayer.mahjongmadrid.com] [--samples 3] [--out screens-results.json]
+//   node scripts/benchmark/screens.mjs [--url https://mts.mahjongmadrid.com] [--samples 3] [--out screens-results.json]
 //
 // The page gets a stub of telemetry.js, so the benchmark sends nothing to Analytics and needs no consent.
 // See docs/benchmark.md.
@@ -14,7 +14,7 @@ import { chromium, devices } from "playwright";
 
 const { values: args } = parseArgs({
   options: {
-    url: { type: "string", default: process.env.BENCH_PLAYER_URL ?? "https://mtsplayer.mahjongmadrid.com" },
+    url: { type: "string", default: process.env.BENCH_PLAYER_URL ?? "https://mts.mahjongmadrid.com" },
     api: { type: "string", default: process.env.BENCH_API_BASE ?? "" },
     samples: { type: "string", default: "3" },
     out: { type: "string", default: "screens-results.json" },

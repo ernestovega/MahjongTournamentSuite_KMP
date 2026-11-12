@@ -7,7 +7,7 @@ This rollout replaces the deployed legacy role API with the `EDITOR` and `ADMIN`
 - The active project is `mahjong-tournament-suite`.
 - The deployed `api` revision is `api-00029-yar`.
 - The function uses Node.js 22 in `europe-southwest1`.
-- The management web application is live at `https://mahjong-tournament-suite.web.app`.
+- The management web application is live at `https://mts.mahjongmadrid.com/admin/`.
 - Firebase Hosting forwards `/api/**` to the deployed `api` function.
 - Both required secrets exist.
 - Firestore and Storage deny all direct client access.
@@ -62,10 +62,10 @@ The Firebase CLI currently reports that `firebase-functions` is outdated. The cu
 Build the production WebAssembly application from the repository root:
 
 ```bash
-./gradlew :adminApp:wasmJsBrowserDistribution
+./scripts/assemble-web-hosting.sh
 ```
 
-Firebase Hosting reads the generated files from `adminApp/build/dist/wasmJs/productionExecutable`.
+Firebase Hosting reads the generated files from `build/hosting`: the player app at the root and the admin app in `admin/`. See [web-hosting.md](web-hosting.md).
 
 Deploy a temporary channel before the live site:
 
@@ -83,7 +83,7 @@ npx -y firebase-tools@latest deploy \
   --project mahjong-tournament-suite
 ```
 
-The live management application URL is `https://mahjong-tournament-suite.web.app`.
+The live management application URL is `https://mts.mahjongmadrid.com/admin/`.
 
 ## Admin checks
 

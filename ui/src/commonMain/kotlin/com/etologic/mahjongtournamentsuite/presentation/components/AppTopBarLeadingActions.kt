@@ -10,6 +10,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
+import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeController
@@ -34,8 +35,11 @@ fun AppTopBarLeadingActions(
     rankingFocusRequester: FocusRequester? = null,
     errorsFocusRequester: FocusRequester? = null,
     usersFocusRequester: FocusRequester? = null,
+    /** The other application of the suite, for admins and editors. Null hides the button. */
+    switchTo: SuiteApp? = null,
 ) {
     TopBarButtonsLayout {
+        switchTo?.let { SuiteAppSwitchButton(it) }
         onAppUsers?.let { AppTopBarButton(stringResource(Res.string.top_bar_app_users), Icons.Default.Person, it, usersFocusRequester) }
         if (showThemeToggle) {
             ThemeModeToggleButton()

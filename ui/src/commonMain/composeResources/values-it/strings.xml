@@ -334,4 +334,12 @@
     <string name="stat_best_hand_points">Mano migliore (punti vinti)</string>
     <string name="stat_best_hand_points_info">I punti più alti che una mano vincente ha dato al vincitore: su scarto, la mano più 24; in autopescata, la mano più 8, tre volte. Le penalità non contano.</string>
     <string name="stat_average_hands_per_table">Media mani per tavolo</string>
+    <string name="app_switch_to_admin">Gestione</string>
+    <string name="app_switch_to_player">Vista giocatore</string>
+    <string name="app_chooser_title">Cosa vuoi aprire?</string>
+    <string name="app_chooser_player">Tornei</string>
+    <string name="app_chooser_player_text">Guarda i tornei e i risultati, e annota le mani del tuo tavolo.</string>
+    <string name="app_chooser_admin">Gestione</string>
+    <string name="app_chooser_admin_text">Gestisci i tuoi tornei: giocatori, tavoli, risultati e account.</string>
+    <string name="app_chooser_remember">Ricorda la mia scelta su questo dispositivo</string>
 </resources>

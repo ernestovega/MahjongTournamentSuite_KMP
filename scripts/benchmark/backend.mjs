@@ -3,7 +3,7 @@
 // Every endpoint runs twice: "cdn" as the apps call it (Firebase Hosting can answer from its cache), and "origin"
 // with a unique query parameter, so the cache misses and the Cloud Function answers.
 //
-//   node scripts/benchmark/backend.mjs [--base https://mtsplayer.mahjongmadrid.com/api] [--runs 15] [--out results.json]
+//   node scripts/benchmark/backend.mjs [--base https://mts.mahjongmadrid.com/api] [--runs 15] [--out results.json]
 //
 // It needs no packages: Node 22 has fetch. See docs/benchmark.md.
 import { writeFile } from "node:fs/promises";
@@ -12,7 +12,7 @@ import { parseArgs } from "node:util";
 
 const { values: args } = parseArgs({
   options: {
-    base: { type: "string", default: process.env.BENCH_API_BASE ?? "https://mtsplayer.mahjongmadrid.com/api" },
+    base: { type: "string", default: process.env.BENCH_API_BASE ?? "https://mts.mahjongmadrid.com/api" },
     runs: { type: "string", default: "15" },
     out: { type: "string", default: "backend-results.json" },
     tournament: { type: "string" },

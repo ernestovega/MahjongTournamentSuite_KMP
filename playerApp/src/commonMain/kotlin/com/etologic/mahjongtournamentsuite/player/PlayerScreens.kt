@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Directions
@@ -42,7 +43,6 @@ import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PanTool
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Schedule
@@ -121,16 +121,21 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.SignInForm
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppChooserDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
+import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
+import com.etologic.mahjongtournamentsuite.presentation.platform.currentAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
+import com.etologic.mahjongtournamentsuite.presentation.platform.loadPreferredSuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
+import com.etologic.mahjongtournamentsuite.presentation.platform.savePreferredSuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -160,6 +165,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.info_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_open_directions
 import mahjongtournamentsuite.playerapp.generated.resources.info_schedule
 import mahjongtournamentsuite.playerapp.generated.resources.jump_to_me
+import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
+import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_hands
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_best_short
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_chicken_hands
@@ -175,6 +182,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
+import mahjongtournamentsuite.playerapp.generated.resources.sign_in_needed_title
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_player_description
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
 import mahjongtournamentsuite.playerapp.generated.resources.standing_best_hand
@@ -197,27 +205,24 @@ import mahjongtournamentsuite.playerapp.generated.resources.table_done
 import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
 import mahjongtournamentsuite.playerapp.generated.resources.table_hands_done
 import mahjongtournamentsuite.playerapp.generated.resources.table_n
+import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
 import mahjongtournamentsuite.playerapp.generated.resources.tables_all_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.tables_me_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.tables_mine_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_not_linked
 import mahjongtournamentsuite.playerapp.generated.resources.tables_player_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
+import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.team_hide_players
 import mahjongtournamentsuite.playerapp.generated.resources.team_n
 import mahjongtournamentsuite.playerapp.generated.resources.team_show_players
 import mahjongtournamentsuite.playerapp.generated.resources.tournament_logo_of
+import mahjongtournamentsuite.playerapp.generated.resources.tournament_you_play
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_empty_title
-import mahjongtournamentsuite.playerapp.generated.resources.tournaments_title
 import mahjongtournamentsuite.playerapp.generated.resources.tournaments_no_match
-import mahjongtournamentsuite.playerapp.generated.resources.tables_me_sign_in
-import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
-import mahjongtournamentsuite.playerapp.generated.resources.sign_in_needed_title
-import mahjongtournamentsuite.playerapp.generated.resources.privacy_public_notice
-import mahjongtournamentsuite.playerapp.generated.resources.tournament_you_play
-import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
-import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
+import mahjongtournamentsuite.playerapp.generated.resources.tournaments_title
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -233,12 +238,18 @@ fun SplashScreen(
     openTournamentId: String?,
     /** The screens that were open before a page refresh, from the first to the last. */
     restoredRoutes: List<Any> = emptyList(),
+    /** True when the admin app sent the user here to sign in. The site has one sign-in, the one of this app. */
+    openSignIn: Boolean = false,
 ) {
+    val session = koinInject<PlayerSessionPresenter>()
     LaunchedEffect(Unit) {
+        val signInFirst = openSignIn && !session.hasSession()
         // Everything is public, so the app opens on the tournaments with or without an account.
         navController.navigate(TournamentsRoute) { popUpTo(SplashRoute) { inclusive = true } }
         val restored = restoredRoutes.filterNot { it == TournamentsRoute }
-        if (restored.isNotEmpty()) {
+        if (signInFirst) {
+            navController.navigate(SignInRoute())
+        } else if (restored.isNotEmpty()) {
             // A page refresh returns to the screen that was open.
             restored.forEach { navController.navigate(it) }
         } else if (openTournamentId != null) {
@@ -259,6 +270,9 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
     var busy by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<UiText?>(null) }
     var infoMessage by remember { mutableStateOf<UiText?>(null) }
+    // Admins and editors choose between this app and the admin app after the sign-in.
+    val appSwitcher = currentAppSwitcher()
+    var choosingApp by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         // Chrome mediates this request through its password manager UI.
@@ -269,6 +283,18 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         emailRequester.requestFocus()
     }
 
+    fun continueInPlayerApp() {
+        // Back to the screens that were open, loaded again for the account.
+        val routes = navController.openRoutes()
+        navController.reopen(if (openTournamentId != null) routes + TournamentRoute(openTournamentId) else routes)
+    }
+
+    fun openAdminApp(switcher: (SuiteApp) -> Unit) {
+        switcher(SuiteApp.ADMIN)
+        // On Android the admin app opens over this one. Back returns here, signed in.
+        continueInPlayerApp()
+    }
+
     fun submit() {
         errorMessage = null
         infoMessage = null
@@ -277,9 +303,14 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
             when (val result = presenter.signIn(email, password)) {
                 is AppResult.Success -> {
                     saveBrowserCredentials(email.trim(), password)
-                    // Back to the screens that were open, loaded again for the account.
-                    val routes = navController.openRoutes()
-                    navController.reopen(if (openTournamentId != null) routes + TournamentRoute(openTournamentId) else routes)
+                    val preferred = loadPreferredSuiteApp()
+                    when {
+                        appSwitcher == null || !presenter.canManage(RefreshMode.FORCE) -> continueInPlayerApp()
+                        // The manager chose an app on this device before: no question.
+                        preferred == SuiteApp.ADMIN -> openAdminApp(appSwitcher)
+                        preferred == SuiteApp.PLAYER -> continueInPlayerApp()
+                        else -> choosingApp = true
+                    }
                 }
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
@@ -303,6 +334,14 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
             busy = false
+        }
+    }
+
+    if (choosingApp && appSwitcher != null) {
+        SuiteAppChooserDialog { app, rememberChoice ->
+            choosingApp = false
+            if (rememberChoice) savePreferredSuiteApp(app)
+            if (app == SuiteApp.ADMIN) openAdminApp(appSwitcher) else continueInPlayerApp()
         }
     }
 

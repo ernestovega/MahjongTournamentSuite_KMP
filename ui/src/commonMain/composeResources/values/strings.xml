@@ -334,4 +334,12 @@
     <string name="stat_best_hand_points">Best hand (points won)</string>
     <string name="stat_best_hand_points_info">The most points that one winning hand added to its winner: by discard, the hand plus 24; by self-draw, the hand plus 8, three times. Penalties do not count.</string>
     <string name="stat_average_hands_per_table">Avg. hands per table</string>
+    <string name="app_switch_to_admin">Management</string>
+    <string name="app_switch_to_player">Player view</string>
+    <string name="app_chooser_title">What do you want to open?</string>
+    <string name="app_chooser_player">Tournaments</string>
+    <string name="app_chooser_player_text">See the tournaments and results, and write down the hands of your table.</string>
+    <string name="app_chooser_admin">Management</string>
+    <string name="app_chooser_admin_text">Run your tournaments: players, tables, results and accounts.</string>
+    <string name="app_chooser_remember">Remember my choice on this device</string>
 </resources>

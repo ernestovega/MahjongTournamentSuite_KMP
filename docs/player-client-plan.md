@@ -34,19 +34,18 @@ Phases 1 and 2 are built and tested. Phase 3 (schedules and notifications) is no
 - `:ui` has the theme, keyboard focus helpers, dialogs and tables that both apps use. It keeps the package names of the code that moved.
 - `:playerApp` is a Kotlin Multiplatform library with the player screens. It has a web entry point (`playerApp.js`). It targets Android, JVM (tests only) and wasmJs.
 - `:playerAndroidApp` is the thin Android application. Its id is `com.etologic.mahjongtournamentsuite.player`.
-- The web app has its own Firebase Hosting site `mahjong-tournament-suite-player`.
+- The web app is served at the root of `https://mts.mahjongmadrid.com`, next to the admin app at `/admin/`. See [web-hosting.md](web-hosting.md).
 
 No new libraries were added.
 
 ## Setup before the first invitation
 
-1. Create the hosting site: `firebase hosting:sites:create mahjong-tournament-suite-player`.
-2. Connect the domain `mtsplayer.mahjongmadrid.com` to that site (Firebase console, Hosting, Add custom domain) and add the DNS records in cPanel.
-3. Create a mailbox for the sender and store its SMTP address as the secret `MTS_SMTP_URI`:
+1. The player app needs no hosting site of its own (see [web-hosting.md](web-hosting.md)).
+2. Create a mailbox for the sender and store its SMTP address as the secret `MTS_SMTP_URI`:
    `npx -y firebase-tools@latest functions:secrets:set MTS_SMTP_URI --project mahjong-tournament-suite`.
-4. `PLAYER_APP_URL` and `MAIL_FROM` are set in `firebase/functions/.env`. Deploy the functions. Then deploy hosting for both sites.
-5. Save each existing editor account once in the accounts screen so it gets the `editor` claim.
-6. Run `npm run verify:roles` (see `firebase-role-rollout.md`).
+3. `PLAYER_APP_URL` and `MAIL_FROM` are set in `firebase/functions/.env`. Deploy the functions. Then deploy hosting.
+4. Save each existing editor account once in the accounts screen so it gets the `editor` claim.
+5. Run `npm run verify:roles` (see `firebase-role-rollout.md`).
 
 ## Phase 3: schedules and notifications
 

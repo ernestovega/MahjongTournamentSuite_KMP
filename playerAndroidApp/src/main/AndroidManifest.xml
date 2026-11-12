@@ -3,6 +3,11 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- The "Management" button opens the other app of the suite when it is installed. See SuiteApps.android.kt. -->
+    <queries>
+        <package android:name="com.etologic.mahjongtournamentsuite" />
+    </queries>
+
     <application
         android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"

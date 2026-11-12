@@ -72,13 +72,13 @@ import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
+import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.SignInRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
-import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
@@ -92,8 +92,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivi
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
@@ -105,6 +103,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFla
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
+import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
+import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPlayerApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -149,6 +149,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournament_color_valu
 import mahjongtournamentsuite.adminapp.generated.resources.tournaments
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -346,6 +348,7 @@ fun TournamentsScreen(
                     null
                 },
                 usersFocusRequester = usersFocusRequester,
+                switchTo = SuiteApp.PLAYER,
             )
         },
         actions = {
@@ -593,6 +596,8 @@ private fun LogoutButton(
                 confirming = false
                 coroutineScope.launch {
                     presenter.signOut()
+                    // On the web the player app of the site takes over, without a session.
+                    if (leaveAdminForPlayerApp(signIn = false)) return@launch
                     // The sign out can suspend. The navigation must run on the main thread, also in the UI tests.
                     withContext(Dispatchers.Main) {
                         navController.navigate(SignInRoute) {
