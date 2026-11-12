@@ -1903,12 +1903,19 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
                 }
             }
         }
-        // The chicken and the best hand mark the winning hand, so they go before its score.
-        if (hand.isChickenHand) ChickenIcon()
-        // A gold, silver or bronze trophy for the three best hands of the tournament.
-        view.bestHandRank(hand)?.let { PositionTrophy(it, size = 24.dp) }
-        if (kind != HandKind.DRAW) {
-            ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
+        // The chicken and the best hand mark the winning hand, so they go above its score, which saves width.
+        // The best hand is a gold, silver or bronze trophy for the three best hands of the tournament.
+        val bestHandRank = view.bestHandRank(hand)
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            if (hand.isChickenHand || bestHandRank != null) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (hand.isChickenHand) ChickenIcon()
+                    bestHandRank?.let { PositionTrophy(it, size = 24.dp) }
+                }
+            }
+            if (kind != HandKind.DRAW) {
+                ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
+            }
         }
     }
 }
