@@ -736,9 +736,6 @@
     <string name="activity_action_table_conflict">Salvataggio rifiutato: il tavolo era cambiato</string>
     <string name="activity_action_script_run">Script di manutenzione eseguito</string>
     <string name="activity_origin_all">Tutte le origini</string>
-    <string name="activity_period_from">Dal: %1$s</string>
-    <string name="activity_period_to">Fino al: %1$s</string>
-    <string name="activity_period_any">qualsiasi data</string>
     <string name="activity_period_clear">Cancella date</string>
     <string name="reset_table">Svuota tavolo</string>
     <string name="reset_table_confirm_title">Svuotare il turno %1$d · tavolo %2$d?</string>
@@ -747,4 +744,6 @@
     <string name="activity_filter_origin">Origine</string>
     <string name="activity_filter_period">Periodo</string>
     <string name="activity_filter_person">Persona</string>
+    <string name="activity_period_from_short">Dal</string>
+    <string name="activity_period_to_short">Fino al</string>
 </resources>

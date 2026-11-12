@@ -736,9 +736,6 @@
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
     <string name="activity_action_script_run">Maintenance script run</string>
     <string name="activity_origin_all">All origins</string>
-    <string name="activity_period_from">From: %1$s</string>
-    <string name="activity_period_to">Until: %1$s</string>
-    <string name="activity_period_any">any time</string>
     <string name="activity_period_clear">Clear dates</string>
     <string name="reset_table">Clear table</string>
     <string name="reset_table_confirm_title">Clear round %1$d · table %2$d?</string>
@@ -747,4 +744,6 @@
     <string name="activity_filter_origin">Origin</string>
     <string name="activity_filter_period">Period</string>
     <string name="activity_filter_person">Person</string>
+    <string name="activity_period_from_short">From</string>
+    <string name="activity_period_to_short">Until</string>
 </resources>

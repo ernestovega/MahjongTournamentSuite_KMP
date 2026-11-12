@@ -1,19 +1,25 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,6 +37,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -43,16 +50,19 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTimePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -70,6 +80,7 @@ import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toInstant
 import kotlinx.datetime.toLocalDateTime
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -121,10 +132,9 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_no_changes
 import mahjongtournamentsuite.adminapp.generated.resources.activity_none
 import mahjongtournamentsuite.adminapp.generated.resources.activity_only_person
 import mahjongtournamentsuite.adminapp.generated.resources.activity_origin_all
-import mahjongtournamentsuite.adminapp.generated.resources.activity_period_any
 import mahjongtournamentsuite.adminapp.generated.resources.activity_period_clear
-import mahjongtournamentsuite.adminapp.generated.resources.activity_period_from
-import mahjongtournamentsuite.adminapp.generated.resources.activity_period_to
+import mahjongtournamentsuite.adminapp.generated.resources.activity_period_from_short
+import mahjongtournamentsuite.adminapp.generated.resources.activity_period_to_short
 import mahjongtournamentsuite.adminapp.generated.resources.activity_person_filter
 import mahjongtournamentsuite.adminapp.generated.resources.activity_source_all
 import mahjongtournamentsuite.adminapp.generated.resources.activity_source_other
@@ -143,6 +153,10 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 private val WhenColumnWidth = 150.dp
+
+/** From this width, the filters take two columns. Below it, for example on a phone, they take one. */
+private val WIDE_FILTERS_MIN_WIDTH = 720.dp
+private val FILTER_COLUMN_GAP = 24.dp
 private const val MILLIS_PER_MINUTE = 60_000L
 
 /** The uid of the activity records of the maintenance scripts. */
@@ -259,6 +273,15 @@ fun ActivityScreen(navController: NavHostController) {
         showBackgroundLogo = loading && entries.isEmpty(),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
+        actions = {
+            AppTopBarButton(
+                text = stringResource(Res.string.errors_reload),
+                icon = Icons.Default.Refresh,
+                onClick = { reloadCount++ },
+                focusRequester = reloadFocusRequester,
+                enabled = !loading,
+            )
+        },
     ) {
         ScreenColumn(
             maxWidth = 1200.dp,
@@ -288,9 +311,6 @@ fun ActivityScreen(navController: NavHostController) {
                         personUid = null
                         personName = null
                     },
-                    reloadFocusRequester = reloadFocusRequester,
-                    onReload = { reloadCount++ },
-                    reloadEnabled = !loading,
                 )
             }
             ActivityTable(
@@ -352,94 +372,129 @@ private fun ActivityFiltersBar(
     onClearPeriod: () -> Unit,
     personName: String?,
     onClearPerson: () -> Unit,
-    reloadFocusRequester: FocusRequester,
-    onReload: () -> Unit,
-    reloadEnabled: Boolean,
 ) {
     val allLabel = stringResource(Res.string.activity_all_tournaments)
     val options = remember(tournaments, allLabel) { listOf(ALL_TOURNAMENTS to allLabel) + tournaments.map { it.id to it.name } }
-    Column(
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.fillMaxWidth().appFocusGroup(),
-    ) {
-        // Each row is centered and wraps when its groups do not fit in the width, for example on a phone.
-        FiltersRow {
-            SelectField(
-                label = stringResource(Res.string.activity_tournament),
-                options = options,
-                selected = tournamentId,
-                onSelect = onTournament,
-                modifier = Modifier.widthIn(min = 260.dp, max = 420.dp),
-            )
-            FilterGroup(stringResource(Res.string.activity_filter_period)) {
-                val anyTime = stringResource(Res.string.activity_period_any)
-                FilterChip(
-                    selected = fromMillis != null,
-                    onClick = { onPickPeriod(PeriodEnd.FROM) },
-                    label = { Text(stringResource(Res.string.activity_period_from, fromMillis?.let(::dateTime) ?: anyTime)) },
-                )
-                FilterChip(
-                    selected = toMillis != null,
-                    onClick = { onPickPeriod(PeriodEnd.TO) },
-                    label = { Text(stringResource(Res.string.activity_period_to, toMillis?.let { dateTime(it - MILLIS_PER_MINUTE) } ?: anyTime)) },
-                )
-                if (fromMillis != null || toMillis != null) {
-                    FilterChip(selected = false, onClick = onClearPeriod, label = { Text(stringResource(Res.string.activity_period_clear)) })
+    val tournamentField: @Composable (Modifier) -> Unit = { modifier ->
+        SelectField(
+            label = stringResource(Res.string.activity_tournament),
+            options = options,
+            selected = tournamentId,
+            onSelect = onTournament,
+            modifier = modifier,
+        )
+    }
+    val periodGroup: @Composable (Modifier) -> Unit = { modifier ->
+        FilterGroup(stringResource(Res.string.activity_filter_period), modifier) {
+            PeriodChip(Res.string.activity_period_from_short, fromMillis, selected = fromMillis != null) { onPickPeriod(PeriodEnd.FROM) }
+            PeriodChip(Res.string.activity_period_to_short, toMillis?.minus(MILLIS_PER_MINUTE), selected = toMillis != null) { onPickPeriod(PeriodEnd.TO) }
+            if (fromMillis != null || toMillis != null) {
+                FocusedIconButton(onClick = onClearPeriod) {
+                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.activity_period_clear))
                 }
-            }
-            FocusedButton(onClick = onReload, enabled = reloadEnabled, focusRequester = reloadFocusRequester) {
-                Text(stringResource(Res.string.errors_reload))
             }
         }
-        FiltersRow {
-            FilterGroup(stringResource(Res.string.activity_filter_kind)) {
-                ActivitySource.entries.forEach { value ->
-                    FilterChip(selected = source == value, onClick = { onSource(value) }, label = { Text(sourceLabel(value)) })
-                }
+    }
+    val personGroup: @Composable () -> Unit = {
+        if (personName != null) {
+            FilterGroup(stringResource(Res.string.activity_filter_person), Modifier.fillMaxWidth()) {
+                FilterChip(
+                    selected = true,
+                    onClick = onClearPerson,
+                    label = { Text(stringResource(Res.string.activity_person_filter, personName), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                    trailingIcon = { Text("×") },
+                )
             }
-            FilterGroup(stringResource(Res.string.activity_filter_origin)) {
-                FilterChip(selected = origin == null, onClick = { onOrigin(null) }, label = { Text(stringResource(Res.string.activity_origin_all)) })
-                ActivityOrigin.entries.forEach { value ->
-                    FilterChip(selected = origin == value, onClick = { onOrigin(value) }, label = { Text(originLabel(value.wire)) })
+        }
+    }
+    BoxWithConstraints(Modifier.fillMaxWidth().appFocusGroup()) {
+        if (maxWidth >= WIDE_FILTERS_MIN_WIDTH) {
+            // Two equal columns, so each row lines up: tournament over type on the left, period over origin on the right.
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(FILTER_COLUMN_GAP), verticalAlignment = Alignment.Bottom) {
+                    tournamentField(Modifier.weight(1f))
+                    periodGroup(Modifier.weight(1f))
                 }
+                Row(horizontalArrangement = Arrangement.spacedBy(FILTER_COLUMN_GAP), verticalAlignment = Alignment.Bottom) {
+                    FilterGroup(stringResource(Res.string.activity_filter_kind), Modifier.weight(1f)) {
+                        ActivitySource.entries.forEach { value ->
+                            WideChip(sourceLabel(value), selected = source == value) { onSource(value) }
+                        }
+                    }
+                    FilterGroup(stringResource(Res.string.activity_filter_origin), Modifier.weight(1f)) {
+                        WideChip(stringResource(Res.string.activity_origin_all), selected = origin == null) { onOrigin(null) }
+                        ActivityOrigin.entries.forEach { value ->
+                            WideChip(originLabel(value.wire), selected = origin == value) { onOrigin(value) }
+                        }
+                    }
+                }
+                personGroup()
             }
-            if (personName != null) {
-                FilterGroup(stringResource(Res.string.activity_filter_person)) {
-                    FilterChip(
-                        selected = true,
-                        onClick = onClearPerson,
-                        label = { Text(stringResource(Res.string.activity_person_filter, personName)) },
-                        trailingIcon = { Text("×") },
-                    )
-                }
+        } else {
+            // One column on a phone. Each filter takes one full line, and the lists of options become menus.
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                tournamentField(Modifier.fillMaxWidth())
+                periodGroup(Modifier.fillMaxWidth())
+                SelectField(
+                    label = stringResource(Res.string.activity_filter_kind),
+                    options = ActivitySource.entries.map { SelectOption(it, sourceLabel(it)) },
+                    selected = source,
+                    onSelect = onSource,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                val allOrigins = stringResource(Res.string.activity_origin_all)
+                val originOptions = listOf(SelectOption<ActivityOrigin?>(null, allOrigins)) +
+                    ActivityOrigin.entries.map { SelectOption<ActivityOrigin?>(it, originLabel(it.wire)) }
+                SelectField(
+                    label = stringResource(Res.string.activity_filter_origin),
+                    options = originOptions,
+                    selected = origin,
+                    onSelect = onOrigin,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                personGroup()
             }
         }
     }
 }
 
+/** A titled line of filter chips. The chips share the width of the line. */
 @Composable
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-private fun FiltersRow(content: @Composable () -> Unit) {
-    androidx.compose.foundation.layout.FlowRow(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(24.dp, Alignment.CenterHorizontally),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        itemVerticalAlignment = Alignment.Bottom,
-    ) { content() }
-}
-
-/** A titled group of filter chips. */
-@Composable
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-private fun FilterGroup(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+private fun FilterGroup(title: String, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        androidx.compose.foundation.layout.FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) { content() }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            content()
+        }
     }
+}
+
+@Composable
+private fun RowScope.WideChip(text: String, selected: Boolean, onClick: () -> Unit) {
+    FilterChip(
+        selected = selected,
+        onClick = onClick,
+        label = { Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth()) },
+        modifier = Modifier.weight(1f),
+    )
+}
+
+/** "From" or "Until", with the chosen day and time when there is one. */
+@Composable
+private fun RowScope.PeriodChip(word: StringResource, millis: Long?, selected: Boolean, onClick: () -> Unit) {
+    val text = stringResource(word) + (millis?.let { " ${shortDateTime(it)}" } ?: "")
+    WideChip(text, selected, onClick)
+}
+
+/** A short local date and time, with the year only when it is not this year. */
+private fun shortDateTime(millis: Long): String {
+    val zone = TimeZone.currentSystemDefault()
+    val time = Instant.fromEpochMilliseconds(millis).toLocalDateTime(zone)
+    val thisYear = Clock.System.now().toLocalDateTime(zone).year
+    val day = time.day.toString().padStart(2, '0')
+    val month = time.month.number.toString().padStart(2, '0')
+    val year = if (time.year == thisYear) "" else "/${time.year % 100}"
+    return "$day/$month$year ${time.hour.toString().padStart(2, '0')}:${time.minute.toString().padStart(2, '0')}"
 }
 
 @Composable

@@ -736,9 +736,6 @@
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
     <string name="activity_action_script_run">Script de maintenance exécuté</string>
     <string name="activity_origin_all">Toutes les origines</string>
-    <string name="activity_period_from">Du : %1$s</string>
-    <string name="activity_period_to">Jusqu\'au : %1$s</string>
-    <string name="activity_period_any">toute date</string>
     <string name="activity_period_clear">Effacer les dates</string>
     <string name="reset_table">Vider la table</string>
     <string name="reset_table_confirm_title">Vider le tour %1$d · table %2$d ?</string>
@@ -747,4 +744,6 @@
     <string name="activity_filter_origin">Origine</string>
     <string name="activity_filter_period">Période</string>
     <string name="activity_filter_person">Personne</string>
+    <string name="activity_period_from_short">Du</string>
+    <string name="activity_period_to_short">Jusqu\'au</string>
 </resources>
