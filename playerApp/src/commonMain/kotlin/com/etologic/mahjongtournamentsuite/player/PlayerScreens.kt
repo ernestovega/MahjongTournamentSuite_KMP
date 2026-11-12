@@ -1791,12 +1791,21 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerHigh),
             elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
         ) {
-            if (hand.isDone) HandRow(view, hand, dark)
+            // The hand number and its wind are the title of the card, so the lines under it use the whole width.
+            Row(
+                Modifier.padding(start = 12.dp, top = 10.dp, end = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                HandNumber(hand.handId)
+                HandLabel(hand.handId)
+            }
+            // The first line is close to the title. The lines after a divider keep their space.
+            if (hand.isDone) HandRow(view, hand, dark, top = 8.dp)
             penalties.forEachIndexed { index, values ->
                 val first = !hand.isDone && index == 0
                 if (!first) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
-                // The hand number is only on the first line of the card.
-                PenaltyRow(view, table.seatIds(), hand.handId.takeIf { first }, values)
+                PenaltyRow(view, table.seatIds(), values, top = if (first) 8.dp else 14.dp)
             }
         }
     }
@@ -1804,19 +1813,15 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
 
 /**
  * One penalty. A red "Penalty" chip is at the top and each player with points is on a line under it. The values are
- * at the end, in the same column and size as the score of a hand. [handId] is null when a hand is above the penalty,
- * so the number is not repeated, but its column keeps the content aligned with the hand.
+ * at the end, in the same column and size as the score of a hand.
  */
 @Composable
-private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId: Int?, values: List<Int>) {
+private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values: List<Int>, top: Dp) {
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 12.dp, top = top, end = 12.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) {
-            if (handId != null) HandNumber(handId)
-        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             // The penalized players come first with a red chip. The players who receive points come under them,
             // smaller, slightly indented and with a green chip.
@@ -1856,20 +1861,15 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId
  * chicken are on the second line. The score is at the end of the row.
  */
 @Composable
-private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) {
+private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean, top: Dp) {
     val winnerSlot = hand.playerWinnerId.toIntOrNull()
     val loserSlot = hand.playerLooserId.toIntOrNull()
     val kind = hand.kind()
     Row(
-        Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 12.dp, top = top, end = 12.dp, bottom = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // The hand number has the wind and the place in the round under it, so the row keeps its width.
-        Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            HandNumber(hand.handId)
-            HandLabel(hand.handId)
-        }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             if (kind != HandKind.DRAW) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1927,9 +1927,8 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
 private fun HandNumber(handId: Int) {
     Text(
         "#$handId",
-        style = MaterialTheme.typography.bodyMedium,
-        fontWeight = FontWeight.Medium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodyLarge,
+        fontWeight = FontWeight.Bold,
     )
 }
 
