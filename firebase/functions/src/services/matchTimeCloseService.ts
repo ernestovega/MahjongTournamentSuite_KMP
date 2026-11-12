@@ -9,13 +9,13 @@ export type CloseExpiredResult = { tournaments: number; closed: number };
 
 const SYSTEM_ACTOR = { uid: "system", name: "Match time", source: "system" as const };
 
-/** Rounds of the tournament whose match time is over at an instant. Empty when the server cannot know it. */
+/** Rounds of the tournament whose match time is over at an instant. A round without a clock has not started. */
 function overRounds(tournament: Data, nowMs: number): number[] {
   const numRounds = Number(tournament.numRounds ?? 0);
   const rounds: number[] = [];
   for (let roundId = 1; roundId <= numRounds; roundId += 1) {
-    const { rules, schedule } = matchTimeOfTournament(tournament, roundId);
-    if (matchPhaseAt(schedule, rules, nowMs) === "OVER") rounds.push(roundId);
+    const { rules, clock } = matchTimeOfTournament(tournament, roundId);
+    if (matchPhaseAt(clock, rules, nowMs) === "OVER") rounds.push(roundId);
   }
   return rounds;
 }
@@ -52,9 +52,8 @@ async function closeTable(tournamentId: string, roundId: number, tableId: number
 
 /**
  * Marks as completed the tables of one round that have played hands, when the match time of the round is over.
- * A task runs it at the end of the round. It checks the time again, so a task made before an edit of the
- * schedule does nothing. A tournament without time zone is skipped, because the server cannot know the local
- * time of its rounds.
+ * A task runs it at the end of the round. It checks the clock again, so a task made before a pause, a reset or
+ * "Set time" does nothing.
  */
 export async function closeRoundTables(tournamentId: string, roundId: number, nowMs: number = Date.now()): Promise<CloseExpiredResult> {
   const result: CloseExpiredResult = { tournaments: 0, closed: 0 };

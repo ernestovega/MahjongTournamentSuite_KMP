@@ -2,7 +2,7 @@ import { HttpError, badRequest, conflict, forbidden, notFound } from "../api/htt
 import { db } from "../firebase";
 import type { ChangeActor } from "./changeLog";
 import { handSeatScores, isResultSelectionInvalid, seatIdsOf, tableTotalsPatch } from "./handScoring";
-import { tournamentMatchPhase } from "./matchTime";
+import { seatingIsOpen, tournamentMatchPhase } from "./matchTime";
 import { getPlayerRegistration } from "./playerAccountsService";
 import {
   HANDS_PER_TABLE,
@@ -107,7 +107,8 @@ export function parseHandInput(body: unknown): HandInput {
 
 type TableKey = { tournamentId: string; roundId: number; tableId: number };
 
-async function loadFor(
+/** Reads a table for a player of it: the registration of the account, the tournament, the table and its hands. */
+async function loadTableOf(
   key: TableKey,
   uid: string,
   read: { get(ref: FirebaseFirestore.DocumentReference): Promise<FirebaseFirestore.DocumentSnapshot> },
@@ -128,18 +129,27 @@ async function loadFor(
   }
   if (!tableSnap.exists) throw notFound("Table not found");
   const table: Data = tableSnap.data() ?? {};
-  const seats = seatIdsOf(table);
   if (Boolean(table.isCompleted)) throw conflict("This table is already completed");
   if (Boolean(table.useTotalsOnly ?? false)) throw conflict("This table uses totals only. An editor enters its results");
+  const hands = handsFromData(handSnaps.map((snap) => snap.data() ?? {}));
+  return { registration, tournament: tournamentSnap.data() ?? {}, table, hands };
+}
+
+async function loadFor(
+  key: TableKey,
+  uid: string,
+  read: { get(ref: FirebaseFirestore.DocumentReference): Promise<FirebaseFirestore.DocumentSnapshot> },
+  readAll: (refs: FirebaseFirestore.DocumentReference[]) => Promise<FirebaseFirestore.DocumentSnapshot[]>,
+) {
+  const { registration, tournament, table, hands } = await loadTableOf(key, uid, read, readAll);
+  const seats = seatIdsOf(table);
   if (seats == null) throw conflict("The seats of this table are not assigned yet");
   if (!seats.includes(String(registration.playerId))) throw forbidden("You do not play at this table");
-  // Players write only while the match is on. Before the start, after the end, or without a known schedule, an
-  // organizer enters the data.
-  const phase = tournamentMatchPhase(tournamentSnap.data() ?? {}, key.roundId, Date.now());
-  if (phase == null) throw conflict("The schedule of this match is not set. An organizer must enter the data");
-  if (phase === "NOT_STARTED") throw conflict("This match has not started yet");
+  // Players write only while the match is on: from the Play of the Timer to the end of the match time.
+  // Before or after it, an organizer enters the data.
+  const phase = tournamentMatchPhase(tournament, key.roundId, Date.now());
+  if (phase === "NOT_STARTED") throw conflict("This round has not started yet. Wait for the starting gong");
   if (phase === "OVER") throw conflict("The time of this match is over. An organizer must enter the missing data");
-  const hands = handsFromData(handSnaps.map((snap) => snap.data() ?? {}));
   return { registration, table, seats, hands, phase };
 }
 
@@ -313,6 +323,67 @@ export async function addPenalties(
       await logTableConflict({ ...params, actor: { uid: params.uid, name: null, source: "player" } });
     }
     if (error instanceof StaleTableVersion) throw conflict("The table changed. Check the table and add the penalty again");
+    throw error;
+  }
+}
+
+/** Reads the four seats of a request: slot ids in the order east, south, west, north. */
+export function parseSeatsInput(body: unknown): [string, string, string, string] {
+  const data = (body != null && typeof body === "object") ? body as Record<string, unknown> : {};
+  const seats = [data.playerEastId, data.playerSouthId, data.playerWestId, data.playerNorthId].map((value) => String(value ?? "").trim());
+  if (seats.some((id) => !/^[1-9][0-9]*$/.test(id))) throw badRequest("The four seats need a player each");
+  if (new Set(seats).size !== 4) throw badRequest("A player can sit in one seat only");
+  return seats as [string, string, string, string];
+}
+
+/**
+ * A player of the table sets its four seats. It is possible from a few minutes before the planned start of the round
+ * ([seatingIsOpen]) until the first hand is saved, so the table can sit down before the starting gong.
+ * The four players must be the players of the draw.
+ */
+export async function assignSeats(
+  params: TableKey & { uid: string; seats: [string, string, string, string]; expectedVersion: number },
+): Promise<{ tableVersion: number }> {
+  try {
+    return await db.runTransaction(async (transaction) => {
+      const { registration, tournament, table, hands } = await loadTableOf(
+        params,
+        params.uid,
+        { get: (ref) => transaction.get(ref) },
+        (refs) => transaction.getAll(...refs),
+      );
+      const drawn = (Array.isArray(table.playerIds) ? table.playerIds : []).map((id) => String(id));
+      if (!drawn.includes(String(registration.playerId))) throw forbidden("You do not play at this table");
+      if ([...params.seats].sort().join(",") !== [...drawn].sort().join(",")) {
+        throw badRequest("The seats must hold the four players of the table");
+      }
+      if (hands.some((hand) => hand.isDone)) throw conflict("The seats cannot change after the first hand");
+      if (!seatingIsOpen(tournament, params.roundId, Date.now())) {
+        throw conflict("The seats open a few minutes before the start of the round");
+      }
+      const version = Number(table.version ?? 0);
+      if (version !== params.expectedVersion) throw conflict("The table changed. Check the seats and save again");
+      await saveTableStateInTransaction(transaction, {
+        tournamentId: params.tournamentId,
+        roundId: params.roundId,
+        tableId: params.tableId,
+        expectedVersion: version,
+        tablePatch: {
+          playerEastId: params.seats[0],
+          playerSouthId: params.seats[1],
+          playerWestId: params.seats[2],
+          playerNorthId: params.seats[3],
+        },
+        handPatches: [],
+        actor: { uid: params.uid, name: `Player ${registration.emaId}`, source: "player" },
+      });
+      return { tableVersion: version + 1 };
+    });
+  } catch (error) {
+    if (isVersionConflict(error)) {
+      await logTableConflict({ ...params, actor: { uid: params.uid, name: null, source: "player" } });
+    }
+    if (error instanceof StaleTableVersion) throw conflict("The table changed. Check the seats and save again");
     throw error;
   }
 }

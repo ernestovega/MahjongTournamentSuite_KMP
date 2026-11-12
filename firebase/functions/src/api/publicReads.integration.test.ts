@@ -47,7 +47,7 @@ describe("what anyone can read without an account", () => {
 
   it("serves the content of a public tournament and hides a private one", async () => {
     for (const suffix of ["", "/sync/manifest", "/players", "/teams", "/rounds", "/tables", "/tables-with-hands",
-      "/rounds/1/tables-with-hands", "/tables/1/1"]) {
+      "/rounds/1/tables-with-hands", "/tables/1/1", "/round-clocks"]) {
       assert.equal((await get(`/public/tournaments/${open}${suffix}`)).status, 200, suffix);
       assert.equal((await get(`/public/tournaments/${hidden}${suffix}`)).status, 404, suffix);
     }

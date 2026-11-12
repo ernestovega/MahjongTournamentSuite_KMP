@@ -198,6 +198,14 @@ interface TournamentRepository {
      */
     suspend fun prefetchRevisions(tournamentId: String) {}
 
+    /** The clocks of the rounds, read fresh from the server. The tournament list can be a minute old. */
+    suspend fun getRoundClocks(tournamentId: String): AppResult<RoundClocks> =
+        AppResult.Failure(AppError.Unexpected("The round clocks are not available"))
+
+    /** Play, Pause, Resume, Reset or "Set time" of the Timer. A reset of a round with hands fails with [AppError.Conflict]. */
+    suspend fun updateRoundClock(tournamentId: String, roundId: Int, action: RoundClockAction): AppResult<RoundClocks> =
+        AppResult.Failure(AppError.Unexpected("The round clocks are not available"))
+
     /** The tournaments where the signed-in account plays, with its slot and team. Empty without an account. */
     suspend fun listMyTournamentSlots(): AppResult<List<MyTournamentSlot>> = AppResult.Success(emptyList())
 }

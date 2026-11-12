@@ -38,4 +38,16 @@ interface PlayerHandRepository {
         proposal: HandProposal,
         expectedVersion: Long,
     ): AppResult<HandPreview>
+
+    /**
+     * Sets the four seats of the table: slot ids in the order east, south, west, north. It works from a few minutes
+     * before the planned start of the round until the first hand. [expectedVersion] is the table version that the app shows.
+     */
+    suspend fun assignSeats(
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        seats: List<Int>,
+        expectedVersion: Long,
+    ): AppResult<Unit>
 }

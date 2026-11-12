@@ -1,7 +1,7 @@
 import { getFunctions } from "firebase-admin/functions";
 
-import { db } from "../firebase";
-import { roundStartMs, matchTimeOfTournament } from "./matchTime";
+import { matchTimeOfTournament } from "./matchTime";
+import { clockEndMs } from "./roundClock";
 
 type Data = Record<string, unknown>;
 
@@ -9,32 +9,35 @@ type Data = Record<string, unknown>;
 export const CLOSE_ROUND_TASK_REGION = "europe-west1";
 export const CLOSE_ROUND_TASK_NAME = "closeRoundTablesTask";
 
-/** Cloud Tasks accepts a task at most 30 days ahead. The daily job plans the later rounds when they come near. */
-const MAX_TASK_AHEAD_MS = 29 * 24 * 60 * 60_000;
-
 export type RoundCloseTask = { id: string; roundId: number; at: Date };
 
 export type RoundCloseEnqueuer = (tournamentId: string, task: RoundCloseTask) => Promise<void>;
 
-/** The instant in which the match time of a round is over. Null when the server cannot know it. */
+/**
+ * The instant in which the match time of a round is over, extra time included. Null while the round has not started
+ * or its clock is paused: the server cannot know the end then.
+ */
 export function roundOverMs(tournament: Data, roundId: number): number | null {
-  const { rules, schedule } = matchTimeOfTournament(tournament, roundId);
-  const start = roundStartMs(schedule, rules.timeZone);
-  if (start == null) return null;
+  const { rules, clock } = matchTimeOfTournament(tournament, roundId);
+  if (clock == null) return null;
+  const end = clockEndMs(clock, rules.durationMinutes);
+  if (end == null) return null;
   const extra = rules.endMode === "FINISH_HAND" ? rules.extraMinutes * 60_000 : 0;
-  return start + rules.durationMinutes * 60_000 + extra;
+  return end + extra;
 }
 
 /**
- * The tasks that close the rounds of a tournament, one for each round whose end is in the next 29 days.
- * The id has the end instant, so the same schedule gives the same id and Cloud Tasks drops the copy.
+ * The tasks that close the rounds of a tournament, one for each running round whose end is in the future.
+ * The Play of the Timer starts a round, so an end is never more than a few hours ahead.
+ * The id has the end instant, so the same clock gives the same id and Cloud Tasks drops the copy.
  */
-export function roundCloseTasks(tournamentId: string, tournament: Data, nowMs: number): RoundCloseTask[] {
+export function roundCloseTasks(tournamentId: string, tournament: Data, nowMs: number, onlyRoundId?: number): RoundCloseTask[] {
   const numRounds = Number(tournament.numRounds ?? 0);
   const tasks: RoundCloseTask[] = [];
   for (let roundId = 1; roundId <= numRounds; roundId += 1) {
+    if (onlyRoundId != null && roundId !== onlyRoundId) continue;
     const overMs = roundOverMs(tournament, roundId);
-    if (overMs == null || overMs <= nowMs || overMs > nowMs + MAX_TASK_AHEAD_MS) continue;
+    if (overMs == null || overMs <= nowMs) continue;
     tasks.push({ id: `${tournamentId}_r${roundId}_${overMs}`, roundId, at: new Date(overMs) });
   }
   return tasks;
@@ -61,12 +64,19 @@ export function setRoundCloseEnqueuer(replacement?: RoundCloseEnqueuer): void {
 }
 
 /**
- * Plans the close of every round of a tournament. A task made before an earlier schedule stays in the queue.
- * It does nothing when it runs, because it checks the time again. A failure is logged and never stops the save.
+ * Plans the close of the running rounds of a tournament, or of one round. The Timer calls it after each change of a
+ * clock, and a settings save calls it because the match duration can change. A task made before an earlier change
+ * stays in the queue. It does nothing when it runs, because it checks the time again. A failure is logged and never
+ * stops the save.
  */
-export async function scheduleRoundCloses(tournamentId: string, tournament: Data, nowMs: number = Date.now()): Promise<number> {
+export async function scheduleRoundCloses(
+  tournamentId: string,
+  tournament: Data,
+  nowMs: number = Date.now(),
+  onlyRoundId?: number,
+): Promise<number> {
   let planned = 0;
-  for (const task of roundCloseTasks(tournamentId, tournament, nowMs)) {
+  for (const task of roundCloseTasks(tournamentId, tournament, nowMs, onlyRoundId)) {
     try {
       await enqueuer(tournamentId, task);
       planned += 1;
@@ -75,17 +85,4 @@ export async function scheduleRoundCloses(tournamentId: string, tournament: Data
     }
   }
   return planned;
-}
-
-/**
- * Plans the close tasks of every tournament that is not completed. The daily job runs it. It plans the rounds
- * that entered the 30 days window, and it repairs a task that failed to enqueue when the organizer saved.
- */
-export async function planRoundCloses(nowMs: number = Date.now()): Promise<{ tournaments: number; planned: number }> {
-  const tournaments = await db.collection("tournaments").where("isCompleted", "==", false).get();
-  let planned = 0;
-  for (const tournament of tournaments.docs) {
-    planned += await scheduleRoundCloses(tournament.id, tournament.data(), nowMs);
-  }
-  return { tournaments: tournaments.size, planned };
 }

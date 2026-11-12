@@ -18,6 +18,7 @@ import {
 } from "../../services/tournamentContentService";
 import { getTournament, listAllTournaments, type Tournament } from "../../services/tournamentsService";
 import { getUserProfile } from "../../services/usersService";
+import { getRoundClocks } from "../../services/roundClockService";
 import { assertSafeDocumentId, badRequest, notFound } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { rateLimit } from "../middleware/rateLimit";
@@ -36,6 +37,8 @@ export const PUBLIC_CACHE_SECONDS = {
   lists: 60,
   /** The EMA registry and the countries. */
   registry: 3600,
+  /** The clocks of the rounds. The hand buttons of the players appear when the Timer starts a round. */
+  clocks: 3,
 } as const;
 
 /** The browser keeps an answer for a few seconds only, so polling sees new data soon after the CDN does. */
@@ -149,6 +152,12 @@ export function publicRouter(): Router {
     const teams = await listTournamentTeams(pathParam(req, "tournamentId"));
     tournamentCache(res);
     res.status(200).json({ teams });
+  }));
+
+  router.get("/tournaments/:tournamentId/round-clocks", handle(async (req, res) => {
+    const answer = await getRoundClocks(pathParam(req, "tournamentId"));
+    cacheFor(res, PUBLIC_CACHE_SECONDS.clocks);
+    res.status(200).json(answer);
   }));
 
   router.get("/tournaments/:tournamentId/rounds", handle(async (req, res) => {

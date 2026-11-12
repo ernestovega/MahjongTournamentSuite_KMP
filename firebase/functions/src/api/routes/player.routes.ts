@@ -3,7 +3,15 @@ import { Router, type Request, type Response } from "express";
 import { assertSafeDocumentId, badRequest } from "../httpError";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireRegisteredPlayer } from "../middleware/requireRegisteredPlayer";
-import { addPenalties, parseHandInput, parsePenaltyInput, previewHand, recordHand } from "../../services/playerHandService";
+import {
+  addPenalties,
+  assignSeats,
+  parseHandInput,
+  parsePenaltyInput,
+  parseSeatsInput,
+  previewHand,
+  recordHand,
+} from "../../services/playerHandService";
 import { pathParam } from "../pathParam";
 
 /** Routes for signed-in player accounts. */
@@ -62,6 +70,20 @@ export function playerRouter(): Router {
         throw badRequest("expectedVersion must be the table version of the preview");
       }
       res.status(200).json(await recordHand({ ...tableParams(req), uid: uidOf(res), input, expectedVersion }));
+    } catch (e) {
+      next(e);
+    }
+  });
+
+  // A player of the table sets the four seats, before the first hand.
+  router.post(`${tableRoute}/seats`, requireAuth, requireRegisteredPlayer, async (req, res, next) => {
+    try {
+      const seats = parseSeatsInput(req.body);
+      const expectedVersion = req.body?.expectedVersion;
+      if (!Number.isInteger(expectedVersion) || expectedVersion < 0) {
+        throw badRequest("expectedVersion must be the table version that the app shows");
+      }
+      res.status(200).json(await assignSeats({ ...tableParams(req), uid: uidOf(res), seats, expectedVersion }));
     } catch (e) {
       next(e);
     }

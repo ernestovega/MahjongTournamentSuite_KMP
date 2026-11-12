@@ -23,9 +23,12 @@ data class Tournament(
     val eventStartDate: String? = null,
     /** Last calendar date of the tournament in ISO-8601 format (yyyy-MM-dd). */
     val eventEndDate: String? = null,
+    /** The planned start of each round. The real start is the Play of the Timer ([roundClocks]). */
     val roundSchedules: List<TournamentRoundSchedule> = emptyList(),
+    /** The clocks of the rounds that started. */
+    val roundClocks: List<RoundClock> = emptyList(),
     val agendaItems: List<TournamentAgendaItem> = emptyList(),
-    /** Minutes that a match lasts. A table ends this long after the start of its round. */
+    /** Minutes that a match lasts, from the Play of the Timer. */
     val matchDurationMinutes: Int = DEFAULT_MATCH_DURATION_MINUTES,
     /** What happens when the time of a match is over. */
     val matchEndMode: MatchEndMode = MatchEndMode.STOP,

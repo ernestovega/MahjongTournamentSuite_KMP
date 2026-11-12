@@ -1,4 +1,5 @@
 import { badRequest } from "../api/httpError";
+import { clockDurationMs, clockElapsedMs, readStoredRoundClocks, type RoundClock } from "./roundClock";
 import { readStoredMatchDuration, readStoredMatchEndMode, type MatchEndMode } from "./tournamentSchedule";
 
 /** Minutes after the end time in which the players can record the hand in play, with the mode FINISH_HAND. */
@@ -97,7 +98,10 @@ export type MatchTimeRules = {
   extraMinutes: number;
 };
 
-/** Start of a round as an instant. Null when the tournament has no time zone or the round has no date. */
+/** Minutes before the planned start of a round in which the players can set the seats of their table. */
+export const SEATING_LEAD_MINUTES = 10;
+
+/** Planned start of a round as an instant. Null when the tournament has no time zone or the round has no date. */
 export function roundStartMs(
   schedule: { date: string | null; startTime: string | null } | undefined,
   timeZone: string | null,
@@ -107,30 +111,28 @@ export function roundStartMs(
 }
 
 /**
- * The phase of the matches of a round at an instant.
- * Null when the server cannot know it: the tournament has no time zone or the round has no date.
+ * The phase of the matches of a round at an instant. The match time counts from the Play of the Timer, so a round
+ * without a clock has not started, whatever its planned time. A paused clock keeps its phase.
  */
-export function matchPhaseAt(
-  schedule: { date: string | null; startTime: string | null } | undefined,
-  rules: MatchTimeRules,
-  nowMs: number,
-): MatchPhase | null {
-  const start = roundStartMs(schedule, rules.timeZone);
-  if (start == null) return null;
-  if (nowMs < start) return "NOT_STARTED";
-  const end = start + rules.durationMinutes * 60_000;
-  if (nowMs < end) return "PLAYING";
+export function matchPhaseAt(clock: RoundClock | null, rules: MatchTimeRules, nowMs: number): MatchPhase {
+  if (clock == null) return "NOT_STARTED";
+  const elapsed = clockElapsedMs(clock, nowMs);
+  const duration = clockDurationMs(clock, rules.durationMinutes);
+  if (elapsed < duration) return "PLAYING";
   const extra = rules.endMode === "FINISH_HAND" ? rules.extraMinutes * 60_000 : 0;
-  return nowMs < end + extra ? "EXTRA_TIME" : "OVER";
+  return elapsed < duration + extra ? "EXTRA_TIME" : "OVER";
 }
 
 type Data = Record<string, unknown>;
 
-/** The match time rules and the schedule of a round, read from a stored tournament document. */
-export function matchTimeOfTournament(
-  tournament: Data,
-  roundId: number,
-): { rules: MatchTimeRules; schedule: { date: string | null; startTime: string | null } | undefined } {
+export type RoundMatchTime = {
+  rules: MatchTimeRules;
+  schedule: { date: string | null; startTime: string | null } | undefined;
+  clock: RoundClock | null;
+};
+
+/** The match time rules, the planned schedule and the clock of a round, read from a stored tournament document. */
+export function matchTimeOfTournament(tournament: Data, roundId: number): RoundMatchTime {
   const schedules = Array.isArray(tournament.roundSchedules) ? tournament.roundSchedules as Data[] : [];
   const row = schedules.find((item) => Number(item.roundId) === roundId);
   return {
@@ -146,11 +148,26 @@ export function matchTimeOfTournament(
         date: typeof row.date === "string" ? row.date : null,
         startTime: typeof row.startTime === "string" ? row.startTime : null,
       },
+    clock: readStoredRoundClocks(tournament).get(roundId) ?? null,
   };
 }
 
-/** The phase of the matches of a round. Null when the server cannot know it. */
-export function tournamentMatchPhase(tournament: Data, roundId: number, nowMs: number): MatchPhase | null {
-  const { rules, schedule } = matchTimeOfTournament(tournament, roundId);
-  return matchPhaseAt(schedule, rules, nowMs);
+/** The phase of the matches of a round. */
+export function tournamentMatchPhase(tournament: Data, roundId: number, nowMs: number): MatchPhase {
+  const { rules, clock } = matchTimeOfTournament(tournament, roundId);
+  return matchPhaseAt(clock, rules, nowMs);
+}
+
+/**
+ * True when the players of a round can set the seats of their tables: from [SEATING_LEAD_MINUTES] before the planned
+ * start, or as soon as the round started, until the match time is over. A round without a planned time is always open.
+ * The first hand of a table closes its seats; the caller checks that.
+ */
+export function seatingIsOpen(tournament: Data, roundId: number, nowMs: number): boolean {
+  const { rules, schedule, clock } = matchTimeOfTournament(tournament, roundId);
+  const phase = matchPhaseAt(clock, rules, nowMs);
+  if (phase === "OVER") return false;
+  if (phase !== "NOT_STARTED") return true;
+  const planned = roundStartMs(schedule, rules.timeZone);
+  return planned == null || nowMs >= planned - SEATING_LEAD_MINUTES * 60_000;
 }

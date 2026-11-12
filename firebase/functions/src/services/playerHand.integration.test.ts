@@ -5,21 +5,30 @@ import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
 import { giveEmaIdToAccount, seatEmaId } from "../testing/authFixtures";
 import { readChanges, readHand, readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
+import { startedClock } from "../testing/schedule";
 import { getTournamentManifest } from "./dataVersionsService";
-import { addPenalties, parseHandInput, parsePenaltyInput, previewHand, recordHand } from "./playerHandService";
+import {
+  addPenalties,
+  assignSeats,
+  parseHandInput,
+  parsePenaltyInput,
+  parseSeatsInput,
+  previewHand,
+  recordHand,
+} from "./playerHandService";
 import { saveTableState } from "./tableManagerService";
 
 type Fixture = { tournamentId: string; uid: string; otherUid: string };
 
-/** Gives round 1 a schedule in UTC. The match lasts 120 minutes and ends with the hand in play cut off. */
+/** The Timer started round 1 [startedMinutesAgo] minutes ago. The match lasts 120 minutes and ends with the hand in play cut off. */
 async function startMatch(tournamentId: string, startedMinutesAgo: number): Promise<void> {
-  const start = new Date(Date.now() - startedMinutesAgo * 60_000).toISOString();
   await db.doc(`tournaments/${tournamentId}`).update({
+    numRounds: 1,
     timeZone: "UTC",
     matchDurationMinutes: 120,
     matchEndMode: "STOP",
     matchExtraMinutes: 15,
-    roundSchedules: [{ roundId: 1, date: start.slice(0, 10), startTime: start.slice(11, 16) }],
+    roundClocks: { 1: startedClock(startedMinutesAgo) },
   });
 }
 
@@ -119,12 +128,11 @@ describe("hand entry by a player", () => {
     await rejects(previewHand({ ...at(fixture), uid: "nobody", input: hand("1", "4") }), 403);
   });
 
-  it("refuses a hand before the match starts, after it ends, and without a schedule", async () => {
-    const early = await seedTable({ startedMinutesAgo: -30 });
+  it("refuses a hand before the Play of the Timer and after the match time", async () => {
+    const notStarted = await seedTable({ startedMinutesAgo: null });
     const late = await seedTable({ startedMinutesAgo: 300 });
-    const unscheduled = await seedTable({ startedMinutesAgo: null });
 
-    for (const fixture of [early, late, unscheduled]) {
+    for (const fixture of [notStarted, late]) {
       await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 409);
       await rejects(recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 }), 409);
       await rejects(addPenalties({ ...at(fixture), uid: fixture.uid, penalties: ["-10", "", "", ""], expectedVersion: 0 }), 409);
@@ -252,5 +260,76 @@ describe("hand entry by a player", () => {
 
     assert.equal(results.filter((result) => result.status === "fulfilled").length, 1);
     assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 1);
+  });
+});
+
+/** Plans round 1 to start [minutesAhead] minutes from now, in UTC. No Timer started it. */
+async function planRound(tournamentId: string, minutesAhead: number): Promise<void> {
+  const planned = new Date(Date.now() + minutesAhead * 60_000).toISOString();
+  await db.doc(`tournaments/${tournamentId}`).update({
+    numRounds: 1,
+    timeZone: "UTC",
+    matchDurationMinutes: 120,
+    roundSchedules: [{ roundId: 1, date: planned.slice(0, 10), startTime: planned.slice(11, 16) }],
+  });
+}
+
+describe("seats set by a player", () => {
+  before(requireEmulator);
+
+  const seats = ["3", "1", "4", "2"] as [string, string, string, string];
+
+  it("sets the seats a few minutes before the start, and the hands still wait for the Play", async () => {
+    const fixture = await seedTable({ seats: false, startedMinutesAgo: null });
+    await planRound(fixture.tournamentId, 5);
+
+    const result = await assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 0 });
+
+    assert.equal(result.tableVersion, 1);
+    const table = await readTable(fixture.tournamentId, 1, 1);
+    assert.deepEqual([table.playerEastId, table.playerSouthId, table.playerWestId, table.playerNorthId], seats);
+    const changes = await readChanges(fixture.tournamentId);
+    assert.equal(changes[changes.length - 1]?.source, "player");
+    await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 409);
+    // The players can change the seats again until the first hand.
+    await assignSeats({ ...at(fixture), uid: fixture.uid, seats: ["1", "2", "3", "4"], expectedVersion: 1 });
+    assert.equal((await readTable(fixture.tournamentId, 1, 1)).playerEastId, "1");
+  });
+
+  it("refuses the seats long before the planned start", async () => {
+    const fixture = await seedTable({ seats: false, startedMinutesAgo: null });
+    await planRound(fixture.tournamentId, 30);
+
+    await rejects(assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 0 }), 409);
+    assert.equal((await readTable(fixture.tournamentId, 1, 1)).version, 0);
+  });
+
+  it("accepts the seats in a round that the Timer started early", async () => {
+    const fixture = await seedTable({ seats: false, startedMinutesAgo: 1 });
+    await db.doc(`tournaments/${fixture.tournamentId}`).update({
+      roundSchedules: [{ roundId: 1, date: "2099-01-01", startTime: "10:00" }],
+    });
+
+    await assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 0 });
+
+    assert.equal((await readTable(fixture.tournamentId, 1, 1)).playerEastId, "3");
+  });
+
+  it("refuses the seats after the first hand", async () => {
+    const fixture = await seedTable();
+    await recordHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4"), expectedVersion: 0 });
+
+    await rejects(assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 1 }), 409);
+  });
+
+  it("refuses other players, a player who is not at the table and an old version", async () => {
+    const fixture = await seedTable({ seats: false });
+
+    await rejects(assignSeats({ ...at(fixture), uid: fixture.uid, seats: ["1", "2", "3", "9"], expectedVersion: 0 }), 400);
+    await rejects(assignSeats({ ...at(fixture), uid: fixture.otherUid, seats, expectedVersion: 0 }), 403);
+    await rejects(assignSeats({ ...at(fixture), uid: fixture.uid, seats, expectedVersion: 4 }), 409);
+    assert.throws(() => parseSeatsInput({ playerEastId: "1", playerSouthId: "1", playerWestId: "3", playerNorthId: "4" }), HttpError);
+    assert.throws(() => parseSeatsInput({ playerEastId: "1", playerSouthId: "2", playerWestId: "3" }), HttpError);
+    assert.deepEqual(parseSeatsInput({ playerEastId: 4, playerSouthId: "3", playerWestId: "2", playerNorthId: "1" }), ["4", "3", "2", "1"]);
   });
 });

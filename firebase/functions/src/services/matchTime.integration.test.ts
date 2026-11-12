@@ -5,22 +5,22 @@ import { db } from "../firebase";
 import { HttpError } from "../api/httpError";
 import { giveEmaIdToAccount, seatEmaId } from "../testing/authFixtures";
 import { readChanges, readTable, requireEmulator, seedTournament } from "../testing/firestoreFixtures";
+import { startedClock } from "../testing/schedule";
 import { closeRoundTables } from "./matchTimeCloseService";
 import { parseHandInput, recordHand } from "./playerHandService";
 
 type Mode = "STOP" | "FINISH_HAND";
 
-/** A tournament in UTC whose round 1 started [startedMinutesAgo] minutes ago. The match lasts 120 minutes. */
+/** A tournament whose Timer started round 1 [startedMinutesAgo] minutes ago. The match lasts 120 minutes. */
 async function seedTimedTable(startedMinutesAgo: number, mode: Mode, doneHands = 0) {
   const tournamentId = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
-  const start = new Date(Date.now() - startedMinutesAgo * 60_000).toISOString();
   await db.doc(`tournaments/${tournamentId}`).update({
     numRounds: 1,
     timeZone: "UTC",
     matchDurationMinutes: 120,
     matchEndMode: mode,
     matchExtraMinutes: 15,
-    roundSchedules: [{ roundId: 1, date: start.slice(0, 10), startTime: start.slice(11, 16) }],
+    roundClocks: { 1: startedClock(startedMinutesAgo) },
   });
   await db.doc(`tournaments/${tournamentId}/tables/1_1`).update({
     playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4", hasProgress: doneHands > 0,
@@ -113,12 +113,33 @@ describe("match time", () => {
     assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, false);
   });
 
-  it("skips a tournament without time zone", async () => {
-    const { tournamentId } = await seedTimedTable(200, "STOP", 3);
-    await db.doc(`tournaments/${tournamentId}`).update({ timeZone: null });
+  it("refuses a hand before the Play of the Timer, even after the planned time", async () => {
+    const { tournamentId, uid } = await seedTimedTable(30, "STOP");
+    const planned = new Date(Date.now() - 60 * 60_000).toISOString();
+    await db.doc(`tournaments/${tournamentId}`).update({
+      roundClocks: {},
+      roundSchedules: [{ roundId: 1, date: planned.slice(0, 10), startTime: planned.slice(11, 16) }],
+    });
 
-    await closeRoundTables(tournamentId, 1);
+    await assert.rejects(
+      recordHand({ tournamentId, roundId: 1, tableId: 1, uid, input: win(), expectedVersion: 0 }),
+      (error: unknown) => error instanceof HttpError && error.status === 409 && error.message.includes("starting gong"),
+    );
+  });
 
-    assert.equal((await readTable(tournamentId, 1, 1)).isCompleted, false);
+  it("does not close a round that has not started or is paused", async () => {
+    const notStarted = await seedTimedTable(200, "STOP", 3);
+    await db.doc(`tournaments/${notStarted.tournamentId}`).update({ roundClocks: {} });
+    const paused = await seedTimedTable(200, "STOP", 3);
+    const clock = startedClock(200);
+    await db.doc(`tournaments/${paused.tournamentId}`).update({
+      roundClocks: { 1: { ...clock, pausedAtMs: clock.startedAtMs + 60 * 60_000 } },
+    });
+
+    await closeRoundTables(notStarted.tournamentId, 1);
+    await closeRoundTables(paused.tournamentId, 1);
+
+    assert.equal((await readTable(notStarted.tournamentId, 1, 1)).isCompleted, false);
+    assert.equal((await readTable(paused.tournamentId, 1, 1)).isCompleted, false);
   });
 });

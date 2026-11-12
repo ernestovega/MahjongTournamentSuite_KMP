@@ -53,6 +53,8 @@ import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../../services/tourn
 import { isValidIsoDate, isValidIsoDateRange } from "../../services/tournamentDates";
 import { normalizeVenue, venueRequiredProblems } from "../../services/tournamentVenue";
 import { getTournamentManifest } from "../../services/dataVersionsService";
+import { getRoundClocks, updateRoundClock } from "../../services/roundClockService";
+import { parseRoundClockAction } from "../../services/roundClock";
 import { parseSaveTableRequest } from "../tableRequests";
 import { pathParam } from "../pathParam";
 import { loadOverview, loadPersonStatistics, loadStandings, MAX_STANDINGS_PER_REQUEST } from "../../services/statisticsStore";
@@ -878,6 +880,42 @@ export function tournamentsRouter(): Router {
       try {
         const rounds = await listTournamentRounds(pathParam(req, "tournamentId"));
         res.status(200).json({ rounds });
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  router.get(
+    "/:tournamentId/round-clocks",
+    requireAuth,
+    requireTournamentReader,
+    async (req, res, next) => {
+      try {
+        res.status(200).json(await getRoundClocks(pathParam(req, "tournamentId")));
+      } catch (e) {
+        next(e);
+      }
+    },
+  );
+
+  // Play, Pause, Resume, Reset and "Set time" of the Timer. The server keeps the clock of each round.
+  router.post(
+    "/:tournamentId/rounds/:roundId/clock",
+    requireAuth,
+    requireTournamentEditor,
+    async (req, res, next) => {
+      try {
+        const roundId = Number(pathParam(req, "roundId"));
+        if (!Number.isInteger(roundId) || roundId <= 0) throw badRequest("roundId must be a positive integer");
+        const answer = await updateRoundClock({
+          tournamentId: pathParam(req, "tournamentId"),
+          roundId,
+          action: parseRoundClockAction(req.body),
+          force: req.body?.force === true,
+          actor: actorFromToken(res.locals.auth),
+        });
+        res.status(200).json(answer);
       } catch (e) {
         next(e);
       }
