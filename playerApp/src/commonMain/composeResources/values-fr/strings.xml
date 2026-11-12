@@ -183,4 +183,5 @@
     <string name="table_status_not_started">Pas commencée</string>
     <string name="table_status_playing">En cours</string>
     <string name="tables_no_match">Aucune table ne correspond aux filtres</string>
+    <string name="filter_search_label">Rechercher</string>
 </resources>

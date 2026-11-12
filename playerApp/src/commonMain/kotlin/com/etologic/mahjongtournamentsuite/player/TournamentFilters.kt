@@ -31,6 +31,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.filter_all_years
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_country
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search
+import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
 import mahjongtournamentsuite.playerapp.generated.resources.filter_status
 import mahjongtournamentsuite.playerapp.generated.resources.filter_year
 import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
@@ -132,6 +133,8 @@ internal fun TournamentFilterBar(
                     onValueChange = { onChange(filter.copy(query = it)) },
                     modifier = Modifier.weight(1f),
                     singleLine = true,
+                    // The title says what the field is. The hint, which is longer, shows while the person types.
+                    label = { Text(stringResource(Res.string.filter_search_label)) },
                     placeholder = { Text(stringResource(Res.string.filter_search), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),

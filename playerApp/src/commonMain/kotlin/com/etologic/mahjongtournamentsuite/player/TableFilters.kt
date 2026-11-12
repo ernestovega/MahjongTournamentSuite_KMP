@@ -26,6 +26,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.filter_all_rounds
 import mahjongtournamentsuite.playerapp.generated.resources.filter_all_statuses
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_round
+import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
 import mahjongtournamentsuite.playerapp.generated.resources.filter_status
 import mahjongtournamentsuite.playerapp.generated.resources.filter_table_search
 import mahjongtournamentsuite.playerapp.generated.resources.round_n
@@ -110,6 +111,8 @@ internal fun TableFilterBar(
             onValueChange = { onChange(filter.copy(query = it)) },
             modifier = Modifier.fillMaxWidth().testTag(TABLE_SEARCH_TAG),
             singleLine = true,
+            // The title says what the field is. The hint, which is longer, shows while the person types.
+            label = { Text(stringResource(Res.string.filter_search_label)) },
             placeholder = { Text(stringResource(Res.string.filter_table_search), maxLines = 1, overflow = TextOverflow.Ellipsis) },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = if (!filter.isActive) {
