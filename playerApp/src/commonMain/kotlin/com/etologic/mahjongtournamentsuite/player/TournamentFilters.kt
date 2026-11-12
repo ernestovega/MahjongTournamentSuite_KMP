@@ -1,16 +1,15 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.FilterAltOff
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
@@ -112,8 +111,7 @@ internal fun List<Tournament>.sortedForList(statusOf: (Tournament) -> Tournament
     )
 }
 
-/** The search field, the status, country and year dropdowns and the "My tournaments" chip above the tournament list. */
-@OptIn(ExperimentalLayoutApi::class)
+/** The search field with the "My tournaments" chip and the clear button, and the status, country and year dropdowns, above the tournament list. */
 @Composable
 internal fun TournamentFilterBar(
     filter: TournamentFilter,
@@ -122,70 +120,67 @@ internal fun TournamentFilterBar(
     signedIn: Boolean,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        OutlinedTextField(
-            value = filter.query,
-            onValueChange = { onChange(filter.copy(query = it)) },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            placeholder = { Text(stringResource(Res.string.filter_search)) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
-            trailingIcon = if (filter.query.isEmpty()) {
-                null
-            } else {
-                {
-                    IconButton(onClick = { onChange(filter.copy(query = "")) }) {
-                        Icon(Icons.Default.Clear, contentDescription = stringResource(Res.string.filter_clear))
-                    }
-                }
-            },
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        )
-        // The three dropdowns share one row, also on a phone.
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            val allStatuses = stringResource(Res.string.filter_all_statuses)
-            val statusOptions = listOf(TournamentStatus.IN_PROGRESS, TournamentStatus.UPCOMING, TournamentStatus.FINISHED)
-                .map { it.name to stringResource(it.label) }
-            SelectField(
-                label = stringResource(Res.string.filter_status),
-                options = listOf("" to allStatuses) + statusOptions,
-                selected = filter.status?.name.orEmpty(),
-                onSelect = { name -> onChange(filter.copy(status = TournamentStatus.entries.firstOrNull { it.name == name })) },
-                modifier = Modifier.weight(1f),
-                compact = true,
-            )
-            val allCountries = stringResource(Res.string.filter_all_countries)
-            val countries = tournaments.map { it.hostCountry.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
-            SelectField(
-                label = stringResource(Res.string.filter_country),
-                options = listOf("" to allCountries) + countries.map { it to it },
-                selected = filter.country.orEmpty(),
-                onSelect = { onChange(filter.copy(country = it.ifBlank { null })) },
-                modifier = Modifier.weight(1f),
-                compact = true,
-            )
-            val allYears = stringResource(Res.string.filter_all_years)
-            val years = tournaments.mapNotNull { it.year() }.distinct().sortedDescending()
-            SelectField(
-                label = stringResource(Res.string.filter_year),
-                options = listOf(0 to allYears) + years.map { it to it.toString() },
-                selected = filter.year ?: 0,
-                onSelect = { onChange(filter.copy(year = it.takeIf { year -> year > 0 })) },
-                modifier = Modifier.weight(1f),
-                compact = true,
-            )
-        }
-        if (signedIn || filter.isActive) {
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) {
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        // On a phone the clear button is an icon, so the search field keeps room to type.
+        val narrow = maxWidth < 560.dp
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            // The search field shares its row with the "My tournaments" chip and the button that clears the filters.
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = filter.query,
+                    onValueChange = { onChange(filter.copy(query = it)) },
+                    modifier = Modifier.weight(1f),
+                    singleLine = true,
+                    placeholder = { Text(stringResource(Res.string.filter_search)) },
+                    leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                )
                 if (signedIn) {
                     Chip(stringResource(Res.string.scope_my_tournaments), filter.mineOnly) { onChange(filter.copy(mineOnly = !filter.mineOnly)) }
                 }
                 if (filter.isActive) {
-                    TextButton(onClick = { onChange(TournamentFilter()) }) { Text(stringResource(Res.string.filter_clear)) }
+                    if (narrow) {
+                        IconButton(onClick = { onChange(TournamentFilter()) }) {
+                            Icon(Icons.Default.FilterAltOff, contentDescription = stringResource(Res.string.filter_clear))
+                        }
+                    } else {
+                        TextButton(onClick = { onChange(TournamentFilter()) }) { Text(stringResource(Res.string.filter_clear)) }
+                    }
                 }
+            }
+            // The three dropdowns share one row, also on a phone.
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                val allStatuses = stringResource(Res.string.filter_all_statuses)
+                val statusOptions = listOf(TournamentStatus.IN_PROGRESS, TournamentStatus.UPCOMING, TournamentStatus.FINISHED)
+                    .map { it.name to stringResource(it.label) }
+                SelectField(
+                    label = stringResource(Res.string.filter_status),
+                    options = listOf("" to allStatuses) + statusOptions,
+                    selected = filter.status?.name.orEmpty(),
+                    onSelect = { name -> onChange(filter.copy(status = TournamentStatus.entries.firstOrNull { it.name == name })) },
+                    modifier = Modifier.weight(1f),
+                    compact = true,
+                )
+                val allCountries = stringResource(Res.string.filter_all_countries)
+                val countries = tournaments.map { it.hostCountry.uppercase() }.filter { it.isNotBlank() }.distinct().sorted()
+                SelectField(
+                    label = stringResource(Res.string.filter_country),
+                    options = listOf("" to allCountries) + countries.map { it to it },
+                    selected = filter.country.orEmpty(),
+                    onSelect = { onChange(filter.copy(country = it.ifBlank { null })) },
+                    modifier = Modifier.weight(1f),
+                    compact = true,
+                )
+                val allYears = stringResource(Res.string.filter_all_years)
+                val years = tournaments.mapNotNull { it.year() }.distinct().sortedDescending()
+                SelectField(
+                    label = stringResource(Res.string.filter_year),
+                    options = listOf(0 to allYears) + years.map { it to it.toString() },
+                    selected = filter.year ?: 0,
+                    onSelect = { onChange(filter.copy(year = it.takeIf { year -> year > 0 })) },
+                    modifier = Modifier.weight(1f),
+                    compact = true,
+                )
             }
         }
     }

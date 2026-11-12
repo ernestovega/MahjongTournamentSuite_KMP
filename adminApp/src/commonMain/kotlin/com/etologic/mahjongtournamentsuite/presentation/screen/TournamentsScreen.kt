@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -90,9 +89,9 @@ import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
+import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfilePhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -469,12 +468,10 @@ fun TournamentsScreen(
                                             tableContent(Modifier.width(baseMinWidth))
                                         }
 
-                                        PlatformVerticalScrollbar(
-                                            listState = listState,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterEnd)
-                                                .fillMaxHeight()
-                                                .width(12.dp),
+                                        // The same draggable scrollbar on every platform, also for a finger.
+                                        DraggableScrollbar(
+                                            state = listState,
+                                            modifier = Modifier.align(Alignment.CenterEnd),
                                         )
 
                                         PlatformHorizontalScrollbar(
@@ -487,14 +484,13 @@ fun TournamentsScreen(
                                     }
                                 } else {
                                     Box(modifier = Modifier.fillMaxWidth()) {
-                                        tableContent(Modifier.fillMaxWidth())
+                                        // The rows end before the scrollbar strip, so the scrollbar does not cover the edit button.
+                                        tableContent(Modifier.fillMaxWidth().padding(end = 20.dp))
 
-                                        PlatformVerticalScrollbar(
-                                            listState = listState,
-                                            modifier = Modifier
-                                                .align(Alignment.CenterEnd)
-                                                .fillMaxHeight()
-                                                .width(12.dp),
+                                        // The same draggable scrollbar on every platform, also for a finger.
+                                        DraggableScrollbar(
+                                            state = listState,
+                                            modifier = Modifier.align(Alignment.CenterEnd),
                                         )
                                     }
                                 }

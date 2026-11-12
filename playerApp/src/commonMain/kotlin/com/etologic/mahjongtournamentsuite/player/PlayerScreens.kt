@@ -469,37 +469,42 @@ fun TournamentsScreen(navController: NavHostController) {
                         // The padding is inside the list, so the list ends at the tabs and at the bottom of the screen.
                         else -> {
                             val shown = list.filter { filter.accepts(it, statusOf(it), mine) }.sortedForList(::statusOf)
-                            LazyColumn(
-                                state = rememberPersistentLazyListState("tournaments"),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-                            ) {
-                                item(key = "filters") {
-                                    TournamentFilterBar(
-                                        filter = filter,
-                                        onChange = { filterText = it.encode() },
-                                        tournaments = list,
-                                        signedIn = signedIn,
-                                    )
-                                }
-                                if (shown.isEmpty()) {
-                                    item(key = "no-match") {
-                                        EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_no_match), "")
+                            val listState = rememberPersistentLazyListState("tournaments")
+                            Box(Modifier.weight(1f)) {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                    contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+                                ) {
+                                    item(key = "filters") {
+                                        TournamentFilterBar(
+                                            filter = filter,
+                                            onChange = { filterText = it.encode() },
+                                            tournaments = list,
+                                            signedIn = signedIn,
+                                        )
+                                    }
+                                    if (shown.isEmpty()) {
+                                        item(key = "no-match") {
+                                            EmptyState(Icons.Default.EmojiEvents, stringResource(Res.string.tournaments_no_match), "")
+                                        }
+                                    }
+                                    items(shown, key = { it.id }) { tournament ->
+                                        TournamentCard(tournament, standings[tournament.id], mine = tournament.id in mine) {
+                                            navController.navigate(TournamentRoute(tournament.id))
+                                        }
+                                    }
+                                    item(key = "privacy") {
+                                        Text(
+                                            text = stringResource(Res.string.privacy_public_notice),
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                                        )
                                     }
                                 }
-                                items(shown, key = { it.id }) { tournament ->
-                                    TournamentCard(tournament, standings[tournament.id], mine = tournament.id in mine) {
-                                        navController.navigate(TournamentRoute(tournament.id))
-                                    }
-                                }
-                                item(key = "privacy") {
-                                    Text(
-                                        text = stringResource(Res.string.privacy_public_notice),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
-                                    )
-                                }
+                                DraggableScrollbar(listState, Modifier.align(Alignment.CenterEnd))
                             }
                         }
                     }
