@@ -743,4 +743,8 @@
     <string name="reset_table">Vider la table</string>
     <string name="reset_table_confirm_title">Vider le tour %1$d · table %2$d ?</string>
     <string name="reset_table_confirm_text">Cela supprime l’attribution des places, les scores et toutes les mains de cette table. Les joueurs de la table restent, vous pouvez donc les placer à nouveau. Les modifications non enregistrées de cette table sont perdues. Le changement est enregistré dans l’activité.</string>
+    <string name="activity_filter_kind">Type</string>
+    <string name="activity_filter_origin">Origine</string>
+    <string name="activity_filter_period">Période</string>
+    <string name="activity_filter_person">Personne</string>
 </resources>

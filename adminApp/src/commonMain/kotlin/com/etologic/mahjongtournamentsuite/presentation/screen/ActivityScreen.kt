@@ -3,11 +3,11 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -52,7 +52,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
-import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentDatePickerDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentTimePickerDialog
@@ -108,6 +107,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_col_what
 import mahjongtournamentsuite.adminapp.generated.resources.activity_col_when
 import mahjongtournamentsuite.adminapp.generated.resources.activity_col_who
 import mahjongtournamentsuite.adminapp.generated.resources.activity_details
+import mahjongtournamentsuite.adminapp.generated.resources.activity_filter_kind
+import mahjongtournamentsuite.adminapp.generated.resources.activity_filter_origin
+import mahjongtournamentsuite.adminapp.generated.resources.activity_filter_period
+import mahjongtournamentsuite.adminapp.generated.resources.activity_filter_person
 import mahjongtournamentsuite.adminapp.generated.resources.activity_from_editor
 import mahjongtournamentsuite.adminapp.generated.resources.activity_from_player
 import mahjongtournamentsuite.adminapp.generated.resources.activity_from_system
@@ -263,47 +266,47 @@ fun ActivityScreen(navController: NavHostController) {
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             error?.let { AppErrorDialog(it, onDismiss = { error = null }) }
-            ActivityFiltersBar(
-                tournaments = tournaments,
-                tournamentId = tournamentId,
-                onTournament = { tournamentId = it },
-                source = source,
-                onSource = { sourceName = it.name },
-                origin = origin,
-                onOrigin = { originName = it?.name },
-                fromMillis = fromMillis,
-                toMillis = toMillis,
-                onPickPeriod = { periodPicker = it },
-                onClearPeriod = {
-                    fromMillis = null
-                    toMillis = null
-                },
-                personName = if (personUid == null) null else personName ?: personUid,
-                onClearPerson = {
-                    personUid = null
-                    personName = null
-                },
-                reloadFocusRequester = reloadFocusRequester,
-                onReload = { reloadCount++ },
-                reloadEnabled = !loading,
-            )
-            SectionCard(
-                title = stringResource(Res.string.app_activity),
-                subtitle = stringResource(Res.string.activity_loaded_count, entries.size),
-            ) {
-                ActivityTable(
-                    entries = entries,
-                    showEmpty = !loading,
-                    rowFocusRequesters = rowFocusRequesters,
-                    hasMore = nextCursor != null,
-                    loading = loading,
-                    onLoadMore = { scope.launch { loadPage(nextCursor) } },
-                    onOpen = {
-                        restoreEntryId = it.id
-                        openEntryId = it.id
+            // The filters are the first item of the list, so they scroll away with the entries.
+            val filtersBar: @Composable () -> Unit = {
+                ActivityFiltersBar(
+                    tournaments = tournaments,
+                    tournamentId = tournamentId,
+                    onTournament = { tournamentId = it },
+                    source = source,
+                    onSource = { sourceName = it.name },
+                    origin = origin,
+                    onOrigin = { originName = it?.name },
+                    fromMillis = fromMillis,
+                    toMillis = toMillis,
+                    onPickPeriod = { periodPicker = it },
+                    onClearPeriod = {
+                        fromMillis = null
+                        toMillis = null
                     },
+                    personName = if (personUid == null) null else personName ?: personUid,
+                    onClearPerson = {
+                        personUid = null
+                        personName = null
+                    },
+                    reloadFocusRequester = reloadFocusRequester,
+                    onReload = { reloadCount++ },
+                    reloadEnabled = !loading,
                 )
             }
+            ActivityTable(
+                filters = filtersBar,
+                loadedCount = entries.size,
+                entries = entries,
+                showEmpty = !loading,
+                rowFocusRequesters = rowFocusRequesters,
+                hasMore = nextCursor != null,
+                loading = loading,
+                onLoadMore = { scope.launch { loadPage(nextCursor) } },
+                onOpen = {
+                    restoreEntryId = it.id
+                    openEntryId = it.id
+                },
+            )
         }
     }
 
@@ -355,71 +358,89 @@ private fun ActivityFiltersBar(
 ) {
     val allLabel = stringResource(Res.string.activity_all_tournaments)
     val options = remember(tournaments, allLabel) { listOf(ALL_TOURNAMENTS to allLabel) + tournaments.map { it.id to it.name } }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.appFocusGroup()) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.appFocusGroup()) {
+        // Each row wraps when its groups do not fit in the width, for example on a phone.
+        FiltersRow {
             SelectField(
                 label = stringResource(Res.string.activity_tournament),
                 options = options,
                 selected = tournamentId,
                 onSelect = onTournament,
-                modifier = Modifier.weight(1f),
+                modifier = Modifier.widthIn(min = 260.dp, max = 420.dp),
             )
+            FilterGroup(stringResource(Res.string.activity_filter_period)) {
+                val anyTime = stringResource(Res.string.activity_period_any)
+                FilterChip(
+                    selected = fromMillis != null,
+                    onClick = { onPickPeriod(PeriodEnd.FROM) },
+                    label = { Text(stringResource(Res.string.activity_period_from, fromMillis?.let(::dateTime) ?: anyTime)) },
+                )
+                FilterChip(
+                    selected = toMillis != null,
+                    onClick = { onPickPeriod(PeriodEnd.TO) },
+                    label = { Text(stringResource(Res.string.activity_period_to, toMillis?.let { dateTime(it - MILLIS_PER_MINUTE) } ?: anyTime)) },
+                )
+                if (fromMillis != null || toMillis != null) {
+                    FilterChip(selected = false, onClick = onClearPeriod, label = { Text(stringResource(Res.string.activity_period_clear)) })
+                }
+            }
             FocusedButton(onClick = onReload, enabled = reloadEnabled, focusRequester = reloadFocusRequester) {
                 Text(stringResource(Res.string.errors_reload))
             }
         }
-        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-        androidx.compose.foundation.layout.FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            ActivitySource.entries.forEach { value ->
-                FilterChip(selected = source == value, onClick = { onSource(value) }, label = { Text(sourceLabel(value)) })
+        FiltersRow {
+            FilterGroup(stringResource(Res.string.activity_filter_kind)) {
+                ActivitySource.entries.forEach { value ->
+                    FilterChip(selected = source == value, onClick = { onSource(value) }, label = { Text(sourceLabel(value)) })
+                }
             }
-        }
-        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-        androidx.compose.foundation.layout.FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            FilterChip(selected = origin == null, onClick = { onOrigin(null) }, label = { Text(stringResource(Res.string.activity_origin_all)) })
-            ActivityOrigin.entries.forEach { value ->
-                FilterChip(selected = origin == value, onClick = { onOrigin(value) }, label = { Text(originLabel(value.wire)) })
-            }
-        }
-        @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
-        androidx.compose.foundation.layout.FlowRow(
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            val anyTime = stringResource(Res.string.activity_period_any)
-            FilterChip(
-                selected = fromMillis != null,
-                onClick = { onPickPeriod(PeriodEnd.FROM) },
-                label = { Text(stringResource(Res.string.activity_period_from, fromMillis?.let(::dateTime) ?: anyTime)) },
-            )
-            FilterChip(
-                selected = toMillis != null,
-                onClick = { onPickPeriod(PeriodEnd.TO) },
-                label = { Text(stringResource(Res.string.activity_period_to, toMillis?.let { dateTime(it - MILLIS_PER_MINUTE) } ?: anyTime)) },
-            )
-            if (fromMillis != null || toMillis != null) {
-                FilterChip(selected = false, onClick = onClearPeriod, label = { Text(stringResource(Res.string.activity_period_clear)) })
+            FilterGroup(stringResource(Res.string.activity_filter_origin)) {
+                FilterChip(selected = origin == null, onClick = { onOrigin(null) }, label = { Text(stringResource(Res.string.activity_origin_all)) })
+                ActivityOrigin.entries.forEach { value ->
+                    FilterChip(selected = origin == value, onClick = { onOrigin(value) }, label = { Text(originLabel(value.wire)) })
+                }
             }
             if (personName != null) {
-                FilterChip(
-                    selected = true,
-                    onClick = onClearPerson,
-                    label = { Text(stringResource(Res.string.activity_person_filter, personName)) },
-                    trailingIcon = { Text("×") },
-                )
+                FilterGroup(stringResource(Res.string.activity_filter_person)) {
+                    FilterChip(
+                        selected = true,
+                        onClick = onClearPerson,
+                        label = { Text(stringResource(Res.string.activity_person_filter, personName)) },
+                        trailingIcon = { Text("×") },
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+private fun FiltersRow(content: @Composable () -> Unit) {
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        itemVerticalAlignment = Alignment.Bottom,
+    ) { content() }
+}
+
+/** A titled group of filter chips. */
+@Composable
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+private fun FilterGroup(title: String, content: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) { content() }
+    }
+}
+
+@Composable
 private fun ActivityTable(
+    filters: @Composable () -> Unit,
+    loadedCount: Int,
     entries: List<ActivityEntry>,
     showEmpty: Boolean,
     rowFocusRequesters: Map<String, FocusRequester>,
@@ -428,15 +449,30 @@ private fun ActivityTable(
     onLoadMore: () -> Unit,
     onOpen: (ActivityEntry) -> Unit,
 ) {
-    if (entries.isEmpty()) {
-        if (showEmpty) Text(stringResource(Res.string.activity_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        return
-    }
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("activity"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
     ) {
-        item {
+        item(key = "filters") { filters() }
+        item(key = "title") {
+            Column(Modifier.padding(top = 20.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(Res.string.app_activity), style = MaterialTheme.typography.titleMedium)
+                Text(
+                    stringResource(Res.string.activity_loaded_count, loadedCount),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+        if (entries.isEmpty()) {
+            if (showEmpty) {
+                item(key = "empty") {
+                    Text(stringResource(Res.string.activity_none), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            return@LazyColumnWithScrollbar
+        }
+        item(key = "header") {
             DataTableHeaderRow {
                 Text(stringResource(Res.string.activity_col_when), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.labelLarge)
                 Text(stringResource(Res.string.activity_col_who), modifier = Modifier.weight(0.6f), style = MaterialTheme.typography.labelLarge)
