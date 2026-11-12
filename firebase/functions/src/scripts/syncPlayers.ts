@@ -1,4 +1,5 @@
 import { runEmaPlayerRegistrySync } from "../services/playerSyncService";
+import { runScript } from "./scriptRun";
 
 const localSourceDir = process.env.EMA_LOCAL_SOURCE_DIR?.trim();
 if (localSourceDir) {
@@ -8,11 +9,8 @@ if (localSourceDir) {
   console.warn("WARNING: TLS certificate validation is disabled for this local run only.");
 }
 
-runEmaPlayerRegistrySync("incremental")
-  .then((report) => {
-    console.log(`Sync completed: ${report.additions.length} additions, ${report.updates.length} updates.`);
-  })
-  .catch((error: unknown) => {
-    console.error("EMA player sync failed.", error);
-    process.exitCode = 1;
-  });
+runScript("syncPlayers", async () => {
+  const report = await runEmaPlayerRegistrySync("incremental");
+  console.log(`Sync completed: ${report.additions.length} additions, ${report.updates.length} updates.`);
+  return { additions: report.additions.length, updates: report.updates.length };
+}, true);

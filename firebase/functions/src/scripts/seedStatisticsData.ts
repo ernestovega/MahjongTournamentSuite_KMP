@@ -24,6 +24,7 @@ import {
   type SynthHand,
 } from "../services/handSynthesis";
 import { calculateTableSummary, defaultHand, HANDS_PER_TABLE } from "../services/tableManagerService";
+import { runScript } from "./scriptRun";
 
 /**
  * Fills the test tournaments and the legacy tournaments with data for the statistics screens.
@@ -561,7 +562,4 @@ async function main(): Promise<void> {
   }
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+runScript("seedStatisticsData", main, applyChanges);

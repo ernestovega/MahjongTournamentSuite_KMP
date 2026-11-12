@@ -732,4 +732,5 @@
     <string name="activity_action_table_save">Table enregistrée</string>
     <string name="activity_action_table_reset">Table réinitialisée</string>
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
+    <string name="activity_action_script_run">Script de maintenance exécuté</string>
 </resources>

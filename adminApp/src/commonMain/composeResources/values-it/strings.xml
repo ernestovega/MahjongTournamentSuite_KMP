@@ -732,4 +732,5 @@
     <string name="activity_action_table_save">Tavolo salvato</string>
     <string name="activity_action_table_reset">Tavolo azzerato</string>
     <string name="activity_action_table_conflict">Salvataggio rifiutato: il tavolo era cambiato</string>
+    <string name="activity_action_script_run">Script di manutenzione eseguito</string>
 </resources>

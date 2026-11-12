@@ -1,5 +1,6 @@
 import { db } from "../firebase";
 import { bumpGlobalDataVersion } from "../services/dataVersionsService";
+import { runScript } from "./scriptRun";
 
 const countryCodes = [
   "AD", "AE", "AF", "AG", "AI", "AL", "AM", "AO", "AQ", "AR", "AS", "AT", "AU", "AW", "AX", "AZ",
@@ -47,7 +48,4 @@ async function seedCountries(): Promise<void> {
   console.log(`Seeded ${countryCodes.length} countries.`);
 }
 
-seedCountries().catch((error: unknown) => {
-  console.error("Country seed failed.", error);
-  process.exitCode = 1;
-});
+runScript("seedCountries", seedCountries, true);

@@ -8,6 +8,13 @@ through the `api` function. The function keeps two append-only logs of who wrote
 | Table changes | `tournaments/{id}/changes` | Every table save, reset and refused save (conflict): the person (`uid`, `name`), the origin (`editor`, `player` or `system` for the automatic close at the end of the match time), the table version, and the old and new value of every table and hand field. It is written in the same transaction as the save. |
 | Activity | `activity` | Every other change: tournament settings, players, teams, editors, accounts, users and the EMA player registry. It keeps the action, the person, the tournament, the target and the short values of the request. E-mail addresses, passwords and images stay out. A failed write never fails the change. |
 
+## Maintenance scripts
+
+The scripts in `firebase/functions/src/scripts` change data outside the API. Each run that writes (with `--apply`
+when the script has it) leaves one `script.run` record in `activity`: the script, the machine user, the project, the
+arguments (without e-mail addresses), the outcome and a short summary such as the number of additions. A preview
+leaves no record. New scripts that write must run through `runScript` in `scripts/scriptRun.ts`.
+
 ## Activity screen
 
 Administrators read both logs in one list in the admin app: **Activity** in the top bar of the tournament list.
@@ -21,6 +28,6 @@ The queries need the indexes in `firebase/firestore.indexes.json` (`activity` an
 
 ## Not recorded
 
-- A person's own profile changes (`PUT /auth/me` and the profile photo).
-- The maintenance scripts in `firebase/functions/src/scripts` and manual edits in the Firebase console.
+- A person's own profile changes (`PUT /auth/me` and the profile photo). Left out on purpose (Ernesto, 2026-11-12).
+- Manual edits in the Firebase console. Left out on purpose: only the owner has console access (Ernesto, 2026-11-12).
 - The table changes of a deleted tournament, which go with the tournament.

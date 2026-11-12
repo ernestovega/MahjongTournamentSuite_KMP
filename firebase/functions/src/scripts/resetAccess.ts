@@ -9,6 +9,7 @@ import {
   type DocumentReference,
   type QueryDocumentSnapshot,
 } from "firebase-admin/firestore";
+import { recordScriptRun } from "./scriptRun";
 
 const APPLY_FLAG = "--apply";
 const BACKUP_DIRECTORY = ".firebase-reset-backups";
@@ -223,6 +224,13 @@ async function main(): Promise<void> {
     throw new Error("Reset verification failed. Review the backup and remote project state.");
   }
 
+  // The reset removed every account, so the record names the script and the kept admin.
+  await recordScriptRun(db, {
+    script: "resetAccess",
+    projectId: options.projectId,
+    outcome: "ok",
+    summary: { deletedAccounts: users.length - (selectedAdmin ? 1 : 0), adminUid: admin.uid },
+  });
   console.log(`Reset complete. ADMIN uid: ${admin.uid}`);
   console.log("Use the password reset screen before the first sign-in when the account has no password.");
 }

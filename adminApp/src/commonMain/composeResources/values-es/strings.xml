@@ -732,4 +732,5 @@
     <string name="activity_action_table_save">Mesa guardada</string>
     <string name="activity_action_table_reset">Mesa reiniciada</string>
     <string name="activity_action_table_conflict">Guardado rechazado: la mesa había cambiado</string>
+    <string name="activity_action_script_run">Script de mantenimiento ejecutado</string>
 </resources>

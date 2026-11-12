@@ -2,6 +2,7 @@ import { db, firebaseProjectId } from "../firebase";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "../services/dataVersionsService";
 import { slotCleanupOf } from "../services/retiredSlotFields";
 import { deleteTournament } from "../services/tournamentsService";
+import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
 
@@ -54,8 +55,5 @@ async function main(): Promise<void> {
 }
 
 if (require.main === module) {
-  main().catch((error) => {
-    console.error(error);
-    process.exitCode = 1;
-  });
+  runScript("removeNonMembersAndInvitations", main, applyChanges);
 }

@@ -2,6 +2,7 @@ import { FieldValue } from "firebase-admin/firestore";
 
 import { db, firebaseProjectId } from "../firebase";
 import { bumpTournamentDataVersion } from "../services/dataVersionsService";
+import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
 
@@ -31,7 +32,4 @@ async function main(): Promise<void> {
   console.log("Done.");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+runScript("removeStoredAccountLinks", main, applyChanges);

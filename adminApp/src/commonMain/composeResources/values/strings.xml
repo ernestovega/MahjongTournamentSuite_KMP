@@ -732,4 +732,5 @@
     <string name="activity_action_table_save">Table saved</string>
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
+    <string name="activity_action_script_run">Maintenance script run</string>
 </resources>

@@ -1,5 +1,6 @@
 import { db, firebaseProjectId } from "../firebase";
 import { refreshTournamentStats } from "../services/statisticsStore";
+import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
 
@@ -9,7 +10,7 @@ const applyChanges = process.argv.includes("--apply");
  * so the memory use does not depend on the number of tournaments. It is safe to run again:
  * a table that did not change adds nothing a second time.
  */
-async function backfill(): Promise<void> {
+async function backfill(): Promise<{ tournaments: number; tables: number }> {
   const tournaments = await db.collection("tournaments").select().get();
   console.log(`${applyChanges ? "Applying" : "Previewing"} the statistics rebuild for ${firebaseProjectId}: ${tournaments.size} tournaments.`);
   let tables = 0;
@@ -23,9 +24,7 @@ async function backfill(): Promise<void> {
   }
   console.log(`${applyChanges ? "Processed" : "Found"} ${tables} tables.`);
   if (!applyChanges) console.log("Run again with --apply to write the statistics.");
+  return { tournaments: tournaments.size, tables };
 }
 
-backfill().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+runScript("backfillStatistics", backfill, applyChanges);

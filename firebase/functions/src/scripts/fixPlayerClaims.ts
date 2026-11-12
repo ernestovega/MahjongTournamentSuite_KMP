@@ -1,6 +1,7 @@
 import { auth, db, firebaseProjectId } from "../firebase";
 import { findPlayerClaimProblems } from "../services/emaIdAudit";
 import { grantPlayerCapability, revokePlayerCapability } from "../services/usersService";
+import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
 
@@ -41,7 +42,4 @@ async function main(): Promise<void> {
   console.log(problems.length === 0 ? "Nothing to fix." : applyChanges ? "Done." : "Run again with --apply to write.");
 }
 
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+runScript("fixPlayerClaims", main, applyChanges);
