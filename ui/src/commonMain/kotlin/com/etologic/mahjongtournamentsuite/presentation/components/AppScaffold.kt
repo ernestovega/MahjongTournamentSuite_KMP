@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.menu
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.ReportScreenLoading
 import org.jetbrains.compose.resources.stringResource
 
 private val AppTopBarSidePadding = 8.dp
@@ -90,6 +91,8 @@ fun AppScaffold(
     content: @Composable () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
+    // The time until the content shows. Telemetry counts it, and the benchmark reads it on the web.
+    ReportScreenLoading(isLoading)
 
     LaunchedEffect(Unit) {
         if (autoFocusFirst) {

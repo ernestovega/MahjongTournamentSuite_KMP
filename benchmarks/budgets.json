@@ -1,0 +1,19 @@
+{
+  "backend": {
+    "regression": { "factor": 1.5, "minMs": 150 },
+    "p95Ms": {
+      "default": { "cdn": 800, "origin": 2500 },
+      "EMA registry": { "cdn": 1500, "origin": 4000 },
+      "tables with hands (all)": { "cdn": 1500, "origin": 5000 },
+      "statistics overview": { "cdn": 1000, "origin": 4000 },
+      "person statistics": { "cdn": 1000, "origin": 3500 }
+    }
+  },
+  "screens": {
+    "regression": { "factor": 1.4, "minMs": 400 },
+    "budgetMs": {
+      "default": { "desktop": 3000, "phone": 8000 },
+      "coldStart": { "desktop": 8000, "phone": 20000 }
+    }
+  }
+}
