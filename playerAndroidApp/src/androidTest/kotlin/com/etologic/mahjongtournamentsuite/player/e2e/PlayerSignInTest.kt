@@ -16,7 +16,7 @@ class PlayerSignInTest : PlayerE2eTest() {
         app.launch()
         c.signIn(E2eAccounts.EDITOR)
         c.waitForText("What do you want to open?")
-        c.clickButton("Tournaments")
+        c.clickButton("Player view")
         c.waitForText("Test - Live ongoing tournament")
         c.assertNoText("What do you want to open?")
     }

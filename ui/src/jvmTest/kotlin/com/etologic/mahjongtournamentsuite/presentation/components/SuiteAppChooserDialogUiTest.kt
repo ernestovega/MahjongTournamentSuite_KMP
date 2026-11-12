@@ -12,22 +12,21 @@ import kotlin.test.assertEquals
 /** The step after the sign-in of an admin or an editor: the player app or the admin app. */
 @OptIn(ExperimentalTestApi::class)
 class SuiteAppChooserDialogUiTest {
-    private val chosen = mutableListOf<Pair<SuiteApp, Boolean>>()
+    private val chosen = mutableListOf<SuiteApp>()
 
     private fun androidx.compose.ui.test.ComposeUiTest.show() = setContent {
         MtsTheme(useDarkTheme = false) {
-            SuiteAppChooserDialog { app, remember -> chosen += app to remember }
+            SuiteAppChooserDialog { app -> chosen += app }
         }
     }
 
     @Test
-    fun offersBothAppsWithoutTheRememberOptionOnTheDesktop() = runComposeUiTest {
+    fun offersBothAppsAndSaysTheTopBarSwitchesLater() = runComposeUiTest {
         show()
         onNodeWithText("What do you want to open?").assertExists()
-        onNodeWithText("Tournaments").assertExists()
+        onNodeWithText("Player view").assertExists()
         onNodeWithText("Management").assertExists()
-        // Only the web remembers the choice.
-        onNodeWithText("Remember my choice on this device").assertDoesNotExist()
+        onNodeWithText("You can switch between the apps at any time with the button in the top bar.").assertExists()
     }
 
     @Test
@@ -35,14 +34,14 @@ class SuiteAppChooserDialogUiTest {
         show()
         onNodeWithText("Management").performClick()
         waitForIdle()
-        assertEquals(listOf(SuiteApp.ADMIN to false), chosen)
+        assertEquals(listOf(SuiteApp.ADMIN), chosen)
     }
 
     @Test
-    fun choosingTournamentsStaysInThePlayerApp() = runComposeUiTest {
+    fun choosingPlayerViewStaysInThePlayerApp() = runComposeUiTest {
         show()
-        onNodeWithText("Tournaments").performClick()
+        onNodeWithText("Player view").performClick()
         waitForIdle()
-        assertEquals(listOf(SuiteApp.PLAYER to false), chosen)
+        assertEquals(listOf(SuiteApp.PLAYER), chosen)
     }
 }
