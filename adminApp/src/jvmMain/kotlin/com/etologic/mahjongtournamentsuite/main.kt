@@ -12,7 +12,9 @@ import androidx.compose.ui.window.application
 import androidx.compose.ui.window.rememberWindowState
 import java.awt.Dimension
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.app_logo
 import mahjongtournamentsuite.adminapp.generated.resources.mahjongtournamentsuite
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 fun main() = application {
@@ -28,6 +30,7 @@ fun main() = application {
         Window(
             onCloseRequest = { isMainWindowOpen = false },
             title = stringResource(Res.string.mahjongtournamentsuite),
+            icon = painterResource(Res.drawable.app_logo),
             state = state,
         ) {
             DisposableEffect(Unit) {

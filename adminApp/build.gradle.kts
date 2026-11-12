@@ -94,6 +94,9 @@ compose.desktop {
             // The desktop app is the admin app, so it shares the admin version.
             // Compose desktop requires a major version above zero.
             packageVersion = libs.versions.admin.versionName.get()
+            macOS { iconFile.set(project.file("desktop-icons/icon.icns")) }
+            windows { iconFile.set(project.file("desktop-icons/icon.ico")) }
+            linux { iconFile.set(project.file("desktop-icons/icon.png")) }
         }
     }
 }

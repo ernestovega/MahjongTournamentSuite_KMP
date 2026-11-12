@@ -8,8 +8,10 @@ import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.rememberWindowState
 import java.util.UUID
 import mahjongtournamentsuite.adminapp.generated.resources.Res
+import mahjongtournamentsuite.adminapp.generated.resources.app_logo
 import mahjongtournamentsuite.adminapp.generated.resources.rankings
 import mahjongtournamentsuite.adminapp.generated.resources.timer
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 sealed class StandaloneWindow {
@@ -51,6 +53,7 @@ object StandaloneWindows {
                 is StandaloneWindow.Timer -> {
                     Window(
                         title = stringResource(Res.string.timer),
+                        icon = painterResource(Res.drawable.app_logo),
                         onCloseRequest = { windows.removeAll { it.id == w.id } },
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {
@@ -61,6 +64,7 @@ object StandaloneWindows {
                 is StandaloneWindow.Rankings -> {
                     Window(
                         title = stringResource(Res.string.rankings),
+                        icon = painterResource(Res.drawable.app_logo),
                         onCloseRequest = { windows.removeAll { it.id == w.id } },
                         state = rememberWindowState(placement = WindowPlacement.Maximized),
                     ) {
