@@ -22,7 +22,9 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.menu_profile
 import mahjongtournamentsuite.playerapp.generated.resources.menu_sign_in
@@ -89,8 +91,9 @@ class AccountActions(
                     confirmingSignOut = false
                     scope.launch {
                         session.signOut()
-                        // The same screens stay open, now without the own player.
-                        navController.reopen(navController.openRoutes())
+                        // The same screens stay open, now without the own player. The sign out suspends, and the
+                        // navigation must run on the main thread, also in the UI tests.
+                        withContext(Dispatchers.Main) { navController.reopen(navController.openRoutes()) }
                     }
                 },
                 onDismiss = { confirmingSignOut = false },

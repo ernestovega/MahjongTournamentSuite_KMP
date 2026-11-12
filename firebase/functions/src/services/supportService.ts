@@ -1,5 +1,4 @@
-import { SUPPORT_EMAIL } from "../config";
-import { badRequest } from "../api/httpError";
+import { badRequest, HttpError } from "../api/httpError";
 import { sendEmail } from "./mailService";
 
 /** A message that someone writes to the support of the apps from the "Need help?" screen. */
@@ -81,6 +80,11 @@ export function setSupportRecipientForTests(recipient: string | null): void {
 
 /** Sends the message to the support mailbox. The address is a secret of the server and never reaches the apps. */
 export async function sendSupportMessage(message: SupportMessage): Promise<void> {
-  const to = recipientOverride ?? SUPPORT_EMAIL.value().trim();
+  // A bound secret reaches the code as an environment variable of the same name.
+  const to = recipientOverride ?? process.env.MTS_SUPPORT_EMAIL?.trim();
+  if (!to) {
+    console.error("The secret MTS_SUPPORT_EMAIL is not bound to the api function. Support messages cannot be sent.");
+    throw new HttpError(503, "support_unavailable", "Support is not available right now. Try again later.");
+  }
   await sendEmail(buildSupportEmail(message, to));
 }

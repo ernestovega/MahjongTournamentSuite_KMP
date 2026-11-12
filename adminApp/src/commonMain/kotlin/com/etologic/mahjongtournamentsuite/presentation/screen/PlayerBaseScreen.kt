@@ -35,8 +35,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -69,7 +67,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_pu
 import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_public_description
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
@@ -88,7 +85,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberCountryNames
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
@@ -146,6 +142,7 @@ import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 
 /** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
@@ -652,15 +649,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                 if (isSelected) Res.string.remove_country_filter else Res.string.filter_by_code,
                                 countryName,
                             )
-                            TooltipBox(
-                                positionProvider = rememberAppTooltipPositionProvider(),
-                                tooltip = {
-                                    AppPlainTooltip {
-                                        Text(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount))
-                                    }
-                                },
-                                state = rememberTooltipState(),
-                            ) {
+                            AppTooltipBox(pluralStringResource(Res.plurals.country_players_count, countryPlayerCount, countryName, countryPlayerCount)) {
                                 TextButton(
                                     onClick = {
                                         selectedCountryCodes = if (isSelected) {
@@ -984,14 +973,9 @@ private fun validatePlayerPhoto(image: SelectedImage): UiText? = when {
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun CountryFlagWithTooltip(code: String, countries: List<Country>) {
     val country = countries.firstOrNull { it.code == code }
-    TooltipBox(
-        positionProvider = rememberAppTooltipPositionProvider(),
-        tooltip = { AppPlainTooltip { Text(country?.name ?: code) } },
-        state = rememberTooltipState(),
-    ) {
+    AppTooltipBox(country?.name ?: code) {
         CountryFlag(code = code, contentDescription = country?.name ?: code)
     }
 }

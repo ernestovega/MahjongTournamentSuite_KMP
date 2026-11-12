@@ -744,4 +744,9 @@
     <string name="timer_reset_confirm_message">This round has saved hands. They stay, but the players cannot add more until you press Play again.</string>
     <string name="timer_reset_confirm">Reset</string>
     <string name="activity_action_round_clock">Round clock changed</string>
+    <string name="activity_origin_all">All origins</string>
+    <string name="activity_period_from">From: %1$s</string>
+    <string name="activity_period_to">Until: %1$s</string>
+    <string name="activity_period_any">any time</string>
+    <string name="activity_period_clear">Clear dates</string>
 </resources>

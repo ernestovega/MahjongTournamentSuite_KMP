@@ -4,7 +4,7 @@ import org.junit.Test
 
 class TeamsScreenTest : AdminE2eTest() {
     private fun openTeams(tournament: String = "Test - Live ongoing tournament") {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(tournament)
         c.waitForAnyText("Players & results", "Tournament players")
         // A tournament with open slots opens on the players screen. Back leads to the tournament screen.

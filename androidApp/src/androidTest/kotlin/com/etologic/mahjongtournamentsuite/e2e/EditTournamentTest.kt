@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -13,7 +16,7 @@ class EditTournamentTest : AdminE2eTest() {
     fun restoreData() = E2eApi.reset("test-live-ongoing", "test-no-extras")
 
     private fun openDialog(name: String = "Test - Live ongoing tournament") {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(name)
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
@@ -92,7 +95,7 @@ class EditTournamentTest : AdminE2eTest() {
 
     @Test
     fun editorSaveIsRefusedByTheServer() {
-        start(E2eAccounts.EDITOR, ready = "Logout")
+        start(E2eAccounts.EDITOR, ready = PROFILE_BUTTON)
         c.openTournament("Test - Live ongoing tournament")
         c.waitForText("Players & results")
         c.clickButton("Edit tournament")
@@ -132,7 +135,7 @@ class EditTournamentTest : AdminE2eTest() {
         c.clickButton("Delete")
         c.waitForText("Delete tournament")
         pressDeleteInConfirmation()
-        c.waitForText("Logout")
+        c.waitForText(PROFILE_BUTTON)
         c.waitForNoText(name)
     }
 
@@ -164,10 +167,16 @@ class EditTournamentTest : AdminE2eTest() {
         c.waitForText("Branding")
     }
 
-    /** The General tab ends with three switches: finish the hand, best hands and chicken hands. The dialog is last in the tree. */
+    /**
+     * Turns on the "Finish the hand in play" switch of the General tab, found by its label. The dialog is last in the
+     * tree. Turning it on shows the extra time field.
+     */
     private fun toggleFinishTheHand() {
-        val switches = c.onAllNodes(isToggleable())
-        switches[switches.fetchSemanticsNodes().size - 3].performClick()
+        val switch = c.onAllNodes(isToggleable() and hasAnySibling(hasText("Finish the hand in play"))).onLast()
+        switch.assertIsOff()
+        switch.performClick()
+        switch.assertIsOn()
+        c.waitForText("Extra time (minutes)")
     }
 
     @Test

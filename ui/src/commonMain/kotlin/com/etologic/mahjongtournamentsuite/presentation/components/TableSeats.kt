@@ -17,22 +17,15 @@ import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -44,10 +37,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.IntOffset
-import androidx.compose.ui.unit.IntRect
-import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.PopupPositionProvider
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
@@ -55,7 +44,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.PointsDiff
 import com.etologic.mahjongtournamentsuite.domain.model.SeatDiffs
 import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
-import kotlinx.coroutines.launch
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.chicken_hand
 import mahjongtournamentsuite.ui.generated.resources.diffs_about
@@ -291,20 +279,13 @@ fun TableSeatsView(
     }
 }
 
-/** An info icon. A tap, a long press or a hover shows what the differences mean. */
+/** An info icon. A touch, a hover or a click shows what the differences mean. */
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun DiffsInfo() {
-    val state = rememberTooltipState(isPersistent = true)
-    val scope = rememberCoroutineScope()
     val diffsInfoDescription = stringResource(Res.string.diffs_about)
-    TooltipBox(
-        positionProvider = rememberAppTooltipPositionProvider(alignEnd = true),
-        tooltip = { AppPlainTooltip { Text(stringResource(Res.string.diffs_explanation)) } },
-        state = state,
-    ) {
+    AppTooltipBox(stringResource(Res.string.diffs_explanation), alignEnd = true) {
         IconButton(
-            onClick = { scope.launch { if (state.isVisible) state.dismiss() else state.show() } },
+            onClick = { toggleTooltip() },
             modifier = Modifier.semantics { contentDescription = diffsInfoDescription },
         ) {
             Icon(Icons.Outlined.Info, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -744,4 +744,9 @@
     <string name="timer_reset_confirm_message">Questo turno ha mani salvate. Restano, ma i giocatori non possono aggiungerne altre finché non premi di nuovo Play.</string>
     <string name="timer_reset_confirm">Azzera</string>
     <string name="activity_action_round_clock">Orologio del turno modificato</string>
+    <string name="activity_origin_all">Tutte le origini</string>
+    <string name="activity_period_from">Dal: %1$s</string>
+    <string name="activity_period_to">Fino al: %1$s</string>
+    <string name="activity_period_any">qualsiasi data</string>
+    <string name="activity_period_clear">Cancella date</string>
 </resources>

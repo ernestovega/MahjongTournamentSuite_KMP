@@ -38,6 +38,7 @@ import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.LoadStoredStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
@@ -48,6 +49,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.app_logo
+import mahjongtournamentsuite.playerapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import kotlinx.serialization.Serializable
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
@@ -137,6 +139,7 @@ fun PlayerApp(
             LocalAppVersion provides appVersion,
             LocalScrollPositionStore provides remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } },
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
+            LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value

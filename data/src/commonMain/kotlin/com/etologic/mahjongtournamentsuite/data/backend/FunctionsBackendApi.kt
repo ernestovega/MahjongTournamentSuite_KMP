@@ -139,9 +139,19 @@ class FunctionsBackendApi(
 
     suspend fun errorGroups(idToken: String, sinceMillis: Long?, cursor: ErrorLogCursorDto?): ErrorGroupsResponseDto = get(path = "/admin/error-groups?limit=$ERROR_PAGE_SIZE" + sinceMillis.sinceQuery() + cursor.cursorQuery(), idToken = idToken)
 
-    suspend fun activity(idToken: String, tournamentId: String?, uid: String?, source: String, cursor: String?): ActivityPageDto = get(
+    suspend fun activity(
+        idToken: String,
+        tournamentId: String?,
+        uid: String?,
+        source: String,
+        origin: String?,
+        fromMillis: Long?,
+        toMillis: Long?,
+        cursor: String?,
+    ): ActivityPageDto = get(
         path = "/admin/activity?limit=$ACTIVITY_PAGE_SIZE&source=$source" +
-            tournamentId.query("tournamentId") + uid.query("uid") + cursor.query("cursor"),
+            tournamentId.query("tournamentId") + uid.query("uid") + origin.query("origin") +
+            fromMillis?.toString().query("from") + toMillis?.toString().query("to") + cursor.query("cursor"),
         idToken = idToken,
     )
 

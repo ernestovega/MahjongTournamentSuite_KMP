@@ -64,7 +64,16 @@ class DefaultAdminRepository(
 
     override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> = runCatching {
         withFreshIdToken { idToken ->
-            backendApi.activity(idToken, filter.tournamentId, filter.uid, filter.source.wire, cursor).toDomain()
+            backendApi.activity(
+                idToken = idToken,
+                tournamentId = filter.tournamentId,
+                uid = filter.uid,
+                source = filter.source.wire,
+                origin = filter.origin?.wire,
+                fromMillis = filter.fromMillis,
+                toMillis = filter.toMillis,
+                cursor = cursor,
+            ).toDomain()
         }
     }.fold(
         onSuccess = { AppResult.Success(it) },

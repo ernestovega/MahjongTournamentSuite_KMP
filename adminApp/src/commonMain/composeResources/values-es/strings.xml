@@ -744,4 +744,9 @@
     <string name="timer_reset_confirm_message">Esta ronda tiene manos guardadas. Se conservan, pero los jugadores no podrán añadir más hasta que vuelvas a pulsar Play.</string>
     <string name="timer_reset_confirm">Reiniciar</string>
     <string name="activity_action_round_clock">Reloj de ronda cambiado</string>
+    <string name="activity_origin_all">Todos los orígenes</string>
+    <string name="activity_period_from">Desde: %1$s</string>
+    <string name="activity_period_to">Hasta: %1$s</string>
+    <string name="activity_period_any">cualquier fecha</string>
+    <string name="activity_period_clear">Quitar fechas</string>
 </resources>

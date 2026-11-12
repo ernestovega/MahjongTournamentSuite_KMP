@@ -100,6 +100,7 @@
     <string name="jump_to_me">Ir a mi posición</string>
     <string name="entry_totals_only">Los organizadores solo introducen las puntuaciones finales de esta mesa. No puedes añadir manos aquí.</string>
     <string name="entry_round_not_started">Esperando al gong inicial. Los botones para añadir manos aparecen cuando empieza la ronda.</string>
+    <string name="entry_seats_not_assigned">Los asientos de esta mesa aún no están asignados. Podrás añadir manos cuando estén asignados los cuatro.</string>
     <string name="entry_time_over">El tiempo de esta partida ha terminado. Ya no puedes añadir manos. Los organizadores introducen los datos que faltan.</string>
     <string name="entry_extra_time">El tiempo ha terminado. Puedes añadir la mano en juego. Después, la mesa queda completada.</string>
     <string name="entry_add_draw">Añadir empate</string>
@@ -186,4 +187,10 @@
     <string name="round_clock_remaining">Tiempo restante: %1$s</string>
     <string name="round_clock_paused">En pausa · Tiempo restante: %1$s</string>
     <string name="round_clock_over">El tiempo de juego ha terminado.</string>
+    <string name="filter_table_search">Nº de mesa o jugador</string>
+    <string name="filter_round">Ronda</string>
+    <string name="filter_all_rounds">Todas las rondas</string>
+    <string name="table_status_not_started">Sin empezar</string>
+    <string name="table_status_playing">En juego</string>
+    <string name="tables_no_match">Ninguna mesa coincide con los filtros</string>
 </resources>

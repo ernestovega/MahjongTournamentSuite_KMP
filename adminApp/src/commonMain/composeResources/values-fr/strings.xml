@@ -744,4 +744,9 @@
     <string name="timer_reset_confirm_message">Ce tour a des mains enregistrées. Elles restent, mais les joueurs ne peuvent plus en ajouter avant un nouveau Play.</string>
     <string name="timer_reset_confirm">Réinitialiser</string>
     <string name="activity_action_round_clock">Horloge du tour modifiée</string>
+    <string name="activity_origin_all">Toutes les origines</string>
+    <string name="activity_period_from">Du : %1$s</string>
+    <string name="activity_period_to">Jusqu\'au : %1$s</string>
+    <string name="activity_period_any">toute date</string>
+    <string name="activity_period_clear">Effacer les dates</string>
 </resources>

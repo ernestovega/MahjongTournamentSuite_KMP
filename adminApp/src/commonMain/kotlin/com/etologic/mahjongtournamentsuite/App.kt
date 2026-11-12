@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalFeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.model.FeatureFlags
 import com.etologic.mahjongtournamentsuite.domain.repository.FeatureFlagsRepository
@@ -18,6 +19,7 @@ import androidx.compose.runtime.produceState
 import org.koin.compose.koinInject
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.app_logo
+import mahjongtournamentsuite.adminapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -113,6 +115,7 @@ private fun AppWithModules(content: @Composable () -> Unit) {
         CompositionLocalProvider(
             LocalTelemetry provides telemetry,
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
+            LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value

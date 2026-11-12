@@ -18,8 +18,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -247,12 +245,7 @@ fun LevelMedalTag(
     val skillScoreText = skillScore?.let { stringResource(Res.string.level_skill_score_suffix, it.roundToInt()) }.orEmpty()
     val provisionalText = if (provisional) "\n" + stringResource(Res.string.level_provisional_suffix) else ""
     val text = levelDescription + skillScoreText + stringResource(Res.string.level_end) + provisionalText
-    TooltipBox(
-        positionProvider = rememberAppTooltipPositionProvider(),
-        tooltip = { AppPlainTooltip { Text(text) } },
-        state = rememberTooltipState(),
-        modifier = modifier,
-    ) {
+    AppTooltipBox(text, modifier) {
         LevelMedal(level, size, Modifier.semantics { contentDescription = levelDescription })
     }
 }

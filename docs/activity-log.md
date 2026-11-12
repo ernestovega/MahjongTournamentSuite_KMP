@@ -18,11 +18,14 @@ leaves no record. New scripts that write must run through `runScript` in `script
 ## Activity screen
 
 Administrators read both logs in one list in the admin app: **Activity** in the top bar of the tournament list.
-The list is newest first and loads 50 entries at a time. It filters by tournament, by origin (table saves or
-other changes) and by person (from the detail of an entry). The detail shows every changed value.
+The list is newest first and loads 50 entries at a time. It filters by tournament, by kind (table saves or
+other changes), by origin (admin app, player app, or automatic: the server and the maintenance scripts), by a period
+with a start and an end date and time (local time of the device, the end minute included) and by person (from the
+detail of an entry). The detail shows every changed value.
 
 The screen reads `GET /admin/activity` (admin only). Its parameters are `limit`, `tournamentId`, `uid`,
-`source` (`all`, `tables` or `other`) and `cursor`. The answer has `entries` and a `nextCursor`, which the app
+`source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`), `from` (inclusive) and `to`
+(exclusive) in milliseconds, and `cursor`. The answer has `entries` and a `nextCursor`, which the app
 sends back unchanged. The cursor keeps the place of each log, so the merged pages never skip or repeat an entry.
 The queries need the indexes in `firebase/firestore.indexes.json` (`activity` and `changes`).
 

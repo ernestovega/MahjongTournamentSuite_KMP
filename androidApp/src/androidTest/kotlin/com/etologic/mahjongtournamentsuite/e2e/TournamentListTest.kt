@@ -47,8 +47,8 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
-        // "Admin" is the role under the name. It opens the profile, which holds the theme.
-        listOf("Logout", "Admin", "Users", "App errors", "Timer", "Statistics", "EMA players", "New tournament")
+        // "Admin" is the role under the name. It opens the profile, which holds the theme and the Logout button.
+        listOf(PROFILE_BUTTON, "Admin", "Users", "App errors", "Timer", "Statistics", "EMA players", "New tournament")
             .forEach { c.waitForText(it) }
     }
 
@@ -79,7 +79,7 @@ class TournamentListTest : AdminE2eTest() {
     @Test
     fun playerSessionIsSignedOutAtTheStart() {
         start(E2eAccounts.PLAYER, ready = "Need help?")
-        c.assertNoText("Logout")
+        c.assertNoText(PROFILE_BUTTON)
         c.assertNoText("New tournament")
         c.assertNoText("App errors")
     }

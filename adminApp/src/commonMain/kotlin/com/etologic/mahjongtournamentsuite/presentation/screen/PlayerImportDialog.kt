@@ -34,8 +34,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -68,9 +66,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportPreview
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerImportResult
 import com.etologic.mahjongtournamentsuite.domain.model.field
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
-import com.etologic.mahjongtournamentsuite.presentation.components.AppPlainTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberAppTooltipPositionProvider
 import com.etologic.mahjongtournamentsuite.presentation.platform.SelectedSpreadsheet
 import com.etologic.mahjongtournamentsuite.presentation.platform.SpreadsheetPicker
 import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreadsheetPicker
@@ -136,6 +132,7 @@ import org.koin.compose.koinInject
 import kotlin.time.Clock
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 
 /** What the dialog shows now. */
 private sealed interface ImportStep {
@@ -418,12 +415,7 @@ private fun ImportCell(info: CellInfo, modifier: Modifier, content: @Composable 
         if (info.state == ImportCellState.NORMAL) {
             cell(Modifier.fillMaxWidth())
         } else {
-            TooltipBox(
-                positionProvider = rememberAppTooltipPositionProvider(),
-                tooltip = { AppPlainTooltip { Text(tipText) } },
-                state = rememberTooltipState(),
-                modifier = Modifier.fillMaxWidth(),
-            ) { cell(Modifier.fillMaxWidth()) }
+            AppTooltipBox(tipText, Modifier.fillMaxWidth()) { cell(Modifier.fillMaxWidth()) }
         }
     }
 }

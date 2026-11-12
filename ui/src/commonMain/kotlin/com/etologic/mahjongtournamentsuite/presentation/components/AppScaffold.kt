@@ -35,9 +35,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -305,12 +303,7 @@ private fun EllipsizedTitleText(
     color: Color = Color.Unspecified,
 ) {
     var isEllipsized by remember(text) { mutableStateOf(false) }
-    TooltipBox(
-        positionProvider = rememberAppTooltipPositionProvider(),
-        tooltip = { AppPlainTooltip { Text(text) } },
-        state = rememberTooltipState(),
-        enableUserInput = isEllipsized,
-    ) {
+    AppTooltipBox(text, enabled = isEllipsized) {
         Text(
             text = text,
             style = style,

@@ -5,7 +5,7 @@ import org.junit.Test
 /** The ranking board and the timer open in their own window, so they can run on a second screen. */
 class RankingAndTimerTest : AdminE2eTest() {
     private fun openRanking(tournament: String = "Test - Live ongoing tournament") {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.openTournament(tournament)
         c.waitForText("Players & results")
         c.clickButton("Ranking")
@@ -60,7 +60,7 @@ class RankingAndTimerTest : AdminE2eTest() {
 
     @Test
     fun timerShowsRoundAndTime() {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.clickButton("Timer")
         listOf("Round 1", "1:55:00", "Start timer", "Reset timer", "Set time", "Increase round", "Decrease round")
             .forEach { c.waitForText(it) }
@@ -68,7 +68,7 @@ class RankingAndTimerTest : AdminE2eTest() {
 
     @Test
     fun timerRoundCanChange() {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.clickButton("Timer")
         c.waitForText("Round 1")
         c.clickButton("Increase round")
@@ -79,7 +79,7 @@ class RankingAndTimerTest : AdminE2eTest() {
 
     @Test
     fun timerCountsDownAfterStart() {
-        start(E2eAccounts.ADMIN, ready = "Logout")
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
         c.clickButton("Timer")
         c.waitForText("1:55:00")
         c.clickButton("Start timer")

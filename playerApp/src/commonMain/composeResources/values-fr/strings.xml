@@ -100,6 +100,7 @@
     <string name="jump_to_me">Aller à moi</string>
     <string name="entry_totals_only">Les organisateurs saisissent seulement les scores finaux de cette table. Vous ne pouvez pas ajouter de mains ici.</string>
     <string name="entry_round_not_started">En attente du gong de départ. Les boutons pour ajouter des mains apparaissent au début du tour.</string>
+    <string name="entry_seats_not_assigned">Les places de cette table ne sont pas encore attribuées. Vous pourrez ajouter des mains quand les quatre places seront attribuées.</string>
     <string name="entry_time_over">Le temps de cette partie est écoulé. Vous ne pouvez plus ajouter de mains. Les organisateurs saisissent les données manquantes.</string>
     <string name="entry_extra_time">Le temps est écoulé. Vous pouvez ajouter la main en cours. Après elle, la table est terminée.</string>
     <string name="entry_add_draw">Ajouter une main nulle</string>
@@ -186,4 +187,10 @@
     <string name="round_clock_remaining">Temps restant : %1$s</string>
     <string name="round_clock_paused">En pause · Temps restant : %1$s</string>
     <string name="round_clock_over">Le temps de jeu est écoulé.</string>
+    <string name="filter_table_search">N° de table ou joueur</string>
+    <string name="filter_round">Tour</string>
+    <string name="filter_all_rounds">Tous les tours</string>
+    <string name="table_status_not_started">Pas commencée</string>
+    <string name="table_status_playing">En cours</string>
+    <string name="tables_no_match">Aucune table ne correspond aux filtres</string>
 </resources>

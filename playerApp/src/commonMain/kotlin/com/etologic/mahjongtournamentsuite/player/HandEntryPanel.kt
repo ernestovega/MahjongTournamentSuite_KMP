@@ -108,6 +108,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_points
 import mahjongtournamentsuite.playerapp.generated.resources.entry_remove_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_review
 import mahjongtournamentsuite.playerapp.generated.resources.entry_round_not_started
+import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_not_assigned
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_seats_first
 import mahjongtournamentsuite.playerapp.generated.resources.entry_saving_penalty
@@ -287,6 +288,9 @@ fun HandEntryPanel(
         if (seatsEditable) {
             Text(stringResource(Res.string.entry_seats_first), color = MaterialTheme.colorScheme.onSurfaceVariant)
             SeatsAssignment(tournamentId, view, table, onSaved)
+        } else {
+            // Hands need the winds, so the table takes hands only once the four seats are set. The player learns why.
+            Text(stringResource(Res.string.entry_seats_not_assigned), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         return
     }

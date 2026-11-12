@@ -100,6 +100,7 @@
     <string name="jump_to_me">Jump to me</string>
     <string name="entry_totals_only">The organizers enter only the final scores of this table. You cannot add hands here.</string>
     <string name="entry_round_not_started">Waiting for the starting gong. The hand buttons appear when the round starts.</string>
+    <string name="entry_seats_not_assigned">The seats of this table are not set yet. You can add hands when the four seats are set.</string>
     <string name="entry_time_over">The time of this match is over. You cannot add hands now. The organizers enter the missing data.</string>
     <string name="entry_extra_time">The time is over. You can add the hand in play. After it, the table is completed.</string>
     <string name="entry_add_draw">Add draw</string>
@@ -186,4 +187,10 @@
     <string name="round_clock_remaining">Time left: %1$s</string>
     <string name="round_clock_paused">Paused · Time left: %1$s</string>
     <string name="round_clock_over">The match time is over.</string>
+    <string name="filter_table_search">Table number or player</string>
+    <string name="filter_round">Round</string>
+    <string name="filter_all_rounds">All rounds</string>
+    <string name="table_status_not_started">Not started</string>
+    <string name="table_status_playing">Playing</string>
+    <string name="tables_no_match">No table matches the filters</string>
 </resources>

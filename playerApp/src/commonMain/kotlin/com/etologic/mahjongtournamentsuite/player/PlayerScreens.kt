@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -108,6 +109,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LastPlaceIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
@@ -138,10 +140,12 @@ import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import androidx.compose.ui.platform.testTag
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -209,6 +213,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.table_n
 import mahjongtournamentsuite.playerapp.generated.resources.table_sign_in_to_enter_hands
 import mahjongtournamentsuite.playerapp.generated.resources.tables_all_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
+import mahjongtournamentsuite.playerapp.generated.resources.tables_no_match
 import mahjongtournamentsuite.playerapp.generated.resources.tables_me_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.tables_mine_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_not_linked
@@ -304,7 +309,9 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
             when (val result = presenter.signIn(email, password)) {
                 is AppResult.Success -> {
                     saveBrowserCredentials(email.trim(), password)
-                    if (appSwitcher != null && presenter.canManage(RefreshMode.FORCE)) choosingApp = true else continueInPlayerApp()
+                    val canManage = appSwitcher != null && presenter.canManage(RefreshMode.FORCE)
+                    // The sign in suspends, and the navigation must run on the main thread, also in the UI tests.
+                    withContext(Dispatchers.Main) { if (canManage) choosingApp = true else continueInPlayerApp() }
                 }
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
             }
@@ -1004,9 +1011,10 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                     view.teamTables,
                                     stringResource(Res.string.tables_team_empty),
                                     open,
+                                    filterName = "team",
                                 )
                             } else {
-                                TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open)
+                                TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open, filterName = "all")
                             }
                         }
                         1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
@@ -1077,35 +1085,83 @@ private fun SignInPrompt(message: String, onSignIn: () -> Unit) {
 }
 
 @Composable
-private fun TableList(
+internal fun TableList(
     view: PlayerTournamentView,
     tables: List<PlayerTable>,
     emptyText: String,
     onOpen: (PlayerTable) -> Unit,
     stickyRounds: Boolean = true,
+    filterName: String? = null,
 ) {
     if (tables.isEmpty()) {
         Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), emptyText) }
         return
     }
-    val rounds = tables.sortedBy { it.roundId }.groupBy { it.roundId }
-    // The list uses all the width. Its padding is inside, so it ends at the tabs and at the bottom of the screen.
-    LazyColumn(
-        state = rememberPersistentLazyListState("tables-" + emptyText),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
-        contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-    ) {
-        rounds.forEach { (roundId, roundTables) ->
-            // In the sticky case, the title of a round stays at the top while its tables scroll under it.
-            if (stickyRounds) {
-                stickyHeader(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
-            } else {
-                item(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
-            }
-            items(roundTables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                TableSummaryCard(view, table, highlightSlot = view.mySlotId, onClick = { onOpen(table) })
+    // A long list has filters on top. They hide with the tabs when the list scrolls down.
+    var filterText by rememberPersistentText("table-filter-" + filterName.orEmpty(), null)
+    val filter = if (filterName == null) TableFilter() else TableFilter.decode(filterText)
+    val shown = filter.apply(view, tables)
+    val rounds = shown.sortedBy { it.roundId }.groupBy { it.roundId }
+    Column {
+        if (filterName != null) {
+            HideOnScrollTabs {
+                TableFilterBar(
+                    filter = filter,
+                    onChange = { filterText = it.encode() },
+                    rounds = tables.map { it.roundId }.distinct().sorted(),
+                    modifier = Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp),
+                )
             }
         }
+        if (shown.isEmpty()) {
+            Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) {
+                EmptyState(Icons.Default.People, stringResource(Res.string.tables_no_match), "")
+            }
+            return@Column
+        }
+        val state = rememberPersistentLazyListState("tables-" + emptyText)
+        // A new filter starts the list at the top. The restored filter keeps the restored position.
+        var lastFilter by remember { mutableStateOf(filter) }
+        LaunchedEffect(filter) {
+            if (filter != lastFilter) {
+                lastFilter = filter
+                state.scrollToItem(0)
+            }
+        }
+        Box(Modifier.weight(1f)) {
+            // The list uses all the width. Its padding is inside, so it ends at the tabs and at the bottom of the screen.
+            LazyColumn(
+                state = state,
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+            ) {
+                rounds.forEach { (roundId, roundTables) ->
+                    // In the sticky case, the title of a round stays at the top while its tables scroll under it.
+                    if (stickyRounds) {
+                        stickyHeader(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
+                    } else {
+                        item(key = "round_$roundId") { RoundHeader(roundId, view.roundStartOf(roundId)) }
+                    }
+                    items(roundTables, key = { "${it.roundId}_${it.tableId}" }) { table ->
+                        TableSummaryCard(view, table, highlightSlot = view.mySlotId, onClick = { onOpen(table) })
+                    }
+                }
+            }
+            TableScrollbar(state, shown, Modifier.align(Alignment.CenterEnd))
+        }
+    }
+}
+
+/** The scrollbar of a table list. While the person drags it, a bubble says which round and table show. */
+@Composable
+internal fun TableScrollbar(state: LazyListState, tables: List<PlayerTable>, modifier: Modifier = Modifier) {
+    val roundNames = tables.map { it.roundId }.distinct().associateWith { stringResource(Res.string.round_n, it) }
+    val tableNames = tables.map { it.tableId }.distinct().associateWith { stringResource(Res.string.table_n, it) }
+    DraggableScrollbar(state, modifier) { item ->
+        val ids = (item.key as? String)?.split('_')?.mapNotNull { it.toIntOrNull() }
+        if (ids == null || ids.size != 2) return@DraggableScrollbar null
+        listOfNotNull(roundNames[ids[0]], tableNames[ids[1]]).joinToString(" · ").ifEmpty { null }
     }
 }
 
@@ -1737,33 +1793,32 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
         ) {
             if (hand.isDone) HandRow(view, hand, dark)
             penalties.forEachIndexed { index, values ->
-                if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
-                PenaltyRow(view, table.seatIds(), hand.handId, values)
+                val first = !hand.isDone && index == 0
+                if (!first) HorizontalDivider(Modifier.padding(horizontal = 12.dp))
+                // The hand number is only on the first line of the card.
+                PenaltyRow(view, table.seatIds(), hand.handId.takeIf { first }, values)
             }
         }
     }
 }
 
 /**
- * One penalty. The text is at the start and the values are at the end, in the same column as the score of a hand.
- * The penalized players are red and the players who receive points are green.
+ * One penalty. A red "Penalty" chip is at the top and each player with points is on a line under it. The values are
+ * at the end, in the same column and size as the score of a hand. [handId] is null when a hand is above the penalty,
+ * so the number is not repeated, but its column keeps the content aligned with the hand.
  */
 @Composable
-private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId: Int, values: List<Int>) {
+private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId: Int?, values: List<Int>) {
     Row(
         Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                "$handId",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Icon(Icons.Default.Warning, contentDescription = stringResource(Res.string.hand_penalty), Modifier.size(20.dp), tint = MaterialTheme.colorScheme.error)
+        Box(Modifier.width(44.dp), contentAlignment = Alignment.Center) {
+            if (handId != null) HandNumber(handId)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), MaterialTheme.colorScheme.error)
             values.forEachIndexed { seat, value ->
                 if (value == 0) return@forEachIndexed
                 val slot = seatSlots.getOrNull(seat)
@@ -1777,11 +1832,11 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, handId
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Text(
+                    // The invisible outline gives the value the size of the score pill of a hand, so both line up.
+                    ScorePill(
                         if (value > 0) "+$value" else "$value",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
                         color = if (value > 0) WinnerColor else MaterialTheme.colorScheme.error,
+                        outline = Color.Transparent,
                     )
                 }
             }
@@ -1805,11 +1860,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
     ) {
         // The hand number has the wind and the place in the round under it, so the row keeps its width.
         Column(Modifier.width(44.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(
-                "${hand.handId}",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            HandNumber(hand.handId)
             HandLabel(hand.handId)
         }
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1850,43 +1901,61 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
             }
         }
         if (kind != HandKind.DRAW) {
-            Surface(
-                shape = RoundedCornerShape(50),
-                color = Color.Transparent,
-                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.onSurface),
-            ) {
-                Text(
-                    hand.handScore,
-                    Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                )
-            }
+            ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
         }
+    }
+}
+
+/** The number of a hand, with the normal font and a "#" in front. */
+@Composable
+private fun HandNumber(handId: Int) {
+    Text(
+        "#$handId",
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = FontWeight.Medium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+/** A score in a round outline. The score of a hand and the value of a penalty use it, so they have the same size. */
+@Composable
+private fun ScorePill(text: String, color: Color, outline: Color) {
+    Surface(shape = RoundedCornerShape(50), color = Color.Transparent, border = BorderStroke(1.5.dp, outline)) {
+        Text(
+            text,
+            Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = color,
+        )
     }
 }
 
 /** The way the hand was won. Only this pill has color, so the type reads at once without coloring the whole item. */
 @Composable
 private fun WinTypePill(kind: HandKind, accent: Color) {
+    HandChip(
+        kind.icon(),
+        when (kind) {
+            HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
+            HandKind.DISCARD -> stringResource(Res.string.hand_discard)
+            HandKind.DRAW -> stringResource(Res.string.hand_draw)
+        },
+        accent,
+    )
+}
+
+/** A small colored chip with an icon and a text, like the way of winning or a penalty. */
+@Composable
+private fun HandChip(icon: ImageVector, text: String, accent: Color) {
     Surface(shape = RoundedCornerShape(50), color = accent.copy(alpha = 0.18f)) {
         Row(
             Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            Icon(kind.icon(), contentDescription = null, Modifier.size(16.dp), tint = accent)
-            Text(
-                when (kind) {
-                    HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
-                    HandKind.DISCARD -> stringResource(Res.string.hand_discard)
-                    HandKind.DRAW -> stringResource(Res.string.hand_draw)
-                },
-                style = MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = accent,
-            )
+            Icon(icon, contentDescription = null, Modifier.size(16.dp), tint = accent)
+            Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = accent)
         }
     }
 }
@@ -1968,16 +2037,21 @@ fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, s
                         Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message)) }
                     } else {
                         // The padding is inside the list, so the list ends at the tab row and at the bottom of the screen.
-                        LazyColumn(
-                            state = rememberPersistentLazyListState("tables"),
-                            verticalArrangement = Arrangement.spacedBy(10.dp),
-                            contentPadding = PaddingValues(16.dp),
-                        ) {
-                            items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                                TableSummaryCard(view, table, highlightSlot = slotId) {
-                                    navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                        val state = rememberPersistentLazyListState("tables")
+                        Box(Modifier.weight(1f)) {
+                            LazyColumn(
+                                state = state,
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(10.dp),
+                                contentPadding = PaddingValues(16.dp),
+                            ) {
+                                items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
+                                    TableSummaryCard(view, table, highlightSlot = slotId) {
+                                        navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
+                                    }
                                 }
                             }
+                            TableScrollbar(state, tables, Modifier.align(Alignment.CenterEnd))
                         }
                     }
                 }
