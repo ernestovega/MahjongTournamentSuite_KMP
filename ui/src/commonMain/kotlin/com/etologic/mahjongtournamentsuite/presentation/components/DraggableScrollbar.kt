@@ -28,6 +28,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -116,6 +117,7 @@ fun DraggableScrollbar(
     var dragging by remember { mutableStateOf(false) }
     // While the person drags, the thumb follows the finger, not the list, so it does not jump.
     var dragFraction by remember { mutableStateOf(0f) }
+    var dragThumbPx by remember { mutableStateOf(0f) }
     var target by remember { mutableStateOf<Float?>(null) }
     LaunchedEffect(state) {
         snapshotFlow { target }.collectLatest { fraction ->
@@ -131,39 +133,55 @@ fun DraggableScrollbar(
     BoxWithConstraints(modifier.fillMaxHeight().width(TouchWidth)) {
         val trackPx = with(density) { maxHeight.toPx() }
         val minThumbPx = with(density) { MinThumbHeight.toPx() }
-        val thumbPx = (current.visibleFraction * trackPx).coerceIn(minThumbPx.coerceAtMost(trackPx), trackPx)
+        // While the person drags, the thumb keeps its size. Items of different heights would change it and move the finger off it.
+        val thumbPx = if (dragging) {
+            dragThumbPx
+        } else {
+            (current.visibleFraction * trackPx).coerceIn(minThumbPx.coerceAtMost(trackPx), trackPx)
+        }
         val travel = (trackPx - thumbPx).coerceAtLeast(1f)
         val fraction = if (dragging) dragFraction else current.position
         val thumbTop = fraction * travel
-        fun fractionAt(y: Float) = ((y - thumbPx / 2f) / travel).coerceIn(0f, 1f)
+        // The gestures read the sizes through these states. Keys that change while the list moves would restart the
+        // gesture in the middle of a drag, and the drag would stop.
+        val currentThumbPx by rememberUpdatedState(thumbPx)
+        val currentTravel by rememberUpdatedState(travel)
+        fun fractionAt(y: Float) = ((y - currentThumbPx / 2f) / currentTravel).coerceIn(0f, 1f)
         Box(
             Modifier
                 .matchParentSize()
-                .pointerInput(state, travel, thumbPx) {
+                .pointerInput(state) {
                     detectTapGestures { offset -> target = fractionAt(offset.y) }
                 }
-                .pointerInput(state, travel, thumbPx) {
-                    detectVerticalDragGestures(
-                        onDragStart = { offset ->
-                            // A drag that starts on the thumb keeps the finger where it took the thumb.
-                            val position = metrics?.position ?: 0f
-                            val top = position * travel
-                            dragFraction = if (offset.y in top..(top + thumbPx)) position else fractionAt(offset.y)
-                            dragging = true
+                .pointerInput(state) {
+                    try {
+                        detectVerticalDragGestures(
+                            onDragStart = { offset ->
+                                // A drag that starts on the thumb keeps the pointer where it took the thumb.
+                                val position = metrics?.position ?: 0f
+                                val top = position * currentTravel
+                                dragThumbPx = currentThumbPx
+                                dragFraction = if (offset.y in top..(top + currentThumbPx)) position else fractionAt(offset.y)
+                                dragging = true
+                                target = dragFraction
+                            },
+                            onDragEnd = {
+                                dragging = false
+                                target = null
+                            },
+                            onDragCancel = {
+                                dragging = false
+                                target = null
+                            },
+                        ) { change, amount ->
+                            change.consume()
+                            dragFraction = (dragFraction + amount / currentTravel).coerceIn(0f, 1f)
                             target = dragFraction
-                        },
-                        onDragEnd = {
-                            dragging = false
-                            target = null
-                        },
-                        onDragCancel = {
-                            dragging = false
-                            target = null
-                        },
-                    ) { change, amount ->
-                        change.consume()
-                        dragFraction = (dragFraction + amount / travel).coerceIn(0f, 1f)
-                        target = dragFraction
+                        }
+                    } finally {
+                        // A gesture that ends in any other way must not leave the thumb stuck in the drag state.
+                        dragging = false
+                        target = null
                     }
                 },
         )
