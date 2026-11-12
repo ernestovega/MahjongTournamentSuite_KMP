@@ -2,7 +2,9 @@ package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -280,6 +282,20 @@ class HandEntryPanelUiTest {
         waitUntil(timeoutMillis = 5_000) { repository.seats.isNotEmpty() }
 
         assertEquals(listOf(listOf(3, 1, 4, 2)), repository.seats)
+    }
+
+    @Test
+    fun quickPicksOfTheTopNameAllCount() = runComposeUiTest {
+        val repository = RecordingHandRepository()
+        show(MatchEndMode.STOP, "09:55", repository, started = false, seats = false)
+
+        onNodeWithText("Set the seats").performClick()
+        // The name at the top changes after each pick. A quick press on it is a new press, not a double press.
+        repeat(3) { onAllNodesWithTag(SEAT_OPTION_TAG).onFirst().performClick() }
+        onNodeWithText("Save the seats").performClick()
+        waitUntil(timeoutMillis = 5_000) { repository.seats.isNotEmpty() }
+
+        assertEquals(listOf(listOf(1, 2, 3, 4)), repository.seats)
     }
 
     @Test

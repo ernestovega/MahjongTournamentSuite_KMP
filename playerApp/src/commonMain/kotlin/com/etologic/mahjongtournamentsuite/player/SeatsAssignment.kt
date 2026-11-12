@@ -9,6 +9,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -101,8 +102,12 @@ internal fun SeatsAssignment(
                             WindIcon(wind, size = 20.dp)
                             Text(stringResource(Res.string.seats_who_sits, wind.label()), style = MaterialTheme.typography.titleSmall)
                         }
+                        // Each player keeps its own button. A button that moves up to the place of the picked one would
+                        // take its last press and ignore a quick second pick.
                         left.forEach { slot ->
-                            OutlinedButton(onClick = { picks.add(slot) }, modifier = Modifier.fillMaxWidth().testTag(SEAT_OPTION_TAG)) { Text(view.nameOf(slot)) }
+                            key(slot) {
+                                OutlinedButton(onClick = { picks.add(slot) }, modifier = Modifier.fillMaxWidth().testTag(SEAT_OPTION_TAG)) { Text(view.nameOf(slot)) }
+                            }
                         }
                     }
                 }

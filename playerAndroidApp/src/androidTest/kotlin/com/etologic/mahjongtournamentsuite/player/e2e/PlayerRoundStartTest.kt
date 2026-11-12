@@ -32,6 +32,8 @@ class PlayerRoundStartTest : PlayerE2eTest() {
     private fun openExtraTimeTable() {
         start(E2eAccounts.EXTRA_TIME, ready = "My tournaments")
         c.openTournament(extraTimeTournament)
+        c.waitForText("Me")
+        c.settle()
         c.clickButton("Me")
         c.waitForText("Table 1", substring = true)
         c.onAllNodes(hasText("Table 1", substring = true) and hasClickAction()).onFirst().performClick()
