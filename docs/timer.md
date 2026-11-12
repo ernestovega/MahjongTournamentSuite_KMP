@@ -86,7 +86,7 @@ Closing a Timer does not stop the round: the clock lives on the server.
 
 ## Moving stored tournaments
 
-`npm run backfill:round-clocks` (preview) and `npm run backfill:round-clocks:apply` give a clock at the planned start to every round of a tournament that is not completed, whose planned start is past and that has no clock. The seed of the test tournaments does the same, so its rounds in play stay in play.
+`npm run backfill:round-clocks` (preview) and `npm run backfill:round-clocks:apply` give a clock at the planned start to every round of a tournament that is not completed, whose planned start is past and that has no clock. The seed of the test tournaments does the same, so its rounds in play stay in play. From a computer, planning the close of a round in play needs `EMA_FIREBASE_SERVICE_ACCOUNT` set to the service account of the functions; without it the script writes the clocks but warns that the closes are not planned. Saving the settings of the tournament in the admin app plans them.
 
 ## Main source files
 

@@ -1,7 +1,7 @@
 import { db, firebaseProjectId } from "../firebase";
 import { bumpGlobalDataVersion, tournamentVersionUpdate } from "../services/dataVersionsService";
 import { plannedRoundClocks } from "../services/matchTime";
-import { scheduleRoundCloses } from "../services/matchTimeTaskService";
+import { roundCloseTasks, scheduleRoundCloses } from "../services/matchTimeTaskService";
 import { runScript } from "./scriptRun";
 
 const applyChanges = process.argv.includes("--apply");
@@ -31,7 +31,11 @@ async function backfill(): Promise<{ tournaments: number; rounds: number }> {
     for (const [roundId, clock] of clocks) update[`roundClocks.${roundId}`] = clock;
     await document.ref.update(update);
     const stored = { ...data, roundClocks: { ...(data.roundClocks as object | undefined), ...Object.fromEntries(clocks) } };
-    await scheduleRoundCloses(document.id, stored, nowMs);
+    const expected = roundCloseTasks(document.id, stored, nowMs).length;
+    const planned = await scheduleRoundCloses(document.id, stored, nowMs);
+    if (planned < expected) {
+      console.warn(`${document.id}: planned ${planned} of ${expected} round closes. Set EMA_FIREBASE_SERVICE_ACCOUNT to the service account of the functions, or save the settings of the tournament in the admin app, which plans them.`);
+    }
   }
   if (applyChanges && tournaments > 0) await bumpGlobalDataVersion("tournaments");
   console.log(`${applyChanges ? "Wrote" : "Would write"} ${rounds} clocks in ${tournaments} tournaments.`);

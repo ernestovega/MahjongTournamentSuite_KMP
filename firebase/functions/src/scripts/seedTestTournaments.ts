@@ -4,7 +4,7 @@ import { db, firebaseProjectId } from "../firebase";
 import { ownershipAction } from "../services/emaIdOwnership";
 import { globalVersionUpdate } from "../services/dataVersionsService";
 import { isSelectableTimeZone, plannedRoundClocks } from "../services/matchTime";
-import { scheduleRoundCloses } from "../services/matchTimeTaskService";
+import { roundCloseTasks, scheduleRoundCloses } from "../services/matchTimeTaskService";
 import { handScoreTotals, tablePointsOf } from "../services/handScoring";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { drawProblem } from "../services/tournamentDraw";
@@ -1333,7 +1333,10 @@ async function main(): Promise<void> {
     // The tournament document comes last. A tournament without its document is invisible.
     await ref.set(built.tournament);
     // The close of a round in play is planned at its Play. These rounds had no Play, so the seed plans it.
-    await scheduleRoundCloses(spec.id, built.tournament);
+    const closes = roundCloseTasks(spec.id, built.tournament, Date.now()).length;
+    if (await scheduleRoundCloses(spec.id, built.tournament) < closes) {
+      console.warn("  the close of a round in play is not planned. Set EMA_FIREBASE_SERVICE_ACCOUNT, or save the tournament settings in the admin app.");
+    }
     created += 1;
     console.log("  written");
   }
