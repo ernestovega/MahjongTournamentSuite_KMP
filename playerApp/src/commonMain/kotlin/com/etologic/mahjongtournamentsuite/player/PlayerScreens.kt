@@ -183,7 +183,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_needed_title
-import mahjongtournamentsuite.playerapp.generated.resources.sign_in_player_description
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_reset_sent
 import mahjongtournamentsuite.playerapp.generated.resources.standing_best_hand
 import mahjongtournamentsuite.playerapp.generated.resources.standing_team
@@ -357,7 +356,7 @@ fun SignInScreen(navController: NavHostController, openTournamentId: String?) {
         onSubmit = ::submit,
         onForgotPassword = ::requestPasswordReset,
         onErrorDismiss = { errorMessage = null },
-        description = stringResource(Res.string.sign_in_player_description),
+        onNeedHelp = { navController.navigate(SupportRoute(email = email.trim())) },
         onBack = { if (!navController.popBackStack()) navController.reopen(emptyList()) },
     )
 }

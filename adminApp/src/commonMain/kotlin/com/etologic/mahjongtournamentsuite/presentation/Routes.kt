@@ -8,6 +8,10 @@ data object SplashRoute
 @Serializable
 data object SignInRoute
 
+/** The "Need help?" form of the sign-in. [email] is the email that the sign-in had, to fill the form. */
+@Serializable
+data class SupportRoute(val email: String = "")
+
 @Serializable
 data object TournamentsRoute
 

@@ -26,6 +26,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/admin/error-groups/:id", "ADMIN"],
   ["POST", "/auth/signIn", "PUBLIC"],
   ["POST", "/auth/passwordReset", "PUBLIC"],
+  ["POST", "/support/message", "PUBLIC"],
   ["POST", "/auth/refresh", "PUBLIC"],
   ["GET", "/auth/me", "SIGNED_IN"],
   ["PUT", "/auth/me", "SIGNED_IN"],

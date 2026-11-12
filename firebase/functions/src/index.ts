@@ -5,7 +5,7 @@ import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { buildApp } from "./api/app";
 import { closeRoundTables } from "./services/matchTimeCloseService";
 import { CLOSE_ROUND_TASK_REGION, planRoundCloses } from "./services/matchTimeTaskService";
-import { ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY } from "./config";
+import { ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY, SUPPORT_EMAIL } from "./config";
 
 const app = buildApp();
 
@@ -17,7 +17,7 @@ export const api = onRequest(
     memory: "512MiB",
     // A brake on the bill: the public routes are open to everyone, and a flood of requests must not scale without end.
     maxInstances: 20,
-    secrets: [ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY],
+    secrets: [ID_TOOLKIT_API_KEY, MAIL_SMTP_URI, PLACES_API_KEY, SUPPORT_EMAIL],
   },
   app,
 );

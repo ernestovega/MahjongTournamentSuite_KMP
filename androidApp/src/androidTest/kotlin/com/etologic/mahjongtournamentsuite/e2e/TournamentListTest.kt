@@ -78,7 +78,7 @@ class TournamentListTest : AdminE2eTest() {
     /** The admin app is for admins and editors. The splash screen signs a player out and shows the sign-in form. */
     @Test
     fun playerSessionIsSignedOutAtTheStart() {
-        start(E2eAccounts.PLAYER, ready = "Use your email to sign in. Accounts are invitation-only.")
+        start(E2eAccounts.PLAYER, ready = "Need help?")
         c.assertNoText("Logout")
         c.assertNoText("New tournament")
         c.assertNoText("App errors")

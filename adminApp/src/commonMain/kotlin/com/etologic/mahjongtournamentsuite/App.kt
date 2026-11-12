@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite
 
+import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
+import com.etologic.mahjongtournamentsuite.presentation.SupportRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -153,6 +156,15 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
             ) {
                 screen<SplashRoute> { SplashScreen(navController = navController, restoredRoutes = restoredRoutes) }
                 screen<SignInRoute> { SignInScreen(navController = navController) }
+                screen<SupportRoute> { backStackEntry ->
+                    val supportRepository = koinInject<SupportRepository>()
+                    SupportForm(
+                        app = "admin",
+                        initialEmail = backStackEntry.toRoute<SupportRoute>().email,
+                        onSend = supportRepository::send,
+                        onBack = { navController.popBackStack() },
+                    )
+                }
                 screen<TournamentsRoute> { TournamentsScreen(navController = navController) }
                 screen<PlayerBaseRoute> { PlayerBaseScreen(navController = navController) }
                 screen<TournamentRoute> { backStackEntry ->

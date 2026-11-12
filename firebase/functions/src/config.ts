@@ -6,3 +6,5 @@ export const ID_TOOLKIT_API_KEY = defineSecret("MTS_ID_TOOLKIT_API_KEY");
 export const MAIL_SMTP_URI = defineSecret("MTS_SMTP_URI");
 // The key of Google Places (New). The server uses it to read the place of a Google Maps link.
 export const PLACES_API_KEY = defineSecret("PLACES_API_KEY");
+// The mailbox that receives the messages of the "Need help?" screen. It is a secret so that the public code does not show it.
+export const SUPPORT_EMAIL = defineSecret("MTS_SUPPORT_EMAIL");

@@ -1,7 +1,9 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import com.etologic.mahjongtournamentsuite.domain.AppVersion
+import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
+import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -62,6 +64,10 @@ data object SplashRoute
 
 @Serializable
 data class SignInRoute(val openTournamentId: String? = null)
+
+/** The "Need help?" form of the sign-in. [email] is the email that the sign-in had, to fill the form. */
+@Serializable
+data class SupportRoute(val email: String = "")
 
 @Serializable
 data object TournamentsRoute
@@ -166,6 +172,15 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
         screen<SignInRoute> { entry ->
             val route = entry.toRoute<SignInRoute>()
             SignInScreen(navController, route.openTournamentId)
+        }
+        screen<SupportRoute> { entry ->
+            val supportRepository = koinInject<SupportRepository>()
+            SupportForm(
+                app = "player",
+                initialEmail = entry.toRoute<SupportRoute>().email,
+                onSend = supportRepository::send,
+                onBack = { navController.popBackStack() },
+            )
         }
         screen<TournamentsRoute> { TournamentsScreen(navController) }
         screen<TournamentRoute> { entry ->
