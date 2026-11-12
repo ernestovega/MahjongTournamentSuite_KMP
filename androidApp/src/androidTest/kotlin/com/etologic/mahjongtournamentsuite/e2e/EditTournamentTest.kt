@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.e2e
 
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasAnySibling
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isToggleable
@@ -164,10 +167,16 @@ class EditTournamentTest : AdminE2eTest() {
         c.waitForText("Branding")
     }
 
-    /** The General tab ends with three switches: finish the hand, best hands and chicken hands. The dialog is last in the tree. */
+    /**
+     * Turns on the "Finish the hand in play" switch of the General tab, found by its label. The dialog is last in the
+     * tree. Turning it on shows the extra time field.
+     */
     private fun toggleFinishTheHand() {
-        val switches = c.onAllNodes(isToggleable())
-        switches[switches.fetchSemanticsNodes().size - 3].performClick()
+        val switch = c.onAllNodes(isToggleable() and hasAnySibling(hasText("Finish the hand in play"))).onLast()
+        switch.assertIsOff()
+        switch.performClick()
+        switch.assertIsOn()
+        c.waitForText("Extra time (minutes)")
     }
 
     @Test
