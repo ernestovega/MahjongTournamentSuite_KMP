@@ -11,11 +11,25 @@ enum class ActivitySource(val wire: String) {
     OTHER("other"),
 }
 
-/** The filters of the activity screen. Null shows every tournament or every person. */
+/** Where a change came from. */
+enum class ActivityOrigin(val wire: String) {
+    ADMIN_APP("admin"),
+    PLAYER_APP("player"),
+
+    /** The server, for example the automatic close at the end of the match time, and the maintenance scripts. */
+    AUTOMATIC("system"),
+}
+
+/** The filters of the activity screen. Null shows every tournament, person, origin or time. */
 data class ActivityFilter(
     val tournamentId: String? = null,
     val uid: String? = null,
     val source: ActivitySource = ActivitySource.ALL,
+    val origin: ActivityOrigin? = null,
+    /** Milliseconds since the epoch. Keeps the changes at this time or later. */
+    val fromMillis: Long? = null,
+    /** Milliseconds since the epoch. Keeps the changes before this time. */
+    val toMillis: Long? = null,
 )
 
 /** One value that a write changed. [handId] is null for a field of the table or of the tournament. */

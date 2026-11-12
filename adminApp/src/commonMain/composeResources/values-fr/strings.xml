@@ -733,4 +733,9 @@
     <string name="activity_action_table_reset">Table réinitialisée</string>
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
     <string name="activity_action_script_run">Script de maintenance exécuté</string>
+    <string name="activity_origin_all">Toutes les origines</string>
+    <string name="activity_period_from">Du : %1$s</string>
+    <string name="activity_period_to">Jusqu\'au : %1$s</string>
+    <string name="activity_period_any">toute date</string>
+    <string name="activity_period_clear">Effacer les dates</string>
 </resources>

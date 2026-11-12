@@ -733,4 +733,9 @@
     <string name="activity_action_table_reset">Tavolo azzerato</string>
     <string name="activity_action_table_conflict">Salvataggio rifiutato: il tavolo era cambiato</string>
     <string name="activity_action_script_run">Script di manutenzione eseguito</string>
+    <string name="activity_origin_all">Tutte le origini</string>
+    <string name="activity_period_from">Dal: %1$s</string>
+    <string name="activity_period_to">Fino al: %1$s</string>
+    <string name="activity_period_any">qualsiasi data</string>
+    <string name="activity_period_clear">Cancella date</string>
 </resources>

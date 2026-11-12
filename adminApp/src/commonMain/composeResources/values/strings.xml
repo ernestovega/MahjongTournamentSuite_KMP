@@ -733,4 +733,9 @@
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
     <string name="activity_action_script_run">Maintenance script run</string>
+    <string name="activity_origin_all">All origins</string>
+    <string name="activity_period_from">From: %1$s</string>
+    <string name="activity_period_to">Until: %1$s</string>
+    <string name="activity_period_any">any time</string>
+    <string name="activity_period_clear">Clear dates</string>
 </resources>
