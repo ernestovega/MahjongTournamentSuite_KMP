@@ -114,18 +114,20 @@ private fun detailRows(table: PlayerTable, seatIds: List<Int>): List<DetailRow> 
     val rows = mutableListOf<DetailRow>()
     val totals = MutableList(4) { 0 }
     table.hands.sortedBy { it.handId }.forEach { hand ->
-        // The penalties were given before the result of the hand, so they come first.
-        hand.penaltyRows().forEach { values ->
+        val penalties = hand.penaltyRows()
+        if (hand.isDone) {
+            val change = hand.resultChange(seatIds)
+            val winnerSeat = seatIds.indexOf(hand.playerWinnerId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
+            val loserSeat = seatIds.indexOf(hand.playerLooserId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
+            rows += DetailRow.Result(hand, change, winnerSeat, loserSeat)
+            change?.forEachIndexed { seat, value -> totals[seat] += value }
+        }
+        // The penalties of a hand go under its result and above its subtotal, which counts them.
+        penalties.forEach { values ->
             rows += DetailRow.Penalty(hand.handId, values, counted = hand.isDone)
             if (hand.isDone) values.forEachIndexed { seat, value -> totals[seat] += value }
         }
-        if (!hand.isDone) return@forEach
-        val change = hand.resultChange(seatIds)
-        val winnerSeat = seatIds.indexOf(hand.playerWinnerId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
-        val loserSeat = seatIds.indexOf(hand.playerLooserId.trim().toIntOrNull()).takeIf { change != null && it >= 0 }
-        rows += DetailRow.Result(hand, change, winnerSeat, loserSeat)
-        change?.forEachIndexed { seat, value -> totals[seat] += value }
-        rows += DetailRow.Subtotal(totals.toList())
+        if (hand.isDone) rows += DetailRow.Subtotal(totals.toList())
     }
     return rows
 }
