@@ -92,16 +92,17 @@ data class PlayerTournamentView(
         )
     }
 
-    /** The winner and score of the hands in the best hands ranking, when the tournament counts best hands. */
-    private val bestHandKeys: Set<Pair<Int, Int>> by lazy {
-        if (tournament.countBestHands) rankings.bestHands.map { it.playerId to it.handScore }.toSet() else emptySet()
+    /** The best position of each winner and score in the best hands ranking, when the tournament counts best hands. */
+    private val bestHandPositions: Map<Pair<Int, Int>, Int> by lazy {
+        if (!tournament.countBestHands) return@lazy emptyMap()
+        rankings.bestHands.groupBy { it.playerId to it.handScore }.mapValues { (_, rows) -> rows.minOf { it.position } }
     }
 
-    /** True when [hand] is one of the best hands of the tournament. */
-    fun isBestHand(hand: TableHand): Boolean {
-        val winner = hand.playerWinnerId.trim().toIntOrNull() ?: return false
-        val score = hand.handScore.trim().toIntOrNull() ?: return false
-        return hand.isDone && (winner to score) in bestHandKeys
+    /** The place of [hand] among the three best hands of the tournament, from 1 to 3, or null. */
+    fun bestHandRank(hand: TableHand): Int? {
+        val winner = hand.playerWinnerId.trim().toIntOrNull() ?: return null
+        val score = hand.handScore.trim().toIntOrNull() ?: return null
+        return bestHandPositions[winner to score]?.takeIf { hand.isDone && it in 1..3 }
     }
 
     private fun statisticsOf(slotId: Int?): PlayerStatistics? =

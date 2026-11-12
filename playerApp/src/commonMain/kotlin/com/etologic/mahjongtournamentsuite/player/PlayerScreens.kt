@@ -1905,9 +1905,8 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
         }
         // The chicken and the best hand mark the winning hand, so they go before its score.
         if (hand.isChickenHand) ChickenIcon()
-        if (view.isBestHand(hand)) {
-            Icon(Icons.Default.PanTool, contentDescription = stringResource(Res.string.standing_best_hand), Modifier.size(20.dp))
-        }
+        // A gold, silver or bronze trophy for the three best hands of the tournament.
+        view.bestHandRank(hand)?.let { PositionTrophy(it, size = 24.dp) }
         if (kind != HandKind.DRAW) {
             ScorePill(hand.handScore, MaterialTheme.colorScheme.onSurface, MaterialTheme.colorScheme.onSurface)
         }
