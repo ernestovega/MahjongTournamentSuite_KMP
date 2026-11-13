@@ -11,6 +11,16 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRankings
 
 class CalculateTournamentRankingsUseCase {
+    /** The rankings at the end of each of [rounds]: only the tables of that round and of the rounds before it count. */
+    fun afterEachRound(
+        players: List<TournamentPlayer>,
+        tables: List<RankingTable>,
+        includeTeams: Boolean,
+        rounds: List<Int>,
+    ): Map<Int, TournamentRankings> = rounds.associateWith { roundId ->
+        invoke(players, tables.filter { it.table.roundId <= roundId }, includeTeams)
+    }
+
     operator fun invoke(
         players: List<TournamentPlayer>,
         tables: List<RankingTable>,
