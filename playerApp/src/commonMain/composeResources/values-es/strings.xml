@@ -194,4 +194,10 @@
     <string name="table_status_playing">En juego</string>
     <string name="tables_no_match">Ninguna mesa coincide con los filtros</string>
     <string name="filter_search_label">Buscar</string>
+    <string name="my_table_title">Mesa %1$d · Ronda %2$d</string>
+    <string name="my_table_starts_in">Empieza en %1$s</string>
+    <string name="my_table_awaiting_gong">Esperando el gong inicial</string>
+    <string name="my_table_started">Empezó hace %1$s</string>
+    <string name="my_table_go">Ir a mi mesa</string>
+    <string name="my_table_dismiss">Cerrar el aviso</string>
 </resources>

@@ -194,4 +194,10 @@
     <string name="table_status_playing">En cours</string>
     <string name="tables_no_match">Aucune table ne correspond aux filtres</string>
     <string name="filter_search_label">Rechercher</string>
+    <string name="my_table_title">Table %1$d · Tour %2$d</string>
+    <string name="my_table_starts_in">Commence dans %1$s</string>
+    <string name="my_table_awaiting_gong">En attente du gong de départ</string>
+    <string name="my_table_started">A commencé il y a %1$s</string>
+    <string name="my_table_go">Aller à ma table</string>
+    <string name="my_table_dismiss">Fermer le rappel</string>
 </resources>

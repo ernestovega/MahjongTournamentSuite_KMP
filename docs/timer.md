@@ -44,6 +44,16 @@ The Timer shows an action at once and says "No connection". It sends the action 
 
 A player of a table can set the four seats from 10 minutes before the planned start, or once the round started, until the first saved hand or penalty, while the round is not over (`POST /player/tournaments/{id}/tables/{roundId}/{tableId}/seats`). The player picks East, South and West; the player who is left takes North. The button says "Change the seats" once they are set. Organizers can still set seats at any time.
 
+## Reminder of the own table (player app)
+
+When the player app opens or returns to the front, a signed-in player who plays a round that starts soon or is in play sees a reminder at the bottom of every screen: "Table 7 · Round 3" and "Starts in 6 minutes", "Waiting for the starting gong" or "Started 12 minutes ago". "Go to my table" opens the table.
+
+- It shows from 10 minutes before the planned start (the same lead as the seats) until the end of the match, extra time included. The countdown uses the planned time; "Started ... ago" uses the round clock (pauses do not count).
+- A round with no clock shows "Waiting for the starting gong" for at most one match duration after the planned time.
+- A completed table gives no reminder. Closing the reminder or opening the table hides it until the next round. The web keeps that through a page refresh (session storage); Android keeps it while the app process lives.
+- Before the gong the app checks the clocks again every minute while the reminder shows, so it turns into "Started ... ago" without leaving the app.
+- Code: `playerApp/.../player/MyTableReminder.kt`.
+
 ## Controls
 
 When opened, the Timer selects the round whose clock runs, or else the round after the last round that has a clock or hands. A round with hands but no clock (hands entered in the editor without the Timer) counts as played.

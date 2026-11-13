@@ -5,7 +5,9 @@ import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
 import com.etologic.mahjongtournamentsuite.presentation.components.SupportForm
 import com.etologic.mahjongtournamentsuite.presentation.language.ProvideAppLanguage
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.navigation.NavHostController
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -115,6 +117,7 @@ private val playerModule = module {
     factory { LoadStoredStatisticsUseCase(get(), get(), get()) }
     factory { PlayerTournamentPresenter(get(), get(), get(), get()) }
     factory { PlayerTablePresenter(get(), telemetry()) }
+    factory { MyTableReminderPresenter(get()) }
     factory { PlayerStatisticsPresenter(get(), get(), get(), get(), telemetry()) }
 }
 
@@ -170,6 +173,20 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
         navController.currentBackStack.collect { routePersistence.save(it) }
     }
 
+    Box(Modifier.fillMaxSize()) {
+        PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn)
+        // Over every screen: the table of the player when a round of the player starts soon or is in play.
+        MyTableReminder(navController, sessionStorage)
+    }
+}
+
+@Composable
+private fun PlayerNavHost(
+    navController: NavHostController,
+    openTournamentId: String?,
+    restoredRoutes: List<Any>,
+    openSignIn: Boolean,
+) {
     NavHost(navController = navController, startDestination = SplashRoute) {
         screen<SplashRoute> { SplashScreen(navController, openTournamentId, restoredRoutes, openSignIn) }
         screen<SignInRoute> { entry ->

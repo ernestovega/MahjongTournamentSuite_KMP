@@ -194,4 +194,10 @@
     <string name="table_status_playing">In corso</string>
     <string name="tables_no_match">Nessun tavolo corrisponde ai filtri</string>
     <string name="filter_search_label">Cerca</string>
+    <string name="my_table_title">Tavolo %1$d · Turno %2$d</string>
+    <string name="my_table_starts_in">Inizia tra %1$s</string>
+    <string name="my_table_awaiting_gong">In attesa del gong iniziale</string>
+    <string name="my_table_started">Iniziato %1$s fa</string>
+    <string name="my_table_go">Vai al mio tavolo</string>
+    <string name="my_table_dismiss">Chiudi il promemoria</string>
 </resources>

@@ -194,4 +194,10 @@
     <string name="table_status_playing">Playing</string>
     <string name="tables_no_match">No table matches the filters</string>
     <string name="filter_search_label">Search</string>
+    <string name="my_table_title">Table %1$d · Round %2$d</string>
+    <string name="my_table_starts_in">Starts in %1$s</string>
+    <string name="my_table_awaiting_gong">Waiting for the starting gong</string>
+    <string name="my_table_started">Started %1$s ago</string>
+    <string name="my_table_go">Go to my table</string>
+    <string name="my_table_dismiss">Close the reminder</string>
 </resources>
