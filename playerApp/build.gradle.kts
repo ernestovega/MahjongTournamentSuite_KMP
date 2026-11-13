@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.kover)
+    alias(libs.plugins.roborazzi)
 }
 
 kotlin {
@@ -65,6 +66,7 @@ kotlin {
             implementation(libs.kotlinx.coroutines.test)
         }
         jvmTest.dependencies {
+            implementation(projects.screenshotTesting)
             implementation(compose.desktop.currentOs)
             implementation(libs.compose.ui.test.junit4.desktop)
         }
