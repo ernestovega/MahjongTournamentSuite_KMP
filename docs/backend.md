@@ -177,7 +177,7 @@ These routes need no sign-in. Every other route needs a valid token and a role c
 - Every write (`POST`, `PUT`, `DELETE`) is limited to 120 requests per minute for each address and token, to 600 per minute for each address, and to 120 per minute for each signed-in user from every address. The counters live in one function instance.
 - An editor cannot save a table of a completed tournament. Only an admin can.
 - A tournament id in a route must not contain `/`.
-- The hosting sites send `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'` and `Permissions-Policy`.
+- The hosting sites send `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and a `Content-Security-Policy` (`firebase.json`). It lets the pages load scripts, styles, fonts and wasm only from the site, plus the Firebase SDK (`www.gstatic.com`), Google Analytics, reCAPTCHA and Firebase Storage. Inline scripts are blocked. A new external origin must be added there, or the browser blocks it.
 
 ## App Check
 
