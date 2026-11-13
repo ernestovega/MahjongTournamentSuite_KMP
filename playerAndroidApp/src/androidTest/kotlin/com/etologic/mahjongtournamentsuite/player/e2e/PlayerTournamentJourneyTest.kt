@@ -1,9 +1,14 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import com.etologic.mahjongtournamentsuite.player.PLAYER_SEARCH_TAG
 import com.etologic.mahjongtournamentsuite.player.SEAT_OPTION_TAG
 import org.junit.After
 import org.junit.Before
@@ -137,6 +142,13 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
         c.waitForText("Players")
         c.scrollListTo(players[0].lastName, substring = true)
         check(JourneyApi.finalRank(tournamentId, players[0].emaId) == 1) { "Slot 1 is not first in the final ranking" }
+
+        // The winner in the Players tab: the search finds the player and the player shows its tables.
+        c.clickButton("Players")
+        c.onNodeWithTag(PLAYER_SEARCH_TAG).performTextInput(players[0].lastName)
+        c.onAllNodes(hasClickAction() and hasAnyDescendant(hasText("#1"))).onFirst().performClick()
+        c.waitForText("Stats")
+        c.waitForText("Table 1", substring = true)
     }
 
     private companion object {

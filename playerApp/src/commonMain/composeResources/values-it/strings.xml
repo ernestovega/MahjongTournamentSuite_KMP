@@ -97,6 +97,16 @@
     <string name="hand_discard">Scarto</string>
     <string name="hand_draw">Patta</string>
     <string name="tables_player_empty_message">Questo giocatore non ha ancora un tavolo in questo torneo.</string>
+    <string name="players_search_hint">Nome, paese o squadra</string>
+    <string name="players_search_empty">Nessun giocatore corrisponde alla ricerca.</string>
+    <string name="player_position">#%1$d</string>
+    <string name="team_members">Membri</string>
+    <string name="teams_search_hint">Squadra o giocatore</string>
+    <string name="teams_search_empty">Nessuna squadra corrisponde alla ricerca.</string>
+    <string name="team_statistics_note">Le statistiche sommano i tavoli di tutti i giocatori della squadra.</string>
+    <string name="team_member_win_rate">Percentuale di vittorie</string>
+    <string name="team_member_points">Punti</string>
+    <string name="team_member_score">Punteggio</string>
     <string name="jump_to_me">Vai a me</string>
     <string name="entry_totals_only">Gli organizzatori inseriscono solo i punteggi finali di questo tavolo. Non puoi aggiungere mani qui.</string>
     <string name="entry_round_not_started">In attesa del gong iniziale. I pulsanti per aggiungere mani appaiono quando inizia il turno.</string>

@@ -4,7 +4,6 @@ import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
@@ -40,7 +39,7 @@ private inline fun <reified T : Any> fake(crossinline answer: (name: String) -> 
 
 private object NotUsed
 
-/** The tabs of the statistics: the bar with the chosen player in a tournament, and the tabs of a guest. */
+/** The tabs of the statistics: the statistics of a tournament without inner tabs, and the tabs of a guest. */
 @OptIn(ExperimentalTestApi::class)
 class StatisticsTabsUiTest {
     @AfterTest
@@ -99,31 +98,12 @@ class StatisticsTabsUiTest {
     private fun ComposeUiTest.waitForText(text: String) = waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText(text)).fetchSemanticsNodes().isNotEmpty() }
 
     @Test
-    fun thePlayersTabShowsTheChosenPlayerInABarWithAChangeButton() = runComposeUiTest {
-        show(session = null) { TournamentStatisticsTab(tournamentId = "t-1", mySlotId = 1) }
-        waitForText("Players")
-        onAllNodes(hasText("Players"))[0].performClick()
-
-        // The slot with an EMA number shows the name of the registry, in capitals.
-        waitForText("ANA LOPEZ")
-        onNodeWithText("Change").assertExists()
-        onNodeWithText("Cancel").assertDoesNotExist()
-    }
-
-    @Test
-    fun changeOpensThePlayerDropdownAndCancelGoesBackToTheBar() = runComposeUiTest {
-        show(session = null) { TournamentStatisticsTab(tournamentId = "t-1", mySlotId = 2) }
-        waitForText("Players")
-        onAllNodes(hasText("Players"))[0].performClick()
-        waitForText("Bea Ruiz")
-
-        onNodeWithText("Change").performClick()
-        waitForText("Cancel")
+    fun theTournamentStatisticsHaveNoInnerTabs() = runComposeUiTest {
+        show(session = null) { TournamentStatisticsTab(tournamentId = "t-1") }
+        // The players have their own tab in the tournament now, so the statistics show only the tournament.
+        waitForIdle()
+        onNodeWithText("Tournament").assertDoesNotExist()
         onNodeWithText("Change").assertDoesNotExist()
-
-        onNodeWithText("Cancel").performClick()
-        waitForText("Change")
-        onNodeWithText("Cancel").assertDoesNotExist()
     }
 
     @Test

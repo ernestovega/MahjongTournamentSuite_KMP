@@ -97,6 +97,16 @@
     <string name="hand_discard">Descarte</string>
     <string name="hand_draw">Empate</string>
     <string name="tables_player_empty_message">Este jugador aún no tiene mesa en este torneo.</string>
+    <string name="players_search_hint">Nombre, país o equipo</string>
+    <string name="players_search_empty">Ningún jugador coincide con la búsqueda.</string>
+    <string name="player_position">#%1$d</string>
+    <string name="team_members">Miembros</string>
+    <string name="teams_search_hint">Equipo o jugador</string>
+    <string name="teams_search_empty">Ningún equipo coincide con la búsqueda.</string>
+    <string name="team_statistics_note">Las estadísticas suman las mesas de todos los jugadores del equipo.</string>
+    <string name="team_member_win_rate">Tasa de victorias</string>
+    <string name="team_member_points">Puntos</string>
+    <string name="team_member_score">Puntuación</string>
     <string name="jump_to_me">Ir a mi posición</string>
     <string name="entry_totals_only">Los organizadores solo introducen las puntuaciones finales de esta mesa. No puedes añadir manos aquí.</string>
     <string name="entry_round_not_started">Esperando al gong inicial. Los botones para añadir manos aparecen cuando empieza la ronda.</string>

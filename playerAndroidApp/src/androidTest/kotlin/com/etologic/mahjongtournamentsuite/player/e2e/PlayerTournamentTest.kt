@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
+import androidx.compose.ui.test.hasAnyDescendant
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.performClick
 import org.junit.Test
 
 class PlayerTournamentTest : PlayerE2eTest() {
@@ -12,7 +17,27 @@ class PlayerTournamentTest : PlayerE2eTest() {
     @Test
     fun tabsAreShown() {
         open()
-        listOf("Tables", "Ranking", "Statistics", "Info").forEach { c.waitForText(it) }
+        listOf("Tables", "Ranking", "Players", "Statistics", "Info").forEach { c.waitForText(it) }
+    }
+
+    /** A line of the player list. It shows the place in the ranking, such as "#3". */
+    private val playerLine = hasClickAction() and hasAnyDescendant(hasText("#", substring = true))
+
+    @Test
+    fun playersTabOpensAPlayerAndBackReturnsToTheList() {
+        open()
+        c.clickButton("Players")
+        c.waitForText("Search")
+        c.waitUntil(20_000) { c.onAllNodes(playerLine).fetchSemanticsNodes().isNotEmpty() }
+        c.onAllNodes(playerLine).onFirst().performClick()
+        // The player shows in the same tab, with its tables and its statistics.
+        c.waitForText("Stats")
+        c.clickButton("Stats")
+        c.waitForNoText("Something went wrong. Please try again.")
+        c.clickButton("Back")
+        c.waitForText("Search")
+        // The tournament is still open: one more back leaves it.
+        c.waitForText("Test - Live ongoing tournament")
     }
 
     @Test

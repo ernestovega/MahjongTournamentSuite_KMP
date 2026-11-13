@@ -3,6 +3,8 @@ package com.etologic.mahjongtournamentsuite.player
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -12,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedTab
 
 /** The color of every tab row. It is the color of the top bar. */
@@ -44,7 +47,16 @@ internal fun CompactTab(
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
             icon?.invoke()
-            Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            // With many tabs on a phone, a long label gets smaller before it is cut.
+            val style = MaterialTheme.typography.labelMedium
+            Text(
+                title,
+                Modifier.padding(horizontal = 2.dp),
+                style = style,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
+            )
         }
     }
 }

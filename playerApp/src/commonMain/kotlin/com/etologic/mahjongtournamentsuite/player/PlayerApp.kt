@@ -80,9 +80,6 @@ data object TournamentsRoute
 data class TournamentRoute(val tournamentId: String)
 
 @Serializable
-data class PlayerTablesRoute(val tournamentId: String, val slotId: Int)
-
-@Serializable
 data class TableRoute(val tournamentId: String, val roundId: Int, val tableId: Int)
 
 /**
@@ -204,11 +201,8 @@ private fun PlayerNavHost(
         }
         screen<TournamentsRoute> { TournamentsScreen(navController) }
         screen<TournamentRoute> { entry ->
-            TournamentScreen(navController, entry.toRoute<TournamentRoute>().tournamentId)
-        }
-        screen<PlayerTablesRoute> { entry ->
-            val route = entry.toRoute<PlayerTablesRoute>()
-            PlayerTablesScreen(navController, route.tournamentId, route.slotId)
+            // The saved state carries the requests of the tables to open one of their players.
+            TournamentScreen(navController, entry.toRoute<TournamentRoute>().tournamentId, entry.savedStateHandle)
         }
         screen<TableRoute> { entry ->
             val route = entry.toRoute<TableRoute>()

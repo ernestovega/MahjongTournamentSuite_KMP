@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PanTool
@@ -95,6 +96,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
+import androidx.lifecycle.SavedStateHandle
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformBackHandler
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
@@ -198,10 +202,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.stats_title
 import mahjongtournamentsuite.playerapp.generated.resources.status_finished
 import mahjongtournamentsuite.playerapp.generated.resources.status_in_progress
 import mahjongtournamentsuite.playerapp.generated.resources.status_upcoming
-import mahjongtournamentsuite.playerapp.generated.resources.tab_info
-import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
-import mahjongtournamentsuite.playerapp.generated.resources.tab_stats
-import mahjongtournamentsuite.playerapp.generated.resources.tab_tables
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_all
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_me
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_team
@@ -217,7 +217,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.tables_no_match
 import mahjongtournamentsuite.playerapp.generated.resources.tables_me_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.tables_mine_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_not_linked
-import mahjongtournamentsuite.playerapp.generated.resources.tables_player_empty_message
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_empty
 import mahjongtournamentsuite.playerapp.generated.resources.tables_team_sign_in
 import mahjongtournamentsuite.playerapp.generated.resources.team_hide_players
@@ -895,14 +894,57 @@ private fun Duration.toAgeText(): UiText {
 internal val TournamentColumnWidth = 720.dp
 
 @Composable
-fun TournamentScreen(navController: NavHostController, tournamentId: String) {
+fun TournamentScreen(navController: NavHostController, tournamentId: String, requests: SavedStateHandle? = null) {
     val (view, message) = rememberTournamentView(tournamentId)
     val session = koinInject<PlayerSessionPresenter>()
     // Null until the session is known, so a guest never sees the empty texts of an account for a moment.
     val signedIn by produceState<Boolean?>(null) { value = session.hasSession() }
     // An account that is not linked to a player has no own tables. It starts on All tables.
     // A negative value means that the player did not choose a tab.
-    var tab by rememberPersistentInt("mainTab", 0)
+    // The name changed when the Players tab came in, so an old saved value does not open the wrong tab.
+    var tab by rememberPersistentInt("tournamentTab", MainTab.TABLES)
+    // The player open in the Players tab, and the tab of that player: 0 is Tables and 1 is Stats.
+    var selectedPlayer by rememberPersistentOptionalInt("selectedPlayer")
+    var playerTab by rememberPersistentInt("playerTab", 0)
+    // Where the back button goes from the open player: the main tab it came from, or the table it came from.
+    var backTab by rememberPersistentInt("playerBackTab", -1)
+    var backTable by rememberPersistentText("playerBackTable", null)
+    fun openPlayer(slot: Int, from: Int?, statistics: Boolean = false) {
+        selectedPlayer = slot
+        playerTab = if (statistics) 1 else 0
+        backTab = from ?: -1
+        backTable = null
+        tab = MainTab.PLAYERS
+    }
+    fun closePlayer() {
+        selectedPlayer = null
+        val table = backTable?.split(':')?.mapNotNull { it.toIntOrNull() }?.takeIf { it.size == 2 }
+        if (backTab >= 0) tab = backTab
+        backTab = -1
+        backTable = null
+        if (table != null) navController.navigate(TableRoute(tournamentId, table[0], table[1]))
+    }
+    // A table asks this screen to open one of its players. See [openPlayerFromTable].
+    LaunchedEffect(requests) {
+        requests ?: return@LaunchedEffect
+        requests.getStateFlow<Int?>(OPEN_PLAYER_KEY, null).collect { slot ->
+            if (slot == null) return@collect
+            openPlayer(slot, from = null)
+            backTable = requests.get<String>(OPEN_PLAYER_FROM_TABLE_KEY)
+            requests[OPEN_PLAYER_KEY] = null
+            requests.remove<String>(OPEN_PLAYER_FROM_TABLE_KEY)
+        }
+    }
+    // The team open in the Teams tab, and the tab of that team: 0 is Players and 1 is Tables.
+    var selectedTeam by rememberPersistentOptionalInt("selectedTeam")
+    var teamTab by rememberPersistentInt("teamTab", 0)
+    // The tabs in their order. Teams shows only in a tournament with teams.
+    val mainTabs = MainTab.visible(isTeams = view?.tournament?.isTeams == true)
+    val shownTab = tab.takeIf { it in mainTabs } ?: MainTab.TABLES
+    val playerOpen = shownTab == MainTab.PLAYERS && selectedPlayer != null
+    val teamOpen = shownTab == MainTab.TEAMS && selectedTeam != null
+    fun closeDetail() = if (playerOpen) closePlayer() else selectedTeam = null
+    PlatformBackHandler(enabled = playerOpen || teamOpen) { closeDetail() }
     var chosenTablesTab by rememberPersistentInt("tablesTab", -1)
     // The values are ids: 0 is My tables, 1 is All tables and 2 is Team tables (only in a tournament with teams).
     val tablesTabs = if (view?.tournament?.isTeams == true) listOf(0, 2, 1) else listOf(0, 1)
@@ -917,10 +959,16 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     account.Dialogs()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
-        title = view?.tournament?.name ?: stringResource(Res.string.scope_tournament),
-        isLoading = (view == null && message == null) || (tab == 2 && statisticsLoading),
+        // An open player names the screen, like the screen of a player did before the Players tab.
+        title = when {
+            playerOpen -> view?.nameOf(selectedPlayer) ?: stringResource(Res.string.scope_player)
+            teamOpen -> view?.teamNameOf(selectedTeam) ?: stringResource(Res.string.ranking_teams)
+            else -> view?.tournament?.name ?: stringResource(Res.string.scope_tournament)
+        },
+        subtitle = if (playerOpen || teamOpen) view?.tournament?.name else null,
+        isLoading = (view == null && message == null) || ((shownTab == MainTab.STATISTICS || playerOpen || teamOpen) && statisticsLoading),
         autoFocusFirst = false,
-        onBack = { navController.popBackStack() },
+        onBack = { if (playerOpen || teamOpen) closeDetail() else navController.popBackStack() },
     ) {
         // The tab row touches the top bar, so the screen has no padding. The content under the tabs has its own.
         // The provider is outside the column, so all the tab rows use the same state.
@@ -931,26 +979,36 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                     MessageDialog(message)
                     return@ScreenColumn
                 }
-                HideOnScrollTabs(tab) {
+                HideOnScrollTabs(shownTab) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        val selectedIndex = mainTabs.indexOf(shownTab)
                         PrimaryTabRow(
-                            selectedTabIndex = tab,
+                            selectedTabIndex = selectedIndex,
                             containerColor = tabRowColor(),
                             contentColor = TabContentColor,
-                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
+                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(selectedIndex), color = TabContentColor) },
                             modifier = Modifier.widthIn(max = TournamentColumnWidth),
                         ) {
-                            listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_ranking), stringResource(Res.string.stats_title), stringResource(Res.string.tab_info)).forEachIndexed { index, title ->
+                            mainTabs.forEach { id ->
                                 CompactTab(
-                                    selected = tab == index,
-                                    onClick = { tab = index },
-                                    title = title,
-                                    trackingName = listOf("Tables", "Ranking", "Statistics", "Info")[index],
+                                    selected = shownTab == id,
+                                    onClick = {
+                                        // The Players and Teams tabs go back to their list when they are already open.
+                                        if (id == shownTab && id == MainTab.PLAYERS) selectedPlayer = null
+                                        if (id == shownTab && id == MainTab.TEAMS) selectedTeam = null
+                                        backTab = -1
+                                        backTable = null
+                                        tab = id
+                                    },
+                                    title = stringResource(MainTab.title(id)),
+                                    trackingName = MainTab.trackingName(id),
                                     icon = {
-                                        val icon = when (index) {
-                                            0 -> Icons.Default.People
-                                            1 -> Icons.Default.Leaderboard
-                                            2 -> StatisticsIcon
+                                        val icon = when (id) {
+                                            MainTab.TABLES -> Icons.Default.GridView
+                                            MainTab.RANKING -> Icons.Default.Leaderboard
+                                            MainTab.PLAYERS -> Icons.Default.Person
+                                            MainTab.TEAMS -> Icons.Default.Groups
+                                            MainTab.STATISTICS -> StatisticsIcon
                                             else -> Icons.Default.Info
                                         }
                                         Icon(icon, contentDescription = null, Modifier.size(20.dp))
@@ -962,12 +1020,12 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                 }
                 Column(
                     Modifier.weight(1f).align(Alignment.CenterHorizontally).hideOnScroll(hideOnScroll)
-                        .then(if (tab == 2) Modifier.fillMaxWidth() else Modifier.widthIn(max = TournamentColumnWidth).fillMaxWidth()),
+                        .then(if (shownTab == MainTab.STATISTICS) Modifier.fillMaxWidth() else Modifier.widthIn(max = TournamentColumnWidth).fillMaxWidth()),
                 ) {
                     MessageDialog(message)
                     val open: (PlayerTable) -> Unit = { navController.navigate(TableRoute(tournamentId, it.roundId, it.tableId)) }
-                    when (tab) {
-                        0 -> {
+                    when (shownTab) {
+                        MainTab.TABLES -> {
                             HideOnScrollTabs(tablesTab) {
                                 PrimaryTabRow(
                                     selectedTabIndex = tablesTab,
@@ -1026,8 +1084,33 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
                                 TableList(view, view.tables, stringResource(Res.string.tables_all_empty), open, filterName = "all")
                             }
                         }
-                        1 -> RankingTab(view) { navController.navigate(PlayerTablesRoute(tournamentId, it)) }
-                        2 -> TournamentStatisticsTab(tournamentId, view.mySlotId) { statisticsLoading = it }
+                        MainTab.RANKING -> RankingTab(view) { openPlayer(it, from = MainTab.RANKING) }
+                        MainTab.PLAYERS -> PlayersTab(
+                            view = view,
+                            selectedSlot = selectedPlayer,
+                            playerTab = playerTab,
+                            onPlayerTabChange = { playerTab = it },
+                            onSelect = { openPlayer(it, from = null) },
+                            onOpenTable = open,
+                            onStatisticsLoading = { statisticsLoading = it },
+                        )
+                        MainTab.TEAMS -> TeamsTab(
+                            view = view,
+                            selectedTeam = selectedTeam,
+                            teamTab = teamTab,
+                            onTeamTabChange = { teamTab = it },
+                            onSelect = {
+                                selectedTeam = it
+                                teamTab = 0
+                            },
+                            onOpenPlayer = { openPlayer(it, from = MainTab.TEAMS) },
+                            onOpenTable = open,
+                            onStatisticsLoading = { statisticsLoading = it },
+                        )
+                        MainTab.STATISTICS -> TournamentStatisticsTab(
+                            tournamentId,
+                            onOpenPlayer = { openPlayer(it, from = MainTab.STATISTICS, statistics = true) },
+                        ) { statisticsLoading = it }
                         else -> TournamentInfoTab(view)
                     }
                 }
@@ -1207,7 +1290,7 @@ private fun RoundHeader(roundId: Int, start: String?) {
 
 /** A table with its four players. The points of the table show only for a complete table. */
 @Composable
-private fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, highlightSlot: Int?, onClick: () -> Unit) {
+internal fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, highlightSlot: Int?, onClick: () -> Unit) {
     val colors = MaterialTheme.colorScheme
     val complete = table.isComplete
     val ongoing = !complete && table.doneHands > 0
@@ -1735,7 +1818,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                     if (view.canAddHands(table, now)) {
                         preselectWinner = slot
                     } else {
-                        navController.navigate(PlayerTablesRoute(tournamentId, slot))
+                        navController.openPlayerFromTable(tournamentId, roundId, tableId, slot)
                     }
                 },
             )
@@ -2001,93 +2084,6 @@ private fun HandKind.icon(): ImageVector = when (this) {
     HandKind.SELF_PICK -> Icons.Default.Bolt
     HandKind.DISCARD -> Icons.Default.SwapHoriz
     HandKind.DRAW -> Icons.Default.HorizontalRule
-}
-
-/** Every table of one player of the tournament, with the results. */
-@Composable
-fun PlayerTablesScreen(navController: NavHostController, tournamentId: String, slotId: Int) {
-    val (view, message) = rememberTournamentView(tournamentId)
-    val ranking = view?.rankings?.players?.firstOrNull { it.playerId == slotId }
-    val tables = view?.tables.orEmpty().filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
-    var tab by rememberPersistentInt("playerTab", 0)
-    // The Stats tab tells this screen when it loads, so the progress bar stays until the content shows.
-    var statisticsLoading by remember { mutableStateOf(false) }
-    // The tab row hides when the content scrolls down and shows when it scrolls up.
-    val hideOnScroll = rememberHideOnScrollState()
-
-    val account = rememberAccountActions(navController)
-    account.Dialogs()
-    AppScaffold(
-        rootLeadingActions = { account.Buttons() },
-        title = view?.nameOf(slotId) ?: stringResource(Res.string.scope_player),
-        subtitle = view?.tournament?.name,
-        isLoading = (view == null && message == null) || (tab == 1 && statisticsLoading),
-        autoFocusFirst = false,
-        onBack = { navController.popBackStack() },
-    ) {
-        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
-            ScreenColumn(maxWidth = 720.dp, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
-                if (view == null) {
-                    MessageDialog(message)
-                    return@ScreenColumn
-                }
-                HideOnScrollTabs(tab) {
-                    PrimaryTabRow(
-                        selectedTabIndex = tab,
-                        containerColor = tabRowColor(),
-                        contentColor = TabContentColor,
-                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
-                    ) {
-                        listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_stats)).forEachIndexed { index, title ->
-                            CompactTab(
-                                selected = tab == index,
-                                onClick = { tab = index },
-                                title = title,
-                                trackingName = if (index == 0) "Tables" else "Statistics",
-                                icon = {
-                                    Icon(
-                                        if (index == 0) Icons.Default.People else StatisticsIcon,
-                                        contentDescription = null,
-                                        Modifier.size(20.dp),
-                                    )
-                                },
-                            )
-                        }
-                    }
-                }
-                Column(Modifier.weight(1f).fillMaxWidth().hideOnScroll(hideOnScroll)) {
-                    MessageDialog(message)
-                    if (tab == 1) {
-                        PlayerSlotStatisticsTab(
-                            tournamentId,
-                            slotId,
-                            ranking = ranking,
-                        ) { statisticsLoading = it }
-                    } else if (tables.isEmpty()) {
-                        Box(Modifier.padding(16.dp)) { EmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message)) }
-                    } else {
-                        // The padding is inside the list, so the list ends at the tab row and at the bottom of the screen.
-                        val state = rememberPersistentLazyListState("tables")
-                        Box(Modifier.weight(1f)) {
-                            LazyColumn(
-                                state = state,
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(10.dp),
-                                contentPadding = PaddingValues(16.dp),
-                            ) {
-                                items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                                    TableSummaryCard(view, table, highlightSlot = slotId) {
-                                        navController.navigate(TableRoute(tournamentId, table.roundId, table.tableId))
-                                    }
-                                }
-                            }
-                            TableScrollbar(state, tables, Modifier.align(Alignment.CenterEnd))
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 /** The color of the winner in the hand list, the counterpart of the red loser. Same green as the gains of the hand review. */

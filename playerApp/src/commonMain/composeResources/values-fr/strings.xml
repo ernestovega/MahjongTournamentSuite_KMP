@@ -97,6 +97,16 @@
     <string name="hand_discard">Défausse</string>
     <string name="hand_draw">Nulle</string>
     <string name="tables_player_empty_message">Ce joueur n'a pas encore de table dans ce tournoi.</string>
+    <string name="players_search_hint">Nom, pays ou équipe</string>
+    <string name="players_search_empty">Aucun joueur ne correspond à la recherche.</string>
+    <string name="player_position">#%1$d</string>
+    <string name="team_members">Membres</string>
+    <string name="teams_search_hint">Équipe ou joueur</string>
+    <string name="teams_search_empty">Aucune équipe ne correspond à la recherche.</string>
+    <string name="team_statistics_note">Les statistiques additionnent les tables de tous les joueurs de l’équipe.</string>
+    <string name="team_member_win_rate">Taux de victoire</string>
+    <string name="team_member_points">Points</string>
+    <string name="team_member_score">Score</string>
     <string name="jump_to_me">Aller à moi</string>
     <string name="entry_totals_only">Les organisateurs saisissent seulement les scores finaux de cette table. Vous ne pouvez pas ajouter de mains ici.</string>
     <string name="entry_round_not_started">En attente du gong de départ. Les boutons pour ajouter des mains apparaissent au début du tour.</string>

@@ -278,7 +278,7 @@ fun PlayerStandingCard(position: Int, points: Double, score: Int, modifier: Modi
 }
 
 @Composable
-internal fun StatCard(
+fun StatCard(
     title: String?,
     modifier: Modifier = Modifier,
     /** When [onToggle] is set, the title is a button that folds the card. */

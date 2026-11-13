@@ -97,6 +97,16 @@
     <string name="hand_discard">Discard</string>
     <string name="hand_draw">Draw</string>
     <string name="tables_player_empty_message">This player has no table in this tournament yet.</string>
+    <string name="players_search_hint">Name, country or team</string>
+    <string name="players_search_empty">No player matches the search.</string>
+    <string name="player_position">#%1$d</string>
+    <string name="team_members">Members</string>
+    <string name="teams_search_hint">Team or player</string>
+    <string name="teams_search_empty">No team matches the search.</string>
+    <string name="team_statistics_note">The statistics add up the tables of every player of the team.</string>
+    <string name="team_member_win_rate">Win rate</string>
+    <string name="team_member_points">Points</string>
+    <string name="team_member_score">Score</string>
     <string name="jump_to_me">Jump to me</string>
     <string name="entry_totals_only">The organizers enter only the final scores of this table. You cannot add hands here.</string>
     <string name="entry_round_not_started">Waiting for the starting gong. The hand buttons appear when the round starts.</string>

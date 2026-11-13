@@ -276,31 +276,19 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
     }
 }
 
-/** The tabs inside the statistics tab of a tournament. */
-private enum class TournamentStatisticsKind(val title: StringResource, val icon: ImageVector) {
-    TOURNAMENT(Res.string.scope_tournament, Icons.Default.EmojiEvents),
-    PLAYERS(Res.string.scope_players, Icons.Default.Group),
-}
-
 /**
- * The statistics tab of the tournament screen. It has two tabs inside:
- * "Tournament" shows the statistics of the tournament, and "Players" shows the statistics of one player.
- * "Players" starts with the signed-in player. A tap on a player in "Tournament" opens that player in "Players".
+ * The statistics tab of the tournament screen: the statistics of the whole tournament.
+ * A tap on a player opens that player in the Players tab of the tournament ([onOpenPlayer]).
  */
 @Composable
 fun TournamentStatisticsTab(
     tournamentId: String,
-    mySlotId: Int?,
+    onOpenPlayer: (Int) -> Unit = {},
     onLoadingChange: (Boolean) -> Unit = {},
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
     var message by remember(tournamentId) { mutableStateOf<UiText?>(null) }
-    val tabs = TournamentStatisticsKind.entries
-    var tabName by rememberPersistentText("tournament-statistics-tab", TournamentStatisticsKind.TOURNAMENT.name)
-    val tab = tabs.firstOrNull { it.name == tabName } ?: TournamentStatisticsKind.TOURNAMENT
-    var chosenSlotText by rememberPersistentText("tournament-statistics-player", null)
-    var changing by remember { mutableStateOf(false) }
     LaunchedEffect(tournamentId) {
         when (val result = presenter.tournament(tournamentId)) {
             is AppResult.Success -> data = result.value
@@ -308,97 +296,23 @@ fun TournamentStatisticsTab(
         }
     }
     ReportLoading(data == null && message == null, onLoadingChange)
-    // The scroll starts at the line under the tabs. The padding is inside the scroll, so the content moves under that line.
-    Column(Modifier.fillMaxSize()) {
-        // The tab row is as wide as the tabs of the tournament, like the rows of Tables and Ranking. The content uses all the width.
-        val loadedData = data
-        val shownSlotId = loadedData?.let { chosenSlotText?.toIntOrNull() ?: mySlotId ?: it.slots.firstOrNull()?.id }
-        // The bar with the chosen player, like in "Others" of the general statistics.
-        val shownProfile = loadedData?.let { loaded ->
-            shownSlotId?.let { id -> loaded.profiles[id] ?: loaded.names[id]?.let { name -> PlayerProfile(name, "", "", null) } }
-        }
-        HideOnScrollTabs(tab to shownSlotId) {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                PrimaryTabRow(
-                    selectedTabIndex = tabs.indexOf(tab),
-                    containerColor = tabRowColor(),
-                    contentColor = TabContentColor,
-                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
-                    modifier = Modifier.widthIn(max = TournamentColumnWidth),
-                ) {
-                    tabs.forEach { item ->
-                        CompactTab(
-                            selected = item == tab,
-                            onClick = { tabName = item.name },
-                            title = stringResource(item.title),
-                            trackingName = item.name,
-                            icon = { Icon(item.icon, contentDescription = null, Modifier.size(20.dp)) },
-                        )
-                    }
-                }
-                if (tab == TournamentStatisticsKind.PLAYERS && shownProfile != null && !changing) {
-                    OthersPlayerBar(shownProfile) { changing = true }
-                }
-            }
-        }
-        val tabScroll = rememberPersistentScrollState("statistics-" + tab.name)
-        // A player opened from a list starts at the top of the Players tab.
-        ResetScrollOnChange(tabScroll, chosenSlotText)
-        Column(
-            Modifier.weight(1f).fillMaxWidth().verticalScroll(tabScroll)
-                .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
-        ) {
-            message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
-            val loaded = data ?: return@Column
-            when (tab) {
-                TournamentStatisticsKind.TOURNAMENT -> TournamentStatisticsPanel(
-                    statistics = loaded.statistics,
-                    names = loaded.names,
-                    onOpenPlayer = { slotId ->
-                        chosenSlotText = slotId.toString()
-                        tabName = TournamentStatisticsKind.PLAYERS.name
-                    },
-                )
-                TournamentStatisticsKind.PLAYERS -> {
-                    val slotId = shownSlotId
-                    if (shownProfile == null || changing) {
-                        Row(
-                            Modifier.widthIn(max = 520.dp).fillMaxWidth().align(Alignment.CenterHorizontally),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            PlayerDropdownField(
-                                names = loaded.names,
-                                selectedId = slotId,
-                                onChoose = {
-                                    chosenSlotText = it.toString()
-                                    changing = false
-                                },
-                                modifier = Modifier.weight(1f),
-                            )
-                            if (shownProfile != null) TextButton(onClick = { changing = false }) { Text(stringResource(Res.string.action_cancel)) }
-                        }
-                    }
-                    val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
-                    if (stats == null) {
-                        AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
-                    } else {
-                        // The bar above names the player, so the panel has no header.
-                        PlayerStatisticsPanel(
-                            stats,
-                            tournaments = listOf(loaded.tournament),
-                            rivalNames = loaded.rivalNames,
-                        )
-                    }
-                }
-            }
-        }
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("statistics-TOURNAMENT"))
+            .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(20.dp),
+    ) {
+        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        val loaded = data ?: return@Column
+        TournamentStatisticsPanel(
+            statistics = loaded.statistics,
+            names = loaded.names,
+            onOpenPlayer = onOpenPlayer,
+        )
     }
 }
 
 /**
- * The statistics of one player in one tournament. The player screen shows it in its Stats tab.
+ * The statistics of one player in one tournament. The player in the Players tab shows it in its Stats tab.
  * [onLoadingChange] tells the screen when the data loads, so the progress bar stays until the content shows.
  */
 @Composable
