@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -510,6 +511,7 @@ private fun ActivityTable(
     onLoadMore: () -> Unit,
     onOpen: (ActivityEntry) -> Unit,
 ) {
+    val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("activity"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
@@ -533,7 +535,7 @@ private fun ActivityTable(
             }
             return@LazyColumnWithScrollbar
         }
-        item(key = "header") {
+        if (!compact) item(key = "header") {
             DataTableHeaderRow {
                 Text(stringResource(Res.string.activity_col_when), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.labelLarge)
                 Text(stringResource(Res.string.activity_col_who), modifier = Modifier.weight(0.6f), style = MaterialTheme.typography.labelLarge)
@@ -546,6 +548,33 @@ private fun ActivityTable(
                 modifier = rowFocusRequesters[entry.id]?.let { Modifier.focusRequester(it) } ?: Modifier,
                 onClick = { onOpen(entry) },
             ) {
+                if (compact) {
+                    // A phone shows what happened first, then where, then when and who on one small line.
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            actionLabel(entry.action),
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (entry.action == "table.conflict") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        val where = whereLabel(entry)
+                        if (where.isNotBlank()) {
+                            Text(where, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
+                        Text(
+                            listOf(dateTime(entry.at), personLabel(entry), originLabel(originOf(entry))).joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (entry.isTableSave && entry.changes.isNotEmpty()) {
+                            Text(stringResource(Res.string.activity_changes_count, entry.changes.size), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    return@DataTableRow
+                }
                 Text(dateTime(entry.at), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.bodySmall)
                 Column(Modifier.weight(0.6f)) {
                     Text(personLabel(entry), style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)

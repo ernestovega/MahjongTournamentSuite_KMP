@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -485,11 +488,12 @@ private fun UsersTable(
     onToggleSelected: (String) -> Unit,
     onEdit: (ManagedUser) -> Unit,
 ) {
+    val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("users"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
     ) {
-        item {
+        if (!compact) item {
             DataTableHeaderRow {
                 if (selectable) Spacer(Modifier.width(UserCheckboxColumnWidth))
                 Text(
@@ -523,22 +527,55 @@ private fun UsersTable(
                     )
                 }
                 val country = user.emaId?.let(countryByEmaId::get).orEmpty()
-                Box(modifier = Modifier.width(UserCountryColumnWidth), contentAlignment = Alignment.Center) {
-                    if (country.isBlank()) {
-                        Text("—")
-                    } else {
-                        CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
+                val roleLabel = user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() }
+                val statusLabel = stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active)
+                if (compact) {
+                    // A phone shows the alias over the email, and the other columns as one small line.
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            user.alias.ifBlank { user.email },
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (user.alias.isNotBlank()) {
+                            Text(
+                                user.email,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if (country.isNotBlank()) CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
+                            Text(
+                                listOfNotNull(roleLabel, user.emaId?.let { "EMA $it" }, statusLabel).joinToString(" · "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (user.disabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
+                } else {
+                    Box(modifier = Modifier.width(UserCountryColumnWidth), contentAlignment = Alignment.Center) {
+                        if (country.isBlank()) {
+                            Text("—")
+                        } else {
+                            CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
+                        }
+                    }
+                    Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.25f), maxLines = 1)
+                    Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() },
+                        modifier = Modifier.weight(0.2f),
+                        maxLines = 1,
+                    )
+                    Text(user.emaId ?: "—", modifier = Modifier.weight(0.12f), maxLines = 1)
+                    Text(stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active), modifier = Modifier.weight(0.13f))
                 }
-                Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.25f), maxLines = 1)
-                Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() },
-                    modifier = Modifier.weight(0.2f),
-                    maxLines = 1,
-                )
-                Text(user.emaId ?: "—", modifier = Modifier.weight(0.12f), maxLines = 1)
-                Text(stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active), modifier = Modifier.weight(0.13f))
             }
             DataTableDivider()
         }
@@ -549,7 +586,7 @@ private fun UsersTable(
 internal val RoleFilterOrder = listOf(GlobalUserRole.ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 internal fun UserFilters(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
@@ -559,8 +596,15 @@ internal fun UserFilters(
     selectedTournamentId: String?,
     onTournamentSelected: (String?) -> Unit,
 ) {
+    // A phone puts the search and the tournament on two lines, so both fields have room.
+    val compact = LocalCompactLayout.current
+    val fieldModifier = if (compact) Modifier.fillMaxWidth() else Modifier
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            maxItemsInEachRow = if (compact) 1 else 2,
+        ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchChange,
@@ -571,7 +615,7 @@ internal fun UserFilters(
                         IconButton(onClick = { onSearchChange("") }) { Text("×") }
                     }
                 },
-                modifier = Modifier.weight(1f),
+                modifier = if (compact) fieldModifier else Modifier.weight(1f),
             )
             val allTournaments = stringResource(Res.string.all_tournaments)
             val options = remember(tournaments, allTournaments) {
@@ -582,7 +626,7 @@ internal fun UserFilters(
                 options = options,
                 selected = selectedTournamentId,
                 onSelect = onTournamentSelected,
-                modifier = Modifier.weight(1f),
+                modifier = if (compact) fieldModifier else Modifier.weight(1f),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

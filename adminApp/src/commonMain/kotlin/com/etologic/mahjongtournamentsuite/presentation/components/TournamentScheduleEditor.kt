@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -125,20 +127,28 @@ fun TournamentScheduleEditor(
                 style = MaterialTheme.typography.bodySmall,
             )
         } else {
+            val compact = LocalCompactLayout.current
+            val fieldTextStyle = compactDateTextStyle()
             roundRows.forEachIndexed { index, row ->
                 if (index > 0) HorizontalDivider()
                 val datePickerFocusRequester = remember(row.roundId) { FocusRequester() }
                 val timePickerFocusRequester = remember(row.roundId) { FocusRequester() }
+                // A phone puts the round name over the two fields, so the date has room.
+                if (compact) {
+                    Text(stringResource(Res.string.round_n, row.roundId), style = MaterialTheme.typography.bodyMedium)
+                }
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        stringResource(Res.string.round_n, row.roundId),
-                        modifier = Modifier.width(72.dp),
-                        style = MaterialTheme.typography.bodyMedium,
-                    )
+                    if (!compact) {
+                        Text(
+                            stringResource(Res.string.round_n, row.roundId),
+                            modifier = Modifier.width(72.dp),
+                            style = MaterialTheme.typography.bodyMedium,
+                        )
+                    }
                     OutlinedTextField(
                         value = row.date,
                         onValueChange = { value ->
@@ -146,7 +156,8 @@ fun TournamentScheduleEditor(
                                 roundRows.replaceAt(index, row.copy(date = value.toDateInput())),
                             )
                         },
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier.weight(if (compact) 1.25f else 1f),
+                        textStyle = fieldTextStyle,
                         // Every round needs a date and a start time, so both fields carry the required star.
                         label = { RequiredLabel(stringResource(Res.string.date)) },
                         placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
@@ -179,7 +190,8 @@ fun TournamentScheduleEditor(
                                 roundRows.replaceAt(index, row.copy(startTime = value.toTimeInput())),
                             )
                         },
-                        modifier = Modifier.width(128.dp),
+                        modifier = if (compact) Modifier.weight(1f) else Modifier.width(128.dp),
+                        textStyle = fieldTextStyle,
                         label = { RequiredLabel(stringResource(Res.string.start)) },
                         placeholder = { Text(stringResource(Res.string.hh_mm)) },
                         trailingIcon = {
@@ -478,3 +490,8 @@ private fun String.toTournamentTimeOrNull(): String? {
 
 private fun <T> List<T>.replaceAt(index: Int, value: T): List<T> =
     toMutableList().also { it[index] = value }
+
+/** A smaller text in the date fields on a phone, so a whole DD/MM/YYYY date fits next to the calendar button. */
+@Composable
+internal fun compactDateTextStyle(): TextStyle =
+    if (LocalCompactLayout.current) MaterialTheme.typography.bodyMedium else LocalTextStyle.current

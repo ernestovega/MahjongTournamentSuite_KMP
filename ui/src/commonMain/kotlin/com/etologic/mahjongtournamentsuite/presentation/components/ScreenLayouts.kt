@@ -166,9 +166,9 @@ fun ScreenColumn(
         // A phone keeps the margins small, so the content has room.
         val contentPadding = if (LocalCompactLayout.current) {
             PaddingValues(
-                start = CompactScreenSidePadding,
+                start = contentPadding.calculateStartPadding(layoutDirection).coerceAtMost(CompactScreenSidePadding),
                 top = contentPadding.calculateTopPadding().coerceAtMost(CompactScreenSidePadding),
-                end = CompactScreenSidePadding,
+                end = contentPadding.calculateEndPadding(layoutDirection).coerceAtMost(CompactScreenSidePadding),
                 bottom = contentPadding.calculateBottomPadding(),
             )
         } else {

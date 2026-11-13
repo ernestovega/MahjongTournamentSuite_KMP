@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
+import androidx.compose.foundation.layout.Box
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -260,7 +264,9 @@ fun ErrorsScreen(navController: NavHostController) {
 @Composable
 private fun ErrorKpis(shown: List<ErrorGroup>, now: Long) {
     val lastSeen = shown.maxOfOrNull { it.lastSeen }
-    StaggeredColumns(minColumnWidth = 200.dp, spacing = 12.dp) {
+    // Two tiles per line on a phone, so the numbers do not push the list down.
+    val compact = LocalCompactLayout.current
+    StaggeredColumns(minColumnWidth = if (compact) 140.dp else 200.dp, spacing = if (compact) 8.dp else 12.dp) {
         KpiTile(stringResource(Res.string.errors_kpi_problems), shown.size.toString())
         KpiTile(stringResource(Res.string.errors_kpi_occurrences), shown.sumOf { it.count }.toString())
         KpiTile(
@@ -275,9 +281,10 @@ private fun ErrorKpis(shown: List<ErrorGroup>, now: Long) {
 @Composable
 private fun KpiTile(label: String, value: String, valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface) {
     Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)) {
-        Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        val compact = LocalCompactLayout.current
+        Column(Modifier.fillMaxWidth().padding(if (compact) 12.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text(value, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = valueColor)
+            Text(value, style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = valueColor)
         }
     }
 }
@@ -317,6 +324,37 @@ private fun ErrorFiltersBar(
             FocusedButton(onClick = onReload, enabled = reloadEnabled, focusRequester = reloadFocusRequester) {
                 Text(stringResource(Res.string.errors_reload))
             }
+        }
+        if (LocalCompactLayout.current) {
+            // A phone has no room for five lines of chips. Each group becomes a menu, two per line.
+            val half = Modifier.weight(1f)
+            val periodOptions = listOf(SelectOption<Int?>(null, stringResource(Res.string.errors_period_all))) +
+                PERIOD_HOURS.map { hours ->
+                    SelectOption<Int?>(hours, if (hours < 48) stringResource(Res.string.errors_last_hours, hours) else stringResource(Res.string.errors_last_days, hours / 24))
+                }
+            val appOptions = listOf(SelectOption<String?>(null, stringResource(Res.string.errors_app_all))) + APPS.map { SelectOption<String?>(it, appLabel(it)) }
+            val platformOptions = listOf(SelectOption<String?>(null, stringResource(Res.string.errors_platform_all))) +
+                PLATFORMS.map { SelectOption<String?>(it, platformLabel(it)) }
+            val kindOptions = listOf(SelectOption<String?>(null, stringResource(Res.string.errors_kind_all))) + ERROR_KINDS.map { SelectOption<String?>(it, kindLabel(it)) }
+            val sortOptions = listOf(
+                SelectOption(false, stringResource(Res.string.errors_sort_latest)),
+                SelectOption(true, stringResource(Res.string.errors_sort_frequent)),
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SelectField(null, periodOptions, periodHours, onPeriod, half, textStyle = MaterialTheme.typography.bodyMedium)
+                SelectField(null, appOptions, app, onApp, half, textStyle = MaterialTheme.typography.bodyMedium)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                SelectField(null, platformOptions, platform, onPlatform, half, textStyle = MaterialTheme.typography.bodyMedium)
+                SelectField(null, kindOptions, kind, onKind, half, textStyle = MaterialTheme.typography.bodyMedium)
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                SelectField(null, sortOptions, sortFrequent, onSortFrequent, half, textStyle = MaterialTheme.typography.bodyMedium)
+                Box(half) {
+                    FilterChip(selected = productionOnly, onClick = { onProductionOnly(!productionOnly) }, label = { Text(stringResource(Res.string.errors_prod_only)) })
+                }
+            }
+            return@Column
         }
         ChipRow {
             FilterChip(selected = periodHours == null, onClick = { onPeriod(null) }, label = { Text(stringResource(Res.string.errors_period_all)) })
@@ -369,11 +407,12 @@ private fun ErrorGroupsTable(
         if (showEmpty) Text(emptyText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
+    val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("errors"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
     ) {
-        item {
+        if (!compact) item {
             DataTableHeaderRow {
                 Text(stringResource(Res.string.errors_col_last), modifier = Modifier.width(LastSeenColumnWidth), style = MaterialTheme.typography.labelLarge)
                 Text(stringResource(Res.string.errors_col_problem), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
@@ -387,6 +426,33 @@ private fun ErrorGroupsTable(
                 modifier = Modifier.focusRequesterFor(rowFocusRequesters[group.id]),
                 onClick = { onOpen(group) },
             ) {
+                if (compact) {
+                    // A phone shows the problem first and puts when, where and how many times on one small line.
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Text(group.errorType, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+                            Text(
+                                kindLabel(group.lastKind),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = if (group.lastKind == "crash") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        if (group.message.isNotBlank()) {
+                            Text(group.message, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
+                        Text(
+                            listOf(relativeTime(group.lastSeen, now), appLabel(group.lastApp), platformLabel(group.lastPlatform), group.lastVersion)
+                                .filter { it.isNotBlank() }
+                                .joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Text("×${group.count}", fontWeight = FontWeight.Bold)
+                    return@DataTableRow
+                }
                 Column(Modifier.width(LastSeenColumnWidth)) {
                     Text(relativeTime(group.lastSeen, now), style = MaterialTheme.typography.bodyMedium)
                     Text(

@@ -599,6 +599,7 @@ fun EditTournamentDialog(
                                                 renameError = null
                                             },
                                             modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.from)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {
@@ -633,6 +634,7 @@ fun EditTournamentDialog(
                                                 renameError = null
                                             },
                                             modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.date_to)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {

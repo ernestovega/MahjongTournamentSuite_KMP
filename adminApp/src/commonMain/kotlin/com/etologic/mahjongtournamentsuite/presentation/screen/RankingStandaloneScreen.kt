@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -214,8 +218,12 @@ private fun RankingStandaloneContent(
     Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
+            val compact = LocalCompactLayout.current
             Column(
-                modifier = Modifier.fillMaxSize().padding(20.dp).appFocusGroup(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(20.dp))
+                    .appFocusGroup(),
             ) {
                 error?.let {
                     AppErrorDialog(
@@ -282,8 +290,8 @@ private fun RankingStandaloneContent(
                 showTopThree = showTopThree,
                 onShowTopThreeChanged = { showTopThree = it },
                 modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(12.dp),
+                    .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
+                    .padding(if (compact) 8.dp else 12.dp),
             )
             }
         }
@@ -296,6 +304,7 @@ private fun CenteredMessage(message: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun RankingControls(
     playing: Boolean,
     themePreference: ThemePreference,
@@ -346,19 +355,12 @@ private fun RankingControls(
 
     LaunchedEffect(Unit) { playFocusRequester.requestFocus() }
 
-    Column(
-        modifier = modifier
-            .alpha(if (playing) 0.12f else 1f)
-            .verticalScroll(rememberScrollState())
-            .appFocusGroup(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
+    val controls: @Composable () -> Unit = {
         FocusedIconButton(
             onClick = onTogglePlaying,
             focusRequester = playFocusRequester,
             buttonModifier = Modifier
-                .size(56.dp)
+                .size(if (LocalCompactLayout.current) 44.dp else 56.dp)
                 .then(focusLoopFor(playFocusRequester)),
             showFocusHighlight = false,
         ) {
@@ -448,6 +450,30 @@ private fun RankingControls(
             }
         }
     }
+    if (LocalCompactLayout.current) {
+        // A phone has no room at the side of the ranking. The controls wrap in a bar at the bottom.
+        Surface(
+            modifier = modifier.fillMaxWidth().alpha(if (playing) 0.4f else 1f).appFocusGroup(),
+            shape = MaterialTheme.shapes.large,
+            tonalElevation = 3.dp,
+            shadowElevation = 3.dp,
+        ) {
+            FlowRow(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                itemVerticalAlignment = Alignment.CenterVertically,
+            ) { controls() }
+        }
+    } else {
+        Column(
+            modifier = modifier
+                .alpha(if (playing) 0.12f else 1f)
+                .verticalScroll(rememberScrollState())
+                .appFocusGroup(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) { controls() }
+    }
 }
 
 @Composable
@@ -458,21 +484,24 @@ private fun RankingPage(
     onMaxRowsChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // A phone reads the ranking in the hand: a normal text size, the full width, and the name column takes the space left.
+    val compact = LocalCompactLayout.current
+    val spacing = if (compact) 10.dp else RankingColumnSpacing
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = page.title,
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            style = (if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium).copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(bottom = 8.dp),
         )
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(horizontal = RankingHorizontalPadding)
-                .horizontalScroll(rememberScrollState()),
+                .padding(horizontal = if (compact) 0.dp else RankingHorizontalPadding)
+                .then(if (compact) Modifier else Modifier.horizontalScroll(rememberScrollState())),
             contentAlignment = Alignment.TopCenter,
         ) {
             val headerHeight = 28.dp
@@ -488,26 +517,31 @@ private fun RankingPage(
             LaunchedEffect(page.key, maxRowsAtReadableFont) {
                 onMaxRowsChanged(maxRowsAtReadableFont)
             }
-            val textStyle = MaterialTheme.typography.headlineSmall.copy(
-                fontSize = fontSize,
-                lineHeight = (fontSize.value + 2f).sp,
-                fontWeight = FontWeight.Bold,
-            )
+            val textStyle = if (compact) {
+                MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            } else {
+                MaterialTheme.typography.headlineSmall.copy(
+                    fontSize = fontSize,
+                    lineHeight = (fontSize.value + 2f).sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
             val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
-            val widths = rememberRankingColumnWidths(page, textStyle)
+            val measuredWidths = rememberRankingColumnWidths(page, textStyle)
+            val widths = if (compact) measuredWidths.fitNameTo(maxWidth, spacing) else measuredWidths
 
-            Column(modifier = Modifier.width(RankingTableWidth).fillMaxHeight()) {
+            Column(modifier = Modifier.width(if (compact) maxWidth else RankingTableWidth).fillMaxHeight()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(
-                        RankingColumnSpacing,
+                        spacing,
                         Alignment.CenterHorizontally,
                     ),
                 ) {
                     RankingCell("#", widths.position, TextAlign.Center, headerStyle)
-                    if (page.showCountry) RankingCell(stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
+                    if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
                     RankingCell(page.nameHeader, widths.name, TextAlign.Start, headerStyle)
                     if (page.extraHeader != null) {
                         RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
@@ -534,7 +568,7 @@ private fun RankingPage(
                                 vertical = 2.dp,
                             ),
                             horizontalArrangement = Arrangement.spacedBy(
-                                RankingColumnSpacing,
+                                spacing,
                                 Alignment.CenterHorizontally,
                             ),
                         ) {
@@ -636,6 +670,29 @@ private fun RankingCountryCell(
     }
 }
 
+/** Gives the name column the width that the other columns leave free in [total]. */
+private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp): RankingColumnWidths {
+    // The flag alone tells the country, so the column loses the width of its title.
+    // The team and the extra column are cut short, so the name keeps most of the width.
+    val fitted = copy(
+        country = if (showCountry) 40.dp else country,
+        extra = extra.coerceAtMost(72.dp),
+        team = team.coerceAtMost(72.dp),
+    )
+    val others = with(fitted) {
+        listOfNotNull(
+            position,
+            country.takeIf { showCountry },
+            extra.takeIf { showExtra },
+            points.takeIf { showPoints },
+            score.takeIf { showScore },
+            team.takeIf { showTeam },
+        )
+    }
+    val used = others.fold(0.dp) { sum, width -> sum + width } + spacing * others.size
+    return fitted.copy(name = (total - used).coerceAtLeast(80.dp))
+}
+
 private data class RankingColumnWidths(
     val position: Dp,
     val country: Dp,
@@ -648,6 +705,7 @@ private data class RankingColumnWidths(
     val showExtra: Boolean,
     val showPoints: Boolean,
     val showScore: Boolean,
+    val showTeam: Boolean,
 )
 
 @Composable
@@ -679,6 +737,7 @@ private fun rememberRankingColumnWidths(
             showExtra = page.extraHeader != null,
             showPoints = page.showPoints,
             showScore = page.showScore,
+            showTeam = page.teamHeader != null,
         )
     }
 }

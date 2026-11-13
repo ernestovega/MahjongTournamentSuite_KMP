@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.Spacer
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -51,6 +54,7 @@ import org.jetbrains.compose.resources.stringResource
 
 /** The bar above the list of accounts. Admins select accounts here and send them the password reset email. */
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 internal fun PasswordResetBar(
     shownCount: Int,
     selectedCount: Int,
@@ -59,17 +63,22 @@ internal fun PasswordResetBar(
     onClear: () -> Unit,
     onSend: () -> Unit,
 ) {
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // The items wrap on a narrow screen. On a wide one the send button stays at the end of the line.
+    FlowRow(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
         TextButton(enabled = shownCount > 0 && !busy, onClick = onSelectAllShown) {
             Text(stringResource(Res.string.select_all_shown, shownCount))
         }
         TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { Text(stringResource(Res.string.clear)) }
         Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(Modifier.weight(1f), horizontalArrangement = Arrangement.End) {
-            Button(enabled = selectedCount > 0 && !busy, onClick = onSend) {
-                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
-                Text(stringResource(Res.string.send_password_reset_count, selectedCount), Modifier.padding(start = 8.dp))
-            }
+        Spacer(Modifier.weight(1f))
+        Button(enabled = selectedCount > 0 && !busy, onClick = onSend) {
+            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
+            Text(stringResource(Res.string.send_password_reset_count, selectedCount), Modifier.padding(start = 8.dp))
         }
     }
 }

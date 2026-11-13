@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.material.icons.filled.Menu
+import androidx.compose.ui.graphics.vector.ImageVector
 import mahjongtournamentsuite.ui.generated.resources.action_back
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
@@ -241,7 +243,9 @@ fun AppScaffold(
                                         AppBackButton(onClick = onBack, showLabel = false)
                                     }
                                     if (navigationIcon != null || leadingActions != null) {
-                                        TopBarOverflowMenu(isLoading) {
+                                        // The menu at the start has the profile and the other sections. Its icon is not the
+                                        // three dots, so it does not look like the actions menu at the end.
+                                        TopBarOverflowMenu(isLoading, icon = Icons.Default.Menu) {
                                             navigationIcon?.invoke()
                                             leadingActions?.invoke()
                                         }
@@ -359,11 +363,11 @@ private fun SlowLinearLoadingIndicator(
 
 /** A three-dots button. Its menu shows [content] in a column. */
 @Composable
-private fun TopBarOverflowMenu(isLoading: Boolean, content: @Composable () -> Unit) {
+private fun TopBarOverflowMenu(isLoading: Boolean, icon: ImageVector = Icons.Default.MoreVert, content: @Composable () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { menuOpen = true }) {
-            Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.menu), tint = Color.White)
+            Icon(icon, contentDescription = stringResource(Res.string.menu), tint = Color.White)
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             CompositionLocalProvider(

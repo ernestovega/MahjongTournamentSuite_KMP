@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import mahjongtournamentsuite.adminapp.generated.resources.close
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -401,16 +404,18 @@ fun PlayerBaseScreen(navController: NavHostController) {
             selectedCountryCodes = availableSelection
         }
     }
+    // A phone shows the details instead of the list, so it does not choose the first player by itself.
+    val autoSelect = !LocalCompactLayout.current
     LaunchedEffect(loading, filteredPlayers.map { it.emaId }) {
         if (!playerFocusApplied && !loading) {
             val index = filteredPlayers.indexOfFirst { it.emaId == lastFocusedPlayerEmaId }
                 .takeIf { it >= 0 }
                 ?: 0
             if (index in playerFocusRequesters.indices) {
-                if (selected == null) select(filteredPlayers[index])
+                if (selected == null && autoSelect) select(filteredPlayers[index])
                 playerFocusRequesters[index].requestFocus()
             } else {
-                if (selected == null && players.isNotEmpty()) select(players.first())
+                if (selected == null && autoSelect && players.isNotEmpty()) select(players.first())
                 searchFocusRequester.requestFocus()
             }
             playerFocusApplied = true
@@ -692,17 +697,22 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     }
                 }
             }
+            // A phone has no room for the list and the details side by side. It shows the list, and the details
+            // instead of the list once a player is chosen. The close button of the details goes back to the list.
+            val compact = LocalCompactLayout.current
+            val showList = !compact || selected == null
+            val showDetails = !compact || selected != null
             Row(
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                SectionCard(
+                if (showList) SectionCard(
                     modifier = Modifier.weight(1.7f).fillMaxHeight(),
                     title = stringResource(Res.string.player_base),
                     subtitle = stringResource(Res.string.player_base_summary, filteredPlayers.size, filteredCountryCount),
                 ) {
                     Column(Modifier.fillMaxWidth().weight(1f)) {
-                        DataTableHeaderRow {
+                        if (!compact) DataTableHeaderRow {
                             PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
                             PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
                             PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
@@ -741,26 +751,46 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         }
                                     }
                                     Box(
-                                        modifier = Modifier.width(PlayerCountryColumnWidth),
+                                        modifier = if (compact) Modifier else Modifier.width(PlayerCountryColumnWidth),
                                         contentAlignment = Alignment.Center,
                                     ) {
                                         CountryFlagWithTooltip(player.country, countries)
                                     }
-                                    Text(player.displayName, modifier = Modifier.weight(1f))
-                                    Text(
-                                        player.emaId,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.width(PlayerEmaColumnWidth),
-                                    )
+                                    if (compact) {
+                                        Column(Modifier.weight(1f)) {
+                                            Text(player.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                            Text(
+                                                "EMA ${player.emaId}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
+                                        }
+                                    } else {
+                                        Text(player.displayName, modifier = Modifier.weight(1f))
+                                        Text(
+                                            player.emaId,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.width(PlayerEmaColumnWidth),
+                                        )
+                                    }
                                 }
                                 DataTableDivider()
                             }
                         }
                     }
                 }
-                SectionCard(
+                if (showDetails) SectionCard(
                     modifier = Modifier.weight(0.8f).fillMaxHeight(),
                     title = stringResource(Res.string.player_details),
+                    actions = if (compact) {
+                        {
+                            IconButton(onClick = { select(null) }) {
+                                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
+                            }
+                        }
+                    } else {
+                        null
+                    },
                 ) {
                     if (selected == null) {
                         AppEmptyState(

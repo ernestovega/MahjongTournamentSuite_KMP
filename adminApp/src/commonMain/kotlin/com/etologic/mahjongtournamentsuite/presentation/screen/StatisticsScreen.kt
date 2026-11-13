@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -384,7 +386,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     }
                 }
             }
-            Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            val compact = LocalCompactLayout.current
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = if (compact) CompactScreenSidePadding else 24.dp, vertical = if (compact) 12.dp else 16.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 20.dp),
+            ) {
                 message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                 when (scope) {
                     StatisticsScope.TOURNAMENT -> {

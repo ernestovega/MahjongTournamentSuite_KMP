@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.compactDateTextStyle
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -842,6 +843,7 @@ fun CreateTournamentDialog(
                                                 eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
                                                 clearError(CreateField.START_DATE, CreateField.END_DATE)
                                             },
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.from)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {
@@ -868,6 +870,7 @@ fun CreateTournamentDialog(
                                                 }
                                                 clearError(CreateField.START_DATE, CreateField.END_DATE)
                                             },
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.date_to)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {
