@@ -1,26 +1,27 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +41,6 @@ import mahjongtournamentsuite.ui.generated.resources.outcome_by_discard
 import mahjongtournamentsuite.ui.generated.resources.outcome_by_discard_deal_in
 import mahjongtournamentsuite.ui.generated.resources.outcome_by_self_draw
 import mahjongtournamentsuite.ui.generated.resources.outcome_hands_drawn
-import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.outcome_lost_to_self_draw
 import mahjongtournamentsuite.ui.generated.resources.outcome_third_player_win
 import mahjongtournamentsuite.ui.generated.resources.round_short
@@ -48,6 +48,7 @@ import mahjongtournamentsuite.ui.generated.resources.rounds_avg_hand_value
 import mahjongtournamentsuite.ui.generated.resources.rounds_cumulative_note
 import mahjongtournamentsuite.ui.generated.resources.rounds_empty_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_detail
+import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
 import mahjongtournamentsuite.ui.generated.resources.rounds_place_points_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_points_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_round_n
@@ -79,31 +80,27 @@ enum class RoundView(val title: StringResource) {
     RECORDS(Res.string.stats_records),
 }
 
-/** The test tag of the chip of a view of the "By round" cards. */
+/** The test tag of the section of a view of the "By round" cards. */
 fun roundViewTag(view: RoundView): String = "round-view-" + view.name.lowercase()
 
-/** The frame of every "By round" card: the title, the chips of the views, and the view. */
-@OptIn(ExperimentalLayoutApi::class)
+/**
+ * The frame of every "By round" card: the title, then every view one under the other, each one with its name. All the
+ * views share the selected round, so a tap on a round in one chart selects it in all of them.
+ */
 @Composable
 private fun RoundsCardFrame(
     views: List<RoundView>,
     modifier: Modifier,
     content: @Composable (RoundView) -> Unit,
 ) {
-    var chosen by rememberSaveable { mutableStateOf(views.first().name) }
-    val view = views.firstOrNull { it.name == chosen } ?: views.first()
     StatCard(stringResource(Res.string.rounds_title), modifier) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-            views.forEach { item ->
-                FilterChip(
-                    selected = item == view,
-                    onClick = { chosen = item.name },
-                    label = { Text(stringResource(item.title)) },
-                    modifier = Modifier.testTag(roundViewTag(item)),
-                )
+        views.forEachIndexed { index, view ->
+            if (index > 0) HorizontalDivider(Modifier.padding(vertical = MtsTheme.spacing.xs), color = MaterialTheme.colorScheme.outlineVariant)
+            Column(Modifier.fillMaxWidth().testTag(roundViewTag(view)), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                Text(stringResource(view.title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+                content(view)
             }
         }
-        content(view)
     }
 }
 
@@ -143,6 +140,8 @@ private fun SkillCharts(
     formats: List<(Double) -> String>,
     selected: Int,
     onSelect: (Int) -> Unit,
+    /** True writes under the charts that the lines add up the rounds and the dots are each round alone. */
+    note: Boolean = true,
 ) {
     val color = MaterialTheme.colorScheme.primary
     Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
@@ -167,13 +166,15 @@ private fun SkillCharts(
                 allValues = true,
             )
         }
-        Text(
-            stringResource(Res.string.rounds_cumulative_note),
-            Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
+        if (note) {
+            Text(
+                stringResource(Res.string.rounds_cumulative_note),
+                Modifier.fillMaxWidth(),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
     }
 }
 
@@ -264,14 +265,48 @@ fun PlayerRoundsCard(
 }
 
 /**
- * The hands of the player in the selected round, in sectors: won by discard or by self-draw, deal-ins, lost to a
- * self-draw, won by a third player, and drawn. The chips over the chart choose the round.
+ * The hands of the player, or of all the players of a team, in every round, one small ring for each round, all in a row that scrolls sideways when it
+ * does not fit: won by discard or by self-draw, deal-ins, lost to a self-draw, won by a third player, and drawn.
+ * A tap on a ring selects its round, and the legend under the row gives the counts and the shares of that round.
  */
 @Composable
 private fun PlayerHandsView(names: List<String>, rounds: List<PlayerRound>, selected: Int, onSelect: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-        names.forEachIndexed { index, name ->
-            FilterChip(selected = index == selected, onClick = { onSelect(index) }, label = { Text(name) })
+    val won = MaterialTheme.colorScheme.primary
+    val lost = MaterialTheme.colorScheme.error
+    val neutral = MaterialTheme.colorScheme.outline
+    fun parts(s: PlayerStatistics) = listOf(
+        Triple(Res.string.outcome_by_discard, s.winsByDiscard, won.copy(alpha = 0.85f)),
+        Triple(Res.string.outcome_by_self_draw, s.selfDraws, won.copy(alpha = 0.5f)),
+        Triple(Res.string.outcome_by_discard_deal_in, s.dealIns, lost.copy(alpha = 0.85f)),
+        Triple(Res.string.outcome_lost_to_self_draw, s.lostToSelfDraws, lost.copy(alpha = 0.5f)),
+        Triple(Res.string.outcome_third_player_win, s.otherWins, neutral.copy(alpha = 0.75f)),
+        Triple(Res.string.outcome_hands_drawn, s.drawnHands, neutral.copy(alpha = 0.4f)),
+    )
+    val scroll = rememberScrollState()
+    // Like the charts, the row starts at the end, where the last rounds are.
+    LaunchedEffect(rounds.size, scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
+    Row(Modifier.fillMaxWidth().horizontalScroll(scroll), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+        rounds.forEachIndexed { index, round ->
+            val highlight = if (index == selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f) else Color.Transparent
+            Column(
+                Modifier.clip(MaterialTheme.shapes.medium).background(highlight).clickable { onSelect(index) }.padding(MtsTheme.spacing.xs),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+            ) {
+                val s = round.round
+                SectorChart(
+                    inner = parts(s).map { Slice(it.second, it.third) },
+                    outer = null,
+                    size = 56.dp,
+                    thickness = 0.3f,
+                )
+                Text(
+                    names[index] + (s.handsPlayed.takeIf { it > 0 }?.let { " · $it" } ?: ""),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (index == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontWeight = if (index == selected) FontWeight.Bold else null,
+                )
+            }
         }
     }
     val round = rounds[selected]
@@ -286,29 +321,13 @@ private fun PlayerHandsView(names: List<String>, rounds: List<PlayerRound>, sele
         )
         return
     }
-    val won = MaterialTheme.colorScheme.primary
-    val lost = MaterialTheme.colorScheme.error
-    val neutral = MaterialTheme.colorScheme.outline
-    val parts = listOf(
-        Triple(Res.string.outcome_by_discard, s.winsByDiscard, won.copy(alpha = 0.85f)),
-        Triple(Res.string.outcome_by_self_draw, s.selfDraws, won.copy(alpha = 0.5f)),
-        Triple(Res.string.outcome_by_discard_deal_in, s.dealIns, lost.copy(alpha = 0.85f)),
-        Triple(Res.string.outcome_lost_to_self_draw, s.lostToSelfDraws, lost.copy(alpha = 0.5f)),
-        Triple(Res.string.outcome_third_player_win, s.otherWins, neutral.copy(alpha = 0.75f)),
-        Triple(Res.string.outcome_hands_drawn, s.drawnHands, neutral.copy(alpha = 0.4f)),
+    Text(
+        stringResource(Res.string.rounds_hands_of_round, round.roundId, s.handsPlayed),
+        style = MaterialTheme.typography.labelLarge,
+        fontWeight = FontWeight.Bold,
     )
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
-        SectorChart(
-            inner = parts.map { Slice(it.second, it.third) },
-            outer = null,
-            size = 180.dp,
-            thickness = 0.24f,
-            centerValue = s.handsPlayed.toString(),
-            centerLabel = stringResource(Res.string.outcome_hands_unit),
-        )
-        parts.forEach { (label, value, color) ->
-            LegendRow(color, stringResource(label), "$value · ${(100.0 * value / s.handsPlayed).roundToInt()}%")
-        }
+    parts(s).forEach { (label, value, color) ->
+        LegendRow(color, stringResource(label), "$value · ${(100.0 * value / s.handsPlayed).roundToInt()}%")
     }
 }
 
@@ -334,7 +353,7 @@ fun TeamRoundsCard(
     modifier: Modifier = Modifier,
 ) {
     if (rounds.isEmpty()) return
-    val views = listOfNotNull(RoundView.PLACE.takeIf { !places.isNullOrEmpty() }, RoundView.POINTS, RoundView.SKILLS)
+    val views = listOfNotNull(RoundView.PLACE.takeIf { !places.isNullOrEmpty() }, RoundView.POINTS, RoundView.SKILLS, RoundView.HANDS)
     var selected by remember(rounds.size) { mutableStateOf(lastPlayed(rounds)) }
     val names = roundNames(rounds.map { it.roundId })
     val colors = memberColors()
@@ -362,7 +381,8 @@ fun TeamRoundsCard(
                     LegendRow(colors[m % colors.size], name, memberRounds.getOrNull(selected)?.round?.takeIf { it.results.isNotEmpty() }?.let { formatPoints(it.totalPoints) } ?: "—")
                 }
             }
-            else -> PlayerSkillCharts(names, rounds, selected) { selected = it }
+            RoundView.SKILLS -> PlayerSkillCharts(names, rounds, selected) { selected = it }
+            else -> PlayerHandsView(names, rounds, selected) { selected = it }
         }
     }
 }
@@ -427,6 +447,7 @@ fun TournamentRoundsCard(
                     formats = lines.map { it.third },
                     selected = selected,
                     onSelect = { selected = it },
+                    note = false,
                 )
             }
             else -> Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {

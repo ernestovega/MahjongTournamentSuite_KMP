@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -30,6 +31,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 /** The "By round" cards: their views, the note of the cumulative skills, and the rounds that are not played yet. */
 @OptIn(ExperimentalTestApi::class)
@@ -78,28 +80,22 @@ class RoundsCardsUiTest {
     }
 
     @Test
-    fun playerCardOpensOnThePlaceAndShowsEveryView() = runDesktopComposeUiTest(width = 432, height = 1200) {
+    fun playerCardShowsEveryViewWithoutChips() = runDesktopComposeUiTest(width = 432, height = 2000) {
         val player = CalculateStatisticsUseCase()(players, tables()).players.first { it.playerId == 1 }
         show { PlayerRoundsCard(player.byRound(rounds), places = mapOf(1 to 4, 2 to 2, 3 to 1), playerCount = 4) }
         onNodeWithText("By round").assertExists()
-        // The last played round is selected, and the place view comes first.
+        // Every view is there at the same time, and the last played round is selected in all of them.
+        listOf(RoundView.PLACE, RoundView.POINTS, RoundView.SKILLS, RoundView.HANDS).forEach { onNodeWithTag(roundViewTag(it)).assertExists() }
         onNodeWithContentDescription("Round 3 · Place 1 of 4 · 4 table points").assertExists()
-        snapshot("rounds-player-place", onRoot().captureToImage())
-
-        onNodeWithTag(roundViewTag(RoundView.POINTS)).performClick()
         onNodeWithContentDescription("Round 3 · Table 1 · Place 1 · 4 points · Score 30").assertExists()
-        snapshot("rounds-player-points", onRoot().captureToImage())
-
-        onNodeWithTag(roundViewTag(RoundView.SKILLS)).performClick()
         onNodeWithText("Lines: everything up to each round. Dots: that round alone.").assertExists()
-        snapshot("rounds-player-skills", onRoot().captureToImage())
-
-        onNodeWithTag(roundViewTag(RoundView.HANDS)).performClick()
         onNodeWithText("By discard (deal-in)").assertExists()
-        snapshot("rounds-player-hands", onRoot().captureToImage())
-        // A round without tables has no hands to show.
+        onNodeWithText("Round 3 · 9 hands").assertExists()
+        snapshot("rounds-player", onRoot().captureToImage())
+        // A tap on a round without tables selects it everywhere.
         onNodeWithText("R5").performClick()
         onNodeWithText("Round 5 · No finished table yet").assertExists()
+        assertEquals(2, onAllNodesWithContentDescription("Round 5 · No finished table yet").fetchSemanticsNodes().size)
     }
 
     @Test
@@ -110,39 +106,72 @@ class RoundsCardsUiTest {
         onNodeWithTag(roundViewTag(RoundView.POINTS)).assertExists()
     }
 
-    @Test
-    fun teamCardShowsThePointsOfEachPlayer() = runComposeUiTest {
-        val statistics = CalculateStatisticsUseCase()(players, tables())
-        val members = statistics.players.filter { it.playerId in 1..2 }
+    /** Four tables in each round. The team has one player at each table: slots 1, 5, 9 and 13. */
+    private fun teamTables(): List<RankingTable> = (1..3).flatMap { round ->
+        (1..4).map { tableId ->
+            val ids = (1..4).map { 4 * (tableId - 1) + it }
+            // Each round the player of the team ends in a different place at each table.
+            val scores = listOf(30, 10, -10, -30).let { base -> List(4) { base[(it + round + tableId) % 4] + round } }
+            val table = TableState(
+                roundId = round,
+                tableId = tableId,
+                playerIds = ids,
+                playerEastId = "${ids[0]}", playerSouthId = "${ids[1]}", playerWestId = "${ids[2]}", playerNorthId = "${ids[3]}",
+                playerEastScore = "${scores[0]}", playerSouthScore = "${scores[1]}", playerWestScore = "${scores[2]}", playerNorthScore = "${scores[3] - 4 * round}",
+                isCompleted = true,
+                useTotalsOnly = false,
+            )
+            val hands = (1..(10 + round + tableId)).map { id ->
+                val winner = ids[(id + tableId) % 4]
+                TableHand(
+                    handId = id,
+                    playerWinnerId = if ((id + round) % 6 == 0) "" else "$winner",
+                    playerLooserId = if (id % 3 == 0) "" else "${ids[(id + tableId + 1 + round % 3) % 4]}",
+                    handScore = if ((id + round) % 6 == 0) "" else (8 + (id * (round + tableId)) % 30).toString(),
+                    isChickenHand = false,
+                    isDone = true,
+                    playerEastPenalty = "", playerSouthPenalty = "", playerWestPenalty = "", playerNorthPenalty = "",
+                )
+            }
+            RankingTable(table, hands)
+        }
+    }
+
+    private fun teamCard(dark: Boolean, name: String) = runDesktopComposeUiTest(width = 432, height = 1950) {
+        val slots = (1..16).map { TournamentPlayer(id = it, name = "Player $it", team = (it - 1) % 4 + 1) }
+        val statistics = CalculateStatisticsUseCase()(slots, teamTables())
+        val memberNames = mapOf(1 to "Ana López", 5 to "Bea Ruiz", 9 to "Carla Gil", 13 to "Diego Sanz")
+        val members = statistics.players.filter { it.playerId in memberNames }.sortedBy { it.playerId }
         val combined = com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics(-1, members.flatMap { it.results })
-        show(dark = true) {
+        show(dark) {
             TeamRoundsCard(
                 rounds = combined.byRound(rounds),
-                members = members.map { names.getValue(it.playerId) to it.byRound(rounds) },
-                places = mapOf(1 to 2, 2 to 1, 3 to 1),
-                teamCount = 2,
+                members = members.map { memberNames.getValue(it.playerId) to it.byRound(rounds) },
+                places = mapOf(1 to 3, 2 to 2, 3 to 1),
+                teamCount = 4,
             )
         }
-        onNodeWithContentDescription("Round 3 · Place 1 of 2 ·", substring = true).assertExists()
-        onNodeWithTag(roundViewTag(RoundView.POINTS)).performClick()
-        onNodeWithText("Player 1").assertExists()
-        onNodeWithText("Player 2").assertExists()
-        snapshot("rounds-team-points-dark", onRoot().captureToImage())
+        onNodeWithContentDescription("Round 3 · Place 1 of 4 ·", substring = true).assertExists()
+        memberNames.values.forEach { onNodeWithText(it).assertExists() }
+        // The ring of the team adds up the hands of its four tables.
+        onNodeWithText("Round 3 · ${combined.results.filter { it.roundId == 3 }.sumOf { it.handsPlayed }} hands").assertExists()
+        snapshot(name, onRoot().captureToImage())
     }
 
     @Test
-    fun tournamentCardShowsHandsSkillsAndRecords() = runDesktopComposeUiTest(width = 432, height = 1200) {
+    fun teamCardOfFourPlayersShowsTheirPointsAndTheirHandsTogether() = teamCard(dark = false, name = "rounds-team")
+
+    @Test
+    fun teamCardInTheDarkTheme() = teamCard(dark = true, name = "rounds-team-dark")
+
+    @Test
+    fun tournamentCardShowsHandsSkillsAndRecords() = runDesktopComposeUiTest(width = 432, height = 1700) {
         val statistics = CalculateStatisticsUseCase()(players, tables())
         show { TournamentRoundsCard(statistics.byRound(rounds), names) }
+        listOf(RoundView.HANDS, RoundView.SKILLS, RoundView.RECORDS).forEach { onNodeWithTag(roundViewTag(it)).assertExists() }
         onNodeWithContentDescription("Round 3 · 1 of 1 tables", substring = true).assertExists()
-        snapshot("rounds-tournament-hands", onRoot().captureToImage())
-
-        onNodeWithTag(roundViewTag(RoundView.SKILLS)).performClick()
-        onNodeWithText("Lines: everything up to each round. Dots: that round alone.").assertExists()
-        snapshot("rounds-tournament-skills", onRoot().captureToImage())
-
-        onNodeWithTag(roundViewTag(RoundView.RECORDS)).performClick()
+        onNodeWithText("Lines: everything up to each round. Dots: that round alone.").assertDoesNotExist()
         onNodeWithText("Round 1").assertExists()
-        snapshot("rounds-tournament-records", onRoot().captureToImage())
+        snapshot("rounds-tournament", onRoot().captureToImage())
     }
 }

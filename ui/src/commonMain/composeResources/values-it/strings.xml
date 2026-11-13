@@ -359,4 +359,5 @@
     <string name="rounds_team_points_detail">Turno %1$d · %2$s punti</string>
     <string name="rounds_avg_hand_value">Valore medio della mano</string>
     <string name="rounds_place_points_detail">Turno %1$d · Posizione %2$d di %3$d · %4$s punti tavolo</string>
+    <string name="rounds_hands_of_round">Turno %1$d · %2$d mani</string>
 </resources>

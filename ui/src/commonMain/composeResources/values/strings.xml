@@ -359,4 +359,5 @@
     <string name="rounds_team_points_detail">Round %1$d · %2$s points</string>
     <string name="rounds_avg_hand_value">Avg. hand value</string>
     <string name="rounds_place_points_detail">Round %1$d · Place %2$d of %3$d · %4$s table points</string>
+    <string name="rounds_hands_of_round">Round %1$d · %2$d hands</string>
 </resources>

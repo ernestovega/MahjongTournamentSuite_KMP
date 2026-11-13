@@ -359,4 +359,5 @@
     <string name="rounds_team_points_detail">Tour %1$d · %2$s points</string>
     <string name="rounds_avg_hand_value">Valeur moyenne de main</string>
     <string name="rounds_place_points_detail">Tour %1$d · Place %2$d sur %3$d · %4$s points de table</string>
+    <string name="rounds_hands_of_round">Tour %1$d · %2$d mains</string>
 </resources>
