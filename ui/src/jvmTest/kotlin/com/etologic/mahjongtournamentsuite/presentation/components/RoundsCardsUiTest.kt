@@ -170,17 +170,6 @@ class RoundsCardsUiTest {
     fun teamCardInTheDarkTheme() = teamCard(dark = true, name = "rounds-team-dark")
 
     @Test
-    fun tournamentCardShowsHandsSkillsAndRecords() = runDesktopComposeUiTest(width = 432, height = 1700) {
-        val statistics = CalculateStatisticsUseCase()(players, tables())
-        show { TournamentRoundsCard(statistics.byRound(rounds), names) }
-        listOf(RoundView.HANDS, RoundView.SKILLS, RoundView.RECORDS).forEach { onNodeWithTag(roundViewTag(it)).assertExists() }
-        onNodeWithContentDescription("Round 3 · 1 of 1 tables", substring = true).assertExists()
-        onNodeWithText("Lines: everything up to each round. Dots: that round alone.").assertDoesNotExist()
-        onNodeWithText("Round 1").assertExists()
-        snapshot("rounds-tournament", onRoot().captureToImage())
-    }
-
-    @Test
     fun onAWideScreenTheViewsShareTheWidthInColumns() = wideTeamCard(dark = false, name = "rounds-team-wide")
 
     @Test

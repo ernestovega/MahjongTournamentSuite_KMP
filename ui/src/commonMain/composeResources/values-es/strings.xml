@@ -124,6 +124,7 @@
     <string name="card_unfold">Desplegar</string>
     <string name="more_information">Más información</string>
     <string name="stats_records">Récords</string>
+    <string name="stats_hands_by_round">Manos por ronda</string>
     <string name="stat_highest_rank">Mejor puesto</string>
     <string name="rank_of">de %1$d</string>
     <string name="stat_highest_table_score">Mayor puntuación de mesa</string>

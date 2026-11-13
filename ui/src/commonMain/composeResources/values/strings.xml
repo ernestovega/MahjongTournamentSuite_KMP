@@ -124,6 +124,7 @@
     <string name="card_unfold">Unfold</string>
     <string name="more_information">More information</string>
     <string name="stats_records">Records</string>
+    <string name="stats_hands_by_round">Hands by round</string>
     <string name="stat_highest_rank">Highest rank</string>
     <string name="rank_of">of %1$d</string>
     <string name="stat_highest_table_score">Highest table score</string>

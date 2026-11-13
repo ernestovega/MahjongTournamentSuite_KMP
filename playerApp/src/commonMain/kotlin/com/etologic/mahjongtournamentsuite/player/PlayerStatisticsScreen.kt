@@ -108,7 +108,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutl
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundsCard
 
 /**
  * Tells the screen that the tab is loading. The screen shows its progress bar under the top bar while this is true.
@@ -306,11 +305,11 @@ fun TournamentStatisticsTab(
     ) {
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val loaded = data ?: return@Column
-        TournamentRoundsCard(loaded.statistics.byRound(loaded.tournament.roundIds()), loaded.names, Modifier.fillMaxWidth(), onOpenPlayer)
         TournamentStatisticsPanel(
             statistics = loaded.statistics,
             names = loaded.names,
             onOpenPlayer = onOpenPlayer,
+            roundIds = loaded.tournament.roundIds(),
         )
     }
 }
