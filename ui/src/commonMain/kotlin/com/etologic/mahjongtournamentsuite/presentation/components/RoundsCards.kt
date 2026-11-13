@@ -393,9 +393,13 @@ private fun PlayerHandsView(
 /** The charts of a team are taller, so their tooltips with a line for each player leave the bars in sight. */
 private val TeamChartHeight = 240.dp
 
-/** The colors of the players of a team in the stacked bars: soft solid shades of one color, from the strongest to the palest. */
+/** The colors of the players of a team in the stacked bars: solid shades of one color, from the darkest to the palest. */
 @Composable
-private fun memberColors(): List<Color> = listOf(0f, 0.3f, 0.5f, 0.68f).map { lerp(MaterialTheme.colorScheme.primary, Color.White, it) }
+private fun memberColors(): List<Color> {
+    val primary = MaterialTheme.colorScheme.primary
+    // From a dark green to a pale one, with clear steps between them so the four players are easy to tell apart.
+    return listOf(lerp(primary, Color.Black, 0.45f), primary, lerp(primary, Color.White, 0.45f), lerp(primary, Color.White, 0.78f))
+}
 
 /**
  * The "By round" card of a team. [rounds] has the tables of all its players. [members] gives each player with its own
