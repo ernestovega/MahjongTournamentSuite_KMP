@@ -116,7 +116,8 @@ fun rememberPersistentOptionalInt(name: String, vararg inputs: Any?): MutableSta
 fun rememberPersistentText(name: String, default: String?): MutableState<String?> {
     val store = LocalScrollPositionStore.current
     val key = LocalScrollScope.current + "/text:" + name
-    val state = remember(store, key) {
+    // rememberSaveable keeps the text when the user opens another screen and comes back.
+    val state = rememberSaveable(store, key) {
         // A saved text starts with "+". A saved "no value" is "-".
         val restored = store?.takeRestoredText(key)
         mutableStateOf(

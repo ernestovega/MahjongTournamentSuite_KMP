@@ -79,6 +79,10 @@ data object TournamentsRoute
 @Serializable
 data class TournamentRoute(val tournamentId: String)
 
+/** The screen of one player of a tournament. [tab] is a [PlayerTab]: the tables or the statistics of the player. */
+@Serializable
+data class TournamentPlayerRoute(val tournamentId: String, val slotId: Int, val tab: Int = PlayerTab.TABLES)
+
 @Serializable
 data class TableRoute(val tournamentId: String, val roundId: Int, val tableId: Int)
 
@@ -200,10 +204,8 @@ private fun PlayerNavHost(
             )
         }
         screen<TournamentsRoute> { TournamentsScreen(navController) }
-        screen<TournamentRoute> { entry ->
-            // The saved state carries the requests of the tables to open one of their players.
-            TournamentScreen(navController, entry.toRoute<TournamentRoute>().tournamentId, entry.savedStateHandle)
-        }
+        screen<TournamentRoute> { entry -> TournamentScreen(navController, entry.toRoute<TournamentRoute>().tournamentId) }
+        screen<TournamentPlayerRoute> { entry -> TournamentPlayerScreen(navController, entry.toRoute<TournamentPlayerRoute>()) }
         screen<TableRoute> { entry ->
             val route = entry.toRoute<TableRoute>()
             TableScreen(navController, route.tournamentId, route.roundId, route.tableId)

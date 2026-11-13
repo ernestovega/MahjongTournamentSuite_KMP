@@ -5,10 +5,13 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.player.PlayerTab
 import com.etologic.mahjongtournamentsuite.player.SignInScreen
 import com.etologic.mahjongtournamentsuite.player.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.player.StatisticsScreen
 import com.etologic.mahjongtournamentsuite.player.TableScreen
+import com.etologic.mahjongtournamentsuite.player.TournamentPlayerRoute
+import com.etologic.mahjongtournamentsuite.player.TournamentPlayerScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
@@ -50,6 +53,17 @@ class PlayerScreensScreenshotTest {
 
     @Test
     fun tournamentPlayers() = playerScreenshots("tournament-players", ready = { openTab("Players") }) { nav -> TournamentScreen(nav, ONGOING) }
+
+    @Test
+    fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText("Madrid Open 2026", substring = true) }) { nav ->
+        TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1))
+    }
+
+    @Test
+    fun tournamentPlayerStatistics() = playerScreenshots(
+        "tournament-player-statistics",
+        ready = { waitForText("Madrid Open 2026", substring = true) },
+    ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.STATISTICS)) }
 
     @Test
     fun tournamentTeams() = playerScreenshots("tournament-teams", ready = { openTab("Teams") }) { nav -> TournamentScreen(nav, ONGOING) }
