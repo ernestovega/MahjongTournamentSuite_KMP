@@ -98,8 +98,14 @@ fun MtsCatalog(modifier: Modifier = Modifier) {
 
             CatalogTitle("Spacing (MtsTheme.spacing)")
             listOf(
-                "xxs" to MtsSpacing.xxs, "xs" to MtsSpacing.xs, "sm" to MtsSpacing.sm, "md" to MtsSpacing.md,
-                "lg" to MtsSpacing.lg, "xl" to MtsSpacing.xl, "xxl" to MtsSpacing.xxl, "xxxl" to MtsSpacing.xxxl,
+                "xxs" to MtsSpacing.xxs,
+                "xs" to MtsSpacing.xs,
+                "sm" to MtsSpacing.sm,
+                "md" to MtsSpacing.md,
+                "lg" to MtsSpacing.lg,
+                "xl" to MtsSpacing.xl,
+                "xxl" to MtsSpacing.xxl,
+                "xxxl" to MtsSpacing.xxxl,
             ).forEach { (name, value) -> SpacingBar(name, value) }
 
             CatalogTitle("Shapes")
