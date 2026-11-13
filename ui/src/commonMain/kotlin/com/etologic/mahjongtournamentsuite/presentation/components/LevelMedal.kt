@@ -70,6 +70,11 @@ private class IconShape(
     val tint: Color? = null,
     /** Degrees around the center of the icon. */
     val rotation: Float = 0f,
+    /** A vertical scale around the center of the icon, before the rotation. It turns a circle into a tilted ellipse. */
+    val squash: Float = 1f,
+    /** The color fades out from this distance to the center of the icon to [fadeEnd], where it is transparent. */
+    val fadeStart: Float = 0f,
+    val fadeEnd: Float = 0f,
 )
 
 private val LevelIcons: Map<PlayerLevel, List<IconShape>> = mapOf(
@@ -89,23 +94,35 @@ private val LevelIcons: Map<PlayerLevel, List<IconShape>> = mapOf(
         IconShape("M12.5 2 C13 6 19 8.5 19 14.5 A7 7 0 0 1 5 14.5 C5 11.5 7 9.5 8 7 C9.6 8 10.4 9.2 10.8 10.6 C11.9 8 11.6 4.6 12.5 2 Z"),
         IconShape("M12 21 A3.4 3.4 0 0 1 8.6 17.6 C8.6 15.8 10 15 11 13.4 C12.2 14.6 15.4 15.8 15.4 17.8 A3.4 3.4 0 0 1 12 21 Z", detail = true),
     ),
-    // A rocket that flies up to the right, with a window, two fins, a flame and a white trail.
+    // A rocket that flies up to the right, with a window, two fins and a white flame.
     PlayerLevel.EXPERT to listOf(
-        IconShape("M12 18.5 V23.2", stroke = 1.5f, tint = Color.White.copy(alpha = 0.85f), rotation = 45f),
-        IconShape("M9.56 18.03 V22.44", stroke = 1.1f, tint = Color.White.copy(alpha = 0.55f), rotation = 45f),
-        IconShape("M14.44 18.03 V22.44", stroke = 1.1f, tint = Color.White.copy(alpha = 0.55f), rotation = 45f),
-        IconShape("M10.07 11.81 H13.93 L12 16.83 Z", detail = true, rotation = 45f),
-        IconShape("M8.91 8.31 L6.32 11.49 V13.48 L8.91 11.65 ZM15.09 8.31 L17.68 11.49 V13.48 L15.09 11.65 Z", rotation = 45f),
-        IconShape("M12 -0.88 C14.51 1.13 15.26 4.47 15.26 7.64 V11.65 H8.74 V7.64 C8.74 4.47 9.49 1.13 12 -0.88 Z", rotation = 45f),
-        IconShape("M12 3.64 A1.67 1.67 0 1 1 11.99 3.64 Z", detail = true, rotation = 45f),
+        IconShape("M9.84 11.79 H14.16 L12 17.41 Z", tint = Color.White, rotation = 45f),
+        IconShape("M8.54 7.87 L5.64 11.43 V13.66 L8.54 11.61 ZM15.46 7.87 L18.36 11.43 V13.66 L15.46 11.61 Z", rotation = 45f),
+        IconShape("M12 -2.43 C14.81 -0.17 15.65 3.57 15.65 7.12 V11.61 H8.35 V7.12 C8.35 3.57 9.19 -0.17 12 -2.43 Z", rotation = 45f),
+        IconShape("M12 2.64 A1.87 1.87 0 1 1 11.99 2.64 Z", detail = true, rotation = 45f),
     ),
     // A black hole: a glowing ring, a black center and a tilted disc around it, like the rings of Saturn.
-    // The back half of the disc goes behind the center and the front half over it.
+    // The disc starts at the edge of the ring, with no gap, and fades out. Its back half goes behind the center and
+    // its front half over it.
     PlayerLevel.MASTER to listOf(
-        IconShape("M1.2 12 A10.8 4 0 0 1 22.8 12", stroke = 3f, tint = Color.White.copy(alpha = 0.6f), rotation = -18f),
+        IconShape(
+            "M-3 12 A15 15 0 0 1 27 12 H20.4 A8.4 8.4 0 0 0 3.6 12 Z",
+            tint = Color.White,
+            rotation = -18f,
+            squash = 0.38f,
+            fadeStart = 10.8f,
+            fadeEnd = 15f,
+        ),
         IconShape("M12 4.6 A7.4 7.4 0 1 1 11.99 4.6 Z", stroke = 2.8f, tint = Color.White),
         IconShape("M12 6.4 A5.6 5.6 0 1 1 11.99 6.4 Z", tint = Color(0xFF0B0B12)),
-        IconShape("M1.2 12 A10.8 4 0 0 0 22.8 12", stroke = 3f, tint = Color.White, rotation = -18f),
+        IconShape(
+            "M-3 12 A15 15 0 0 0 27 12 H20.4 A8.4 8.4 0 0 1 3.6 12 Z",
+            tint = Color.White,
+            rotation = -18f,
+            squash = 0.38f,
+            fadeStart = 10.8f,
+            fadeEnd = 15f,
+        ),
     ),
 )
 
@@ -180,9 +197,21 @@ private fun DrawScope.drawMedal(level: PlayerLevel, colors: LevelColors, laurel:
     }) {
         ParsedIcons.getValue(level).forEach { (shape, path) ->
             val color = shape.tint ?: if (shape.detail) colors.dark else colors.content
-            rotate(shape.rotation, Offset(12f, 12f)) {
+            withTransform({
+                rotate(shape.rotation, Offset(12f, 12f))
+                scale(1f, shape.squash, Offset(12f, 12f))
+            }) {
                 if (shape.stroke > 0f) {
                     drawPath(path, color, style = Stroke(shape.stroke, cap = StrokeCap.Round))
+                } else if (shape.fadeEnd > 0f) {
+                    val brush = Brush.radialGradient(
+                        shape.fadeStart / shape.fadeEnd to color,
+                        (shape.fadeStart + shape.fadeEnd) / 2f / shape.fadeEnd to color.copy(alpha = 0.4f),
+                        1f to color.copy(alpha = 0f),
+                        center = Offset(12f, 12f),
+                        radius = shape.fadeEnd,
+                    )
+                    drawPath(path, brush)
                 } else {
                     drawPath(path, color)
                 }
