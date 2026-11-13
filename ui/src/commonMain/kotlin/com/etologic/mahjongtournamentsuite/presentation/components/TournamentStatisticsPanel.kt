@@ -1,7 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -10,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.HorizontalDivider
@@ -22,10 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSlice
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
+import com.etologic.mahjongtournamentsuite.domain.model.byRound
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -42,6 +49,7 @@ import mahjongtournamentsuite.ui.generated.resources.leader_most_points_info
 import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
 import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws_info
 import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
+import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table
 import mahjongtournamentsuite.ui.generated.resources.stat_average_winning_hand
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points
@@ -61,6 +69,7 @@ import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
 import mahjongtournamentsuite.ui.generated.resources.stat_tournaments
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_stats_missing
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_values_use
+import mahjongtournamentsuite.ui.generated.resources.stats_hands_by_round
 import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
@@ -81,6 +90,8 @@ fun TournamentStatisticsPanel(
     /** The number of players, when [statistics] holds only some of them. */
     playerCount: Int? = null,
     onOpenPlayer: ((Int) -> Unit)? = null,
+    /** The rounds of the tournament. When set, a card shows how the hands of each round ended. */
+    roundIds: List<Int>? = null,
 ) {
     @Suppress("NAME_SHADOWING")
     val names = remember(names, PlaceholderNames.playerTemplate) { PlaceholderNames.localizeAll(names) }
@@ -88,6 +99,7 @@ fun TournamentStatisticsPanel(
         StaggeredColumns(minColumnWidth = 480.dp) {
             TournamentTotalsCard(statistics, tournamentCount, playerCount)
             TournamentHandsCard(statistics)
+            if (roundIds != null) HandsByRoundCard(remember(statistics, roundIds) { statistics.byRound(roundIds) })
             TournamentRecordsCard(statistics, playersAreSums = playerCount != null)
             val minimum = MIN_HANDS_FOR_LEADERBOARD
             val points = statistics.players.filter { it.tablesPlayed > 0 }.sortedByDescending { it.totalPoints }
@@ -216,6 +228,60 @@ private fun TournamentHandsCard(statistics: TournamentStatistics) {
 }
 
 /**
+ * How the hands of each round ended, one ring for each round: won by discard, won by self-draw or drawn.
+ * The middle of each ring has the round, and the number of hands is under it.
+ */
+@Composable
+private fun HandsByRoundCard(rounds: List<TournamentRoundSlice>) {
+    if (rounds.none { it.round.handsPlayed > 0 }) return
+    val won = MaterialTheme.colorScheme.primary
+    // The same colors as the card of the hands of the whole tournament.
+    val parts = listOf(
+        stringResource(Res.string.hands_won_by_discard) to won.copy(alpha = 0.75f),
+        stringResource(Res.string.hands_won_by_self_draw) to won.copy(alpha = 0.45f),
+        stringResource(Res.string.hands_drawn) to MaterialTheme.colorScheme.outline,
+    )
+    StatCard(stringResource(Res.string.stats_hands_by_round), Modifier.fillMaxWidth()) {
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            parts.forEach { (label, color) ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    Box(Modifier.size(10.dp).background(color, CircleShape))
+                    Text(label, style = MaterialTheme.typography.bodySmall)
+                }
+            }
+        }
+        FlowRow(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            rounds.forEach { slice ->
+                val round = slice.round
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    SectorChart(
+                        listOf(round.winsByDiscard, round.selfDraws, round.drawnHands).zip(parts) { value, part -> Slice(value, part.second) },
+                        null,
+                        // Three rings fit in a row on a phone.
+                        100.dp,
+                        0.3f,
+                        centerValue = stringResource(Res.string.round_short, round.roundId),
+                    )
+                    Text(
+                        if (round.handsPlayed > 0) "${round.handsPlayed} ${stringResource(Res.string.outcome_hands_unit)}" else EMPTY,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/**
  * The best values of the tournament: the highest hand and table score, the most hands won on a table,
  * the biggest penalty and the longest runs of one player.
  * [playersAreSums] is true when each player holds the sums of all tournaments. Then the values of one table are not known.
@@ -242,7 +308,7 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
     }
 }
 
-/** A ranked list of the best five players with one value each. */
+/** A short ranked list of the best three players with one value each. */
 @Composable
 private fun LeaderboardCard(
     title: String,
@@ -256,8 +322,8 @@ private fun LeaderboardCard(
 ) {
     if (entries.isEmpty()) return
     val clickable = onOpenPlayer != null
-    StatCard(title, Modifier.fillMaxWidth(), info = info) {
-        entries.take(5).forEachIndexed { index, player ->
+    StatCard(title, Modifier.fillMaxWidth(), info = info, compact = true) {
+        entries.take(LEADERBOARD_SIZE).forEachIndexed { index, player ->
             if (index > 0) HorizontalDivider()
             Row(
                 Modifier.fillMaxWidth()
@@ -268,18 +334,20 @@ private fun LeaderboardCard(
                             Modifier
                         },
                     )
-                    .padding(vertical = 4.dp),
+                    .padding(vertical = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("${index + 1}.", Modifier.width(36.dp), style = MaterialTheme.typography.titleLarge.inTextFont())
+                Text("${index + 1}.", Modifier.width(28.dp), style = MaterialTheme.typography.bodyLarge.inTextFont())
                 Text(
                     names[player.playerId] ?: "Player ${player.playerId}",
                     Modifier.weight(1f).padding(end = 12.dp),
-                    style = MaterialTheme.typography.titleLarge.inTextFont(),
+                    style = MaterialTheme.typography.bodyLarge.inTextFont(),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
                     // A name in the color of the links and an arrow show that the player opens.
                     color = if (clickable) MaterialTheme.colorScheme.primary else Color.Unspecified,
                 )
-                Text(value(player), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
+                Text(value(player), style = MaterialTheme.typography.bodyLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 if (calculation != null) {
                     Text(
                         calculation(player),
@@ -300,3 +368,6 @@ private fun LeaderboardCard(
         }
     }
 }
+
+/** The players that each leaderboard shows. */
+private const val LEADERBOARD_SIZE = 3

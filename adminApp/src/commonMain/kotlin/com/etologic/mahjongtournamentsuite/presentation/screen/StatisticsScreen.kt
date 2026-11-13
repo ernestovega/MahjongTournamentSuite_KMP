@@ -389,6 +389,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                             TournamentStatisticsPanel(
                                 statistics = specific.statistics,
                                 names = specific.names,
+                                roundIds = (1..specific.tournament.numRounds).toList(),
                                 onOpenPlayer = { slot ->
                                     chosenSlotText = slot.toString()
                                     val ema = specific.slots.firstOrNull { it.id == slot }?.assignedEmaId?.takeIf { it.isNotBlank() }

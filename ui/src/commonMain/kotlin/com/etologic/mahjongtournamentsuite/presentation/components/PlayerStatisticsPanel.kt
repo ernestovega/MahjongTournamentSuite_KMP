@@ -287,6 +287,8 @@ fun StatCard(
     onToggle: (() -> Unit)? = null,
     /** A help text. An info icon on the right of the title shows it in a tooltip. */
     info: String? = null,
+    /** A compact card has less room around its content and a smaller title, for short lists. */
+    compact: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -296,9 +298,16 @@ fun StatCard(
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface),
         shadowElevation = 2.dp,
     ) {
-        Column(Modifier.padding(MtsTheme.spacing.lg), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(
+            Modifier.padding(if (compact) MtsTheme.spacing.md else MtsTheme.spacing.lg),
+            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 12.dp),
+        ) {
             // A card that does not fold shows its title at the top of the card.
-            if (title != null && onToggle == null) CardTitle(title, Modifier.padding(top = 4.dp), info)
+            if (title != null && onToggle == null && compact) {
+                CardTitle(title, info = info, style = MaterialTheme.typography.titleLarge, bottomPadding = 4.dp)
+            } else if (title != null && onToggle == null) {
+                CardTitle(title, Modifier.padding(top = 4.dp), info)
+            }
             if (title != null && onToggle != null) {
                 run {
                     Row(Modifier.fillMaxWidth().clickable(onClick = onToggle), verticalAlignment = Alignment.CenterVertically) {
@@ -311,7 +320,7 @@ fun StatCard(
                 }
             }
             AnimatedVisibility(expanded) {
-                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { content() }
+                Column(verticalArrangement = Arrangement.spacedBy(if (compact) 0.dp else 12.dp)) { content() }
             }
         }
     }
@@ -324,9 +333,10 @@ private fun CardTitle(
     modifier: Modifier = Modifier,
     info: String? = null,
     style: TextStyle = MaterialTheme.typography.headlineMedium,
+    bottomPadding: Dp = 12.dp,
 ) {
     Row(
-        modifier.fillMaxWidth().padding(bottom = 12.dp),
+        modifier.fillMaxWidth().padding(bottom = bottomPadding),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {

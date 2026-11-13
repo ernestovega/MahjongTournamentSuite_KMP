@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -34,8 +33,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRound
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSlice
-import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundTotals
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -51,7 +48,6 @@ import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.rounds_avg_hand_value
 import mahjongtournamentsuite.ui.generated.resources.rounds_cumulative_note
 import mahjongtournamentsuite.ui.generated.resources.rounds_empty_detail
-import mahjongtournamentsuite.ui.generated.resources.rounds_hands_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
 import mahjongtournamentsuite.ui.generated.resources.rounds_member_points
 import mahjongtournamentsuite.ui.generated.resources.rounds_member_result
@@ -65,8 +61,6 @@ import mahjongtournamentsuite.ui.generated.resources.skill_deal_in_rate
 import mahjongtournamentsuite.ui.generated.resources.skill_self_draw
 import mahjongtournamentsuite.ui.generated.resources.skill_win_rate
 import mahjongtournamentsuite.ui.generated.resources.stat_hands
-import mahjongtournamentsuite.ui.generated.resources.stat_highest_hand_score
-import mahjongtournamentsuite.ui.generated.resources.stat_highest_table_score
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_stats_missing
 import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_skills
@@ -500,102 +494,6 @@ fun TeamRoundsCard(
             }
             RoundView.SKILLS -> TeamSkillCharts(names, rounds, members, selected) { selected = it }
             else -> PlayerHandsView(names, rounds, selected, members) { selected = it }
-        }
-    }
-}
-
-/**
- * The "By round" card of a tournament: the hands of each round, the skills of the tournament round by round, and the
- * records of each round. [names] gives the name of each slot. A tap on a name of a record opens that player.
- */
-@Composable
-fun TournamentRoundsCard(
-    rounds: List<TournamentRoundSlice>,
-    names: Map<Int, String>,
-    modifier: Modifier = Modifier,
-    onOpenPlayer: ((Int) -> Unit)? = null,
-) {
-    if (rounds.isEmpty()) return
-    var selected by remember(rounds.size) { mutableStateOf(rounds.indexOfLast { it.round.tablesCompleted > 0 }.coerceAtLeast(0)) }
-    val roundNames = roundNames(rounds.map { it.round.roundId })
-    RoundsCardFrame(listOf(RoundView.HANDS, RoundView.SKILLS, RoundView.RECORDS), modifier) { view ->
-        when (view) {
-            RoundView.HANDS -> {
-                val won = MaterialTheme.colorScheme.primary
-                val neutral = MaterialTheme.colorScheme.outline
-                val parts = listOf(
-                    Res.string.outcome_by_discard to won.copy(alpha = 0.75f),
-                    Res.string.outcome_by_self_draw to won.copy(alpha = 0.45f),
-                    Res.string.outcome_hands_drawn to neutral.copy(alpha = 0.5f),
-                )
-                fun values(r: TournamentRoundTotals) = listOf(r.winsByDiscard, r.selfDraws, r.drawnHands)
-                val round = rounds[selected].round
-                val tip = stringResource(
-                    Res.string.rounds_hands_detail,
-                    round.roundId,
-                    round.tablesCompleted,
-                    round.tablesTotal,
-                    round.handsPlayed,
-                    round.drawnHands,
-                    round.penaltyCount,
-                )
-                RoundBarChart(
-                    names = roundNames,
-                    bars = rounds.map { slice -> values(slice.round).zip(parts) { value, part -> BarPart(value.toDouble(), part.second) } },
-                    labels = rounds.map { it.round.handsPlayed.takeIf { hands -> hands > 0 }?.toString() },
-                    selected = selected,
-                    onSelect = { selected = it },
-                    tooltip = tip,
-                )
-                parts.zip(values(round)).forEach { (part, value) -> LegendRow(part.second, stringResource(part.first), value.toString()) }
-            }
-            RoundView.SKILLS -> {
-                val lines = listOf<Triple<StringResource, (TournamentRoundTotals) -> Double?, (Double) -> String>>(
-                    Triple(Res.string.outcome_hands_drawn, { it.drawRate }, ::percent),
-                    Triple(Res.string.skill_self_draw, { it.selfDrawRate }, ::percent),
-                    Triple(Res.string.rounds_avg_hand_value, { it.averageHandScore }, { v -> v.roundToInt().toString() }),
-                )
-                SkillCharts(
-                    names = roundNames,
-                    lines = lines.map { (title, read, _) ->
-                        Triple(title, { i: Int -> rounds[i].takeIf { it.round.handsPlayed > 0 }?.cumulative?.let(read) }, { i: Int -> read(rounds[i].round) })
-                    },
-                    minValues = listOf(0.0, 0.0, 8.0),
-                    formats = lines.map { it.third },
-                    selected = selected,
-                    onSelect = { selected = it },
-                    note = false,
-                )
-            }
-            else -> Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
-                rounds.forEach { slice ->
-                    val round = slice.round
-                    Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs)) {
-                        Text(stringResource(Res.string.rounds_round_n, round.roundId), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
-                        RecordLine(stringResource(Res.string.stat_highest_hand_score), round.highestHand?.value, round.highestHand?.playerId, names, onOpenPlayer)
-                        RecordLine(stringResource(Res.string.stat_highest_table_score), round.highestTableScore?.value, round.highestTableScore?.playerId, names, onOpenPlayer)
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun RecordLine(label: String, value: Int?, playerId: Int?, names: Map<Int, String>, onOpenPlayer: ((Int) -> Unit)?) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-        Text(label, Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Text(value?.toString() ?: "—", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Bold)
-        val name = playerId?.let { names[it] }
-        if (name != null) {
-            Text(
-                name,
-                Modifier.width(140.dp).then(if (onOpenPlayer != null) Modifier.clickable { onOpenPlayer(playerId) } else Modifier),
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (onOpenPlayer != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
         }
     }
 }
