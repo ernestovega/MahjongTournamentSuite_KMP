@@ -38,7 +38,8 @@ All of them are in `designsystem/src/commonMain/kotlin/com/etologic/mahjongtourn
 | `MaterialTheme.shapes` | extraSmall 4, small 8, medium 12, large 16, extraLarge 28 dp | `shape = MaterialTheme.shapes.medium` |
 | `MtsTheme.shapes` | `pill` (50%) for chips and badges | `MtsTheme.shapes.pill` |
 
-`MtsCatalog` (same folder) shows them all; open its previews in the IDE.
+`MtsCatalog` (same folder) shows them all. Open its previews in the IDE, or in the admin app: an administrator opens
+**Profile > Design system** (`DesignSystemRoute`, in no menu).
 
 ## Rules
 

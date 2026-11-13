@@ -70,3 +70,7 @@ data object ErrorsRoute
 /** Who wrote what and when in the database. Only administrators can open it. */
 @Serializable
 data object ActivityRoute
+
+/** The catalog of the design system. It is in no menu: administrators open it from their profile. */
+@Serializable
+data object DesignSystemRoute

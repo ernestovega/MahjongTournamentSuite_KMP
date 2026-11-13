@@ -19,6 +19,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
@@ -47,6 +48,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionS
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
 import com.etologic.mahjongtournamentsuite.presentation.screen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.DesignSystemScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
@@ -208,6 +210,7 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                 }
                 screen<ErrorsRoute> { ErrorsScreen(navController) }
                 screen<ActivityRoute> { ActivityScreen(navController) }
+                screen<DesignSystemRoute> { DesignSystemScreen(navController) }
                 screen<StatisticsRoute> { backStackEntry ->
                     StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())
                 }

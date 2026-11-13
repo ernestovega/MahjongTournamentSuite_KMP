@@ -347,4 +347,5 @@
     <string name="app_chooser_title">¿Qué quieres abrir?</string>
     <string name="app_chooser_hint">Luego podrás cambiar de una app a otra cuando quieras con el botón de la barra superior.</string>
     <string name="top_bar_activity">Actividad</string>
+    <string name="design_system">Design system</string>
 </resources>

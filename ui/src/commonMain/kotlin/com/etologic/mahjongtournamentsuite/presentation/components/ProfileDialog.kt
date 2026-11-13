@@ -5,6 +5,7 @@ import com.etologic.mahjongtournamentsuite.presentation.language.LanguageSelecto
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalWithdrawConsent
 import mahjongtournamentsuite.ui.generated.resources.consent_withdraw
 import mahjongtournamentsuite.ui.generated.resources.consent_withdraw_info
+import mahjongtournamentsuite.ui.generated.resources.design_system
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemeSelector
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -71,6 +72,8 @@ fun ProfileDialog(
     onSaved: (UserProfile) -> Unit,
     onDismiss: () -> Unit,
     onSignOut: (() -> Unit)? = null,
+    /** Opens the catalog of the design system. Only administrators get it. */
+    onOpenDesignSystem: (() -> Unit)? = null,
 ) {
     val scope = rememberCoroutineScope()
     var alias by remember(profile.uid) { mutableStateOf(profile.alias) }
@@ -178,6 +181,9 @@ fun ProfileDialog(
                     }
                     LanguageSelector(Modifier.fillMaxWidth())
                     ThemeSelector()
+                    onOpenDesignSystem?.let { open ->
+                        FocusedTextButton(enabled = !saving, onClick = open) { Text(stringResource(Res.string.design_system)) }
+                    }
                     // The user can withdraw the consent at any time. The app then asks again and stays closed.
                     LocalWithdrawConsent.current?.let { withdraw ->
                         Text(

@@ -750,4 +750,5 @@
     <string name="activity_filter_person">Personne</string>
     <string name="activity_period_from_short">Du</string>
     <string name="activity_period_to_short">Jusqu\'au</string>
+    <string name="design_system">Design system</string>
 </resources>

@@ -51,6 +51,7 @@ private val savedKinds: List<RouteKind<*>> = listOf(
     kind<StatisticsRoute>(),
     kind<ErrorsRoute>(),
     kind<ActivityRoute>(),
+    kind<DesignSystemRoute>(),
 )
 
 /**

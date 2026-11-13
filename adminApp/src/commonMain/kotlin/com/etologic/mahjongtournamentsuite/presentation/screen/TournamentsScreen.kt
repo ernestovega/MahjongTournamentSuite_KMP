@@ -76,6 +76,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
@@ -339,7 +340,7 @@ fun TournamentsScreen(
         isLoading = isRefreshing || isLoading,
         showBackgroundLogo = false,
         navigationIcon = {
-            ProfileInfo(profile, roleLabel, navController)
+            ProfileInfo(profile, roleLabel, navController, isAdmin = adminStatus?.isAdmin == true)
         },
         leadingActions = {
             AppTopBarLeadingActions(
@@ -579,6 +580,7 @@ fun ProfileInfo(
     profile: UserProfile?,
     roleLabel: String?,
     navController: NavHostController,
+    isAdmin: Boolean = false,
 ) {
     var showProfile by remember { mutableStateOf(false) }
     var confirmingSignOut by remember { mutableStateOf(false) }
@@ -632,6 +634,14 @@ fun ProfileInfo(
                 onSignOut = {
                     showProfile = false
                     confirmingSignOut = true
+                },
+                onOpenDesignSystem = if (isAdmin) {
+                    {
+                        showProfile = false
+                        navController.navigate(DesignSystemRoute)
+                    }
+                } else {
+                    null
                 },
             )
         }
