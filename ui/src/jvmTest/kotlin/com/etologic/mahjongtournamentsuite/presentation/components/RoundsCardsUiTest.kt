@@ -71,10 +71,10 @@ class RoundsCardsUiTest {
         ImageIO.write(image.toAwtImage(), "png", File(dir, "$name.png"))
     }
 
-    private fun ComposeUiTest.show(dark: Boolean = false, content: @Composable () -> Unit) = setContent {
+    private fun ComposeUiTest.show(dark: Boolean = false, width: Int = 400, content: @Composable () -> Unit) = setContent {
         MtsTheme(useDarkTheme = dark) {
             Surface {
-                Column(Modifier.width(400.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { content() }
+                Column(Modifier.width(width.dp).padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) { content() }
             }
         }
     }
@@ -178,5 +178,27 @@ class RoundsCardsUiTest {
         onNodeWithText("Lines: everything up to each round. Dots: that round alone.").assertDoesNotExist()
         onNodeWithText("Round 1").assertExists()
         snapshot("rounds-tournament", onRoot().captureToImage())
+    }
+
+    @Test
+    fun onAWideScreenTheViewsShareTheWidthInColumns() = runDesktopComposeUiTest(width = 1100, height = 1300) {
+        val slots = (1..16).map { TournamentPlayer(id = it, name = "Player $it", team = (it - 1) % 4 + 1) }
+        val statistics = CalculateStatisticsUseCase()(slots, teamTables())
+        val memberNames = mapOf(1 to "Ana López", 5 to "Bea Ruiz", 9 to "Carla Gil", 13 to "Diego Sanz")
+        val members = statistics.players.filter { it.playerId in memberNames }.sortedBy { it.playerId }
+        val combined = com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics(-1, members.flatMap { it.results })
+        show(width = 1060) {
+            TeamRoundsCard(
+                rounds = combined.byRound(rounds),
+                members = members.map { memberNames.getValue(it.playerId) to it.byRound(rounds) },
+                places = mapOf(1 to 3, 2 to 2, 3 to 1),
+                teamCount = 4,
+            )
+        }
+        val place = onNodeWithTag(roundViewTag(RoundView.PLACE)).fetchSemanticsNode().boundsInRoot
+        val score = onNodeWithTag(roundViewTag(RoundView.POINTS)).fetchSemanticsNode().boundsInRoot
+        // The place and the score are side by side, not one under the other.
+        assertEquals(place.top, score.top)
+        snapshot("rounds-team-wide", onRoot().captureToImage())
     }
 }

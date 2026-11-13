@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -97,12 +98,26 @@ private fun RoundsCardFrame(
     modifier: Modifier,
     content: @Composable (RoundView) -> Unit,
 ) {
+    val section = @Composable { view: RoundView ->
+        Column(Modifier.fillMaxWidth().testTag(roundViewTag(view)), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+            Text(stringResource(view.title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
+            content(view)
+        }
+    }
     StatCard(stringResource(Res.string.rounds_title), modifier) {
-        views.forEachIndexed { index, view ->
-            if (index > 0) HorizontalDivider(Modifier.padding(vertical = MtsTheme.spacing.xs), color = MaterialTheme.colorScheme.outlineVariant)
-            Column(Modifier.fillMaxWidth().testTag(roundViewTag(view)), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                Text(stringResource(view.title), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                content(view)
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            if (maxWidth >= TwoColumnsWidth) {
+                // On a wide screen the views share the width in columns, so the charts do not stretch.
+                StaggeredColumns(minColumnWidth = SectionMinWidth, spacing = MtsTheme.spacing.xl) {
+                    views.forEach { section(it) }
+                }
+            } else {
+                Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    views.forEachIndexed { index, view ->
+                        if (index > 0) HorizontalDivider(Modifier.padding(vertical = MtsTheme.spacing.xs), color = MaterialTheme.colorScheme.outlineVariant)
+                        section(view)
+                    }
+                }
             }
         }
     }
@@ -389,6 +404,12 @@ private fun PlayerHandsView(
         }
     }
 }
+
+/** The narrowest column of a view of a card. */
+private val SectionMinWidth = 340.dp
+
+/** From this width a card puts its views in two columns or more. */
+private val TwoColumnsWidth = SectionMinWidth * 2 + 24.dp
 
 /** The charts of a team are taller, so their tooltips with a line for each player leave the bars in sight. */
 private val TeamChartHeight = 240.dp
