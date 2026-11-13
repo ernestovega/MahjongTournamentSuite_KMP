@@ -1,7 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
@@ -20,8 +20,8 @@ class PlayerTournamentTest : PlayerE2eTest() {
         listOf("Tables", "Ranking", "Players", "Statistics", "Info").forEach { c.waitForText(it) }
     }
 
-    /** A line of the player list. It shows the place in the ranking, such as "#3". */
-    private val playerLine = hasClickAction() and hasAnyDescendant(hasText("#", substring = true))
+    /** A line of the player list. It shows the place in the ranking, such as "#3". The card merges its texts. */
+    private val playerLine = hasClickAction() and hasText("#", substring = true) and !hasSetTextAction()
 
     @Test
     fun playersTabOpensAPlayerAndBackReturnsToTheList() {

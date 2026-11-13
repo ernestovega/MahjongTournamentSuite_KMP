@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
-import androidx.compose.ui.test.hasAnyDescendant
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -146,7 +145,7 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
         // The winner in the Players tab: the search finds the player and the player shows its tables.
         c.clickButton("Players")
         c.onNodeWithTag(PLAYER_SEARCH_TAG).performTextInput(players[0].lastName)
-        c.onAllNodes(hasClickAction() and hasAnyDescendant(hasText("#1"))).onFirst().performClick()
+        c.onAllNodes(hasClickAction() and hasText("#1")).onFirst().performClick()
         c.waitForText("Stats")
         c.waitForText("Table 1", substring = true)
     }

@@ -16,8 +16,9 @@ class TournamentListTest : AdminE2eTest() {
         c.waitForText("Team tournament")
         c.waitForText("Individual tournament")
         // BARE has both switches off. LASTTABLE counts best hands but not chicken hands.
-        c.waitForText("Best hands not counted")
-        c.waitForText("Chicken hands not counted")
+        // Those rows can be below the screen, so the test scrolls to them.
+        c.scrollListTo("Best hands not counted")
+        c.scrollListTo("Chicken hands not counted")
         c.waitForText("Best hands counted")
         c.waitForText("Chicken hands counted")
     }
@@ -49,10 +50,9 @@ class TournamentListTest : AdminE2eTest() {
     fun adminHasAllTopBarActions() {
         start(E2eAccounts.ADMIN)
         // "Admin" is the role under the name. It opens the profile, which holds the theme and the Logout button.
-        listOf(PROFILE_BUTTON, "Admin", "Users", "App errors", "Statistics", "EMA players", "New tournament")
+        // "Timer" opens the independent Timer, which is not tied to a tournament.
+        listOf(PROFILE_BUTTON, "Admin", "Users", "App errors", "Statistics", "EMA players", "New tournament", "Timer")
             .forEach { c.waitForText(it) }
-        // The Timer opens from a tournament only.
-        c.assertNoText("Timer")
     }
 
     @Test

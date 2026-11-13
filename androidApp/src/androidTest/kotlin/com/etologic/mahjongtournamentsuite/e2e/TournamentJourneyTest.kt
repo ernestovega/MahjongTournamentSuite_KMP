@@ -87,7 +87,8 @@ class TournamentJourneyTest : AdminE2eTest() {
     private fun assignTheFirstSlotWithThePicker(player: JourneyApi.Player) {
         c.clickButton("Assign")
         c.waitForText("ASSIGN EMA PLAYER TO PLAYER 1")
-        c.field("Search by name, country, or EMA number").performTextInput(player.emaId)
+        // The players screen behind the dialog has a "Search" field too. The dialog is the last root in the tree.
+        c.onAllNodes(hasSetTextAction() and hasText("Search")).onLast().performTextInput(player.emaId)
         val row = hasClickAction() and hasText(player.emaId, substring = true) and !hasSetTextAction()
         c.waitUntil(10_000) { c.onAllNodes(row).fetchSemanticsNodes().isNotEmpty() }
         c.onAllNodes(row).onLast().performClick()
