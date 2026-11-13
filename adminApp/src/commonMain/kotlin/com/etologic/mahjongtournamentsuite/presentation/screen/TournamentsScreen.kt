@@ -115,6 +115,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusO
 import com.etologic.mahjongtournamentsuite.presentation.components.toTournamentColorOrNull
 import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPlayerApp
+import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -352,6 +353,8 @@ fun TournamentsScreen(
                 } else {
                     null
                 },
+                // A Timer without a tournament, for any use apart from a tournament. It changes no data.
+                onTimer = { openTimer(navController, tournamentId = null) },
                 onErrors = if (adminStatus?.isAdmin == true) {
                     { navController.navigate(ErrorsRoute) }
                 } else {

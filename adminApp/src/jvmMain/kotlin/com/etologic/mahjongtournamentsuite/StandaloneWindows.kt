@@ -18,7 +18,7 @@ sealed class StandaloneWindow {
     abstract val id: String
 
     data class Timer(
-        val tournamentId: String,
+        val tournamentId: String?,
         val initialRound: Int,
         override val id: String = UUID.randomUUID().toString(),
     ) : StandaloneWindow()
@@ -33,7 +33,7 @@ object StandaloneWindows {
     private val windows: SnapshotStateList<StandaloneWindow> = mutableStateListOf()
     val hasOpenWindows: Boolean get() = windows.isNotEmpty()
 
-    fun openTimer(tournamentId: String, initialRound: Int) {
+    fun openTimer(tournamentId: String?, initialRound: Int) {
         windows.add(StandaloneWindow.Timer(tournamentId = tournamentId, initialRound = initialRound))
     }
 

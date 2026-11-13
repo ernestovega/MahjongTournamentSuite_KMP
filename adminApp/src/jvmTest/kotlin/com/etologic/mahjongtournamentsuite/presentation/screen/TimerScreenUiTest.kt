@@ -32,8 +32,12 @@ class TimerScreenUiTest {
         serverNowMs = now
     }
 
-    private fun ComposeUiTest.show(server: FakeTournamentRepository, round: Int = 1): RoundTimerController {
-        val controller = RoundTimerController(server, "t1", round, deviceNowMs = { now })
+    private fun ComposeUiTest.show(
+        server: FakeTournamentRepository,
+        round: Int = 1,
+        tournamentId: String? = "t1",
+    ): RoundTimerController {
+        val controller = RoundTimerController(server, tournamentId, round, deviceNowMs = { now })
         setContent {
             MtsTheme(useDarkTheme = false) {
                 TimerContent(controller = controller, themePreference = ThemePreference.Light, onToggleTheme = {}, deviceNowMs = { now })
@@ -144,5 +148,35 @@ class TimerScreenUiTest {
 
         assertEquals(listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.Start()), server.clockActions.toList())
         onNodeWithText("No connection", substring = true).assertDoesNotExist()
+    }
+
+    @Test
+    fun theTimerOfATournamentHasNoRoundButtons() = runComposeUiTest {
+        show(server(), round = 2)
+
+        onNodeWithText("Round 2").assertExists()
+        onNodeWithContentDescription("Decrease round").assertDoesNotExist()
+        onNodeWithContentDescription("Increase round").assertDoesNotExist()
+    }
+
+    @Test
+    fun aTimerWithoutTournamentPicksItsRoundAndPlaysWithoutTheServer() = runComposeUiTest {
+        val server = server()
+        show(server, tournamentId = null)
+
+        onNodeWithText("Press Play when the starting gong sounds", substring = true).assertDoesNotExist()
+        onNodeWithContentDescription("Increase round").performClick()
+        mainClock.advanceTimeBy(600)
+        waitForIdle()
+        onNodeWithText("Round 2").assertExists()
+
+        onNodeWithContentDescription("Start timer").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+
+        onNodeWithContentDescription("Pause timer").assertExists()
+        // While it runs the round stays fixed.
+        onNodeWithContentDescription("Increase round").assertDoesNotExist()
+        assertEquals(emptyList<Pair<Int, RoundClockAction>>(), server.clockActions.toList())
     }
 }

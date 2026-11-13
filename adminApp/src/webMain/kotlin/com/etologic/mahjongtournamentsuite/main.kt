@@ -20,7 +20,7 @@ fun main() {
         .toMap()
     ComposeViewport {
         when (parameters["standalone"]) {
-            "timer" -> TimerApp(parameters["tournamentId"].orEmpty(), parameters["initialRound"]?.toIntOrNull() ?: 1)
+            "timer" -> TimerApp(parameters["tournamentId"]?.ifEmpty { null }, parameters["initialRound"]?.toIntOrNull() ?: 1)
             "rankings" -> RankingApp(parameters["tournamentId"].orEmpty())
             else -> App(remember { BrowserSessionStorage("adminApp") }, appVersion = AppVersion.web)
         }

@@ -12,7 +12,7 @@ class TimerActivity : ComponentActivity() {
         initAndroidApp(applicationContext)
         setContent {
             TimerApp(
-                tournamentId = intent.getStringExtra(EXTRA_TOURNAMENT_ID).orEmpty(),
+                tournamentId = intent.getStringExtra(EXTRA_TOURNAMENT_ID)?.ifEmpty { null },
                 initialRound = intent.getIntExtra(EXTRA_INITIAL_ROUND, 1),
             )
         }
