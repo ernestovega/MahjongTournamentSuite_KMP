@@ -85,7 +85,7 @@ fun AppScaffold(
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
     autoFocusFirst: Boolean = true,
-    /** The faint app logo behind the content. By default it shows while the screen loads. */
+    /** The faint app logo behind the content. By default it shows while the screen loads. The web never shows it. */
     showBackgroundLogo: Boolean = isLoading,
     content: @Composable () -> Unit,
 ) {
@@ -283,7 +283,7 @@ fun AppScaffold(
         ) { padding ->
             Box(modifier = Modifier.padding(padding)) {
                 // The content stays in the same place whether the logo shows or not, so it keeps its state.
-                AppBackground(showLogo = showBackgroundLogo) {
+                AppBackground(showLogo = showBackgroundLogo && showsLoadingBackgroundLogo) {
                     CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
                         content()
                     }
