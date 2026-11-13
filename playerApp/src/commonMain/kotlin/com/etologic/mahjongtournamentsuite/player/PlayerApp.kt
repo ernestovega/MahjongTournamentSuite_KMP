@@ -21,6 +21,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.ScrollPositionS
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
 import com.etologic.mahjongtournamentsuite.data.di.dataModule
 import com.etologic.mahjongtournamentsuite.data.di.telemetry
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
@@ -176,6 +177,8 @@ private fun PlayerNavigation(openTournamentId: String?, sessionStorage: SessionS
 
     Box(Modifier.fillMaxSize()) {
         PlayerNavHost(navController, openTournamentId, restoredRoutes, openSignIn)
+        // On the web the back and forward of the browser move through the screens like the back of the app.
+        BrowserHistory(navController)
         // Over every screen: the table of the player when a round of the player starts soon or is in play.
         MyTableReminder(navController, sessionStorage)
     }

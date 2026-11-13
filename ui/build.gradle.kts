@@ -47,6 +47,8 @@ kotlin {
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
             implementation(libs.coil.compose)
+            // The web apps tie the back stack of the navigation to the history of the browser.
+            implementation(libs.androidx.navigation.compose)
             api(projects.designsystem)
             implementation(projects.domain)
         }

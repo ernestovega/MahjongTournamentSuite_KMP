@@ -20,6 +20,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
+import com.etologic.mahjongtournamentsuite.presentation.navigation.BrowserHistory
 import com.etologic.mahjongtournamentsuite.presentation.DesignSystemRoute
 import com.etologic.mahjongtournamentsuite.presentation.ErrorsRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayerBaseRoute
@@ -233,6 +234,8 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                         )
                     }
                 }
+                // On the web the back and forward of the browser move through the screens like the back of the app.
+                BrowserHistory(navController)
             }
         }
     }
