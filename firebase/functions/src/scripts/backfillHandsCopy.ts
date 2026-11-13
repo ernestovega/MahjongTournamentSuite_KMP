@@ -12,7 +12,11 @@ const tournamentIds = process.argv.slice(2).filter((arg) => !arg.startsWith("--"
  */
 async function backfill(): Promise<Record<string, number>> {
   console.log(`${applyChanges ? "Applying" : "Previewing"} the copies of the hands for ${firebaseProjectId}.`);
-  const counts = await backfillHandsCopy({ tournamentIds: tournamentIds.length > 0 ? tournamentIds : undefined, apply: applyChanges });
+  const counts = await backfillHandsCopy({
+    tournamentIds: tournamentIds.length > 0 ? tournamentIds : undefined,
+    apply: applyChanges,
+    onTournament: ({ tournamentId, index, total, tables }) => console.log(`${index}/${total} ${tournamentId}: ${tables} tables.`),
+  });
   console.log(`${applyChanges ? "Copied" : "Would copy"} ${counts.copied} tables. ${counts.valid} already had a valid copy. ${counts["missing-hands"]} have missing hands.`);
   if (!applyChanges && counts.copied > 0) console.log("Run again with --apply to write them.");
   return counts;
