@@ -26,8 +26,8 @@ html[data-theme="dark"] {
 }
 
 .mts-loading img {
-    width: 96px;
-    height: 96px;
+    width: 160px;
+    height: 160px;
 }
 
 /* The logo is green on light backgrounds and white on dark ones. */
