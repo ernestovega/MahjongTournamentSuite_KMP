@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.kotlinSerialization) apply false
     alias(libs.plugins.googleServices) apply false
     alias(libs.plugins.ktlint) apply false
+    alias(libs.plugins.roborazzi) apply false
     // Code coverage of the JVM tests: ./gradlew koverHtmlReportCoverage (report in build/reports/kover/htmlCoverage).
     alias(libs.plugins.kover)
 }
@@ -50,6 +51,19 @@ kover {
             excludes {
                 packages("*.generated.resources")
                 classes("*ComposableSingletons*", "*_Factory", "*MainKt")
+            }
+        }
+    }
+}
+
+// The screenshot tests (Roborazzi, see docs/screenshot-tests.md) draw the system font with a bundled one on Linux, so
+// the images are the same in the cloud, in CI and on any Linux machine. macOS draws text in its own way: record there
+// only to look at the images, never to commit them.
+subprojects {
+    pluginManager.withPlugin("io.github.takahirom.roborazzi") {
+        tasks.withType<Test>().configureEach {
+            if (org.gradle.internal.os.OperatingSystem.current().isLinux) {
+                environment("FONTCONFIG_FILE", rootProject.file("screenshotTesting/fonts/fonts.conf").absolutePath)
             }
         }
     }

@@ -34,6 +34,7 @@ plugins {
 
 include(":adminApp")
 include(":designsystem")
+include(":screenshotTesting")
 include(":ui")
 include(":playerApp")
 include(":playerAndroidApp")

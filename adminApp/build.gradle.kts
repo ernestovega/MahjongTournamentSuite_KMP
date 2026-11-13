@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.composeHotReload)
     alias(libs.plugins.kotlinSerialization)
     alias(libs.plugins.kover)
+    alias(libs.plugins.roborazzi)
 }
 
 kotlin {
@@ -68,6 +69,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
         }
         jvmTest.dependencies {
+            implementation(projects.screenshotTesting)
             implementation(libs.compose.ui.test.junit4.desktop)
         }
         wasmJsMain.dependencies {

@@ -5,11 +5,11 @@ agp = "9.4.1"
 # Versions of the three products. Each one goes up on its own, see docs/versioning.md.
 # Bump the patch with: python3 scripts/versions.py bump <web|admin|player>
 # MAJOR and MINOR only change by hand, when the owner decides.
-web-versionName = "1.0.117"
-admin-versionName = "1.0.83"
-admin-versionCode = "83"
-player-versionName = "1.0.93"
-player-versionCode = "93"
+web-versionName = "1.0.118"
+admin-versionName = "1.0.84"
+admin-versionCode = "84"
+player-versionName = "1.0.94"
+player-versionCode = "94"
 android-compileSdk = "37"
 android-minSdk = "24"
 android-targetSdk = "36"
@@ -27,6 +27,7 @@ kotlinx-serialization = "1.12.0"
 ktor = "3.6.0"
 material3 = "1.12.0-alpha03"
 coil = "3.6.3"
+roborazzi = "1.79.0"
 google-services = "4.5.0"
 
 [libraries]
@@ -69,8 +70,10 @@ ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 ktor-serialization-kotlinxJson = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 coil-network-ktor3 = { module = "io.coil-kt.coil3:coil-network-ktor3", version.ref = "coil" }
+roborazzi-compose-desktop = { module = "io.github.takahirom.roborazzi:roborazzi-compose-desktop", version.ref = "roborazzi" }
 
 [plugins]
+roborazzi = { id = "io.github.takahirom.roborazzi", version.ref = "roborazzi" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 androidMultiplatformLibrary = { id = "com.android.kotlin.multiplatform.library", version.ref = "agp" }
 composeHotReload = { id = "org.jetbrains.compose.hot-reload", version.ref = "composeHotReload" }

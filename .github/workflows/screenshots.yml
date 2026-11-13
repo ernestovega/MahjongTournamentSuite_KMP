@@ -1,0 +1,52 @@
+# Screenshot tests (Roborazzi on the JVM): every screen in phone, tablet and desktop width, light and dark, compared
+# with the reference images in <module>/screenshots/. See docs/screenshot-tests.md.
+# Paused until the release (Ernesto, 2026-11-13): it only runs by hand (Actions > Screenshot tests > Run workflow).
+# To run it on the pull requests to main, uncomment the trigger below.
+name: Screenshot tests
+
+on:
+  # pull_request:
+  #   branches: [main]
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: verify compares with the reference images; record writes new ones (download them from the artifact)
+        type: choice
+        options: [verify, record]
+        default: verify
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    name: Screenshot tests (${{ inputs.mode || 'verify' }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The reference images live in Git LFS.
+          lfs: true
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: ${{ inputs.mode == 'record' && 'Record' || 'Verify' }} the screenshots
+        # --continue runs every module even when one fails, so the artifact has all the differences.
+        run: ./gradlew ${{ inputs.mode == 'record' && 'recordRoborazziJvm' || 'verifyRoborazziJvm' }} --continue
+
+      - name: Upload the images
+        if: always()
+        uses: actions/upload-artifact@v5
+        with:
+          name: screenshots-${{ inputs.mode || 'verify' }}
+          # The reference images (new ones in record mode) and, when a verify fails, the actual image and the comparison.
+          path: |
+            */screenshots/**/*.png
+            */build/outputs/roborazzi/**
+          if-no-files-found: ignore

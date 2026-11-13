@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kover)
+    alias(libs.plugins.roborazzi)
 }
 
 kotlin {
@@ -41,6 +42,10 @@ kotlin {
             api(libs.compose.ui)
             implementation(libs.compose.components.resources)
             implementation(libs.compose.uiToolingPreview)
+        }
+        jvmTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(project(":screenshotTesting"))
         }
     }
 }
