@@ -139,8 +139,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.player_n
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_list
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_country_or_ema
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_ema_number_player
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
 import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
@@ -400,7 +399,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
             .distinct()
             .sorted()
     }
-    val filteredPlayers = remember(players, playersByEma, teamNamesById, tableNumbersByPlayerId, searchQuery, selectedCountryCodes) {
+    val filteredPlayers = remember(players, playersByEma, teamNamesById, tableNumbersByPlayerId, countries, searchQuery, selectedCountryCodes) {
         val query = normalizeSearchText(searchQuery.trim())
         players.filter { slot ->
             val assigned = slot.assignedEmaId?.let(playersByEma::get)
@@ -416,6 +415,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     slot.id.toString(),
                     team,
                     tablesForPlayer,
+                    // The country matches by its code (ESP) or by its name (Spain).
+                    country,
+                    countries.firstOrNull { it.code.equals(country.trim(), ignoreCase = true) }?.name.orEmpty(),
                 ).any { normalizeSearchText(it).contains(query) }
             val matchesCountry = selectedCountryCodes.isEmpty() || country.trim().uppercase() in selectedCountryCodes
             matchesSearch && matchesCountry
@@ -627,7 +629,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                         OutlinedTextField(
                             value = assignmentSearchQuery,
                             onValueChange = { assignmentSearchQuery = it },
-                            label = { Text(stringResource(Res.string.search_by_name_country_or_ema)) },
+                            label = { Text(stringResource(Res.string.search)) },
                             singleLine = true,
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -1098,7 +1100,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                     OutlinedTextField(
                         value = searchQuery,
                         onValueChange = { searchQuery = it },
-                        label = { Text(stringResource(Res.string.search_by_name_ema_number_player)) },
+                        label = { Text(stringResource(Res.string.search)) },
                         singleLine = true,
                         trailingIcon = if (searchQuery.isNotEmpty()) {
                             {
@@ -1221,20 +1223,29 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 overflow = TextOverflow.Ellipsis,
                                             )
                                         }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.Top) {
                                             if (!slot.assignedEmaId.isNullOrBlank()) {
                                                 AccountStateIcon(slot.hasAccount, Modifier.size(16.dp))
                                             }
-                                            Text(
-                                                text = listOfNotNull(
-                                                    tableNumbersByPlayerId[slot.id]?.let { "${stringResource(Res.string.tables)}: $it" },
-                                                    slot.email?.takeIf { it.isNotBlank() },
-                                                ).joinToString(" · "),
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
+                                            Column(Modifier.weight(1f)) {
+                                                // Every table shows: the numbers take as many lines as they need.
+                                                tableNumbersByPlayerId[slot.id]?.let { tables ->
+                                                    Text(
+                                                        text = "${stringResource(Res.string.tables)}: $tables",
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    )
+                                                }
+                                                slot.email?.takeIf { it.isNotBlank() }?.let { email ->
+                                                    Text(
+                                                        text = email,
+                                                        style = MaterialTheme.typography.bodySmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                    )
+                                                }
+                                            }
                                         }
                                     }
                                 } else {
@@ -1299,8 +1310,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         modifier = Modifier.width(TournamentPlayerTablesColumnWidth),
                                         textAlign = TextAlign.Center,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
                                     )
                                     Box(
                                         modifier = Modifier.width(TournamentPlayerAccountColumnWidth),

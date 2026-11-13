@@ -107,8 +107,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.remove_country_filter
 import mahjongtournamentsuite.adminapp.generated.resources.rival_ema
 import mahjongtournamentsuite.adminapp.generated.resources.save_team
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_team_or_player_name
-import mahjongtournamentsuite.adminapp.generated.resources.search_players
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.select_player_n
 import mahjongtournamentsuite.adminapp.generated.resources.team_members
 import mahjongtournamentsuite.adminapp.generated.resources.team_move_warning
@@ -313,7 +312,7 @@ fun TeamsScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text(stringResource(Res.string.search_by_team_or_player_name)) },
+                    label = { Text(stringResource(Res.string.search)) },
                     singleLine = true,
                     trailingIcon = if (searchQuery.isNotEmpty()) {
                         {
@@ -724,7 +723,7 @@ private fun PlayerPickerDialog(
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
-                        label = { Text(stringResource(Res.string.search_players)) },
+                        label = { Text(stringResource(Res.string.search)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                     )

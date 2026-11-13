@@ -61,6 +61,8 @@ internal fun PasswordResetBar(
     onSelectAllShown: () -> Unit,
     onClear: () -> Unit,
     onSend: () -> Unit,
+    /** False on a phone, where the send button floats at the bottom of the screen. */
+    showSend: Boolean = true,
 ) {
     // The items wrap on a narrow screen. On a wide one the send button stays at the end of the line.
     FlowRow(
@@ -74,10 +76,12 @@ internal fun PasswordResetBar(
         }
         TextButton(enabled = selectedCount > 0 && !busy, onClick = onClear) { Text(stringResource(Res.string.clear)) }
         Text(stringResource(Res.string.selected_count, selectedCount), color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.weight(1f))
-        Button(enabled = selectedCount > 0 && !busy, onClick = onSend) {
-            Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
-            Text(stringResource(Res.string.send_password_reset_count, selectedCount), Modifier.padding(start = 8.dp))
+        if (showSend) {
+            Spacer(Modifier.weight(1f))
+            Button(enabled = selectedCount > 0 && !busy, onClick = onSend) {
+                Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null, Modifier.size(18.dp))
+                Text(stringResource(Res.string.send_password_reset_count, selectedCount), Modifier.padding(start = 8.dp))
+            }
         }
     }
 }

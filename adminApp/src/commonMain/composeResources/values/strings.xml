@@ -80,6 +80,7 @@
     <string name="loading_rankings">Loading rankings…</string>
     <string name="no_ranking_yet">No ranking yet</string>
     <string name="the_ranking_shows_when_the_first">The ranking shows when the first table is completed.</string>
+    <string name="settings">Settings</string>
     <string name="show_first_3">Show first 3</string>
     <string name="previous_ranking_list">Previous ranking list</string>
     <string name="next_ranking_list">Next ranking list</string>
@@ -111,7 +112,6 @@
     <string name="send_password_reset_email">Send password-reset email</string>
     <string name="global_role">Global role</string>
     <string name="assign_tournaments">Assign tournaments</string>
-    <string name="search_by_name">Search by name</string>
     <string name="selected_only">Selected only</string>
     <string name="close">Close</string>
     <string name="select_results">Select results</string>
@@ -124,7 +124,6 @@
     <string name="first_name">First name</string>
     <string name="last_name">Last name</string>
     <string name="add_player">Add player</string>
-    <string name="search_by_name_or_ema_number">Search by name or EMA number</string>
     <string name="clear_search">Clear search</string>
     <string name="player_base">Player base</string>
     <string name="player_details">Player details</string>
@@ -185,22 +184,18 @@
     <string name="new_tournament">New tournament</string>
     <string name="heavy_computing">Heavy computing</string>
     <string name="reuse_existing">Reuse existing</string>
-    <string name="search_by_name_country_or_ema">Search by name, country, or EMA number</string>
     <string name="assign">Assign</string>
     <string name="clear_assignment">Clear assignment?</string>
     <string name="clear_assignment_2">Clear assignment</string>
     <string name="tournament_players">Tournament players</string>
-    <string name="search_by_name_ema_number_player">Search by name, EMA number, player ID, team, or table</string>
     <string name="player_actions">Player actions</string>
     <string name="clear">Clear</string>
     <string name="tournament_teams">Tournament teams</string>
-    <string name="search_by_team_or_player_name">Search by team or player name or ID</string>
     <string name="edit">Edit</string>
     <string name="team_name">Team name</string>
     <string name="team_members">Team members</string>
     <string name="player_assignments_are_locked_because_table">Player assignments are locked because table results have started.</string>
     <string name="save_team">Save team</string>
-    <string name="search_players">Search players</string>
     <string name="no_players_match_the_search">No players match the search.</string>
     <string name="clear_slot">Clear slot</string>
     <string name="tables">Tables</string>
@@ -215,7 +210,6 @@
     <string name="edit_coming_soon">Edit (coming soon)</string>
     <string name="delete_coming_soon">Delete (coming soon)</string>
     <string name="preview_tournament_2">preview-tournament</string>
-    <string name="search_by_name_number_email_ema">Search by name, number, email, EMA number or country</string>
     <string name="no_players_in_this_group">No players in this group.</string>
     <string name="reason">Reason</string>
     <string name="first_round_of_the_substitute">First round of the substitute</string>
@@ -634,7 +628,6 @@
     <string name="errors_kpi_occurrences">Occurrences</string>
     <string name="errors_kpi_crashes">Crashes</string>
     <string name="errors_kpi_last">Last error</string>
-    <string name="errors_search">Search by type, area or message</string>
     <string name="errors_reload">Reload</string>
     <string name="errors_last_hours">Last %1$d hours</string>
     <string name="errors_last_days">Last %1$d days</string>

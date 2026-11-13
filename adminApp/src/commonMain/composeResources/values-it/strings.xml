@@ -80,6 +80,7 @@
     <string name="loading_rankings">Caricamento delle classifiche…</string>
     <string name="no_ranking_yet">Ancora nessuna classifica</string>
     <string name="the_ranking_shows_when_the_first">La classifica compare quando si completa il primo tavolo.</string>
+    <string name="settings">Impostazioni</string>
     <string name="show_first_3">Mostra i primi 3</string>
     <string name="previous_ranking_list">Elenco di classifica precedente</string>
     <string name="next_ranking_list">Elenco di classifica successivo</string>
@@ -111,7 +112,6 @@
     <string name="send_password_reset_email">Invia l'email di reimpostazione della password</string>
     <string name="global_role">Ruolo globale</string>
     <string name="assign_tournaments">Assegna tornei</string>
-    <string name="search_by_name">Cerca per nome</string>
     <string name="selected_only">Solo selezionati</string>
     <string name="close">Chiudi</string>
     <string name="select_results">Seleziona i risultati</string>
@@ -124,7 +124,6 @@
     <string name="first_name">Nome</string>
     <string name="last_name">Cognome</string>
     <string name="add_player">Aggiungi giocatore</string>
-    <string name="search_by_name_or_ema_number">Cerca per nome o numero EMA</string>
     <string name="clear_search">Cancella la ricerca</string>
     <string name="player_base">Anagrafica giocatori</string>
     <string name="player_details">Dettagli del giocatore</string>
@@ -185,22 +184,18 @@
     <string name="new_tournament">Nuovo torneo</string>
     <string name="heavy_computing">Calcolo intensivo</string>
     <string name="reuse_existing">Riutilizza esistente</string>
-    <string name="search_by_name_country_or_ema">Cerca per nome, paese o numero EMA</string>
     <string name="assign">Assegna</string>
     <string name="clear_assignment">Annullare l'assegnazione?</string>
     <string name="clear_assignment_2">Annulla l'assegnazione</string>
     <string name="tournament_players">Giocatori del torneo</string>
-    <string name="search_by_name_ema_number_player">Cerca per nome, numero EMA, ID giocatore, squadra o tavolo</string>
     <string name="player_actions">Azioni del giocatore</string>
     <string name="clear">Cancella</string>
     <string name="tournament_teams">Squadre del torneo</string>
-    <string name="search_by_team_or_player_name">Cerca per squadra, nome del giocatore o ID</string>
     <string name="edit">Modifica</string>
     <string name="team_name">Nome della squadra</string>
     <string name="team_members">Membri della squadra</string>
     <string name="player_assignments_are_locked_because_table">Le assegnazioni dei giocatori sono bloccate perché i risultati dei tavoli sono iniziati.</string>
     <string name="save_team">Salva la squadra</string>
-    <string name="search_players">Cerca giocatori</string>
     <string name="no_players_match_the_search">Nessun giocatore corrisponde alla ricerca.</string>
     <string name="clear_slot">Svuota il posto</string>
     <string name="tables">Tavoli</string>
@@ -215,7 +210,6 @@
     <string name="edit_coming_soon">Modifica (a breve)</string>
     <string name="delete_coming_soon">Elimina (a breve)</string>
     <string name="preview_tournament_2">preview-tournament</string>
-    <string name="search_by_name_number_email_ema">Cerca per nome, numero, email, numero EMA o paese</string>
     <string name="no_players_in_this_group">Nessun giocatore in questo gruppo.</string>
     <string name="reason">Motivo</string>
     <string name="first_round_of_the_substitute">Primo turno del sostituto</string>
@@ -634,7 +628,6 @@
     <string name="errors_kpi_occurrences">Occorrenze</string>
     <string name="errors_kpi_crashes">Arresti anomali</string>
     <string name="errors_kpi_last">Ultimo errore</string>
-    <string name="errors_search">Cerca per tipo, area o messaggio</string>
     <string name="errors_reload">Ricarica</string>
     <string name="errors_last_hours">Ultime %1$d ore</string>
     <string name="errors_last_days">Ultimi %1$d giorni</string>

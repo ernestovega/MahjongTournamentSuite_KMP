@@ -190,7 +190,7 @@ class ErrorsScreenUiTest {
     @Test
     fun aSearchThatMatchesNothingShowsTheNoMatchMessage() = runComposeUiTest {
         show()
-        onNodeWithText("Search by type, area or message").performTextInput("zzz-nothing")
+        onNodeWithText("Search").performTextInput("zzz-nothing")
         waitForIdle()
 
         onNodeWithText("No problem matches these filters.").assertExists()
@@ -200,7 +200,7 @@ class ErrorsScreenUiTest {
     @Test
     fun aSearchKeepsOnlyTheMatchingProblem() = runComposeUiTest {
         show()
-        onNodeWithText("Search by type, area or message").performTextInput("android")
+        onNodeWithText("Search").performTextInput("android")
         waitForIdle()
 
         onAllNodesWithText("WebFailure").assertCountEquals(0)

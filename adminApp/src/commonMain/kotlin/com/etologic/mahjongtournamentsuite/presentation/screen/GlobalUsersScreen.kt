@@ -1,5 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +26,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -135,11 +141,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.role_player
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_and_send_password_reset
 import mahjongtournamentsuite.adminapp.generated.resources.search
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_name
 import mahjongtournamentsuite.adminapp.generated.resources.search_ema_players
 import mahjongtournamentsuite.adminapp.generated.resources.select_results
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.selected_only
+import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_email
 import mahjongtournamentsuite.adminapp.generated.resources.status
 import mahjongtournamentsuite.adminapp.generated.resources.the_email_addresses_do_not_match
@@ -152,6 +158,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
@@ -317,11 +324,22 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         }
     }
 
+    // On a phone the send button is a floating button. It shows only while accounts are selected.
+    val compact = LocalCompactLayout.current
+    val showResetFab = compact && access?.isAdmin == true && chosenUids.isNotEmpty() && !saving && !loading
     AppScaffold(
         title = stringResource(Res.string.app_users),
         isLoading = loading || saving,
         showBackgroundLogo = loading && users.isEmpty(),
         onBack = { navController.popBackStack() },
+        floatingActionButton = {
+            AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
+                ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                    Text(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
+                }
+            }
+        },
         actions = {
             AppTopBarActions(
                 // Only admins create accounts. A new account is an editor or an admin.
@@ -332,7 +350,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     ) {
         ScreenColumn(
             maxWidth = 1200.dp,
-            contentPadding = PaddingValues(24.dp),
+            // The floating button must not cover the last account.
+            contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp, bottom = if (compact) 88.dp else 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             error?.let {
@@ -366,6 +385,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                         onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
                         onClear = { selectedUids = emptySet() },
                         onSend = { confirmResetOpen = true },
+                        showSend = !compact,
                     )
                 }
                 UsersTable(
@@ -980,7 +1000,7 @@ private fun TournamentAssignmentsDialog(
                     OutlinedTextField(
                         value = searchText,
                         onValueChange = { searchText = it },
-                        label = { Text(stringResource(Res.string.search_by_name)) },
+                        label = { Text(stringResource(Res.string.search)) },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()

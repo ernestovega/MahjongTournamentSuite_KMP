@@ -860,6 +860,20 @@ private fun CompactTournamentCard(
                     )
                 }
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (tournament.shortName.isNotBlank()) {
+                        // The short name is a code, so it shows as a tag in the color of the tournament.
+                        Text(
+                            text = tournament.shortName,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = accent,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .border(1.dp, accent, MaterialTheme.shapes.extraSmall)
+                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                        )
+                    }
                     Text(
                         text = tournament.name,
                         style = MaterialTheme.typography.bodyLarge,
@@ -899,15 +913,6 @@ private fun CompactTournamentCard(
                             AppTooltipBox(stringResource(Res.string.feature_chicken_on)) {
                                 ChickenIcon(contentDescription = stringResource(Res.string.feature_chicken_on), modifier = Modifier.size(18.dp))
                             }
-                        }
-                        if (tournament.shortName.isNotBlank()) {
-                            Text(
-                                text = tournament.shortName,
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
                         }
                     }
                 }

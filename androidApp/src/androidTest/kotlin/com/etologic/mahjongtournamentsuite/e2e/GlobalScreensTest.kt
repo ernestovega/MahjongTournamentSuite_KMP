@@ -88,7 +88,7 @@ class GlobalScreensTest : AdminE2eTest() {
         start(E2eAccounts.ADMIN)
         c.clickButton("EMA players")
         c.waitForText("160 players · 8 countries")
-        c.field("Search by name or EMA number").performTextInputText("10000119")
+        c.field("Search").performTextInputText("10000119")
         c.waitForText("CARMEN ALVAREZ")
         c.assertNoText("ANA ALVAREZ")
     }

@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,9 +27,12 @@ import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -110,6 +111,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.previous_ranking_list
 import mahjongtournamentsuite.adminapp.generated.resources.rows_count
 import mahjongtournamentsuite.adminapp.generated.resources.score
 import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
+import mahjongtournamentsuite.adminapp.generated.resources.settings
 import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
 import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
 import mahjongtournamentsuite.adminapp.generated.resources.show_more_rows
@@ -307,7 +309,7 @@ private fun CenteredMessage(message: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 private fun RankingControls(
     playing: Boolean,
     themePreference: ThemePreference,
@@ -335,11 +337,19 @@ private fun RankingControls(
     val longerIntervalFocusRequester = remember { FocusRequester() }
     val themeFocusRequester = remember { FocusRequester() }
 
+    val compact = LocalCompactLayout.current
+    val settingsFocusRequester = remember { FocusRequester() }
+    var settingsOpen by remember { mutableStateOf(false) }
     val activeFocusRequesters = buildList {
         add(playFocusRequester)
         if (pageCount > 1) {
             add(previousFocusRequester)
             add(nextFocusRequester)
+        }
+        // On a phone the other settings are in a bottom sheet, so the bar has only its own buttons.
+        if (compact) {
+            add(settingsFocusRequester)
+            return@buildList
         }
         if (rowsPerScroll > MIN_ROWS_PER_SCROLL) add(fewerRowsFocusRequester)
         if (rowsPerScroll < minOf(MAX_ROWS_PER_SCROLL, maxVisibleRows)) add(moreRowsFocusRequester)
@@ -358,7 +368,7 @@ private fun RankingControls(
 
     LaunchedEffect(Unit) { playFocusRequester.requestFocus() }
 
-    val controls: @Composable () -> Unit = {
+    val playButton: @Composable () -> Unit = {
         FocusedIconButton(
             onClick = onTogglePlaying,
             focusRequester = playFocusRequester,
@@ -373,12 +383,14 @@ private fun RankingControls(
                 modifier = Modifier.size(34.dp),
             )
         }
-
+    }
+    val topThree: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = showTopThree, onCheckedChange = onShowTopThreeChanged)
             Text(stringResource(Res.string.show_first_3), style = MaterialTheme.typography.labelSmall)
         }
-
+    }
+    val pager: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = onPrevious,
@@ -398,7 +410,9 @@ private fun RankingControls(
                 Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_ranking_list))
             }
         }
-
+    }
+    val settings: @Composable () -> Unit = {
+        if (compact) topThree()
         Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = { onRowsChanged((rowsPerScroll - 1).coerceAtLeast(MIN_ROWS_PER_SCROLL)) },
@@ -453,19 +467,42 @@ private fun RankingControls(
             }
         }
     }
-    if (LocalCompactLayout.current) {
-        // A phone has no room at the side of the ranking. The controls wrap in a bar at the bottom.
+    if (compact) {
+        // A phone has no room at the side of the ranking. A small bar at the bottom keeps play and the pages
+        // always at hand, and its settings button opens the other settings in a bottom sheet.
         Surface(
-            modifier = modifier.fillMaxWidth().alpha(if (playing) 0.4f else 1f).appFocusGroup(),
-            shape = MaterialTheme.shapes.large,
+            modifier = modifier.alpha(if (playing) 0.4f else 1f).appFocusGroup(),
+            shape = MaterialTheme.shapes.extraLarge,
             tonalElevation = 3.dp,
             shadowElevation = 3.dp,
         ) {
-            FlowRow(
+            Row(
                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
-                itemVerticalAlignment = Alignment.CenterVertically,
-            ) { controls() }
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                playButton()
+                pager()
+                FocusedIconButton(
+                    onClick = { settingsOpen = true },
+                    focusRequester = settingsFocusRequester,
+                    buttonModifier = focusLoopFor(settingsFocusRequester),
+                ) {
+                    Icon(Icons.Default.Tune, contentDescription = stringResource(Res.string.settings))
+                }
+            }
+        }
+        if (settingsOpen) {
+            ModalBottomSheet(onDismissRequest = { settingsOpen = false }) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp).appFocusGroup(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(Res.string.settings), style = MaterialTheme.typography.titleMedium)
+                    settings()
+                }
+            }
         }
     } else {
         Column(
@@ -475,7 +512,12 @@ private fun RankingControls(
                 .appFocusGroup(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) { controls() }
+        ) {
+            playButton()
+            topThree()
+            pager()
+            settings()
+        }
     }
 }
 

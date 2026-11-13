@@ -116,11 +116,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.errors_recent_reports
 import mahjongtournamentsuite.adminapp.generated.resources.errors_reload
 import mahjongtournamentsuite.adminapp.generated.resources.errors_report_id
 import mahjongtournamentsuite.adminapp.generated.resources.errors_report_reason
-import mahjongtournamentsuite.adminapp.generated.resources.errors_search
 import mahjongtournamentsuite.adminapp.generated.resources.errors_sort_frequent
 import mahjongtournamentsuite.adminapp.generated.resources.errors_sort_latest
 import mahjongtournamentsuite.adminapp.generated.resources.errors_stack_trace
 import mahjongtournamentsuite.adminapp.generated.resources.errors_summary
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import kotlin.time.Clock
@@ -314,7 +314,7 @@ private fun ErrorFiltersBar(
             OutlinedTextField(
                 value = query,
                 onValueChange = onQueryChange,
-                label = { Text(stringResource(Res.string.errors_search)) },
+                label = { Text(stringResource(Res.string.search)) },
                 singleLine = true,
                 trailingIcon = {
                     if (query.isNotEmpty()) IconButton(onClick = { onQueryChange("") }) { Text("×") }

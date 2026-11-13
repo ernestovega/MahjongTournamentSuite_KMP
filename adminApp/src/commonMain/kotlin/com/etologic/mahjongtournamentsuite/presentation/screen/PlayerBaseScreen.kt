@@ -138,7 +138,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.remove_country_filter
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_changes_to
 import mahjongtournamentsuite.adminapp.generated.resources.save_player_changes
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_or_ema_number
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.this_player
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
@@ -617,7 +617,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { searchQuery = it },
-                label = { Text(stringResource(Res.string.search_by_name_or_ema_number)) },
+                label = { Text(stringResource(Res.string.search)) },
                 singleLine = true,
                 trailingIcon = if (searchQuery.isNotEmpty()) {
                     {
