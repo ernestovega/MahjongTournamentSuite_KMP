@@ -147,10 +147,22 @@ class RoundTimerControllerTest {
         val base = Tournament(id = "t", name = "T", isTeams = false, numPlayers = 8, numRounds = 3, matchDurationMinutes = 120)
         val now = 10 * 60 * minute
 
-        assertEquals(1, base.timerRound(now))
-        assertEquals(2, base.copy(roundClocks = listOf(RoundClock(1, now - 200 * minute))).timerRound(now))
-        assertEquals(2, base.copy(roundClocks = listOf(RoundClock(1, now - 200 * minute), RoundClock(2, now - 10 * minute))).timerRound(now))
+        assertEquals(1, base.timerRound(nowMs = now))
+        assertEquals(2, base.copy(roundClocks = listOf(RoundClock(1, now - 200 * minute))).timerRound(nowMs = now))
+        assertEquals(2, base.copy(roundClocks = listOf(RoundClock(1, now - 200 * minute), RoundClock(2, now - 10 * minute))).timerRound(nowMs = now))
         val allOver = (1..3).map { RoundClock(it, now - 1000 * minute) }
-        assertEquals(3, base.copy(roundClocks = allOver).timerRound(now))
+        assertEquals(3, base.copy(roundClocks = allOver).timerRound(nowMs = now))
+    }
+
+    @Test
+    fun theTimerSkipsTheRoundsWithHandsThatHaveNoClock() {
+        val base = Tournament(id = "t", name = "T", isTeams = false, numPlayers = 8, numRounds = 4, matchDurationMinutes = 120)
+        val now = 10 * 60 * minute
+        val firstOver = base.copy(roundClocks = listOf(RoundClock(1, now - 1000 * minute)))
+
+        // Rounds 2 and 3 have hands from the editor but no clock: the next round to play is 4.
+        assertEquals(4, firstOver.timerRound(roundsWithHands = setOf(1, 2, 3), nowMs = now))
+        assertEquals(3, base.timerRound(roundsWithHands = setOf(2), nowMs = now))
+        assertEquals(4, firstOver.timerRound(roundsWithHands = setOf(4), nowMs = now))
     }
 }

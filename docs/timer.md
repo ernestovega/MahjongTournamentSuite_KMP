@@ -46,7 +46,7 @@ A player of a table can set the four seats from 10 minutes before the planned st
 
 ## Controls
 
-When opened, the Timer selects the round whose clock runs, or else the first round without a clock.
+When opened, the Timer selects the round whose clock runs, or else the round after the last round that has a clock or hands. A round with hands but no clock (hands entered in the editor without the Timer) counts as played.
 
 | Control | Behavior |
 | --- | --- |
@@ -87,6 +87,10 @@ Closing a Timer does not stop the round: the clock lives on the server.
 ## Moving stored tournaments
 
 `npm run backfill:round-clocks` (preview) and `npm run backfill:round-clocks:apply` give a clock at the planned start to every round of a tournament that is not completed, whose planned start is past and that has no clock. The seed of the test tournaments does the same, so its rounds in play stay in play. From a computer, planning the close of a round in play needs `EMA_FIREBASE_SERVICE_ACCOUNT` set to the service account of the functions; without it the script writes the clocks but warns that the closes are not planned. Saving the settings of the tournament in the admin app plans them.
+
+## Preparing an ongoing tournament for tests
+
+`npm run prepare:ongoing-round [tournamentId]` (preview) and `npm run prepare:ongoing-round:apply [tournamentId]` leave a tournament ready to try the tables; the default is `madrid-open-2026`. The first round after the last round with hands starts at the time of the run: every planned time (rounds, agenda, event dates) moves by the same amount, so the rounds keep their order and the time between them. The rounds before it get a clock that is over, and the server closes their open tables with hands as at the end of a round. That round and the later ones lose their clock, so the Timer opens at it and Play starts it. Run it again whenever a new round is needed; when every round has hands, seed the tournament again. The production seed (`seed:production-tournaments`) leaves `madrid-open-2026` in the same state. Like any script, it targets production unless `FIRESTORE_EMULATOR_HOST` or `EMA_FIREBASE_PROJECT` says otherwise. Logic: `services/ongoingRound.ts`.
 
 ## Main source files
 

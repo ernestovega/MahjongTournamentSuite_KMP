@@ -380,7 +380,11 @@ fun TournamentScreen(
                     },
                 )
             }
-            RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound() ?: 1)
+            RoundEditorAction.Timer -> openTimer(
+                navController,
+                tournamentId,
+                tournament?.timerRound(allTables.filter { it.hasProgress }.map { it.roundId }.toSet()) ?: 1,
+            )
             RoundEditorAction.Export -> scope.launch { exportResults() }
         }
     }
@@ -540,12 +544,16 @@ fun TournamentScreen(
 }
 
 /**
- * The round that the Timer opens at: the round whose clock runs, or else the first round that has not started.
- * After the last round it opens at the last round.
+ * The round that the Timer opens at: the round whose clock runs, or else the round after the last round that started
+ * or has hands. A round with hands was played, even when its clock is missing (hands entered in the editor without the
+ * Timer). After the last round it opens at the last round.
  */
-internal fun Tournament.timerRound(nowMs: Long = kotlin.time.Clock.System.now().toEpochMilliseconds()): Int {
+internal fun Tournament.timerRound(
+    roundsWithHands: Set<Int> = emptySet(),
+    nowMs: Long = kotlin.time.Clock.System.now().toEpochMilliseconds(),
+): Int {
     val running = roundClocks.filter { it.remainingMs(matchDurationMinutes, nowMs) > 0 }.maxOfOrNull { it.roundId }
     if (running != null) return running
-    val started = roundClocks.map { it.roundId }.toSet()
-    return (1..numRounds).firstOrNull { it !in started } ?: numRounds.coerceAtLeast(1)
+    val lastPlayed = (roundClocks.map { it.roundId } + roundsWithHands).maxOrNull() ?: 0
+    return (lastPlayed + 1).coerceAtMost(numRounds).coerceAtLeast(1)
 }

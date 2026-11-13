@@ -6,6 +6,7 @@ import { globalVersionUpdate } from "../services/dataVersionsService";
 import { isSelectableTimeZone, plannedRoundClocks } from "../services/matchTime";
 import { roundCloseTasks, scheduleRoundCloses } from "../services/matchTimeTaskService";
 import { handScoreTotals, tablePointsOf } from "../services/handScoring";
+import { planOngoingRound } from "../services/ongoingRound";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 import { drawProblem } from "../services/tournamentDraw";
 import { isValidPlayerCount, MIN_TOURNAMENT_PLAYERS } from "../services/tournamentContentRules";
@@ -97,6 +98,11 @@ type TournamentSpec = {
   production?: boolean;
   /** EMA ids that the random fill of "ema" slots must not use. */
   avoidEmaIds?: string[];
+  /**
+   * The round that waits for the Play of the Timer. The seed moves the whole schedule so that this round starts at the
+   * time of the run, as the script prepareOngoingRound does: the rounds before it are over and it has no clock.
+   */
+  readyRound?: number;
   /** Match time settings. Without it, the tournament uses the defaults (120 minutes, the table stops). */
   match?: { durationMinutes: number; endMode: "STOP" | "FINISH_HAND"; extraMinutes: number; timeZone: string };
 };
@@ -653,14 +659,16 @@ const TESTER_TOURNAMENTS: TournamentSpec[] = [
  * and no "Test" in any text. The testers play in all of them. The ongoing one is a big tournament that starts on the
  * day of the seed run and lasts 4 days. Its rounds start every 2 hours and 30 minutes, from 10:00 to 23:00, so the
  * testers can play a round in the morning, in the afternoon and at night. The rounds that started before the seed run
- * are complete, the last one of them has hands in some tables, the later rounds are empty.
+ * are complete and over. The last round that started by the planned times is empty and starts at the time of the seed
+ * run, without a clock, so Play in the Timer starts it; the whole schedule moves to make it so. The later rounds are
+ * empty. `npm run prepare:ongoing-round` does the same later on the stored tournament, after the testers enter hands.
  */
 const PROD_TIMES = ["09:00", "11:30", "14:00", "16:30"];
 const ONGOING_TIMES = ["10:00", "12:30", "15:00", "18:00", "20:30", "23:00"];
 const ONGOING_DAYS = 4;
 const ONGOING_START = TESTER_START;
 const ONGOING_ROUNDS = ONGOING_TIMES.length * ONGOING_DAYS;
-/** The round that plays at the time of the seed run. Round 1 when no round started yet. */
+/** The last round that started by the planned times at the seed run. Round 1 when no round started yet. */
 const ONGOING_NOW_ROUND = Math.max(1, ONGOING_TIMES.filter((time) => time <= localSlot(new Date()).startTime).length);
 
 /** Slots (counted from 1) of the testers. Edgar and Edu share team 1. Héctor and Raúl share team 2. */
@@ -724,10 +732,9 @@ const PRODUCTION_TOURNAMENTS: TournamentSpec[] = [
     ],
     mode: (round, table) => {
       if (round < ONGOING_NOW_ROUND) return { kind: "full", style: table % 17 === 0 ? "penalties" : table % 11 === 0 ? "draws" : "normal" };
-      if (round > ONGOING_NOW_ROUND) return { kind: "empty" };
-      if (table <= 30) return { kind: "partial", done: cycle([3, 5, 6, 4, 7, 2], table - 1) };
-      return table <= 42 ? { kind: "seats" } : { kind: "empty" };
+      return { kind: "empty" };
     },
+    readyRound: ONGOING_NOW_ROUND,
     match: { durationMinutes: 120, endMode: "FINISH_HAND", extraMinutes: 15, timeZone: "Europe/Madrid" },
     testers: true, production: true,
     avoidEmaIds: TESTER_EMA_IDS,
@@ -1174,6 +1181,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
   const kinds: Record<string, number> = {};
   const tableVersions: Record<string, number> = {};
   let progress = 0;
+  const roundsWithHands = new Set<number>();
   let allCompleted = true;
   let maxVersion = 0;
   seating.forEach((tables, roundIndex) => {
@@ -1185,7 +1193,10 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       });
       const status = String(built.table.completionStatus);
       kinds[`${mode.kind}:${status}`] = (kinds[`${mode.kind}:${status}`] ?? 0) + 1;
-      if (built.table.hasProgress) progress += 1;
+      if (built.table.hasProgress) {
+        progress += 1;
+        roundsWithHands.add(roundIndex + 1);
+      }
       if (!built.table.isCompleted) allCompleted = false;
       tableVersions[built.id] = Number(built.table.version);
       maxVersion += Number(built.table.version);
@@ -1245,8 +1256,19 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       tableVersions,
     },
   };
-  // The rounds whose planned start is past were started by the Timer at that time, so they are in play or over.
-  const clocks = plannedRoundClocks(tournament, Date.now());
+  const plan = spec.readyRound != null ? planOngoingRound(tournament, roundsWithHands, Date.now()) : null;
+  if (plan != null) {
+    if (plan.roundId !== spec.readyRound) throw new Error(`${spec.id}: round ${plan.roundId} would wait for Play instead of ${spec.readyRound}`);
+    Object.assign(tournament, {
+      roundSchedules: plan.roundSchedules,
+      agendaItems: plan.agendaItems,
+      eventStartDate: plan.eventStartDate,
+      eventEndDate: plan.eventEndDate,
+    });
+  }
+  // The rounds whose planned start is past were started by the Timer at that time, so they are in play or over. The
+  // ready round has none: the plan gives the earlier rounds clocks that are over.
+  const clocks = plan?.clocks ?? plannedRoundClocks(tournament, Date.now());
   if (clocks.size > 0) tournament.roundClocks = Object.fromEntries([...clocks].map(([roundId, clock]) => [String(roundId), clock]));
   return { id: spec.id, writes, tournament, summary: { tables: kinds, players: numPlayers, ema, open, completed: allCompleted } };
 }
