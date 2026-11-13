@@ -23,7 +23,7 @@ import {
   type SeatNumbers,
   type SynthHand,
 } from "../services/handSynthesis";
-import { calculateTableSummary, defaultHand, HANDS_PER_TABLE } from "../services/tableManagerService";
+import { calculateTableSummary, defaultHand, HANDS_PER_TABLE, handsCopyUpdate } from "../services/tableManagerService";
 import { runScript } from "./scriptRun";
 
 /**
@@ -219,6 +219,8 @@ function finishTable(params: {
     useTotalsOnly: false,
     isCompleted: true,
     ...summary,
+    // The copy of the hands in the table goes with the new version, so the API keeps reading one document per table.
+    ...handsCopyUpdate(version, finalHands),
     version,
   };
   operations.push({
@@ -254,7 +256,7 @@ function finishWithTotals(params: {
   const points = tablePointsOf(merged);
   const summary = calculateTableSummary({ ...merged, ...points }, entry.hands);
   const version = Number(entry.table.version ?? 0) + 1;
-  const patch: Data = { ...totals, ...points, ...summary, version };
+  const patch: Data = { ...totals, ...points, ...summary, ...handsCopyUpdate(version, entry.hands), version };
   return {
     operations: [{ path: tablePath, kind: "update", data: { ...patch, updatedAt: FieldValue.serverTimestamp() } }],
     hands: entry.hands,
