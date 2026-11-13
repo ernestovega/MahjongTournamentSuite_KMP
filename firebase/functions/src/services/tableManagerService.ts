@@ -298,6 +298,13 @@ export async function saveTableStateInTransaction(
     const key = String(item.handId);
     handsAfter.set(key, { ...(handsBefore.get(key) ?? {}), ...item.patch, handId: item.handId });
   });
+  // A table with every hand done is completed, whether the hands come from the editor or from a phone. The organizer
+  // does not need the Completed switch for it. A totals-only table has no hands to count.
+  const everyHandDone = !Boolean(mergedTable.useTotalsOnly) && [...handsAfter.values()].every((hand) => Boolean(hand.isDone));
+  const tablePatch = everyHandDone && !Boolean(mergedTable.isCompleted)
+    ? { ...params.tablePatch, isCompleted: true }
+    : params.tablePatch;
+  if (everyHandDone) mergedTable.isCompleted = true;
   const previousSummary = calculateTableSummary(tableBefore, [...handsBefore.values()]);
   const summary = calculateTableSummary(mergedTable, [...handsAfter.values()]);
   // The table points are written on every save, from the scores of the merged table.
@@ -335,7 +342,7 @@ export async function saveTableStateInTransaction(
     ? {}
     : { lastEditedByUid: params.actor.uid, lastEditedByName: params.actor.name, lastEditedAt: FieldValue.serverTimestamp() };
   transaction.update(tableRef, {
-    ...params.tablePatch,
+    ...tablePatch,
     ...derivedPoints,
     ...summary,
     ...editedBy,
@@ -367,7 +374,7 @@ export async function saveTableStateInTransaction(
       version: nextVersion,
       actor: params.actor ?? null,
       tableBefore,
-      tablePatch: params.tablePatch,
+      tablePatch,
       handsBefore,
       handPatches: params.handPatches,
     }),

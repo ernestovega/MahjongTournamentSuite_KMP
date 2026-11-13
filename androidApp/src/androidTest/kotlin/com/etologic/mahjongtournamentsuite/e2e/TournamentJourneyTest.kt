@@ -151,12 +151,8 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.onAllNodes(emptyChoice).let { it[it.fetchSemanticsNodes().size - 1].performClick() }
         c.onAllNodes(playerOption(loser)).onLast().performClick()
         c.onAllNodes(hasSetTextAction() and hasText("")).onLast().performTextInput("8")
-        val toggles = c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState))
-        toggles.onLast().performClick()
-        // The editor does not close a table by itself after hand 16, unlike the phones. The organizer turns on the
-        // "Completed" switch. The switches above the rows are "Manual scores" and then "Completed", as in TableEditingTest.
-        toggles[1].performScrollTo()
-        toggles[1].performClick()
+        // Only the Done box of hand 16. With every hand done the server closes the table: no "Completed" switch.
+        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast().performClick()
         c.clickButton("Save")
         c.waitForText("16 of 16 hands done.")
         closeTableNotices()
