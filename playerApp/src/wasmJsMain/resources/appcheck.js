@@ -2,9 +2,9 @@
 // Fill in the values of the Firebase web app and the reCAPTCHA v3 site key to turn it on. See docs/backend.md.
 // These values are public. Without them this file does nothing and the app sends no token.
 const CONFIG = {
-  siteKey: "",
-  apiKey: "",
-  appId: "",
+  siteKey: "6LdXph4uAAAAAKlhZLrxYfvcYh8852FPS-wq6ai9",
+  apiKey: "AIzaSyDf4pvgE_iwfbo2Yo4nEmMN0Ch0qvb1T_c",
+  appId: "1:827074322474:web:cb06b89f34d68a72efa353",
   projectId: "mahjong-tournament-suite",
 };
 const SDK = "https://www.gstatic.com/firebasejs/11.0.2/";
