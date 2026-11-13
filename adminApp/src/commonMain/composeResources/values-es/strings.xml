@@ -751,4 +751,10 @@
     <string name="activity_period_from_short">Desde</string>
     <string name="activity_period_to_short">Hasta</string>
     <string name="design_system">Design system</string>
+    <string name="background_export_running">%1$s: generando…</string>
+    <string name="background_export_running_hint">Puedes seguir trabajando. Te avisaremos cuando esté listo.</string>
+    <string name="background_export_ready">%1$s: listo</string>
+    <string name="background_export_failed">%1$s: no se pudo generar</string>
+    <string name="background_export_save">Guardar</string>
+    <string name="background_export_close">Cerrar</string>
 </resources>

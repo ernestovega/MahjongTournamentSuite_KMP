@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.domain.model.Player
@@ -87,6 +88,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivi
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
@@ -95,7 +98,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
-import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayersPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
@@ -139,6 +141,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.player_n
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_cards
 import mahjongtournamentsuite.adminapp.generated.resources.save_id_list
+import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_cards
+import mahjongtournamentsuite.adminapp.generated.resources.top_bar_id_list
 import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
 import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
@@ -166,6 +170,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val presenter = koinInject<PlayersPresenter>()
     val store = koinInject<AppMemoryStore>()
     val scope = rememberCoroutineScope()
+    val backgroundExports = rememberBackgroundExports()
     val slots by store.tournamentPlayers.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
     val isAdmin = adminStatus?.isAdmin == true
@@ -327,55 +332,44 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
     val playersByEma = basePlayers.associateBy { it.emaId }
     val players = slots[tournamentId].orEmpty()
 
-    fun exportIdCards(sheet: IdCardSheetLayout?) = scope.launch {
+    fun exportIdCards(sheet: IdCardSheetLayout?) {
         val unassigned = players.filterNot { it.isAssigned }
         if (unassigned.isNotEmpty()) {
             error = UiText.of(Res.string.assign_all_before_id_cards)
-            return@launch
+            return
         }
 
-        loading = true
         error = null
-        when (val result = presenter.generateIdCards(tournamentId, sheet)) {
-            is AppResult.Success -> {
-                val tournament = tournaments.firstOrNull { it.id == tournamentId }
+        val tournament = tournaments.firstOrNull { it.id == tournamentId }
+        backgroundExports.start("id-cards:$tournamentId", UiText.of(Res.string.top_bar_id_cards)) {
+            presenter.generateIdCards(tournamentId, sheet).map { content ->
                 val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
                 val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
                 val fileName = generatedFileName(baseName, "id-cards", "pdf", Clock.System.now(), year = year)
-                saveBinaryFile(fileName, result.value, "application/pdf", saveIdCardsTitle)
+                ExportFile(fileName, content, "application/pdf", saveIdCardsTitle)
             }
-            is AppResult.Failure -> error = result.error.toUiText()
         }
-        loading = false
     }
 
     val exportPlayers = rememberPlayersExport(tournamentId) { error = it }
 
-    fun exportIdList() = scope.launch {
+    fun exportIdList() {
         val unassigned = players.filterNot { it.isAssigned }
         if (unassigned.isNotEmpty()) {
             error = UiText.of(Res.string.assign_all_before_id_list)
-            return@launch
+            return
         }
 
-        loading = true
         error = null
-        when (val result = presenter.generateIdList(tournamentId)) {
-            is AppResult.Success -> {
-                val tournament = tournaments.firstOrNull { it.id == tournamentId }
+        val tournament = tournaments.firstOrNull { it.id == tournamentId }
+        backgroundExports.start("id-list:$tournamentId", UiText.of(Res.string.top_bar_id_list)) {
+            presenter.generateIdList(tournamentId).map { content ->
                 val baseName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament"
                 val year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) }
                 val fileName = generatedFileName(baseName, "id-list", "xlsx", Clock.System.now(), year = year)
-                saveBinaryFile(
-                    fileName,
-                    result.value,
-                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    saveIdListTitle,
-                )
+                ExportFile(fileName, content, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", saveIdListTitle)
             }
-            is AppResult.Failure -> error = result.error.toUiText()
         }
-        loading = false
     }
 
     val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true

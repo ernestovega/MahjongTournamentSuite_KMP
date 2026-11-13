@@ -37,6 +37,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
+import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
@@ -48,6 +49,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarButt
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.HandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
+import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
@@ -56,7 +59,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
 import com.etologic.mahjongtournamentsuite.presentation.platform.openRankings
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
-import com.etologic.mahjongtournamentsuite.presentation.platform.saveBinaryFile
 import com.etologic.mahjongtournamentsuite.presentation.presenter.RankingPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
@@ -120,6 +122,7 @@ fun TournamentScreen(
     val rankingPresenter = koinInject<RankingPresenter>()
     val store = koinInject<AppMemoryStore>()
     val scope = rememberCoroutineScope()
+    val backgroundExports = rememberBackgroundExports()
     val profile by store.profile.collectAsState()
     val adminStatus by store.adminStatus.collectAsState()
     LoadMissingSession()
@@ -321,22 +324,26 @@ fun TournamentScreen(
                     isLoading = false
                     return
                 }
-                when (val report = rankingPresenter.generateEmaReport(tournamentId, snapshot.rankings.players)) {
-                    is AppResult.Failure -> errorMessage = report.error.toUiText()
-                    is AppResult.Success -> saveBinaryFile(
-                        dialogTitle = saveEmaReportTitle,
-                        // The name tells which results the file holds: the revision, and when it was made.
-                        fileName = generatedFileName(
-                            tournamentName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament",
-                            kind = "ema-report",
-                            year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) },
-                            extension = "xlsx",
-                            now = Clock.System.now(),
-                            revision = snapshot.dataRevision,
-                        ),
-                        content = report.value,
-                        mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    )
+                // The file is made in the background, so the user can keep working while the server builds it.
+                val rankings = snapshot.rankings.players
+                val revision = snapshot.dataRevision
+                backgroundExports.start("ema-report:$tournamentId", UiText.of(Res.string.ema_report)) {
+                    rankingPresenter.generateEmaReport(tournamentId, rankings).map { content ->
+                        ExportFile(
+                            // The name tells which results the file holds: the revision, and when it was made.
+                            fileName = generatedFileName(
+                                tournamentName = tournament?.shortName?.ifBlank { tournament.name.take(10) } ?: "tournament",
+                                kind = "ema-report",
+                                year = tournament?.eventStartDate?.take(4)?.takeIf { it.all(Char::isDigit) },
+                                extension = "xlsx",
+                                now = Clock.System.now(),
+                                revision = revision,
+                            ),
+                            content = content,
+                            mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            dialogTitle = saveEmaReportTitle,
+                        )
+                    }
                 }
             }
         }

@@ -6,6 +6,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.NavHost
@@ -34,7 +35,10 @@ import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
+import com.etologic.mahjongtournamentsuite.presentation.components.BackgroundExports
+import com.etologic.mahjongtournamentsuite.presentation.components.BackgroundExportsHost
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogo
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppLogoOnDark
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAppVersion
@@ -148,6 +152,9 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
     // The saved routes are read one time, before the first navigation changes them.
     val restoredRoutes = remember(routePersistence) { routePersistence?.load().orEmpty() }
     val scrollPositions = remember(sessionStorage) { sessionStorage?.let { ScrollPositionStore(it) } }
+    // Long exports run in the scope of the app, so they go on when the user leaves the screen that started them.
+    val exportScope = rememberCoroutineScope()
+    val backgroundExports = remember(exportScope) { BackgroundExports(exportScope) }
 
     LaunchedEffect(navController, routePersistence) {
         routePersistence ?: return@LaunchedEffect
@@ -157,68 +164,71 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
     CompositionLocalProvider(
         LocalThemeController provides themeController,
         LocalScrollPositionStore provides scrollPositions,
+        LocalBackgroundExports provides backgroundExports,
     ) {
         MtsTheme(useDarkTheme = themeController.isDarkTheme) {
-            NavHost(
-                navController = navController,
-                startDestination = SplashRoute,
-                modifier = Modifier.fillMaxSize(),
-            ) {
-                screen<SplashRoute> { SplashScreen(navController = navController, restoredRoutes = restoredRoutes) }
-                screen<SignInRoute> { SignInScreen(navController = navController) }
-                screen<SupportRoute> { backStackEntry ->
-                    val supportRepository = koinInject<SupportRepository>()
-                    SupportForm(
-                        app = "admin",
-                        initialEmail = backStackEntry.toRoute<SupportRoute>().email,
-                        onSend = supportRepository::send,
-                        onBack = { navController.popBackStack() },
-                    )
-                }
-                screen<TournamentsRoute> { TournamentsScreen(navController = navController) }
-                screen<PlayerBaseRoute> { PlayerBaseScreen(navController = navController) }
-                screen<TournamentRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<TournamentRoute>()
-                    TournamentScreen(
-                        navController = navController,
-                        tournamentId = args.tournamentId,
-                    )
-                }
-                screen<UsersRoute> { backStackEntry ->
-                    GlobalUsersScreen(navController = navController, editUid = backStackEntry.toRoute<UsersRoute>().editUid)
-                }
-                screen<PlayersRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<PlayersRoute>()
-                    PlayersScreen(
-                        navController = navController,
-                        tournamentId = args.tournamentId,
-                    )
-                }
-                screen<TeamsRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<TeamsRoute>()
-                    TeamsScreen(
-                        navController = navController,
-                        tournamentId = args.tournamentId,
-                    )
-                }
-                screen<TablesRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<TablesRoute>()
-                    TablesScreen(
-                        navController = navController,
-                        tournamentId = args.tournamentId,
-                    )
-                }
-                screen<ErrorsRoute> { ErrorsScreen(navController) }
-                screen<ActivityRoute> { ActivityScreen(navController) }
-                screen<DesignSystemRoute> { DesignSystemScreen(navController) }
-                screen<StatisticsRoute> { backStackEntry ->
-                    StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())
-                }
-                screen<RankingsRoute> { backStackEntry ->
-                    val args = backStackEntry.toRoute<RankingsRoute>()
-                    RankingStandaloneScreen(
-                        tournamentId = args.tournamentId,
-                    )
+            BackgroundExportsHost(backgroundExports) {
+                NavHost(
+                    navController = navController,
+                    startDestination = SplashRoute,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    screen<SplashRoute> { SplashScreen(navController = navController, restoredRoutes = restoredRoutes) }
+                    screen<SignInRoute> { SignInScreen(navController = navController) }
+                    screen<SupportRoute> { backStackEntry ->
+                        val supportRepository = koinInject<SupportRepository>()
+                        SupportForm(
+                            app = "admin",
+                            initialEmail = backStackEntry.toRoute<SupportRoute>().email,
+                            onSend = supportRepository::send,
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    screen<TournamentsRoute> { TournamentsScreen(navController = navController) }
+                    screen<PlayerBaseRoute> { PlayerBaseScreen(navController = navController) }
+                    screen<TournamentRoute> { backStackEntry ->
+                        val args = backStackEntry.toRoute<TournamentRoute>()
+                        TournamentScreen(
+                            navController = navController,
+                            tournamentId = args.tournamentId,
+                        )
+                    }
+                    screen<UsersRoute> { backStackEntry ->
+                        GlobalUsersScreen(navController = navController, editUid = backStackEntry.toRoute<UsersRoute>().editUid)
+                    }
+                    screen<PlayersRoute> { backStackEntry ->
+                        val args = backStackEntry.toRoute<PlayersRoute>()
+                        PlayersScreen(
+                            navController = navController,
+                            tournamentId = args.tournamentId,
+                        )
+                    }
+                    screen<TeamsRoute> { backStackEntry ->
+                        val args = backStackEntry.toRoute<TeamsRoute>()
+                        TeamsScreen(
+                            navController = navController,
+                            tournamentId = args.tournamentId,
+                        )
+                    }
+                    screen<TablesRoute> { backStackEntry ->
+                        val args = backStackEntry.toRoute<TablesRoute>()
+                        TablesScreen(
+                            navController = navController,
+                            tournamentId = args.tournamentId,
+                        )
+                    }
+                    screen<ErrorsRoute> { ErrorsScreen(navController) }
+                    screen<ActivityRoute> { ActivityScreen(navController) }
+                    screen<DesignSystemRoute> { DesignSystemScreen(navController) }
+                    screen<StatisticsRoute> { backStackEntry ->
+                        StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())
+                    }
+                    screen<RankingsRoute> { backStackEntry ->
+                        val args = backStackEntry.toRoute<RankingsRoute>()
+                        RankingStandaloneScreen(
+                            tournamentId = args.tournamentId,
+                        )
+                    }
                 }
             }
         }
