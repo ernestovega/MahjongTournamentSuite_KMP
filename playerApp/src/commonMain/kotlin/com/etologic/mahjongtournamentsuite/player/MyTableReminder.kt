@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -298,7 +299,17 @@ internal fun MyTableReminderDialog(
             modifier = Modifier.appFocusGroup().testTag(MY_TABLE_REMINDER_TAG),
             onDismissRequest = {},
             properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
-            icon = { Icon(Icons.Default.TableRestaurant, contentDescription = null, Modifier.size(48.dp)) },
+            icon = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    Text(
+                        tournamentName,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    Icon(Icons.Default.TableRestaurant, contentDescription = null, Modifier.size(48.dp))
+                }
+            },
             title = { Text(stringResource(Res.string.my_table_title, tableId, roundId), textAlign = TextAlign.Center) },
             text = {
                 Column(
@@ -309,15 +320,19 @@ internal fun MyTableReminderDialog(
                     Text(
                         myTableReminderTime(moment),
                         style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary,
+                        // The accent of the brand, like a table in play.
+                        color = MaterialTheme.colorScheme.tertiary,
                         textAlign = TextAlign.Center,
                     )
-                    Text(tournamentName, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
                 }
             },
             confirmButton = {
                 FocusedButton(
                     onClick = onOpen,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.tertiary,
+                        contentColor = MaterialTheme.colorScheme.onTertiary,
+                    ),
                     focusRequester = openRequester,
                     buttonModifier = Modifier.focusLoop(previous = laterRequester, next = laterRequester),
                 ) {
