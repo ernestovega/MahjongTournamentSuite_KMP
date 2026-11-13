@@ -5,11 +5,11 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.player.PlayerTab
 import com.etologic.mahjongtournamentsuite.player.SignInScreen
 import com.etologic.mahjongtournamentsuite.player.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.player.StatisticsScreen
 import com.etologic.mahjongtournamentsuite.player.TableScreen
-import com.etologic.mahjongtournamentsuite.player.PlayerTab
 import com.etologic.mahjongtournamentsuite.player.TournamentPlayerRoute
 import com.etologic.mahjongtournamentsuite.player.TournamentPlayerScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentScreen

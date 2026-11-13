@@ -189,7 +189,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
 import mahjongtournamentsuite.playerapp.generated.resources.round_n
 import mahjongtournamentsuite.playerapp.generated.resources.schedule_hide
 import mahjongtournamentsuite.playerapp.generated.resources.scope_me
-import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
 import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.sign_in_enter_email
@@ -888,6 +887,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String) {
     // A negative value means that the player did not choose a tab.
     // The name changed when the Players tab came in, so an old saved value does not open the wrong tab.
     var tab by rememberPersistentInt("tournamentTab", MainTab.TABLES)
+
     // A player opens on its own screen, over the tournament. Back comes to the same tab, with the same scroll.
     fun openPlayer(slot: Int, statistics: Boolean = false) {
         navController.navigate(TournamentPlayerRoute(tournamentId, slot, if (statistics) PlayerTab.STATISTICS else PlayerTab.TABLES))
