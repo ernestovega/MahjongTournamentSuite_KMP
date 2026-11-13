@@ -13,8 +13,8 @@ Supported targets:
 Not in scope:
 
 - iOS
-- backend/server module
-- interface/UI test suite
+
+The backend is a Firebase Cloud Function with an Express API in `firebase/functions` (TypeScript). See `docs/backend.md`.
 
 ## Architecture
 
@@ -42,8 +42,17 @@ The project uses a simple Clean Architecture split:
   - DI bootstrap
   - depends on `domain` and `data`
 
-- `androidApp`
-  - Android application entry point only
+- `ui`
+  - Compose components, theme, texts and telemetry shared by both apps
+
+- `playerApp`
+  - the player app (Android, desktop and web), same layers as `adminApp`
+
+- `androidApp` and `playerAndroidApp`
+  - Android application entry points only
+
+- `firebase`
+  - Cloud Functions API, Firestore and Storage rules (clients never read Firestore directly), indexes
 
 ## Libraries Currently Intended
 
@@ -101,8 +110,13 @@ MTS_API_TARGET=http://localhost:5055 ./gradlew :playerApp:wasmJsBrowserDevelopme
 Run tests:
 
 ```bash
-./gradlew :domain:allTests :data:allTests
+./gradlew :domain:jvmTest :data:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
+(cd firebase/functions && npm test)                 # backend unit tests
+(cd firebase/functions && npm run test:integration) # backend tests on the emulators
 ```
+
+Coverage of the JVM tests: `./gradlew koverHtmlReportCoverage`. Check the style with `./gradlew ktlintCheck`; never run
+`ktlintFormat` on the whole repository.
 
 ## Current Known Warnings
 
@@ -120,7 +134,7 @@ The web, the admin app and the player app have independent versions in `gradle/l
 
 ## Editing Guidance
 
-- Preserve the `domain` -> `data` -> `adminApp` direction.
+- Preserve the `domain` -> `data` -> `adminApp` / `playerApp` direction.
 - Avoid putting networking, logging, or platform checks in `domain`.
 - Avoid leaking Ktor/Firebase/Android/Compose types into `domain`.
 - Prefer plain Koin DSL wiring unless there is a strong reason to introduce compiler/codegen tooling.
@@ -130,8 +144,9 @@ The web, the admin app and the player app have independent versions in `gradle/l
 ## Testing Guidance
 
 - Unit tests belong primarily in `domain` and `data`.
-- There is no UI/interface test harness yet.
+- Compose UI tests run on the JVM (`jvmTest`). Android instrumented UI tests are described in `docs/instrumented-ui-tests.md`.
 - If adding tests, prefer focused common tests before platform-specific ones.
+- A push to `main` deploys to production only after the Kotlin, integration and script tests pass (`.github/workflows/firebase.yml`).
 
 ## Keyboard Focus And Interaction
 

@@ -48,14 +48,24 @@ describe("web hosting cache headers", () => {
       const cacheControl = (source: string) => site.headers
         .find((entry) => entry.source === source)?.headers
         .find((header) => header.key === "Cache-Control")?.value;
-      for (const source of ["**/*.js", "**/*.wasm", "**/*.css", "/index.html", "/"]) {
+      for (const source of ["**/*.js", "**/*.css", "/index.html", "/"]) {
         const value = cacheControl(source);
         assert.ok(value != null, `${source} has no Cache-Control`);
         assert.ok(value.includes("no-cache"), `${source} must be revalidated: ${value}`);
       }
-      for (const source of ["**/*.js", "**/*.wasm", "**/*.css"]) {
+      for (const source of ["**/*.js", "**/*.css"]) {
         assert.ok(!cacheControl(source)?.includes("no-store"), `${source} must allow a 304 answer`);
       }
+    });
+
+    // The name of every .wasm file is the hash of its content (scripts/assemble-web-hosting.sh checks it), and the
+    // revalidated .js file names the .wasm files of its build. A deploy is still seen at once, and a returning
+    // browser does not download or even ask for megabytes it already has.
+    it(`${site.site} lets the browser keep the .wasm files, whose names change with every build`, () => {
+      const value = site.headers
+        .find((entry) => entry.source === "**/*.wasm")?.headers
+        .find((header) => header.key === "Cache-Control")?.value;
+      assert.equal(value, "public, max-age=31536000, immutable");
     });
   }
 });

@@ -18,6 +18,9 @@ describe("the routes that need no account", () => {
 
     assert.equal(response.status, 200);
     assert.deepEqual(response.body, { levelsEnabled: false });
+    // The flags are the same for everyone, so the CDN may share them for a minute.
+    const raw = await fetch(`${server.baseUrl}/config`);
+    assert.equal(raw.headers.get("cache-control"), "public, max-age=5, s-maxage=60");
   });
 
   it("refuses an error report without a valid app, platform and kind", async () => {

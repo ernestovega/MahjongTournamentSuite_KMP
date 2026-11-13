@@ -18,8 +18,20 @@
     <link rel="icon" type="image/png" href="/favicon.png?v=7">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=7">
     <link type="text/css" rel="stylesheet" href="styles.css">
+    <script src="loading.js"></script>
 </head>
 <body style="text-align: center; align-content: center">
+<div class="mts-loading" role="progressbar" aria-label="Loading">
+    <img src="/favicon.png?v=7" alt="">
+    <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 50 50" aria-hidden="true">
+        <circle class="track" cx="25" cy="25" r="20" stroke-width="4" fill="none"/>
+        <circle class="arc" cx="25" cy="25" r="20" stroke-width="4" fill="none" stroke-linecap="round"
+                stroke-dasharray="90 125">
+            <animateTransform attributeName="transform" type="rotate" from="0 25 25" to="360 25 25" dur="1s"
+                              repeatCount="indefinite"/>
+        </circle>
+    </svg>
+</div>
 <script src="raf-fix.js"></script>
 <script src="webkit-warning.js"></script>
 <script src="diagnostics.js"></script>

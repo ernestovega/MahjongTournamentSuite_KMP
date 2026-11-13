@@ -393,6 +393,11 @@ export async function createTournament(params: {
 /** One tournament, or null when it does not exist. */
 export async function getTournament(tournamentId: string): Promise<Tournament | null> {
   const snap = await db.collection("tournaments").doc(tournamentId).get();
+  return tournamentFromSnapshot(snap);
+}
+
+/** The tournament of a document that was already read, or null when it does not exist. */
+export async function tournamentFromSnapshot(snap: FirebaseFirestore.DocumentSnapshot): Promise<Tournament | null> {
   return snap.exists ? mapTournamentDoc(snap) : null;
 }
 
