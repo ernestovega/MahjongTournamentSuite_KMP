@@ -5,7 +5,6 @@ import { auth, db } from "../firebase";
 import { requireAdmin } from "./middleware/requireAdmin";
 import { requireEditor } from "./middleware/requireEditor";
 import { requireRegisteredPlayer } from "./middleware/requireRegisteredPlayer";
-import { requireTournamentReader } from "./middleware/requireTournamentReader";
 import { requireAuth } from "./middleware/requireAuth";
 import { requireTournamentEditor } from "./middleware/requireTournamentEditor";
 import { buildApp, MOUNTED_ROUTERS } from "./app";
@@ -16,7 +15,7 @@ import { createAccount, signInTestAccount, requireAuthEmulator, startServer, typ
  * Who may call what. The table is written by hand, so it states the intended rules.
  * A test compares it with the guards of the real routes. A new route fails that test until it is listed here.
  */
-type Access = "PUBLIC" | "SIGNED_IN" | "EDITOR" | "READER" | "PLAYER" | "MEMBER" | "ADMIN";
+type Access = "PUBLIC" | "SIGNED_IN" | "EDITOR" | "PLAYER" | "MEMBER" | "ADMIN";
 
 const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/health", "PUBLIC"],
@@ -62,7 +61,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["DELETE", "/tournaments/:tournamentId", "ADMIN"],
   ["PUT", "/tournaments/:tournamentId", "ADMIN"],
   ["POST", "/tournaments/:tournamentId/tables/:roundId/:tableId/reset", "ADMIN"],
-  ["GET", "/tournaments/:tournamentId/sync/manifest", "READER"],
+  ["GET", "/tournaments/:tournamentId/sync/manifest", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/id-cards", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/id-list", "MEMBER"],
   ["GET", "/tournaments/:tournamentId/integrity", "MEMBER"],
@@ -71,7 +70,7 @@ const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/tournaments/:tournamentId/members", "MEMBER"],
   ["PUT", "/tournaments/:tournamentId/members/:uid", "ADMIN"],
   ["DELETE", "/tournaments/:tournamentId/members/:uid", "ADMIN"],
-  ["GET", "/tournaments/:tournamentId/players", "READER"],
+  ["GET", "/tournaments/:tournamentId/players", "MEMBER"],
   ["PUT", "/tournaments/:tournamentId/players/:playerId", "MEMBER"],
   ["PUT", "/tournaments/:tournamentId/players/:playerId/substitution", "MEMBER"],
   ["DELETE", "/tournaments/:tournamentId/players/:playerId/substitution", "MEMBER"],
@@ -80,15 +79,15 @@ const MATRIX: Array<[string, string, Access]> = [
   ["GET", "/tournaments/:tournamentId/player-import/export", "MEMBER"],
   ["POST", "/tournaments/:tournamentId/player-import/preview", "MEMBER"],
   ["POST", "/tournaments/:tournamentId/player-import/apply", "MEMBER"],
-  ["GET", "/tournaments/:tournamentId/teams", "READER"],
+  ["GET", "/tournaments/:tournamentId/teams", "MEMBER"],
   ["PUT", "/tournaments/:tournamentId/teams/:teamId", "MEMBER"],
-  ["GET", "/tournaments/:tournamentId/rounds", "READER"],
-  ["GET", "/tournaments/:tournamentId/round-clocks", "READER"],
+  ["GET", "/tournaments/:tournamentId/rounds", "MEMBER"],
+  ["GET", "/tournaments/:tournamentId/round-clocks", "MEMBER"],
   ["POST", "/tournaments/:tournamentId/rounds/:roundId/clock", "MEMBER"],
-  ["GET", "/tournaments/:tournamentId/tables", "READER"],
-  ["GET", "/tournaments/:tournamentId/tables-with-hands", "READER"],
-  ["GET", "/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", "READER"],
-  ["GET", "/tournaments/:tournamentId/tables/:roundId/:tableId", "READER"],
+  ["GET", "/tournaments/:tournamentId/tables", "MEMBER"],
+  ["GET", "/tournaments/:tournamentId/tables-with-hands", "MEMBER"],
+  ["GET", "/tournaments/:tournamentId/rounds/:roundId/tables-with-hands", "MEMBER"],
+  ["GET", "/tournaments/:tournamentId/tables/:roundId/:tableId", "MEMBER"],
   ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/hands/preview", "PLAYER"],
   ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/penalties", "PLAYER"],
   ["POST", "/player/tournaments/:tournamentId/tables/:roundId/:tableId/hands", "PLAYER"],
@@ -123,7 +122,6 @@ function actualGuards(): Map<string, Access> {
       const handlers: unknown[] = layer.route.stack.map((item: any) => item.handle);
       const access: Access = handlers.includes(requireAdmin) ? "ADMIN"
         : handlers.includes(requireRegisteredPlayer) ? "PLAYER"
-        : handlers.includes(requireTournamentReader) ? "READER"
         : handlers.includes(requireTournamentEditor) ? "MEMBER"
         : handlers.includes(requireEditor) ? "EDITOR"
         : handlers.includes(requireAuth) ? "SIGNED_IN"
@@ -205,8 +203,10 @@ describe("who may call which route", () => {
           }
         });
 
-        it("refuses an account that is only a player", async () => {
-          assert.equal((await server.request(method, concrete(path, t1), { token: player.token })).status, 403);
+        it("refuses an account that is only a player, even one registered here", async () => {
+          for (const account of [player, registeredPlayer]) {
+            assert.equal((await server.request(method, concrete(path, t1), { token: account.token, body: {} })).status, 403);
+          }
         });
       }
 
@@ -224,32 +224,6 @@ describe("who may call which route", () => {
         });
       }
 
-      if (access === "READER") {
-        it("refuses an editor who is not assigned to the tournament", async () => {
-          assert.equal((await server.request(method, concrete(path, t1), { token: outsider.token })).status, 403);
-        });
-
-        it("lets an assigned editor and a registered player read the tournament", async () => {
-          for (const account of [member, registeredPlayer]) {
-            const { status } = await server.request(method, concrete(path, t1), { token: account.token });
-            assert.ok(!denied(status), `status ${status} for ${account.email}`);
-          }
-        });
-
-        it("refuses a player who is registered in another tournament", async () => {
-          assert.equal((await server.request(method, concrete(path, t2), { token: registeredPlayer.token })).status, 403);
-        });
-
-        it("refuses a player who is not registered anywhere", async () => {
-          assert.equal((await server.request(method, concrete(path, t1), { token: player.token })).status, 403);
-        });
-
-        it("lets an admin into any tournament without an assignment", async () => {
-          const { status } = await server.request(method, concrete(path, "probe-tournament"), { token: admin.token });
-          assert.ok(!denied(status), `status ${status}`);
-        });
-      }
-
       if (access === "MEMBER") {
         it("refuses an editor who is not assigned to the tournament", async () => {
           assert.equal((await server.request(method, concrete(path, t1), { token: outsider.token })).status, 403);
@@ -260,8 +234,10 @@ describe("who may call which route", () => {
           assert.ok(!denied(status), `status ${status}`);
         });
 
-        it("refuses an account that is only a player", async () => {
-          assert.equal((await server.request(method, concrete(path, t1), { token: player.token })).status, 403);
+        it("refuses an account that is only a player, even one registered here", async () => {
+          for (const account of [player, registeredPlayer]) {
+            assert.equal((await server.request(method, concrete(path, t1), { token: account.token, body: {} })).status, 403);
+          }
         });
 
         it("refuses an assigned editor in another tournament", async () => {

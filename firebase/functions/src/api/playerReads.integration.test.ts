@@ -5,7 +5,7 @@ import { db } from "../firebase";
 import { seedTournament } from "../testing/firestoreFixtures";
 import { createAccount, giveEmaIdToAccount, requireAuthEmulator, seatEmaId, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
-describe("what a player can read", () => {
+describe("what an account reads outside /public", () => {
   let server: TestServer;
   let t1 = "";
   let t2 = "";
@@ -40,54 +40,29 @@ describe("what a player can read", () => {
   });
   after(async () => { await server.close(); });
 
-  it("lists only the tournaments where the player is registered", async () => {
-    const { status, body } = await server.request("GET", "/tournaments", { token: player.token });
-
-    assert.equal(status, 200);
-    assert.deepEqual((body as { tournaments: Array<{ id: string }> }).tournaments.map((t) => t.id), [t1]);
+  it("gives a player-only account no tournaments and no tournament reads: the player app reads /public", async () => {
+    const list = await server.request("GET", "/tournaments", { token: player.token });
+    assert.equal(list.status, 200);
+    assert.deepEqual((list.body as { tournaments: unknown[] }).tournaments, []);
+    assert.equal((await server.request("GET", `/tournaments/${t1}/players`, { token: player.token })).status, 403);
+    assert.equal((await server.request("GET", `/tournaments/${t1}/tables-with-hands`, { token: player.token })).status, 403);
+    assert.equal((await server.request("GET", "/tournaments?scope=player", { token: player.token })).status, 200);
   });
 
-  it("lists only the player tournaments for an admin who sends scope=player", async () => {
-    const admin = await createAccount({ role: "ADMIN" });
-    // The admin list is ordered by updatedAt, so a tournament needs the field to appear in it.
-    for (const id of [t1, t2]) await db.doc(`tournaments/${id}`).update({ updatedAt: new Date() });
-    const all = await server.request("GET", "/tournaments", { token: admin.token });
-    const scoped = await server.request("GET", "/tournaments?scope=player", { token: admin.token });
+  it("lists only the assigned tournaments of an editor who also plays elsewhere", async () => {
+    const { body } = await server.request("GET", "/tournaments", { token: both.token });
 
-    assert.ok((all.body as { tournaments: unknown[] }).tournaments.length >= 2);
-    assert.deepEqual((scoped.body as { tournaments: unknown[] }).tournaments, []);
+    assert.deepEqual((body as { tournaments: Array<{ id: string }> }).tournaments.map((t) => t.id), [t2]);
   });
 
-  it("lists only the player tournaments for an editor who sends scope=player", async () => {
-    const { body } = await server.request("GET", "/tournaments?scope=player", { token: both.token });
-
-    assert.deepEqual((body as { tournaments: Array<{ id: string }> }).tournaments.map((t) => t.id), [t1]);
-  });
-
-  it("hides accounts and emails of other players", async () => {
-    const { body } = await server.request("GET", `/tournaments/${t1}/players`, { token: player.token });
-    const players = (body as { players: Array<Record<string, unknown>> }).players;
-
-    assert.equal(players.length, 4);
-    for (const slot of players) {
-      assert.equal(slot.accountUid, null);
-      assert.equal(slot.email, null);
-      assert.equal(slot.hasAccount, false);
-      assert.equal(slot.hasEmail, false);
-    }
+  it("refuses an editor who plays in a tournament but is not assigned to it", async () => {
+    assert.equal((await server.request("GET", `/tournaments/${t1}/players`, { token: both.token })).status, 403);
   });
 
   it("lists registry players only from the tournaments of the player", async () => {
     const { body } = await server.request("GET", "/ema-player-registry", { token: player.token });
 
     assert.deepEqual((body as { players: Array<{ emaId: string }> }).players.map((p) => p.emaId).sort(), ["10000001", "10000002", "10000004", "10000005"]);
-  });
-
-  it("refuses writes and editor reads in the player tournament", async () => {
-    assert.equal((await server.request("PUT", `/tournaments/${t1}/tables/1/1/state`, { token: player.token, body: {} })).status, 403);
-    assert.equal((await server.request("GET", `/tournaments/${t1}/members`, { token: player.token })).status, 403);
-    assert.equal((await server.request("POST", `/tournaments/${t1}/player-accounts/send`, { token: player.token, body: { players: [{ playerId: 1 }] } })).status, 403);
-    assert.equal((await server.request("GET", `/tournaments/${t2}/players`, { token: player.token })).status, 403);
   });
 
   it("shows an editor whether a slot has an account and an email, and never the email", async () => {

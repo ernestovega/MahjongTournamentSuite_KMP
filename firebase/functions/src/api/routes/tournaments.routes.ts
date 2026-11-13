@@ -7,7 +7,6 @@ import { requireAuth } from "../middleware/requireAuth";
 import { requireEditor } from "../middleware/requireEditor";
 import { requireAdmin } from "../middleware/requireAdmin";
 import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
-import { requireTournamentReader } from "../middleware/requireTournamentReader";
 import { runAccountAction, savePendingEmails } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
 import { hasAdminClaim } from "../../models/globalRole";
@@ -16,7 +15,6 @@ import {
   createTournament,
   deleteTournament,
   listAllTournaments,
-  listTournamentsForPlayer,
   listTournamentsForUser,
   renameTournament,
   updateTournamentSettings,
@@ -108,7 +106,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/sync/manifest",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         res.setHeader("Cache-Control", "no-store");
@@ -119,23 +117,17 @@ export function tournamentsRouter(): Router {
     },
   );
 
-  // Admins see every tournament. Editors see assigned ones. Players see the ones where they are registered.
-  // The player app sends scope=player. It shows only the tournaments where the account is a player, whatever its role.
-  router.get("/", requireAuth, async (req, res, next) => {
+  // Admins see every tournament. Editors see the ones assigned to them. The player app reads /public instead.
+  router.get("/", requireAuth, async (_req, res, next) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
+      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
       let tournaments: Awaited<ReturnType<typeof listAllTournaments>>;
-      if (req.query.scope === "player") {
-        tournaments = await listTournamentsForPlayer(decoded.uid);
-      } else if (decoded.admin === true) {
+      if (decoded.admin === true) {
         tournaments = await listAllTournaments();
+      } else if (decoded.editor === true) {
+        tournaments = await listTournamentsForUser(decoded.uid);
       } else {
-        const lists = await Promise.all([
-          decoded.editor === true ? listTournamentsForUser(decoded.uid) : Promise.resolve([]),
-          decoded.player === true ? listTournamentsForPlayer(decoded.uid) : Promise.resolve([]),
-        ]);
-        const byId = new Map(lists.flat().map((tournament) => [tournament.id, tournament]));
-        tournaments = [...byId.values()];
+        tournaments = [];
       }
       res.status(200).json({ tournaments });
     } catch (e) {
@@ -159,13 +151,10 @@ export function tournamentsRouter(): Router {
    * The ids of the tournaments that the signed-in account can see, or null for an administrator.
    * It is the same rule as the tournament list above.
    */
-  const visibleTournamentIds = async (decoded: { uid: string; admin?: boolean; editor?: boolean; player?: boolean }) => {
+  const visibleTournamentIds = async (decoded: { uid: string; admin?: boolean; editor?: boolean }) => {
     if (decoded.admin === true) return null;
-    const lists = await Promise.all([
-      decoded.editor === true ? listTournamentsForUser(decoded.uid) : Promise.resolve([]),
-      decoded.player === true ? listTournamentsForPlayer(decoded.uid) : Promise.resolve([]),
-    ]);
-    return new Set(lists.flat().map((tournament) => tournament.id));
+    if (decoded.editor !== true) return new Set<string>();
+    return new Set((await listTournamentsForUser(decoded.uid)).map((tournament) => tournament.id));
   };
 
   const readEmaParam = (value: unknown): string => {
@@ -189,7 +178,7 @@ export function tournamentsRouter(): Router {
    */
   const personHandler = (own: boolean) => async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
+      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
       const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(pathParam(req, "emaId"));
       if (emaId === "") {
         res.status(200).json({ emaId, tournaments: [] });
@@ -204,7 +193,7 @@ export function tournamentsRouter(): Router {
   /** The final places of one player in a few tournaments. The app asks for the tournaments on screen. */
   const standingsHandler = (own: boolean) => async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean; player?: boolean };
+      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
       const emaId = own ? await ownEmaId(decoded.uid) : readEmaParam(pathParam(req, "emaId"));
       const allowed = await visibleTournamentIds(decoded);
       const ids = readTournamentIds(req.query.tournaments).filter((id) => allowed == null || allowed.has(id));
@@ -784,19 +773,11 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/players",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
-        const isPlayer = res.locals.reader === "PLAYER";
         // Editors get the names, so the tables do not need the whole EMA registry.
-        const players = await listTournamentPlayers(pathParam(req, "tournamentId"), { withNames: !isPlayer });
-        if (isPlayer) {
-          // Players see who plays and where, never the accounts or emails of other players.
-          res.status(200).json({
-            players: players.map((player) => ({ ...player, accountUid: null, hasAccount: false, email: null, hasEmail: false })),
-          });
-          return;
-        }
+        const players = await listTournamentPlayers(pathParam(req, "tournamentId"), { withNames: true });
         // Only admins read emails. Editors see whether a slot has an account.
         const isAdmin = hasAdminClaim(res.locals.auth);
         res.status(200).json({ players: players.map((player) => (isAdmin ? player : { ...player, email: null })) });
@@ -809,7 +790,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/teams",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const teams = await listTournamentTeams(pathParam(req, "tournamentId"));
@@ -879,7 +860,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/rounds",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const rounds = await listTournamentRounds(pathParam(req, "tournamentId"));
@@ -893,7 +874,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/round-clocks",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         res.status(200).json(await getRoundClocks(pathParam(req, "tournamentId")));
@@ -929,7 +910,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const roundIdParam = req.query.roundId;
@@ -949,7 +930,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables-with-hands",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const tables = await getAllTablesWithHands({ tournamentId: pathParam(req, "tournamentId") });
@@ -963,7 +944,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/rounds/:roundId/tables-with-hands",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const roundId = Number(pathParam(req, "roundId"));
@@ -982,7 +963,7 @@ export function tournamentsRouter(): Router {
   router.get(
     "/:tournamentId/tables/:roundId/:tableId",
     requireAuth,
-    requireTournamentReader,
+    requireTournamentEditor,
     async (req, res, next) => {
       try {
         const roundId = Number(pathParam(req, "roundId"));

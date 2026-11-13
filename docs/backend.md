@@ -77,7 +77,7 @@ Admins manage all tournaments, the EMA registry and all editor accounts. Editors
 Only admins can create, delete, rename, or configure tournaments. Disabling an account keeps its profile and history.
 
 Management routes use `requireEditor`. It accepts the `admin` and `editor` claims and refuses player-only accounts.
-Read routes of a tournament use `requireTournamentReader`. It accepts admins, assigned editors and players who are registered in the tournament.
+Read routes of a tournament (`/tournaments/:id/...`) use `requireTournamentEditor`: admins and assigned editors. `GET /tournaments` lists every tournament for an admin and the assigned ones for an editor; a player-only account gets an empty list. The player app reads everything from `/public` (see public-data.md); the old player reads (`requireTournamentReader`, `?scope=player`) were removed on 2026-11-13.
 `GET /admin/whoami` and `GET /auth/me` return `roles`. `whoami` also returns `role`, the highest capability.
 `GET /auth/me` also returns `emaId` and `photoUrl` (the photo of the EMA player of the account). `PUT /auth/me` with `{ alias }` lets every signed-in user change the own alias (1 to 60 characters). The user cannot change the EMA id or the photo.
 `POST /venues/resolve-link` with `{ url }` (editors and admins) follows a short Google Maps link and returns `{ url }` with the full link. It follows only Google hosts and at most 5 redirects. The tournament form reads the venue name, the address, the country and the city from the full link.

@@ -12,7 +12,7 @@ Phases 1 and 2 are built and tested. Phase 3 (schedules and notifications) is no
 | Roles `ADMIN`, `EDITOR`, `PLAYER` as claims, `emaId` on the account | Done |
 | Account creation from the pending email of the import, without password and alias, password reset email, slot link | Done |
 | Management app: has account or not, invite and password reset on the players screen | Done |
-| Player read access with `requireTournamentReader`, scoped lists | Done |
+| Player read access with `requireTournamentReader`, scoped lists | Replaced by `/public` reads; removed 2026-11-13 |
 | Modules `:ui`, `:playerApp`, `:playerAndroidApp` (Android and web) | Done |
 | Hand entry with a review step (preview, then confirm) | Done |
 | Schedules, time zone, FCM and Web Push | Phase 3 |

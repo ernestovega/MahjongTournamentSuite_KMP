@@ -6,7 +6,6 @@ import { db, storage } from "../firebase";
 import { badRequest, notFound } from "../api/httpError";
 import { isValidIsoDateRange } from "./tournamentDates";
 import { drawProblem } from "./tournamentDraw";
-import { listPlayerTournamentIds } from "./playerAccountsService";
 import { getUserProfile } from "./usersService";
 import { bumpGlobalDataVersion, bumpTournamentDataVersion } from "./dataVersionsService";
 import {
@@ -609,14 +608,6 @@ export async function updateTournamentSettings(params: {
 
 function isDocRef(value: DocumentReference | null): value is DocumentReference {
   return value != null;
-}
-
-/** Tournaments where a slot holds the EMA id of the player account. */
-export async function listTournamentsForPlayer(uid: string): Promise<Tournament[]> {
-  const tournamentIds = await listPlayerTournamentIds(uid);
-  if (tournamentIds.length === 0) return [];
-  const snaps = await db.getAll(...tournamentIds.map((id) => db.doc(`tournaments/${id}`)));
-  return Promise.all(snaps.filter((snap) => snap.exists).map((snap) => mapTournamentDoc(snap)));
 }
 
 export async function listTournamentsForUser(uid: string): Promise<Tournament[]> {
