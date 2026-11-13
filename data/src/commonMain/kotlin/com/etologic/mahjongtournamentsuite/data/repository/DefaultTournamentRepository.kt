@@ -682,14 +682,17 @@ class DefaultTournamentRepository(
         val owner = readOwner()
         // IF_CHANGED compares the table versions of the tournament manifest with the held tables,
         // so a table that someone else saved is loaded again.
-        val hasNewerTables: suspend (Map<TableKey, Long>) -> Boolean = { known ->
+        val roundsWithNewerTables: suspend (Map<TableKey, Long>) -> Set<Int> = { known ->
             withReadToken { token ->
                 tournamentManifest(token, tournamentId).toDomain().tableVersions
-                    .any { (key, serverVersion) -> serverVersion > (known[key] ?: -1L) }
+                    .filter { (key, serverVersion) -> serverVersion > (known[key] ?: -1L) }
+                    .keys.mapTo(mutableSetOf()) { it.roundId }
             }
         }
+        val hasNewerTables: suspend (Map<TableKey, Long>) -> Boolean = { known -> roundsWithNewerTables(known).isNotEmpty() }
         val persistedName = "tournament:$tournamentId:all-tables"
         var answer: RoundTablesWithHandsResponseDto? = null
+        val roundAnswers = mutableMapOf<Int, RoundTablesWithHandsResponseDto>()
         tableStore.all(
             ownerUid = owner,
             tournamentId = tournamentId,
@@ -707,12 +710,22 @@ class DefaultTournamentRepository(
                 // The table versions are inside the answer, so the saved revision is not used.
                 answer?.let { persisted?.write(owner, persistedName, 0, RoundTablesWithHandsResponseDto.serializer(), it) }
             },
+            // While a round is played, only its tables change. Loading that round is a fraction of all the tables.
+            changedRounds = roundsWithNewerTables.takeIf { refreshMode == RefreshMode.IF_CHANGED },
+            fetchRound = { roundId ->
+                withReadToken { token ->
+                    backendApi.getRoundTablesWithHands(token, tournamentId, roundId).also { roundAnswers[roundId] = it }.tables.map { it.toDomain() }
+                }
+            },
             fetchAll = {
                 withReadToken { token ->
                     backendApi.getAllTablesWithHands(token, tournamentId).also { answer = it }.tables.map { it.toDomain() }
                 }
             },
-        )
+        ).also {
+            // The saved copy gets the reloaded rounds too, so the next start of the app does not download them again.
+            if (roundAnswers.isNotEmpty()) persisted?.let { store -> saveReloadedRounds(store, owner, persistedName, roundAnswers) }
+        }
     }.fold(
         onSuccess = { AppResult.Success(it) },
         onFailure = { throwable ->
@@ -720,6 +733,18 @@ class DefaultTournamentRepository(
             AppResult.Failure(throwable.toAppError())
         },
     )
+
+    private suspend fun saveReloadedRounds(
+        store: PersistedValues,
+        owner: String,
+        name: String,
+        rounds: Map<Int, RoundTablesWithHandsResponseDto>,
+    ) {
+        val (_, saved) = store.read(owner, name, RoundTablesWithHandsResponseDto.serializer()) ?: return
+        val merged = saved.tables.filter { it.table.roundId !in rounds.keys } + rounds.values.flatMap { it.tables }
+        val sorted = merged.sortedWith(compareBy({ it.table.roundId }, { it.table.tableId }))
+        store.write(owner, name, 0, RoundTablesWithHandsResponseDto.serializer(), RoundTablesWithHandsResponseDto(sorted))
+    }
 
     override suspend fun saveTableState(
         tournamentId: String,

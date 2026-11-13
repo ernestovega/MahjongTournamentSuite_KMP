@@ -21,11 +21,30 @@ private fun table(round: Int, id: Int, version: Long = 1, east: String = "") = T
 
 private fun hands(score: String = "") = listOf(TableHand(1, "", "", score, false, false, "", "", "", ""))
 
-/** A tiny server. It counts the full loads. */
+/** A tiny server. It counts the full loads and the loads of one round. */
 private class Server(vararg initial: TableState) {
     val tables = initial.associateBy { TableKey(it.roundId, it.tableId) }.toMutableMap()
     var fullLoads = 0
+    val roundLoads = mutableListOf<Int>()
     var fail = false
+
+    /** The rounds with a table newer than the device holds, as the manifest of the tournament tells them. */
+    fun changedRounds(known: Map<TableKey, Long>): Set<Int> = tables.filter { (key, table) -> table.version > (known[key] ?: -1L) }
+        .keys.mapTo(mutableSetOf()) { it.roundId }
+
+    suspend fun TournamentTableStore.byRounds() = all(
+        ownerUid = "u1",
+        tournamentId = "t1",
+        changedRounds = { known -> changedRounds(known) },
+        fetchRound = { round ->
+            roundLoads += round
+            tables.values.filter { it.roundId == round }.map { it to hands("v${it.version}") }
+        },
+        fetchAll = {
+            fullLoads++
+            tables.values.map { it to hands("v${it.version}") }
+        },
+    )
 
     suspend fun TournamentTableStore.all(
         owner: String = "u1",
@@ -115,6 +134,79 @@ class TournamentTableStoreTest {
 
         assertEquals(2, server.fullLoads)
         assertEquals(2L, result.single().first.version)
+    }
+
+    @Test
+    fun aChangedRoundReloadsOnlyThatRound() = runTest {
+        val server = Server(table(1, 1), table(1, 2), table(2, 1), table(2, 2))
+        with(server) { store.byRounds() }
+        server.tables[TableKey(2, 2)] = table(2, 2, version = 3, east = "new")
+
+        val result = with(server) { store.byRounds() }
+
+        assertEquals(1, server.fullLoads, "no second full load")
+        assertEquals(listOf(2), server.roundLoads)
+        assertEquals("new", result.single { it.first.roundId == 2 && it.first.tableId == 2 }.first.playerEastId)
+        assertEquals(4, result.size)
+    }
+
+    @Test
+    fun nothingChangedMeansNoLoadAtAll() = runTest {
+        val server = Server(table(1, 1), table(2, 1))
+        with(server) { store.byRounds() }
+
+        repeat(3) { with(server) { store.byRounds() } }
+
+        assertEquals(1, server.fullLoads)
+        assertEquals(emptyList(), server.roundLoads)
+    }
+
+    @Test
+    fun aNewTableInARoundArrivesWithItsRound() = runTest {
+        val server = Server(table(1, 1))
+        with(server) { store.byRounds() }
+        server.tables[TableKey(1, 2)] = table(1, 2)
+
+        val result = with(server) { store.byRounds() }
+
+        assertEquals(listOf(TableKey(1, 1), TableKey(1, 2)), result.map { TableKey(it.first.roundId, it.first.tableId) })
+        assertEquals(listOf(1), server.roundLoads)
+    }
+
+    @Test
+    fun manyChangedRoundsReloadEverythingInOneRequest() = runTest {
+        val server = Server(table(1, 1), table(2, 1), table(3, 1))
+        with(server) { store.byRounds() }
+        (1..3).forEach { round -> server.tables[TableKey(round, 1)] = table(round, 1, version = 2) }
+
+        val result = with(server) { store.byRounds() }
+
+        assertEquals(2, server.fullLoads)
+        assertEquals(emptyList(), server.roundLoads)
+        assertEquals(listOf(2L, 2L, 2L), result.map { it.first.version })
+    }
+
+    @Test
+    fun theFirstLoadIsAlwaysAFullLoad() = runTest {
+        val server = Server(table(1, 1), table(2, 1))
+
+        with(server) { store.byRounds() }
+
+        assertEquals(1, server.fullLoads)
+        assertEquals(emptyList(), server.roundLoads)
+    }
+
+    @Test
+    fun aRoundLoadNeverPutsBackAnOlderTable() = runTest {
+        val server = Server(table(1, 1), table(1, 2))
+        with(server) { store.byRounds() }
+        store.put("t1", table(1, 1, version = 5, east = "mine"), hands())
+        server.tables[TableKey(1, 2)] = table(1, 2, version = 2)
+
+        val result = with(server) { store.byRounds() }
+
+        assertEquals("mine", result.first().first.playerEastId, "the own save is newer than the server copy")
+        assertEquals(2L, result.last().first.version)
     }
 
     @Test

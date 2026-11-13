@@ -3,6 +3,9 @@ package com.etologic.mahjongtournamentsuite.data.cache
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
@@ -15,6 +18,7 @@ typealias TableWithHands = Pair<TableState, List<TableHand>>
  *   unless the caller says that a table is outdated.
  * - The table editor keeps the store current. Its saves, loads and polling call [put].
  * - A table only moves forward. An older copy never replaces a newer one.
+ * - When only a few rounds changed, the caller can reload just those rounds instead of every table.
  */
 class TournamentTableStore {
     private class Entry(
@@ -61,6 +65,11 @@ class TournamentTableStore {
      * Before the first load, [restore] can give the tables that were saved on the device. They are checked with
      * [verifyRestored] (or [isOutdated]) before use, also when the caller does not check, because they can be old.
      * [onFetched] gets every complete load, so the caller can save it.
+     *
+     * [changedRounds] replaces [isOutdated] when it is given: it gets the same versions and returns the rounds that
+     * have a newer table on the server. Up to [MAX_PARTIAL_ROUNDS] of them are reloaded with [fetchRound], one request
+     * each; more than that reload everything with [fetchAll]. During play only the round in progress changes, so a
+     * check loads one round instead of the whole tournament.
      */
     suspend fun all(
         ownerUid: String,
@@ -70,6 +79,8 @@ class TournamentTableStore {
         restore: (suspend () -> List<TableWithHands>?)? = null,
         verifyRestored: (suspend (known: Map<TableKey, Long>) -> Boolean)? = null,
         onFetched: (suspend (List<TableWithHands>) -> Unit)? = null,
+        changedRounds: (suspend (known: Map<TableKey, Long>) -> Set<Int>)? = null,
+        fetchRound: (suspend (roundId: Int) -> List<TableWithHands>)? = null,
         fetchAll: suspend () -> List<TableWithHands>,
     ): List<TableWithHands> {
         selectOwner(ownerUid)
@@ -89,8 +100,22 @@ class TournamentTableStore {
                 known = completeVersions(tournamentId)
             }
         }
-        val check = isOutdated ?: verifyRestored.takeIf { restored }
-        val needsLoad = reload || known == null || (check?.invoke(known) ?: false)
+        var partial: List<TableWithHands>? = null
+        val needsLoad = when {
+            reload || known == null -> true
+            changedRounds != null && fetchRound != null -> {
+                val rounds = changedRounds(known)
+                when {
+                    rounds.isEmpty() -> false
+                    rounds.size > MAX_PARTIAL_ROUNDS -> true
+                    else -> {
+                        partial = coroutineScope { rounds.sorted().map { round -> async { fetchRound(round) } }.awaitAll() }.flatten()
+                        false
+                    }
+                }
+            }
+            else -> (isOutdated ?: verifyRestored.takeIf { restored })?.invoke(known) ?: false
+        }
         val loaded = if (needsLoad) fetchAll().also { onFetched?.invoke(it) } else null
         return mutex.withLock {
             val entry = entries.getOrPut(tournamentId) { Entry() }
@@ -98,10 +123,16 @@ class TournamentTableStore {
                 loaded.forEach { value -> entry.accept(value) }
                 entry.isComplete = true
             }
+            partial?.forEach { value -> entry.accept(value) }
             entry.tables.entries
                 .sortedWith(compareBy({ it.key.roundId }, { it.key.tableId }))
                 .map { it.value }
         }
+    }
+
+    companion object {
+        /** More changed rounds than this reload every table in one request, which is cheaper than many small ones. */
+        const val MAX_PARTIAL_ROUNDS = 2
     }
 
     private suspend fun completeVersions(tournamentId: String): Map<TableKey, Long>? = mutex.withLock {
