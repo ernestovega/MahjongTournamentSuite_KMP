@@ -25,6 +25,10 @@ const WRITES_PER_MINUTE = 120;
  */
 export const WRITES_PER_ADDRESS_PER_MINUTE = 600;
 
+/** Writes that need no account. Their bodies are small: a sign-in, a support message, an error report. */
+export const OPEN_WRITE_ROUTES = /^(\/api)?\/(auth\/(signIn|passwordReset|refresh)|support\/message|telemetry\/errors)\/?$/;
+export const OPEN_ROUTE_BODY_LIMIT = "256kb";
+
 /** The route groups of the API and where each one is mounted. A test reads this list to check every route. */
 export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
   ["/auth", authRouter],
@@ -55,7 +59,11 @@ export function buildApp(): express.Express {
     next();
   });
   app.use(gzipJson);
-  app.use(express.json({ limit: "8mb" }));
+  // Routes that anyone can call without an account take small bodies only. The others carry photos, logos and
+  // imports, so they keep the large limit. The parser runs before the token is checked.
+  const smallJson = express.json({ limit: OPEN_ROUTE_BODY_LIMIT });
+  const largeJson = express.json({ limit: "8mb" });
+  app.use((req, res, next) => (OPEN_WRITE_ROUTES.test(req.path) ? smallJson : largeJson)(req, res, next));
 
   // Firebase Hosting keeps the rewrite source in the forwarded path.
   // Remove it so hosted web requests use the same routes as direct function calls.
