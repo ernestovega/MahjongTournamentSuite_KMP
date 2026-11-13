@@ -33,6 +33,7 @@ plugins {
 }
 
 include(":adminApp")
+include(":designsystem")
 include(":ui")
 include(":playerApp")
 include(":playerAndroidApp")

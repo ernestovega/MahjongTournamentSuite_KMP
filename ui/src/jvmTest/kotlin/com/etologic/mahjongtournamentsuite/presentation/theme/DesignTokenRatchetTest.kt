@@ -23,7 +23,7 @@ class DesignTokenRatchetTest {
     private val offScaleSpacing = Regex("""\b(6|10|14|18|20|22|28)\.dp""")
 
     /** The main source sets of every module. Gradle runs the tests with the module folder as the working directory. */
-    private fun sourceFiles(): List<File> = listOf("ui", "adminApp", "playerApp", "androidApp", "playerAndroidApp")
+    private fun sourceFiles(): List<File> = listOf("designsystem", "ui", "adminApp", "playerApp", "androidApp", "playerAndroidApp")
         .map { File("../$it/src") }
         .filter { it.exists() }
         .flatMap { root ->

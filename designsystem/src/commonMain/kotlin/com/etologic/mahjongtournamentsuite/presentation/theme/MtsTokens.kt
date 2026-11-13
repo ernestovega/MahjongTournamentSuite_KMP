@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 
 /*
  * The design tokens of the suite. Material 3 stays the base for color, typography and shapes. These tokens add
@@ -141,9 +140,9 @@ data class MtsColors(
     /** Text and icons on the green header (top bar, tabs). */
     val onHeader: Color,
     val onHeaderMuted: Color,
-    val levels: Map<PlayerLevel, MtsLevelColors>,
+    /** The player levels, from the lowest to the highest. `ui` maps a `PlayerLevel` to them with `level()`. */
+    val levels: List<MtsLevelColors>,
 ) {
-    fun level(level: PlayerLevel): MtsLevelColors = levels.getValue(level)
 
     /** The color of a position at a table: the medals, and the error red for the fourth. */
     fun position(position: Int, error: Color): Color = when (position) {
@@ -161,12 +160,13 @@ private val MedalSilver = Color(0xFF8A99A8)
 private val MedalBronze = Color(0xFFA9632F)
 private val Warning = Color(0xFFB26A00)
 
-private val LevelColorsByLevel = mapOf(
-    PlayerLevel.BEGINNER to MtsLevelColors(MedalSilver, Color(0xFF5F6E7D), Color.White),
-    PlayerLevel.INTERMEDIATE to MtsLevelColors(MahjongGreen, MahjongGreenDark, Color.White),
-    PlayerLevel.ADVANCED to MtsLevelColors(Color(0xFFF2692E), Color(0xFFB53B10), Color.White),
-    PlayerLevel.EXPERT to MtsLevelColors(Color(0xFF8E5CD9), Color(0xFF6538AD), Color.White),
-    PlayerLevel.MASTER to MtsLevelColors(Color(0xFF5B616E), Color(0xFF15181E), Color.White),
+// Beginner, intermediate, advanced, expert and master.
+private val LevelColorsByLevel = listOf(
+    MtsLevelColors(MedalSilver, Color(0xFF5F6E7D), Color.White),
+    MtsLevelColors(MahjongGreen, MahjongGreenDark, Color.White),
+    MtsLevelColors(Color(0xFFF2692E), Color(0xFFB53B10), Color.White),
+    MtsLevelColors(Color(0xFF8E5CD9), Color(0xFF6538AD), Color.White),
+    MtsLevelColors(Color(0xFF5B616E), Color(0xFF15181E), Color.White),
 )
 
 internal val LightMtsColors = MtsColors(

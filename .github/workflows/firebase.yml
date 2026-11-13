@@ -106,7 +106,7 @@ jobs:
       - name: Test Kotlin code
         run: >
           ./gradlew
-          :domain:jvmTest :data:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
+          :domain:jvmTest :data:jvmTest :designsystem:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
           :androidApp:testDebugUnitTest :playerAndroidApp:testDebugUnitTest
 
   scripts:
