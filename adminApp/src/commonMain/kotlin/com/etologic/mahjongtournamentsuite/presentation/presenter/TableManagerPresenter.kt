@@ -1,17 +1,19 @@
 package com.etologic.mahjongtournamentsuite.presentation.presenter
 
-import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
-import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
-import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentManifest
-import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
+import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
+import com.etologic.mahjongtournamentsuite.domain.telemetry.trackAction
 
 class TableManagerPresenter(
     private val tournamentRepository: TournamentRepository,
@@ -79,5 +81,6 @@ class TableManagerPresenter(
     ): AppResult<Pair<TableState, List<TableHand>>> {
         logger.i { "Resetting table." }
         return tournamentRepository.resetTable(tournamentId = tournamentId, roundId = roundId, tableId = tableId)
+            .trackAction(telemetry, TelemetryAction.TABLE_RESET)
     }
 }

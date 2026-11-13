@@ -52,6 +52,21 @@ object TelemetryEvent {
     const val PENALTY_ADDED = "penalty_added"
     const val SEATS_ASSIGNED = "seats_assigned"
 
+    /**
+     * The user pressed a button of the Timer. [TelemetryParam.ACTION] is one word of [TelemetryClockAction].
+     * [TelemetryParam.KIND] is [TelemetryTimerKind.TOURNAMENT] or [TelemetryTimerKind.INDEPENDENT].
+     */
+    const val ROUND_CLOCK = "round_clock"
+
+    /** The support form sent a message. */
+    const val SUPPORT_SENT = "support_sent"
+
+    /**
+     * The reminder of the own table of the player app. [TelemetryParam.ACTION] is one word of [TelemetryReminderAction].
+     * [TelemetryParam.KIND] is one word of [TelemetryReminderMoment].
+     */
+    const val TABLE_REMINDER = "table_reminder"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
         LOGIN,
@@ -76,6 +91,9 @@ object TelemetryEvent {
         HAND_RECORDED,
         PENALTY_ADDED,
         SEATS_ASSIGNED,
+        ROUND_CLOCK,
+        SUPPORT_SENT,
+        TABLE_REMINDER,
     )
 }
 
@@ -159,6 +177,7 @@ object TelemetryAction {
     const val REGISTRY_PLAYER_CREATED = "registry_player_created"
     const val REGISTRY_PLAYER_UPDATED = "registry_player_updated"
     const val REGISTRY_PHOTO_UPDATED = "registry_photo_updated"
+    const val TABLE_RESET = "table_reset"
 
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(
@@ -183,7 +202,62 @@ object TelemetryAction {
         REGISTRY_PLAYER_CREATED,
         REGISTRY_PLAYER_UPDATED,
         REGISTRY_PHOTO_UPDATED,
+        TABLE_RESET,
     )
+}
+
+/** The values of [TelemetryParam.ACTION] in `round_clock`: the buttons of the Timer. */
+object TelemetryClockAction {
+    /** The gong, or Play after a pause, when the round had not started. */
+    const val STARTED = "started"
+    const val PAUSED = "paused"
+    const val RESUMED = "resumed"
+
+    /** "The round started N minutes ago". */
+    const val STARTED_AGO = "started_ago"
+
+    /** "Set time": the minutes left. */
+    const val TIME_SET = "time_set"
+    const val RESET = "reset"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(STARTED, PAUSED, RESUMED, STARTED_AGO, TIME_SET, RESET)
+}
+
+/** The values of [TelemetryParam.KIND] in `round_clock`. */
+object TelemetryTimerKind {
+    /** The Timer of a tournament: its clock is on the server. */
+    const val TOURNAMENT = "tournament"
+
+    /** The Timer without a tournament, from the tournament list. Its clock lives only on the device. */
+    const val INDEPENDENT = "independent"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(TOURNAMENT, INDEPENDENT)
+}
+
+/** The values of [TelemetryParam.ACTION] in `table_reminder`. */
+object TelemetryReminderAction {
+    const val SHOWN = "shown"
+
+    /** The player pressed the button that opens the table. */
+    const val OPENED = "opened"
+
+    /** The player closed the reminder. */
+    const val CLOSED = "closed"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(SHOWN, OPENED, CLOSED)
+}
+
+/** The values of [TelemetryParam.KIND] in `table_reminder`: what the reminder said when the player saw it. */
+object TelemetryReminderMoment {
+    const val STARTS_SOON = "starts_soon"
+    const val AWAITING_GONG = "awaiting_gong"
+    const val PLAYING = "playing"
+
+    /** Every value of this object. A test checks it against the rules of GA4. */
+    val all: List<String> = listOf(STARTS_SOON, AWAITING_GONG, PLAYING)
 }
 
 object TelemetryProperty {

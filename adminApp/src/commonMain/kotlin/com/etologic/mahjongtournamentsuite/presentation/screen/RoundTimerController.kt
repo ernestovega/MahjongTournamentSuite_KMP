@@ -10,6 +10,12 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundClocks
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryClockAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryTimerKind
 import kotlin.time.Clock
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -71,6 +77,7 @@ class RoundTimerController(
     private val repository: TournamentRepository,
     private val tournamentId: String?,
     initialRound: Int,
+    private val telemetry: Telemetry = NoTelemetry,
     private val deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
     private val mutableState = MutableStateFlow(
@@ -133,6 +140,7 @@ class RoundTimerController(
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }
 
     private suspend fun perform(action: RoundClockAction) {
+        track(action)
         if (tournamentId == null) {
             val nowMs = deviceNowMs()
             val pending = PendingClockAction(mutableState.value.roundId, action, nowMs)
@@ -141,6 +149,20 @@ class RoundTimerController(
         }
         val pending = PendingClockAction(mutableState.value.roundId, action, deviceNowMs())
         send(pending)
+    }
+
+    /** Counts the press of a button. A failed request is counted by the log writer of the data module. */
+    private fun track(action: RoundClockAction) {
+        val word = when (action) {
+            is RoundClockAction.Start -> if (action.agoSeconds > 0) TelemetryClockAction.STARTED_AGO else TelemetryClockAction.STARTED
+            is RoundClockAction.Pause -> TelemetryClockAction.PAUSED
+            is RoundClockAction.Resume -> TelemetryClockAction.RESUMED
+            is RoundClockAction.SetRemaining -> TelemetryClockAction.TIME_SET
+            // The confirmation of a reset is the same press again.
+            is RoundClockAction.Reset -> if (action.force) return else TelemetryClockAction.RESET
+        }
+        val kind = if (tournamentId == null) TelemetryTimerKind.INDEPENDENT else TelemetryTimerKind.TOURNAMENT
+        telemetry.event(TelemetryEvent.ROUND_CLOCK, mapOf(TelemetryParam.ACTION to word, TelemetryParam.KIND to kind))
     }
 
     private suspend fun send(pending: PendingClockAction) {

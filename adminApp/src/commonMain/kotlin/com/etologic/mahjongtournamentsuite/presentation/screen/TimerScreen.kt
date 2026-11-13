@@ -79,6 +79,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.GongIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.GangOfThreeFontFamily
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -113,7 +114,8 @@ fun TimerStandaloneScreen(
 ) {
     val themeController = rememberScreenThemeController()
     val repository = koinInject<TournamentRepository>()
-    val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound) }
+    val telemetry = LocalTelemetry.current
+    val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry) }
 
     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
         Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {

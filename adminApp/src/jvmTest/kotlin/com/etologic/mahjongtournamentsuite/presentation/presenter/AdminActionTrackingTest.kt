@@ -21,6 +21,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.FakeAdminReposito
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakePlayerAccountRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeSignedInAuthRepository
 import com.etologic.mahjongtournamentsuite.presentation.screen.FakeTournamentRepository
+import com.etologic.mahjongtournamentsuite.presentation.screen.syncTable
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.RecordingTelemetry
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
@@ -33,7 +34,11 @@ import kotlin.test.assertEquals
 class AdminActionTrackingTest {
     private class World(works: Boolean) {
         val telemetry = RecordingTelemetry()
-        val tournaments = FakeTournamentRepository().apply { writesSucceed = works }
+        val tournaments = FakeTournamentRepository().apply {
+            writesSucceed = works
+            seed(syncTable(version = 0))
+            if (!works) resetError = AppError.Network
+        }
         val admin = FakeAdminRepository(GlobalUserRole.ADMIN, users = listOf(USER)).apply { failWrites = !works }
         val accounts = FakePlayerAccountRepository().apply { fails = !works }
         val players = SharedPlayers(works)
@@ -44,6 +49,7 @@ class AdminActionTrackingTest {
         val playerBasePresenter = PlayerBasePresenter(players, tournaments, telemetry)
         val proofPresenter = IdCardProofPresenter(tournaments, telemetry)
         val usersPresenter = UsersPresenter(tournaments, admin, FakeSignedInAuthRepository(), players, telemetry)
+        val tablePresenter = TableManagerPresenter(tournaments, Logger.withTag("test"), telemetry)
         val rankingPresenter = RankingPresenter(tournaments, players, CalculateTournamentRankingsUseCase(), Logger.withTag("test"), telemetry)
     }
 
@@ -102,6 +108,7 @@ class AdminActionTrackingTest {
         Case(TelemetryAction.REGISTRY_PLAYER_CREATED) { it.playerBasePresenter.createPlayer(PLAYER) },
         Case(TelemetryAction.REGISTRY_PLAYER_UPDATED) { it.playerBasePresenter.updatePlayer("1234", PLAYER) },
         Case(TelemetryAction.REGISTRY_PHOTO_UPDATED) { it.playerBasePresenter.updatePlayerPhoto("1234", "image/png", ByteArray(1)) },
+        Case(TelemetryAction.TABLE_RESET) { it.tablePresenter.resetTable("t1", 1, 1) },
     )
 
     private fun expected(action: String, outcome: String) = TelemetryEvent.ADMIN_ACTION to mapOf<String, Any>(TelemetryParam.ACTION to action, TelemetryParam.OUTCOME to outcome)

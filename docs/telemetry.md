@@ -36,7 +36,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 
 | Event | When | Parameters |
 | --- | --- | --- |
-| `screen_view` | The user opens a screen | `firebase_screen`: the name of the route, for example `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Timer` |
+| `screen_view` | The user opens a screen | `firebase_screen`: the name of the route, for example `Tournaments`, `Tournament`, `Tables`, `Players`, `Statistics`, `Timer`. The Timer without a tournament is `IndependentTimer` |
 | `dialog_view` | A dialog opens | `dialog`, `screen` |
 | `tab_view` | A tab is selected | `tab`, `screen` |
 | `view_time` | A screen, dialog or tab closes | `kind` (`screen`, `dialog` or `tab`), `view`, `screen`, `seconds` |
@@ -52,6 +52,9 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `admin_action` | An administrator or editor tries to change or export something (admin app). One event for each try | `action`, one word of the list below. `outcome`: `ok` or `failed` |
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `seats_assigned` | A player sets the seats of the table before the first hand (player app) | |
+| `round_clock` | A button of the Timer (admin app) | `action`: `started` (the gong), `paused`, `resumed`, `started_ago` ("The round started N minutes ago"), `time_set`, `reset`. `kind`: `tournament` or `independent`. The confirmation of a reset of a round with hands is not counted again |
+| `table_reminder` | The reminder of the own table (player app) | `action`: `shown` (once for each round), `opened` (the button to the table), `closed`. `kind`: `starts_soon`, `awaiting_gong` or `playing` |
+| `support_sent` | The support form sent a message (sign-in of both apps) | none |
 | `action_failed` | Any request fails | `action`, `reason` |
 | `app_error` | The app caught a bug | `report_id`, `action`, `kind`, `reason` |
 | `app_crash` | The app stopped | `report_id`, `kind` |
@@ -62,7 +65,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 
 | Group | Words |
 | --- | --- |
-| Tournament | `tournament_renamed`, `tournament_settings_updated` |
+| Tournament | `tournament_renamed`, `tournament_settings_updated`, `table_reset` |
 | Players and teams | `player_assigned`, `player_unassigned`, `player_substituted`, `substitution_cleared`, `team_updated`, `emails_saved` |
 | Exports | `id_cards_exported`, `id_list_exported`, `id_card_proof_created`, `ema_report_exported` |
 | Accounts | `account_created`, `account_updated`, `account_disabled`, `account_enabled`, `account_photo_updated`, `account_photo_removed` |

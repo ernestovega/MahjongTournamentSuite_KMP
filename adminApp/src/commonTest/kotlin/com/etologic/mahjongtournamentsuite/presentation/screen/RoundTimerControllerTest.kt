@@ -1,9 +1,13 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
+import com.etologic.mahjongtournamentsuite.domain.model.ROUND_HAS_HANDS
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.RecordingTelemetry
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -202,5 +206,43 @@ class RoundTimerControllerTest {
         assertEquals(MAX_INDEPENDENT_ROUNDS, controller.state.value.roundId)
         controller.selectRound(0)
         assertEquals(1, controller.state.value.roundId)
+    }
+
+    private fun RecordingTelemetry.clockWords(): List<Pair<Any?, Any?>> = events
+        .filter { it.first == TelemetryEvent.ROUND_CLOCK }
+        .map { it.second[TelemetryParam.ACTION] to it.second[TelemetryParam.KIND] }
+
+    @Test
+    fun everyButtonOfTheTimerCountsOneEventWithTheKindOfTimer() = runTest {
+        val telemetry = RecordingTelemetry()
+        val controller = RoundTimerController(FakeTournamentRepository(), null, 1, telemetry) { deviceNow }
+
+        controller.play()
+        controller.pause()
+        controller.play()
+        controller.setRemainingMinutes(10)
+        controller.reset()
+        controller.startedMinutesAgo(5)
+
+        val kind = "independent"
+        assertEquals(
+            listOf("started", "paused", "resumed", "time_set", "reset", "started_ago").map { it to kind },
+            telemetry.clockWords(),
+        )
+    }
+
+    @Test
+    fun theConfirmationOfAResetIsNotASecondPress() = runTest {
+        val (repository, _) = setup()
+        val telemetry = RecordingTelemetry()
+        val controller = RoundTimerController(repository, "t", 1, telemetry) { deviceNow }
+        controller.refresh()
+        controller.play()
+        repository.clockError = AppError.Conflict(ROUND_HAS_HANDS)
+        controller.reset()
+        repository.clockError = null
+        controller.reset(force = true)
+
+        assertEquals(listOf("started" to "tournament", "reset" to "tournament"), telemetry.clockWords())
     }
 }

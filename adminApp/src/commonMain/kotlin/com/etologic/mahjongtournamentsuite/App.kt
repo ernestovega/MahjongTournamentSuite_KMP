@@ -140,7 +140,10 @@ private fun AppWithModules(content: @Composable () -> Unit) {
 @Composable
 fun TimerApp(tournamentId: String?, initialRound: Int = 1) {
     AppWithModules {
-        TrackedScreen("Timer") { TimerStandaloneScreen(tournamentId = tournamentId, initialRound = initialRound) }
+        // The Timer without a tournament has its own name, so the reports tell the two apart.
+        TrackedScreen(if (tournamentId == null) "IndependentTimer" else "Timer") {
+            TimerStandaloneScreen(tournamentId = tournamentId, initialRound = initialRound)
+        }
     }
 }
 

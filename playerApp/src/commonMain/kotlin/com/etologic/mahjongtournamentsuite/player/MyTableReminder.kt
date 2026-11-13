@@ -42,7 +42,12 @@ import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderAction
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderMoment
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -224,6 +229,13 @@ internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionS
         LaunchedEffect(shown.key) { active = null }
         return
     }
+    val telemetry = LocalTelemetry.current
+    fun track(action: String) = telemetry.event(
+        TelemetryEvent.TABLE_REMINDER,
+        mapOf(TelemetryParam.ACTION to action, TelemetryParam.KIND to moment.telemetryKind()),
+    )
+    // One "shown" for each round, the first time the reminder appears.
+    LaunchedEffect(shown.key) { track(TelemetryReminderAction.SHOWN) }
 
     MyTableReminderCard(
         tournamentName = shown.tournament.shortName.ifBlank { shown.tournament.name },
@@ -231,16 +243,25 @@ internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionS
         tableId = shown.tableId,
         moment = moment,
         onOpen = {
+            track(TelemetryReminderAction.OPENED)
             handled.add(shown.key)
             active = null
             navController.navigate(shown.route)
         },
         onDismiss = {
+            track(TelemetryReminderAction.CLOSED)
             handled.add(shown.key)
             active = null
         },
         modifier = Modifier.align(Alignment.BottomCenter),
     )
+}
+
+/** The word of the moment in the analytics. */
+private fun RoundMoment.telemetryKind(): String = when (this) {
+    is RoundMoment.StartsIn -> TelemetryReminderMoment.STARTS_SOON
+    RoundMoment.AwaitingGong -> TelemetryReminderMoment.AWAITING_GONG
+    is RoundMoment.StartedAgo -> TelemetryReminderMoment.PLAYING
 }
 
 /** When the round starts, or since when it plays, for example "Started 12 minutes ago". */

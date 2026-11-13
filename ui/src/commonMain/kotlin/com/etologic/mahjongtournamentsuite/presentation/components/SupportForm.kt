@@ -34,6 +34,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.SupportMessage
+import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
+import com.etologic.mahjongtournamentsuite.domain.telemetry.track
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
@@ -62,6 +65,7 @@ fun SupportForm(
 ) {
     val scope = rememberCoroutineScope()
     val appVersion = LocalAppVersion.current
+    val telemetry = LocalTelemetry.current
     val nameRequester = remember { FocusRequester() }
     val emailRequester = remember { FocusRequester() }
     val messageRequester = remember { FocusRequester() }
@@ -93,6 +97,7 @@ fun SupportForm(
         busy = true
         scope.launch {
             val result = onSend(SupportMessage(name = name, email = email, message = message, app = app, appVersion = appVersion))
+                .track(telemetry, TelemetryEvent.SUPPORT_SENT)
             when (result) {
                 is AppResult.Success -> sent = true
                 is AppResult.Failure -> errorMessage = result.error.toUiText()
