@@ -1,14 +1,13 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -73,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSubstitutionLabel
@@ -88,8 +88,6 @@ import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.dataStatus
 import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -123,6 +121,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.use_a_longer_page_int
 import mahjongtournamentsuite.adminapp.generated.resources.use_a_shorter_page_interval
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Composable
 fun RankingStandaloneScreen(tournamentId: String) {
@@ -218,81 +218,84 @@ private fun RankingStandaloneContent(
     Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-            val compact = LocalCompactLayout.current
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(20.dp))
-                    .appFocusGroup(),
-            ) {
-                error?.let {
-                    AppErrorDialog(
-                        message = it,
-                        onDismiss = { error = null },
-                    )
-                }
-                when {
-                    loading && snapshot == null -> CenteredMessage(
-                        message = stringResource(Res.string.loading_rankings),
-                        modifier = Modifier.weight(1f),
-                    )
-                    currentPage == null -> AppEmptyState(
-                        icon = Icons.Default.Leaderboard,
-                        title = stringResource(Res.string.no_ranking_yet),
-                        message = stringResource(Res.string.the_ranking_shows_when_the_first),
-                        modifier = Modifier.weight(1f),
-                    )
-                    else -> RankingPage(
-                        page = currentPage,
-                        listState = listState,
-                        rowsPerScroll = rowsPerScroll,
-                        onMaxRowsChanged = { maxRowsPerScreen = it },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-            snapshot?.let { held ->
-                // Which data this screen shows. The screen stays still, so it also says when it loaded.
-                Text(
-                    text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-                )
-            }
-            if (playing) {
-                Text(
-                    text = remainingSeconds.toString(),
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                val compact = LocalCompactLayout.current
+                Column(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp),
+                        .fillMaxSize()
+                        .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(20.dp))
+                        .appFocusGroup(),
+                ) {
+                    error?.let {
+                        AppErrorDialog(
+                            message = it,
+                            onDismiss = { error = null },
+                        )
+                    }
+                    when {
+                        loading && snapshot == null -> CenteredMessage(
+                            message = stringResource(Res.string.loading_rankings),
+                            modifier = Modifier.weight(1f),
+                        )
+                        currentPage == null -> AppEmptyState(
+                            icon = Icons.Default.Leaderboard,
+                            title = stringResource(Res.string.no_ranking_yet),
+                            message = stringResource(Res.string.the_ranking_shows_when_the_first),
+                            modifier = Modifier.weight(1f),
+                        )
+                        else -> RankingPage(
+                            page = currentPage,
+                            listState = listState,
+                            rowsPerScroll = rowsPerScroll,
+                            onMaxRowsChanged = { maxRowsPerScreen = it },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                snapshot?.let { held ->
+                    // Which data this screen shows. The screen stays still, so it also says when it loaded.
+                    Text(
+                        text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                    )
+                }
+                if (playing) {
+                    Text(
+                        text = remainingSeconds.toString(),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp),
+                    )
+                }
+                RankingControls(
+                    playing = playing,
+                    themePreference = themePreference,
+                    rowsPerScroll = rowsPerScroll,
+                    maxVisibleRows = maxRowsPerScreen,
+                    intervalSeconds = intervalSeconds,
+                    pageIndex = pageIndex,
+                    pageCount = pages.size,
+                    onTogglePlaying = { playing = !playing },
+                    onRowsChanged = { rowsPerScroll = it.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen) },
+                    onIntervalChanged = {
+                        intervalSeconds = it
+                        remainingSeconds = it
+                    },
+                    onPrevious = {
+                        if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
+                    },
+                    onNext = {
+                        if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
+                    },
+                    onToggleTheme = onToggleTheme,
+                    showTopThree = showTopThree,
+                    onShowTopThreeChanged = { showTopThree = it },
+                    modifier = Modifier
+                        .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
+                        .padding(if (compact) 8.dp else 12.dp),
                 )
-            }
-            RankingControls(
-                playing = playing,
-                themePreference = themePreference,
-                rowsPerScroll = rowsPerScroll,
-                maxVisibleRows = maxRowsPerScreen,
-                intervalSeconds = intervalSeconds,
-                pageIndex = pageIndex,
-                pageCount = pages.size,
-                onTogglePlaying = { playing = !playing },
-                onRowsChanged = { rowsPerScroll = it.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen) },
-                onIntervalChanged = { intervalSeconds = it; remainingSeconds = it },
-                onPrevious = {
-                    if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
-                },
-                onNext = {
-                    if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
-                },
-                onToggleTheme = onToggleTheme,
-                showTopThree = showTopThree,
-                onShowTopThreeChanged = { showTopThree = it },
-                modifier = Modifier
-                    .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
-                    .padding(if (compact) 8.dp else 12.dp),
-            )
             }
         }
     }
@@ -512,7 +515,7 @@ private fun RankingPage(
                 .sp
             val maxRowsAtReadableFont = (
                 availableRowsHeight.value / (MIN_RANKING_FONT_SIZE_SP + ROW_VERTICAL_OVERHEAD.value)
-            ).toInt().minus(ROW_LAYOUT_SAFETY_ROWS)
+                ).toInt().minus(ROW_LAYOUT_SAFETY_ROWS)
                 .coerceIn(MIN_ROWS_PER_SCROLL, MAX_ROWS_PER_SCROLL)
             LaunchedEffect(page.key, maxRowsAtReadableFont) {
                 onMaxRowsChanged(maxRowsAtReadableFont)
@@ -900,17 +903,13 @@ private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Ma
     country = displayCountry(playerId, slots, players),
 )
 
-private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels): String =
-    slots[playerId]?.assignedEmaId?.let(players::get)?.displayName
-        ?.takeIf { it.isNotBlank() }
-        ?: labels.playerN(playerId).uppercase()
+private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels): String = slots[playerId]?.assignedEmaId?.let(players::get)?.displayName
+    ?.takeIf { it.isNotBlank() }
+    ?: labels.playerN(playerId).uppercase()
 
-private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String {
-    return slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
-}
+private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String = slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
 
-private fun formatPoints(value: Double): String =
-    if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
+private fun formatPoints(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
 
 private const val DEFAULT_ROWS_PER_SCROLL = 20
 private const val MIN_ROWS_PER_SCROLL = 16

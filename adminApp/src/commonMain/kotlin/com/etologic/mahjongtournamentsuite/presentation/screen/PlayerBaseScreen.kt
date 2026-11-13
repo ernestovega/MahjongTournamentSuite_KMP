@@ -1,8 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
-import mahjongtournamentsuite.adminapp.generated.resources.close
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -58,6 +55,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
@@ -65,12 +63,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.displayName
-import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
-import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_public
-import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_public_description
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
@@ -81,10 +77,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighligh
 import com.etologic.mahjongtournamentsuite.presentation.components.FullBleedRow
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformScrollbarThickness
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformVerticalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentOptionSwitch
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
@@ -105,6 +103,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.add_player
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.choose_a_player_in_the_list
 import mahjongtournamentsuite.adminapp.generated.resources.clear_search
+import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.country
 import mahjongtournamentsuite.adminapp.generated.resources.country_players_count
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
@@ -132,6 +131,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.player_error_ema_requ
 import mahjongtournamentsuite.adminapp.generated.resources.player_error_first_name
 import mahjongtournamentsuite.adminapp.generated.resources.player_error_last_name
 import mahjongtournamentsuite.adminapp.generated.resources.player_error_required_fields
+import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_public
+import mahjongtournamentsuite.adminapp.generated.resources.player_hidden_from_public_description
 import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.remove_country_filter
 import mahjongtournamentsuite.adminapp.generated.resources.save
@@ -145,7 +146,6 @@ import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton as Button
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 
 /** Shared player base. All signed-in users can read it. Only admins can change it. */
 @Composable
@@ -706,178 +706,184 @@ fun PlayerBaseScreen(navController: NavHostController) {
                 modifier = Modifier.fillMaxWidth().weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                if (showList) SectionCard(
-                    modifier = Modifier.weight(1.7f).fillMaxHeight(),
-                    title = stringResource(Res.string.player_base),
-                    subtitle = stringResource(Res.string.player_base_summary, filteredPlayers.size, filteredCountryCount),
-                ) {
-                    Column(Modifier.fillMaxWidth().weight(1f)) {
-                        if (!compact) DataTableHeaderRow {
-                            PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
-                            PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
-                            PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
-                            PlayerTableHeader(stringResource(Res.string.ema_number), Modifier.width(PlayerEmaColumnWidth))
-                        }
-                        DataTableDivider()
-                        LazyColumnWithScrollbar(
-                            state = rememberPersistentLazyListState("players"),
-                            modifier = Modifier.weight(1f),
-                        ) {
-                            itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
-                                DataTableRow(
-                                    modifier = Modifier
-                                        .focusRequester(playerFocusRequesters[index])
-                                        .onFocusChanged {
-                                            if (it.isFocused) lastFocusedPlayerEmaId = player.emaId
-                                        },
-                                    onClick = { select(player) },
-                                    highlighted = selectedEmaId == player.emaId,
-                                ) {
-                                    Box(
-                                        modifier = Modifier
-                                            .width(PlayerPhotoColumnWidth)
-                                            .height(PlayerPhotoSize),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        if (player.photoUrl.isNullOrBlank()) {
-                                            PlayerPhotoPlaceholder(PlayerPhotoSize)
-                                        } else {
-                                            AsyncImage(
-                                                model = player.photoUrl,
-                                                contentDescription = stringResource(Res.string.photo_of, player.displayName),
-                                                contentScale = ContentScale.Crop,
-                                                modifier = Modifier.width(PlayerPhotoSize).height(PlayerPhotoSize),
-                                            )
-                                        }
-                                    }
-                                    Box(
-                                        modifier = if (compact) Modifier else Modifier.width(PlayerCountryColumnWidth),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CountryFlagWithTooltip(player.country, countries)
-                                    }
-                                    if (compact) {
-                                        Column(Modifier.weight(1f)) {
-                                            Text(player.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                                            Text(
-                                                "EMA ${player.emaId}",
-                                                style = MaterialTheme.typography.bodySmall,
-                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            )
-                                        }
-                                    } else {
-                                        Text(player.displayName, modifier = Modifier.weight(1f))
-                                        Text(
-                                            player.emaId,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.width(PlayerEmaColumnWidth),
-                                        )
-                                    }
+                if (showList) {
+                    SectionCard(
+                        modifier = Modifier.weight(1.7f).fillMaxHeight(),
+                        title = stringResource(Res.string.player_base),
+                        subtitle = stringResource(Res.string.player_base_summary, filteredPlayers.size, filteredCountryCount),
+                    ) {
+                        Column(Modifier.fillMaxWidth().weight(1f)) {
+                            if (!compact) {
+                                DataTableHeaderRow {
+                                    PlayerTableHeader(stringResource(Res.string.photo), Modifier.width(PlayerPhotoColumnWidth), TextAlign.Center)
+                                    PlayerTableHeader(stringResource(Res.string.country), Modifier.width(PlayerCountryColumnWidth), TextAlign.Center)
+                                    PlayerTableHeader(stringResource(Res.string.name), Modifier.weight(1f))
+                                    PlayerTableHeader(stringResource(Res.string.ema_number), Modifier.width(PlayerEmaColumnWidth))
                                 }
-                                DataTableDivider()
+                            }
+                            DataTableDivider()
+                            LazyColumnWithScrollbar(
+                                state = rememberPersistentLazyListState("players"),
+                                modifier = Modifier.weight(1f),
+                            ) {
+                                itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
+                                    DataTableRow(
+                                        modifier = Modifier
+                                            .focusRequester(playerFocusRequesters[index])
+                                            .onFocusChanged {
+                                                if (it.isFocused) lastFocusedPlayerEmaId = player.emaId
+                                            },
+                                        onClick = { select(player) },
+                                        highlighted = selectedEmaId == player.emaId,
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .width(PlayerPhotoColumnWidth)
+                                                .height(PlayerPhotoSize),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            if (player.photoUrl.isNullOrBlank()) {
+                                                PlayerPhotoPlaceholder(PlayerPhotoSize)
+                                            } else {
+                                                AsyncImage(
+                                                    model = player.photoUrl,
+                                                    contentDescription = stringResource(Res.string.photo_of, player.displayName),
+                                                    contentScale = ContentScale.Crop,
+                                                    modifier = Modifier.width(PlayerPhotoSize).height(PlayerPhotoSize),
+                                                )
+                                            }
+                                        }
+                                        Box(
+                                            modifier = if (compact) Modifier else Modifier.width(PlayerCountryColumnWidth),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            CountryFlagWithTooltip(player.country, countries)
+                                        }
+                                        if (compact) {
+                                            Column(Modifier.weight(1f)) {
+                                                Text(player.displayName, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                                                Text(
+                                                    "EMA ${player.emaId}",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                )
+                                            }
+                                        } else {
+                                            Text(player.displayName, modifier = Modifier.weight(1f))
+                                            Text(
+                                                player.emaId,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.width(PlayerEmaColumnWidth),
+                                            )
+                                        }
+                                    }
+                                    DataTableDivider()
+                                }
                             }
                         }
                     }
                 }
-                if (showDetails) SectionCard(
-                    modifier = Modifier.weight(0.8f).fillMaxHeight(),
-                    title = stringResource(Res.string.player_details),
-                    actions = if (compact) {
-                        {
-                            IconButton(onClick = { select(null) }) {
-                                Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
-                            }
-                        }
-                    } else {
-                        null
-                    },
-                ) {
-                    if (selected == null) {
-                        AppEmptyState(
-                            icon = Icons.Default.PersonSearch,
-                            title = stringResource(Res.string.no_player_selected),
-                            message = stringResource(Res.string.choose_a_player_in_the_list),
-                            compact = true,
-                        )
-                    } else {
-                        val detailsScrollState = rememberScrollState()
-                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .verticalScroll(detailsScrollState)
-                                    .padding(end = PlatformScrollbarThickness),
-                                verticalArrangement = Arrangement.spacedBy(12.dp),
-                            ) {
-                                OutlinedTextField(
-                                    value = emaId,
-                                    onValueChange = { emaId = it.toDigitsInput(8) },
-                                    label = { Text(stringResource(Res.string.ema_number)) },
-                                    enabled = canEditEmaNumber && !saving,
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                                OutlinedTextField(firstName, { firstName = it }, label = { Text(stringResource(Res.string.first_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                                OutlinedTextField(lastName, { lastName = it }, label = { Text(stringResource(Res.string.last_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
-                                EmaCountryDropdown(
-                                    selectedCode = country,
-                                    onCountrySelected = { country = it },
-                                    enabled = canEdit,
-                                    label = stringResource(Res.string.country),
-                                    modifier = Modifier.fillMaxWidth(),
-                                )
-                                TournamentOptionSwitch(
-                                    label = stringResource(Res.string.player_hidden_from_public),
-                                    description = stringResource(Res.string.player_hidden_from_public_description),
-                                    checked = hiddenFromPublic,
-                                    enabled = canEdit && !saving,
-                                    onCheckedChange = { hiddenFromPublic = it },
-                                )
-                                val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
-                                PlayerPhotoPreview(
-                                    model = photoModel,
-                                    playerName = "$firstName $lastName".trim(),
-                                    maxWidth = 280.dp,
-                                    maxHeight = 340.dp,
-                                    enabled = canEdit && !saving,
-                                    onClick = imagePicker::launch,
-                                )
-                                if (canEdit) {
-                                    pendingPhoto?.let {
-                                        Text(
-                                            text = it.fileName,
-                                            style = MaterialTheme.typography.bodySmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        )
-                                    }
+                if (showDetails) {
+                    SectionCard(
+                        modifier = Modifier.weight(0.8f).fillMaxHeight(),
+                        title = stringResource(Res.string.player_details),
+                        actions = if (compact) {
+                            {
+                                IconButton(onClick = { select(null) }) {
+                                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.close))
                                 }
-                                if (canEdit && hasPlayerChanges) {
-                                    Row(
+                            }
+                        } else {
+                            null
+                        },
+                    ) {
+                        if (selected == null) {
+                            AppEmptyState(
+                                icon = Icons.Default.PersonSearch,
+                                title = stringResource(Res.string.no_player_selected),
+                                message = stringResource(Res.string.choose_a_player_in_the_list),
+                                compact = true,
+                            )
+                        } else {
+                            val detailsScrollState = rememberScrollState()
+                            Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .verticalScroll(detailsScrollState)
+                                        .padding(end = PlatformScrollbarThickness),
+                                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
+                                    OutlinedTextField(
+                                        value = emaId,
+                                        onValueChange = { emaId = it.toDigitsInput(8) },
+                                        label = { Text(stringResource(Res.string.ema_number)) },
+                                        enabled = canEditEmaNumber && !saving,
                                         modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-                                    ) {
-                                        Button(
-                                            enabled = !saving,
-                                            onClick = { showSaveConfirmation = true },
-                                            focusRequester = saveFocusRequester,
-                                            colors = ButtonDefaults.buttonColors(
-                                                containerColor = MaterialTheme.colorScheme.tertiary,
-                                                contentColor = MaterialTheme.colorScheme.onTertiary,
-                                            ),
-                                        ) {
-                                            Text(stringResource(Res.string.save))
+                                    )
+                                    OutlinedTextField(firstName, { firstName = it }, label = { Text(stringResource(Res.string.first_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                                    OutlinedTextField(lastName, { lastName = it }, label = { Text(stringResource(Res.string.last_name)) }, enabled = canEdit, modifier = Modifier.fillMaxWidth())
+                                    EmaCountryDropdown(
+                                        selectedCode = country,
+                                        onCountrySelected = { country = it },
+                                        enabled = canEdit,
+                                        label = stringResource(Res.string.country),
+                                        modifier = Modifier.fillMaxWidth(),
+                                    )
+                                    TournamentOptionSwitch(
+                                        label = stringResource(Res.string.player_hidden_from_public),
+                                        description = stringResource(Res.string.player_hidden_from_public_description),
+                                        checked = hiddenFromPublic,
+                                        enabled = canEdit && !saving,
+                                        onCheckedChange = { hiddenFromPublic = it },
+                                    )
+                                    val photoModel = pendingPhoto?.dataUrl ?: photoUrl.takeIf { it.isNotBlank() }
+                                    PlayerPhotoPreview(
+                                        model = photoModel,
+                                        playerName = "$firstName $lastName".trim(),
+                                        maxWidth = 280.dp,
+                                        maxHeight = 340.dp,
+                                        enabled = canEdit && !saving,
+                                        onClick = imagePicker::launch,
+                                    )
+                                    if (canEdit) {
+                                        pendingPhoto?.let {
+                                            Text(
+                                                text = it.fileName,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            )
                                         }
                                     }
-                                } else if (!canEdit) {
-                                    Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    if (canEdit && hasPlayerChanges) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                                        ) {
+                                            Button(
+                                                enabled = !saving,
+                                                onClick = { showSaveConfirmation = true },
+                                                focusRequester = saveFocusRequester,
+                                                colors = ButtonDefaults.buttonColors(
+                                                    containerColor = MaterialTheme.colorScheme.tertiary,
+                                                    contentColor = MaterialTheme.colorScheme.onTertiary,
+                                                ),
+                                            ) {
+                                                Text(stringResource(Res.string.save))
+                                            }
+                                        }
+                                    } else if (!canEdit) {
+                                        Text(stringResource(Res.string.only_admins_can_edit_the_player), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
                                 }
+                                PlatformVerticalScrollbar(
+                                    scrollState = detailsScrollState,
+                                    modifier = Modifier
+                                        .align(Alignment.CenterEnd)
+                                        .fillMaxHeight()
+                                        .width(PlatformScrollbarThickness),
+                                )
                             }
-                            PlatformVerticalScrollbar(
-                                scrollState = detailsScrollState,
-                                modifier = Modifier
-                                    .align(Alignment.CenterEnd)
-                                    .fillMaxHeight()
-                                    .width(PlatformScrollbarThickness),
-                            )
                         }
                     }
                 }

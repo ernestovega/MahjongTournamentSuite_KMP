@@ -1,13 +1,10 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -38,13 +35,14 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.topHandScores
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStatOptions
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
@@ -74,6 +72,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.unfold_hands
 import mahjongtournamentsuite.adminapp.generated.resources.when_on_mark_the_table_complete
 import mahjongtournamentsuite.adminapp.generated.resources.winner
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
 @Composable
 internal fun TableHandsCard(
@@ -191,72 +190,72 @@ internal fun TableHandsCard(
             return@SectionCard
         }
         Column {
-        GridTable(
-            modifier = Modifier.onGloballyPositioned { coordinates ->
-                tableHeight = coordinates.size.height.toFloat()
-                if (stickyHost != null) {
-                    tableContentTop = coordinates.positionInRoot().y + stickyHost.scrollState.value
-                }
-            },
-        ) {
-            GridRow(
-                height = GridHeaderHeight,
-                topDivider = false,
-                modifier = Modifier
-                    .zIndex(1f)
-                    .drawWithContent {
-                        drawContent()
-                        // While the header is stuck, close it with a line twice as thick as the table borders.
-                        if (stickyHost != null && stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop) > 0f) {
-                            val thickness = 2.dp.toPx()
-                            drawRect(
-                                color = headerLineColor,
-                                topLeft = Offset(0f, size.height - thickness),
-                                size = Size(size.width, thickness),
+            GridTable(
+                modifier = Modifier.onGloballyPositioned { coordinates ->
+                    tableHeight = coordinates.size.height.toFloat()
+                    if (stickyHost != null) {
+                        tableContentTop = coordinates.positionInRoot().y + stickyHost.scrollState.value
+                    }
+                },
+            ) {
+                GridRow(
+                    height = GridHeaderHeight,
+                    topDivider = false,
+                    modifier = Modifier
+                        .zIndex(1f)
+                        .drawWithContent {
+                            drawContent()
+                            // While the header is stuck, close it with a line twice as thick as the table borders.
+                            if (stickyHost != null && stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop) > 0f) {
+                                val thickness = 2.dp.toPx()
+                                drawRect(
+                                    color = headerLineColor,
+                                    topLeft = Offset(0f, size.height - thickness),
+                                    size = Size(size.width, thickness),
+                                )
+                            }
+                        }
+                        .graphicsLayer {
+                            if (stickyHost != null) {
+                                val hidden = stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop)
+                                translationY = hidden.coerceIn(0f, (tableHeight - headerHeightPx).coerceAtLeast(0f))
+                            }
+                        },
+                ) {
+                    GridHeaderCell(text = "#", modifier = Modifier.width(HandsIndexColumnWidth))
+                    GridHeaderCell(text = stringResource(Res.string.winner), modifier = Modifier.weight(HandsPlayerColumnWeight))
+                    GridHeaderCell(text = stringResource(Res.string.loser), modifier = Modifier.weight(HandsPlayerColumnWeight))
+                    GridHeaderCell(text = stringResource(Res.string.score), modifier = Modifier.width(HandsScoreColumnWidth))
+                    if (showChicken) GridHeaderCell(text = stringResource(Res.string.chicken), modifier = Modifier.width(HandsChickenColumnWidth))
+                    listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId)
+                        .forEachIndexed { seat, id ->
+                            GridHeaderCell(
+                                text = seatLabels[seat],
+                                icon = SeatWindIcons[seat],
+                                subtext = playerNameOrNull(id, playerNamesById)?.asString(),
+                                modifier = Modifier.weight(HandsSeatColumnWeight),
                             )
                         }
-                    }
-                    .graphicsLayer {
-                        if (stickyHost != null) {
-                            val hidden = stickyHost.scrollState.value - (tableContentTop - stickyHost.viewportTop)
-                            translationY = hidden.coerceIn(0f, (tableHeight - headerHeightPx).coerceAtLeast(0f))
-                        }
-                    },
-            ) {
-                GridHeaderCell(text = "#", modifier = Modifier.width(HandsIndexColumnWidth))
-                GridHeaderCell(text = stringResource(Res.string.winner), modifier = Modifier.weight(HandsPlayerColumnWeight))
-                GridHeaderCell(text = stringResource(Res.string.loser), modifier = Modifier.weight(HandsPlayerColumnWeight))
-                GridHeaderCell(text = stringResource(Res.string.score), modifier = Modifier.width(HandsScoreColumnWidth))
-                if (showChicken) GridHeaderCell(text = stringResource(Res.string.chicken), modifier = Modifier.width(HandsChickenColumnWidth))
-                listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId)
-                    .forEachIndexed { seat, id ->
-                        GridHeaderCell(
-                            text = seatLabels[seat],
-                            icon = SeatWindIcons[seat],
-                            subtext = playerNameOrNull(id, playerNamesById)?.asString(),
-                            modifier = Modifier.weight(HandsSeatColumnWeight),
-                        )
-                    }
-                GridHeaderCell(text = stringResource(Res.string.penalty), modifier = Modifier.width(HandsPenaltyColumnWidth))
-                GridHeaderCell(text = stringResource(Res.string.done), modifier = Modifier.width(HandsDoneColumnWidth), last = true)
+                    GridHeaderCell(text = stringResource(Res.string.penalty), modifier = Modifier.width(HandsPenaltyColumnWidth))
+                    GridHeaderCell(text = stringResource(Res.string.done), modifier = Modifier.width(HandsDoneColumnWidth), last = true)
+                }
+                editor.hands.forEachIndexed { index, hand ->
+                    HandTableRow(
+                        index = index,
+                        hand = hand,
+                        playerIds = editor.playerIds,
+                        playerNamesById = playerNamesById,
+                        enabled = handsEnabled,
+                        forceDoneChecked = editor.isCompleted,
+                        result = if (hand.isBlank) SeatTextValues.EMPTY else handResults.getOrNull(index).orZero(),
+                        subtotal = if (hand.isBlank) SeatTextValues.EMPTY else handSubtotals.getOrNull(index).orZero(),
+                        navigation = rowNavigators.getOrNull(index) ?: HandRowKeyboardNavigator(),
+                        previousNavigation = rowNavigators.getOrNull(index - 1),
+                        nextNavigation = rowNavigators.getOrNull(index + 1),
+                    )
+                }
             }
-            editor.hands.forEachIndexed { index, hand ->
-                HandTableRow(
-                    index = index,
-                    hand = hand,
-                    playerIds = editor.playerIds,
-                    playerNamesById = playerNamesById,
-                    enabled = handsEnabled,
-                    forceDoneChecked = editor.isCompleted,
-                    result = if (hand.isBlank) SeatTextValues.EMPTY else handResults.getOrNull(index).orZero(),
-                    subtotal = if (hand.isBlank) SeatTextValues.EMPTY else handSubtotals.getOrNull(index).orZero(),
-                    navigation = rowNavigators.getOrNull(index) ?: HandRowKeyboardNavigator(),
-                    previousNavigation = rowNavigators.getOrNull(index - 1),
-                    nextNavigation = rowNavigators.getOrNull(index + 1),
-                )
-            }
-        }
-        HandsTotalsRow(totals = editor.calculatedHandScoreTotals)
+            HandsTotalsRow(totals = editor.calculatedHandScoreTotals)
         }
     }
 }

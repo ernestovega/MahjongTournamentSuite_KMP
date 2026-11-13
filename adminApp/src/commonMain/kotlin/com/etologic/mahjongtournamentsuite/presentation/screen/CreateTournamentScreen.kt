@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.compactDateTextStyle
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -76,6 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentSch
 import com.etologic.mahjongtournamentsuite.presentation.components.VenueTimeZoneField
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.compactDateTextStyle
 import com.etologic.mahjongtournamentsuite.presentation.components.contactEmailRequiredError
 import com.etologic.mahjongtournamentsuite.presentation.components.deviceTimeZoneId
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize

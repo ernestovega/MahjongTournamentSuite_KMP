@@ -1,12 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import androidx.compose.foundation.Image
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.material3.LocalContentColor
-import org.jetbrains.compose.resources.painterResource
-import com.etologic.mahjongtournamentsuite.presentation.util.UiText
-import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,13 +27,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.util.UiText
+import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.edit_seats
 import mahjongtournamentsuite.adminapp.generated.resources.manual_scores
@@ -57,6 +56,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.table_done
 import mahjongtournamentsuite.adminapp.generated.resources.table_points
 import mahjongtournamentsuite.adminapp.generated.resources.total_scores
 import mahjongtournamentsuite.adminapp.generated.resources.when_on_enter_each_player_s
+import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -123,7 +123,10 @@ internal fun TableResultsCard(
         }
         fun moveScoreFocus(seat: Int): Boolean {
             val target = seatScoreFocus.getOrNull(seat) ?: return false
-            return runCatching { target.requestFocus(); true }.getOrDefault(false)
+            return runCatching {
+                target.requestFocus()
+                true
+            }.getOrDefault(false)
         }
         val playerCell: @Composable (Int) -> Unit = { seat ->
             val id = seatIds[seat]

@@ -1,8 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -48,6 +46,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -72,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -392,11 +392,13 @@ fun TeamsScreen(
                 }
                 val compact = LocalCompactLayout.current
                 Column(Modifier.fillMaxWidth()) {
-                    if (!compact) DataTableHeaderRow {
-                        TeamHeader(stringResource(Res.string.id), Modifier.width(90.dp))
-                        TeamHeader(stringResource(Res.string.name), Modifier.weight(1f))
-                        TeamHeader(stringResource(Res.string.players), Modifier.weight(1.6f))
-                        Spacer(Modifier.width(96.dp))
+                    if (!compact) {
+                        DataTableHeaderRow {
+                            TeamHeader(stringResource(Res.string.id), Modifier.width(90.dp))
+                            TeamHeader(stringResource(Res.string.name), Modifier.weight(1f))
+                            TeamHeader(stringResource(Res.string.players), Modifier.weight(1.6f))
+                            Spacer(Modifier.width(96.dp))
+                        }
                     }
                     DataTableDivider()
                     LazyColumnWithScrollbar(
@@ -483,24 +485,26 @@ fun TeamsScreen(
                                         onClick = { editingTeamId = team.id },
                                         focusRequester = editFocusRequesters[index],
                                     ) { Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit)) }
-                                } else FocusedButton(
-                                    onClick = { editingTeamId = team.id },
-                                    focusRequester = editFocusRequesters[index],
-                                    buttonModifier = Modifier.onPreviewKeyEvent { event ->
-                                        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                        when (event.key) {
-                                            Key.DirectionUp -> {
-                                                editFocusRequesters.getOrNull(index - 1)?.requestFocus()
-                                                true
+                                } else {
+                                    FocusedButton(
+                                        onClick = { editingTeamId = team.id },
+                                        focusRequester = editFocusRequesters[index],
+                                        buttonModifier = Modifier.onPreviewKeyEvent { event ->
+                                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                            when (event.key) {
+                                                Key.DirectionUp -> {
+                                                    editFocusRequesters.getOrNull(index - 1)?.requestFocus()
+                                                    true
+                                                }
+                                                Key.DirectionDown -> {
+                                                    editFocusRequesters.getOrNull(index + 1)?.requestFocus()
+                                                    true
+                                                }
+                                                else -> false
                                             }
-                                            Key.DirectionDown -> {
-                                                editFocusRequesters.getOrNull(index + 1)?.requestFocus()
-                                                true
-                                            }
-                                            else -> false
-                                        }
-                                    },
-                                ) { Text(stringResource(Res.string.edit)) }
+                                        },
+                                    ) { Text(stringResource(Res.string.edit)) }
+                                }
                             }
                             DataTableDivider()
                         }

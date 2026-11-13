@@ -1,7 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import androidx.compose.ui.text.TextStyle
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -12,6 +10,7 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -24,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentAgendaItem
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
@@ -298,7 +298,8 @@ fun TournamentScheduleEditor(
                         },
                         singleLine = true,
                         enabled = enabled,
-                        isError = row.title.isNotBlank() && row.date.isNotBlank() &&
+                        isError = row.title.isNotBlank() &&
+                            row.date.isNotBlank() &&
                             row.date.toIsoTournamentDateOrNull() == null,
                     )
                     OutlinedTextField(
@@ -331,7 +332,8 @@ fun TournamentScheduleEditor(
                         },
                         singleLine = true,
                         enabled = enabled,
-                        isError = row.title.isNotBlank() && row.startTime.isNotBlank() &&
+                        isError = row.title.isNotBlank() &&
+                            row.startTime.isNotBlank() &&
                             row.startTime.toTournamentTimeOrNull() == null,
                     )
                 }
@@ -441,14 +443,13 @@ fun List<RoundScheduleEditorRow>.toTournamentRoundSchedules(): List<TournamentRo
     )
 }
 
-fun List<AgendaItemEditorRow>.toTournamentAgendaItems(): List<TournamentAgendaItem> =
-    filter { it.title.isNotBlank() }.map { row ->
-        TournamentAgendaItem(
-            title = row.title.trim(),
-            date = row.date.toIsoTournamentDateOrNull(),
-            startTime = row.startTime.toTournamentTimeOrNull(),
-        )
-    }
+fun List<AgendaItemEditorRow>.toTournamentAgendaItems(): List<TournamentAgendaItem> = filter { it.title.isNotBlank() }.map { row ->
+    TournamentAgendaItem(
+        title = row.title.trim(),
+        date = row.date.toIsoTournamentDateOrNull(),
+        startTime = row.startTime.toTournamentTimeOrNull(),
+    )
+}
 
 fun tournamentScheduleEditorError(
     roundRows: List<RoundScheduleEditorRow>,
@@ -488,10 +489,8 @@ private fun String.toTournamentTimeOrNull(): String? {
     return value
 }
 
-private fun <T> List<T>.replaceAt(index: Int, value: T): List<T> =
-    toMutableList().also { it[index] = value }
+private fun <T> List<T>.replaceAt(index: Int, value: T): List<T> = toMutableList().also { it[index] = value }
 
 /** A smaller text in the date fields on a phone, so a whole DD/MM/YYYY date fits next to the calendar button. */
 @Composable
-internal fun compactDateTextStyle(): TextStyle =
-    if (LocalCompactLayout.current) MaterialTheme.typography.bodyMedium else LocalTextStyle.current
+internal fun compactDateTextStyle(): TextStyle = if (LocalCompactLayout.current) MaterialTheme.typography.bodyMedium else LocalTextStyle.current

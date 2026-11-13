@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
@@ -90,6 +89,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExportDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -1159,18 +1159,20 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 }
                 val compact = LocalCompactLayout.current
                 Column(Modifier.fillMaxWidth()) {
-                    if (!compact) DataTableHeaderRow {
-                        TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
-                        TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
-                        TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
-                        TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(TournamentPlayerPhotoColumnWidth))
-                        TournamentPlayerHeader(stringResource(Res.string.name), Modifier.weight(1.2f))
-                        if (isTeamsTournament) {
-                            TournamentPlayerHeader(stringResource(Res.string.team), Modifier.width(TournamentPlayerTeamColumnWidth))
+                    if (!compact) {
+                        DataTableHeaderRow {
+                            TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
+                            TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
+                            TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
+                            TournamentPlayerHeader(stringResource(Res.string.photo), Modifier.width(TournamentPlayerPhotoColumnWidth))
+                            TournamentPlayerHeader(stringResource(Res.string.name), Modifier.weight(1.2f))
+                            if (isTeamsTournament) {
+                                TournamentPlayerHeader(stringResource(Res.string.team), Modifier.width(TournamentPlayerTeamColumnWidth))
+                            }
+                            TournamentPlayerHeader(stringResource(Res.string.tables), Modifier.width(TournamentPlayerTablesColumnWidth))
+                            TournamentPlayerHeader(stringResource(Res.string.account), Modifier.width(TournamentPlayerAccountColumnWidth), TextAlign.Center)
+                            Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                         }
-                        TournamentPlayerHeader(stringResource(Res.string.tables), Modifier.width(TournamentPlayerTablesColumnWidth))
-                        TournamentPlayerHeader(stringResource(Res.string.account), Modifier.width(TournamentPlayerAccountColumnWidth), TextAlign.Center)
-                        Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                     }
                     DataTableDivider()
                     LazyColumnWithScrollbar(

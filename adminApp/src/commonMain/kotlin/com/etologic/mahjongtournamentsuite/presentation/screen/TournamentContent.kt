@@ -1,9 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
-import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
-import androidx.compose.material3.HorizontalDivider
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,7 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -33,11 +28,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -65,13 +56,18 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.next_round
@@ -84,6 +80,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_table_header
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_and_next_table
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 /** The stateless body of the tournament screen: the round and table strip, and the editor of the selected table. */
 @Composable
@@ -190,15 +188,15 @@ internal fun TournamentContent(
                         .padding(bottom = 96.dp),
                 ) {
                     CompositionLocalProvider(LocalStickyHeaderHost provides stickyHost) {
-                    TableEditorPanel(
-                        editor = selectedEditor,
-                        enabled = enabled,
-                        playerNamesById = playerNamesById,
-                        scoreFocusRequester = scoreFocusRequester,
-                        otherTablesBestHandScores = allTables
-                            .filterNot { it.roundId == selectedEditor.roundId && it.tableId == tableId }
-                            .flatMap { it.bestHandScores },
-                    )
+                        TableEditorPanel(
+                            editor = selectedEditor,
+                            enabled = enabled,
+                            playerNamesById = playerNamesById,
+                            scoreFocusRequester = scoreFocusRequester,
+                            otherTablesBestHandScores = allTables
+                                .filterNot { it.roundId == selectedEditor.roundId && it.tableId == tableId }
+                                .flatMap { it.bestHandScores },
+                        )
                     }
                 }
                 if (selectedEditor.hasUnsavedChanges) {
@@ -310,34 +308,34 @@ private fun RoundTableStrip(
     val roundStatus = roundCompletionStatus(tables)
     val roundPicker: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-        FocusedIconButton(
-            onClick = { rounds.getOrNull(roundIndex - 1)?.let { onSelectRound(it.roundId) } },
-            enabled = enabled && roundIndex > 0,
-        ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = stringResource(Res.string.previous_round)) }
-        Box {
-            FocusedOutlinedButton(
-                onClick = roundMenu::open,
-                enabled = enabled,
-                focusRequester = roundFocusRequester,
-            ) {
-                Text(stringResource(Res.string.round_n_text, selectedRoundId?.toString() ?: "-"), style = MaterialTheme.typography.titleMedium)
-                Spacer(Modifier.width(8.dp))
-                StatusIconWithTooltip(roundStatus)
-                Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+            FocusedIconButton(
+                onClick = { rounds.getOrNull(roundIndex - 1)?.let { onSelectRound(it.roundId) } },
+                enabled = enabled && roundIndex > 0,
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = stringResource(Res.string.previous_round)) }
+            Box {
+                FocusedOutlinedButton(
+                    onClick = roundMenu::open,
+                    enabled = enabled,
+                    focusRequester = roundFocusRequester,
+                ) {
+                    Text(stringResource(Res.string.round_n_text, selectedRoundId?.toString() ?: "-"), style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.width(8.dp))
+                    StatusIconWithTooltip(roundStatus)
+                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+                }
+                val roundOptions = rounds.map { round ->
+                    SelectOption(
+                        key = round.roundId,
+                        label = stringResource(Res.string.round_n, round.roundId),
+                        trailingIcon = { StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId })) },
+                    )
+                }
+                SelectMenu(roundMenu, roundOptions, selectedRoundId, onSelectRound)
             }
-            val roundOptions = rounds.map { round ->
-                SelectOption(
-                    key = round.roundId,
-                    label = stringResource(Res.string.round_n, round.roundId),
-                    trailingIcon = { StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId })) },
-                )
-            }
-            SelectMenu(roundMenu, roundOptions, selectedRoundId, onSelectRound)
-        }
-        FocusedIconButton(
-            onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },
-            enabled = enabled && roundIndex in 0 until rounds.lastIndex,
-        ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_round)) }
+            FocusedIconButton(
+                onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },
+                enabled = enabled && roundIndex in 0 until rounds.lastIndex,
+            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_round)) }
         }
     }
     val tableChips: @Composable (Modifier) -> Unit = { modifier ->

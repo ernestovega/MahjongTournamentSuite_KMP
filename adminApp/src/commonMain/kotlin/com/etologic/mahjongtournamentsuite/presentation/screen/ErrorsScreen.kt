@@ -1,10 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
-import androidx.compose.foundation.layout.Box
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -58,9 +55,12 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.StaggeredColumns
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
@@ -412,14 +412,16 @@ private fun ErrorGroupsTable(
         state = rememberPersistentLazyListState("errors"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
     ) {
-        if (!compact) item {
-            DataTableHeaderRow {
-                Text(stringResource(Res.string.errors_col_last), modifier = Modifier.width(LastSeenColumnWidth), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.errors_col_problem), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.errors_col_where), modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.errors_col_count), modifier = Modifier.width(CountColumnWidth), style = MaterialTheme.typography.labelLarge)
+        if (!compact) {
+            item {
+                DataTableHeaderRow {
+                    Text(stringResource(Res.string.errors_col_last), modifier = Modifier.width(LastSeenColumnWidth), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.errors_col_problem), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.errors_col_where), modifier = Modifier.weight(0.4f), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.errors_col_count), modifier = Modifier.width(CountColumnWidth), style = MaterialTheme.typography.labelLarge)
+                }
+                DataTableDivider()
             }
-            DataTableDivider()
         }
         items(groups, key = { it.id }) { group ->
             DataTableRow(
