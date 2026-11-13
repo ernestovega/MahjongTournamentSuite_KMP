@@ -3,6 +3,7 @@ package com.etologic.mahjongtournamentsuite.player
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.TableRestaurant
@@ -338,7 +339,7 @@ internal fun MyTableReminderDialog(
                 Column(
                     Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.none),
                 ) {
                     FocusedButton(
                         onClick = onOpen,
@@ -353,6 +354,8 @@ internal fun MyTableReminderDialog(
                     }
                     FocusedTextButton(
                         onClick = onDismiss,
+                        // The minimum touch heights leave a big gap between the buttons. This brings "Later" closer.
+                        modifier = Modifier.offset(y = -MtsTheme.spacing.md),
                         focusRequester = laterRequester,
                         buttonModifier = Modifier.focusLoop(previous = openRequester, next = openRequester),
                     ) {
