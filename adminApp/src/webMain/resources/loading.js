@@ -9,3 +9,15 @@
     // Without storage the light colors stay.
   }
 })();
+
+// Marks the page with the language that the user chose in the app, before the app starts. The browser and screen
+// readers read it, and Chrome does not offer to translate a page that is already in the language of the user.
+// The app keeps the choice in localStorage under "languagePreference" and updates the mark when it changes.
+(function () {
+  try {
+    const saved = window.localStorage.getItem("languagePreference");
+    if (saved) document.documentElement.lang = saved;
+  } catch (_) {
+    // Without storage the page stays in English, the default language of the app.
+  }
+})();
