@@ -18,7 +18,7 @@ import {
   seatIdsOf,
   tablePointsOf,
 } from "./handScoring";
-import { calculateTableSummary, HANDS_PER_TABLE } from "./tableManagerService";
+import { calculateTableSummary, handsFromCopy, handsFromData, HANDS_PER_TABLE } from "./tableManagerService";
 
 type Data = Record<string, unknown>;
 
@@ -516,5 +516,13 @@ function checkTournamentCounters(c: Collector, input: IntegrityInput): void {
   });
   if (stale > 0) {
     c.add("warning", "counters.tableVersions", `${stale} tables have a version that differs from the tournament table versions. Polling clients may miss changes.`);
+  }
+  // The copy of the hands in a table is what the apps read. A valid copy must equal the hand documents.
+  const wrongCopies = input.tables.filter(({ data, hands }) => {
+    const copy = handsFromCopy(data);
+    return copy != null && JSON.stringify(copy) !== JSON.stringify(handsFromData(hands.map((hand) => hand.data)));
+  }).map(({ id }) => id);
+  if (wrongCopies.length > 0) {
+    c.add("error", "counters.handsCopy", `${wrongCopies.length} tables keep a copy of their hands that differs from the hands (${wrongCopies.slice(0, 5).join(", ")}). The apps show the copy.`);
   }
 }

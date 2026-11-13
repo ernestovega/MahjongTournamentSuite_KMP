@@ -226,7 +226,9 @@ class SingleManifestPollTest {
         val screen = nextPoll()
 
         assertEquals("2", screen.east)
-        assertEquals(1, count("/tournaments/t1/tables-with-hands"))
+        // Only round 1 changed, so the poll loads that round and not every table of the tournament.
+        assertEquals(0, count("/tournaments/t1/tables-with-hands"))
+        assertEquals(1, count("/tournaments/t1/rounds/1/tables-with-hands"))
         assertEquals(1, tournamentManifests)
     }
 
