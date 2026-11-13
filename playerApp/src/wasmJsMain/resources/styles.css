@@ -30,6 +30,11 @@ html[data-theme="dark"] {
     height: 96px;
 }
 
+/* The logo is green on light backgrounds and white on dark ones. */
+html[data-theme="dark"] .mts-loading img {
+    filter: brightness(0) invert(1);
+}
+
 .mts-loading .track {
     stroke: rgba(0, 177, 106, 0.2);
 }
