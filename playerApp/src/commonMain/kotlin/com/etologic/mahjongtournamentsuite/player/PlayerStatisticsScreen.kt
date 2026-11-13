@@ -315,7 +315,45 @@ fun TournamentStatisticsTab(
 }
 
 /**
- * The statistics of one player in one tournament. The player in the Players tab shows it in its Stats tab.
+ * The statistics of the person with the EMA number [emaId] over all the public tournaments, for the choice "All" of
+ * the screen of a player. [onLoadingChange] tells the screen when the data loads.
+ */
+@Composable
+fun PersonStatisticsTab(
+    emaId: String,
+    onLoadingChange: (Boolean) -> Unit = {},
+    /** Above the cards, for example the choice of a tournament of the player. */
+    top: (@Composable () -> Unit)? = null,
+) {
+    val presenter = koinInject<PlayerStatisticsPresenter>()
+    var data by remember(emaId) { mutableStateOf<PersonStatisticsData?>(null) }
+    var message by remember(emaId) { mutableStateOf<UiText?>(null) }
+    LaunchedEffect(emaId) {
+        when (val result = presenter.person(emaId)) {
+            is AppResult.Success -> data = result.value
+            is AppResult.Failure -> message = result.error.toUiText()
+        }
+    }
+    ReportLoading(data == null && message == null, onLoadingChange)
+    Column(
+        Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("person-statistics-$emaId"))
+            .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
+    ) {
+        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        top?.invoke()
+        val loaded = data ?: return@Column
+        PlayerStatisticsPanel(
+            loaded.overall,
+            tournaments = loaded.tournaments.map { it.first },
+            rivalNames = loaded.rivalNames,
+            loadStandings = { ids -> presenter.standings(loaded.emaId, ids) },
+        )
+    }
+}
+
+/**
+ * The statistics of one player in one tournament. The screen of a player shows it in its Stats tab.
  * [onLoadingChange] tells the screen when the data loads, so the progress bar stays until the content shows.
  */
 @Composable
@@ -328,6 +366,8 @@ fun PlayerSlotStatisticsTab(
     places: Map<Int, Int>? = null,
     playerCount: Int = 0,
     onLoadingChange: (Boolean) -> Unit = {},
+    /** Above the cards, for example the choice of another tournament of the player. */
+    top: (@Composable () -> Unit)? = null,
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
@@ -345,6 +385,7 @@ fun PlayerSlotStatisticsTab(
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        top?.invoke()
         val loaded = data ?: return@Column
         val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
         val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier) } }

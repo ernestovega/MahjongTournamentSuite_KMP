@@ -73,3 +73,34 @@ export async function closeRoundTables(tournamentId: string, roundId: number, no
   }
   return result;
 }
+
+/**
+ * Closes at once the rounds that a change ended: a "Set time" to zero, a "started N minutes ago" longer than the match,
+ * a shorter match duration in the settings. No task closes them, because a task runs only at an end in the future.
+ * Only rounds that were not over before the change count, so a save of the settings never closes the tables that an
+ * organizer fills later in an old round. A failure is logged and never stops the change.
+ */
+export async function closeRoundsEndedByChange(params: {
+  tournamentId: string;
+  before: Data;
+  after: Data;
+  nowMs: number;
+  onlyRoundId?: number;
+}): Promise<number> {
+  let closed = 0;
+  const numRounds = Number(params.after.numRounds ?? 0);
+  for (let roundId = 1; roundId <= numRounds; roundId += 1) {
+    if (params.onlyRoundId != null && roundId !== params.onlyRoundId) continue;
+    const phase = (tournament: Data) => {
+      const { rules, clock } = matchTimeOfTournament(tournament, roundId);
+      return matchPhaseAt(clock, rules, params.nowMs);
+    };
+    if (phase(params.before) === "OVER" || phase(params.after) !== "OVER") continue;
+    try {
+      closed += (await closeRoundTables(params.tournamentId, roundId, params.nowMs)).closed;
+    } catch (error) {
+      console.error(`Could not close round ${roundId} of tournament ${params.tournamentId}`, error);
+    }
+  }
+  return closed;
+}

@@ -74,6 +74,18 @@ class PlayerScreensScreenshotTest {
     ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.STATISTICS)) }
 
     @Test
+    fun tournamentPlayerAllTournaments() = playerScreenshots(
+        "tournament-player-all-tournaments",
+        ready = {
+            waitForText("Totals")
+            onAllNodesWithText("Madrid Open 2026").onFirst().performClick()
+            waitForIdle()
+            onAllNodesWithText("All").onFirst().performClick()
+            waitForText("Tournaments")
+        },
+    ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.STATISTICS)) }
+
+    @Test
     fun tournamentTeams() = playerScreenshots("tournament-teams", ready = { openTab("Teams") }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test

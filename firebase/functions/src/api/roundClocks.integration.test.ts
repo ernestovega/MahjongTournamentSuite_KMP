@@ -6,6 +6,7 @@ import { readGlobalTournamentsRevision, readTournament, seedTournament } from ".
 import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 import { setRoundCloseEnqueuer, type RoundCloseTask } from "../services/matchTimeTaskService";
 import { getRoundClocks, updateRoundClock } from "../services/roundClockService";
+import { updateTournamentSettings } from "../services/tournamentsService";
 import { HttpError } from "./httpError";
 
 const MIN = 60_000;
@@ -112,6 +113,129 @@ describe("the clocks of the rounds", () => {
     await db.doc(`tournaments/${tournamentId}`).update({ isCompleted: true });
     await assert.rejects(updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null }), status(409));
     await assert.rejects(getRoundClocks("missing-tournament"), status(404));
+  });
+});
+
+/** Gives table 1 of the round one played hand, as a player or an organizer would. */
+async function playOneHand(tournamentId: string, roundId: number): Promise<void> {
+  await db.doc(`tournaments/${tournamentId}/tables/${roundId}_1`).update({ hasProgress: true });
+  await db.doc(`tournaments/${tournamentId}/tables/${roundId}_1/hands/1`).update({ isDone: true, playerWinnerId: "1", handScore: "8" });
+}
+
+async function tableState(tournamentId: string, roundId: number): Promise<{ completed: boolean; checked: boolean }> {
+  const table = await db.doc(`tournaments/${tournamentId}/tables/${roundId}_1`).get();
+  return { completed: table.get("isCompleted") === true, checked: table.get("matchTimeChecked") === true };
+}
+
+/**
+ * A change that ends a round at once gets no task, because a task runs only at an end in the future. The server closes
+ * the round right away instead.
+ */
+describe("a change that ends the round at once", () => {
+  let tasks: RoundCloseTask[] = [];
+
+  before(() => setRoundCloseEnqueuer(async (_tournamentId, task) => {
+    tasks.push(task);
+  }));
+  after(() => setRoundCloseEnqueuer());
+  beforeEach(() => {
+    tasks = [];
+  });
+
+  it("closes the tables when Set time leaves no time", async () => {
+    const tournamentId = await seedClockTournament();
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 30 * MIN });
+    await playOneHand(tournamentId, 1);
+
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "setRemaining", remainingMs: 0 }, actor: null, nowMs: now });
+
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: true, checked: true });
+    // Only the Play planned a close. The end of the Set time is now, so it planned none.
+    assert.equal(tasks.length, 1);
+  });
+
+  it("closes the tables of a paused round whose time is set to zero after the planned end", async () => {
+    const tournamentId = await seedClockTournament();
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 200 * MIN });
+    await playOneHand(tournamentId, 1);
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "pause", agoMs: 0 }, actor: null, nowMs: now - 150 * MIN });
+    // The task of the Play ran during the pause and did nothing.
+
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "setRemaining", remainingMs: 0 }, actor: null, nowMs: now });
+
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: true, checked: true });
+    // A resume afterwards changes nothing and closes nothing again.
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "resume", agoMs: 0 }, actor: null, nowMs: now + MIN });
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: true, checked: true });
+  });
+
+  it("closes the tables when the round started a whole match ago", async () => {
+    const tournamentId = await seedClockTournament();
+    // An organizer entered a hand before the Play.
+    await playOneHand(tournamentId, 1);
+
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 120 * MIN }, actor: null });
+
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: true, checked: true });
+    assert.equal(tasks.length, 0);
+  });
+
+  it("only marks a table without hands as checked", async () => {
+    const tournamentId = await seedClockTournament();
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 30 * MIN });
+
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "setRemaining", remainingMs: 0 }, actor: null, nowMs: now });
+
+    // The query of the close only takes tables with progress, so this one stays as it was.
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: false, checked: false });
+  });
+
+  it("keeps the tables open while the extra time to finish the hand runs", async () => {
+    const tournamentId = await seedClockTournament();
+    await db.doc(`tournaments/${tournamentId}`).update({ matchEndMode: "FINISH_HAND" });
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 30 * MIN });
+    await playOneHand(tournamentId, 1);
+
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "setRemaining", remainingMs: 0 }, actor: null, nowMs: now });
+
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: false, checked: false });
+    // The close comes with a task at the end of the extra time.
+    assert.deepEqual(tasks.map((task) => task.at.getTime()), [now - 30 * MIN + 135 * MIN, now + 15 * MIN]);
+  });
+
+  it("never closes a round that was already over, so an organizer can fill it later", async () => {
+    const tournamentId = await seedClockTournament();
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 300 * MIN });
+    // Round 1 is over. An organizer enters a hand in it now.
+    await playOneHand(tournamentId, 1);
+
+    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now });
+    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "setRemaining", remainingMs: 0 }, actor: null, nowMs: now + MIN });
+
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: false, checked: false });
+  });
+
+  it("closes a running round that a shorter match in the settings ends, and leaves the old rounds", async () => {
+    const tournamentId = await seedClockTournament();
+    const now = Date.now();
+    await updateRoundClock({ tournamentId, roundId: 1, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 300 * MIN });
+    await updateRoundClock({ tournamentId, roundId: 2, action: { kind: "start", agoMs: 0 }, actor: null, nowMs: now - 60 * MIN });
+    await playOneHand(tournamentId, 1);
+    await playOneHand(tournamentId, 2);
+
+    await updateTournamentSettings({
+      tournamentId, name: "Clock", shortName: "CL", primaryColor: "#02B16B",
+      eventStartDate: "2026-11-12", eventEndDate: "2026-11-12", hostCountry: "ES", hostCity: "Madrid",
+      matchDurationMinutes: 45,
+    });
+
+    assert.deepEqual(await tableState(tournamentId, 2), { completed: true, checked: true });
+    assert.deepEqual(await tableState(tournamentId, 1), { completed: false, checked: false });
   });
 });
 

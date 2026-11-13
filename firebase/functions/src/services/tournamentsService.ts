@@ -14,6 +14,7 @@ import {
   readStoredMatchExtraMinutes,
   readStoredTimeZone,
 } from "./matchTime";
+import { closeRoundsEndedByChange } from "./matchTimeCloseService";
 import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { roundClockViews, type RoundClockView } from "./roundClock";
 import { defaultHand, HANDS_PER_TABLE, handsCopyUpdate } from "./tableManagerService";
@@ -602,7 +603,10 @@ export async function updateTournamentSettings(params: {
   }
   const after = await ref.get();
   // A new match duration moves the end of a running round.
-  await scheduleRoundCloses(params.tournamentId, after.data() ?? {});
+  const nowMs = Date.now();
+  await scheduleRoundCloses(params.tournamentId, after.data() ?? {}, nowMs);
+  // A shorter match can end a running round at once. No task runs for an end that is past.
+  await closeRoundsEndedByChange({ tournamentId: params.tournamentId, before: before.data() ?? {}, after: after.data() ?? {}, nowMs });
   return mapTournamentDoc(after);
 }
 

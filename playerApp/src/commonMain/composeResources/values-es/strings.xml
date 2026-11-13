@@ -164,6 +164,7 @@
     <string name="tab_tables_me">Yo</string>
     <string name="tab_tables_team">Mi equipo</string>
     <string name="tab_tables_all">Todas</string>
+    <string name="player_tournaments_all">Todos</string>
     <string name="tables_team_empty">Las mesas de los miembros de tu equipo se muestran aquí cuando la organización sortea la ronda.</string>
     <string name="progress_title">Progreso</string>
     <string name="progress_rounds_label">Rondas</string>
