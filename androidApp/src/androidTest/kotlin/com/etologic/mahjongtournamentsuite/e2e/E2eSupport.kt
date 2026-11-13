@@ -14,6 +14,7 @@ import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.junit4.ComposeTestRule
@@ -244,9 +245,37 @@ fun ComposeTestRule.openTournament(name: String) {
     onNode(hasClickAction() and hasAnyDescendant(hasText(name)), useUnmergedTree = true).performTouchInput { click(Offset(40f, height / 2f)) }
 }
 
-/** Presses the chip of a table in the row of table chips. */
+/**
+ * Presses the chip of a table in the row of table chips and waits until the screen shows that table.
+ * A chip stays off until its table loads, and the row scrolls, so the chip is brought into view and pressed once it is on.
+ */
 fun ComposeTestRule.selectTable(number: Int) {
-    onAllNodes(hasClickAction() and hasAnyDescendant(hasText(number.toString())), useUnmergedTree = true)[0].performClick()
+    val chip = hasTestTag("table-chip-$number")
+    // The header over the table, "Round 3 • Table 6". "Table 1" must not match "Table 12".
+    val header = SemanticsMatcher("header of table $number") { node ->
+        node.config.getOrNull(SemanticsProperties.Text)?.any { it.text.endsWith("• Table $number") } == true
+    }
+    waitUntil(WAIT_MS) {
+        if (onAllNodes(header).fetchSemanticsNodes().isNotEmpty()) return@waitUntil true
+        onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().indices.forEach { index ->
+            runCatching { onAllNodes(hasScrollToNodeAction())[index].performScrollToNode(chip) }
+        }
+        if (onAllNodes(chip and isEnabled()).fetchSemanticsNodes().isNotEmpty()) {
+            runCatching { onNode(chip and isEnabled()).performClick() }
+            Thread.sleep(300)
+        }
+        false
+    }
+}
+
+/** Goes from the first round to [round] with the Next round button, one round at a time. */
+fun ComposeTestRule.goToRound(round: Int) {
+    for (next in 2..round) {
+        clickButton("Next round")
+        waitForText("Round $next")
+        // The button ignores a second press within 500 ms.
+        Thread.sleep(700)
+    }
 }
 
 /** Lets the app run for a while. The test clock only moves when the test moves it, so never use Thread.sleep alone. */

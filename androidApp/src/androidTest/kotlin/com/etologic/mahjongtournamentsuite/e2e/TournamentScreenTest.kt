@@ -71,9 +71,7 @@ class TournamentScreenTest : AdminE2eTest() {
     @Test
     fun lastTableOfTheTournamentHasFifteenHandsDone() {
         open("Test - One table left, broken logo, chicken hands off")
-        c.clickButton("Next round")
-        c.clickButton("Next round")
-        c.waitForText("Round 3")
+        c.goToRound(3)
         c.selectTable(6)
         c.waitForText("15 of 16 hands done.")
     }
