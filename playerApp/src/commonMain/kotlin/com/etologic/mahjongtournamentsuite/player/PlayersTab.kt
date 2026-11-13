@@ -225,10 +225,8 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
     var statisticsLoading by remember { mutableStateOf(false) }
     // The tab row hides when the content scrolls down and shows when it scrolls up.
     val hideOnScroll = rememberHideOnScrollState()
-    val account = rememberAccountActions(navController)
-    account.Dialogs()
+    // Only the back button: the profile stays on the screens of the tournaments and of the tournament.
     AppScaffold(
-        rootLeadingActions = { account.Buttons() },
         title = view?.takeIf { slotId in it.players }?.nameOf(slotId) ?: stringResource(Res.string.scope_player),
         subtitle = view?.tournament?.name,
         isLoading = (view == null && message == null) || (tab == PlayerTab.STATISTICS && statisticsLoading),
