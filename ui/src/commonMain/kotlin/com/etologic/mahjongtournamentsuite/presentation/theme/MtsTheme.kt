@@ -6,8 +6,11 @@ import androidx.compose.material3.Typography
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.text.TextStyle
 
 @Composable
@@ -18,11 +21,28 @@ fun MtsTheme(
     val fontFamily = GangOfThreeFontFamily()
     val typography = remember(fontFamily) { gangOfThreeTypography(fontFamily) }
 
+    val mtsTypography = remember(typography) { MtsTypography.from(typography) }
+    // The width class comes from the window, not from the layout, so reading it costs no extra measure pass.
+    // A window of width 0 (some tests) counts as Expanded, the layout the screens had before the classes existed.
+    val windowPx = LocalWindowInfo.current.containerSize.width
+    val windowWidth = if (windowPx > 0) {
+        MtsWindowWidth.fromWidth(with(LocalDensity.current) { windowPx.toDp() })
+    } else {
+        MtsWindowWidth.Expanded
+    }
+
     MaterialTheme(
         colorScheme = if (useDarkTheme) DarkColors else LightColors,
         typography = typography,
-        content = content,
-    )
+        shapes = MtsMaterialShapes,
+    ) {
+        CompositionLocalProvider(
+            LocalMtsColors provides if (useDarkTheme) DarkMtsColors else LightMtsColors,
+            LocalMtsTypography provides mtsTypography,
+            LocalMtsWindowWidth provides windowWidth,
+            content = content,
+        )
+    }
 }
 
 private val MahjongGreen = Color(0xFF00B16A)
