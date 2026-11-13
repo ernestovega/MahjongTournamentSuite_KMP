@@ -15,7 +15,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -208,7 +207,7 @@ private fun BackgroundExportCard(task: BackgroundExports.Task, onSave: () -> Uni
                 }
             }
             if (task.status !is BackgroundExports.Status.Running) {
-                IconButton(onClick = onDismiss) {
+                DebouncedIconButton(onClick = onDismiss) {
                     Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.background_export_close))
                 }
             }
