@@ -79,27 +79,29 @@ private val LevelIcons: Map<PlayerLevel, List<IconShape>> = mapOf(
         IconShape("M12 14 C12 8.5 8 6 3.5 7 C3.5 11.5 7 14.5 12 14 Z"),
         IconShape("M12 11.5 C12 6 15.5 3 20.5 3.5 C20.5 9 17 12.5 12 11.5 Z"),
     ),
-    // A tree.
+    // A tree: a fir with three tiers and a trunk.
     PlayerLevel.INTERMEDIATE to listOf(
-        IconShape("M10.6 14 H13.4 V22 H10.6 Z"),
-        IconShape("M12 2 A7.6 7.6 0 1 1 11.99 2 Z"),
-        IconShape("M12 18 L8.6 13.6 M12 16 L15.4 11.4", detail = true, stroke = 1.4f),
+        IconShape("M10.7 18 H13.3 V22.6 H10.7 Z", detail = true),
+        IconShape("M12 1.4 L17.2 8 H14.6 L18.8 13.2 H15.8 L20.4 18.8 H3.6 L8.2 13.2 H5.2 L9.4 8 H6.8 Z"),
     ),
     // A flame.
     PlayerLevel.ADVANCED to listOf(
         IconShape("M12.5 2 C13 6 19 8.5 19 14.5 A7 7 0 0 1 5 14.5 C5 11.5 7 9.5 8 7 C9.6 8 10.4 9.2 10.8 10.6 C11.9 8 11.6 4.6 12.5 2 Z"),
         IconShape("M12 21 A3.4 3.4 0 0 1 8.6 17.6 C8.6 15.8 10 15 11 13.4 C12.2 14.6 15.4 15.8 15.4 17.8 A3.4 3.4 0 0 1 12 21 Z", detail = true),
     ),
-    // A star.
+    // A rocket that flies up to the right, with a window, two fins and a flame.
     PlayerLevel.EXPERT to listOf(
-        IconShape("M12 1.8 L14.9 8.5 L22 9.2 L16.6 14 L18.2 21.2 L12 17.4 L5.8 21.2 L7.4 14 L2 9.2 L9.1 8.5 Z"),
+        IconShape("M9.7 16.6 H14.3 L12 22.6 Z", detail = true, rotation = 45f),
+        IconShape("M8.3 12.4 L5.2 16.2 V18.6 L8.3 16.4 Z M15.7 12.4 L18.8 16.2 V18.6 L15.7 16.4 Z", rotation = 45f),
+        IconShape("M12 1.4 C15 3.8 15.9 7.8 15.9 11.6 V16.4 H8.1 V11.6 C8.1 7.8 9 3.8 12 1.4 Z", rotation = 45f),
+        IconShape("M12 6.8 A2 2 0 1 1 11.99 6.8 Z", detail = true, rotation = 45f),
     ),
     // A black hole: a light streak, a glowing ring and a black center.
     PlayerLevel.MASTER to listOf(
         IconShape("M1.8 12 H22.2", stroke = 1.5f, tint = Color.White.copy(alpha = 0.85f)),
-        IconShape("M12 2.4 A9.6 9.6 0 1 1 11.99 2.4 Z", stroke = 1.2f, tint = Color.White.copy(alpha = 0.45f)),
-        IconShape("M12 4.6 A7.4 7.4 0 1 1 11.99 4.6 Z", stroke = 2.8f, tint = Color.White),
-        IconShape("M12 6.4 A5.6 5.6 0 1 1 11.99 6.4 Z", tint = Color(0xFF0B0B12)),
+        IconShape("M12 0.8 A11.2 11.2 0 1 1 11.99 0.8 Z", stroke = 1f, tint = Color.White.copy(alpha = 0.45f)),
+        IconShape("M12 2.6 A9.4 9.4 0 1 1 11.99 2.6 Z", stroke = 2.4f, tint = Color.White),
+        IconShape("M12 4 A8 8 0 1 1 11.99 4 Z", tint = Color(0xFF0B0B12)),
     ),
 )
 
