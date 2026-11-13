@@ -38,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -348,7 +349,7 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     }
     val texts: @Composable (Alignment.Horizontal) -> Unit = { alignment ->
         Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(profile.name, style = MaterialTheme.typography.titleLarge)
+            Text(profile.name, style = MaterialTheme.typography.titleLarge.inTextFont())
             Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
                 if (profile.country.isNotBlank()) {
                     CountryFlag(profile.country, width = 24.dp, contentDescription = stringResource(Res.string.country_n, profile.country))

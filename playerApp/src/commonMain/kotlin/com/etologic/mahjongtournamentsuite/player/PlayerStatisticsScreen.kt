@@ -75,6 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabRowColo
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.async
@@ -598,7 +599,7 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
             Text(
                 profile.name,
                 Modifier.weight(1f, fill = false),
-                style = MaterialTheme.typography.titleMedium,
+                style = MaterialTheme.typography.titleMedium.inTextFont(),
                 color = mtsTabContentColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

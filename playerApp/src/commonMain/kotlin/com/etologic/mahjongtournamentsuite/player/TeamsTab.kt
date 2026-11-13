@@ -44,6 +44,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import mahjongtournamentsuite.playerapp.generated.resources.Res
@@ -217,8 +218,8 @@ private fun TeamListCard(row: TeamListRow, onClick: () -> Unit) {
             }
             row.position?.let {
                 Column(horizontalAlignment = Alignment.End) {
-                    Text(stringResource(Res.string.player_position, it), style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant)
-                    row.points?.let { points -> Text(formatPoints(points), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant) }
+                    Text(stringResource(Res.string.player_position, it), style = MaterialTheme.typography.labelLarge.inTextFont(), color = colors.onSurfaceVariant)
+                    row.points?.let { points -> Text(formatPoints(points), style = MaterialTheme.typography.labelMedium.inTextFont(), color = colors.onSurfaceVariant) }
                 }
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = colors.onSurfaceVariant)

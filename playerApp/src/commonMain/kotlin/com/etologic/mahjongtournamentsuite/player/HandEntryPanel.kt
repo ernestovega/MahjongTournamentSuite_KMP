@@ -58,6 +58,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -592,7 +593,7 @@ private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (slot != null) WindIcon(windOf(slot), size = 24.dp)
         Text(view.firstNameOf(slot), Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1)
-        Text("-${penalty.amount}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
+        Text("-${penalty.amount}", style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
         if (penalty.shared) {
             Text(stringResource(Res.string.entry_others_each, penalty.amount / 3), color = MtsTheme.colors.gain)
         }
@@ -768,10 +769,10 @@ private fun ReviewHand(
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     windOf(winner)?.let { WindIcon(it, size = 28.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                    Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
                     if (chicken) ChickenIcon(24.dp)
                 }
                 if (selfDraw) {

@@ -32,6 +32,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSlice
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundTotals
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.column_score
@@ -152,7 +153,7 @@ private fun SkillCharts(
             val shown = total.getOrNull(selected)
             Row(Modifier.fillMaxWidth()) {
                 Text(stringResource(title), Modifier.weight(1f), style = MaterialTheme.typography.labelLarge, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(shown?.let(formats[index]) ?: "—", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold)
+                Text(shown?.let(formats[index]) ?: "—", style = MaterialTheme.typography.labelLarge.inTextFont(), fontWeight = FontWeight.Bold)
             }
             RoundLineChart(
                 names = names,

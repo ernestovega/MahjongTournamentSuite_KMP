@@ -87,6 +87,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.SkillScale
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.card_fold
@@ -498,7 +499,7 @@ private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
         Text(
             name,
             if (open != null) Modifier.clickable(onClick = open) else Modifier,
-            style = MaterialTheme.typography.titleLarge,
+            style = MaterialTheme.typography.titleLarge.inTextFont(),
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
             color = if (open != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
@@ -692,7 +693,7 @@ internal fun SectorChart(
         }
         if (centerValue != null) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(centerValue, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(centerValue, style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 if (centerLabel != null) {
                     Text(centerLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

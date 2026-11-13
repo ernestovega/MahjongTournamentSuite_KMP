@@ -141,6 +141,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.currentAppSwitc
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -611,7 +612,7 @@ private fun StandingTag(standing: TournamentStanding) {
     val color = MaterialTheme.colorScheme.onSurface
     OutlinedTag(color) {
         RankTrophy(standing.position, size = 18.dp)
-        Text("${standing.position}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = color)
+        Text("${standing.position}", style = MaterialTheme.typography.titleSmall.inTextFont(), fontWeight = FontWeight.Bold, color = color)
     }
 }
 
@@ -690,7 +691,7 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                                                 Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.standing_team), Modifier.size(22.dp))
                                                 RankTrophy(standing.teamRank, size = 18.dp)
-                                                Text("${standing.teamRank}", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                                                Text("${standing.teamRank}", style = MaterialTheme.typography.titleSmall.inTextFont(), fontWeight = FontWeight.Bold)
                                             }
                                         }
                                         if (standing.chickenRank != null) {
@@ -1926,7 +1927,7 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values
                     Text(
                         view.nameOf(seatSlots.getOrNull(seat)),
                         Modifier.weight(1f),
-                        style = if (receives) MaterialTheme.typography.titleSmall else MaterialTheme.typography.titleMedium,
+                        style = if (receives) MaterialTheme.typography.titleSmall.inTextFont() else MaterialTheme.typography.titleMedium.inTextFont(),
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -1964,7 +1965,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                     Text(
                         view.nameOf(winnerSlot),
                         Modifier.weight(1f, fill = false),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleMedium.inTextFont(),
                         fontWeight = FontWeight.Bold,
                         color = MtsTheme.colors.gain,
                         maxLines = 1,
@@ -1983,7 +1984,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                         Text(
                             view.nameOf(loserSlot),
                             Modifier.weight(1f, fill = false),
-                            style = MaterialTheme.typography.titleSmall,
+                            style = MaterialTheme.typography.titleSmall.inTextFont(),
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.error,
                             maxLines = 1,
@@ -2027,7 +2028,7 @@ private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean
         Text(
             text,
             Modifier.padding(horizontal = 16.dp, vertical = if (small) 2.dp else 6.dp),
-            style = if (small) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge,
+            style = if (small) MaterialTheme.typography.titleMedium.inTextFont() else MaterialTheme.typography.titleLarge.inTextFont(),
             fontWeight = FontWeight.Bold,
             color = color,
         )

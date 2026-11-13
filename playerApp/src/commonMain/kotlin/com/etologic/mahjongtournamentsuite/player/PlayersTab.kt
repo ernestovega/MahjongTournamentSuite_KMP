@@ -47,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
@@ -203,7 +204,7 @@ internal fun PlayerListCard(row: PlayerListRow, onClick: () -> Unit) {
                 }
             }
             row.position?.let {
-                Text(stringResource(Res.string.player_position, it), style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant)
+                Text(stringResource(Res.string.player_position, it), style = MaterialTheme.typography.labelLarge.inTextFont(), color = colors.onSurfaceVariant)
             }
             Icon(Icons.Default.ChevronRight, contentDescription = null, tint = colors.onSurfaceVariant)
         }

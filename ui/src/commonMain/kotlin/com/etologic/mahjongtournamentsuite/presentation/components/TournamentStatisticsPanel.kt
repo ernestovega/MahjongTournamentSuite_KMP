@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.MIN_HANDS_FOR_LEADERBOARD
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentStatistics
+import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
@@ -270,15 +271,15 @@ private fun LeaderboardCard(
                     .padding(vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text("${index + 1}.", Modifier.width(36.dp), style = MaterialTheme.typography.titleLarge)
+                Text("${index + 1}.", Modifier.width(36.dp), style = MaterialTheme.typography.titleLarge.inTextFont())
                 Text(
                     names[player.playerId] ?: "Player ${player.playerId}",
                     Modifier.weight(1f).padding(end = 12.dp),
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.titleLarge.inTextFont(),
                     // A name in the color of the links and an arrow show that the player opens.
                     color = if (clickable) MaterialTheme.colorScheme.primary else Color.Unspecified,
                 )
-                Text(value(player), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                Text(value(player), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 if (calculation != null) {
                     Text(
                         calculation(player),
