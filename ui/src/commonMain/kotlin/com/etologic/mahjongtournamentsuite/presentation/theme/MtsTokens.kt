@@ -134,6 +134,8 @@ data class MtsColors(
     val medalGold: Color,
     val medalSilver: Color,
     val medalBronze: Color,
+    /** Text and icons on the medal colors. */
+    val onMedal: Color,
     /** The background of the first place in a ranking. */
     val firstPlaceHighlight: Color,
     /** Text and icons on the green header (top bar, tabs). */
@@ -152,38 +154,45 @@ data class MtsColors(
     }
 }
 
+// The palette of the domain colors, unified by Ernesto on 2026-11-13: the greens are the primary green of the theme,
+// the greys are the silver of the medals, and the text on all of them is white.
+private val MedalGold = Color(0xFFFFAC33)
+private val MedalSilver = Color(0xFF8A99A8)
+private val MedalBronze = Color(0xFFA9632F)
+private val Warning = Color(0xFFB26A00)
+
 private val LevelColorsByLevel = mapOf(
-    PlayerLevel.BEGINNER to MtsLevelColors(Color(0xFF8A99A8), Color(0xFF5F6E7D), Color.White),
-    PlayerLevel.INTERMEDIATE to MtsLevelColors(Color(0xFF02B16B), Color(0xFF017A4A), Color.White),
+    PlayerLevel.BEGINNER to MtsLevelColors(MedalSilver, Color(0xFF5F6E7D), Color.White),
+    PlayerLevel.INTERMEDIATE to MtsLevelColors(MahjongGreen, MahjongGreenDark, Color.White),
     PlayerLevel.ADVANCED to MtsLevelColors(Color(0xFFF2692E), Color(0xFFB53B10), Color.White),
     PlayerLevel.EXPERT to MtsLevelColors(Color(0xFF8E5CD9), Color(0xFF6538AD), Color.White),
     PlayerLevel.MASTER to MtsLevelColors(Color(0xFF5B616E), Color(0xFF15181E), Color.White),
 )
 
 internal val LightMtsColors = MtsColors(
-    gain = Color(0xFF00934C),
-    scoreOk = Color(0xFF2E9E4F),
-    scoreWarning = Color(0xFFE08A00),
-    changed = Color(0xFF2E7D32),
-    warning = Color(0xFFB26A00),
+    gain = MahjongGreen,
+    scoreOk = MahjongGreen,
+    scoreWarning = Warning,
+    changed = MahjongGreenDark,
+    warning = Warning,
     info = Color(0xFF1565C0),
     onInfo = Color.White,
-    selfPick = Color(0xFF2E7D32),
-    draw = Color(0xFF757575),
-    medalGold = Color(0xFFFFAC33),
-    medalSilver = Color(0xFF8A99A8),
-    medalBronze = Color(0xFFA9632F),
-    firstPlaceHighlight = Color(0xFFFFE259),
+    selfPick = MahjongGreen,
+    draw = MedalSilver,
+    medalGold = MedalGold,
+    medalSilver = MedalSilver,
+    medalBronze = MedalBronze,
+    onMedal = Color.White,
+    firstPlaceHighlight = MedalGold,
     onHeader = Color.White,
     onHeaderMuted = Color.White.copy(alpha = 0.85f),
     levels = LevelColorsByLevel,
 )
 
+/** The same palette; only the colors that follow a container of the dark scheme change. */
 internal val DarkMtsColors = LightMtsColors.copy(
+    changed = MahjongGreenDarker,
     info = Color(0xFF4D9BFF),
-    onInfo = Color.Black,
-    selfPick = Color(0xFF66BB6A),
-    draw = Color(0xFFBDBDBD),
 )
 
 /** Text roles on top of the Material type scale. */
