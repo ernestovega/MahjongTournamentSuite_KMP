@@ -1,6 +1,5 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
-import mahjongtournamentsuite.ui.generated.resources.action_back
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -18,22 +17,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -49,15 +46,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import mahjongtournamentsuite.ui.generated.resources.Res
-import mahjongtournamentsuite.ui.generated.resources.menu
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.ReportScreenLoading
+import mahjongtournamentsuite.ui.generated.resources.Res
+import mahjongtournamentsuite.ui.generated.resources.action_back
+import mahjongtournamentsuite.ui.generated.resources.menu
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
 private val AppTopBarSidePadding = 8.dp
 
@@ -103,194 +103,196 @@ fun AppScaffold(
 
     val adaptive = LocalAdaptiveTopBar.current
     BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-    val compact = adaptive && maxWidth.value < TopBarCompactWidthDp
-    // On a phone the top bar buttons lose their labels and keep the icons.
-    val topBarLabels = maxWidth.value >= TopBarLabelsMinWidthDp
-    Scaffold(
-        modifier = Modifier.appFocusGroup(),
-        topBar = {
-            CompositionLocalProvider(LocalTopBarLabels provides topBarLabels) {
-            // The progress bar covers the bottom edge of the top bar. It takes no height, so the content under it does not move.
-            Box {
-                // The player top bar has no extra padding. The top bar already has 4 dp, and the buttons have their own 12 dp,
-                // so the icons line up with the 16 dp of the content.
-                val sidePadding = if (rootLeadingActions != null) 0.dp else AppTopBarSidePadding
-                val titleContent: @Composable () -> Unit = {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Box(modifier = Modifier.weight(1f, fill = false)) {
-                            if (subtitle == null) {
-                                EllipsizedTitleText(title)
-                            } else {
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(2.dp),
-                                    horizontalAlignment = Alignment.CenterHorizontally,
+        val compact = adaptive && maxWidth.value < TopBarCompactWidthDp
+        // On a phone the top bar buttons lose their labels and keep the icons.
+        val topBarLabels = maxWidth.value >= TopBarLabelsMinWidthDp
+        Scaffold(
+            modifier = Modifier.appFocusGroup(),
+            topBar = {
+                CompositionLocalProvider(LocalTopBarLabels provides topBarLabels) {
+                    // The progress bar covers the bottom edge of the top bar. It takes no height, so the content under it does not move.
+                    Box {
+                        // The player top bar has no extra padding. The top bar already has 4 dp, and the buttons have their own 12 dp,
+                        // so the icons line up with the 16 dp of the content.
+                        val sidePadding = if (rootLeadingActions != null) 0.dp else AppTopBarSidePadding
+                        val titleContent: @Composable () -> Unit = {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Box(modifier = Modifier.weight(1f, fill = false)) {
+                                    if (subtitle == null) {
+                                        EllipsizedTitleText(title)
+                                    } else {
+                                        Column(
+                                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                        ) {
+                                            EllipsizedTitleText(title)
+                                            EllipsizedTitleText(
+                                                text = subtitle,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                // Same color as the title, in the light and the dark theme.
+                                                color = LocalContentColor.current,
+                                            )
+                                        }
+                                    }
+                                }
+                                if (titleAction != null) {
+                                    CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                        titleAction()
+                                    }
+                                }
+                            }
+                        }
+
+                        val navigationContent: @Composable () -> Unit = {
+                            Row(
+                                modifier = Modifier.padding(start = sidePadding),
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                when {
+                                    navigationIcon != null -> {
+                                        CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                            navigationIcon()
+                                        }
+                                    }
+                                    onBack != null -> {
+                                        AppBackButton(onClick = onBack)
+                                    }
+                                }
+
+                                if (leadingActions != null) {
+                                    CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                        leadingActions()
+                                    }
+                                }
+                                if (rootLeadingActions != null) {
+                                    CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                        rootLeadingActions()
+                                    }
+                                }
+                            }
+                        }
+
+                        val actionsContent: @Composable () -> Unit = {
+                            if (actions != null) {
+                                Box(
+                                    modifier = Modifier.padding(end = sidePadding),
                                 ) {
-                                    EllipsizedTitleText(title)
-                                    EllipsizedTitleText(
-                                        text = subtitle,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        // Same color as the title, in the light and the dark theme.
-                                        color = LocalContentColor.current,
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                            actions()
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        val colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            titleContentColor = Color.White,
+                            navigationIconContentColor = Color.White.copy(alpha = 0.85f),
+                            actionIconContentColor = Color.White.copy(alpha = 0.85f),
+                        )
+
+                        when {
+                            compact && rootLeadingActions != null -> {
+                                // One icon at the left: the back button, or the root actions when there is no back button.
+                                // One three-dots menu at the right. The root actions are in it when the back button is present.
+                                val hasBack = onBack != null
+                                CompositionLocalProvider(LocalTopBarLabels provides false) {
+                                    CenterAlignedTopAppBar(
+                                        title = titleContent,
+                                        navigationIcon = {
+                                            if (hasBack) {
+                                                AppBackButton(onClick = onBack!!, showLabel = false)
+                                            } else {
+                                                CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                                                    rootLeadingActions()
+                                                }
+                                            }
+                                        },
+                                        actions = {
+                                            if (hasBack || actions != null) {
+                                                TopBarOverflowMenu(isLoading) {
+                                                    if (hasBack) rootLeadingActions()
+                                                    actions?.invoke()
+                                                }
+                                            }
+                                        },
+                                        colors = colors,
                                     )
                                 }
                             }
-                        }
-                        if (titleAction != null) {
-                            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                titleAction()
+                            compact -> {
+                                CenterAlignedTopAppBar(
+                                    title = titleContent,
+                                    navigationIcon = {
+                                        Row(
+                                            modifier = Modifier.padding(start = AppTopBarSidePadding),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                        ) {
+                                            if (onBack != null && navigationIcon == null) {
+                                                // The buttons are collapsed, so the back button drops its label.
+                                                AppBackButton(onClick = onBack, showLabel = false)
+                                            }
+                                            if (navigationIcon != null || leadingActions != null) {
+                                                // The menu at the start has the profile and the other sections. Its icon is not the
+                                                // three dots, so it does not look like the actions menu at the end.
+                                                TopBarOverflowMenu(isLoading, icon = Icons.Default.Menu) {
+                                                    navigationIcon?.invoke()
+                                                    leadingActions?.invoke()
+                                                }
+                                            }
+                                        }
+                                    },
+                                    actions = {
+                                        if (actions != null) {
+                                            TopBarOverflowMenu(isLoading) { actions() }
+                                        }
+                                    },
+                                    colors = colors,
+                                )
                             }
-                        }
-                    }
-                }
-
-                val navigationContent: @Composable () -> Unit = {
-                    Row(
-                        modifier = Modifier.padding(start = sidePadding),
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        when {
-                            navigationIcon != null -> {
-                                CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                    navigationIcon()
-                                }
-                            }
-                            onBack != null -> {
-                                AppBackButton(onClick = onBack)
-                            }
-                        }
-
-                        if (leadingActions != null) {
-                            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                leadingActions()
-                            }
-                        }
-                        if (rootLeadingActions != null) {
-                            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                rootLeadingActions()
-                            }
-                        }
-                    }
-                }
-
-                val actionsContent: @Composable () -> Unit = {
-                    if (actions != null) {
-                        Box(
-                            modifier = Modifier.padding(end = sidePadding),
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                    actions()
-                                }
-                            }
-                        }
-                    }
-                }
-
-                val colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White.copy(alpha = 0.85f),
-                    actionIconContentColor = Color.White.copy(alpha = 0.85f),
-                )
-
-                when {
-                    compact && rootLeadingActions != null -> {
-                        // One icon at the left: the back button, or the root actions when there is no back button.
-                        // One three-dots menu at the right. The root actions are in it when the back button is present.
-                        val hasBack = onBack != null
-                        CompositionLocalProvider(LocalTopBarLabels provides false) {
-                            CenterAlignedTopAppBar(
+                            else -> CenterAlignedTopAppBar(
                                 title = titleContent,
-                                navigationIcon = {
-                                    if (hasBack) {
-                                        AppBackButton(onClick = onBack!!, showLabel = false)
-                                    } else {
-                                        CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                            rootLeadingActions()
-                                        }
-                                    }
-                                },
-                                actions = {
-                                    if (hasBack || actions != null) {
-                                        TopBarOverflowMenu(isLoading) {
-                                            if (hasBack) rootLeadingActions()
-                                            actions?.invoke()
-                                        }
-                                    }
-                                },
+                                navigationIcon = navigationContent,
+                                actions = { Row { actionsContent() } },
                                 colors = colors,
                             )
                         }
-                    }
-                    compact -> {
-                        CenterAlignedTopAppBar(
-                            title = titleContent,
-                            navigationIcon = {
-                                Row(
-                                    modifier = Modifier.padding(start = AppTopBarSidePadding),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    if (onBack != null && navigationIcon == null) {
-                                        // The buttons are collapsed, so the back button drops its label.
-                                        AppBackButton(onClick = onBack, showLabel = false)
-                                    }
-                                    if (navigationIcon != null || leadingActions != null) {
-                                        TopBarOverflowMenu(isLoading) {
-                                            navigationIcon?.invoke()
-                                            leadingActions?.invoke()
-                                        }
-                                    }
-                                }
-                            },
-                            actions = {
-                                if (actions != null) {
-                                    TopBarOverflowMenu(isLoading) { actions() }
-                                }
-                            },
-                            colors = colors,
-                        )
-                    }
-                    else -> CenterAlignedTopAppBar(
-                        title = titleContent,
-                        navigationIcon = navigationContent,
-                        actions = { Row { actionsContent() } },
-                        colors = colors,
-                    )
-                }
 
-                if (showProgress) {
-                    SlowLinearLoadingIndicator(Modifier.align(Alignment.BottomCenter))
+                        if (showProgress) {
+                            SlowLinearLoadingIndicator(Modifier.align(Alignment.BottomCenter))
+                        }
+                    }
                 }
-            }
-            }
-        },
-        floatingActionButton = {
-            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                floatingActionButton?.invoke()
-            }
-        },
-        floatingActionButtonPosition = floatingActionButtonPosition,
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { padding ->
-        Box(modifier = Modifier.padding(padding)) {
-            val contentWithBackground: @Composable () -> Unit = {
+            },
+            floatingActionButton = {
                 CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                    content()
+                    floatingActionButton?.invoke()
                 }
-            }
-            if (showBackgroundLogo) {
-                AppBackground(contentWithBackground)
-            } else {
-                contentWithBackground()
+            },
+            floatingActionButtonPosition = floatingActionButtonPosition,
+            containerColor = MaterialTheme.colorScheme.background,
+        ) { padding ->
+            Box(modifier = Modifier.padding(padding)) {
+                val contentWithBackground: @Composable () -> Unit = {
+                    CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                        content()
+                    }
+                }
+                if (showBackgroundLogo) {
+                    AppBackground(contentWithBackground)
+                } else {
+                    contentWithBackground()
+                }
             }
         }
-    }
     }
 }
 
@@ -359,11 +361,11 @@ private fun SlowLinearLoadingIndicator(
 
 /** A three-dots button. Its menu shows [content] in a column. */
 @Composable
-private fun TopBarOverflowMenu(isLoading: Boolean, content: @Composable () -> Unit) {
+private fun TopBarOverflowMenu(isLoading: Boolean, icon: ImageVector = Icons.Default.MoreVert, content: @Composable () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { menuOpen = true }) {
-            Icon(Icons.Default.MoreVert, contentDescription = stringResource(Res.string.menu), tint = Color.White)
+            Icon(icon, contentDescription = stringResource(Res.string.menu), tint = Color.White)
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             CompositionLocalProvider(

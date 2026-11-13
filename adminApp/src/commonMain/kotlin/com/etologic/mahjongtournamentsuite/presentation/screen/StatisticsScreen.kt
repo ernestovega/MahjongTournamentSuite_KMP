@@ -51,7 +51,9 @@ import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
@@ -384,7 +386,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     }
                 }
             }
-            Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 16.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            val compact = LocalCompactLayout.current
+            Column(
+                Modifier.fillMaxWidth().padding(horizontal = if (compact) CompactScreenSidePadding else 24.dp, vertical = if (compact) 12.dp else 16.dp),
+                verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 20.dp),
+            ) {
                 message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                 when (scope) {
                     StatisticsScope.TOURNAMENT -> {

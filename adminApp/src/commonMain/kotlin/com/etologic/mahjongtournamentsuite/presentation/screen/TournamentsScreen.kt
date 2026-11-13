@@ -10,10 +10,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -23,13 +25,15 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.EmojiEvents
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -59,6 +63,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -82,21 +87,26 @@ import com.etologic.mahjongtournamentsuite.presentation.UsersRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivider
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DraggableScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.EditTournamentDialog
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfileDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ProfilePhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.SignOutConfirmDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.emaCountryFlagCode
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
 import com.etologic.mahjongtournamentsuite.presentation.components.requestFocusIfAttached
@@ -147,7 +157,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.tournaments
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton as TextButton
 
 @Composable
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
@@ -189,8 +198,10 @@ fun TournamentsScreen(
 
             when (val adminResult = presenter.loadAdminStatus(force)) {
                 is AppResult.Success -> store.adminStatus.value = adminResult.value
-                is AppResult.Failure -> if (errorMessage == null) errorMessage =
-                    adminResult.error.toUiText()
+                is AppResult.Failure -> if (errorMessage == null) {
+                    errorMessage =
+                        adminResult.error.toUiText()
+                }
             }
 
             when (val tournamentsResult = presenter.loadTournaments(force)) {
@@ -198,14 +209,18 @@ fun TournamentsScreen(
                     store.upsertTournaments(tournamentsResult.value)
                 }
 
-                is AppResult.Failure -> if (errorMessage == null) errorMessage =
-                    tournamentsResult.error.toUiText()
+                is AppResult.Failure -> if (errorMessage == null) {
+                    errorMessage =
+                        tournamentsResult.error.toUiText()
+                }
             }
 
             when (val countriesResult = presenter.loadCountries(force)) {
                 is AppResult.Success -> countries = countriesResult.value
-                is AppResult.Failure -> if (errorMessage == null) errorMessage =
-                    countriesResult.error.toUiText()
+                is AppResult.Failure -> if (errorMessage == null) {
+                    errorMessage =
+                        countriesResult.error.toUiText()
+                }
             }
 
             isRefreshing = false
@@ -319,7 +334,6 @@ fun TournamentsScreen(
         )
     }
 
-
     AppScaffold(
         title = stringResource(Res.string.tournaments),
         isLoading = isRefreshing || isLoading,
@@ -371,144 +385,182 @@ fun TournamentsScreen(
             )
         },
     ) {
+        val compact = LocalCompactLayout.current
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(PaddingValues(horizontal = 24.dp, vertical = 24.dp)),
+                    .padding(
+                        if (compact) PaddingValues(start = CompactScreenSidePadding, end = CompactScreenSidePadding, top = 12.dp) else PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+                    ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-            SectionCard(
-                content = {
-                    when {
-                        !isRefreshing && tournaments.isEmpty() -> {
-                            AppEmptyState(
-                                icon = Icons.Default.EmojiEvents,
-                                title = stringResource(Res.string.no_tournaments_yet),
-                                message = stringResource(Res.string.create_the_first_tournament_to_see),
-                                compact = true,
+                if (compact && tournaments.isNotEmpty()) {
+                    // A phone shows one card per tournament instead of the wide table.
+                    val listState = rememberPersistentLazyListState("tournaments")
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 32.dp),
+                    ) {
+                        itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
+                            CompactTournamentCard(
+                                modifier = Modifier
+                                    .then(tournamentFocusRequesters.getOrNull(index)?.let { Modifier.focusRequester(it) } ?: Modifier)
+                                    .onFocusChanged {
+                                        if (it.isFocused) lastFocusedTournamentId = tournament.id
+                                        if (it.isFocused) lastFocusedControl = "tournament"
+                                    },
+                                tournament = tournament,
+                                enabled = !isLoading,
+                                showEdit = canEditTournament,
+                                onClick = {
+                                    lastFocusedTournamentId = tournament.id
+                                    lastFocusedControl = "tournament"
+                                    openTournament(tournament)
+                                },
+                                onEdit = {
+                                    lastFocusedTournamentId = tournament.id
+                                    lastFocusedControl = "tournament"
+                                    editDialogTournament = tournament
+                                },
                             )
                         }
-
-                        else -> {
-                            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                                val scrollState = rememberScrollState()
-                                val listState = rememberPersistentLazyListState("tournaments")
-                                val cellMinWidth = 56.dp
-                                val numColumns = 10
-                                val actionCellMinWidth = 56.dp
-                                val flexibleColumns = 5
-                                val columnsMinWidth = (cellMinWidth * flexibleColumns) + featuresGroupMinWidth(cellMinWidth) +
-                                    ColorColumnWidth + CountryColumnWidth + ShortNameColumnWidth + actionCellMinWidth +
-                                    (PlayersColumnMinWidth - cellMinWidth)
-                                val columnSpacing = 12.dp
-                                val baseMinWidth = columnsMinWidth + (columnSpacing * (numColumns - 1))
-                                val needsHorizontalScroll = baseMinWidth > maxWidth
-
-                                val headerBackground = CardDefaults.cardColors().containerColor
-                                val tableContent: @Composable (Modifier) -> Unit = { modifier ->
-                                    LazyColumn(
-                                        state = listState,
-                                        modifier = modifier,
-                                    ) {
-                                        stickyHeader {
-                                            Column(modifier = Modifier.background(headerBackground)) {
-                                                TournamentTableHeader(
-                                                    cellMinWidth = cellMinWidth,
-                                                    actionCellMinWidth = actionCellMinWidth,
-                                                )
-                                                DataTableDivider()
-                                            }
-                                        }
-                                        itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
-                                            TournamentTableRow(
-                                                modifier = Modifier
-                                                    // The lazy item can compose before the requester list catches up with the tournaments list.
-                                                    .then(
-                                                        tournamentFocusRequesters.getOrNull(index)
-                                                            ?.let { Modifier.focusRequester(it) }
-                                                            ?: Modifier,
-                                                    )
-                                                    .onFocusChanged {
-                                                        if (it.isFocused) lastFocusedTournamentId = tournament.id
-                                                        if (it.isFocused) lastFocusedControl = "tournament"
-                                                    },
-                                                tournament = tournament,
-                                                enabled = !isLoading,
-                                                cellMinWidth = cellMinWidth,
-                                                actionCellMinWidth = actionCellMinWidth,
-                                                showEdit = canEditTournament,
-                                                onClick = {
-                                                    lastFocusedTournamentId = tournament.id
-                                                    lastFocusedControl = "tournament"
-                                                    openTournament(tournament)
-                                                },
-                                                onEdit = {
-                                                    lastFocusedTournamentId = tournament.id
-                                                    lastFocusedControl = "tournament"
-                                                    editDialogTournament = tournament
-                                                },
-                                            )
-                                            DataTableDivider()
-                                        }
-                                    }
+                    }
+                } else {
+                    SectionCard(
+                        content = {
+                            when {
+                                !isRefreshing && tournaments.isEmpty() -> {
+                                    AppEmptyState(
+                                        icon = Icons.Default.EmojiEvents,
+                                        title = stringResource(Res.string.no_tournaments_yet),
+                                        message = stringResource(Res.string.create_the_first_tournament_to_see),
+                                        compact = true,
+                                    )
                                 }
 
-                                if (needsHorizontalScroll) {
-                                    Box(modifier = Modifier.fillMaxWidth()) {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .horizontalScroll(scrollState)
-                                                .pointerInput(scrollState) {
-                                                    detectHorizontalDragGestures { change, dragAmount ->
-                                                        change.consume()
-                                                        scrollState.dispatchRawDelta(-dragAmount)
+                                else -> {
+                                    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                                        val scrollState = rememberScrollState()
+                                        val listState = rememberPersistentLazyListState("tournaments")
+                                        val cellMinWidth = 56.dp
+                                        val numColumns = 10
+                                        val actionCellMinWidth = 56.dp
+                                        val flexibleColumns = 5
+                                        val columnsMinWidth = (cellMinWidth * flexibleColumns) + featuresGroupMinWidth(cellMinWidth) +
+                                            ColorColumnWidth + CountryColumnWidth + ShortNameColumnWidth + actionCellMinWidth +
+                                            (PlayersColumnMinWidth - cellMinWidth)
+                                        val columnSpacing = 12.dp
+                                        val baseMinWidth = columnsMinWidth + (columnSpacing * (numColumns - 1))
+                                        val needsHorizontalScroll = baseMinWidth > maxWidth
+
+                                        val headerBackground = CardDefaults.cardColors().containerColor
+                                        val tableContent: @Composable (Modifier) -> Unit = { modifier ->
+                                            LazyColumn(
+                                                state = listState,
+                                                modifier = modifier,
+                                            ) {
+                                                stickyHeader {
+                                                    Column(modifier = Modifier.background(headerBackground)) {
+                                                        TournamentTableHeader(
+                                                            cellMinWidth = cellMinWidth,
+                                                            actionCellMinWidth = actionCellMinWidth,
+                                                        )
+                                                        DataTableDivider()
                                                     }
-                                                },
-                                        ) {
-                                            tableContent(Modifier.width(baseMinWidth))
+                                                }
+                                                itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
+                                                    TournamentTableRow(
+                                                        modifier = Modifier
+                                                            // The lazy item can compose before the requester list catches up with the tournaments list.
+                                                            .then(
+                                                                tournamentFocusRequesters.getOrNull(index)
+                                                                    ?.let { Modifier.focusRequester(it) }
+                                                                    ?: Modifier,
+                                                            )
+                                                            .onFocusChanged {
+                                                                if (it.isFocused) lastFocusedTournamentId = tournament.id
+                                                                if (it.isFocused) lastFocusedControl = "tournament"
+                                                            },
+                                                        tournament = tournament,
+                                                        enabled = !isLoading,
+                                                        cellMinWidth = cellMinWidth,
+                                                        actionCellMinWidth = actionCellMinWidth,
+                                                        showEdit = canEditTournament,
+                                                        onClick = {
+                                                            lastFocusedTournamentId = tournament.id
+                                                            lastFocusedControl = "tournament"
+                                                            openTournament(tournament)
+                                                        },
+                                                        onEdit = {
+                                                            lastFocusedTournamentId = tournament.id
+                                                            lastFocusedControl = "tournament"
+                                                            editDialogTournament = tournament
+                                                        },
+                                                    )
+                                                    DataTableDivider()
+                                                }
+                                            }
                                         }
 
-                                        // The same draggable scrollbar on every platform, also for a finger.
-                                        DraggableScrollbar(
-                                            state = listState,
-                                            modifier = Modifier.align(Alignment.CenterEnd),
-                                        )
+                                        if (needsHorizontalScroll) {
+                                            Box(modifier = Modifier.fillMaxWidth()) {
+                                                Row(
+                                                    modifier = Modifier
+                                                        .fillMaxWidth()
+                                                        .horizontalScroll(scrollState)
+                                                        .pointerInput(scrollState) {
+                                                            detectHorizontalDragGestures { change, dragAmount ->
+                                                                change.consume()
+                                                                scrollState.dispatchRawDelta(-dragAmount)
+                                                            }
+                                                        },
+                                                ) {
+                                                    tableContent(Modifier.width(baseMinWidth))
+                                                }
 
-                                        PlatformHorizontalScrollbar(
-                                            scrollState = scrollState,
-                                            modifier = Modifier
-                                                .align(Alignment.BottomStart)
-                                                .fillMaxWidth()
-                                                .height(12.dp),
-                                        )
-                                    }
-                                } else {
-                                    Box(modifier = Modifier.fillMaxWidth()) {
-                                        // The rows end before the scrollbar strip, so the scrollbar does not cover the edit button.
-                                        tableContent(Modifier.fillMaxWidth().padding(end = 20.dp))
+                                                // The same draggable scrollbar on every platform, also for a finger.
+                                                DraggableScrollbar(
+                                                    state = listState,
+                                                    modifier = Modifier.align(Alignment.CenterEnd),
+                                                )
 
-                                        // The same draggable scrollbar on every platform, also for a finger.
-                                        DraggableScrollbar(
-                                            state = listState,
-                                            modifier = Modifier.align(Alignment.CenterEnd),
-                                        )
+                                                PlatformHorizontalScrollbar(
+                                                    scrollState = scrollState,
+                                                    modifier = Modifier
+                                                        .align(Alignment.BottomStart)
+                                                        .fillMaxWidth()
+                                                        .height(12.dp),
+                                                )
+                                            }
+                                        } else {
+                                            Box(modifier = Modifier.fillMaxWidth()) {
+                                                // The rows end before the scrollbar strip, so the scrollbar does not cover the edit button.
+                                                tableContent(Modifier.fillMaxWidth().padding(end = 20.dp))
+
+                                                // The same draggable scrollbar on every platform, also for a finger.
+                                                DraggableScrollbar(
+                                                    state = listState,
+                                                    modifier = Modifier.align(Alignment.CenterEnd),
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        }
-                    }
-                },
-            )
+                        },
+                    )
+                }
 
-            errorMessage?.let { message ->
-                AppErrorDialog(
-                    message = message,
-                    onDismiss = { errorMessage = null },
-                )
-            }
+                errorMessage?.let { message ->
+                    AppErrorDialog(
+                        message = message,
+                        onDismiss = { errorMessage = null },
+                    )
+                }
             }
 
             AppVersionLabel(
@@ -766,8 +818,115 @@ private fun TournamentTableRow(
     }
 }
 
-private fun tournamentDateRange(tournament: Tournament): String =
-    formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate) ?: "—"
+/** One tournament on a phone: its color, logo, name, place, dates, players and features, and the edit button. */
+@Composable
+private fun CompactTournamentCard(
+    modifier: Modifier = Modifier,
+    tournament: Tournament,
+    enabled: Boolean,
+    showEdit: Boolean,
+    onClick: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    val accent = tournament.primaryColor.toTournamentColorOrNull() ?: MaterialTheme.colorScheme.primary
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        onClick = onClick,
+        enabled = enabled,
+    ) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            // The color of the tournament marks the card, as the color column does in the table.
+            Box(Modifier.width(6.dp).fillMaxHeight().background(accent))
+            Row(
+                modifier = Modifier.weight(1f).padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val shape = MaterialTheme.shapes.small
+                if (tournament.associationLogoUrl.isNullOrBlank()) {
+                    Box(
+                        Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceVariant, shape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    AsyncImage(
+                        model = tournament.associationLogoUrl,
+                        contentDescription = stringResource(Res.string.logo_for, tournament.name),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(44.dp).clip(shape),
+                    )
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    if (tournament.shortName.isNotBlank()) {
+                        // The short name is a code, so it shows as a tag in the color of the tournament.
+                        Text(
+                            text = tournament.shortName,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = accent,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .border(1.dp, accent, MaterialTheme.shapes.extraSmall)
+                                .padding(horizontal = 8.dp, vertical = 2.dp),
+                        )
+                    }
+                    Text(
+                        text = tournament.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CountryFlag(
+                            code = emaCountryFlagCode(tournament.hostCountry).orEmpty(),
+                            contentDescription = tournament.hostCountry.ifBlank { stringResource(Res.string.no_host_country) },
+                        )
+                        Text(
+                            text = listOf(tournament.hostCity, tournamentDateRange(tournament)).filter { it.isNotBlank() }.joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.People, contentDescription = stringResource(Res.string.players), modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${tournament.numPlayers}", style = MaterialTheme.typography.labelLarge)
+                        }
+                        if (tournament.isTeams) {
+                            AppTooltipBox(stringResource(Res.string.feature_team)) {
+                                Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.feature_team), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        if (tournament.countBestHands) {
+                            AppTooltipBox(stringResource(Res.string.feature_best_on)) {
+                                TrophyIcon(contentDescription = stringResource(Res.string.feature_best_on), modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        if (tournament.countChickenHands) {
+                            AppTooltipBox(stringResource(Res.string.feature_chicken_on)) {
+                                ChickenIcon(contentDescription = stringResource(Res.string.feature_chicken_on), modifier = Modifier.size(18.dp))
+                            }
+                        }
+                    }
+                }
+                if (showEdit) {
+                    IconButton(enabled = enabled, onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit_tournament_named, tournament.name))
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun tournamentDateRange(tournament: Tournament): String = formatLocalizedDateRange(tournament.eventStartDate, tournament.eventEndDate) ?: "—"
 
 @Composable
 private fun RowScope.TournamentCountryCell(
@@ -918,6 +1077,7 @@ private fun RowScope.FeatureStateCell(
 
 /** Minimum width of the Best hands and Chicken hands columns. It fits their titles. */
 private val FeatureColumnMinWidth = 96.dp
+
 /** The name takes the width that the removed Open button left free. */
 private const val NameWeight = 3.0f
 private const val TeamsWeight = .5f

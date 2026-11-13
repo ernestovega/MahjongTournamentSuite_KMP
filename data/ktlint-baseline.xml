@@ -136,15 +136,15 @@
         <error line="291" column="110" source="standard:statement-wrapping" />
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/cache/TournamentTableStoreTest.kt">
-        <error line="68" column="71" source="standard:statement-wrapping" />
-        <error line="68" column="84" source="standard:statement-wrapping" />
-        <error line="68" column="90" source="standard:statement-wrapping" />
-        <error line="90" column="49" source="standard:statement-wrapping" />
-        <error line="90" column="62" source="standard:statement-wrapping" />
-        <error line="90" column="68" source="standard:statement-wrapping" />
-        <error line="193" column="74" source="standard:statement-wrapping" />
-        <error line="193" column="87" source="standard:statement-wrapping" />
-        <error line="193" column="119" source="standard:statement-wrapping" />
+        <error line="87" column="71" source="standard:statement-wrapping" />
+        <error line="87" column="84" source="standard:statement-wrapping" />
+        <error line="87" column="90" source="standard:statement-wrapping" />
+        <error line="109" column="49" source="standard:statement-wrapping" />
+        <error line="109" column="62" source="standard:statement-wrapping" />
+        <error line="109" column="68" source="standard:statement-wrapping" />
+        <error line="285" column="74" source="standard:statement-wrapping" />
+        <error line="285" column="87" source="standard:statement-wrapping" />
+        <error line="285" column="119" source="standard:statement-wrapping" />
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/DefaultAdminRepositoryPasswordResetsTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
@@ -170,7 +170,7 @@
         <error line="51" column="77" source="standard:function-signature" />
         <error line="111" column="104" source="standard:function-signature" />
         <error line="114" column="106" source="standard:function-signature" />
-        <error line="460" column="102" source="standard:function-signature" />
+        <error line="462" column="102" source="standard:function-signature" />
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/data/repository/FakeAuthRepository.kt">
         <error line="17" column="91" source="standard:function-signature" />

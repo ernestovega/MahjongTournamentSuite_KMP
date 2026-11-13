@@ -78,7 +78,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_email_warning
 import mahjongtournamentsuite.adminapp.generated.resources.no_players_in_this_group
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_label_invited
 import mahjongtournamentsuite.adminapp.generated.resources.outcome_label_reminded
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_name_number_email_ema
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.select_all_shown
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_count
@@ -196,7 +196,7 @@ fun PlayerAccountsBulkDialog(
                             onValueChange = { query = it },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            label = { Text(stringResource(Res.string.search_by_name_number_email_ema)) },
+                            label = { Text(stringResource(Res.string.search)) },
                         )
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             TextButton(

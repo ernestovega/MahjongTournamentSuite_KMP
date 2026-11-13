@@ -1,54 +1,73 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.gestures.scrollBy
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
-import kotlinx.coroutines.launch
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.width
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
-import androidx.compose.material3.Text
+import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import kotlinx.coroutines.launch
+
+/**
+ * True when the window is as narrow as a phone. The screens then show lists of cards instead of wide tables,
+ * stack the panels and use smaller margins. An app turns it on with [ProvideCompactLayout]; it is false otherwise.
+ */
+val LocalCompactLayout = compositionLocalOf { false }
+
+/** Windows narrower than this use the compact layout. The top bar buttons also lose their labels under this width. */
+val CompactLayoutMaxWidth = 600.dp
+
+/** The side margin of a screen in the compact layout. */
+val CompactScreenSidePadding = 12.dp
+
+/** Gives [LocalCompactLayout] to [content] from the width of the window. */
+@Composable
+fun ProvideCompactLayout(content: @Composable () -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalCompactLayout provides (maxWidth < CompactLayoutMaxWidth)) { content() }
+    }
+}
 
 /** The scroll state of a [ScreenColumn] and the top of its viewport in the window. A section uses them to stick or to scroll. */
 class ScreenScroll(val state: ScrollState) {
@@ -143,6 +162,17 @@ fun ScreenColumn(
     ) {
         val scrollState = rememberPersistentScrollState("screen")
         val layoutDirection = LocalLayoutDirection.current
+        // A phone keeps the margins small, so the content has room.
+        val contentPadding = if (LocalCompactLayout.current) {
+            PaddingValues(
+                start = contentPadding.calculateStartPadding(layoutDirection).coerceAtMost(CompactScreenSidePadding),
+                top = contentPadding.calculateTopPadding().coerceAtMost(CompactScreenSidePadding),
+                end = contentPadding.calculateEndPadding(layoutDirection).coerceAtMost(CompactScreenSidePadding),
+                bottom = contentPadding.calculateBottomPadding(),
+            )
+        } else {
+            contentPadding
+        }
         // The column fills the width. The side space keeps the content inside maxWidth and lets a full-bleed row use it.
         val sideSpace = ((this.maxWidth - maxWidth) / 2).coerceAtLeast(0.dp)
         val sidePadding = PaddingValues(
@@ -161,23 +191,23 @@ fun ScreenColumn(
                 LocalScreenScroll provides if (scrollable) screenScroll else null,
                 LocalScreenBleed provides bleed,
             ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .fillMaxHeight()
-                    .align(Alignment.TopCenter)
-                    .onGloballyPositioned { screenScroll.viewportTop = it.positionInRoot().y }
-                    .then(
-                        if (scrollable && paddingInsideScroll) {
-                            Modifier.verticalScroll(scrollState).padding(sidePadding)
-                        } else {
-                            Modifier.padding(sidePadding).then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier)
-                        },
-                    ),
-                verticalArrangement = verticalArrangement,
-                horizontalAlignment = horizontalAlignment,
-                content = content,
-            )
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight()
+                        .align(Alignment.TopCenter)
+                        .onGloballyPositioned { screenScroll.viewportTop = it.positionInRoot().y }
+                        .then(
+                            if (scrollable && paddingInsideScroll) {
+                                Modifier.verticalScroll(scrollState).padding(sidePadding)
+                            } else {
+                                Modifier.padding(sidePadding).then(if (scrollable) Modifier.verticalScroll(scrollState) else Modifier)
+                            },
+                        ),
+                    verticalArrangement = verticalArrangement,
+                    horizontalAlignment = horizontalAlignment,
+                    content = content,
+                )
             }
             if (scrollable) {
                 PlatformVerticalScrollbar(

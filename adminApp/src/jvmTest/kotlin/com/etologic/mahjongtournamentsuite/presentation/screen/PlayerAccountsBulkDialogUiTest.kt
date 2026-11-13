@@ -78,7 +78,7 @@ class PlayerAccountsBulkDialogUiTest {
         show()
 
         onNodeWithText("All (4)").performClick()
-        onNodeWithText("Search by name, number, email, EMA number or country").performTextInput("P4")
+        onNodeWithText("Search").performTextInput("P4")
 
         onAllNodesWithText("P1").assertCountEquals(0)
         onAllNodesWithText("P3").assertCountEquals(0)

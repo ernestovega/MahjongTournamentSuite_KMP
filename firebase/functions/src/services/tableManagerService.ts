@@ -102,6 +102,32 @@ export function handsFromData(list: Data[]): TableHand[] {
 
 export const HANDS_PER_TABLE = 16;
 
+/**
+ * The table document also keeps a copy of its 16 hands, so a read of many tables costs one document per table
+ * instead of 17. The hand documents stay the source: every write reads and writes them in a transaction.
+ * The copy counts only while its version is the version of the table. A writer that changes the hands without the
+ * copy must raise the version of the table, and the readers then read the hand documents, as before the copy.
+ */
+export const HANDS_COPY_FIELD = "handsCopy";
+
+/** The update that stores the copy of the hands for a table of [version]. */
+export function handsCopyUpdate(version: number, hands: Data[]): Data {
+  return { [HANDS_COPY_FIELD]: { version, hands: handsFromData(hands) } };
+}
+
+/** The hands kept in a table document, or null when there is no valid copy and the hand documents must be read. */
+export function handsFromCopy(table: Data): TableHand[] | null {
+  const copy = table[HANDS_COPY_FIELD] as { version?: unknown; hands?: unknown } | undefined;
+  if (copy == null || !Array.isArray(copy.hands) || copy.hands.length !== HANDS_PER_TABLE) return null;
+  if (Number(copy.version) !== Number(table.version ?? 0)) return null;
+  return handsFromData(copy.hands as Data[]);
+}
+
+/** The update that keeps a valid copy valid when a writer raises the version without touching the hands. */
+export function handsCopyVersionUpdate(table: Data, nextVersion: number): Data {
+  return handsFromCopy(table) == null ? {} : { [`${HANDS_COPY_FIELD}.version`]: nextVersion };
+}
+
 export function defaultHand(handId: number): TableHand {
   return {
     handId,
@@ -124,13 +150,11 @@ export async function getTableWithHands(params: {
 }): Promise<{ table: TableState; hands: TableHand[] }> {
   const tableDocId = `${params.roundId}_${params.tableId}`;
   const tableRef = db.collection("tournaments").doc(params.tournamentId).collection("tables").doc(tableDocId);
-  // The table and its hands are independent reads, so run them together.
-  const [tableSnap, handsSnap] = await Promise.all([tableRef.get(), tableRef.collection("hands").get()]);
+  const tableSnap = await tableRef.get();
   if (!tableSnap.exists) throw notFound("Table not found");
-  return {
-    table: tableStateFromData(tableSnap.data() ?? {}),
-    hands: handsFromData(handsSnap.docs.map((doc) => doc.data())),
-  };
+  const data = tableSnap.data() ?? {};
+  const hands = handsFromCopy(data) ?? handsFromData((await tableRef.collection("hands").get()).docs.map((doc) => doc.data()));
+  return { table: tableStateFromData(data), hands };
 }
 
 /** Reads every table of a round with its hands in one call, so the client needs one request instead of one per table. */
@@ -162,7 +186,9 @@ const HAND_READ_BATCH = 500;
 async function readTablesWithHands(
   tableDocs: FirebaseFirestore.QueryDocumentSnapshot[],
 ): Promise<{ table: TableState; hands: TableHand[] }[]> {
-  const handRefs = tableDocs.flatMap((tableSnap) => handRefsOf(tableSnap.ref));
+  // Most tables keep a valid copy of their hands. Only the others need their hand documents.
+  const copies = new Map(tableDocs.map((tableSnap) => [tableSnap.ref.path, handsFromCopy(tableSnap.data())]));
+  const handRefs = tableDocs.filter((tableSnap) => copies.get(tableSnap.ref.path) == null).flatMap((tableSnap) => handRefsOf(tableSnap.ref));
   const batches: FirebaseFirestore.DocumentReference[][] = [];
   for (let start = 0; start < handRefs.length; start += HAND_READ_BATCH) {
     batches.push(handRefs.slice(start, start + HAND_READ_BATCH));
@@ -178,7 +204,7 @@ async function readTablesWithHands(
   }
   const tables = tableDocs.map((tableSnap) => ({
     table: tableStateFromData(tableSnap.data()),
-    hands: handsFromData(handsByTable.get(tableSnap.ref.path) ?? []),
+    hands: copies.get(tableSnap.ref.path) ?? handsFromData(handsByTable.get(tableSnap.ref.path) ?? []),
   }));
   return tables.sort((a, b) => a.table.roundId - b.table.roundId || a.table.tableId - b.table.tableId);
 }
@@ -346,6 +372,7 @@ export async function saveTableStateInTransaction(
     ...derivedPoints,
     ...summary,
     ...editedBy,
+    ...handsCopyUpdate(nextVersion, [...handsAfter.values()]),
     version: nextVersion,
     updatedAt: FieldValue.serverTimestamp(),
   });
@@ -483,6 +510,7 @@ export async function resetTable(params: {
 
     transaction.update(tableRef, {
       ...EMPTY_TABLE_FIELDS,
+      ...handsCopyUpdate(nextVersion, handSnapshots.map((hand) => defaultHand(Number(hand.get("handId") ?? hand.id)))),
       version: nextVersion,
       updatedAt: FieldValue.serverTimestamp(),
     });

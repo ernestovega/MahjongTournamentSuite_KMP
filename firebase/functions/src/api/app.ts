@@ -19,6 +19,11 @@ import { venuesRouter } from "./routes/venues.routes";
 
 const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
 const WRITES_PER_MINUTE = 120;
+/**
+ * Writes per minute of one address, whatever the token. The limit above trusts the Authorization header before it
+ * is verified, so a script could send a new header each time. A venue full of players on one network stays far below.
+ */
+export const WRITES_PER_ADDRESS_PER_MINUTE = 600;
 
 /** The route groups of the API and where each one is mounted. A test reads this list to check every route. */
 export const MOUNTED_ROUTERS: Array<[string, () => express.Router]> = [
@@ -77,6 +82,8 @@ export function buildApp(): express.Express {
     max: WRITES_PER_MINUTE,
     key: (req) => `${req.ip ?? "unknown"}|${(req.header("authorization") ?? "").slice(-32)}`,
   });
+  const addressWriteLimit = rateLimit({ windowMs: 60_000, max: WRITES_PER_ADDRESS_PER_MINUTE });
+  app.use((req, res, next) => (READ_METHODS.has(req.method) ? next() : addressWriteLimit(req, res, next)));
   app.use((req, res, next) => (READ_METHODS.has(req.method) ? next() : writeLimit(req, res, next)));
 
   MOUNTED_ROUTERS.forEach(([prefix, router]) => app.use(prefix, router()));

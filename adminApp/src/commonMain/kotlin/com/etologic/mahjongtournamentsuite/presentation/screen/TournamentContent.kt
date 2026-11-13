@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -29,11 +28,7 @@ import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
@@ -61,13 +56,18 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnter
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.next_round
@@ -80,6 +80,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_table_header
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_and_next_table
 import org.jetbrains.compose.resources.stringResource
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 
 /** The stateless body of the tournament screen: the round and table strip, and the editor of the selected table. */
 @Composable
@@ -104,9 +106,13 @@ internal fun TournamentContent(
 ) {
     val selectedEditor = selectedTableId?.let { tableEditors[it] }
     val roundTableCount = allTables.count { it.roundId == selectedRoundId }
+    val compact = LocalCompactLayout.current
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = Modifier.fillMaxSize().padding(
+            horizontal = if (compact) CompactScreenSidePadding else 24.dp,
+            vertical = if (compact) 12.dp else 16.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 20.dp),
     ) {
         RoundTableStrip(
             rounds = rounds,
@@ -119,7 +125,29 @@ internal fun TournamentContent(
             onSelectRound = onSelectRound,
             onSelectTable = onSelectTable,
         )
-        if (selectedEditor != null) {
+        if (selectedEditor != null && compact) {
+            // A phone has no room for the labelled button: the title goes to the start and the button keeps its icon.
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(Res.string.round_table_header, selectedEditor.roundId, selectedEditor.tableId),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                if (canResetTable) {
+                    val resetLabel = stringResource(Res.string.reset_table)
+                    AppTooltipBox(resetLabel) {
+                        FocusedIconButton(
+                            onClick = { onResetTable(selectedEditor.tableId) },
+                            enabled = enabled,
+                            modifier = Modifier.testTag("resetTableButton"),
+                        ) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = resetLabel, tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+        } else if (selectedEditor != null) {
             // The same space on both sides keeps the title centred when the admin button shows.
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f))
@@ -160,15 +188,15 @@ internal fun TournamentContent(
                         .padding(bottom = 96.dp),
                 ) {
                     CompositionLocalProvider(LocalStickyHeaderHost provides stickyHost) {
-                    TableEditorPanel(
-                        editor = selectedEditor,
-                        enabled = enabled,
-                        playerNamesById = playerNamesById,
-                        scoreFocusRequester = scoreFocusRequester,
-                        otherTablesBestHandScores = allTables
-                            .filterNot { it.roundId == selectedEditor.roundId && it.tableId == tableId }
-                            .flatMap { it.bestHandScores },
-                    )
+                        TableEditorPanel(
+                            editor = selectedEditor,
+                            enabled = enabled,
+                            playerNamesById = playerNamesById,
+                            scoreFocusRequester = scoreFocusRequester,
+                            otherTablesBestHandScores = allTables
+                                .filterNot { it.roundId == selectedEditor.roundId && it.tableId == tableId }
+                                .flatMap { it.bestHandScores },
+                        )
                     }
                 }
                 if (selectedEditor.hasUnsavedChanges) {
@@ -278,13 +306,8 @@ private fun RoundTableStrip(
     }
     val roundMenu = rememberSelectMenuState()
     val roundStatus = roundCompletionStatus(tables)
-    Card(modifier = Modifier.fillMaxWidth().appFocusGroup(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+    val roundPicker: @Composable () -> Unit = {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
             FocusedIconButton(
                 onClick = { rounds.getOrNull(roundIndex - 1)?.let { onSelectRound(it.roundId) } },
                 enabled = enabled && roundIndex > 0,
@@ -313,36 +336,56 @@ private fun RoundTableStrip(
                 onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },
                 enabled = enabled && roundIndex in 0 until rounds.lastIndex,
             ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_round)) }
+        }
+    }
+    val tableChips: @Composable (Modifier) -> Unit = { modifier ->
+        LazyRow(
+            state = chipsState,
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            itemsIndexed(tables, key = { _, table -> table.tableId }) { index, table ->
+                val editor = tableEditors[table.tableId]
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (index > 0) {
+                        Box(Modifier.height(24.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                    }
+                    TableChip(
+                        label = "${table.tableId}",
+                        status = editor?.completionStatus ?: tableCompletionStatus(table),
+                        hasUnsavedChanges = editor?.hasUnsavedChanges == true,
+                        selected = table.tableId == selectedTableId,
+                        // A table that is not loaded yet stays disabled until its data arrives.
+                        enabled = enabled && editor != null,
+                        onClick = { onSelectTable(table.tableId) },
+                        loaded = editor != null,
+                        modifier = Modifier.testTag("table-chip-${table.tableId}"),
+                    )
+                }
             }
-            Box(Modifier.height(32.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
-            LazyRow(
-                state = chipsState,
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+        }
+    }
+    Card(modifier = Modifier.fillMaxWidth().appFocusGroup(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+        if (LocalCompactLayout.current) {
+            // A phone shows the round picker over the tables, so both have the full width.
+            Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp)) {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { roundPicker() }
+                HorizontalDivider(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                tableChips(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp))
+            }
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                itemsIndexed(tables, key = { _, table -> table.tableId }) { index, table ->
-                    val editor = tableEditors[table.tableId]
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (index > 0) {
-                            Box(Modifier.height(24.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
-                        }
-                        TableChip(
-                            label = "${table.tableId}",
-                            status = editor?.completionStatus ?: tableCompletionStatus(table),
-                            hasUnsavedChanges = editor?.hasUnsavedChanges == true,
-                            selected = table.tableId == selectedTableId,
-                            // A table that is not loaded yet stays disabled until its data arrives.
-                            enabled = enabled && editor != null,
-                            onClick = { onSelectTable(table.tableId) },
-                            loaded = editor != null,
-                            modifier = Modifier.testTag("table-chip-${table.tableId}"),
-                        )
-                    }
-                }
+                roundPicker()
+                Box(Modifier.height(32.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                tableChips(Modifier.weight(1f))
             }
         }
     }

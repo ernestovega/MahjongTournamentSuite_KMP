@@ -117,7 +117,8 @@ Read routes of a tournament use `requireTournamentReader`. It accepts admins, as
 ## Load speed
 
 - The API loads the heavy libraries (ExcelJS, JSZip, sharp, PDFKit, nodemailer) on their first use, through `services/lazyModules.ts`. A new instance starts in about half the time and with about 55 MB less memory. Import these libraries only as types at the top of a file.
-- `tables-with-hands` reads the hands by document id (`1` to `16` of each table) in batch calls of up to 500 documents, not with one query per table.
+- Each table document keeps a copy of its 16 hands in `handsCopy` (`{ version, hands }`). `tables-with-hands` (all, per round and per table) uses the copy when its version is the version of the table, so it reads one document per table instead of 17. The hand documents stay the source of every write; the save, the reset and the creation write the copy in the same transaction. A writer that changes hands without the copy must raise the version of the table: the reads then fall back to the hand documents. The integrity check reports a copy that differs from the hands (`counters.handsCopy`).
+- Tables stored before the copy existed get it at their next save, or with `npm run backfill:hands-copy` (preview) and `npm run backfill:hands-copy:apply` in `firebase/functions`. Without the copy, the API reads the hands by document id (`1` to `16` of each table) in batch calls of up to 500 documents.
 - Firebase Hosting serves the web files with `Cache-Control: no-cache`. The browser asks every time and gets `304 Not Modified` when the file did not change, so a reload does not download the app again and a new deploy is still seen at once.
 
 ## Firestore data model
@@ -163,7 +164,7 @@ The table editor checks the server for changes while it is open. See [Multi-edit
 - Load when a screen opens. A cached copy is used for 10 seconds. After that, one manifest request decides if a reload is needed.
 - A save, a reset or a conflict marks the cached copies old.
 - The table editor polls the manifest. Other screens do not poll.
-- The player app checks the server while a tournament screen is open and visible (`PollSchedule`): never again for a finished tournament, every minute before it starts, every 15 seconds while it runs, and every 5 seconds on a table whose round is being played, including the extra time. Coming back from the background or a hidden tab always checks at once. It loads all tables again only when the table versions of the manifest are higher than the held versions.
+- The player app checks the server while a tournament screen is open and visible (`PollSchedule`): never again for a finished tournament, every minute before it starts, every 15 seconds while it runs, and every 5 seconds on a table whose round is being played, including the extra time. Coming back from the background or a hidden tab always checks at once. When the table versions of the manifest are higher than the held versions, it loads again only the rounds of those tables (up to two rounds, one request each through `rounds/{roundId}/tables-with-hands`); more changed rounds load all tables in one request.
 
 ## Public routes
 
@@ -173,7 +174,7 @@ These routes need no sign-in. Every other route needs a valid token and a role c
 
 - `/auth/signIn`, `/auth/passwordReset` and `/auth/refresh` allow a limited number of requests for each client address. The counter lives in one function instance.
 - `/auth/passwordReset` answers `200` for an unknown email, so the answer does not show which emails have an account.
-- Every write (`POST`, `PUT`, `DELETE`) is limited to 120 requests per minute for each address and token. The counter lives in one function instance.
+- Every write (`POST`, `PUT`, `DELETE`) is limited to 120 requests per minute for each address and token, to 600 per minute for each address, and to 120 per minute for each signed-in user from every address. The counters live in one function instance.
 - An editor cannot save a table of a completed tournament. Only an admin can.
 - A tournament id in a route must not contain `/`.
 - The hosting sites send `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'` and `Permissions-Policy`.

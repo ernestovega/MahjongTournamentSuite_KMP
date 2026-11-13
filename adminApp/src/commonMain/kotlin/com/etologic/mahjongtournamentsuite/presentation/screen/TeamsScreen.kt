@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -45,6 +46,7 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -69,6 +71,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
@@ -104,8 +107,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.remove_country_filter
 import mahjongtournamentsuite.adminapp.generated.resources.rival_ema
 import mahjongtournamentsuite.adminapp.generated.resources.save_team
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_team_or_player_name
-import mahjongtournamentsuite.adminapp.generated.resources.search_players
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import mahjongtournamentsuite.adminapp.generated.resources.select_player_n
 import mahjongtournamentsuite.adminapp.generated.resources.team_members
 import mahjongtournamentsuite.adminapp.generated.resources.team_move_warning
@@ -310,7 +312,7 @@ fun TeamsScreen(
                 OutlinedTextField(
                     value = searchQuery,
                     onValueChange = { searchQuery = it },
-                    label = { Text(stringResource(Res.string.search_by_team_or_player_name)) },
+                    label = { Text(stringResource(Res.string.search)) },
                     singleLine = true,
                     trailingIcon = if (searchQuery.isNotEmpty()) {
                         {
@@ -387,12 +389,15 @@ fun TeamsScreen(
                 } else if (filteredTeams.isEmpty() && !loading) {
                     AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_teams_match), compact = true)
                 }
+                val compact = LocalCompactLayout.current
                 Column(Modifier.fillMaxWidth()) {
-                    DataTableHeaderRow {
-                        TeamHeader(stringResource(Res.string.id), Modifier.width(90.dp))
-                        TeamHeader(stringResource(Res.string.name), Modifier.weight(1f))
-                        TeamHeader(stringResource(Res.string.players), Modifier.weight(1.6f))
-                        Spacer(Modifier.width(96.dp))
+                    if (!compact) {
+                        DataTableHeaderRow {
+                            TeamHeader(stringResource(Res.string.id), Modifier.width(90.dp))
+                            TeamHeader(stringResource(Res.string.name), Modifier.weight(1f))
+                            TeamHeader(stringResource(Res.string.players), Modifier.weight(1.6f))
+                            Spacer(Modifier.width(96.dp))
+                        }
                     }
                     DataTableDivider()
                     LazyColumnWithScrollbar(
@@ -405,57 +410,100 @@ fun TeamsScreen(
                                 onClick = { editingTeamId = team.id },
                                 clickFocusable = false,
                             ) {
-                                Text(
-                                    text = team.id.toString(),
-                                    modifier = Modifier.width(90.dp),
-                                )
-                                Text(
-                                    text = team.name,
-                                    modifier = Modifier.weight(1f),
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Column(
-                                    modifier = Modifier.weight(1.6f),
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    assignedPlayers.forEach { player ->
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
+                                if (compact) {
+                                    // A phone shows the team name over its players, and the edit button as an icon.
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text(
+                                            text = "#${team.id} · ${team.name}",
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            fontWeight = FontWeight.SemiBold,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Column(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalArrangement = Arrangement.spacedBy(4.dp),
                                         ) {
-                                            Text(player.id.toString())
-                                            CountryFlag(
-                                                code = player.country,
-                                                width = 16.dp,
-                                                contentDescription = player.country.ifBlank { stringResource(Res.string.no_country) },
-                                            )
-                                            Text(
-                                                text = player.name ?: stringResource(Res.string.not_assigned),
-                                                maxLines = 1,
-                                                overflow = TextOverflow.Ellipsis,
-                                            )
+                                            assignedPlayers.forEach { player ->
+                                                Row(
+                                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                    verticalAlignment = Alignment.CenterVertically,
+                                                ) {
+                                                    Text(player.id.toString())
+                                                    CountryFlag(
+                                                        code = player.country,
+                                                        width = 16.dp,
+                                                        contentDescription = player.country.ifBlank { stringResource(Res.string.no_country) },
+                                                    )
+                                                    Text(
+                                                        text = player.name ?: stringResource(Res.string.not_assigned),
+                                                        maxLines = 1,
+                                                        overflow = TextOverflow.Ellipsis,
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                } else {
+                                    Text(
+                                        text = team.id.toString(),
+                                        modifier = Modifier.width(90.dp),
+                                    )
+                                    Text(
+                                        text = team.name,
+                                        modifier = Modifier.weight(1f),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Column(
+                                        modifier = Modifier.weight(1.6f),
+                                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                                    ) {
+                                        assignedPlayers.forEach { player ->
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                            ) {
+                                                Text(player.id.toString())
+                                                CountryFlag(
+                                                    code = player.country,
+                                                    width = 16.dp,
+                                                    contentDescription = player.country.ifBlank { stringResource(Res.string.no_country) },
+                                                )
+                                                Text(
+                                                    text = player.name ?: stringResource(Res.string.not_assigned),
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
                                         }
                                     }
                                 }
-                                FocusedButton(
-                                    onClick = { editingTeamId = team.id },
-                                    focusRequester = editFocusRequesters[index],
-                                    buttonModifier = Modifier.onPreviewKeyEvent { event ->
-                                        if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
-                                        when (event.key) {
-                                            Key.DirectionUp -> {
-                                                editFocusRequesters.getOrNull(index - 1)?.requestFocus()
-                                                true
+                                if (compact) {
+                                    FocusedIconButton(
+                                        onClick = { editingTeamId = team.id },
+                                        focusRequester = editFocusRequesters[index],
+                                    ) { Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit)) }
+                                } else {
+                                    FocusedButton(
+                                        onClick = { editingTeamId = team.id },
+                                        focusRequester = editFocusRequesters[index],
+                                        buttonModifier = Modifier.onPreviewKeyEvent { event ->
+                                            if (event.type != KeyEventType.KeyDown) return@onPreviewKeyEvent false
+                                            when (event.key) {
+                                                Key.DirectionUp -> {
+                                                    editFocusRequesters.getOrNull(index - 1)?.requestFocus()
+                                                    true
+                                                }
+                                                Key.DirectionDown -> {
+                                                    editFocusRequesters.getOrNull(index + 1)?.requestFocus()
+                                                    true
+                                                }
+                                                else -> false
                                             }
-                                            Key.DirectionDown -> {
-                                                editFocusRequesters.getOrNull(index + 1)?.requestFocus()
-                                                true
-                                            }
-                                            else -> false
-                                        }
-                                    },
-                                ) { Text(stringResource(Res.string.edit)) }
+                                        },
+                                    ) { Text(stringResource(Res.string.edit)) }
+                                }
                             }
                             DataTableDivider()
                         }
@@ -675,7 +723,7 @@ private fun PlayerPickerDialog(
                     OutlinedTextField(
                         value = query,
                         onValueChange = { query = it },
-                        label = { Text(stringResource(Res.string.search_players)) },
+                        label = { Text(stringResource(Res.string.search)) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth().focusRequester(searchFocusRequester),
                     )

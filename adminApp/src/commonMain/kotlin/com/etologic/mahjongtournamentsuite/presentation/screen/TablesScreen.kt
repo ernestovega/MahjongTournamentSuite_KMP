@@ -1,7 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
-import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
@@ -10,9 +10,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.People
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
-import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
-import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -36,7 +34,6 @@ import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TournamentRoute
-import com.etologic.mahjongtournamentsuite.presentation.TournamentsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -46,12 +43,17 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DataTableDivi
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableHeaderRow
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionMenuItem
 import com.etologic.mahjongtournamentsuite.presentation.components.RowActionsMenu
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectMenu
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectOption
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -73,6 +75,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.players
 import mahjongtournamentsuite.adminapp.generated.resources.preview_tournament_2
 import mahjongtournamentsuite.adminapp.generated.resources.round
 import mahjongtournamentsuite.adminapp.generated.resources.round_n
+import mahjongtournamentsuite.adminapp.generated.resources.round_table_header
 import mahjongtournamentsuite.adminapp.generated.resources.table
 import mahjongtournamentsuite.adminapp.generated.resources.tables
 import mahjongtournamentsuite.adminapp.generated.resources.the_tables_show_here_when_the
@@ -244,50 +247,53 @@ fun TablesScreen(
                         }
 
                         else -> {
+                            val compact = LocalCompactLayout.current
                             LazyColumnWithScrollbar(
                                 state = tablesListState,
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
-                                item {
-                                    DataTableHeaderRow {
-                                        Text(
-                                            text = stringResource(Res.string.round),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.7f),
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.table),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.7f),
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.players),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(2.8f),
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.done),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.9f),
-                                        )
-                                        Text(
-                                            text = stringResource(Res.string.manual_results),
-                                            style = MaterialTheme.typography.labelLarge,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.9f),
-                                        )
-                                        Text(
-                                            text = "",
-                                            style = MaterialTheme.typography.labelLarge,
-                                            modifier = Modifier.width(44.dp),
-                                            textAlign = androidx.compose.ui.text.style.TextAlign.End,
-                                        )
+                                if (!compact) {
+                                    item {
+                                        DataTableHeaderRow {
+                                            Text(
+                                                text = stringResource(Res.string.round),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.7f),
+                                            )
+                                            Text(
+                                                text = stringResource(Res.string.table),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.7f),
+                                            )
+                                            Text(
+                                                text = stringResource(Res.string.players),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(2.8f),
+                                            )
+                                            Text(
+                                                text = stringResource(Res.string.done),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.9f),
+                                            )
+                                            Text(
+                                                text = stringResource(Res.string.manual_results),
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.9f),
+                                            )
+                                            Text(
+                                                text = "",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                modifier = Modifier.width(44.dp),
+                                                textAlign = androidx.compose.ui.text.style.TextAlign.End,
+                                            )
+                                        }
+                                        DataTableDivider()
                                     }
-                                    DataTableDivider()
                                 }
 
                                 itemsIndexed(
@@ -321,36 +327,64 @@ fun TablesScreen(
                                             )
                                         },
                                     ) {
-                                        Text(
-                                            text = table.roundId.toString(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.weight(0.7f),
-                                        )
-                                        Text(
-                                            text = table.tableId.toString(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.weight(0.7f),
-                                        )
-                                        Text(
-                                            text = playersLabel,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(2.8f),
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Text(
-                                            text = stringResource(if (table.isCompleted) Res.string.yes else Res.string.no),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.9f),
-                                        )
-                                        Text(
-                                            text = stringResource(if (table.useTotalsOnly) Res.string.yes else Res.string.no),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.9f),
-                                        )
+                                        if (compact) {
+                                            // A phone shows the round and the table as a title, and the rest under it.
+                                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Text(
+                                                    text = stringResource(Res.string.round_table_header, table.roundId, table.tableId),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                                Text(
+                                                    text = playersLabel,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                                Text(
+                                                    text = stringResource(Res.string.done) + ": " +
+                                                        stringResource(if (table.isCompleted) Res.string.yes else Res.string.no) + " · " +
+                                                        stringResource(Res.string.manual_results) + ": " +
+                                                        stringResource(if (table.useTotalsOnly) Res.string.yes else Res.string.no),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                        } else {
+                                            Text(
+                                                text = table.roundId.toString(),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                modifier = Modifier.weight(0.7f),
+                                            )
+                                            Text(
+                                                text = table.tableId.toString(),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                modifier = Modifier.weight(0.7f),
+                                            )
+                                            Text(
+                                                text = playersLabel,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(2.8f),
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = stringResource(if (table.isCompleted) Res.string.yes else Res.string.no),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.9f),
+                                            )
+                                            Text(
+                                                text = stringResource(if (table.useTotalsOnly) Res.string.yes else Res.string.no),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.9f),
+                                            )
+                                        }
                                         RowActionsMenu(
                                             enabled = !isLoading,
                                             items = listOf(

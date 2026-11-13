@@ -80,6 +80,7 @@
     <string name="loading_rankings">Chargement des classements…</string>
     <string name="no_ranking_yet">Pas encore de classement</string>
     <string name="the_ranking_shows_when_the_first">Le classement s'affiche quand la première table est terminée.</string>
+    <string name="settings">Paramètres</string>
     <string name="show_first_3">Afficher les 3 premiers</string>
     <string name="previous_ranking_list">Liste de classement précédente</string>
     <string name="next_ranking_list">Liste de classement suivante</string>
@@ -111,7 +112,6 @@
     <string name="send_password_reset_email">Envoyer l'e-mail de réinitialisation du mot de passe</string>
     <string name="global_role">Rôle global</string>
     <string name="assign_tournaments">Attribuer des tournois</string>
-    <string name="search_by_name">Rechercher par nom</string>
     <string name="selected_only">Sélection uniquement</string>
     <string name="close">Fermer</string>
     <string name="select_results">Sélectionner les résultats</string>
@@ -124,7 +124,6 @@
     <string name="first_name">Prénom</string>
     <string name="last_name">Nom</string>
     <string name="add_player">Ajouter un joueur</string>
-    <string name="search_by_name_or_ema_number">Rechercher par nom ou numéro EMA</string>
     <string name="clear_search">Effacer la recherche</string>
     <string name="player_base">Base de joueurs</string>
     <string name="player_details">Détails du joueur</string>
@@ -185,22 +184,18 @@
     <string name="new_tournament">Nouveau tournoi</string>
     <string name="heavy_computing">Calcul intensif</string>
     <string name="reuse_existing">Réutiliser un existant</string>
-    <string name="search_by_name_country_or_ema">Rechercher par nom, pays ou numéro EMA</string>
     <string name="assign">Attribuer</string>
     <string name="clear_assignment">Annuler l'attribution ?</string>
     <string name="clear_assignment_2">Annuler l'attribution</string>
     <string name="tournament_players">Joueurs du tournoi</string>
-    <string name="search_by_name_ema_number_player">Rechercher par nom, numéro EMA, ID de joueur, équipe ou table</string>
     <string name="player_actions">Actions du joueur</string>
     <string name="clear">Effacer</string>
     <string name="tournament_teams">Équipes du tournoi</string>
-    <string name="search_by_team_or_player_name">Rechercher par équipe, nom de joueur ou ID</string>
     <string name="edit">Modifier</string>
     <string name="team_name">Nom de l'équipe</string>
     <string name="team_members">Membres de l'équipe</string>
     <string name="player_assignments_are_locked_because_table">Les attributions de joueurs sont verrouillées car les résultats des tables ont commencé.</string>
     <string name="save_team">Enregistrer l'équipe</string>
-    <string name="search_players">Rechercher des joueurs</string>
     <string name="no_players_match_the_search">Aucun joueur ne correspond à la recherche.</string>
     <string name="clear_slot">Vider la place</string>
     <string name="tables">Tables</string>
@@ -215,7 +210,6 @@
     <string name="edit_coming_soon">Modifier (bientôt)</string>
     <string name="delete_coming_soon">Supprimer (bientôt)</string>
     <string name="preview_tournament_2">preview-tournament</string>
-    <string name="search_by_name_number_email_ema">Rechercher par nom, numéro, e-mail, numéro EMA ou pays</string>
     <string name="no_players_in_this_group">Aucun joueur dans ce groupe.</string>
     <string name="reason">Motif</string>
     <string name="first_round_of_the_substitute">Premier tour du remplaçant</string>
@@ -634,7 +628,6 @@
     <string name="errors_kpi_occurrences">Occurrences</string>
     <string name="errors_kpi_crashes">Plantages</string>
     <string name="errors_kpi_last">Dernière erreur</string>
-    <string name="errors_search">Rechercher par type, zone ou message</string>
     <string name="errors_reload">Recharger</string>
     <string name="errors_last_hours">Dernières %1$d heures</string>
     <string name="errors_last_days">Derniers %1$d jours</string>

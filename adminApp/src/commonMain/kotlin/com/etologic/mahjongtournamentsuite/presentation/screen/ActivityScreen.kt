@@ -59,6 +59,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconBu
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
@@ -95,6 +96,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_playe
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_photo
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_registry_update
+import mahjongtournamentsuite.adminapp.generated.resources.activity_action_round_clock
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_script_run
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_table_conflict
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_table_reset
@@ -103,7 +105,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_action_team_
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_delete
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_rename
-import mahjongtournamentsuite.adminapp.generated.resources.activity_action_round_clock
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_tournament_update
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_create
 import mahjongtournamentsuite.adminapp.generated.resources.activity_action_user_disable
@@ -510,6 +511,7 @@ private fun ActivityTable(
     onLoadMore: () -> Unit,
     onOpen: (ActivityEntry) -> Unit,
 ) {
+    val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("activity"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
@@ -533,19 +535,48 @@ private fun ActivityTable(
             }
             return@LazyColumnWithScrollbar
         }
-        item(key = "header") {
-            DataTableHeaderRow {
-                Text(stringResource(Res.string.activity_col_when), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.activity_col_who), modifier = Modifier.weight(0.6f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.activity_col_what), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+        if (!compact) {
+            item(key = "header") {
+                DataTableHeaderRow {
+                    Text(stringResource(Res.string.activity_col_when), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.activity_col_who), modifier = Modifier.weight(0.6f), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.activity_col_what), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelLarge)
+                }
+                DataTableDivider()
             }
-            DataTableDivider()
         }
         items(entries, key = { it.id }) { entry ->
             DataTableRow(
                 modifier = rowFocusRequesters[entry.id]?.let { Modifier.focusRequester(it) } ?: Modifier,
                 onClick = { onOpen(entry) },
             ) {
+                if (compact) {
+                    // A phone shows what happened first, then where, then when and who on one small line.
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            actionLabel(entry.action),
+                            fontWeight = FontWeight.SemiBold,
+                            color = if (entry.action == "table.conflict") MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        val where = whereLabel(entry)
+                        if (where.isNotBlank()) {
+                            Text(where, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                        }
+                        Text(
+                            listOf(dateTime(entry.at), personLabel(entry), originLabel(originOf(entry))).joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (entry.isTableSave && entry.changes.isNotEmpty()) {
+                            Text(stringResource(Res.string.activity_changes_count, entry.changes.size), style = MaterialTheme.typography.bodySmall)
+                        }
+                    }
+                    return@DataTableRow
+                }
                 Text(dateTime(entry.at), modifier = Modifier.width(WhenColumnWidth), style = MaterialTheme.typography.bodySmall)
                 Column(Modifier.weight(0.6f)) {
                     Text(personLabel(entry), style = MaterialTheme.typography.bodyMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)

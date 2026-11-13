@@ -16,7 +16,7 @@ import {
   listTournamentTables,
   listTournamentTeams,
 } from "../../services/tournamentContentService";
-import { getTournament, listAllTournaments, type Tournament } from "../../services/tournamentsService";
+import { listAllTournaments, tournamentFromSnapshot, type Tournament } from "../../services/tournamentsService";
 import { getUserProfile } from "../../services/usersService";
 import { getRoundClocks } from "../../services/roundClockService";
 import { assertSafeDocumentId, badRequest, notFound } from "../httpError";
@@ -100,6 +100,8 @@ export function publicRouter(): Router {
         next(notFound("Tournament not found"));
         return;
       }
+      // The routes below use this read, so the tournament is read once per request.
+      res.locals.tournamentSnapshot = snapshot;
       res.locals.publicCacheSeconds = snapshot.get("isCompleted") === true
         ? PUBLIC_CACHE_SECONDS.completed
         : PUBLIC_CACHE_SECONDS.live;
@@ -119,8 +121,8 @@ export function publicRouter(): Router {
     res.status(200).json({ tournaments });
   }));
 
-  router.get("/tournaments/:tournamentId", handle(async (req, res) => {
-    const tournament = await getTournament(pathParam(req, "tournamentId"));
+  router.get("/tournaments/:tournamentId", handle(async (_req, res) => {
+    const tournament = await tournamentFromSnapshot(res.locals.tournamentSnapshot as FirebaseFirestore.DocumentSnapshot);
     if (tournament == null) throw notFound("Tournament not found");
     tournamentCache(res);
     res.status(200).json(publicTournament(tournament));

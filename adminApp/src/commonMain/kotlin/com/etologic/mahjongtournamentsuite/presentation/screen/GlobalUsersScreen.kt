@@ -1,9 +1,16 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -19,6 +26,7 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Send
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
@@ -73,6 +81,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.PhotoEditor
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
@@ -132,11 +141,11 @@ import mahjongtournamentsuite.adminapp.generated.resources.role_player
 import mahjongtournamentsuite.adminapp.generated.resources.save
 import mahjongtournamentsuite.adminapp.generated.resources.save_and_send_password_reset
 import mahjongtournamentsuite.adminapp.generated.resources.search
-import mahjongtournamentsuite.adminapp.generated.resources.search_by_name
 import mahjongtournamentsuite.adminapp.generated.resources.search_ema_players
 import mahjongtournamentsuite.adminapp.generated.resources.select_results
 import mahjongtournamentsuite.adminapp.generated.resources.selected_count
 import mahjongtournamentsuite.adminapp.generated.resources.selected_only
+import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_count
 import mahjongtournamentsuite.adminapp.generated.resources.send_password_reset_email
 import mahjongtournamentsuite.adminapp.generated.resources.status
 import mahjongtournamentsuite.adminapp.generated.resources.the_email_addresses_do_not_match
@@ -149,6 +158,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.user_status_active
 import mahjongtournamentsuite.adminapp.generated.resources.user_status_disabled
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 
@@ -314,11 +324,22 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
         }
     }
 
+    // On a phone the send button is a floating button. It shows only while accounts are selected.
+    val compact = LocalCompactLayout.current
+    val showResetFab = compact && access?.isAdmin == true && chosenUids.isNotEmpty() && !saving && !loading
     AppScaffold(
         title = stringResource(Res.string.app_users),
         isLoading = loading || saving,
         showBackgroundLogo = loading && users.isEmpty(),
         onBack = { navController.popBackStack() },
+        floatingActionButton = {
+            AnimatedVisibility(visible = showResetFab, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
+                ExtendedFloatingActionButton(onClick = { confirmResetOpen = true }) {
+                    Icon(Icons.AutoMirrored.Filled.Send, contentDescription = null)
+                    Text(stringResource(Res.string.send_password_reset_count, chosenUids.size), Modifier.padding(start = 12.dp))
+                }
+            }
+        },
         actions = {
             AppTopBarActions(
                 // Only admins create accounts. A new account is an editor or an admin.
@@ -329,7 +350,8 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
     ) {
         ScreenColumn(
             maxWidth = 1200.dp,
-            contentPadding = PaddingValues(24.dp),
+            // The floating button must not cover the last account.
+            contentPadding = PaddingValues(start = 24.dp, top = 24.dp, end = 24.dp, bottom = if (compact) 88.dp else 24.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             error?.let {
@@ -363,6 +385,7 @@ fun GlobalUsersScreen(navController: NavHostController, editUid: String? = null)
                         onSelectAllShown = { selectedUids = filteredUsers.map { it.uid }.toSet() },
                         onClear = { selectedUids = emptySet() },
                         onSend = { confirmResetOpen = true },
+                        showSend = !compact,
                     )
                 }
                 UsersTable(
@@ -485,26 +508,29 @@ private fun UsersTable(
     onToggleSelected: (String) -> Unit,
     onEdit: (ManagedUser) -> Unit,
 ) {
+    val compact = LocalCompactLayout.current
     LazyColumnWithScrollbar(
         state = rememberPersistentLazyListState("users"),
         modifier = Modifier.fillMaxWidth().appFocusGroup(),
     ) {
-        item {
-            DataTableHeaderRow {
-                if (selectable) Spacer(Modifier.width(UserCheckboxColumnWidth))
-                Text(
-                    stringResource(Res.string.country),
-                    modifier = Modifier.width(UserCountryColumnWidth),
-                    style = MaterialTheme.typography.labelLarge,
-                    textAlign = TextAlign.Center,
-                )
-                Text(stringResource(Res.string.alias), modifier = Modifier.weight(0.25f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.email), modifier = Modifier.weight(0.3f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.role), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.ema_id), modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
-                Text(stringResource(Res.string.status), modifier = Modifier.weight(0.13f), style = MaterialTheme.typography.labelLarge)
+        if (!compact) {
+            item {
+                DataTableHeaderRow {
+                    if (selectable) Spacer(Modifier.width(UserCheckboxColumnWidth))
+                    Text(
+                        stringResource(Res.string.country),
+                        modifier = Modifier.width(UserCountryColumnWidth),
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(stringResource(Res.string.alias), modifier = Modifier.weight(0.25f), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.email), modifier = Modifier.weight(0.3f), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.role), modifier = Modifier.weight(0.2f), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.ema_id), modifier = Modifier.weight(0.12f), style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(Res.string.status), modifier = Modifier.weight(0.13f), style = MaterialTheme.typography.labelLarge)
+                }
+                DataTableDivider()
             }
-            DataTableDivider()
         }
         itemsIndexed(users, key = { _, user -> user.uid }) { _, user ->
             // An editor edits player accounts and the own account. Admins edit every account.
@@ -523,22 +549,55 @@ private fun UsersTable(
                     )
                 }
                 val country = user.emaId?.let(countryByEmaId::get).orEmpty()
-                Box(modifier = Modifier.width(UserCountryColumnWidth), contentAlignment = Alignment.Center) {
-                    if (country.isBlank()) {
-                        Text("—")
-                    } else {
-                        CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
+                val roleLabel = user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() }
+                val statusLabel = stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active)
+                if (compact) {
+                    // A phone shows the alias over the email, and the other columns as one small line.
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(
+                            user.alias.ifBlank { user.email },
+                            style = MaterialTheme.typography.bodyLarge,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (user.alias.isNotBlank()) {
+                            Text(
+                                user.email,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            if (country.isNotBlank()) CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
+                            Text(
+                                listOfNotNull(roleLabel, user.emaId?.let { "EMA $it" }, statusLabel).joinToString(" · "),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = if (user.disabled) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
+                } else {
+                    Box(modifier = Modifier.width(UserCountryColumnWidth), contentAlignment = Alignment.Center) {
+                        if (country.isBlank()) {
+                            Text("—")
+                        } else {
+                            CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
+                        }
+                    }
+                    Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.25f), maxLines = 1)
+                    Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(
+                        user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() },
+                        modifier = Modifier.weight(0.2f),
+                        maxLines = 1,
+                    )
+                    Text(user.emaId ?: "—", modifier = Modifier.weight(0.12f), maxLines = 1)
+                    Text(stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active), modifier = Modifier.weight(0.13f))
                 }
-                Text(user.alias.ifBlank { "—" }, modifier = Modifier.weight(0.25f), maxLines = 1)
-                Text(user.email, modifier = Modifier.weight(0.3f), maxLines = 1, overflow = TextOverflow.Ellipsis)
-                Text(
-                    user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() },
-                    modifier = Modifier.weight(0.2f),
-                    maxLines = 1,
-                )
-                Text(user.emaId ?: "—", modifier = Modifier.weight(0.12f), maxLines = 1)
-                Text(stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active), modifier = Modifier.weight(0.13f))
             }
             DataTableDivider()
         }
@@ -549,7 +608,7 @@ private fun UsersTable(
 internal val RoleFilterOrder = listOf(GlobalUserRole.ADMIN, GlobalUserRole.EDITOR, GlobalUserRole.PLAYER)
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 internal fun UserFilters(
     searchQuery: String,
     onSearchChange: (String) -> Unit,
@@ -559,8 +618,15 @@ internal fun UserFilters(
     selectedTournamentId: String?,
     onTournamentSelected: (String?) -> Unit,
 ) {
+    // A phone puts the search and the tournament on two lines, so both fields have room.
+    val compact = LocalCompactLayout.current
+    val fieldModifier = if (compact) Modifier.fillMaxWidth() else Modifier
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            maxItemsInEachRow = if (compact) 1 else 2,
+        ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchChange,
@@ -571,7 +637,7 @@ internal fun UserFilters(
                         IconButton(onClick = { onSearchChange("") }) { Text("×") }
                     }
                 },
-                modifier = Modifier.weight(1f),
+                modifier = if (compact) fieldModifier else Modifier.weight(1f),
             )
             val allTournaments = stringResource(Res.string.all_tournaments)
             val options = remember(tournaments, allTournaments) {
@@ -582,7 +648,7 @@ internal fun UserFilters(
                 options = options,
                 selected = selectedTournamentId,
                 onSelect = onTournamentSelected,
-                modifier = Modifier.weight(1f),
+                modifier = if (compact) fieldModifier else Modifier.weight(1f),
             )
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -934,7 +1000,7 @@ private fun TournamentAssignmentsDialog(
                     OutlinedTextField(
                         value = searchText,
                         onValueChange = { searchText = it },
-                        label = { Text(stringResource(Res.string.search_by_name)) },
+                        label = { Text(stringResource(Res.string.search)) },
                         singleLine = true,
                         modifier = Modifier
                             .fillMaxWidth()

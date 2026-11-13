@@ -32,7 +32,7 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun searchByName() {
         openPlayers()
-        c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("CARMEN GOMEZ")
+        c.field("Search").performTextInputText("CARMEN GOMEZ")
         c.waitForText("Carmen\nGOMEZ")
         c.waitForNoText("Lucia\nPEREZ")
     }
@@ -40,7 +40,7 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun searchByEmaNumber() {
         openPlayers()
-        c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("10000055")
+        c.field("Search").performTextInputText("10000055")
         c.waitForText("Lucia\nPEREZ")
         c.waitForNoText("Jorge\nMARTIN")
     }
@@ -48,7 +48,7 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun searchByTeam() {
         openPlayers()
-        c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("Bamboo")
+        c.field("Search").performTextInputText("Bamboo")
         c.waitForText("Carmen\nLOPEZ 142")
         c.waitForNoText("Lucia\nPEREZ")
     }
@@ -56,7 +56,7 @@ class PlayersScreenTest : AdminE2eTest() {
     @Test
     fun searchWithoutMatchesShowsNoRows() {
         openPlayers()
-        c.field("Search by name, EMA number, player ID, team, or table").performTextInputText("zzzzzz")
+        c.field("Search").performTextInputText("zzzzzz")
         c.waitForNoText("Lucia\nPEREZ")
         c.waitForNoText("Carmen\nGOMEZ")
     }

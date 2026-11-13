@@ -441,6 +441,8 @@ class DefaultTournamentRepositoryTest {
 
         assertEquals("7", tables.single().first.playerEastId)
         assertEquals(2, server.count("/tables-with-hands"))
+        // Only round 1 changed, so only round 1 is loaded again, not every table of the tournament.
+        assertEquals(1, server.count("/rounds/1/tables-with-hands"))
     }
 
     @Test

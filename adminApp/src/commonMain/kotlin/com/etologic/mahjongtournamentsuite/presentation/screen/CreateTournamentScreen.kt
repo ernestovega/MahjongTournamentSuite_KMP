@@ -75,6 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TournamentSch
 import com.etologic.mahjongtournamentsuite.presentation.components.VenueTimeZoneField
 import com.etologic.mahjongtournamentsuite.presentation.components.adjustedEndDate
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.compactDateTextStyle
 import com.etologic.mahjongtournamentsuite.presentation.components.contactEmailRequiredError
 import com.etologic.mahjongtournamentsuite.presentation.components.deviceTimeZoneId
 import com.etologic.mahjongtournamentsuite.presentation.components.formatByteSize
@@ -842,6 +843,7 @@ fun CreateTournamentDialog(
                                                 eventEndDate = adjustedEndDate(eventStartDate, eventEndDate)
                                                 clearError(CreateField.START_DATE, CreateField.END_DATE)
                                             },
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.from)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {
@@ -868,6 +870,7 @@ fun CreateTournamentDialog(
                                                 }
                                                 clearError(CreateField.START_DATE, CreateField.END_DATE)
                                             },
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.date_to)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {

@@ -18,7 +18,7 @@ import {
   type SeatNumbers,
   type SynthHand,
 } from "../services/handSynthesis";
-import { calculateTableSummary, defaultHand, HANDS_PER_TABLE } from "../services/tableManagerService";
+import { calculateTableSummary, defaultHand, HANDS_PER_TABLE, handsCopyUpdate } from "../services/tableManagerService";
 import { runScript } from "./scriptRun";
 
 /**
@@ -1189,7 +1189,7 @@ function buildTournament(spec: TournamentSpec, registry: Registry): BuiltTournam
       if (!built.table.isCompleted) allCompleted = false;
       tableVersions[built.id] = Number(built.table.version);
       maxVersion += Number(built.table.version);
-      writes.push({ path: `${root}/tables/${built.id}`, data: { ...built.table, ...stamp() } });
+      writes.push({ path: `${root}/tables/${built.id}`, data: { ...built.table, ...handsCopyUpdate(Number(built.table.version), built.hands), ...stamp() } });
       built.hands.forEach((hand) => {
         writes.push({ path: `${root}/tables/${built.id}/hands/${hand.handId}`, data: { ...hand, ...stamp() } });
       });

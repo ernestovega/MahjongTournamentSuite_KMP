@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,9 +27,12 @@ import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -69,6 +73,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.DataTableRow
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSubstitutionLabel
@@ -84,8 +89,6 @@ import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.dataStatus
 import com.etologic.mahjongtournamentsuite.presentation.util.rememberTemplate
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
-import kotlin.time.Clock
-import kotlin.time.Instant
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -108,6 +111,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.previous_ranking_list
 import mahjongtournamentsuite.adminapp.generated.resources.rows_count
 import mahjongtournamentsuite.adminapp.generated.resources.score
 import mahjongtournamentsuite.adminapp.generated.resources.seconds_short
+import mahjongtournamentsuite.adminapp.generated.resources.settings
 import mahjongtournamentsuite.adminapp.generated.resources.show_fewer_rows
 import mahjongtournamentsuite.adminapp.generated.resources.show_first_3
 import mahjongtournamentsuite.adminapp.generated.resources.show_more_rows
@@ -119,6 +123,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.use_a_longer_page_int
 import mahjongtournamentsuite.adminapp.generated.resources.use_a_shorter_page_interval
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 @Composable
 fun RankingStandaloneScreen(tournamentId: String) {
@@ -214,77 +220,84 @@ private fun RankingStandaloneContent(
     Surface(modifier = Modifier.fillMaxSize().appFocusGroup()) {
         Box(modifier = Modifier.fillMaxSize()) {
             Box(modifier = Modifier.fillMaxSize().appFocusGroup()) {
-            Column(
-                modifier = Modifier.fillMaxSize().padding(20.dp).appFocusGroup(),
-            ) {
-                error?.let {
-                    AppErrorDialog(
-                        message = it,
-                        onDismiss = { error = null },
-                    )
-                }
-                when {
-                    loading && snapshot == null -> CenteredMessage(
-                        message = stringResource(Res.string.loading_rankings),
-                        modifier = Modifier.weight(1f),
-                    )
-                    currentPage == null -> AppEmptyState(
-                        icon = Icons.Default.Leaderboard,
-                        title = stringResource(Res.string.no_ranking_yet),
-                        message = stringResource(Res.string.the_ranking_shows_when_the_first),
-                        modifier = Modifier.weight(1f),
-                    )
-                    else -> RankingPage(
-                        page = currentPage,
-                        listState = listState,
-                        rowsPerScroll = rowsPerScroll,
-                        onMaxRowsChanged = { maxRowsPerScreen = it },
-                        modifier = Modifier.weight(1f),
-                    )
-                }
-            }
-            snapshot?.let { held ->
-                // Which data this screen shows. The screen stays still, so it also says when it loaded.
-                Text(
-                    text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
-                    modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
-                )
-            }
-            if (playing) {
-                Text(
-                    text = remainingSeconds.toString(),
-                    style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                val compact = LocalCompactLayout.current
+                Column(
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(16.dp),
+                        .fillMaxSize()
+                        .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(20.dp))
+                        .appFocusGroup(),
+                ) {
+                    error?.let {
+                        AppErrorDialog(
+                            message = it,
+                            onDismiss = { error = null },
+                        )
+                    }
+                    when {
+                        loading && snapshot == null -> CenteredMessage(
+                            message = stringResource(Res.string.loading_rankings),
+                            modifier = Modifier.weight(1f),
+                        )
+                        currentPage == null -> AppEmptyState(
+                            icon = Icons.Default.Leaderboard,
+                            title = stringResource(Res.string.no_ranking_yet),
+                            message = stringResource(Res.string.the_ranking_shows_when_the_first),
+                            modifier = Modifier.weight(1f),
+                        )
+                        else -> RankingPage(
+                            page = currentPage,
+                            listState = listState,
+                            rowsPerScroll = rowsPerScroll,
+                            onMaxRowsChanged = { maxRowsPerScreen = it },
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+                snapshot?.let { held ->
+                    // Which data this screen shows. The screen stays still, so it also says when it loaded.
+                    Text(
+                        text = dataStatus(held.dataRevision, loadedAt, loaded = true).asString(),
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
+                        modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
+                    )
+                }
+                if (playing) {
+                    Text(
+                        text = remainingSeconds.toString(),
+                        style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .padding(16.dp),
+                    )
+                }
+                RankingControls(
+                    playing = playing,
+                    themePreference = themePreference,
+                    rowsPerScroll = rowsPerScroll,
+                    maxVisibleRows = maxRowsPerScreen,
+                    intervalSeconds = intervalSeconds,
+                    pageIndex = pageIndex,
+                    pageCount = pages.size,
+                    onTogglePlaying = { playing = !playing },
+                    onRowsChanged = { rowsPerScroll = it.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen) },
+                    onIntervalChanged = {
+                        intervalSeconds = it
+                        remainingSeconds = it
+                    },
+                    onPrevious = {
+                        if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
+                    },
+                    onNext = {
+                        if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
+                    },
+                    onToggleTheme = onToggleTheme,
+                    showTopThree = showTopThree,
+                    onShowTopThreeChanged = { showTopThree = it },
+                    modifier = Modifier
+                        .align(if (compact) Alignment.BottomCenter else Alignment.CenterStart)
+                        .padding(if (compact) 8.dp else 12.dp),
                 )
-            }
-            RankingControls(
-                playing = playing,
-                themePreference = themePreference,
-                rowsPerScroll = rowsPerScroll,
-                maxVisibleRows = maxRowsPerScreen,
-                intervalSeconds = intervalSeconds,
-                pageIndex = pageIndex,
-                pageCount = pages.size,
-                onTogglePlaying = { playing = !playing },
-                onRowsChanged = { rowsPerScroll = it.coerceIn(MIN_ROWS_PER_SCROLL, maxRowsPerScreen) },
-                onIntervalChanged = { intervalSeconds = it; remainingSeconds = it },
-                onPrevious = {
-                    if (pages.isNotEmpty()) pageIndex = (pageIndex - 1 + pages.size) % pages.size
-                },
-                onNext = {
-                    if (pages.isNotEmpty()) pageIndex = (pageIndex + 1) % pages.size
-                },
-                onToggleTheme = onToggleTheme,
-                showTopThree = showTopThree,
-                onShowTopThreeChanged = { showTopThree = it },
-                modifier = Modifier
-                    .align(Alignment.CenterStart)
-                    .padding(12.dp),
-            )
             }
         }
     }
@@ -296,6 +309,7 @@ private fun CenteredMessage(message: String, modifier: Modifier = Modifier) {
 }
 
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 private fun RankingControls(
     playing: Boolean,
     themePreference: ThemePreference,
@@ -323,11 +337,19 @@ private fun RankingControls(
     val longerIntervalFocusRequester = remember { FocusRequester() }
     val themeFocusRequester = remember { FocusRequester() }
 
+    val compact = LocalCompactLayout.current
+    val settingsFocusRequester = remember { FocusRequester() }
+    var settingsOpen by remember { mutableStateOf(false) }
     val activeFocusRequesters = buildList {
         add(playFocusRequester)
         if (pageCount > 1) {
             add(previousFocusRequester)
             add(nextFocusRequester)
+        }
+        // On a phone the other settings are in a bottom sheet, so the bar has only its own buttons.
+        if (compact) {
+            add(settingsFocusRequester)
+            return@buildList
         }
         if (rowsPerScroll > MIN_ROWS_PER_SCROLL) add(fewerRowsFocusRequester)
         if (rowsPerScroll < minOf(MAX_ROWS_PER_SCROLL, maxVisibleRows)) add(moreRowsFocusRequester)
@@ -346,19 +368,12 @@ private fun RankingControls(
 
     LaunchedEffect(Unit) { playFocusRequester.requestFocus() }
 
-    Column(
-        modifier = modifier
-            .alpha(if (playing) 0.12f else 1f)
-            .verticalScroll(rememberScrollState())
-            .appFocusGroup(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(14.dp),
-    ) {
+    val playButton: @Composable () -> Unit = {
         FocusedIconButton(
             onClick = onTogglePlaying,
             focusRequester = playFocusRequester,
             buttonModifier = Modifier
-                .size(56.dp)
+                .size(if (LocalCompactLayout.current) 44.dp else 56.dp)
                 .then(focusLoopFor(playFocusRequester)),
             showFocusHighlight = false,
         ) {
@@ -368,12 +383,14 @@ private fun RankingControls(
                 modifier = Modifier.size(34.dp),
             )
         }
-
+    }
+    val topThree: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Checkbox(checked = showTopThree, onCheckedChange = onShowTopThreeChanged)
             Text(stringResource(Res.string.show_first_3), style = MaterialTheme.typography.labelSmall)
         }
-
+    }
+    val pager: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = onPrevious,
@@ -393,7 +410,9 @@ private fun RankingControls(
                 Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_ranking_list))
             }
         }
-
+    }
+    val settings: @Composable () -> Unit = {
+        if (compact) topThree()
         Row(verticalAlignment = Alignment.CenterVertically) {
             FocusedIconButton(
                 onClick = { onRowsChanged((rowsPerScroll - 1).coerceAtLeast(MIN_ROWS_PER_SCROLL)) },
@@ -448,6 +467,58 @@ private fun RankingControls(
             }
         }
     }
+    if (compact) {
+        // A phone has no room at the side of the ranking. A small bar at the bottom keeps play and the pages
+        // always at hand, and its settings button opens the other settings in a bottom sheet.
+        Surface(
+            modifier = modifier.alpha(if (playing) 0.4f else 1f).appFocusGroup(),
+            shape = MaterialTheme.shapes.extraLarge,
+            tonalElevation = 3.dp,
+            shadowElevation = 3.dp,
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                playButton()
+                pager()
+                FocusedIconButton(
+                    onClick = { settingsOpen = true },
+                    focusRequester = settingsFocusRequester,
+                    buttonModifier = focusLoopFor(settingsFocusRequester),
+                ) {
+                    Icon(Icons.Default.Tune, contentDescription = stringResource(Res.string.settings))
+                }
+            }
+        }
+        if (settingsOpen) {
+            ModalBottomSheet(onDismissRequest = { settingsOpen = false }) {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, bottom = 24.dp).appFocusGroup(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Text(stringResource(Res.string.settings), style = MaterialTheme.typography.titleMedium)
+                    settings()
+                }
+            }
+        }
+    } else {
+        Column(
+            modifier = modifier
+                .alpha(if (playing) 0.12f else 1f)
+                .verticalScroll(rememberScrollState())
+                .appFocusGroup(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            playButton()
+            topThree()
+            pager()
+            settings()
+        }
+    }
 }
 
 @Composable
@@ -458,21 +529,24 @@ private fun RankingPage(
     onMaxRowsChanged: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    // A phone reads the ranking in the hand: a normal text size, the full width, and the name column takes the space left.
+    val compact = LocalCompactLayout.current
+    val spacing = if (compact) 10.dp else RankingColumnSpacing
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = page.title,
-            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
+            style = (if (compact) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium).copy(fontWeight = FontWeight.Bold),
             modifier = Modifier.padding(bottom = 8.dp),
         )
         BoxWithConstraints(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)
-                .padding(horizontal = RankingHorizontalPadding)
-                .horizontalScroll(rememberScrollState()),
+                .padding(horizontal = if (compact) 0.dp else RankingHorizontalPadding)
+                .then(if (compact) Modifier else Modifier.horizontalScroll(rememberScrollState())),
             contentAlignment = Alignment.TopCenter,
         ) {
             val headerHeight = 28.dp
@@ -483,31 +557,36 @@ private fun RankingPage(
                 .sp
             val maxRowsAtReadableFont = (
                 availableRowsHeight.value / (MIN_RANKING_FONT_SIZE_SP + ROW_VERTICAL_OVERHEAD.value)
-            ).toInt().minus(ROW_LAYOUT_SAFETY_ROWS)
+                ).toInt().minus(ROW_LAYOUT_SAFETY_ROWS)
                 .coerceIn(MIN_ROWS_PER_SCROLL, MAX_ROWS_PER_SCROLL)
             LaunchedEffect(page.key, maxRowsAtReadableFont) {
                 onMaxRowsChanged(maxRowsAtReadableFont)
             }
-            val textStyle = MaterialTheme.typography.headlineSmall.copy(
-                fontSize = fontSize,
-                lineHeight = (fontSize.value + 2f).sp,
-                fontWeight = FontWeight.Bold,
-            )
+            val textStyle = if (compact) {
+                MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold)
+            } else {
+                MaterialTheme.typography.headlineSmall.copy(
+                    fontSize = fontSize,
+                    lineHeight = (fontSize.value + 2f).sp,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
             val headerStyle = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.SemiBold)
-            val widths = rememberRankingColumnWidths(page, textStyle)
+            val measuredWidths = rememberRankingColumnWidths(page, textStyle)
+            val widths = if (compact) measuredWidths.fitNameTo(maxWidth, spacing) else measuredWidths
 
-            Column(modifier = Modifier.width(RankingTableWidth).fillMaxHeight()) {
+            Column(modifier = Modifier.width(if (compact) maxWidth else RankingTableWidth).fillMaxHeight()) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(bottom = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(
-                        RankingColumnSpacing,
+                        spacing,
                         Alignment.CenterHorizontally,
                     ),
                 ) {
                     RankingCell("#", widths.position, TextAlign.Center, headerStyle)
-                    if (page.showCountry) RankingCell(stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
+                    if (page.showCountry) RankingCell(if (compact) "" else stringResource(Res.string.country), widths.country, TextAlign.Center, headerStyle)
                     RankingCell(page.nameHeader, widths.name, TextAlign.Start, headerStyle)
                     if (page.extraHeader != null) {
                         RankingCell(page.extraHeader, widths.extra, TextAlign.Center, headerStyle)
@@ -534,7 +613,7 @@ private fun RankingPage(
                                 vertical = 2.dp,
                             ),
                             horizontalArrangement = Arrangement.spacedBy(
-                                RankingColumnSpacing,
+                                spacing,
                                 Alignment.CenterHorizontally,
                             ),
                         ) {
@@ -636,6 +715,29 @@ private fun RankingCountryCell(
     }
 }
 
+/** Gives the name column the width that the other columns leave free in [total]. */
+private fun RankingColumnWidths.fitNameTo(total: Dp, spacing: Dp): RankingColumnWidths {
+    // The flag alone tells the country, so the column loses the width of its title.
+    // The team and the extra column are cut short, so the name keeps most of the width.
+    val fitted = copy(
+        country = if (showCountry) 40.dp else country,
+        extra = extra.coerceAtMost(72.dp),
+        team = team.coerceAtMost(72.dp),
+    )
+    val others = with(fitted) {
+        listOfNotNull(
+            position,
+            country.takeIf { showCountry },
+            extra.takeIf { showExtra },
+            points.takeIf { showPoints },
+            score.takeIf { showScore },
+            team.takeIf { showTeam },
+        )
+    }
+    val used = others.fold(0.dp) { sum, width -> sum + width } + spacing * others.size
+    return fitted.copy(name = (total - used).coerceAtLeast(80.dp))
+}
+
 private data class RankingColumnWidths(
     val position: Dp,
     val country: Dp,
@@ -648,6 +750,7 @@ private data class RankingColumnWidths(
     val showExtra: Boolean,
     val showPoints: Boolean,
     val showScore: Boolean,
+    val showTeam: Boolean,
 )
 
 @Composable
@@ -679,6 +782,7 @@ private fun rememberRankingColumnWidths(
             showExtra = page.extraHeader != null,
             showPoints = page.showPoints,
             showScore = page.showScore,
+            showTeam = page.teamHeader != null,
         )
     }
 }
@@ -841,17 +945,13 @@ private fun BestHandRanking.toRow(slots: Map<Int, TournamentPlayer>, players: Ma
     country = displayCountry(playerId, slots, players),
 )
 
-private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels): String =
-    slots[playerId]?.assignedEmaId?.let(players::get)?.displayName
-        ?.takeIf { it.isNotBlank() }
-        ?: labels.playerN(playerId).uppercase()
+private fun displayName(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>, labels: RankingLabels): String = slots[playerId]?.assignedEmaId?.let(players::get)?.displayName
+    ?.takeIf { it.isNotBlank() }
+    ?: labels.playerN(playerId).uppercase()
 
-private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String {
-    return slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
-}
+private fun displayCountry(playerId: Int, slots: Map<Int, TournamentPlayer>, players: Map<String, Player>): String = slots[playerId]?.assignedEmaId?.let(players::get)?.country.orEmpty()
 
-private fun formatPoints(value: Double): String =
-    if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
+private fun formatPoints(value: Double): String = if (value % 1.0 == 0.0) value.toInt().toString() else value.toString().trimEnd('0').trimEnd('.')
 
 private const val DEFAULT_ROWS_PER_SCROLL = 20
 private const val MIN_ROWS_PER_SCROLL = 16

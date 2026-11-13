@@ -62,8 +62,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.best_hands
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.chicken_hands
-import mahjongtournamentsuite.adminapp.generated.resources.public_tournament
-import mahjongtournamentsuite.adminapp.generated.resources.public_tournament_description
 import mahjongtournamentsuite.adminapp.generated.resources.choose_end_date
 import mahjongtournamentsuite.adminapp.generated.resources.choose_start_date
 import mahjongtournamentsuite.adminapp.generated.resources.completed
@@ -99,6 +97,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.match_extra_invalid
 import mahjongtournamentsuite.adminapp.generated.resources.max_10_characters
 import mahjongtournamentsuite.adminapp.generated.resources.no
 import mahjongtournamentsuite.adminapp.generated.resources.players
+import mahjongtournamentsuite.adminapp.generated.resources.public_tournament
+import mahjongtournamentsuite.adminapp.generated.resources.public_tournament_description
 import mahjongtournamentsuite.adminapp.generated.resources.remove
 import mahjongtournamentsuite.adminapp.generated.resources.reuse
 import mahjongtournamentsuite.adminapp.generated.resources.rounds
@@ -599,6 +599,7 @@ fun EditTournamentDialog(
                                                 renameError = null
                                             },
                                             modifier = Modifier.weight(1f).focusRequester(settingsStartDateFocusRequester),
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.from)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {
@@ -633,6 +634,7 @@ fun EditTournamentDialog(
                                                 renameError = null
                                             },
                                             modifier = Modifier.weight(1f).focusRequester(settingsEndDateFocusRequester),
+                                            textStyle = compactDateTextStyle(),
                                             label = { RequiredLabel(stringResource(Res.string.date_to)) },
                                             placeholder = { Text(stringResource(Res.string.dd_mm_yyyy)) },
                                             trailingIcon = {

@@ -2,11 +2,25 @@ import type { NextFunction, Request, Response } from "express";
 
 import { auth } from "../../firebase";
 import { unauthenticated } from "../httpError";
+import { rateLimit } from "./rateLimit";
 
 // The revocation check calls Firebase Auth, so a successful check is reused for this long per user.
 const REVOCATION_CHECK_TTL_MS = 30_000;
 const MAX_CACHED_USERS = 1000;
 const revocationCheckedUntil = new Map<string, number>();
+const READ_METHODS = new Set(["GET", "HEAD", "OPTIONS"]);
+
+/**
+ * Writes per minute of one verified user, from every address. The limits in `app.ts` run before the token is
+ * verified, so a user could spread writes over many addresses. The counter lives in one function instance.
+ */
+export const WRITES_PER_USER_PER_MINUTE = 120;
+
+const userWriteLimit = rateLimit({
+  windowMs: 60_000,
+  max: WRITES_PER_USER_PER_MINUTE,
+  key: (req) => `uid:${(req.res?.locals.auth as { uid?: string } | undefined)?.uid ?? "unknown"}`,
+});
 
 function extractBearerToken(headerValue: string | undefined): string | null {
   if (!headerValue) return null;
@@ -35,8 +49,13 @@ export async function requireAuth(
       revocationCheckedUntil.set(decoded.uid, now + REVOCATION_CHECK_TTL_MS);
     }
     res.locals.auth = decoded;
-    next();
   } catch {
     next(unauthenticated("Invalid or expired token"));
+    return;
   }
+  if (READ_METHODS.has(req.method)) {
+    next();
+    return;
+  }
+  userWriteLimit(req, res, next);
 }
