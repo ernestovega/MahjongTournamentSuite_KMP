@@ -202,14 +202,10 @@
     <string name="round_n">Ronda %1$d</string>
     <string name="table_n">Mesa %1$d</string>
     <string name="places_history_title">Puesto en las últimas %1$d mesas</string>
-    <string name="leader_most_points">Más puntos</string>
-    <string name="leader_most_points_info">La suma de los puntos de mesa de cada jugador, de las mesas completadas. El número pequeño muestra las mesas completadas, por ejemplo (5).</string>
+    <string name="leader_best_hand_value">Mejor valor medio de mano</string>
     <string name="leader_best_win_rate">Mejor tasa de victorias</string>
-    <string name="leader_best_win_rate_info">Jugadores con al menos %1$d manos. La tasa son las manos ganadas entre las manos jugadas. Los números pequeños muestran las manos ganadas y las manos jugadas, por ejemplo (8/48).</string>
     <string name="leader_lowest_deal_in">Menor tasa de derrotas por descarte</string>
-    <string name="leader_lowest_deal_in_info">Jugadores con al menos %1$d manos. La tasa son las derrotas por descarte entre las manos jugadas. Los números pequeños muestran las derrotas por descarte y las manos jugadas, por ejemplo (8/48).</string>
     <string name="leader_most_self_draws">Más victorias del muro</string>
-    <string name="leader_most_self_draws_info">Las manos que un jugador ganó del muro. El número pequeño muestra las manos jugadas, por ejemplo (48).</string>
     <string name="tables_completed_of">%1$d de %2$d</string>
     <string name="stat_players">Jugadores</string>
     <string name="hands_won_by_discard">Ganadas por descarte</string>

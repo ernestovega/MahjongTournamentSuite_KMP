@@ -202,14 +202,10 @@
     <string name="round_n">Turno %1$d</string>
     <string name="table_n">Tavolo %1$d</string>
     <string name="places_history_title">Posto negli ultimi %1$d tavoli</string>
-    <string name="leader_most_points">Più punti</string>
-    <string name="leader_most_points_info">La somma dei punti di tavolo di ogni giocatore, dai tavoli completati. Il numero piccolo indica i tavoli completati, per esempio (5).</string>
+    <string name="leader_best_hand_value">Miglior valore medio della mano</string>
     <string name="leader_best_win_rate">Migliore percentuale di vittorie</string>
-    <string name="leader_best_win_rate_info">Giocatori con almeno %1$d mani. La percentuale è le mani vinte divise per le mani giocate. I numeri piccoli indicano le mani vinte e le mani giocate, per esempio (8/48).</string>
     <string name="leader_lowest_deal_in">Minore percentuale di sconfitte su scarto</string>
-    <string name="leader_lowest_deal_in_info">Giocatori con almeno %1$d mani. La percentuale sono le sconfitte su scarto divise per le mani giocate. I numeri piccoli indicano le sconfitte su scarto e le mani giocate, per esempio (8/48).</string>
     <string name="leader_most_self_draws">Più vittorie dal muro</string>
-    <string name="leader_most_self_draws_info">Le mani che un giocatore ha vinto dal muro. Il numero piccolo indica le mani giocate, per esempio (48).</string>
     <string name="tables_completed_of">%1$d su %2$d</string>
     <string name="stat_players">Giocatori</string>
     <string name="hands_won_by_discard">Vinte su scarto</string>

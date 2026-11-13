@@ -202,14 +202,10 @@
     <string name="round_n">Tour %1$d</string>
     <string name="table_n">Table %1$d</string>
     <string name="places_history_title">Place sur les %1$d dernières tables</string>
-    <string name="leader_most_points">Le plus de points</string>
-    <string name="leader_most_points_info">La somme des points de table de chaque joueur, sur les tables terminées. Le petit nombre indique les tables terminées, par exemple (5).</string>
+    <string name="leader_best_hand_value">Meilleure valeur moyenne de main</string>
     <string name="leader_best_win_rate">Meilleur taux de victoire</string>
-    <string name="leader_best_win_rate_info">Joueurs ayant au moins %1$d mains. Le taux est le nombre de mains gagnées divisé par le nombre de mains jouées. Les petits nombres indiquent les mains gagnées et les mains jouées, par exemple (8/48).</string>
     <string name="leader_lowest_deal_in">Plus faible taux de défaites sur défausse</string>
-    <string name="leader_lowest_deal_in_info">Joueurs ayant au moins %1$d mains. Le taux est le nombre de défaites sur défausse divisé par le nombre de mains jouées. Les petits nombres indiquent les défaites sur défausse et les mains jouées, par exemple (8/48).</string>
     <string name="leader_most_self_draws">Le plus de victoires du mur</string>
-    <string name="leader_most_self_draws_info">Les mains qu'un joueur a gagnées du mur. Le petit nombre indique les mains jouées, par exemple (48).</string>
     <string name="tables_completed_of">%1$d sur %2$d</string>
     <string name="stat_players">Joueurs</string>
     <string name="hands_won_by_discard">Gagnées sur défausse</string>

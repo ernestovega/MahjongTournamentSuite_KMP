@@ -43,8 +43,8 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     @Test
     fun tournamentStatisticsRankPlayers() {
         openTournamentStatistics()
-        c.scrollListTo("Most points")
-        c.waitForText("Most points")
+        c.scrollListTo("Best hand avg. value")
+        c.waitForText("Best hand avg. value")
         c.scrollListTo("Best win rate")
         c.waitForText("Best win rate")
     }

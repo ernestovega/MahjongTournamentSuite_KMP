@@ -202,14 +202,10 @@
     <string name="round_n">Round %1$d</string>
     <string name="table_n">Table %1$d</string>
     <string name="places_history_title">Place in the last %1$d tables</string>
-    <string name="leader_most_points">Most points</string>
-    <string name="leader_most_points_info">The sum of the table points of each player, from the completed tables. The small number shows the completed tables, for example (5).</string>
+    <string name="leader_best_hand_value">Best hand avg. value</string>
     <string name="leader_best_win_rate">Best win rate</string>
-    <string name="leader_best_win_rate_info">Players with at least %1$d hands. The rate is the hands won divided by the hands played. The small numbers show the hands won and the hands played, for example (8/48).</string>
     <string name="leader_lowest_deal_in">Lowest deal-in rate</string>
-    <string name="leader_lowest_deal_in_info">Players with at least %1$d hands. The rate is the deal-ins divided by the hands played. The small numbers show the deal-ins and the hands played, for example (8/48).</string>
     <string name="leader_most_self_draws">Most self-draws</string>
-    <string name="leader_most_self_draws_info">The hands that a player won by self-draw. The small number shows the hands played, for example (48).</string>
     <string name="tables_completed_of">%1$d of %2$d</string>
     <string name="stat_players">Players</string>
     <string name="hands_won_by_discard">Won by discard</string>

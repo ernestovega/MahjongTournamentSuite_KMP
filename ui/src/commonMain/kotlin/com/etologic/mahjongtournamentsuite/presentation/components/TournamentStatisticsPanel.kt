@@ -33,19 +33,14 @@ import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.PlaceholderNames
-import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.hands_drawn
 import mahjongtournamentsuite.ui.generated.resources.hands_won_by_discard
 import mahjongtournamentsuite.ui.generated.resources.hands_won_by_self_draw
+import mahjongtournamentsuite.ui.generated.resources.leader_best_hand_value
 import mahjongtournamentsuite.ui.generated.resources.leader_best_win_rate
-import mahjongtournamentsuite.ui.generated.resources.leader_best_win_rate_info
 import mahjongtournamentsuite.ui.generated.resources.leader_lowest_deal_in
-import mahjongtournamentsuite.ui.generated.resources.leader_lowest_deal_in_info
-import mahjongtournamentsuite.ui.generated.resources.leader_most_points
-import mahjongtournamentsuite.ui.generated.resources.leader_most_points_info
 import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws
-import mahjongtournamentsuite.ui.generated.resources.leader_most_self_draws_info
 import mahjongtournamentsuite.ui.generated.resources.outcome_hands_unit
 import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table
@@ -273,7 +268,6 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
 /** The best player of one leaderboard and the skill that the board is about, if it is one of the skills chart. */
 private class Leader(
     val title: String,
-    val info: String,
     val player: PlayerStatistics,
     val value: String,
     val calculation: String,
@@ -282,7 +276,7 @@ private class Leader(
 )
 
 /**
- * The leader of the most points, the best win rate, the lowest deal-in rate and the most self-draws, each with the
+ * The leader of the best average hand value, the best win rate, the lowest deal-in rate and the most self-draws, each with the
  * skills chart of that player. The skill of the board stands out in the chart. With [roundIds], chips choose between
  * the whole tournament and one round. A tap on the chosen round goes back to the totals.
  */
@@ -307,20 +301,18 @@ private fun LeadersCard(
     // The same boards as the leaderboards of the tournament statistics: the first of each one.
     val eligible = players.filter { it.handsPlayed >= minimum }
     val leaders = listOfNotNull(
-        players.filter { it.tablesPlayed > 0 }.maxByOrNull { it.totalPoints }?.let {
+        eligible.filter { it.handsWon > 0 }.maxByOrNull { it.averageWinningScore ?: 0.0 }?.let {
             Leader(
-                stringResource(Res.string.leader_most_points),
-                stringResource(Res.string.leader_most_points_info),
+                stringResource(Res.string.leader_best_hand_value),
                 it,
-                formatPoints(it.totalPoints),
-                "(${it.tablesPlayed})",
-                skill = null,
+                it.averageWinningScore.decimal(),
+                "(${it.handsWon})",
+                skill = 3,
             )
         },
         eligible.maxByOrNull { it.winRate ?: 0.0 }?.let {
             Leader(
                 stringResource(Res.string.leader_best_win_rate),
-                stringResource(Res.string.leader_best_win_rate_info, minimum),
                 it,
                 it.winRate.percent(),
                 "(${it.handsWon}/${it.handsPlayed})",
@@ -330,7 +322,6 @@ private fun LeadersCard(
         eligible.minByOrNull { it.dealInRate ?: 1.0 }?.let {
             Leader(
                 stringResource(Res.string.leader_lowest_deal_in),
-                stringResource(Res.string.leader_lowest_deal_in_info, minimum),
                 it,
                 it.dealInRate.percent(),
                 "(${it.dealIns}/${it.handsPlayed})",
@@ -340,7 +331,6 @@ private fun LeadersCard(
         players.filter { it.selfDraws > 0 }.maxByOrNull { it.selfDraws }?.let {
             Leader(
                 stringResource(Res.string.leader_most_self_draws),
-                stringResource(Res.string.leader_most_self_draws_info),
                 it,
                 it.selfDraws.toString(),
                 "(${it.handsPlayed})",
@@ -382,10 +372,7 @@ private fun LeadersCard(
 private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: ((Int) -> Unit)?) {
     val playerId = leader.player.playerId
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
-            Text(leader.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-            InfoTip(leader.info)
-        }
+        Text(leader.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         Row(
             Modifier.then(
                 if (onOpenPlayer != null) {

@@ -948,6 +948,8 @@ internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, high
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = rowSpacing) {
                             Text(
                                 skill.label,
+                                // The name gives room to the info icon, so a name in two lines keeps its icon.
+                                Modifier.weight(1f, fill = false),
                                 style = MaterialTheme.typography.labelMedium,
                                 textAlign = TextAlign.Center,
                                 color = labelColor,
