@@ -50,7 +50,7 @@ class AdminScreensScreenshotTest {
     fun users() = adminScreenshots("users", ready = { waitForText("ada@example.test", substring = true) }) { nav -> GlobalUsersScreen(nav) }
 
     @Test
-    fun statistics() = adminScreenshots("statistics", ready = { waitForText("LUCÍA MARTÍN", substring = true) }) { nav ->
+    fun statistics() = adminScreenshots("statistics", ready = { waitForText("Top players") }) { nav ->
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = ONGOING))
     }
 

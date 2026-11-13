@@ -290,8 +290,6 @@ fun StatCard(
     onToggle: (() -> Unit)? = null,
     /** A help text. An info icon on the right of the title shows it in a tooltip. */
     info: String? = null,
-    /** A compact card has less room around its content and a smaller title, for short lists. */
-    compact: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
@@ -303,16 +301,9 @@ fun StatCard(
         // The color is opaque, so the shadow does not show through the card.
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface),
     ) {
-        Column(
-            Modifier.padding(if (compact) MtsTheme.spacing.md else MtsTheme.spacing.lg),
-            verticalArrangement = Arrangement.spacedBy(if (compact) 4.dp else 12.dp),
-        ) {
+        Column(Modifier.padding(MtsTheme.spacing.lg), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // A card that does not fold shows its title at the top of the card.
-            if (title != null && onToggle == null && compact) {
-                CardTitle(title, info = info, style = MaterialTheme.typography.titleLarge, bottomPadding = 4.dp)
-            } else if (title != null && onToggle == null) {
-                CardTitle(title, Modifier.padding(top = 4.dp), info)
-            }
+            if (title != null && onToggle == null) CardTitle(title, Modifier.padding(top = 4.dp), info)
             if (title != null && onToggle != null) {
                 run {
                     Row(Modifier.fillMaxWidth().clickable(onClick = onToggle), verticalAlignment = Alignment.CenterVertically) {
@@ -325,7 +316,7 @@ fun StatCard(
                 }
             }
             AnimatedVisibility(expanded) {
-                Column(verticalArrangement = Arrangement.spacedBy(if (compact) 0.dp else 12.dp)) { content() }
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) { content() }
             }
         }
     }
@@ -338,10 +329,9 @@ private fun CardTitle(
     modifier: Modifier = Modifier,
     info: String? = null,
     style: TextStyle = MaterialTheme.typography.headlineMedium,
-    bottomPadding: Dp = 12.dp,
 ) {
     Row(
-        modifier.fillMaxWidth().padding(bottom = bottomPadding),
+        modifier.fillMaxWidth().padding(bottom = 12.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -722,7 +712,7 @@ internal fun SectorChart(
  * [text] is the real value that the player sees. [explanation] is the text of the tooltip.
  * [subLabel] is a second line under the [label].
  */
-private class Skill(
+internal class Skill(
     val label: String,
     val value: Double?,
     val full: Double,
@@ -735,7 +725,7 @@ private class Skill(
 }
 
 @Composable
-private fun skillsOf(s: PlayerStatistics): List<Skill> = listOf(
+internal fun skillsOf(s: PlayerStatistics): List<Skill> = listOf(
     // Share of the played hands that the player won. A strong player wins about 4 hands in 10.
     Skill(
         stringResource(Res.string.skill_win_rate),
@@ -894,10 +884,13 @@ private fun SkillsCard(statistics: PlayerStatistics, modifier: Modifier) {
     StatCard(stringResource(Res.string.stats_skills), modifier) { SkillsBlock(statistics, 300.dp) }
 }
 
-/** The radar shapes are drawn on a canvas. The names and values are real views, so they can show a tooltip. */
+/**
+ * The radar shapes are drawn on a canvas. The names and values are real views, so they can show a tooltip.
+ * The skill at [highlight] stands out: its axis, its point and its name are in the main color.
+ */
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
+internal fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier, highlight: Int? = null) {
     val primary = MaterialTheme.colorScheme.primary
     val grid = MaterialTheme.colorScheme.outlineVariant
     val count = skills.size
@@ -918,7 +911,13 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
                     path.close()
                     drawPath(path, grid, style = Stroke(width = 1.dp.toPx()))
                 }
-                repeat(count) { i -> drawLine(grid, center, point(i, 1f), strokeWidth = 1.dp.toPx()) }
+                repeat(count) { i ->
+                    if (i == highlight) {
+                        drawLine(primary, center, point(i, 1f), strokeWidth = 2.dp.toPx())
+                    } else {
+                        drawLine(grid, center, point(i, 1f), strokeWidth = 1.dp.toPx())
+                    }
+                }
                 val shape = Path()
                 skills.forEachIndexed { i, skill ->
                     point(i, skill.fraction).let { if (i == 0) shape.moveTo(it.x, it.y) else shape.lineTo(it.x, it.y) }
@@ -926,9 +925,11 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
                 shape.close()
                 drawPath(shape, primary.copy(alpha = 0.25f))
                 drawPath(shape, primary, style = Stroke(width = 2.dp.toPx()))
-                skills.forEachIndexed { i, skill -> drawCircle(primary, 3.5.dp.toPx(), point(i, skill.fraction)) }
+                skills.forEachIndexed { i, skill -> drawCircle(primary, if (i == highlight) 6.dp.toPx() else 3.5.dp.toPx(), point(i, skill.fraction)) }
             }
-            skills.forEach { skill ->
+            skills.forEachIndexed { index, skill ->
+                val highlighted = index == highlight
+                val labelColor = if (highlighted) MaterialTheme.colorScheme.primary else Color.Unspecified
                 AppTooltipBox(skill.explanation) {
                     Column(
                         Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = 2.dp),
@@ -945,16 +946,22 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
                         }
                         val rowSpacing = Arrangement.spacedBy(4.dp)
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = rowSpacing) {
-                            Text(skill.label, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+                            Text(
+                                skill.label,
+                                style = MaterialTheme.typography.labelMedium,
+                                textAlign = TextAlign.Center,
+                                color = labelColor,
+                                fontWeight = if (highlighted) FontWeight.Bold else null,
+                            )
                             if (skill.subLabel == null) info()
                         }
                         skill.subLabel?.let {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = rowSpacing) {
-                                Text(it, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
+                                Text(it, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center, color = labelColor)
                                 info()
                             }
                         }
-                        Text(skill.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold)
+                        Text(skill.text, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, color = labelColor)
                     }
                 }
             }

@@ -7,14 +7,11 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -54,7 +51,6 @@ import mahjongtournamentsuite.ui.generated.resources.round_short
 import mahjongtournamentsuite.ui.generated.resources.stat_average_hands_per_table
 import mahjongtournamentsuite.ui.generated.resources.stat_average_winning_hand
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points
-import mahjongtournamentsuite.ui.generated.resources.stat_best_hand_points_info
 import mahjongtournamentsuite.ui.generated.resources.stat_hands
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_without_dealin
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_on_table
@@ -70,6 +66,7 @@ import mahjongtournamentsuite.ui.generated.resources.stat_tables_won_row
 import mahjongtournamentsuite.ui.generated.resources.stat_tournaments
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_stats_missing
 import mahjongtournamentsuite.ui.generated.resources.stats_hand_values_use
+import mahjongtournamentsuite.ui.generated.resources.stats_leaders
 import mahjongtournamentsuite.ui.generated.resources.stats_records
 import mahjongtournamentsuite.ui.generated.resources.stats_totals
 import mahjongtournamentsuite.ui.generated.resources.tables_completed_of
@@ -90,7 +87,7 @@ fun TournamentStatisticsPanel(
     /** The number of players, when [statistics] holds only some of them. */
     playerCount: Int? = null,
     onOpenPlayer: ((Int) -> Unit)? = null,
-    /** The rounds of the tournament. When set, chips on the Hands card show the hands of one round. */
+    /** The rounds of the tournament. When set, chips on the Hands and the leaders cards show one round. */
     roundIds: List<Int>? = null,
 ) {
     @Suppress("NAME_SHADOWING")
@@ -100,45 +97,8 @@ fun TournamentStatisticsPanel(
             TournamentTotalsCard(statistics, tournamentCount, playerCount)
             TournamentHandsCard(statistics, roundIds?.let { ids -> remember(statistics, ids) { statistics.byRound(ids).map { it.round } } })
             TournamentRecordsCard(statistics, playersAreSums = playerCount != null)
-            val minimum = MIN_HANDS_FOR_LEADERBOARD
-            val points = statistics.players.filter { it.tablesPlayed > 0 }.sortedByDescending { it.totalPoints }
-            LeaderboardCard(
-                stringResource(Res.string.leader_most_points),
-                points,
-                names,
-                { formatPoints(it.totalPoints) },
-                onOpenPlayer,
-                stringResource(Res.string.leader_most_points_info),
-                calculation = { "(${it.tablesPlayed})" },
-            )
-            LeaderboardCard(
-                stringResource(Res.string.leader_best_win_rate),
-                statistics.winRateLeaders,
-                names,
-                { it.winRate.percent() },
-                onOpenPlayer,
-                stringResource(Res.string.leader_best_win_rate_info, minimum),
-                calculation = { "(${it.handsWon}/${it.handsPlayed})" },
-            )
-            LeaderboardCard(
-                stringResource(Res.string.leader_lowest_deal_in),
-                statistics.lowestDealInLeaders,
-                names,
-                { it.dealInRate.percent() },
-                onOpenPlayer,
-                stringResource(Res.string.leader_lowest_deal_in_info, minimum),
-                calculation = { "(${it.dealIns}/${it.handsPlayed})" },
-            )
-            LeaderboardCard(
-                stringResource(Res.string.leader_most_self_draws),
-                statistics.selfDrawLeaders,
-                names,
-                { it.selfDraws.toString() },
-                onOpenPlayer,
-                stringResource(Res.string.leader_most_self_draws_info),
-                calculation = { "(${it.handsPlayed})" },
-            )
         }
+        LeadersCard(statistics, names, roundIds, onOpenPlayer)
         if (statistics.tablesWithHands < statistics.tablesCompleted) {
             Text(
                 if (statistics.tablesWithHands == 0) {
@@ -296,7 +256,7 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
         StatGrid(Modifier.fillMaxWidth()) {
             BigNumber(stringResource(Res.string.stat_highest_hand_score), statistics.highestHand.text())
             statistics.highestHandGain?.let { gain ->
-                BigNumber(stringResource(Res.string.stat_best_hand_points), gain.toString(), info = stringResource(Res.string.stat_best_hand_points_info))
+                BigNumber(stringResource(Res.string.stat_best_hand_points), gain.toString())
             }
             if (!playersAreSums) {
                 BigNumber(stringResource(Res.string.stat_highest_table_score), players.mapNotNull { it.bestTableScore }.maxOrNull().text())
@@ -310,66 +270,145 @@ private fun TournamentRecordsCard(statistics: TournamentStatistics, playersAreSu
     }
 }
 
-/** A short ranked list of the best three players with one value each. */
+/** The best player of one leaderboard and the skill that the board is about, if it is one of the skills chart. */
+private class Leader(
+    val title: String,
+    val info: String,
+    val player: PlayerStatistics,
+    val value: String,
+    val calculation: String,
+    /** The index of the skill in [skillsOf], or null when the board is not about a skill. */
+    val skill: Int?,
+)
+
+/**
+ * The leader of the most points, the best win rate, the lowest deal-in rate and the most self-draws, each with the
+ * skills chart of that player. The skill of the board stands out in the chart. With [roundIds], chips choose between
+ * the whole tournament and one round. A tap on the chosen round goes back to the totals.
+ */
 @Composable
-private fun LeaderboardCard(
-    title: String,
-    entries: List<PlayerStatistics>,
+private fun LeadersCard(
+    statistics: TournamentStatistics,
     names: Map<Int, String>,
-    value: (PlayerStatistics) -> String,
+    roundIds: List<Int>?,
     onOpenPlayer: ((Int) -> Unit)?,
-    info: String? = null,
-    /** A small gray text after the value of each player, for example the numbers that the rate comes from. */
-    calculation: ((PlayerStatistics) -> String)? = null,
 ) {
-    if (entries.isEmpty()) return
-    val clickable = onOpenPlayer != null
-    StatCard(title, Modifier.fillMaxWidth(), info = info, compact = true) {
-        entries.take(LEADERBOARD_SIZE).forEachIndexed { index, player ->
-            if (index > 0) HorizontalDivider()
-            Row(
-                Modifier.fillMaxWidth()
-                    .then(
-                        if (onOpenPlayer != null) {
-                            Modifier.clickable(onClickLabel = "Open the statistics of the player") { onOpenPlayer(player.playerId) }
-                        } else {
-                            Modifier
-                        },
-                    )
-                    .padding(vertical = 2.dp),
-                verticalAlignment = Alignment.CenterVertically,
+    var chosenRound by remember(statistics) { mutableStateOf<Int?>(null) }
+    val players = remember(statistics, chosenRound) {
+        val round = chosenRound
+        if (round == null) {
+            statistics.players
+        } else {
+            statistics.players.map { player -> PlayerStatistics(player.playerId, player.results.filter { it.roundId == round }) }
+        }
+    }
+    val playedRounds = remember(statistics) { statistics.players.flatMap { player -> player.results.map { it.roundId } }.toSet() }
+    val minimum = MIN_HANDS_FOR_LEADERBOARD
+    // The same boards as the leaderboards of the tournament statistics: the first of each one.
+    val eligible = players.filter { it.handsPlayed >= minimum }
+    val leaders = listOfNotNull(
+        players.filter { it.tablesPlayed > 0 }.maxByOrNull { it.totalPoints }?.let {
+            Leader(
+                stringResource(Res.string.leader_most_points),
+                stringResource(Res.string.leader_most_points_info),
+                it,
+                formatPoints(it.totalPoints),
+                "(${it.tablesPlayed})",
+                skill = null,
+            )
+        },
+        eligible.maxByOrNull { it.winRate ?: 0.0 }?.let {
+            Leader(
+                stringResource(Res.string.leader_best_win_rate),
+                stringResource(Res.string.leader_best_win_rate_info, minimum),
+                it,
+                it.winRate.percent(),
+                "(${it.handsWon}/${it.handsPlayed})",
+                skill = 0,
+            )
+        },
+        eligible.minByOrNull { it.dealInRate ?: 1.0 }?.let {
+            Leader(
+                stringResource(Res.string.leader_lowest_deal_in),
+                stringResource(Res.string.leader_lowest_deal_in_info, minimum),
+                it,
+                it.dealInRate.percent(),
+                "(${it.dealIns}/${it.handsPlayed})",
+                skill = 2,
+            )
+        },
+        players.filter { it.selfDraws > 0 }.maxByOrNull { it.selfDraws }?.let {
+            Leader(
+                stringResource(Res.string.leader_most_self_draws),
+                stringResource(Res.string.leader_most_self_draws_info),
+                it,
+                it.selfDraws.toString(),
+                "(${it.handsPlayed})",
+                skill = 1,
+            )
+        },
+    )
+    if (leaders.isEmpty() && chosenRound == null) return
+    StatCard(stringResource(Res.string.stats_leaders), Modifier.fillMaxWidth()) {
+        if (!roundIds.isNullOrEmpty()) {
+            FlowRow(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, Alignment.CenterHorizontally),
             ) {
-                Text("${index + 1}.", Modifier.width(28.dp), style = MaterialTheme.typography.bodyLarge.inTextFont())
-                Text(
-                    names[player.playerId] ?: "Player ${player.playerId}",
-                    Modifier.weight(1f).padding(end = 12.dp),
-                    style = MaterialTheme.typography.bodyLarge.inTextFont(),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    // A name in the color of the links and an arrow show that the player opens.
-                    color = if (clickable) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                FilterChip(
+                    selected = chosenRound == null,
+                    onClick = { chosenRound = null },
+                    label = { Text(stringResource(Res.string.stats_totals)) },
                 )
-                Text(value(player), style = MaterialTheme.typography.bodyLarge.inTextFont(), fontWeight = FontWeight.Bold)
-                if (calculation != null) {
-                    Text(
-                        calculation(player),
-                        Modifier.padding(start = 8.dp),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (clickable) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        Modifier.padding(start = 4.dp).size(24.dp),
-                        tint = MaterialTheme.colorScheme.primary,
+                roundIds.forEach { roundId ->
+                    FilterChip(
+                        selected = roundId == chosenRound,
+                        // A tap on the chosen round goes back to the totals.
+                        onClick = { chosenRound = if (roundId == chosenRound) null else roundId },
+                        label = { Text(stringResource(Res.string.round_short, roundId)) },
+                        enabled = roundId in playedRounds,
                     )
                 }
             }
         }
+        StaggeredColumns(minColumnWidth = 280.dp) {
+            leaders.forEach { leader -> LeaderSkills(leader, names, onOpenPlayer) }
+        }
     }
 }
 
-/** The players that each leaderboard shows. */
-private const val LEADERBOARD_SIZE = 3
+/** One leader: the board, the name and the value of the player, and the skills chart of the player. */
+@Composable
+private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: ((Int) -> Unit)?) {
+    val playerId = leader.player.playerId
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+            Text(leader.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            InfoTip(leader.info)
+        }
+        Row(
+            Modifier.then(
+                if (onOpenPlayer != null) {
+                    Modifier.clickable(onClickLabel = "Open the statistics of the player") { onOpenPlayer(playerId) }
+                } else {
+                    Modifier
+                },
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
+        ) {
+            Text(
+                names[playerId] ?: "Player $playerId",
+                Modifier.weight(1f, fill = false),
+                style = MaterialTheme.typography.bodyLarge.inTextFont(),
+                // A name in the color of the links shows that the player opens.
+                color = if (onOpenPlayer != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Text(leader.value, style = MaterialTheme.typography.bodyLarge.inTextFont(), fontWeight = FontWeight.Bold)
+            Text(leader.calculation, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        RadarChart(skillsOf(leader.player), Modifier.fillMaxWidth().height(240.dp), highlight = leader.skill)
+    }
+}
