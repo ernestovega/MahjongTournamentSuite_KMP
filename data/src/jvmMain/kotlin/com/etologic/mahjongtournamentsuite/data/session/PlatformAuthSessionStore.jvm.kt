@@ -26,6 +26,15 @@ actual class PlatformAuthSessionStore actual constructor(
             return
         }
         file.writeText(json.encodeToString(StoredAuthSession.serializer(), session))
+        file.keepPrivate()
     }
+}
+
+/** Only the owner of the computer account may read the tokens of the session. */
+private fun File.keepPrivate() {
+    setReadable(false, false)
+    setReadable(true, true)
+    setWritable(false, false)
+    setWritable(true, true)
 }
 

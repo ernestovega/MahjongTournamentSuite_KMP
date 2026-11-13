@@ -5,3 +5,35 @@ html, body {
     padding: 0;
     overflow: hidden;
 }
+
+/* The colors of the theme of the app (MtsTheme), so the page does not change color when the app starts. */
+html {
+    background: #F2FFFA;
+}
+
+html[data-theme="dark"] {
+    background: #414141;
+}
+
+/* Shows while the browser loads the app. The app draws in a shadow root of the body, which hides this. */
+.mts-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    height: 100%;
+}
+
+.mts-loading img {
+    width: 96px;
+    height: 96px;
+}
+
+.mts-loading .track {
+    stroke: rgba(0, 177, 106, 0.2);
+}
+
+.mts-loading .arc {
+    stroke: #00B16A;
+}

@@ -11,4 +11,10 @@ rm -rf "$out"
 mkdir -p "$out/admin"
 cp -R playerApp/build/dist/wasmJs/productionExecutable/. "$out/"
 cp -R adminApp/build/dist/wasmJs/productionExecutable/. "$out/admin/"
+# firebase.json lets browsers keep every .wasm file for a year without asking again. That is only safe while the
+# name of each file is the hash of its content, so a new build gets new names.
+if find "$out" -name '*.wasm' | grep -Ev '/[0-9a-f]{16,}\.wasm$'; then
+  echo "A .wasm file above has no content hash in its name. Fix the build or the cache rule in firebase.json." >&2
+  exit 1
+fi
 echo "Web hosting files in $out"
