@@ -1,7 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -10,7 +9,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -20,6 +23,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -52,7 +57,8 @@ private val AxisSpace = 24.dp
 
 /**
  * A frame for the round charts: a canvas as wide as the card, or wider when the rounds do not fit, then it scrolls
- * sideways and starts at the end, where the last rounds are. A tap selects the round under the finger.
+ * sideways from the first round. The pointer selects the round under it: a hover with a mouse, a press with a finger.
+ * The draw gets `active` while the pointer is over the chart or pressed on it, so the tooltip shows only then.
  */
 @Composable
 private fun RoundCanvas(
@@ -61,22 +67,38 @@ private fun RoundCanvas(
     onSelect: (Int) -> Unit,
     modifier: Modifier,
     description: String?,
-    draw: DrawScope.(slot: Float) -> Unit,
+    draw: DrawScope.(slot: Float, active: Boolean) -> Unit,
 ) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val width = if (RoundSlotWidth * rounds > maxWidth) RoundSlotWidth * rounds else maxWidth
         val scroll = rememberScrollState()
-        LaunchedEffect(rounds, scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
+        var active by remember { mutableStateOf(false) }
+        val select by rememberUpdatedState(onSelect)
         Canvas(
             Modifier.horizontalScroll(scroll).width(width).height(height)
                 .semantics { if (description != null) contentDescription = description }
                 .pointerInput(rounds) {
-                    detectTapGestures { offset ->
-                        val slot = size.width.toFloat() / rounds.coerceAtLeast(1)
-                        onSelect((offset.x / slot).toInt().coerceIn(0, rounds - 1))
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent()
+                            val change = event.changes.firstOrNull() ?: continue
+                            val mouse = change.type == PointerType.Mouse
+                            active = when (event.type) {
+                                PointerEventType.Exit -> false
+                                // A finger shows the tooltip while it presses. A mouse keeps it while it hovers.
+                                PointerEventType.Release -> mouse
+                                PointerEventType.Press, PointerEventType.Enter -> true
+                                PointerEventType.Move -> mouse || change.pressed
+                                else -> active
+                            }
+                            if (active) {
+                                val slot = size.width.toFloat() / rounds.coerceAtLeast(1)
+                                select((change.position.x / slot).toInt().coerceIn(0, rounds - 1))
+                            }
+                        }
                     }
                 },
-        ) { draw(size.width / rounds.coerceAtLeast(1)) }
+        ) { draw(size.width / rounds.coerceAtLeast(1), active) }
     }
 }
 
@@ -151,7 +173,9 @@ fun RoundBarChart(
     val colors = MaterialTheme.colorScheme
     // The negative parts, like a negative score, go down from the zero line. Without them the zero line is the bottom.
     val minValue = bars.minOfOrNull { bar -> bar.filter { it.value < 0 }.sumOf { it.value } }?.coerceAtMost(0.0) ?: 0.0
-    RoundCanvas(names.size, height, onSelect, modifier, tooltip) { slot ->
+    RoundCanvas(names.size, height, onSelect, modifier, tooltip) { slot, active ->
+        // The tooltip shows only while the pointer is on the chart.
+        val tip = tooltip.takeIf { active }
         selection(selected, slot, colors.primary.copy(alpha = 0.08f))
         val top = AxisSpace.toPx()
         val bottom = size.height - AxisSpace.toPx()
@@ -177,13 +201,13 @@ fun RoundBarChart(
             }
             if (index == selected) selectedTop = up
             val label = labels.getOrNull(index) ?: if (parts.none { it.value != 0.0 }) "—" else null
-            if (label != null && !(index == selected && tooltip != null)) {
+            if (label != null && !(index == selected && tip != null)) {
                 val layout = measurer.measure(label, TextStyle(fontSize = 11.sp, color = colors.onSurface, fontWeight = FontWeight.Bold))
                 drawText(layout, topLeft = Offset(slot * index + (slot - layout.size.width) / 2f, (up - layout.size.height - 2.dp.toPx()).coerceAtLeast(0f)))
             }
         }
         roundNames(names, slot, selected, measurer, colors.onSurfaceVariant, colors.primary)
-        if (tooltip != null && selected != null) tooltip(tooltip, selected, slot, selectedTop, measurer, colors.inverseSurface, colors.inverseOnSurface)
+        if (tip != null && selected != null) tooltip(tip, selected, slot, selectedTop, measurer, colors.inverseSurface, colors.inverseOnSurface)
     }
 }
 
@@ -210,7 +234,9 @@ fun RoundLineChart(
 ) {
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
-    RoundCanvas(names.size, height, onSelect, modifier, tooltip) { slot ->
+    RoundCanvas(names.size, height, onSelect, modifier, tooltip) { slot, active ->
+        // The tooltip shows only while the pointer is on the chart.
+        val tip = tooltip.takeIf { active }
         selection(selected, slot, colors.primary.copy(alpha = 0.08f))
         val top = AxisSpace.toPx()
         val bottom = size.height - AxisSpace.toPx()
@@ -249,7 +275,7 @@ fun RoundLineChart(
         val value = selected?.let { first?.values?.getOrNull(it) }
         // With a tooltip, the selected round has its value in the tooltip.
         val labelled: List<Int> = (if (allValues) first?.values?.indices?.toList().orEmpty() else listOfNotNull(selected))
-            .filterNot { tooltip != null && it == selected }
+            .filterNot { tip != null && it == selected }
         labelled.forEach { index ->
             val v = first?.values?.getOrNull(index) ?: return@forEach
             val bold = index == selected
@@ -263,8 +289,8 @@ fun RoundLineChart(
             drawText(layout, topLeft = Offset(x, ty))
         }
         roundNames(names, slot, selected, measurer, colors.onSurfaceVariant, colors.primary)
-        if (selected != null && tooltip != null) {
-            tooltip(tooltip, selected, slot, value?.let { y(it) } ?: ((top + bottom) / 2f), measurer, colors.inverseSurface, colors.inverseOnSurface)
+        if (selected != null && tip != null) {
+            tooltip(tip, selected, slot, value?.let { y(it) } ?: ((top + bottom) / 2f), measurer, colors.inverseSurface, colors.inverseOnSurface)
         }
     }
 }

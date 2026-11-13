@@ -211,6 +211,8 @@ fun PlayerStatisticsPanel(
     header: (@Composable () -> Unit)? = null,
     /** A card above all other cards, for example the standing of the player in the tournament. */
     leading: (@Composable (Modifier) -> Unit)? = null,
+    /** A card after the places, for example the rounds of the player in the tournament. */
+    afterPlaces: (@Composable (Modifier) -> Unit)? = null,
     /** The tournaments of the results. They give the date and time of each table in the place history. */
     tournaments: List<Tournament> = emptyList(),
     /** Display name of every rival key. See `RivalTally.opponent`. */
@@ -240,8 +242,9 @@ fun PlayerStatisticsPanel(
                     header?.invoke()
                     leading?.invoke(Modifier.fillMaxWidth())
                     SkillsCard(statistics, Modifier.fillMaxWidth())
-                    PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                     OverviewCard(statistics, Modifier.fillMaxWidth())
+                    PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
+                    afterPlaces?.invoke(Modifier.fillMaxWidth())
                     RecordsCard(statistics, tournaments, loadStandings, Modifier.fillMaxWidth())
                     RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
                 }
@@ -249,8 +252,9 @@ fun PlayerStatisticsPanel(
                 header?.invoke()
                 leading?.invoke(Modifier.fillMaxWidth())
                 SkillsCard(statistics, Modifier.fillMaxWidth())
-                PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                 OverviewCard(statistics, Modifier.fillMaxWidth())
+                PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
+                afterPlaces?.invoke(Modifier.fillMaxWidth())
                 RecordsCard(statistics, tournaments, loadStandings, Modifier.fillMaxWidth())
                 RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
             }
