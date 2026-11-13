@@ -1,5 +1,8 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsScrollableTabRow
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,9 +29,6 @@ import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -70,6 +70,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIco
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
+import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabContentColor
+import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabRowColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
@@ -210,13 +212,9 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             if (scopes.size > 1) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    PrimaryScrollableTabRow(
+                    MtsScrollableTabRow(
                         modifier = Modifier.weight(1f),
                         selectedTabIndex = scopes.indexOf(scope),
-                        edgePadding = 0.dp,
-                        containerColor = tabRowColor(),
-                        contentColor = TabContentColor,
-                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(scopes.indexOf(scope)), color = TabContentColor) },
                     ) {
                         scopes.forEach { item ->
                             CompactTab(selected = item == scope, onClick = { scope = item }, title = item.title(), trackingName = item.name)
@@ -414,11 +412,8 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
         HideOnScrollTabs(tab) {
             // The tab row touches the top tab row and has the same width. The content under it has its own padding.
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                PrimaryTabRow(
+                MtsTabRow(
                     selectedTabIndex = tabs.indexOf(tab),
-                    containerColor = tabRowColor(),
-                    contentColor = TabContentColor,
-                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tabs.indexOf(tab)), color = TabContentColor) },
                     modifier = Modifier.widthIn(max = 720.dp),
                 ) {
                     tabs.forEach { item ->
@@ -591,7 +586,7 @@ private fun OthersStatistics(
 @Composable
 private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
     Row(
-        Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth().height(OthersBarHeight).background(tabRowColor()).padding(horizontal = 16.dp),
+        Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth().height(OthersBarHeight).background(mtsTabRowColor()).padding(horizontal = 16.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -604,7 +599,7 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
                 profile.name,
                 Modifier.weight(1f, fill = false),
                 style = MaterialTheme.typography.titleMedium,
-                color = TabContentColor,
+                color = mtsTabContentColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
@@ -613,8 +608,8 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
             onClick = onChange,
             modifier = Modifier.height(32.dp),
             contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-            colors = ButtonDefaults.outlinedButtonColors(contentColor = TabContentColor),
-            border = BorderStroke(1.dp, TabContentColor),
+            colors = ButtonDefaults.outlinedButtonColors(contentColor = mtsTabContentColor()),
+            border = BorderStroke(1.dp, mtsTabContentColor()),
         ) {
             Icon(Icons.Default.SwapHoriz, contentDescription = null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
@@ -633,11 +628,8 @@ private val OthersMaxWidth = 720.dp
 @Composable
 private fun OthersViewTabs(view: OthersView, onChoose: (OthersView) -> Unit) {
     val views = OthersView.entries
-    PrimaryTabRow(
+    MtsTabRow(
         selectedTabIndex = views.indexOf(view),
-        containerColor = tabRowColor(),
-        contentColor = TabContentColor,
-        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(views.indexOf(view)), color = TabContentColor) },
         modifier = Modifier.widthIn(max = OthersMaxWidth),
     ) {
         views.forEach { item ->

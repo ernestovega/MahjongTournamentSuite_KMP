@@ -1,5 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -58,10 +60,8 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -140,6 +140,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.SuiteApp
 import com.etologic.mahjongtournamentsuite.presentation.platform.currentAppSwitcher
 import com.etologic.mahjongtournamentsuite.presentation.platform.loadBrowserCredentials
 import com.etologic.mahjongtournamentsuite.presentation.platform.saveBrowserCredentials
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
@@ -429,11 +430,8 @@ fun TournamentsScreen(navController: NavHostController) {
                 // The tabs use the color of the top bar.
                 HideOnScrollTabs(tab) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                        PrimaryTabRow(
+                        MtsTabRow(
                             selectedTabIndex = tab,
-                            containerColor = tabRowColor(),
-                            contentColor = TabContentColor,
-                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tab), color = TabContentColor) },
                             modifier = Modifier.widthIn(max = 720.dp),
                         ) {
                             listOf(stringResource(Res.string.tournaments_title), stringResource(Res.string.stats_title)).forEachIndexed { index, title ->
@@ -583,13 +581,13 @@ private fun OutlinedTag(color: Color, content: @Composable RowScope.() -> Unit) 
     )
 }
 
-/** The blue of the upcoming tournaments. It is lighter in the dark theme, so it stays visible. */
+/** The blue of the upcoming tournaments. The design system makes it lighter in the dark theme. */
 @Composable
-private fun upcomingBlue(): Color = if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) Color(0xFF4D9BFF) else Color(0xFF1565C0)
+private fun upcomingBlue(): Color = MtsTheme.colors.info
 
-/** The color of the text on the blue: white on the dark blue, black on the light blue. */
+/** The color of the text on the blue. */
 @Composable
-private fun onUpcomingBlue(): Color = if (upcomingBlue().luminance() > 0.4f) Color.Black else Color.White
+private fun onUpcomingBlue(): Color = MtsTheme.colors.onInfo
 
 /** The color of a tournament status, in the chips of the cards and in the status filter. */
 @Composable
@@ -982,11 +980,8 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, req
                 HideOnScrollTabs(shownTab) {
                     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                         val selectedIndex = mainTabs.indexOf(shownTab)
-                        PrimaryTabRow(
+                        MtsTabRow(
                             selectedTabIndex = selectedIndex,
-                            containerColor = tabRowColor(),
-                            contentColor = TabContentColor,
-                            indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(selectedIndex), color = TabContentColor) },
                             modifier = Modifier.widthIn(max = TournamentColumnWidth),
                         ) {
                             mainTabs.forEach { id ->
@@ -1027,11 +1022,8 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, req
                     when (shownTab) {
                         MainTab.TABLES -> {
                             HideOnScrollTabs(tablesTab) {
-                                PrimaryTabRow(
+                                MtsTabRow(
                                     selectedTabIndex = tablesTab,
-                                    containerColor = tabRowColor(),
-                                    contentColor = TabContentColor,
-                                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(tablesTab), color = TabContentColor) },
                                 ) {
                                     tablesTabs.forEachIndexed { index, id ->
                                         val title = when (id) {
@@ -1548,11 +1540,8 @@ internal fun RankingTab(view: PlayerTournamentView, onPlayerClick: (Int) -> Unit
             if (kinds.size > 1) {
                 val selectedIndex = kinds.indexOf(kind)
                 HideOnScrollTabs(kinds.size) {
-                    PrimaryTabRow(
+                    MtsTabRow(
                         selectedTabIndex = selectedIndex,
-                        containerColor = tabRowColor(),
-                        contentColor = TabContentColor,
-                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(selectedIndex), color = TabContentColor) },
                     ) {
                         kinds.forEach { item ->
                             CompactTab(
@@ -1661,7 +1650,7 @@ private fun RankingCard(row: RankingRow, onPlayerClick: (Int) -> Unit) {
             // Gold, silver and bronze for the first three places, softened so the text stays readable.
             containerColor = if (row.position in 1..3) {
                 // The first place uses a bright, light yellow so it is easy to tell from bronze.
-                val medal = if (row.position == 1) Color(0xFFFFE259) else positionColor(row.position)
+                val medal = if (row.position == 1) MtsTheme.colors.firstPlaceHighlight else positionColor(row.position)
                 medal.copy(alpha = if (row.position == 1) 0.55f else 0.35f).compositeOver(colors.surfaceContainerHigh)
             } else {
                 colors.surfaceContainerHigh
@@ -1884,7 +1873,6 @@ private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details:
  */
 @Composable
 private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
-    val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     table.hands.sortedByDescending { it.handId }.forEach { hand ->
         val penalties = hand.penaltyRows().asReversed()
         if (!hand.isDone && penalties.isEmpty()) return@forEach
@@ -1900,7 +1888,7 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
                     HandNumber(hand.handId)
                 }
                 Column(Modifier.weight(1f)) {
-                    if (hand.isDone) HandRow(view, hand, dark)
+                    if (hand.isDone) HandRow(view, hand)
                     penalties.forEachIndexed { index, values ->
                         if (hand.isDone || index > 0) HorizontalDivider(Modifier.padding(start = 8.dp, end = 12.dp))
                         PenaltyRow(view, table.seatIds(), values)
@@ -1928,7 +1916,7 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values
             val lines = values.withIndex().filter { it.value != 0 }.sortedBy { it.value > 0 }
             lines.forEach { (seat, value) ->
                 val receives = value > 0
-                val accent = if (receives) WinnerColor else MaterialTheme.colorScheme.error
+                val accent = if (receives) MtsTheme.colors.gain else MaterialTheme.colorScheme.error
                 Row(
                     Modifier.padding(start = if (receives) 16.dp else 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -1961,7 +1949,7 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values
  * chicken are on the second line. The score is at the end of the row.
  */
 @Composable
-private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) {
+private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
     val winnerSlot = hand.playerWinnerId.toIntOrNull()
     val loserSlot = hand.playerLooserId.toIntOrNull()
     val kind = hand.kind()
@@ -1978,14 +1966,14 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand, dark: Boolean) 
                         Modifier.weight(1f, fill = false),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
-                        color = WinnerColor,
+                        color = MtsTheme.colors.gain,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                WinTypePill(kind, kind.accent(dark, MaterialTheme.colorScheme.error))
+                WinTypePill(kind, kind.accent())
                 if (kind == HandKind.DISCARD) {
                     Row(
                         Modifier.weight(1f, fill = false),
@@ -2080,11 +2068,12 @@ private fun HandChip(icon: ImageVector, text: String, accent: Color, small: Bool
     }
 }
 
-/** Green for a self-pick, the error red for a discard and grey for a draw. The dark theme gets lighter shades. */
-private fun HandKind.accent(dark: Boolean, error: Color): Color = when (this) {
-    HandKind.SELF_PICK -> if (dark) Color(0xFF66BB6A) else Color(0xFF2E7D32)
-    HandKind.DISCARD -> error
-    HandKind.DRAW -> if (dark) Color(0xFFBDBDBD) else Color(0xFF757575)
+/** Green for a self-pick, the error red for a discard and grey for a draw. */
+@Composable
+private fun HandKind.accent(): Color = when (this) {
+    HandKind.SELF_PICK -> MtsTheme.colors.selfPick
+    HandKind.DISCARD -> MaterialTheme.colorScheme.error
+    HandKind.DRAW -> MtsTheme.colors.draw
 }
 
 private fun HandKind.icon(): ImageVector = when (this) {
@@ -2092,9 +2081,6 @@ private fun HandKind.icon(): ImageVector = when (this) {
     HandKind.DISCARD -> Icons.Default.SwapHoriz
     HandKind.DRAW -> Icons.Default.HorizontalRule
 }
-
-/** The color of the winner in the hand list, the counterpart of the red loser. Same green as the gains of the hand review. */
-private val WinnerColor = Color(0xFF00934C)
 
 /** Shows a polling message once. The dialog returns only after the message went away and came back. */
 @Composable

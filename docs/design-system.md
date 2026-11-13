@@ -4,7 +4,7 @@ The suite has a light design system on top of Material 3. Material keeps the col
 shapes. The design system adds what Material does not have, and every screen reads it through `MtsTheme`, like
 `MaterialTheme`.
 
-Status: phase 1 in progress. The admin app and `ui` read the domain colors from `MtsTheme.colors`, and every tab row is `MtsTabRow` with `CompactTab` (ui) or `MtsTab` (designsystem). The player app follows.
+Status: phase 1 done. Both apps and `ui` read the domain colors from `MtsTheme.colors` (two raw colors are left on purpose: the black center of the master medal and the black or white text on a computed background), and every tab row is `MtsTabRow` or `MtsScrollableTabRow` with `CompactTab` (ui). Next: phase 3 (layout tokens) and phase 4 (spacing and shapes, screen by screen).
 
 ## The `designsystem` module
 

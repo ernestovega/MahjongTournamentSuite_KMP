@@ -38,7 +38,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -58,6 +57,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -128,8 +128,6 @@ import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedButt
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
-
-private val GainColor = Color(0xFF00934C)
 
 /** A penalty that the player is writing. The amount is a positive number. The app shows the minus sign. */
 private data class PenaltyDraft(val seat: Int? = null, val amount: String = "", val shared: Boolean = false) {
@@ -596,7 +594,7 @@ private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats
         Text(view.firstNameOf(slot), Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1)
         Text("-${penalty.amount}", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
         if (penalty.shared) {
-            Text(stringResource(Res.string.entry_others_each, penalty.amount / 3), color = GainColor)
+            Text(stringResource(Res.string.entry_others_each, penalty.amount / 3), color = MtsTheme.colors.gain)
         }
     }
 }
@@ -811,7 +809,7 @@ private fun ReviewHand(
                 textAlign = TextAlign.End,
                 fontWeight = FontWeight.Bold,
                 color = when {
-                    change > 0 -> GainColor
+                    change > 0 -> MtsTheme.colors.gain
                     change < 0 -> MaterialTheme.colorScheme.error
                     else -> MaterialTheme.colorScheme.onSurface
                 },

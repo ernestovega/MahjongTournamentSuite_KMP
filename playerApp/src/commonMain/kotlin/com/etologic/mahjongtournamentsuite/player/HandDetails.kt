@@ -39,6 +39,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.details_col_hand
 import mahjongtournamentsuite.playerapp.generated.resources.details_col_loser
@@ -53,8 +54,6 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val MIN_HAND_SCORE = 8
 private const val LOSER_COUNT = 3
-
-private val DetailGain = Color(0xFF00934C)
 
 /**
  * The penalties of a hand. Each ";" separated part of the seat texts is one penalty.
@@ -239,7 +238,7 @@ private fun androidx.compose.foundation.layout.RowScope.NumberCell(
 @Composable
 private fun penaltyColor(value: Int, muted: Boolean): Color = when {
     value == 0 || muted -> MaterialTheme.colorScheme.onSurfaceVariant
-    value > 0 -> DetailGain
+    value > 0 -> MtsTheme.colors.gain
     else -> MaterialTheme.colorScheme.error
 }
 
@@ -262,7 +261,7 @@ private fun ResultLine(row: DetailRow.Result) {
         repeat(4) { seat ->
             val color = when {
                 row.winnerSeat == null -> MaterialTheme.colorScheme.onSurface
-                seat == row.winnerSeat -> DetailGain
+                seat == row.winnerSeat -> MtsTheme.colors.gain
                 row.loserSeat == null || seat == row.loserSeat -> MaterialTheme.colorScheme.error
                 else -> MaterialTheme.colorScheme.onSurface
             }

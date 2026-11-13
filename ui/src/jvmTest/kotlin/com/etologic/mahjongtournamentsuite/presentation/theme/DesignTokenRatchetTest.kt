@@ -14,7 +14,7 @@ import kotlin.test.assertTrue
  */
 class DesignTokenRatchetTest {
     /** The counts on main when the ratchet started (2026-11-13, lowered by phase 1). Lower them as the screens move to the tokens. */
-    private val baselineRawColors = 12
+    private val baselineRawColors = 2
     private val baselineRawCornerShapes = 27
     private val baselineOffScaleSpacings = 76
 

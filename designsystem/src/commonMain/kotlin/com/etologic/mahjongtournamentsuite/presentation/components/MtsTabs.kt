@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRowDefaults
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -40,6 +42,27 @@ fun MtsTabRow(
     PrimaryTabRow(
         selectedTabIndex = selectedTabIndex,
         modifier = modifier,
+        containerColor = mtsTabRowColor(),
+        contentColor = content,
+        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(selectedTabIndex), color = content) },
+        tabs = tabs,
+    )
+}
+
+/** [MtsTabRow] that scrolls sideways when its tabs do not fit. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MtsScrollableTabRow(
+    selectedTabIndex: Int,
+    modifier: Modifier = Modifier,
+    edgePadding: Dp = 0.dp,
+    tabs: @Composable () -> Unit,
+) {
+    val content = mtsTabContentColor()
+    PrimaryScrollableTabRow(
+        selectedTabIndex = selectedTabIndex,
+        modifier = modifier,
+        edgePadding = edgePadding,
         containerColor = mtsTabRowColor(),
         contentColor = content,
         indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(selectedTabIndex), color = content) },
