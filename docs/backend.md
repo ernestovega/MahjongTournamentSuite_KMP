@@ -174,7 +174,7 @@ These routes need no sign-in. Every other route needs a valid token and a role c
 
 - `/auth/signIn`, `/auth/passwordReset` and `/auth/refresh` allow a limited number of requests for each client address. The counter lives in one function instance.
 - `/auth/passwordReset` answers `200` for an unknown email, so the answer does not show which emails have an account.
-- Every write (`POST`, `PUT`, `DELETE`) is limited to 120 requests per minute for each address and token. The counter lives in one function instance.
+- Every write (`POST`, `PUT`, `DELETE`) is limited to 120 requests per minute for each address and token, to 600 per minute for each address, and to 120 per minute for each signed-in user from every address. The counters live in one function instance.
 - An editor cannot save a table of a completed tournament. Only an admin can.
 - A tournament id in a route must not contain `/`.
 - The hosting sites send `X-Content-Type-Options`, `Referrer-Policy`, `frame-ancestors 'none'` and `Permissions-Policy`.
