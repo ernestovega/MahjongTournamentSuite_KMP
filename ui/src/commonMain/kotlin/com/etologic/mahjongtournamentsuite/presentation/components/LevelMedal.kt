@@ -96,25 +96,25 @@ private val LevelIcons: Map<PlayerLevel, List<IconShape>> = mapOf(
     ),
     // A rocket that flies up to the right, with a window, two fins and a white flame.
     PlayerLevel.EXPERT to listOf(
-        IconShape("M9.84 11.79 H14.16 L12 17.41 Z", tint = Color.White, rotation = 45f),
-        IconShape("M8.54 7.87 L5.64 11.43 V13.66 L8.54 11.61 ZM15.46 7.87 L18.36 11.43 V13.66 L15.46 11.61 Z", rotation = 45f),
-        IconShape("M12 -2.43 C14.81 -0.17 15.65 3.57 15.65 7.12 V11.61 H8.35 V7.12 C8.35 3.57 9.19 -0.17 12 -2.43 Z", rotation = 45f),
-        IconShape("M12 2.64 A1.87 1.87 0 1 1 11.99 2.64 Z", detail = true, rotation = 45f),
+        IconShape("M9.67 15.27 H14.33 L12 21.34 Z", tint = Color.White, rotation = 45f),
+        IconShape("M8.26 11.04 L5.13 14.88 V17.29 L8.26 15.08 ZM15.74 11.04 L18.87 14.88 V17.29 L15.74 15.08 Z", rotation = 45f),
+        IconShape("M12 -0.09 C15.03 2.36 15.94 6.39 15.94 10.23 V15.08 H8.06 V10.23 C8.06 6.39 8.97 2.36 12 -0.09 Z", rotation = 45f),
+        IconShape("M9.98 7.41 A2.02 2.02 0 1 1 14.02 7.41 A2.02 2.02 0 1 1 9.98 7.41 Z", detail = true, rotation = 45f),
     ),
     // A black hole: a glowing ring, a black center and a tilted disc around it, like the rings of Saturn.
     // The disc starts at the edge of the ring, with no gap, and fades out. Its back half goes behind the center and
     // its front half over it.
     PlayerLevel.MASTER to listOf(
         IconShape(
-            "M-3 12 A15 15 0 0 1 27 12 H20.4 A8.4 8.4 0 0 0 3.6 12 Z",
+            "M-2.98 12.79 A15 15 0 1 1 26.98 12.79 L20.39 12.44 A8.4 8.4 0 1 0 3.61 12.44 Z",
             tint = Color.White,
             rotation = -18f,
             squash = 0.38f,
             fadeStart = 10.8f,
             fadeEnd = 15f,
         ),
-        IconShape("M12 4.6 A7.4 7.4 0 1 1 11.99 4.6 Z", stroke = 2.8f, tint = Color.White),
-        IconShape("M12 6.4 A5.6 5.6 0 1 1 11.99 6.4 Z", tint = Color(0xFF0B0B12)),
+        IconShape("M4.6 12 A7.4 7.4 0 1 1 19.4 12 A7.4 7.4 0 1 1 4.6 12 Z", stroke = 2.8f, tint = Color.White),
+        IconShape("M5.9 12 A6.1 6.1 0 1 1 18.1 12 A6.1 6.1 0 1 1 5.9 12 Z", tint = Color(0xFF0B0B12)),
         IconShape(
             "M-3 12 A15 15 0 0 0 27 12 H20.4 A8.4 8.4 0 0 1 3.6 12 Z",
             tint = Color.White,
