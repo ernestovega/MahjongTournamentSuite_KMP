@@ -77,4 +77,4 @@ The check **Kotlin tests** runs `./gradlew ktlintCheck`. The rules are in `.edit
 
 - **Done:** deploy on merge to `main`, the ruleset on `main`, all tests in the pull request to `main`, ktlint and Dependabot.
 - **Idea:** UI tests of the web apps with Playwright, in Chromium, Firefox and WebKit. The first tests would check that the app starts and draws the canvas.
-- **Pending, no date:** a release pipeline for the Android apps: build, signing, Play Store. It also turns on R8 (code shrinking and obfuscation) and resource shrinking. Both are off now (`isMinifyEnabled = false`).
+- **Pending, no date:** a release pipeline for the Android apps: build, signing, Play Store. R8 code and resource shrinking is on for release builds since 2026-11-13, without obfuscation (`proguard-rules.pro` in each app module).

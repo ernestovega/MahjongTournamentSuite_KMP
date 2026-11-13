@@ -61,7 +61,10 @@ android {
 
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            // R8 removes unused code and resources. The rules are in proguard-rules.pro.
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             signingConfigs.findByName("release")?.let { signingConfig = it }
         }
     }

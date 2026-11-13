@@ -20,6 +20,10 @@ keytool -genkeypair -v -keystore ~/keystores/mts-player-upload.jks -alias upload
   -keyalg RSA -keysize 2048 -validity 10000
 ```
 
+## Code shrinking
+
+The release build runs R8 (`isMinifyEnabled` and `isShrinkResources`). It removes unused code and resources but keeps the class names (`-dontobfuscate` in `proguard-rules.pro`): the app reads route and exception names at run time, and crash reports stay readable. The UI tests run on the debug build, so check a release build by hand after changing the rules or adding a library that uses reflection.
+
 ## Signing the release build
 
 The release build reads the keystore from `local.properties` (or from environment variables, for CI):
