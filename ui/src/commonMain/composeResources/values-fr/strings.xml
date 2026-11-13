@@ -353,13 +353,10 @@
     <string name="round_short">T%1$d</string>
     <string name="rounds_round_n">Tour %1$d</string>
     <string name="rounds_cumulative_note">Lignes : cumul jusqu’à chaque tour. Points : ce tour seul.</string>
-    <string name="rounds_place_detail">Tour %1$d : place %2$d sur %3$d</string>
-    <string name="rounds_points_detail">Tour %1$d · Table %2$d · place %3$d · %4$s points · score %5$d</string>
+    <string name="rounds_points_detail">Tour %1$d · Table %2$d · Place %3$d · %4$s points · Score %5$d</string>
     <string name="rounds_hands_detail">Tour %1$d · %2$d tables sur %3$d · %4$d mains · %5$d nulles · %6$d pénalités</string>
-    <string name="rounds_empty_detail">Le tour %1$d n’a pas encore de table terminée.</string>
-    <string name="rounds_column_table">Table</string>
-    <string name="rounds_column_place">Place</string>
-    <string name="rounds_column_won">Gagnées</string>
-    <string name="rounds_column_deal_ins">Défausses</string>
+    <string name="rounds_empty_detail">Tour %1$d · Aucune table terminée pour l’instant</string>
     <string name="rounds_team_points_detail">Tour %1$d · %2$s points</string>
+    <string name="rounds_avg_hand_value">Valeur moyenne de main</string>
+    <string name="rounds_place_points_detail">Tour %1$d · Place %2$d sur %3$d · %4$s points de table</string>
 </resources>

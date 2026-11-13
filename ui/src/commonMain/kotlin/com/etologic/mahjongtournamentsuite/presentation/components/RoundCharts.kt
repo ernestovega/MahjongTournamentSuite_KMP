@@ -21,15 +21,22 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlin.math.max
+import kotlin.math.min
 
 /** One part of a stacked bar. */
 data class BarPart(val value: Double, val color: Color)
@@ -53,6 +60,7 @@ private fun RoundCanvas(
     height: Dp,
     onSelect: (Int) -> Unit,
     modifier: Modifier,
+    description: String?,
     draw: DrawScope.(slot: Float) -> Unit,
 ) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
@@ -61,6 +69,7 @@ private fun RoundCanvas(
         LaunchedEffect(rounds, scroll.maxValue) { scroll.scrollTo(scroll.maxValue) }
         Canvas(
             Modifier.horizontalScroll(scroll).width(width).height(height)
+                .semantics { if (description != null) contentDescription = description }
                 .pointerInput(rounds) {
                     detectTapGestures { offset ->
                         val slot = size.width.toFloat() / rounds.coerceAtLeast(1)
@@ -87,6 +96,40 @@ private fun DrawScope.selection(index: Int?, slot: Float, color: Color) {
 }
 
 /**
+ * The tooltip of the selected round: a bubble over [anchorY], the top of its bar or its point. The text comes as
+ * "Round 3 · Table 1 · place 1": the first part is the title and every other part is a bullet point. Without room over
+ * the anchor, the bubble goes beside the round.
+ */
+private fun DrawScope.tooltip(text: String, index: Int, slot: Float, anchorY: Float, measurer: TextMeasurer, background: Color, content: Color) {
+    val parts = text.split(" · ")
+    val annotated = buildAnnotatedString {
+        withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(parts.first()) }
+        parts.drop(1).forEach { append("\n• $it") }
+    }
+    val padH = 8.dp.toPx()
+    val padV = 4.dp.toPx()
+    val gap = 8.dp.toPx()
+    val maxText = (min(size.width, 240.dp.toPx()) - 2 * padH).toInt().coerceAtLeast(1)
+    val layout = measurer.measure(annotated, TextStyle(fontSize = 11.sp, color = content), constraints = Constraints(maxWidth = maxText))
+    val w = layout.size.width + 2 * padH
+    val h = layout.size.height + 2 * padV
+    val center = slot * index + slot / 2f
+    var x: Float
+    var y: Float
+    if (anchorY - gap - h >= 0f) {
+        x = center - w / 2f
+        y = anchorY - gap - h
+    } else {
+        y = anchorY - h / 2f
+        x = if (center + slot / 2f + w <= size.width) center + slot / 2f else center - slot / 2f - w
+    }
+    x = x.coerceIn(0f, max(0f, size.width - w))
+    y = y.coerceIn(0f, max(0f, size.height - h))
+    drawRoundRect(background, Offset(x, y), Size(w, h), CornerRadius(8.dp.toPx()))
+    drawText(layout, topLeft = Offset(x + padH, y + padV))
+}
+
+/**
  * Stacked bars, one for each round, from zero up. [labels] go over the bars. A round with no parts shows a dash.
  * [maxValue] is the top of the scale, so several charts can share it.
  */
@@ -100,15 +143,18 @@ fun RoundBarChart(
     modifier: Modifier = Modifier,
     maxValue: Double = bars.maxOfOrNull { bar -> bar.sumOf { it.value } }?.takeIf { it > 0 } ?: 1.0,
     height: Dp = 180.dp,
+    /** The text of the selected round, in a bubble over its bar. Parts split by " · " show as bullet points. */
+    tooltip: String? = null,
 ) {
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
-    RoundCanvas(names.size, height, onSelect, modifier) { slot ->
+    RoundCanvas(names.size, height, onSelect, modifier, tooltip) { slot ->
         selection(selected, slot, colors.primary.copy(alpha = 0.08f))
         val top = AxisSpace.toPx()
         val bottom = size.height - AxisSpace.toPx()
         drawLine(colors.outlineVariant, Offset(0f, bottom), Offset(size.width, bottom), 1.dp.toPx())
         val barWidth = slot * 0.56f
+        var selectedTop = bottom
         bars.forEachIndexed { index, parts ->
             val left = slot * index + (slot - barWidth) / 2f
             var y = bottom
@@ -117,13 +163,15 @@ fun RoundBarChart(
                 drawRect(part.color, Offset(left, y - h), Size(barWidth, h))
                 y -= h
             }
+            if (index == selected) selectedTop = y
             val label = labels.getOrNull(index) ?: if (parts.none { it.value > 0 }) "—" else null
-            if (label != null) {
+            if (label != null && !(index == selected && tooltip != null)) {
                 val layout = measurer.measure(label, TextStyle(fontSize = 11.sp, color = colors.onSurface, fontWeight = FontWeight.Bold))
                 drawText(layout, topLeft = Offset(slot * index + (slot - layout.size.width) / 2f, (y - layout.size.height - 2.dp.toPx()).coerceAtLeast(0f)))
             }
         }
         roundNames(names, slot, selected, measurer, colors.onSurfaceVariant, colors.primary)
+        if (tooltip != null && selected != null) tooltip(tooltip, selected, slot, selectedTop, measurer, colors.inverseSurface, colors.inverseOnSurface)
     }
 }
 
@@ -143,10 +191,14 @@ fun RoundLineChart(
     inverted: Boolean = false,
     format: (Double) -> String = { it.toString() },
     height: Dp = 180.dp,
+    /** The text of the selected round, in a bubble over its point instead of the value. See [RoundBarChart]. */
+    tooltip: String? = null,
+    /** True writes the value over every point of the first line, not only over the selected one. */
+    allValues: Boolean = false,
 ) {
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
-    RoundCanvas(names.size, height, onSelect, modifier) { slot ->
+    RoundCanvas(names.size, height, onSelect, modifier, tooltip) { slot ->
         selection(selected, slot, colors.primary.copy(alpha = 0.08f))
         val top = AxisSpace.toPx()
         val bottom = size.height - AxisSpace.toPx()
@@ -183,10 +235,21 @@ fun RoundLineChart(
         // The value of the selected round, over its point on the first line.
         val first = series.firstOrNull()
         val value = selected?.let { first?.values?.getOrNull(it) }
-        if (selected != null && value != null) {
-            val layout = measurer.measure(format(value), TextStyle(fontSize = 11.sp, color = colors.onSurface, fontWeight = FontWeight.Bold))
-            val x = (slot * selected + (slot - layout.size.width) / 2f).coerceIn(0f, size.width - layout.size.width)
-            val py = y(value)
+        if (selected != null && tooltip != null) {
+            roundNames(names, slot, selected, measurer, colors.onSurfaceVariant, colors.primary)
+            tooltip(tooltip, selected, slot, value?.let { y(it) } ?: ((top + bottom) / 2f), measurer, colors.inverseSurface, colors.inverseOnSurface)
+            return@RoundCanvas
+        }
+        val labelled: List<Int> = if (allValues) first?.values?.indices?.toList().orEmpty() else listOfNotNull(selected)
+        labelled.forEach { index ->
+            val v = first?.values?.getOrNull(index) ?: return@forEach
+            val bold = index == selected
+            val layout = measurer.measure(
+                format(v),
+                TextStyle(fontSize = 11.sp, color = if (bold) colors.onSurface else colors.onSurfaceVariant, fontWeight = if (bold) FontWeight.Bold else null),
+            )
+            val x = (slot * index + (slot - layout.size.width) / 2f).coerceIn(0f, size.width - layout.size.width)
+            val py = y(v)
             val ty = if (py - layout.size.height - 8.dp.toPx() >= 0f) py - layout.size.height - 8.dp.toPx() else py + 8.dp.toPx()
             drawText(layout, topLeft = Offset(x, ty))
         }

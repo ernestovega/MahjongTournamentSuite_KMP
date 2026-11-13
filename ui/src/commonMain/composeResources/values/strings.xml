@@ -353,13 +353,10 @@
     <string name="round_short">R%1$d</string>
     <string name="rounds_round_n">Round %1$d</string>
     <string name="rounds_cumulative_note">Lines: everything up to each round. Dots: that round alone.</string>
-    <string name="rounds_place_detail">Round %1$d: place %2$d of %3$d</string>
-    <string name="rounds_points_detail">Round %1$d · Table %2$d · place %3$d · %4$s points · score %5$d</string>
+    <string name="rounds_points_detail">Round %1$d · Table %2$d · Place %3$d · %4$s points · Score %5$d</string>
     <string name="rounds_hands_detail">Round %1$d · %2$d of %3$d tables · %4$d hands · %5$d drawn · %6$d penalties</string>
-    <string name="rounds_empty_detail">Round %1$d has no finished table yet.</string>
-    <string name="rounds_column_table">Table</string>
-    <string name="rounds_column_place">Place</string>
-    <string name="rounds_column_won">Won</string>
-    <string name="rounds_column_deal_ins">Deal-ins</string>
+    <string name="rounds_empty_detail">Round %1$d · No finished table yet</string>
     <string name="rounds_team_points_detail">Round %1$d · %2$s points</string>
+    <string name="rounds_avg_hand_value">Avg. hand value</string>
+    <string name="rounds_place_points_detail">Round %1$d · Place %2$d of %3$d · %4$s table points</string>
 </resources>

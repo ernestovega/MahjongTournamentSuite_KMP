@@ -12,11 +12,13 @@ import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import androidx.compose.ui.test.runDesktopComposeUiTest
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -76,25 +78,28 @@ class RoundsCardsUiTest {
     }
 
     @Test
-    fun playerCardOpensOnThePlaceAndShowsEveryView() = runComposeUiTest {
+    fun playerCardOpensOnThePlaceAndShowsEveryView() = runDesktopComposeUiTest(width = 432, height = 1200) {
         val player = CalculateStatisticsUseCase()(players, tables()).players.first { it.playerId == 1 }
         show { PlayerRoundsCard(player.byRound(rounds), places = mapOf(1 to 4, 2 to 2, 3 to 1), playerCount = 4) }
         onNodeWithText("By round").assertExists()
         // The last played round is selected, and the place view comes first.
-        onNodeWithText("Round 3: place 1 of 4").assertExists()
+        onNodeWithContentDescription("Round 3 · Place 1 of 4 · 4 table points").assertExists()
         snapshot("rounds-player-place", onRoot().captureToImage())
 
         onNodeWithTag(roundViewTag(RoundView.POINTS)).performClick()
-        onNodeWithText("Round 3 · Table 1 · place 1 · 4 points · score 30", substring = true).assertExists()
+        onNodeWithContentDescription("Round 3 · Table 1 · Place 1 · 4 points · Score 30").assertExists()
         snapshot("rounds-player-points", onRoot().captureToImage())
 
         onNodeWithTag(roundViewTag(RoundView.SKILLS)).performClick()
         onNodeWithText("Lines: everything up to each round. Dots: that round alone.").assertExists()
         snapshot("rounds-player-skills", onRoot().captureToImage())
 
-        onNodeWithTag(roundViewTag(RoundView.TOTALS)).performClick()
-        onNodeWithText("Round 5").assertExists()
-        snapshot("rounds-player-totals", onRoot().captureToImage())
+        onNodeWithTag(roundViewTag(RoundView.HANDS)).performClick()
+        onNodeWithText("By discard (deal-in)").assertExists()
+        snapshot("rounds-player-hands", onRoot().captureToImage())
+        // A round without tables has no hands to show.
+        onNodeWithText("R5").performClick()
+        onNodeWithText("Round 5 · No finished table yet").assertExists()
     }
 
     @Test
@@ -118,7 +123,7 @@ class RoundsCardsUiTest {
                 teamCount = 2,
             )
         }
-        onNodeWithText("Round 3: place 1 of 2").assertExists()
+        onNodeWithContentDescription("Round 3 · Place 1 of 2 ·", substring = true).assertExists()
         onNodeWithTag(roundViewTag(RoundView.POINTS)).performClick()
         onNodeWithText("Player 1").assertExists()
         onNodeWithText("Player 2").assertExists()
@@ -126,10 +131,10 @@ class RoundsCardsUiTest {
     }
 
     @Test
-    fun tournamentCardShowsHandsSkillsAndRecords() = runComposeUiTest {
+    fun tournamentCardShowsHandsSkillsAndRecords() = runDesktopComposeUiTest(width = 432, height = 1200) {
         val statistics = CalculateStatisticsUseCase()(players, tables())
         show { TournamentRoundsCard(statistics.byRound(rounds), names) }
-        onNodeWithText("Round 3 · 1 of 1 tables", substring = true).assertExists()
+        onNodeWithContentDescription("Round 3 · 1 of 1 tables", substring = true).assertExists()
         snapshot("rounds-tournament-hands", onRoot().captureToImage())
 
         onNodeWithTag(roundViewTag(RoundView.SKILLS)).performClick()
