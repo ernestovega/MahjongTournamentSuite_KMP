@@ -188,7 +188,7 @@ App Check proves that a request comes from one of the apps and not from a script
 - The apps always send a token when they have one. The local test backend runs with the mode `off`.
 
 Turn it on in this order:
-1. In the Firebase console, open App Check. Register the web app with reCAPTCHA v3. Register the two Android apps with Play Integrity and add the SHA-256 of the signing key.
+1. In the Firebase console, open App Check. Register the web app with reCAPTCHA Enterprise (Fraud Defense; the classic reCAPTCHA v3 is deprecated there). Register the two Android apps with Play Integrity and add the SHA-256 of the signing key.
 2. Web: fill in `siteKey`, `apiKey` and `appId` at the top of `adminApp/src/webMain/resources/appcheck.js` and `playerApp/src/wasmJsMain/resources/appcheck.js`.
 3. Android: fill in `mts.appCheck.appId` and `mts.appCheck.apiKey` in the manifest of `androidApp` and `playerAndroidApp`.
 4. Set `APP_CHECK_MODE=monitor`, then deploy the API and both web sites. Publish the Android apps.
