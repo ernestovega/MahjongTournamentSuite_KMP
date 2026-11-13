@@ -5,7 +5,10 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import co.touchlab.kermit.Logger
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalAdaptiveTopBar
@@ -35,7 +38,7 @@ import org.koin.dsl.module
 @OptIn(ExperimentalTestApi::class)
 internal fun adminScreenshots(
     name: String,
-    modules: () -> List<Module> = { emptyList() },
+    modules: () -> List<Module> = { adminModules() },
     variants: List<Variant> = allVariants,
     ready: ComposeUiTest.() -> Unit = {},
     content: @Composable (NavHostController) -> Unit,
@@ -55,8 +58,20 @@ internal fun adminScreenshots(
             LocalAdaptiveTopBar provides true,
         ) {
             MtsTheme(useDarkTheme = variant.dark) {
-                ProvideCompactLayout { content(rememberNavController()) }
+                ProvideCompactLayout {
+                    // A real NavHost, so a screen that reads its back stack works. Screenshots never navigate.
+                    val navController = rememberNavController()
+                    NavHost(navController, startDestination = "screen") {
+                        composable("screen") { content(navController) }
+                    }
+                }
             }
         }
     }
+}
+
+/** Waits until [text] is on the screen: the data of the screen is loaded. */
+@OptIn(ExperimentalTestApi::class)
+internal fun ComposeUiTest.waitForText(text: String, substring: Boolean = false) {
+    waitUntil(timeoutMillis = 10_000) { onAllNodesWithText(text, substring = substring).fetchSemanticsNodes().isNotEmpty() }
 }

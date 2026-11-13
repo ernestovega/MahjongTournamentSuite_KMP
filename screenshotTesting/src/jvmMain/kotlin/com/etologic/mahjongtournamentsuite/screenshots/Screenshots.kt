@@ -3,12 +3,16 @@ package com.etologic.mahjongtournamentsuite.screenshots
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.graphics.toAwtImage
+import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
 import io.github.takahirom.roborazzi.captureRoboImage
+import java.io.File
+import javax.imageio.ImageIO
 
 /** The window sizes of the screenshots, in dp at density 1. Phone is compact (< 600 dp), tablet medium, desktop expanded. */
 enum class ScreenSize(val width: Int, val height: Int) {
@@ -50,7 +54,14 @@ fun screenshots(
             runDesktopComposeUiTest(variant.size.width, variant.size.height) {
                 setContent { content(variant) }
                 waitForIdle()
-                ready()
+                try {
+                    ready()
+                } catch (e: Throwable) {
+                    // The image of a screen that never got ready shows why: an error, an empty list, another text.
+                    val file = File("build/outputs/roborazzi/not-ready/$name/${variant.fileName}").apply { parentFile.mkdirs() }
+                    ImageIO.write(onRoot().captureToImage().toAwtImage(), "png", file)
+                    throw AssertionError("Not ready, see ${file.path}: ${e.message}", e)
+                }
                 waitForIdle()
                 onRoot().captureRoboImage("screenshots/$name/${variant.fileName}", roborazziOptions = options)
             }
