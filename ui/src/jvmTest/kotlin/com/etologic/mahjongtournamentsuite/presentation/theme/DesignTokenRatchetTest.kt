@@ -13,10 +13,10 @@ import kotlin.test.assertTrue
  * The theme package is not counted: it is where the raw values are defined.
  */
 class DesignTokenRatchetTest {
-    /** The counts on main when the ratchet started (2026-11-13). Lower them as the screens move to the tokens. */
-    private val baselineRawColors = 31
+    /** The counts on main when the ratchet started (2026-11-13, lowered by phase 1). Lower them as the screens move to the tokens. */
+    private val baselineRawColors = 12
     private val baselineRawCornerShapes = 27
-    private val baselineOffScaleSpacings = 77
+    private val baselineOffScaleSpacings = 76
 
     private val rawColor = Regex("""Color\(0x[0-9A-Fa-f]{6,8}\)""")
     private val rawCornerShape = Regex("""RoundedCornerShape\(""")

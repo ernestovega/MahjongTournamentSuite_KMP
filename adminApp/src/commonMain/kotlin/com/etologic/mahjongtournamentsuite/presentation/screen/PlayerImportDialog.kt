@@ -74,6 +74,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.rememberSpreads
 import com.etologic.mahjongtournamentsuite.presentation.presenter.PlayerImportPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.generatedFileName
@@ -285,14 +286,11 @@ fun PlayerImportDialog(
 /** What a cell of the preview shows. The colour and the tooltip follow it. */
 internal enum class ImportCellState { NORMAL, CHANGED, WARNING, ERROR, REMOVED }
 
-private val ChangedColor = Color(0xFF2E7D32)
-private val WarningColor = Color(0xFFB26A00)
-
 @Composable
 private fun ImportCellState.color(): Color = when (this) {
     ImportCellState.NORMAL -> MaterialTheme.colorScheme.onSurface
-    ImportCellState.CHANGED -> ChangedColor
-    ImportCellState.WARNING, ImportCellState.REMOVED -> WarningColor
+    ImportCellState.CHANGED -> MtsTheme.colors.changed
+    ImportCellState.WARNING, ImportCellState.REMOVED -> MtsTheme.colors.warning
     ImportCellState.ERROR -> MaterialTheme.colorScheme.error
 }
 

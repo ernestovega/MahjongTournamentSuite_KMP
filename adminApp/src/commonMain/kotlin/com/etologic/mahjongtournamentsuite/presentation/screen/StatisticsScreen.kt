@@ -19,8 +19,6 @@ import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -64,12 +62,11 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
-import com.etologic.mahjongtournamentsuite.presentation.components.TabContentColor
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
-import com.etologic.mahjongtournamentsuite.presentation.components.tabRowColor
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -239,11 +236,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             ResetScrollOnChange(LocalScreenScroll.current?.state, Triple(scope, emaId, chosenSlotText))
             // The tab row is as wide as its tabs, like in the player app, and sits in the middle.
             Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                PrimaryTabRow(
+                MtsTabRow(
                     selectedTabIndex = mainTabs.indexOf(selectedMainTab),
-                    containerColor = tabRowColor(),
-                    contentColor = TabContentColor,
-                    indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(mainTabs.indexOf(selectedMainTab)), color = TabContentColor) },
                     modifier = Modifier.widthIn(max = StatisticsTabWidth * mainTabs.size),
                 ) {
                     mainTabs.forEach { item ->
@@ -367,11 +361,8 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     Triple(StatisticsScope.PERSON_TOURNAMENTS, stringResource(Res.string.scope_by_tournaments), Icons.Default.EmojiEvents),
                 )
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    PrimaryTabRow(
+                    MtsTabRow(
                         selectedTabIndex = subTabs.indexOfFirst { it.first == scope },
-                        containerColor = tabRowColor(),
-                        contentColor = TabContentColor,
-                        indicator = { TabRowDefaults.PrimaryIndicator(Modifier.tabIndicatorOffset(subTabs.indexOfFirst { it.first == scope }), color = TabContentColor) },
                         modifier = Modifier.widthIn(max = StatisticsTabWidth * subTabs.size),
                     ) {
                         subTabs.forEach { (item, title, icon) ->

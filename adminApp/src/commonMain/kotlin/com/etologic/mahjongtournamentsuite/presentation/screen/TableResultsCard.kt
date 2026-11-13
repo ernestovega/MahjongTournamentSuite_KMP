@@ -26,7 +26,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
@@ -368,7 +368,7 @@ private fun ScoreCheckMark(check: ScoreCheck) {
             Icon(
                 Icons.Default.Check,
                 contentDescription = check.hint.asString(),
-                tint = ScoreOkColor,
+                tint = MtsTheme.colors.scoreOk,
                 modifier = Modifier.size(22.dp),
             )
         }
@@ -377,7 +377,7 @@ private fun ScoreCheckMark(check: ScoreCheck) {
                 signed(check.amount),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = ScoreWarningColor,
+                color = MtsTheme.colors.scoreWarning,
                 maxLines = 1,
             )
         }
@@ -385,12 +385,9 @@ private fun ScoreCheckMark(check: ScoreCheck) {
             Icon(
                 Icons.Default.Warning,
                 contentDescription = check.hint.asString(),
-                tint = if (check.accepted) ScoreWarningColor else MaterialTheme.colorScheme.error,
+                tint = if (check.accepted) MtsTheme.colors.scoreWarning else MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(22.dp),
             )
         }
     }
 }
-
-private val ScoreOkColor = Color(0xFF2E9E4F)
-private val ScoreWarningColor = Color(0xFFE08A00)

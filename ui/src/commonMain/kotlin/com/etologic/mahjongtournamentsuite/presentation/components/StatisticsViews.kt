@@ -37,7 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -132,7 +132,7 @@ fun AppEmptyState(icon: ImageVector, title: String, message: String, modifier: M
                 icon, contentDescription = null,
                 modifier = Modifier.padding(if (compact) 16.dp else 28.dp).size(if (compact) 32.dp else 56.dp),
                 // A light icon on the green circle, like the tab icons.
-                tint = Color.White.copy(alpha = 0.85f),
+                tint = MtsTheme.colors.onHeaderMuted,
             )
         }
         Text(title, style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)

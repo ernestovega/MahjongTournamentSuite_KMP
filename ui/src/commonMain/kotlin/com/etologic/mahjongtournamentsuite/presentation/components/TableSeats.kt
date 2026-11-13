@@ -43,6 +43,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 import com.etologic.mahjongtournamentsuite.domain.model.PointsDiff
 import com.etologic.mahjongtournamentsuite.domain.model.SeatDiffs
 import com.etologic.mahjongtournamentsuite.domain.model.calculateTableDiffs
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.chicken_hand
@@ -133,8 +134,6 @@ fun windOfChair(chair: Int, handNumber: Int): SeatWind =
 /** The wind of the round of a hand: hands 1 to 4 are East, 5 to 8 South, and so on. */
 fun roundWindOf(handNumber: Int): SeatWind = SeatWind.entries[(handNumber - 1).coerceIn(0, 15) / 4]
 
-private val GainColor = Color(0xFF00934C)
-
 @Composable
 fun WindIcon(wind: SeatWind, size: Dp = 24.dp, tint: Color = MaterialTheme.colorScheme.onSurface) {
     val painter = painterResource(
@@ -205,12 +204,7 @@ fun RankTrophy(rank: Int, size: Dp = 28.dp) {
 
 /** The color of the result of a position at a table. It matches the trophy. The fourth place is red. */
 @Composable
-fun positionColor(position: Int): Color = when (position) {
-    1 -> Color(0xFFFFAC33)
-    2 -> Color(0xFF8A99A8)
-    3 -> Color(0xFFA9632F)
-    else -> MaterialTheme.colorScheme.error
-}
+fun positionColor(position: Int): Color = MtsTheme.colors.position(position, MaterialTheme.colorScheme.error)
 
 /** The sad face of the player who finished fourth at a table. */
 @Composable
@@ -426,7 +420,7 @@ private fun DiffsTable(diffs: SeatDiffs) {
         stringResource(Res.string.place_3rd) to diffs.pointsToBeThird,
     ).mapNotNull { (label, value) -> value?.let { label to it } }
     if (rows.isEmpty()) {
-        Text(stringResource(Res.string.place_1st_long), style = MaterialTheme.typography.labelMedium, color = GainColor)
+        Text(stringResource(Res.string.place_1st_long), style = MaterialTheme.typography.labelMedium, color = MtsTheme.colors.gain)
         return
     }
     Column(horizontalAlignment = Alignment.CenterHorizontally) {

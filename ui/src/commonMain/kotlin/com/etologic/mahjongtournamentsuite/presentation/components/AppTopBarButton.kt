@@ -32,7 +32,7 @@ fun AppTopBarButton(
     onClick: () -> Unit,
     focusRequester: FocusRequester? = null,
     enabled: Boolean = true,
-    textColor: Color = Color.White,
+    textColor: Color = MtsTheme.colors.onHeader,
     iconContent: (@Composable () -> Unit)? = null,
     /** When false, the button shows only the icon. The text stays as the description and in the menu. */
     showLabel: Boolean = true,

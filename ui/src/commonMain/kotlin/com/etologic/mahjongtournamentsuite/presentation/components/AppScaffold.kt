@@ -53,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.ReportScreenLoading
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.action_back
 import mahjongtournamentsuite.ui.generated.resources.menu
@@ -194,9 +195,9 @@ fun AppScaffold(
 
                         val colors = TopAppBarDefaults.topAppBarColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            titleContentColor = Color.White,
-                            navigationIconContentColor = Color.White.copy(alpha = 0.85f),
-                            actionIconContentColor = Color.White.copy(alpha = 0.85f),
+                            titleContentColor = MtsTheme.colors.onHeader,
+                            navigationIconContentColor = MtsTheme.colors.onHeaderMuted,
+                            actionIconContentColor = MtsTheme.colors.onHeaderMuted,
                         )
 
                         when {
@@ -365,7 +366,7 @@ private fun TopBarOverflowMenu(isLoading: Boolean, icon: ImageVector = Icons.Def
     var menuOpen by remember { mutableStateOf(false) }
     Box {
         IconButton(onClick = { menuOpen = true }) {
-            Icon(icon, contentDescription = stringResource(Res.string.menu), tint = Color.White)
+            Icon(icon, contentDescription = stringResource(Res.string.menu), tint = MtsTheme.colors.onHeader)
         }
         DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
             CompositionLocalProvider(

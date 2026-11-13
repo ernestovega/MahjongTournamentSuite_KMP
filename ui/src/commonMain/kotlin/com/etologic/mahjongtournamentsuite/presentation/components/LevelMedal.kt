@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.level
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.roundToInt
@@ -56,13 +58,8 @@ import org.jetbrains.compose.resources.stringResource
 /** The colors of a level. [content] is the color of the icon and the text on the level color. */
 internal class LevelColors(val main: Color, val dark: Color, val content: Color)
 
-internal fun PlayerLevel.colors(): LevelColors = when (this) {
-    PlayerLevel.BEGINNER -> LevelColors(Color(0xFF8A99A8), Color(0xFF5F6E7D), Color.White)
-    PlayerLevel.INTERMEDIATE -> LevelColors(Color(0xFF02B16B), Color(0xFF017A4A), Color.White)
-    PlayerLevel.ADVANCED -> LevelColors(Color(0xFFF2692E), Color(0xFFB53B10), Color.White)
-    PlayerLevel.EXPERT -> LevelColors(Color(0xFF8E5CD9), Color(0xFF6538AD), Color.White)
-    PlayerLevel.MASTER -> LevelColors(Color(0xFF5B616E), Color(0xFF15181E), Color.White)
-}
+@Composable
+internal fun PlayerLevel.colors(): LevelColors = MtsTheme.colors.level(this).let { LevelColors(it.fill, it.rim, it.content) }
 
 /** A shape of an icon on a 24 by 24 grid. A stroke width above zero draws a line, else the shape is filled. */
 private class IconShape(
@@ -250,8 +247,6 @@ fun LevelMedalTag(
     }
 }
 
-private val GainGreen = Color(0xFF00934C)
-
 /** The change of the skill score caused by a table: a green arrow up, a red arrow down, or a flat value. */
 @Composable
 fun LevelChangeTag(change: Double, modifier: Modifier = Modifier) {
@@ -259,7 +254,7 @@ fun LevelChangeTag(change: Double, modifier: Modifier = Modifier) {
     val flat = abs(rounded) < 0.05
     val color = when {
         flat -> MaterialTheme.colorScheme.onSurfaceVariant
-        change > 0 -> GainGreen
+        change > 0 -> MtsTheme.colors.gain
         else -> MaterialTheme.colorScheme.error
     }
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
