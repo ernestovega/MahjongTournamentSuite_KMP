@@ -86,7 +86,8 @@ fun AppScaffold(
     floatingActionButton: @Composable (() -> Unit)? = null,
     floatingActionButtonPosition: FabPosition = FabPosition.End,
     autoFocusFirst: Boolean = true,
-    showBackgroundLogo: Boolean = false,
+    /** The faint app logo behind the content. By default it shows while the screen loads. */
+    showBackgroundLogo: Boolean = isLoading,
     content: @Composable () -> Unit,
 ) {
     val focusManager = LocalFocusManager.current
@@ -282,15 +283,11 @@ fun AppScaffold(
             containerColor = MaterialTheme.colorScheme.background,
         ) { padding ->
             Box(modifier = Modifier.padding(padding)) {
-                val contentWithBackground: @Composable () -> Unit = {
+                // The content stays in the same place whether the logo shows or not, so it keeps its state.
+                AppBackground(showLogo = showBackgroundLogo) {
                     CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
                         content()
                     }
-                }
-                if (showBackgroundLogo) {
-                    AppBackground(contentWithBackground)
-                } else {
-                    contentWithBackground()
                 }
             }
         }

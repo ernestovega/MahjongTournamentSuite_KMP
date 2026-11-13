@@ -1,9 +1,15 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -51,20 +57,32 @@ fun AppLogo(
     )
 }
 
+/**
+ * Draws [content] over the app logo, large and faint, in the middle. The logo fades in and out with [showLogo].
+ * The screens show it while they load, so the content area is not empty.
+ */
 @Composable
-fun AppBackground(content: @Composable () -> Unit) {
+fun AppBackground(showLogo: Boolean = true, content: @Composable () -> Unit) {
     val logo = themedAppLogo()
     Box(modifier = Modifier.fillMaxSize()) {
         if (logo != null) {
-            Image(
-                painter = logo,
-                contentDescription = null,
-                contentScale = ContentScale.Fit,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .size(420.dp)
-                    .alpha(0.10f),
-            )
+            AnimatedVisibility(
+                visible = showLogo,
+                modifier = Modifier.align(Alignment.Center),
+                enter = fadeIn(),
+                exit = fadeOut(),
+            ) {
+                Image(
+                    painter = logo,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .widthIn(max = 420.dp)
+                        .fillMaxWidth(0.7f)
+                        .aspectRatio(1f)
+                        .alpha(0.10f),
+                )
+            }
         }
         content()
     }
