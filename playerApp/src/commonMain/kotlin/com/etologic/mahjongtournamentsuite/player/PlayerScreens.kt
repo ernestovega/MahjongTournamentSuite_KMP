@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.components.AppLoading
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
 import androidx.compose.foundation.BorderStroke
@@ -262,7 +263,7 @@ fun SplashScreen(
             navController.navigate(TournamentRoute(openTournamentId))
         }
     }
-    Column(Modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterHorizontally) { CircularProgressIndicator() }
+    AppLoading()
 }
 
 @Composable

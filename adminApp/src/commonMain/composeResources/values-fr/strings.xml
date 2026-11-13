@@ -166,7 +166,6 @@
     <string name="time_is_up">Le temps est écoulé.</string>
     <string name="reset_timer">Réinitialiser le minuteur</string>
     <string name="set_time">Définir le temps</string>
-    <string name="mahjong_tournament_suite">Mahjong Tournament Suite</string>
     <string name="tournaments">Tournois</string>
     <string name="no_tournaments_yet">Pas encore de tournois</string>
     <string name="create_the_first_tournament_to_see">Créez le premier tournoi pour le voir ici.</string>
