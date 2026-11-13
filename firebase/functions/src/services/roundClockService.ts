@@ -5,6 +5,7 @@ import { conflict, notFound } from "../api/httpError";
 import { recordActivity } from "./activityLog";
 import type { ChangeActor } from "./changeLog";
 import { bumpGlobalDataVersion, tournamentVersionUpdate } from "./dataVersionsService";
+import { closeRoundsEndedByChange } from "./matchTimeCloseService";
 import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { readStoredMatchDuration } from "./tournamentSchedule";
 import {
@@ -84,12 +85,16 @@ export async function updateRoundClock(params: {
     const clocks = readStoredRoundClocks(tournament);
     if (after == null) clocks.delete(params.roundId);
     else clocks.set(params.roundId, after);
-    return { changed, nowMs, tournament: { ...tournament, roundClocks: Object.fromEntries(clocks) } };
+    return { changed, nowMs, before: tournament, tournament: { ...tournament, roundClocks: Object.fromEntries(clocks) } };
   });
   if (result.changed) {
     // The apps read the clocks with the tournament, so the shared revision of the tournaments changes too.
     await bumpGlobalDataVersion("tournaments");
     await scheduleRoundCloses(params.tournamentId, result.tournament, result.nowMs, params.roundId);
+    // An end that is already past gets no task, so the server closes the round now.
+    await closeRoundsEndedByChange({
+      tournamentId: params.tournamentId, before: result.before, after: result.tournament, nowMs: result.nowMs, onlyRoundId: params.roundId,
+    });
     await recordActivity({
       action: "round.clock",
       actor: params.actor,

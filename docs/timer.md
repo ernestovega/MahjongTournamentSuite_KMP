@@ -34,7 +34,7 @@ Editors of the tournament and admins can change a clock. Anyone can read them: `
 
 ### Close of a round
 
-When a clock starts, resumes or changes its time left, the server plans the close of the round at the new end (Cloud Tasks queue `closeRoundTablesTask`). A pause plans nothing, and a close that comes too early does nothing. There is no daily planning job any more.
+When a clock starts, resumes or changes its time left, the server plans the close of the round at the new end (Cloud Tasks queue `closeRoundTablesTask`). A pause plans nothing, and a close that comes too early does nothing. There is no daily planning job any more. A change that ends the round at once (Set time to zero, "started N minutes ago" longer than the match, a shorter match in the settings) gets no task: the server closes the round right away. It only does so for a round that was not over before the change, so an organizer can still fill an old round.
 
 ### Without network
 
