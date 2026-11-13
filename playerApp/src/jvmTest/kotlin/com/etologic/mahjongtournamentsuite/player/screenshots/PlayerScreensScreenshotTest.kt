@@ -5,7 +5,9 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
 import com.etologic.mahjongtournamentsuite.player.PlayerTab
+import com.etologic.mahjongtournamentsuite.player.RoundMoment
 import com.etologic.mahjongtournamentsuite.player.SignInScreen
 import com.etologic.mahjongtournamentsuite.player.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.player.StatisticsScreen
@@ -15,6 +17,7 @@ import com.etologic.mahjongtournamentsuite.player.TournamentPlayerScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
 import kotlin.test.Test
 
@@ -28,6 +31,11 @@ class PlayerScreensScreenshotTest {
         val title = titles.first { onAllNodesWithText(it).fetchSemanticsNodes().isNotEmpty() }
         onAllNodesWithText(title).onFirst().performClick()
         waitForIdle()
+    }
+
+    @Test
+    fun myTableReminder() = playerScreenshots("dialogs/my-table-reminder", variants = dialogVariants, ready = { waitForText("Go to my table") }) {
+        MyTableReminderDialog("Madrid Open 2026", roundId = 3, tableId = 7, moment = RoundMoment.StartedAgo(12 * 60_000L), onOpen = {}, onDismiss = {})
     }
 
     @Test

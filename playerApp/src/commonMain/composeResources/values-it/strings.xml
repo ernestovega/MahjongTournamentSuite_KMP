@@ -209,5 +209,5 @@
     <string name="my_table_awaiting_gong">In attesa del gong iniziale</string>
     <string name="my_table_started">Iniziato %1$s fa</string>
     <string name="my_table_go">Vai al mio tavolo</string>
-    <string name="my_table_dismiss">Chiudi il promemoria</string>
+    <string name="my_table_dismiss">Più tardi</string>
 </resources>

@@ -1,21 +1,14 @@
 package com.etologic.mahjongtournamentsuite.player
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.TableRestaurant
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,11 +19,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -46,8 +42,13 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderAction
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryReminderMoment
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.platform.SessionStateStorage
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -63,8 +64,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.my_table_title
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
-import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
 
 /** Where a round of the player is in time, for the reminder of the own table. */
 sealed interface RoundMoment {
@@ -171,11 +170,11 @@ private const val RECHECK_MS = 60_000L
 private const val TICK_MS = 15_000L
 
 /**
- * A reminder at the bottom of every screen: when the app opens or returns to the front and the signed-in player has a
+ * A dialog over every screen: when the app opens or returns to the front and the signed-in player has a
  * round in play or about to start, it says how long until the start, or since the gong, and opens the table.
  */
 @Composable
-internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionStorage: SessionStateStorage?) {
+internal fun MyTableReminder(navController: NavHostController, sessionStorage: SessionStateStorage?) {
     val presenter = koinInject<MyTableReminderPresenter>()
     val handled = remember(sessionStorage) { HandledReminders(sessionStorage) }
     var active by remember { mutableStateOf<MyActiveTable?>(null) }
@@ -237,7 +236,7 @@ internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionS
     // One "shown" for each round, the first time the reminder appears.
     LaunchedEffect(shown.key) { track(TelemetryReminderAction.SHOWN) }
 
-    MyTableReminderCard(
+    MyTableReminderDialog(
         tournamentName = shown.tournament.shortName.ifBlank { shown.tournament.name },
         roundId = shown.roundId,
         tableId = shown.tableId,
@@ -253,7 +252,6 @@ internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionS
             handled.add(shown.key)
             active = null
         },
-        modifier = Modifier.align(Alignment.BottomCenter),
     )
 }
 
@@ -279,55 +277,63 @@ internal fun myTableReminderTime(moment: RoundMoment): String = when (moment) {
     }
 }
 
+/**
+ * The reminder of the own table: a dialog in the middle of the screen that asks for an answer. Only its buttons close
+ * it, so a tap outside or Back does not hide it by mistake.
+ */
 @Composable
-internal fun MyTableReminderCard(
+internal fun MyTableReminderDialog(
     tournamentName: String,
     roundId: Int,
     tableId: Int,
     moment: RoundMoment,
     onOpen: () -> Unit,
     onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
 ) {
-    val container = MaterialTheme.colorScheme.primaryContainer
-    // The text on the green of the brand is white, like the top bar.
-    val content = MtsTheme.colors.onHeader
-    Box(
-        modifier
-            .fillMaxWidth()
-            .navigationBarsPadding()
-            .padding(MtsTheme.spacing.md),
-        contentAlignment = Alignment.BottomCenter,
-    ) {
-        Surface(
-            color = container,
-            contentColor = content,
-            shape = MaterialTheme.shapes.medium,
-            shadowElevation = 6.dp,
-            modifier = Modifier.widthIn(max = MtsTheme.contentWidth.form).fillMaxWidth().testTag(MY_TABLE_REMINDER_TAG),
-        ) {
-            Row(
-                Modifier.padding(start = MtsTheme.spacing.lg, top = MtsTheme.spacing.xs, bottom = MtsTheme.spacing.xs),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(Icons.Default.TableRestaurant, contentDescription = null)
+    val openRequester = remember { FocusRequester() }
+    val laterRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) { openRequester.requestFocus() }
+    TrackedDialog("MyTableReminder") {
+        AlertDialog(
+            modifier = Modifier.appFocusGroup().testTag(MY_TABLE_REMINDER_TAG),
+            onDismissRequest = {},
+            properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
+            icon = { Icon(Icons.Default.TableRestaurant, contentDescription = null, Modifier.size(48.dp)) },
+            title = { Text(stringResource(Res.string.my_table_title, tableId, roundId), textAlign = TextAlign.Center) },
+            text = {
                 Column(
-                    Modifier
-                        .weight(1f)
-                        .padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm)
-                        .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                    Modifier.fillMaxWidth().semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
                 ) {
-                    Text(stringResource(Res.string.my_table_title, tableId, roundId), style = MaterialTheme.typography.titleSmall)
-                    Text("$tournamentName · ${myTableReminderTime(moment)}", style = MaterialTheme.typography.bodySmall)
+                    Text(
+                        myTableReminderTime(moment),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(tournamentName, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center)
                 }
-                TextButton(onClick = onOpen, colors = ButtonDefaults.textButtonColors(contentColor = content)) {
+            },
+            confirmButton = {
+                FocusedButton(
+                    onClick = onOpen,
+                    focusRequester = openRequester,
+                    buttonModifier = Modifier.focusLoop(previous = laterRequester, next = laterRequester),
+                ) {
                     Text(stringResource(Res.string.my_table_go))
                 }
-                IconButton(onClick = onDismiss, colors = IconButtonDefaults.iconButtonColors(contentColor = content)) {
-                    Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.my_table_dismiss))
+            },
+            dismissButton = {
+                FocusedTextButton(
+                    onClick = onDismiss,
+                    focusRequester = laterRequester,
+                    buttonModifier = Modifier.focusLoop(previous = openRequester, next = openRequester),
+                ) {
+                    Text(stringResource(Res.string.my_table_dismiss))
                 }
-            }
-        }
+            },
+        )
     }
 }
 

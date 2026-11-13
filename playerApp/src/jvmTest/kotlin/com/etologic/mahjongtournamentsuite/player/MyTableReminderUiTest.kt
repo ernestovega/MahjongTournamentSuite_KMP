@@ -6,7 +6,6 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -93,7 +92,8 @@ class MyTableReminderUiTest {
 
         waitUntil(timeoutMillis = 5_000) { runCatching { onNodeWithTag(MY_TABLE_REMINDER_TAG).assertExists() }.isSuccess }
         onNodeWithText("Table 2 · Round 2").assertExists()
-        onNodeWithText("MO · Started 20 minutes ago").assertExists()
+        onNodeWithText("Started 20 minutes ago").assertExists()
+        onNodeWithText("MO").assertExists()
         onNodeWithText("Go to my table").performClick()
 
         waitForIdle()
@@ -108,7 +108,7 @@ class MyTableReminderUiTest {
         show(storage)
 
         waitUntil(timeoutMillis = 5_000) { runCatching { onNodeWithTag(MY_TABLE_REMINDER_TAG).assertExists() }.isSuccess }
-        onNodeWithContentDescription("Close the reminder").performClick()
+        onNodeWithText("Later").performClick()
         waitForIdle()
         onNodeWithTag(MY_TABLE_REMINDER_TAG).assertDoesNotExist()
         kotlin.test.assertEquals("t/2", storage.values["handledTableReminders"])

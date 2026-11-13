@@ -209,5 +209,5 @@
     <string name="my_table_awaiting_gong">Esperando el gong inicial</string>
     <string name="my_table_started">Empezó hace %1$s</string>
     <string name="my_table_go">Ir a mi mesa</string>
-    <string name="my_table_dismiss">Cerrar el aviso</string>
+    <string name="my_table_dismiss">Más tarde</string>
 </resources>

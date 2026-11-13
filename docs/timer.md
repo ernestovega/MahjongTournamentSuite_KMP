@@ -46,7 +46,7 @@ A player of a table can set the four seats from 10 minutes before the planned st
 
 ## Reminder of the own table (player app)
 
-When the player app opens or returns to the front, a signed-in player who plays a round that starts soon or is in play sees a reminder at the bottom of every screen: "Table 7 · Round 3" and "Starts in 6 minutes", "Waiting for the starting gong" or "Started 12 minutes ago". "Go to my table" opens the table.
+When the player app opens or returns to the front, a signed-in player who plays a round that starts soon or is in play sees a dialog in the middle of the screen: "Table 7 · Round 3", then "Starts in 6 minutes", "Waiting for the starting gong" or "Started 12 minutes ago", and the tournament. "Go to my table" opens the table and "Later" closes it. A tap outside or Back does not close it: the player must answer.
 
 - It shows from 10 minutes before the planned start (the same lead as the seats) until the end of the match, extra time included. The countdown uses the planned time; "Started ... ago" uses the round clock (pauses do not count).
 - A round with no clock shows "Waiting for the starting gong" for at most one match duration after the planned time.
