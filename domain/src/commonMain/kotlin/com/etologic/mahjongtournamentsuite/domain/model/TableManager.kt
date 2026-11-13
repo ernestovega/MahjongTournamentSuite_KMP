@@ -35,3 +35,11 @@ data class TableHand(
     val playerWestPenalty: String,
     val playerNorthPenalty: String,
 )
+
+private val WHOLE_NUMBER = Regex("^-?\\d+$")
+
+/**
+ * A score or penalty read the way the server reads it: digits with an optional minus sign, spaces around ignored.
+ * "+8" and "8.5" are not whole numbers. The shared scoring cases (testdata/scoring-cases.json) check this.
+ */
+fun String.toWholeNumberOrNull(): Int? = trim().takeIf { WHOLE_NUMBER.matches(it) }?.toIntOrNull()

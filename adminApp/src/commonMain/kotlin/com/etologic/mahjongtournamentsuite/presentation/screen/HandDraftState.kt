@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.key
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.domain.model.toWholeNumberOrNull
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.hand_chicken_maximum
 import mahjongtournamentsuite.adminapp.generated.resources.hand_invalid
@@ -99,7 +100,7 @@ internal class HandDraftState private constructor(
             val winnerId = playerWinnerId.trim()
             val loserId = normalizedLoserId
             val score = handScore.trim()
-            val parsedScore = score.toIntOrNull()
+            val parsedScore = score.toWholeNumberOrNull()
             val messages = mutableListOf<UiText>()
 
             if (winnerId.isEmpty() || score.isEmpty()) {
@@ -162,7 +163,7 @@ internal class HandDraftState private constructor(
             if (winnerId.isEmpty() && loserId.isNotEmpty()) return true
             if (winnerId.isEmpty() || score.isEmpty()) return true
 
-            val parsedScore = score.toIntOrNull() ?: return true
+            val parsedScore = score.toWholeNumberOrNull() ?: return true
             if (parsedScore < MIN_HAND_SCORE) return true
             if (isChickenHand && parsedScore > MAX_CHICKEN_HAND_SCORE) return true
             return false

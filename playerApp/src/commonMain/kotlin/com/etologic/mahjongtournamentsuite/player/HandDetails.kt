@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
+import com.etologic.mahjongtournamentsuite.domain.model.toWholeNumberOrNull
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
@@ -54,6 +55,7 @@ import org.jetbrains.compose.resources.stringResource
 
 private const val MIN_HAND_SCORE = 8
 private const val LOSER_COUNT = 3
+private const val MAX_CHICKEN_HAND_SCORE = 12
 
 /**
  * The penalties of a hand. Each ";" separated part of the seat texts is one penalty.
@@ -64,7 +66,7 @@ fun TableHand.penaltyRows(): List<List<Int>> {
         .map { text -> text.split(';').map { it.trim() } }
     val rows = parts.maxOf { it.size }
     return (0 until rows)
-        .map { row -> parts.map { seat -> seat.getOrNull(row)?.toIntOrNull() ?: 0 } }
+        .map { row -> parts.map { seat -> seat.getOrNull(row)?.toWholeNumberOrNull() ?: 0 } }
         .filter { values -> values.any { it != 0 } }
 }
 
@@ -83,7 +85,8 @@ fun TableHand.resultChange(seatIds: List<Int>): List<Int>? {
         return if (scoreText == "0" && !isChickenHand) List(4) { 0 } else null
     }
     if (winnerText.isEmpty() || scoreText.isEmpty()) return null
-    val score = scoreText.toIntOrNull()?.takeIf { it >= MIN_HAND_SCORE } ?: return null
+    val score = scoreText.toWholeNumberOrNull()?.takeIf { it >= MIN_HAND_SCORE } ?: return null
+    if (isChickenHand && score > MAX_CHICKEN_HAND_SCORE) return null
     val winnerSeat = seatIds.indexOf(winnerText.toIntOrNull() ?: return null).takeIf { it >= 0 } ?: return null
     val loserSeat = if (loserText.isEmpty()) {
         null

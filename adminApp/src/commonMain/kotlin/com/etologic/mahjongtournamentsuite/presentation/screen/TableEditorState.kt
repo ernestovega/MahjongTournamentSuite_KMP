@@ -11,6 +11,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TablePoints
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
+import com.etologic.mahjongtournamentsuite.domain.model.toWholeNumberOrNull
 import com.etologic.mahjongtournamentsuite.domain.model.topHandScores
 
 internal const val MIN_HAND_SCORE = 8
@@ -485,7 +486,7 @@ internal class TableManagerEditorState private constructor(
             winnerId.isEmpty() && loserId.isEmpty() && score == "0" -> SeatIntValues.ZERO
             winnerId.isEmpty() -> return null
             loserId.isEmpty() -> {
-                val handScore = score.toIntOrNull() ?: return null
+                val handScore = score.toWholeNumberOrNull() ?: return null
                 val winnerPoints = (handScore + MIN_HAND_SCORE) * LOSER_COUNT
                 val loserPoints = -(handScore + MIN_HAND_SCORE)
                 seatValuesForWinnerOnly(
@@ -496,7 +497,7 @@ internal class TableManagerEditorState private constructor(
                 ) ?: return null
             }
             else -> {
-                val handScore = score.toIntOrNull() ?: return null
+                val handScore = score.toWholeNumberOrNull() ?: return null
                 val winnerPoints = handScore + (MIN_HAND_SCORE * LOSER_COUNT)
                 val loserPoints = -(handScore + MIN_HAND_SCORE)
                 seatValuesForWinnerAndLoser(
@@ -579,5 +580,5 @@ internal class TableManagerEditorState private constructor(
 
     private fun parsePenalty(value: String): Int = value
         .split(';')
-        .sumOf { it.trim().toIntOrNull() ?: 0 }
+        .sumOf { it.toWholeNumberOrNull() ?: 0 }
 }

@@ -146,6 +146,7 @@ The web, the admin app and the player app have independent versions in `gradle/l
 - Unit tests belong primarily in `domain` and `data`.
 - Compose UI tests run on the JVM (`jvmTest`). Android instrumented UI tests are described in `docs/instrumented-ui-tests.md`.
 - If adding tests, prefer focused common tests before platform-specific ones.
+- Hand scoring and table points exist on the server (`handScoring.ts`), in the admin table editor and in the player hand details. `testdata/scoring-cases.json` holds shared cases with their correct results; `scoringCases.test.ts` and the `ScoringCasesTest` of `adminApp` and `playerApp` check them. When a scoring rule changes, change the cases first, then make every side pass.
 - A push to `main` deploys to production without running the tests (they only run on pull requests, `.github/workflows/firebase.yml`). Run the Kotlin, integration and script tests locally before pushing.
 
 ## Keyboard Focus And Interaction

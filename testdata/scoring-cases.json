@@ -1,0 +1,136 @@
+{
+  "about": "Shared scoring cases. The server tests (firebase/functions/src/services/scoringCases.test.ts) and the app tests (adminApp and playerApp jvmTest ScoringCasesTest) all check these results, so the scoring of the server and of the apps cannot drift apart. Seats are east, south, west, north. A hand with no expected result does not count. 'result' is the hand without penalties; it is the same as 'scores' when missing. Table points use a comma for decimals.",
+  "seats": ["11", "12", "13", "14"],
+  "hands": [
+    { "name": "a discard pays score plus 8, the others pay 8", "hand": { "winner": "11", "loser": "12", "score": "10" }, "scores": [34, -18, -8, -8] },
+    { "name": "a self-drawn hand takes score plus 8 from each seat", "hand": { "winner": "13", "score": "8" }, "scores": [-16, -16, 48, -16] },
+    { "name": "a loser of '-' means self-drawn", "hand": { "winner": "14", "loser": "-", "score": "9" }, "scores": [-17, -17, -17, 51] },
+    { "name": "a high self-drawn hand", "hand": { "winner": "11", "score": "88" }, "scores": [288, -96, -96, -96] },
+    { "name": "a draw changes nothing", "hand": { "score": "0" }, "scores": [0, 0, 0, 0] },
+    { "name": "a draw cannot be a chicken hand", "hand": { "score": "0", "chicken": true }, "scores": null },
+    { "name": "a chicken hand up to 12 counts", "hand": { "winner": "12", "loser": "11", "score": "12", "chicken": true }, "scores": [-20, 36, -8, -8] },
+    { "name": "a chicken hand over 12 does not count", "hand": { "winner": "12", "loser": "11", "score": "13", "chicken": true }, "scores": null },
+    { "name": "a score below 8 does not count", "hand": { "winner": "11", "loser": "12", "score": "7" }, "scores": null },
+    { "name": "a winner with score 0 does not count", "hand": { "winner": "11", "score": "0" }, "scores": null },
+    { "name": "a score that is not a number does not count", "hand": { "winner": "11", "loser": "12", "score": "abc" }, "scores": null },
+    { "name": "a score with a plus sign does not count", "hand": { "winner": "11", "loser": "12", "score": "+10" }, "scores": null },
+    { "name": "a score with decimals does not count", "hand": { "winner": "11", "loser": "12", "score": "10.5" }, "scores": null },
+    { "name": "a loser without a winner does not count", "hand": { "loser": "12", "score": "10" }, "scores": null },
+    { "name": "the winner cannot be the loser", "hand": { "winner": "11", "loser": "11", "score": "10" }, "scores": null },
+    { "name": "a winner who is not at the table does not count", "hand": { "winner": "99", "loser": "12", "score": "10" }, "scores": null },
+    { "name": "a loser who is not at the table does not count", "hand": { "winner": "11", "loser": "99", "score": "10" }, "scores": null },
+    { "name": "a hand with only the chicken mark does not count", "hand": { "chicken": true }, "scores": null },
+    { "name": "an empty hand does not count, even with a penalty", "hand": { "penalties": ["-10", "", "", ""] }, "scores": null },
+    { "name": "spaces around the values are ignored", "hand": { "winner": " 11 ", "loser": " 12 ", "score": " 10 " }, "scores": [34, -18, -8, -8] },
+    { "name": "penalties add to the result, several joined with ';'", "hand": { "winner": "11", "loser": "12", "score": "10", "penalties": ["-10;-5", "", "-20", ""] }, "scores": [19, -18, -28, -8], "result": [34, -18, -8, -8] },
+    { "name": "a penalty part that is not a number counts as 0", "hand": { "winner": "11", "loser": "12", "score": "10", "penalties": ["abc;-5", "", "", ""] }, "scores": [29, -18, -8, -8], "result": [34, -18, -8, -8] },
+    { "name": "a penalty with a plus sign counts as 0", "hand": { "winner": "11", "loser": "12", "score": "10", "penalties": ["+5;-5", "", "", ""] }, "scores": [29, -18, -8, -8], "result": [34, -18, -8, -8] },
+    { "name": "a draw keeps its penalties", "hand": { "score": "0", "penalties": ["", "", "", "-30"] }, "scores": [0, 0, 0, -30], "result": [0, 0, 0, 0] }
+  ],
+  "tables": [
+    {
+      "name": "hands mode adds the hands that are done",
+      "table": { "seats": ["11", "12", "13", "14"] },
+      "hands": [
+        { "winner": "11", "loser": "12", "score": "10", "done": true },
+        { "winner": "13", "score": "8", "done": true },
+        { "winner": "14", "loser": "13", "score": "20", "done": false }
+      ],
+      "scores": ["18", "-34", "40", "-24"],
+      "points": ["2", "0", "4", "1"]
+    },
+    {
+      "name": "a completed table counts the hands that are not marked done",
+      "table": { "seats": ["11", "12", "13", "14"], "completed": true },
+      "hands": [
+        { "winner": "11", "loser": "12", "score": "10", "done": true },
+        { "winner": "13", "score": "8", "done": true },
+        { "winner": "14", "loser": "13", "score": "20", "done": false }
+      ],
+      "scores": ["10", "-42", "12", "20"],
+      "points": ["1", "0", "2", "4"]
+    },
+    {
+      "name": "a hand that does not count is skipped",
+      "table": { "seats": ["11", "12", "13", "14"] },
+      "hands": [
+        { "winner": "11", "loser": "12", "score": "10", "done": true },
+        { "winner": "12", "loser": "11", "score": "13", "chicken": true, "done": true }
+      ],
+      "scores": ["34", "-18", "-8", "-8"],
+      "points": ["4", "0", "1,5", "1,5"]
+    },
+    {
+      "name": "draws only: all seats tie",
+      "table": { "seats": ["11", "12", "13", "14"] },
+      "hands": [
+        { "score": "0", "done": true },
+        { "score": "0", "done": true }
+      ],
+      "scores": ["0", "0", "0", "0"],
+      "points": ["1,75", "1,75", "1,75", "1,75"]
+    },
+    {
+      "name": "a substitute gets 0 and the others share 4, 2 and 1",
+      "table": { "seats": ["11", "12", "13", "14"], "completed": true, "forcedZero": "14" },
+      "hands": [
+        { "winner": "11", "loser": "12", "score": "10", "done": true },
+        { "winner": "13", "score": "8", "done": true },
+        { "winner": "14", "loser": "13", "score": "20", "done": true }
+      ],
+      "scores": ["10", "-42", "12", "20"],
+      "points": ["2", "1", "4", "0"]
+    },
+    {
+      "name": "with no hand that counts, hands mode uses the manual scores",
+      "table": { "seats": ["11", "12", "13", "14"], "manualScores": ["5", "6", "7", "8"] },
+      "hands": [
+        { "winner": "11", "loser": "12", "score": "10", "done": false }
+      ],
+      "scores": ["5", "6", "7", "8"],
+      "points": ["0", "1", "2", "4"]
+    },
+    {
+      "name": "with an empty seat no hand counts and there are no points",
+      "table": { "seats": ["11", "12", "13", ""] },
+      "hands": [
+        { "winner": "11", "loser": "12", "score": "10", "done": true }
+      ],
+      "scores": ["", "", "", ""],
+      "points": ["", "", "", ""]
+    },
+    {
+      "name": "manual totals ignore the hands",
+      "table": { "seats": ["11", "12", "13", "14"], "useTotalsOnly": true, "manualScores": ["100", "-50", "-50", "0"] },
+      "hands": [
+        { "winner": "11", "loser": "12", "score": "10", "done": true }
+      ],
+      "scores": ["100", "-50", "-50", "0"],
+      "points": ["4", "0,5", "0,5", "2"]
+    },
+    {
+      "name": "manual totals without manual scores use the saved scores",
+      "table": { "seats": ["11", "12", "13", "14"], "useTotalsOnly": true, "savedScores": ["10", "20", "30", "40"] },
+      "hands": [],
+      "scores": ["10", "20", "30", "40"],
+      "points": ["0", "1", "2", "4"]
+    }
+  ],
+  "points": [
+    { "name": "no ties", "scores": ["40", "30", "20", "10"], "points": ["4", "2", "1", "0"] },
+    { "name": "no ties, other order", "scores": ["10", "20", "30", "40"], "points": ["0", "1", "2", "4"] },
+    { "name": "four tied", "scores": ["5", "5", "5", "5"], "points": ["1,75", "1,75", "1,75", "1,75"] },
+    { "name": "first three tied", "scores": ["9", "9", "9", "1"], "points": ["2,33", "2,33", "2,33", "0"] },
+    { "name": "last three tied", "scores": ["9", "1", "1", "1"], "points": ["4", "1", "1", "1"] },
+    { "name": "two pairs tied", "scores": ["1", "9", "1", "9"], "points": ["0,5", "3", "0,5", "3"] },
+    { "name": "first two tied", "scores": ["9", "9", "5", "1"], "points": ["3", "3", "1", "0"] },
+    { "name": "middle two tied", "scores": ["9", "5", "5", "1"], "points": ["4", "1,5", "1,5", "0"] },
+    { "name": "last two tied", "scores": ["9", "5", "1", "1"], "points": ["4", "2", "0,5", "0,5"] },
+    { "name": "negative scores", "scores": ["-10", "-200", "150", "60"], "points": ["1", "0", "4", "2"] },
+    { "name": "a missing score gives no points", "scores": ["10", "", "5", "5"], "points": null },
+    { "name": "substitute east", "scores": ["50", "30", "20", "10"], "forcedZeroSeat": 0, "points": ["0", "4", "2", "1"] },
+    { "name": "substitute with the others tied", "scores": ["5", "5", "99", "5"], "forcedZeroSeat": 2, "points": ["2,33", "2,33", "0", "2,33"] },
+    { "name": "substitute with the first two tied", "scores": ["10", "10", "5", "99"], "forcedZeroSeat": 3, "points": ["3", "3", "1", "0"] },
+    { "name": "substitute with the last two tied", "scores": ["20", "99", "5", "5"], "forcedZeroSeat": 1, "points": ["4", "0", "1,5", "1,5"] }
+  ]
+}
