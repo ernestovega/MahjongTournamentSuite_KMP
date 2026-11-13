@@ -45,10 +45,10 @@ fun MtsTheme(
     }
 }
 
-private val MahjongGreen = Color(0xFF00B16A)
+internal val MahjongGreen = Color(0xFF00B16A)
 private val MahjongGreenLight = Color(0xFF3DE6A3)
-private val MahjongGreenDark = Color(0xFF00934C)
-private val MahjongGreenDarker = Color(0xFF00752E)
+internal val MahjongGreenDark = Color(0xFF00934C)
+internal val MahjongGreenDarker = Color(0xFF00752E)
 private val MahjongRed = Color(0xFFFA6868)
 private val MahjongAccent = Color(0xFFFF00A7)
 private val AppDarkGray = Color(0xFF414141)
@@ -68,9 +68,9 @@ private val LightColors = lightColorScheme(
     tertiaryContainer = Color(0xFFA5EFCF),
     onTertiaryContainer = Color(0xFF002115),
     error = MahjongRed,
-    onError = Color(0xFFFFDAD6),
+    onError = Color.White,
     errorContainer = MahjongRed,
-    onErrorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color.White,
     background = Color(0xFFF2FFFA),
     onBackground = Color(0xFF002115),
     surface = Color(0xFFF2FFFA),
@@ -107,9 +107,9 @@ private val DarkColors = darkColorScheme(
     tertiaryContainer = Color(0xFF004A32),
     onTertiaryContainer = Color(0xFFB8F5DA),
     error = MahjongRed,
-    onError = Color(0xFFFFDAD6),
+    onError = Color.White,
     errorContainer = MahjongRed,
-    onErrorContainer = Color(0xFFFFDAD6),
+    onErrorContainer = Color.White,
     background = AppDarkGray,
     onBackground = Color.White,
     surface = AppDarkGraySurface,
