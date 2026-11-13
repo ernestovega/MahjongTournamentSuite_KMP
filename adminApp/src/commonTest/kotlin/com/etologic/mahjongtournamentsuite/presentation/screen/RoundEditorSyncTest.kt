@@ -1,8 +1,12 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import co.touchlab.kermit.Logger
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TableKey
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
+import com.etologic.mahjongtournamentsuite.domain.repository.PlayerRepository
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TableManagerPresenter
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TablesPresenter
 import kotlinx.coroutines.test.runTest
@@ -16,7 +20,11 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /** One user with an open round editor on a shared fake server. */
-private class TestUser(val server: FakeTournamentRepository, val name: String = "user") {
+private class TestUser(
+    val server: FakeTournamentRepository,
+    val name: String = "user",
+    val registry: PlayerRepository = NoPlayersRepository(),
+) {
     var tournamentReloads = 0
     var tournamentReloadWorks = true
     var clock = kotlin.time.Instant.parse("2026-10-11T15:30:00Z")
@@ -25,7 +33,7 @@ private class TestUser(val server: FakeTournamentRepository, val name: String = 
     val sync = RoundEditorSync(
         tournamentId = "t1",
         tablePresenter = TableManagerPresenter(server, Logger.withTag(name)),
-        tablesPresenter = TablesPresenter(server, NoPlayersRepository(), Logger.withTag(name)),
+        tablesPresenter = TablesPresenter(server, registry, Logger.withTag(name)),
         selectedRoundId = { round },
         selectedTableId = { table },
         reloadTournaments = { tournamentReloads++; tournamentReloadWorks },
@@ -376,6 +384,35 @@ class RoundEditorSyncTest {
 
         assertEquals(listOf("players FORCE"), server.calls.filter { it.startsWith("players") })
         assertEquals(null, user.sync.playerNamesById[1])
+    }
+
+    @Test
+    fun theNamesComeWithThePlayersWithoutTheRegistry() = runTest {
+        val server = FakeTournamentRepository().withTables(1)
+        server.players = listOf(TournamentPlayer(id = 1, name = "P1", team = 0, assignedEmaId = "10", displayName = "ANA GARCÍA"))
+        val registry = CountingRegistry(listOf(Player(emaId = "10", firstName = "Old", lastName = "Name")))
+        val user = TestUser(server, registry = registry).also { it.open(1) }
+
+        assertNull(user.sync.loadPlayerNames(force = false))
+
+        assertEquals("ANA GARCÍA", user.sync.playerNamesById[1])
+        assertEquals(0, registry.loads)
+    }
+
+    @Test
+    fun anAnswerWithoutNamesFallsBackToTheRegistry() = runTest {
+        val server = FakeTournamentRepository().withTables(1)
+        server.players = listOf(
+            TournamentPlayer(id = 1, name = "P1", team = 0, assignedEmaId = "10"),
+            TournamentPlayer(id = 2, name = "P2", team = 0),
+        )
+        val registry = CountingRegistry(listOf(Player(emaId = "10", firstName = "Ana", lastName = "García")))
+        val user = TestUser(server, registry = registry).also { it.open(1) }
+
+        assertNull(user.sync.loadPlayerNames(force = false))
+
+        assertEquals(mapOf(1 to "ANA GARCÍA"), user.sync.playerNamesById)
+        assertEquals(1, registry.loads)
     }
 
     @Test
@@ -750,5 +787,15 @@ class RoundEditorSyncTest {
         assertFalse(anaSaved)
         assertEquals("24", server.tables.getValue(TableKey(1, 1)).second.first().handScore)
         assertEquals(2L, server.tables.getValue(TableKey(1, 1)).first.version)
+    }
+}
+
+/** An EMA registry that counts how often the whole list loads. */
+private class CountingRegistry(private val players: List<Player>) : PlayerRepository by NoPlayersRepository() {
+    var loads = 0
+
+    override suspend fun listPlayers(refreshMode: RefreshMode): AppResult<List<Player>> {
+        loads++
+        return AppResult.Success(players)
     }
 }

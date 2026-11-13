@@ -36,6 +36,11 @@ export type TournamentPlayer = {
   hasEmail: boolean;
   /** Set when a substitute plays for this person from a round on. The substitute is not recorded. */
   substitution: PlayerSubstitution | null;
+  /**
+   * The name of the assigned EMA player, as the apps show it: given name and surname in capitals. Only the admin
+   * routes fill it, so the tables can show names without the whole EMA registry. Null when the slot has no player.
+   */
+  displayName?: string | null;
   createdAt: string | null;
   updatedAt: string | null;
 };
@@ -90,16 +95,47 @@ export type TournamentTable = {
  */
 export async function listTournamentPlayers(
   tournamentId: string,
-  options: { withAccounts?: boolean } = {},
+  options: { withAccounts?: boolean; withNames?: boolean } = {},
 ): Promise<TournamentPlayer[]> {
   const snap = await db.collection("tournaments").doc(tournamentId).collection("players").get();
+  const emaIds = snap.docs.flatMap((d) => (typeof d.get("assignedEmaId") === "string" ? [String(d.get("assignedEmaId"))] : []));
   // The account of a slot is the account that owns the EMA id of the slot.
-  const accounts = options.withAccounts === false ? new Map<string, AccountInfo>() : await loadAccountsByEmaId(
-    snap.docs.flatMap((d) => (typeof d.get("assignedEmaId") === "string" ? [String(d.get("assignedEmaId"))] : [])),
-  );
+  const [accounts, names] = await Promise.all([
+    options.withAccounts === false ? new Map<string, AccountInfo>() : loadAccountsByEmaId(emaIds),
+    options.withNames === true ? loadDisplayNames(emaIds) : null,
+  ]);
   return snap.docs
-    .map((d) => readPlayer(d, accounts))
+    .map((d) => {
+      const player = readPlayer(d, accounts);
+      if (names == null) return player;
+      return { ...player, displayName: player.assignedEmaId == null ? null : names.get(player.assignedEmaId) ?? null };
+    })
     .sort((a, b) => a.id - b.id);
+}
+
+/** The name the apps show for a player: given name and surname, in capitals, like `Player.displayName` in Kotlin. */
+export function displayNameOf(data: FirebaseFirestore.DocumentData | undefined): string | null {
+  if (data == null) return null;
+  const name = [data.firstName, data.lastName]
+    .map((part) => (typeof part === "string" ? part.trim() : ""))
+    .filter((part) => part !== "")
+    .join(" ")
+    .toUpperCase();
+  return name === "" ? null : name;
+}
+
+/** Reads the registry entries of [emaIds] in one call and gives the name of each one that exists. */
+async function loadDisplayNames(emaIds: string[]): Promise<Map<string, string>> {
+  const unique = [...new Set(emaIds)];
+  const names = new Map<string, string>();
+  if (unique.length === 0) return names;
+  const registry = db.collection(EMA_PLAYER_REGISTRY_COLLECTION);
+  const snapshots = await db.getAll(...unique.map((emaId) => registry.doc(emaId)));
+  snapshots.forEach((snapshot) => {
+    const name = snapshot.exists ? displayNameOf(snapshot.data()) : null;
+    if (name != null) names.set(snapshot.id, name);
+  });
+  return names;
 }
 
 function readPlayer(

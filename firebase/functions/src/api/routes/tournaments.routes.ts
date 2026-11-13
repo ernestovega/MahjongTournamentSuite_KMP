@@ -787,8 +787,10 @@ export function tournamentsRouter(): Router {
     requireTournamentReader,
     async (req, res, next) => {
       try {
-        const players = await listTournamentPlayers(pathParam(req, "tournamentId"));
-        if (res.locals.reader === "PLAYER") {
+        const isPlayer = res.locals.reader === "PLAYER";
+        // Editors get the names, so the tables do not need the whole EMA registry.
+        const players = await listTournamentPlayers(pathParam(req, "tournamentId"), { withNames: !isPlayer });
+        if (isPlayer) {
           // Players see who plays and where, never the accounts or emails of other players.
           res.status(200).json({
             players: players.map((player) => ({ ...player, accountUid: null, hasAccount: false, email: null, hasEmail: false })),

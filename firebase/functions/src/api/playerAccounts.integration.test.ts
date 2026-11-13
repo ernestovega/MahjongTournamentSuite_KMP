@@ -516,6 +516,21 @@ describe("player accounts", () => {
     });
   });
 
+  describe("the names of the slots", () => {
+    it("gives editors the name of each assigned player, so the tables need no registry", async () => {
+      const ema = newEma();
+      await seedSlot(82, ema);
+      await db.doc(`emaPlayerRegistry/${ema}`).update({ firstName: " Ana ", lastName: "García López" });
+      await seedSlot(83, null);
+
+      const response = await server.request("GET", `/tournaments/${tournamentId}/players`, { token: editor.token });
+      const players = (response.body as { players: Array<{ id: number; displayName?: string | null }> }).players;
+
+      assert.equal(players.find((player) => player.id === 82)?.displayName, "ANA GARCÍA LÓPEZ");
+      assert.equal(players.find((player) => player.id === 83)?.displayName, null);
+    });
+  });
+
   describe("new accounts have no alias", () => {
     it("lets the person choose an alias after the first sign-in", async () => {
       const ema = newEma();

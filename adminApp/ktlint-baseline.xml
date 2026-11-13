@@ -1059,9 +1059,9 @@
         <error line="21" column="1" source="standard:no-unused-imports" />
         <error line="22" column="1" source="standard:no-unused-imports" />
         <error line="42" column="5" source="standard:spacing-between-declarations-with-comments" />
-        <error line="127" column="23" source="standard:wrapping" />
-        <error line="134" column="17" source="standard:wrapping" />
-        <error line="258" column="36" source="standard:condition-wrapping" />
+        <error line="134" column="23" source="standard:wrapping" />
+        <error line="141" column="17" source="standard:wrapping" />
+        <error line="265" column="36" source="standard:condition-wrapping" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/SeatTypes.kt">
         <error line="61" column="73" source="standard:function-signature" />
@@ -1661,12 +1661,12 @@
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/RoundEditorSyncTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />
-        <error line="31" column="31" source="standard:statement-wrapping" />
-        <error line="31" column="51" source="standard:statement-wrapping" />
-        <error line="31" column="74" source="standard:statement-wrapping" />
-        <error line="685" column="50" source="standard:statement-wrapping" />
-        <error line="685" column="64" source="standard:statement-wrapping" />
-        <error line="685" column="78" source="standard:statement-wrapping" />
+        <error line="39" column="31" source="standard:statement-wrapping" />
+        <error line="39" column="51" source="standard:statement-wrapping" />
+        <error line="39" column="74" source="standard:statement-wrapping" />
+        <error line="722" column="50" source="standard:statement-wrapping" />
+        <error line="722" column="64" source="standard:statement-wrapping" />
+        <error line="722" column="78" source="standard:statement-wrapping" />
     </file>
     <file name="src/commonTest/kotlin/com/etologic/mahjongtournamentsuite/presentation/screen/TableManagerEditorStateTest.kt">
         <error line="3" column="1" source="standard:import-ordering" />

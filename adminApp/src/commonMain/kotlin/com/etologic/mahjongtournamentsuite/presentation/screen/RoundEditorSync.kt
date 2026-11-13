@@ -60,24 +60,31 @@ internal class RoundEditorSync(
 
     val hasUnsavedChanges: Boolean get() = tableEditors.values.any { it.hasUnsavedChanges }
 
-    /** Loads the names of the tournament players. Returns an error message, or null. */
+    /**
+     * Loads the names of the tournament players. Returns an error message, or null.
+     * The server sends the name of each slot with the players. Only an answer without the names, from an older server
+     * or an older copy on the device, needs the whole EMA registry.
+     */
     suspend fun loadPlayerNames(force: Boolean): UiText? {
-        val basePlayers = when (val result = tablesPresenter.loadBasePlayers(force)) {
-            is AppResult.Success -> result.value.associateBy { it.emaId }
-            is AppResult.Failure -> emptyMap()
+        val slots = when (val result = tablesPresenter.loadPlayers(tournamentId, force)) {
+            is AppResult.Success -> result.value
+            is AppResult.Failure -> return result.error.toUiText()
         }
-        return when (val result = tablesPresenter.loadPlayers(tournamentId, force)) {
-            is AppResult.Success -> {
-                // A slot without a person has no entry. The screens show the number of the player then.
-                playerNamesById = result.value.mapNotNull { slot ->
-                    val name = slot.assignedEmaId?.let(basePlayers::get)?.displayName
-                    name?.let { slot.id to it }
-                }.toMap()
-                null
+        val namesMissing = slots.any { it.assignedEmaId != null && it.displayName == null }
+        val registryNames = if (!namesMissing) {
+            emptyMap()
+        } else {
+            when (val result = tablesPresenter.loadBasePlayers(force)) {
+                is AppResult.Success -> result.value.associate { it.emaId to it.displayName }
+                is AppResult.Failure -> emptyMap()
             }
-
-            is AppResult.Failure -> result.error.toUiText()
         }
+        // A slot without a person has no entry. The screens show the number of the player then.
+        playerNamesById = slots.mapNotNull { slot ->
+            val name = slot.displayName ?: slot.assignedEmaId?.let(registryNames::get)
+            name?.let { slot.id to it }
+        }.toMap()
+        return null
     }
 
     /** Puts server data into the editor and the table row. Returns the notice, or null if the data is not newer. */

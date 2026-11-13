@@ -20,6 +20,8 @@ data class TournamentPlayer(
     val hasEmail: Boolean = false,
     /** Set when a substitute plays for this person from a round on. The substitute is never recorded. */
     val substitution: PlayerSubstitution? = null,
+    /** The name of the assigned EMA player, as [Player.displayName] gives it. The server sends it to editors only. */
+    val displayName: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )

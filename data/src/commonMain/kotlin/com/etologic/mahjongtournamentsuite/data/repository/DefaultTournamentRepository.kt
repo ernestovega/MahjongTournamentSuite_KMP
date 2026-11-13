@@ -431,6 +431,7 @@ class DefaultTournamentRepository(
                     email = dto.email,
                     hasEmail = dto.hasEmail,
                     substitution = dto.substitution?.toDomain(),
+                    displayName = dto.displayName,
                     createdAt = dto.createdAt,
                     updatedAt = dto.updatedAt,
                 )

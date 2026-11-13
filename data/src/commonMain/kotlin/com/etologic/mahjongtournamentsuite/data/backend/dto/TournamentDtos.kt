@@ -175,6 +175,7 @@ data class TournamentPlayerDto(
     val email: String? = null,
     val hasEmail: Boolean = false,
     val substitution: PlayerSubstitutionDto? = null,
+    val displayName: String? = null,
     val createdAt: String? = null,
     val updatedAt: String? = null,
 )
