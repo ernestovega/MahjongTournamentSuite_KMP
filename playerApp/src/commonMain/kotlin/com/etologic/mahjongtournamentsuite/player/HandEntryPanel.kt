@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -55,6 +54,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
 import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
+import com.etologic.mahjongtournamentsuite.presentation.components.signedText
 import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
@@ -621,7 +622,7 @@ private fun PlayerChoices(
                     val isSelected = slot == selected
                     Surface(
                         modifier = Modifier.weight(1f).clickable { onSelect(slot) },
-                        shape = RoundedCornerShape(12.dp),
+                        shape = MaterialTheme.shapes.medium,
                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         border = BorderStroke(
                             if (isSelected) 2.dp else 1.dp,
@@ -666,7 +667,7 @@ private fun PenaltyCard(
     val amount = draft.amount.toIntOrNull()
     val notSplittable = draft.shared && amount != null && amount % 3 != 0
     Surface(
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.medium,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         color = MaterialTheme.colorScheme.surface,
     ) {
@@ -718,7 +719,7 @@ private fun CheckRow(
     ) {
         Checkbox(checked = checked, onCheckedChange = onChange)
         Column(Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 Text(label)
                 icon?.invoke()
             }
@@ -748,7 +749,7 @@ private fun ReviewHand(
         ?.let { windOfChair(chairOf(it, preview.handId), preview.handId) }
     if (isDraw) {
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.primaryContainer,
             modifier = Modifier.fillMaxWidth(),
         ) {
@@ -762,23 +763,23 @@ private fun ReviewHand(
         }
     } else {
         Surface(
-            shape = RoundedCornerShape(12.dp),
+            shape = MaterialTheme.shapes.medium,
             color = MaterialTheme.colorScheme.primaryContainer,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     windOf(winner)?.let { WindIcon(it, size = 28.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
                     Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Normal)
                 }
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
                     if (chicken) ChickenIcon(24.dp)
                 }
                 if (selfDraw) {
                     Text(stringResource(Res.string.entry_self_draw))
                 } else {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                         Text(stringResource(Res.string.entry_from))
                         windOf(loser)?.let { WindIcon(it, size = 20.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
                         Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold)
@@ -799,21 +800,17 @@ private fun ReviewHand(
             Row(
                 Modifier.weight(1.4f),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
                 windOf(slot)?.let { WindIcon(it, size = 20.dp) }
                 Text(view.firstNameOf(slot), maxLines = 1)
             }
             Text(
-                if (change > 0) "+$change" else "$change",
+                signedText(change),
                 Modifier.weight(1f),
                 textAlign = TextAlign.End,
                 fontWeight = FontWeight.Bold,
-                color = when {
-                    change > 0 -> MtsTheme.colors.gain
-                    change < 0 -> MaterialTheme.colorScheme.error
-                    else -> MaterialTheme.colorScheme.onSurface
-                },
+                color = signedColor(change),
             )
             Text(preview.tableScores.getOrNull(index).orEmpty(), Modifier.weight(1f), textAlign = TextAlign.End)
             if (showPoints) {

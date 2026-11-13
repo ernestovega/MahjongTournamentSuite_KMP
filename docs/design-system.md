@@ -4,7 +4,7 @@ The suite has a light design system on top of Material 3. Material keeps the col
 shapes. The design system adds what Material does not have, and every screen reads it through `MtsTheme`, like
 `MaterialTheme`.
 
-Status: phase 1 done. Both apps and `ui` read the domain colors from `MtsTheme.colors` (two raw colors are left on purpose: the black center of the master medal and the black or white text on a computed background), and every tab row is `MtsTabRow` or `MtsScrollableTabRow` with `CompactTab` (ui). Next: phase 3 (layout tokens) and phase 4 (spacing and shapes, screen by screen).
+Status: phases 0 to 4 done (phase 5 closed: the owner keeps white text on the colors). Both apps and `ui` read the domain colors from `MtsTheme.colors` (two raw colors are left on purpose: the black center of the master medal and the black or white text on a computed background). The shared components are in `designsystem`, the screens read the layout tokens, and no padding, gap or corner shape is off the scale: the ratchet is at 2 raw colors, 0 raw shapes and 0 off-scale spacings.
 
 ## The `designsystem` module
 
@@ -36,9 +36,24 @@ All of them are in `designsystem/src/commonMain/kotlin/com/etologic/mahjongtourn
 | `MtsTheme.layout` | `screenGutter`, `cardPadding`, `listGap`, `sectionGap`; smaller on Compact | `padding(MtsTheme.layout.cardPadding)` |
 | `MtsTheme.contentWidth` | `form` 520, `reading` 720, `screen` 900, `wide` 1200 dp | `widthIn(max = MtsTheme.contentWidth.form)` |
 | `MaterialTheme.shapes` | extraSmall 4, small 8, medium 12, large 16, extraLarge 28 dp | `shape = MaterialTheme.shapes.medium` |
-| `MtsTheme.shapes` | `pill` (50%) for chips and badges | `MtsTheme.shapes.pill` |
+| `MtsTheme.shapes` | `pill` (50%) for chips and badges, `tag` (2 dp) for outlined tags | `MtsTheme.shapes.pill` |
 
-`MtsCatalog` (same folder) shows them all. Open its previews in the IDE, or in the admin app: an administrator opens
+In `ui`, `screenLayout` gives the layout tokens of the screens of the app: the compact ones when the app provides the
+compact layout (`LocalCompactLayout`, only the admin app), else the wide ones. `ScreenColumn`, `SectionCard` and the
+admin screens read it, so a screen does not write `if (compact) 12.dp else 16.dp`.
+
+## Components
+
+In `designsystem/.../presentation/components`:
+
+| Component | What |
+| --- | --- |
+| `MtsTabRow`, `MtsScrollableTabRow`, `MtsTab` | The tab rows with the color of the top bar (`CompactTab` in `ui` adds the analytics). |
+| `MtsOutlinedTag` | A tag with a thin border, like the status of a tournament or the place of the player. |
+| `MtsTintedChip` | A pill tinted with an accent, with an icon and a text, like the way of winning a hand. |
+| `signedText`, `signedColor` | A value with its sign ("+12") and the color of a gain (green), a loss (red) or zero. |
+
+`MtsCatalog` (same folder as the tokens) shows them all. Open its previews in the IDE, or in the admin app: an administrator opens
 **Profile > Design system** (`DesignSystemRoute`, in no menu).
 
 ## Rules
@@ -46,6 +61,7 @@ All of them are in `designsystem/src/commonMain/kotlin/com/etologic/mahjongtourn
 - No `Color(0x...)` outside the theme package. A color with a meaning gets a token in `MtsColors`.
 - No `RoundedCornerShape(...)` outside the theme package. Use `MaterialTheme.shapes` or `MtsTheme.shapes`.
 - Paddings and gaps use the spacing scale or the layout tokens. Sizes of things (icons, widths) can stay in dp.
+- A value with a sign uses `signedText` and `signedColor`, not its own `if (value > 0) "+$value"`.
 - Buttons are `Debounced*` or `Focused*` (`ButtonConventionTest`).
 
 `DesignTokenRatchetTest` (ui, jvmTest) counts the raw colors, raw corner shapes and paddings off the scale. It fails

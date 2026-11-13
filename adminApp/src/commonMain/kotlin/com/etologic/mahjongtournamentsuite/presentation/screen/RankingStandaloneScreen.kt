@@ -224,7 +224,7 @@ private fun RankingStandaloneContent(
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(20.dp))
+                        .padding(if (compact) PaddingValues(start = 8.dp, top = 24.dp, end = 8.dp, bottom = 132.dp) else PaddingValues(MtsTheme.spacing.lg))
                         .appFocusGroup(),
                 ) {
                     error?.let {
@@ -511,7 +511,7 @@ private fun RankingControls(
                 .verticalScroll(rememberScrollState())
                 .appFocusGroup(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
         ) {
             playButton()
             topThree()

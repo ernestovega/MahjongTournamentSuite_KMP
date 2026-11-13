@@ -79,6 +79,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TeamsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
@@ -623,7 +624,7 @@ private fun TeamEditorDialog(
                     Column(
                         modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                     ) {
                         Text(
                             text = stringResource(Res.string.team_members),

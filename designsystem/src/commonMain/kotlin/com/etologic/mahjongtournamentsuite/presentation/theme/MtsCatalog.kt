@@ -26,10 +26,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsOutlinedTag
+import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
+import com.etologic.mahjongtournamentsuite.presentation.components.signedText
 
 /**
  * A page that shows every token of the design system: colors, text styles, spacing and shapes.
- * It is for review in the IDE previews. It can also be shown on a hidden route of the web (open decision).
+ * It is for review in the IDE previews and in the admin app (Profile > Design system).
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -114,6 +117,16 @@ fun MtsCatalog(modifier: Modifier = Modifier) {
                 ShapeSample("l 16", MaterialTheme.shapes.large)
                 ShapeSample("xl 28", MaterialTheme.shapes.extraLarge)
                 ShapeSample("pill", MtsTheme.shapes.pill)
+                ShapeSample("tag", MtsTheme.shapes.tag)
+            }
+
+            CatalogTitle("Components")
+            Row(horizontalArrangement = Arrangement.spacedBy(MtsSpacing.md), verticalAlignment = Alignment.CenterVertically) {
+                MtsOutlinedTag(scheme.tertiary) { Text("In progress", style = type.labelMedium, color = scheme.tertiary) }
+                MtsOutlinedTag(colors.info) { Text("Upcoming", style = type.labelMedium, color = colors.info) }
+                listOf(250L, 0L, -125L).forEach { value ->
+                    Text(signedText(value), style = MtsTheme.typography.score, color = signedColor(value))
+                }
             }
         }
     }

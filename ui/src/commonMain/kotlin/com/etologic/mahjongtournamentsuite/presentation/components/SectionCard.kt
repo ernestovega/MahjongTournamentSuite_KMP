@@ -30,7 +30,7 @@ fun SectionCard(
     modifier: Modifier = Modifier,
     title: String? = null,
     subtitle: String? = null,
-    verticalSpacing: Dp = 12.dp,
+    verticalSpacing: Dp = MtsTheme.spacing.md,
     titleStyle: TextStyle = MaterialTheme.typography.titleMedium,
     titleAction: @Composable (() -> Unit)? = null,
     centerTitle: Boolean = false,
@@ -43,7 +43,7 @@ fun SectionCard(
     val compact = LocalCompactLayout.current
     Card(modifier = modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
         Column(
-            modifier = Modifier.padding(if (compact) 12.dp else 16.dp),
+            modifier = Modifier.padding(screenLayout.cardPadding),
             verticalArrangement = Arrangement.spacedBy(verticalSpacing),
         ) {
             if (compact && centerTitle && (title != null || subtitle != null || titleAction != null || actions != null || startContent != null)) {
@@ -54,10 +54,10 @@ fun SectionCard(
                     Column(
                         modifier = Modifier.align(Alignment.Center),
                         horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
                     ) {
                         Row(
-                            horizontalArrangement = Arrangement.spacedBy(2.dp),
+                            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             if (!title.isNullOrBlank()) Text(text = title, style = titleStyle)
@@ -84,16 +84,16 @@ fun SectionCard(
             } else if (title != null || subtitle != null || titleAction != null || actions != null) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Column(
                         modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
                     ) {
                         if (!title.isNullOrBlank() || titleAction != null) {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(2.dp),
+                                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 if (!title.isNullOrBlank()) {
@@ -136,9 +136,9 @@ private fun CompactCenteredHeader(
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
     ) {
-        Row(horizontalArrangement = Arrangement.spacedBy(2.dp), verticalAlignment = Alignment.CenterVertically) {
+        Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs), verticalAlignment = Alignment.CenterVertically) {
             if (!title.isNullOrBlank()) Text(text = title, style = titleStyle, textAlign = TextAlign.Center)
             if (!titleActionAtStart) titleAction?.invoke()
         }
@@ -154,8 +154,8 @@ private fun CompactCenteredHeader(
         if (hasStart || actions != null) {
             FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, if (hasStart) Alignment.Start else Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm, if (hasStart) Alignment.Start else Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
                 itemVerticalAlignment = Alignment.CenterVertically,
             ) {
                 startContent?.invoke()
@@ -180,7 +180,7 @@ private fun SectionCardPreview() {
                 }
             },
         ) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 Text("Primary content line.")
                 Text(
                     text = "Secondary detail line.",

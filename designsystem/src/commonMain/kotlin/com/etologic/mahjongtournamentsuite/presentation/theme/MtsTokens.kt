@@ -218,6 +218,9 @@ data class MtsTypography(
 object MtsShapes {
     /** Chips, badges and pill buttons. */
     val pill: Shape = RoundedCornerShape(percent = 50)
+
+    /** Outlined tags, like the status of a tournament: almost square corners. */
+    val tag: Shape = RoundedCornerShape(2.dp)
 }
 
 /** The Material shapes, written out so that the scale is visible here. They are the Material defaults. */

@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Menu
@@ -60,7 +59,7 @@ import mahjongtournamentsuite.ui.generated.resources.menu
 import org.jetbrains.compose.resources.stringResource
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
-private val AppTopBarSidePadding = 8.dp
+private val AppTopBarSidePadding = MtsTheme.spacing.sm
 
 /** The width in dp under which the top bar buttons show only their icons. */
 private const val TopBarLabelsMinWidthDp = 600
@@ -119,7 +118,7 @@ fun AppScaffold(
                         val sidePadding = if (rootLeadingActions != null) 0.dp else AppTopBarSidePadding
                         val titleContent: @Composable () -> Unit = {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Box(modifier = Modifier.weight(1f, fill = false)) {
@@ -127,7 +126,7 @@ fun AppScaffold(
                                         EllipsizedTitleText(title)
                                     } else {
                                         Column(
-                                            verticalArrangement = Arrangement.spacedBy(2.dp),
+                                            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
                                             horizontalAlignment = Alignment.CenterHorizontally,
                                         ) {
                                             EllipsizedTitleText(title)
@@ -151,7 +150,7 @@ fun AppScaffold(
                         val navigationContent: @Composable () -> Unit = {
                             Row(
                                 modifier = Modifier.padding(start = sidePadding),
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 when {
@@ -184,7 +183,7 @@ fun AppScaffold(
                                     modifier = Modifier.padding(end = sidePadding),
                                 ) {
                                     Row(
-                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
                                     ) {
                                         CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
                                             actions()
@@ -322,7 +321,7 @@ private fun SlowLinearLoadingIndicator(
 ) {
     val trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.55f)
     val indicatorColor = MaterialTheme.colorScheme.tertiary
-    val shape = RoundedCornerShape(percent = 50)
+    val shape = MtsTheme.shapes.pill
     val transition = rememberInfiniteTransition(label = "app-loading")
     val phase by transition.animateFloat(
         initialValue = -0.35f,

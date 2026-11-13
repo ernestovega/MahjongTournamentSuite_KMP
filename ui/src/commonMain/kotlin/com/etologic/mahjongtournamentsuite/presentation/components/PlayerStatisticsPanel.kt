@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -87,6 +86,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.SkillScale
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.formatPoints
 import mahjongtournamentsuite.ui.generated.resources.Res
@@ -291,12 +291,12 @@ fun StatCard(
 ) {
     Surface(
         modifier = modifier,
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         // The color is opaque, so the shadow does not show through the card.
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface),
         shadowElevation = 2.dp,
     ) {
-        Column(Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.padding(MtsTheme.spacing.lg), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             // A card that does not fold shows its title at the top of the card.
             if (title != null && onToggle == null) CardTitle(title, Modifier.padding(top = 4.dp), info)
             if (title != null && onToggle != null) {
@@ -348,7 +348,7 @@ private fun CardTitle(
  */
 @Composable
 fun BigNumber(label: String, value: String, modifier: Modifier = Modifier, info: String? = null, suffix: String? = null) {
-    Surface(modifier, shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
+    Surface(modifier, shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.7f)) {
         Column(
             Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -560,13 +560,13 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
     val outer = parts.filter { it.inOuter }.map { Slice(it.value, it.color) }
     BoxWithConstraints(modifier.fillMaxWidth()) {
         val legend: @Composable (Modifier) -> Unit = { m ->
-            Column(m, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(m, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 parts.forEach { part ->
                     LegendRow(
                         part.color,
                         part.label,
                         count(part.value, s.handsPlayed),
-                        Modifier.padding(start = if (part.sub) 20.dp else 0.dp),
+                        Modifier.padding(start = if (part.sub) MtsTheme.spacing.lg else 0.dp),
                         bold = !part.sub,
                         // The ways of a win or a loss are details of the row above: normal weight and a smaller text.
                         detail = part.sub,
@@ -580,7 +580,7 @@ private fun HandOutcomes(s: PlayerStatistics, chartSize: Dp, modifier: Modifier 
         if (maxWidth >= 520.dp) {
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(20.dp, Alignment.CenterHorizontally),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg, Alignment.CenterHorizontally),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 chart()
@@ -606,7 +606,7 @@ internal fun LegendRow(
     detail: Boolean = false,
 ) {
     val style = if (detail) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium
-    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         Box(Modifier.size(if (detail) 10.dp else 12.dp).background(color, CircleShape))
         Text(label, Modifier.weight(1f).padding(end = 12.dp), style = style, fontWeight = if (bold) FontWeight.Bold else null)
         Text(value, style = style, fontWeight = if (detail) null else FontWeight.Bold)
@@ -792,11 +792,11 @@ private fun LevelLegend(current: PlayerLevel?, modifier: Modifier = Modifier) {
                 Modifier.fillMaxWidth()
                     .background(
                         if (selected) level.colors().main.copy(alpha = 0.18f) else Color.Transparent,
-                        RoundedCornerShape(10.dp),
+                        MaterialTheme.shapes.medium,
                     )
                     .padding(horizontal = 8.dp, vertical = 4.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
                 LevelMedal(level, 28.dp)
                 Text(
@@ -828,13 +828,13 @@ private fun LevelBadge(statistics: PlayerStatistics) {
         itemVerticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.width(190.dp)) {
-            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 if (level == null || score == null) {
                     Text(stringResource(Res.string.level_not_rated), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 } else {
                     LevelRibbonBadge(level)
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
                     Text(
                         if (score == null) {
                             stringResource(Res.string.level_needs_hands, MIN_HANDS_FOR_LEADERBOARD.toString())
@@ -916,7 +916,7 @@ private fun RadarChart(skills: List<Skill>, modifier: Modifier = Modifier) {
             skills.forEach { skill ->
                 AppTooltipBox(skill.explanation) {
                     Column(
-                        Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                        Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = 2.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         // The info icon follows the last word of the name, so a name with a second line keeps the first line short.
@@ -1221,7 +1221,7 @@ fun PlayerTournamentsSection(
                     BigNumber(stringResource(Res.string.stat_penalties), penaltiesText(stats), info = stringResource(Res.string.stat_penalties_info))
                 }
                 // The skills and the hands go in the first row. The places and the place history go in the second row. With less room each block takes one row.
-                BoxWithConstraints(Modifier.fillMaxWidth().padding(top = 28.dp)) {
+                BoxWithConstraints(Modifier.fillMaxWidth().padding(top = MtsTheme.spacing.xl)) {
                     val blocks = buildList<@Composable (Modifier) -> Unit> {
                         add { m -> TitledBlock(stringResource(Res.string.stats_skills), m) { SkillsBlock(stats, 240.dp, Modifier.fillMaxWidth(), showLevel = false) } }
                         if (hasHands) add { m -> TitledBlock(stringResource(Res.string.stat_hands), m) { HandOutcomes(stats, 220.dp, Modifier.fillMaxWidth()) } }

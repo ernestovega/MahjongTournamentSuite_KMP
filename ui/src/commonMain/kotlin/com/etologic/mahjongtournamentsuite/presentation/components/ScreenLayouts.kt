@@ -46,7 +46,9 @@ import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsLayout
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsWindowWidth
 import kotlinx.coroutines.launch
 
 /**
@@ -55,11 +57,18 @@ import kotlinx.coroutines.launch
  */
 val LocalCompactLayout = compositionLocalOf { false }
 
-/** Windows narrower than this use the compact layout. The top bar buttons also lose their labels under this width. */
-val CompactLayoutMaxWidth = 600.dp
+/** Windows narrower than this use the compact layout: the start of the Medium window width of the design system. */
+val CompactLayoutMaxWidth = MtsWindowWidth.MEDIUM_MIN_DP.dp
 
 /** The side margin of a screen in the compact layout. */
-val CompactScreenSidePadding = 12.dp
+val CompactScreenSidePadding = MtsLayout.forWidth(MtsWindowWidth.Compact).screenGutter
+
+/**
+ * The layout tokens of the screens of this app: the compact ones when the app uses the compact layout
+ * ([LocalCompactLayout]), else the wide ones. An app that does not provide the compact layout always gets the wide ones.
+ */
+val screenLayout: MtsLayout
+    @Composable get() = MtsLayout.forWidth(if (LocalCompactLayout.current) MtsWindowWidth.Compact else MtsWindowWidth.Expanded)
 
 /** Gives [LocalCompactLayout] to [content] from the width of the window. */
 @Composable
@@ -148,9 +157,9 @@ private const val WheelStepPx = 24f
 @Composable
 fun ScreenColumn(
     modifier: Modifier = Modifier,
-    maxWidth: Dp = 900.dp,
-    contentPadding: PaddingValues = PaddingValues(horizontal = 24.dp, vertical = 24.dp),
-    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(8.dp),
+    maxWidth: Dp = MtsTheme.contentWidth.screen,
+    contentPadding: PaddingValues = PaddingValues(MtsTheme.spacing.xl),
+    verticalArrangement: Arrangement.Vertical = Arrangement.spacedBy(MtsTheme.spacing.sm),
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     scrollable: Boolean = false,
     /** When true, the padding scrolls with the content. The content then goes under the top bar without a gap. */
@@ -163,11 +172,12 @@ fun ScreenColumn(
         val scrollState = rememberPersistentScrollState("screen")
         val layoutDirection = LocalLayoutDirection.current
         // A phone keeps the margins small, so the content has room.
+        val gutter = screenLayout.screenGutter
         val contentPadding = if (LocalCompactLayout.current) {
             PaddingValues(
-                start = contentPadding.calculateStartPadding(layoutDirection).coerceAtMost(CompactScreenSidePadding),
-                top = contentPadding.calculateTopPadding().coerceAtMost(CompactScreenSidePadding),
-                end = contentPadding.calculateEndPadding(layoutDirection).coerceAtMost(CompactScreenSidePadding),
+                start = contentPadding.calculateStartPadding(layoutDirection).coerceAtMost(gutter),
+                top = contentPadding.calculateTopPadding().coerceAtMost(gutter),
+                end = contentPadding.calculateEndPadding(layoutDirection).coerceAtMost(gutter),
                 bottom = contentPadding.calculateBottomPadding(),
             )
         } else {

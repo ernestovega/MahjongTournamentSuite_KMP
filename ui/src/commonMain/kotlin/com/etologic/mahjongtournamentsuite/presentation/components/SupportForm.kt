@@ -37,6 +37,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.SupportMessage
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.track
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
 import kotlinx.coroutines.launch
@@ -127,8 +128,8 @@ fun SupportForm(
 
             Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                 Column(
-                    modifier = Modifier.padding(20.dp),
-                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    modifier = Modifier.padding(MtsTheme.spacing.lg),
+                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                 ) {
                     OutlinedTextField(
                         value = name,

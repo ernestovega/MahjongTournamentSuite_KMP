@@ -319,7 +319,7 @@ private fun SeatsCross(
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             card(3, Modifier.weight(1f))
             Surface(
-                modifier = Modifier.padding(horizontal = 6.dp).size(64.dp),
+                modifier = Modifier.padding(horizontal = MtsTheme.spacing.sm).size(64.dp),
                 shape = CircleShape,
                 color = MaterialTheme.colorScheme.secondaryContainer,
             ) {
@@ -364,13 +364,13 @@ private fun SeatCard(
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
         Column(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = MtsTheme.spacing.sm),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             item.wind?.let { WindIcon(it, size = 22.dp) }
             // The place icon of a complete table is at the side of the score.
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 if (place != null) {
                     if (place <= 3) PositionTrophy(place, size = 24.dp) else LastPlaceIcon(size = 24.dp)
                 }

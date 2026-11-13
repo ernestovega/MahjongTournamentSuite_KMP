@@ -287,11 +287,7 @@ fun LevelMedalTag(
 fun LevelChangeTag(change: Double, modifier: Modifier = Modifier) {
     val rounded = (change * 10).roundToInt() / 10.0
     val flat = abs(rounded) < 0.05
-    val color = when {
-        flat -> MaterialTheme.colorScheme.onSurfaceVariant
-        change > 0 -> MtsTheme.colors.gain
-        else -> MaterialTheme.colorScheme.error
-    }
+    val color = signedColor(if (flat) 0.0 else change, neutral = MaterialTheme.colorScheme.onSurfaceVariant)
     Row(modifier, verticalAlignment = Alignment.CenterVertically) {
         if (!flat) {
             Icon(

@@ -47,6 +47,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.LocalHandStat
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
 import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.TrophyMedal
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.at_least_one_hand_is_invalid
@@ -325,7 +326,7 @@ internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTables
     if (chickenHandCount == 0 && bestHands.isEmpty()) return
     // Each stat is a group: icon, value and winner. The groups have the same space between them.
     Row(
-        horizontalArrangement = Arrangement.spacedBy(20.dp),
+        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         if (chickenHandCount > 0) {

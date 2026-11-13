@@ -35,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextBu
 import com.etologic.mahjongtournamentsuite.presentation.components.HintTooltip
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.SectionCard
+import com.etologic.mahjongtournamentsuite.presentation.components.signedText
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
@@ -99,7 +100,7 @@ internal fun TableResultsCard(
         titleActionAtStart = true,
         titleAction = { HandSummaryTitleAction(editor, otherTablesBestHandScores) },
         actions = {
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg), verticalAlignment = Alignment.CenterVertically) {
                 if (editor.hasCompleteSeatPositions) {
                     FocusedTextButton(onClick = { editingSeats = !editingSeats }, enabled = enabled) {
                         Text(stringResource(if (editingSeats) Res.string.table_done else Res.string.edit_seats))
@@ -309,8 +310,6 @@ private sealed interface ScoreCheck {
     data object None : ScoreCheck
 }
 
-private fun signed(value: Long) = if (value > 0) "+$value" else "$value"
-
 /** The check of each seat. Nothing shows before the four scores are known. */
 private fun scoreChecks(
     editor: TableManagerEditorState,
@@ -326,7 +325,7 @@ private fun scoreChecks(
         } else {
             List(4) {
                 ScoreCheck.Mismatch(
-                    UiText.of(Res.string.score_sum_manual, signed(sum)),
+                    UiText.of(Res.string.score_sum_manual, signedText(sum)),
                     accepted = true,
                 )
             }
@@ -335,10 +334,10 @@ private fun scoreChecks(
     val penalties = editor.seatPenaltyTotals
     val expected = penalties.sum()
     if (sum != expected) {
-        val target = if (expected == 0L) UiText.of(Res.string.score_target_zero) else UiText.of(Res.string.score_target_penalties, signed(expected))
+        val target = if (expected == 0L) UiText.of(Res.string.score_target_zero) else UiText.of(Res.string.score_target_penalties, signedText(expected))
         return List(4) {
             ScoreCheck.Mismatch(
-                UiText.of(Res.string.score_sum_mismatch, signed(sum), target),
+                UiText.of(Res.string.score_sum_mismatch, signedText(sum), target),
                 accepted = false,
             )
         }
@@ -346,15 +345,15 @@ private fun scoreChecks(
     if (expected == 0L) return List(4) { ScoreCheck.Valid(UiText.of(Res.string.score_sum_zero)) }
     fun nameOf(seat: Int): UiText = playerNameOrNull(seatIds[seat], playerNamesById) ?: SeatLabelTexts[seat]
     val penalized = (0..3).filter { penalties[it] != 0L }
-    val who = UiText.Joined(penalized.map { UiText.of(Res.string.score_has_penalty, nameOf(it), signed(penalties[it])) }, separator = ", ")
+    val who = UiText.Joined(penalized.map { UiText.of(Res.string.score_has_penalty, nameOf(it), signedText(penalties[it])) }, separator = ", ")
     return List(4) { seat ->
         if (penalties[seat] != 0L) {
             ScoreCheck.Penalty(
                 penalties[seat],
-                UiText.of(Res.string.score_matches_penalty, signed(sum), nameOf(seat), signed(penalties[seat])),
+                UiText.of(Res.string.score_matches_penalty, signedText(sum), nameOf(seat), signedText(penalties[seat])),
             )
         } else {
-            ScoreCheck.Valid(UiText.of(Res.string.score_matches_penalties, signed(sum), who))
+            ScoreCheck.Valid(UiText.of(Res.string.score_matches_penalties, signedText(sum), who))
         }
     }
 }
@@ -374,7 +373,7 @@ private fun ScoreCheckMark(check: ScoreCheck) {
         }
         is ScoreCheck.Penalty -> HintTooltip(check.hint.asString()) {
             Text(
-                signed(check.amount),
+                signedText(check.amount),
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
                 color = MtsTheme.colors.scoreWarning,

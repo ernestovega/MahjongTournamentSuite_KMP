@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ErrorOutline
 import androidx.compose.material.icons.filled.Groups
@@ -352,8 +351,8 @@ internal fun ImportPreviewContent(
 
 @Composable
 private fun LegendItem(state: ImportCellState, text: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(12.dp).clip(RoundedCornerShape(3.dp)).background(state.color().copy(alpha = 0.35f)).border(1.dp, state.color(), RoundedCornerShape(3.dp)))
+    Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(12.dp).clip(MaterialTheme.shapes.extraSmall).background(state.color().copy(alpha = 0.35f)).border(1.dp, state.color(), MaterialTheme.shapes.extraSmall))
         Text(text, style = MaterialTheme.typography.labelMedium)
     }
 }
@@ -367,7 +366,7 @@ private fun ImportTableHeader(showTeam: Boolean) {
         @Composable
         fun Title(textRes: StringResource, modifier: Modifier) = Text(
             stringResource(textRes),
-            modifier.padding(horizontal = 6.dp),
+            modifier.padding(horizontal = MtsTheme.spacing.sm),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             maxLines = 1,
@@ -400,9 +399,9 @@ private fun ImportCell(info: CellInfo, modifier: Modifier, content: @Composable 
     val cell = @Composable { cellModifier: Modifier ->
         Box(
             cellModifier
-                .clip(RoundedCornerShape(6.dp))
+                .clip(MaterialTheme.shapes.small)
                 .background(info.state.color().copy(alpha = if (info.state == ImportCellState.NORMAL) 0f else 0.14f))
-                .padding(horizontal = 6.dp, vertical = 4.dp)
+                .padding(horizontal = MtsTheme.spacing.sm, vertical = 4.dp)
                 .semantics(mergeDescendants = true) {
                     if (info.state != ImportCellState.NORMAL) stateDescription = "$stateLabel: $tipText"
                 },

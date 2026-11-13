@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AspectRatio
@@ -52,6 +51,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.IdCardSheetLayout
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.arrange_the_cards_for_printing_on
 import mahjongtournamentsuite.adminapp.generated.resources.back_sheet
@@ -124,7 +124,7 @@ private fun LabeledSlider(
                     modifier = Modifier
                         .height(24.dp)
                         .widthIn(min = 32.dp)
-                        .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
+                        .background(MaterialTheme.colorScheme.primary, MaterialTheme.shapes.medium)
                         .padding(horizontal = 8.dp),
                     contentAlignment = Alignment.Center,
                 ) {
@@ -191,7 +191,7 @@ fun IdCardsExportDialog(
                         },
                     ) {
                         Icon(Icons.Default.RestartAlt, contentDescription = null, modifier = Modifier.size(18.dp))
-                        Text(stringResource(Res.string.restore_settings), modifier = Modifier.padding(start = 6.dp))
+                        Text(stringResource(Res.string.restore_settings), modifier = Modifier.padding(start = MtsTheme.spacing.sm))
                     }
                 }
             },

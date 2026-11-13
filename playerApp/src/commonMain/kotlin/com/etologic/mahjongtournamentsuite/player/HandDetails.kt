@@ -40,6 +40,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
+import com.etologic.mahjongtournamentsuite.presentation.components.signedText
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.details_col_hand
@@ -227,7 +229,7 @@ private fun androidx.compose.foundation.layout.RowScope.NumberCell(
     bold: Boolean = false,
 ) {
     Text(
-        if (value == null) "" else if (value > 0) "+$value" else "$value",
+        value?.let(::signedText).orEmpty(),
         Modifier.weight(SEAT_WEIGHT),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (bold) FontWeight.Bold else null,
@@ -239,11 +241,7 @@ private fun androidx.compose.foundation.layout.RowScope.NumberCell(
 
 /** The color of a penalty: red for the penalized player and green for a player who receives points. */
 @Composable
-private fun penaltyColor(value: Int, muted: Boolean): Color = when {
-    value == 0 || muted -> MaterialTheme.colorScheme.onSurfaceVariant
-    value > 0 -> MtsTheme.colors.gain
-    else -> MaterialTheme.colorScheme.error
-}
+private fun penaltyColor(value: Int, muted: Boolean): Color = if (muted) MaterialTheme.colorScheme.onSurfaceVariant else signedColor(value, MaterialTheme.colorScheme.onSurfaceVariant)
 
 @Composable
 private fun ResultLine(row: DetailRow.Result) {

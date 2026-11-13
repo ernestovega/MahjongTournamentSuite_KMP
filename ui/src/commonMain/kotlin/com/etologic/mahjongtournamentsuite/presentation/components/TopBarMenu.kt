@@ -9,6 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.foundation.layout.Arrangement
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsWindowWidth
 
 /**
  * Set to true by the admin app. [AppScaffold] then keeps the title between the buttons on wide screens.
@@ -19,7 +20,7 @@ import androidx.compose.foundation.layout.Arrangement
 val LocalAdaptiveTopBar = staticCompositionLocalOf { false }
 
 /** The width in dp under which the adaptive top bar uses the three-dots menu. */
-internal const val TopBarCompactWidthDp = 900
+internal const val TopBarCompactWidthDp = MtsWindowWidth.EXPANDED_MIN_DP
 
 /** Set while the top bar buttons are drawn inside the three-dots menu. [dismiss] closes the menu. */
 class TopBarMenuScope(val dismiss: () -> Unit)

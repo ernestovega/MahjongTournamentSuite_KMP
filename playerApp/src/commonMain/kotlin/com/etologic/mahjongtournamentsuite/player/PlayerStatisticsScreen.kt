@@ -75,6 +75,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.mtsTabRowColo
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
 import com.etologic.mahjongtournamentsuite.presentation.components.title
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -205,7 +206,7 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
             // The statistics sections use the full width and flow into columns.
             maxWidth = Dp.Infinity,
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
             scrollable = true,
         ) {
             // Another view or another player starts at the top.
@@ -301,7 +302,7 @@ fun TournamentStatisticsTab(
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("statistics-TOURNAMENT"))
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val loaded = data ?: return@Column
@@ -342,7 +343,7 @@ fun PlayerSlotStatisticsTab(
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberPersistentScrollState("player-statistics-$slotId"))
             .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val loaded = data ?: return@Column
@@ -443,7 +444,7 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
         Column(
             Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
                 .padding(start = 16.dp, top = 12.dp, end = 16.dp, bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp),
+            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
         ) {
             message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
             if (!finished) return@Column

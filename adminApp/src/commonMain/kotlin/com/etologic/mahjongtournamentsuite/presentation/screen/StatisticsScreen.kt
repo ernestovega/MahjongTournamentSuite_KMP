@@ -49,9 +49,7 @@ import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
-import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
-import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalScreenScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerDropdownField
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsHeader
@@ -67,6 +65,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.TableStatisti
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsHeader
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentText
+import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.StatisticsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -377,10 +376,9 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     }
                 }
             }
-            val compact = LocalCompactLayout.current
             Column(
-                Modifier.fillMaxWidth().padding(horizontal = if (compact) CompactScreenSidePadding else 24.dp, vertical = if (compact) 12.dp else 16.dp),
-                verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 20.dp),
+                Modifier.fillMaxWidth().padding(horizontal = screenLayout.screenGutter, vertical = screenLayout.sectionGap),
+                verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
             ) {
                 message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                 when (scope) {

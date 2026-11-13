@@ -249,7 +249,7 @@ internal fun TimerContent(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(top = 20.dp, start = 24.dp, end = 24.dp),
+                .padding(top = MtsTheme.spacing.lg, start = 24.dp, end = 24.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {

@@ -118,6 +118,7 @@ import com.etologic.mahjongtournamentsuite.presentation.platform.leaveAdminForPl
 import com.etologic.mahjongtournamentsuite.presentation.platform.openTimer
 import com.etologic.mahjongtournamentsuite.presentation.presenter.TournamentsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDateRange
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -543,7 +544,7 @@ fun TournamentsScreen(
                                         } else {
                                             Box(modifier = Modifier.fillMaxWidth()) {
                                                 // The rows end before the scrollbar strip, so the scrollbar does not cover the edit button.
-                                                tableContent(Modifier.fillMaxWidth().padding(end = 20.dp))
+                                                tableContent(Modifier.fillMaxWidth().padding(end = MtsTheme.spacing.lg))
 
                                                 // The same draggable scrollbar on every platform, also for a finger.
                                                 DraggableScrollbar(

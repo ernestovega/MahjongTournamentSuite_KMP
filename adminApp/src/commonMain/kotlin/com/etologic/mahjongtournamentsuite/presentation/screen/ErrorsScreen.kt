@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
@@ -65,8 +64,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StaggeredColu
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentLazyListState
+import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ErrorsPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -280,9 +281,9 @@ private fun ErrorKpis(shown: List<ErrorGroup>, now: Long) {
 
 @Composable
 private fun KpiTile(label: String, value: String, valueColor: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface) {
-    Surface(shape = RoundedCornerShape(12.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)) {
+    Surface(shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)) {
         val compact = LocalCompactLayout.current
-        Column(Modifier.fillMaxWidth().padding(if (compact) 12.dp else 16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.fillMaxWidth().padding(screenLayout.cardPadding), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
             Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(value, style = if (compact) MaterialTheme.typography.headlineSmall else MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold, color = valueColor)
         }
@@ -641,8 +642,8 @@ private fun ErrorGroupFacts(group: ErrorGroup, now: Long) {
 
 @Composable
 private fun ErrorReportRow(report: ErrorReportEntry) {
-    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
-        Column(Modifier.fillMaxWidth().padding(10.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
+        Column(Modifier.fillMaxWidth().padding(MtsTheme.spacing.sm), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 listOf(
                     dateTime(report.createdAt),

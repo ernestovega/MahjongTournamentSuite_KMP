@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import androidx.compose.foundation.layout.Arrangement
@@ -106,8 +107,8 @@ fun SignInForm(
 
                 Card(modifier = Modifier.fillMaxWidth(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
                     Column(
-                        modifier = Modifier.padding(20.dp),
-                        verticalArrangement = Arrangement.spacedBy(14.dp),
+                        modifier = Modifier.padding(MtsTheme.spacing.lg),
+                        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                     ) {
                         OutlinedTextField(
                             value = email,

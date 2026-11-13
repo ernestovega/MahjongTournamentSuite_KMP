@@ -1,11 +1,11 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.playerapp.generated.resources.progress_title
 import mahjongtournamentsuite.playerapp.generated.resources.progress_rounds_label
 import mahjongtournamentsuite.playerapp.generated.resources.progress_tables_label
 import mahjongtournamentsuite.playerapp.generated.resources.progress_ongoing_label
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Directions
@@ -265,13 +264,13 @@ fun venueSummary(tournament: Tournament): String = listOf(tournament.venue.name,
 @Composable
 fun TournamentSchedule(tournament: Tournament, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
-    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+    Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg)) {
         scheduleByDay(tournament).forEach { (date, entries) ->
             Column(Modifier.fillMaxWidth()) {
                 Text(
                     date?.let { formatLocalizedDate(it, withWeekday = true, fullNames = true) } ?: stringResource(Res.string.info_no_date),
                     Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(MaterialTheme.shapes.small)
                         .background(colors.primary.copy(alpha = 0.14f))
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     style = MaterialTheme.typography.titleMedium,

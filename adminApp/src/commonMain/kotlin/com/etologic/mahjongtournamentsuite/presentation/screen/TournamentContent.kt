@@ -57,7 +57,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
-import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusHighlightContainer
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
@@ -68,6 +67,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.activateOnEnt
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberSelectMenuState
+import com.etologic.mahjongtournamentsuite.presentation.components.screenLayout
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.next_round
@@ -109,10 +109,10 @@ internal fun TournamentContent(
     val compact = LocalCompactLayout.current
     Column(
         modifier = Modifier.fillMaxSize().padding(
-            horizontal = if (compact) CompactScreenSidePadding else 24.dp,
-            vertical = if (compact) 12.dp else 16.dp,
+            horizontal = screenLayout.screenGutter,
+            vertical = screenLayout.sectionGap,
         ),
-        verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 20.dp),
+        verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
     ) {
         RoundTableStrip(
             rounds = rounds,
@@ -342,13 +342,13 @@ private fun RoundTableStrip(
         LazyRow(
             state = chipsState,
             modifier = modifier,
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             itemsIndexed(tables, key = { _, table -> table.tableId }) { index, table ->
                 val editor = tableEditors[table.tableId]
                 Row(
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     if (index > 0) {
@@ -413,8 +413,8 @@ private fun TableChip(
             shape = MaterialTheme.shapes.small,
         ) {
             Row(
-                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = MtsTheme.spacing.sm),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(

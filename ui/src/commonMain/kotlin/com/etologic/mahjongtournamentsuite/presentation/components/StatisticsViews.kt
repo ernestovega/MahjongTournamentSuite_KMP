@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.Person
@@ -131,7 +130,7 @@ fun AppEmptyState(icon: ImageVector, title: String, message: String, modifier: M
         Surface(shape = CircleShape, color = MaterialTheme.colorScheme.primaryContainer) {
             Icon(
                 icon, contentDescription = null,
-                modifier = Modifier.padding(if (compact) 16.dp else 28.dp).size(if (compact) 32.dp else 56.dp),
+                modifier = Modifier.padding(if (compact) 16.dp else MtsTheme.spacing.xl).size(if (compact) 32.dp else 56.dp),
                 // A light icon on the green circle, like the tab icons.
                 tint = MtsTheme.colors.onHeaderMuted,
             )
@@ -171,7 +170,7 @@ fun StatSection(title: String, modifier: Modifier = Modifier, content: @Composab
 fun StatRow(label: String, value: String, modifier: Modifier = Modifier, onClick: (() -> Unit)? = null) {
     Column(modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier)) {
         Row(
-            Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.sm),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -304,7 +303,7 @@ private fun TableHeaderRow() {
 
 @Composable
 private fun TableValuesRow(name: String, cells: List<String>) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
         Text(name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(2.2f))
         cells.forEach {
             Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
@@ -350,7 +349,7 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     val texts: @Composable (Alignment.Horizontal) -> Unit = { alignment ->
         Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(profile.name, style = MaterialTheme.typography.titleLarge.inTextFont())
-            Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg), verticalAlignment = Alignment.CenterVertically) {
                 if (profile.country.isNotBlank()) {
                     CountryFlag(profile.country, width = 24.dp, contentDescription = stringResource(Res.string.country_n, profile.country))
                 }

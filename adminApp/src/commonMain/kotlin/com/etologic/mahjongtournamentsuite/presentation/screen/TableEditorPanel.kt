@@ -8,8 +8,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
 /**
  * Editor of one table. It has three separate blocks: a results table
@@ -28,7 +28,7 @@ internal fun TableEditorPanel(
     val dependentSectionsEnabled = enabled && editor.hasCompleteSeatPositions
     Column(
         modifier = modifier.fillMaxWidth().appFocusGroup(),
-        verticalArrangement = Arrangement.spacedBy(28.dp),
+        verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xl),
     ) {
         TableResultsCard(
             editor = editor,

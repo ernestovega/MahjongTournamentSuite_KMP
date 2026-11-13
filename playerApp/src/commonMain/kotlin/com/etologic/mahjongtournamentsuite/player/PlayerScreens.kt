@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -27,7 +26,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.Bolt
@@ -131,6 +129,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SuiteAppChoos
 import com.etologic.mahjongtournamentsuite.presentation.components.TableSeatsView
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.label
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsOutlinedTag
+import com.etologic.mahjongtournamentsuite.presentation.components.MtsTintedChip
 import com.etologic.mahjongtournamentsuite.presentation.components.positionColor
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
@@ -569,19 +569,6 @@ internal fun statusOf(tournament: Tournament): TournamentStatus? {
     }
 }
 
-/** A small outlined label with square corners, so it does not look like a button. */
-@Composable
-private fun OutlinedTag(color: Color, content: @Composable RowScope.() -> Unit) {
-    Row(
-        Modifier
-            .border(BorderStroke(1.dp, color), RoundedCornerShape(2.dp))
-            .padding(horizontal = 8.dp, vertical = 3.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-        content = content,
-    )
-}
-
 /** The blue of the upcoming tournaments. The design system makes it lighter in the dark theme. */
 @Composable
 private fun upcomingBlue(): Color = MtsTheme.colors.info
@@ -601,7 +588,7 @@ internal fun statusColor(status: TournamentStatus): Color = when (status) {
 @Composable
 private fun StatusChip(status: TournamentStatus) {
     val color = statusColor(status)
-    OutlinedTag(color) {
+    MtsOutlinedTag(color) {
         Text(stringResource(status.label), style = MaterialTheme.typography.labelMedium, color = color, fontWeight = FontWeight.SemiBold)
     }
 }
@@ -610,7 +597,7 @@ private fun StatusChip(status: TournamentStatus) {
 @Composable
 private fun StandingTag(standing: TournamentStanding) {
     val color = MaterialTheme.colorScheme.onSurface
-    OutlinedTag(color) {
+    MtsOutlinedTag(color) {
         RankTrophy(standing.position, size = 18.dp)
         Text("${standing.position}", style = MaterialTheme.typography.titleSmall.inTextFont(), fontWeight = FontWeight.Bold, color = color)
     }
@@ -619,7 +606,7 @@ private fun StandingTag(standing: TournamentStanding) {
 /** The logo of the tournament. A neutral box with a trophy shows while the tournament has no logo. */
 @Composable
 private fun TournamentLogo(tournament: Tournament) {
-    val shape = RoundedCornerShape(10.dp)
+    val shape = MaterialTheme.shapes.medium
     val modifier = Modifier.size(56.dp).clip(shape)
     if (tournament.associationLogoUrl.isNullOrBlank()) {
         Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
@@ -668,7 +655,7 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
         // A tournament in progress has a border with the accent color of its status chip.
         border = accent?.let { BorderStroke(2.dp, it) },
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 TournamentLogo(tournament)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -686,7 +673,7 @@ private fun TournamentCard(tournament: Tournament, standing: TournamentStanding?
                             Column(horizontalAlignment = Alignment.End, verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 StandingTag(standing)
                                 if (standing.teamRank != null || standing.chickenRank != null || standing.bestHandRank != null) {
-                                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
                                         if (standing.teamRank != null) {
                                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                                                 Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.standing_team), Modifier.size(22.dp))
@@ -1307,7 +1294,7 @@ internal fun TableSummaryCard(
     }
     Card(
         Modifier.fillMaxWidth().clickable(onClick = onClick),
-        shape = RoundedCornerShape(16.dp),
+        shape = MaterialTheme.shapes.large,
         colors = CardDefaults.cardColors(containerColor = colors.surfaceContainerLow),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
     ) {
@@ -1323,7 +1310,7 @@ internal fun TableSummaryCard(
                 fontWeight = FontWeight.Bold,
                 color = headerContent,
             )
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                 val statusIcon = when {
                     complete -> Icons.Default.CheckCircle
                     ongoing -> Icons.Default.PlayArrow
@@ -1356,7 +1343,7 @@ internal fun TableSummaryCard(
                 val teammate = !highlighted && view.isTeammate(seat.slotId)
                 Row(
                     Modifier.fillMaxWidth()
-                        .clip(RoundedCornerShape(10.dp))
+                        .clip(MaterialTheme.shapes.medium)
                         .background(
                             when {
                                 highlighted -> colors.primaryContainer.copy(alpha = 0.45f)
@@ -1372,7 +1359,7 @@ internal fun TableSummaryCard(
                         )
                         .padding(horizontal = 8.dp, vertical = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                 ) {
                     if (complete) {
                         // Seats are sorted by result here. The fourth place has a sad face.
@@ -1392,13 +1379,13 @@ internal fun TableSummaryCard(
                     if (complete && seat.points.isNotBlank()) {
                         // The table points have the same outlined style as in the ranking.
                         Surface(
-                            shape = RoundedCornerShape(50),
+                            shape = MtsTheme.shapes.pill,
                             color = Color.Transparent,
                             border = BorderStroke(1.5.dp, colors.onSurface),
                         ) {
                             Text(
                                 formatPoints(seat.points),
-                                Modifier.padding(horizontal = 10.dp, vertical = 2.dp),
+                                Modifier.padding(horizontal = MtsTheme.spacing.sm, vertical = 2.dp),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold,
                                 color = colors.onSurface,
@@ -1601,7 +1588,7 @@ private fun RankingRows(
                     if (myIndex >= 0) {
                         Column(
                             Modifier.width(44.dp).height(44.dp)
-                                .clip(RoundedCornerShape(10.dp))
+                                .clip(MaterialTheme.shapes.medium)
                                 .clickable { scope.launch { listState.animateScrollToItem(myIndex + 1) } }
                                 .semantics { contentDescription = jumpToMe },
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -1710,14 +1697,14 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
             }
         }
         Surface(
-            shape = RoundedCornerShape(50),
+            shape = MtsTheme.shapes.pill,
             color = Color.Transparent,
             border = BorderStroke(1.5.dp, colors.onSurface),
         ) {
             Row(
-                Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
+                Modifier.padding(horizontal = MtsTheme.spacing.md, vertical = MtsTheme.spacing.sm),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
                 if (row.chipChicken) ChickenIcon()
                 Text(
@@ -1844,7 +1831,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
 @Composable
 private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details: Boolean, onDetailsChange: (Boolean) -> Unit) {
     // Extra space separates the list from the players and the button above.
-    Box(Modifier.fillMaxWidth().padding(top = 20.dp), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxWidth().padding(top = MtsTheme.spacing.lg), contentAlignment = Alignment.Center) {
         Text(
             stringResource(Res.string.stat_hands),
             style = MaterialTheme.typography.headlineSmall,
@@ -1907,11 +1894,11 @@ private fun HandList(view: PlayerTournamentView, table: PlayerTable) {
 @Composable
 private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values: List<Int>) {
     Row(
-        Modifier.fillMaxWidth().padding(start = 8.dp, top = 14.dp, end = 12.dp, bottom = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 8.dp, top = MtsTheme.spacing.md, end = 12.dp, bottom = MtsTheme.spacing.md),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
             // The penalized players come first with a red chip. The players who receive points come under them,
             // smaller, slightly indented and with a green chip.
             val lines = values.withIndex().filter { it.value != 0 }.sortedBy { it.value > 0 }
@@ -1921,9 +1908,9 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values
                 Row(
                     Modifier.padding(start = if (receives) 16.dp else 0.dp),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
                 ) {
-                    HandChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), accent, small = receives)
+                    MtsTintedChip(Icons.Default.Warning, stringResource(Res.string.hand_penalty), accent, small = receives)
                     Text(
                         view.nameOf(seatSlots.getOrNull(seat)),
                         Modifier.weight(1f),
@@ -1955,13 +1942,13 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
     val loserSlot = hand.playerLooserId.toIntOrNull()
     val kind = hand.kind()
     Row(
-        Modifier.fillMaxWidth().padding(start = 8.dp, top = 14.dp, end = 12.dp, bottom = 14.dp),
+        Modifier.fillMaxWidth().padding(start = 8.dp, top = MtsTheme.spacing.md, end = 12.dp, bottom = MtsTheme.spacing.md),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
             if (kind != HandKind.DRAW) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Text(
                         view.nameOf(winnerSlot),
                         Modifier.weight(1f, fill = false),
@@ -2024,10 +2011,10 @@ private fun HandNumber(handId: Int) {
 /** A score in a round outline. The score of a hand and the value of a penalty use it, so they have the same size. */
 @Composable
 private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean = false) {
-    Surface(shape = RoundedCornerShape(50), color = Color.Transparent, border = BorderStroke(1.5.dp, outline)) {
+    Surface(shape = MtsTheme.shapes.pill, color = Color.Transparent, border = BorderStroke(1.5.dp, outline)) {
         Text(
             text,
-            Modifier.padding(horizontal = 16.dp, vertical = if (small) 2.dp else 6.dp),
+            Modifier.padding(horizontal = 16.dp, vertical = if (small) 2.dp else MtsTheme.spacing.sm),
             style = if (small) MaterialTheme.typography.titleMedium.inTextFont() else MaterialTheme.typography.titleLarge.inTextFont(),
             fontWeight = FontWeight.Bold,
             color = color,
@@ -2038,7 +2025,7 @@ private fun ScorePill(text: String, color: Color, outline: Color, small: Boolean
 /** The way the hand was won. Only this pill has color, so the type reads at once without coloring the whole item. */
 @Composable
 private fun WinTypePill(kind: HandKind, accent: Color) {
-    HandChip(
+    MtsTintedChip(
         kind.icon(),
         when (kind) {
             HandKind.SELF_PICK -> stringResource(Res.string.hand_self_pick)
@@ -2047,26 +2034,6 @@ private fun WinTypePill(kind: HandKind, accent: Color) {
         },
         accent,
     )
-}
-
-/** A small colored chip with an icon and a text, like the way of winning or a penalty. */
-@Composable
-private fun HandChip(icon: ImageVector, text: String, accent: Color, small: Boolean = false) {
-    Surface(shape = RoundedCornerShape(50), color = accent.copy(alpha = 0.18f)) {
-        Row(
-            Modifier.padding(horizontal = if (small) 8.dp else 10.dp, vertical = if (small) 2.dp else 4.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            Icon(icon, contentDescription = null, Modifier.size(if (small) 13.dp else 16.dp), tint = accent)
-            Text(
-                text,
-                style = if (small) MaterialTheme.typography.labelMedium else MaterialTheme.typography.labelLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = accent,
-            )
-        }
-    }
 }
 
 /** Green for a self-pick, the error red for a discard and grey for a draw. */

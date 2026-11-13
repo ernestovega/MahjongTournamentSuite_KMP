@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -73,6 +72,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.toDisplayTour
 import com.etologic.mahjongtournamentsuite.presentation.components.toIsoTournamentDateOrNull
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -518,7 +518,7 @@ private fun ActivityTable(
     ) {
         item(key = "filters") { filters() }
         item(key = "title") {
-            Column(Modifier.padding(top = 20.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(Modifier.padding(top = MtsTheme.spacing.lg, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(Res.string.app_activity), style = MaterialTheme.typography.titleMedium)
                 Text(
                     stringResource(Res.string.activity_loaded_count, loadedCount),
@@ -684,8 +684,8 @@ private fun KeyValueRow(key: String, value: String) {
 
 @Composable
 private fun ChangeRow(change: ActivityFieldChange) {
-    Surface(shape = RoundedCornerShape(8.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
-        Column(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 6.dp)) {
+    Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = MtsTheme.spacing.sm, vertical = MtsTheme.spacing.sm)) {
             val field = change.handId?.let { "${stringResource(Res.string.activity_hand, it)} · ${change.field}" } ?: change.field
             Text(field, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold)
             Text("${change.from ?: "–"} → ${change.to ?: "–"}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)

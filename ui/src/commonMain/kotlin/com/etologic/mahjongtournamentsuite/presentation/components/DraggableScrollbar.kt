@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -40,6 +39,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.math.roundToInt
 
@@ -194,7 +194,7 @@ fun DraggableScrollbar(
                 .padding(end = 4.dp)
                 .width(thumbWidth)
                 .height(with(density) { thumbPx.toDp() })
-                .clip(RoundedCornerShape(50))
+                .clip(MtsTheme.shapes.pill)
                 .background(if (dragging) colors.primary else colors.onSurfaceVariant.copy(alpha = 0.55f))
                 .testTag(DRAGGABLE_SCROLLBAR_TAG),
         )
@@ -221,14 +221,14 @@ fun DraggableScrollbar(
                     },
             ) {
                 Surface(
-                    shape = RoundedCornerShape(50),
+                    shape = MtsTheme.shapes.pill,
                     color = colors.primary,
                     contentColor = colors.onPrimary,
                     shadowElevation = 4.dp,
                 ) {
                     Text(
                         text.orEmpty(),
-                        Modifier.widthIn(min = 48.dp).padding(horizontal = 14.dp, vertical = 8.dp),
+                        Modifier.widthIn(min = 48.dp).padding(horizontal = MtsTheme.spacing.md, vertical = 8.dp),
                         style = MaterialTheme.typography.labelLarge,
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,

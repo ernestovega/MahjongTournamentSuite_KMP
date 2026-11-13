@@ -25,6 +25,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
 import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.asString
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
@@ -89,7 +90,7 @@ internal fun SeatsAssignment(
             onDismissRequest = { if (!busy) close() },
             title = { Text(stringResource(Res.string.seats_title)) },
             text = {
-                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     picks.forEachIndexed { index, slot ->
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             WindIcon(SeatWind.entries[index], size = 20.dp)
