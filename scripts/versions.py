@@ -34,6 +34,7 @@ HAS_CODE = {WEB: False, ADMIN: True, PLAYER: True}
 MODULES = {
     "domain": {WEB, ADMIN, PLAYER},
     "data": {WEB, ADMIN, PLAYER},
+    "designsystem": {WEB, ADMIN, PLAYER},
     "ui": {WEB, ADMIN, PLAYER},
     "adminApp": {WEB, ADMIN},
     "playerApp": {WEB, PLAYER},

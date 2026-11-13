@@ -27,6 +27,7 @@ subprojects {
 dependencies {
     kover(project(":domain"))
     kover(project(":data"))
+    kover(project(":designsystem"))
     kover(project(":ui"))
     kover(project(":playerApp"))
     kover(project(":adminApp"))

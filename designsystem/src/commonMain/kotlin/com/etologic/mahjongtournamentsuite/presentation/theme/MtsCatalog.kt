@@ -26,7 +26,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.etologic.mahjongtournamentsuite.domain.model.PlayerLevel
 
 /**
  * A page that shows every token of the design system: colors, text styles, spacing and shapes.
@@ -72,9 +71,8 @@ fun MtsCatalog(modifier: Modifier = Modifier) {
                 Swatch("medalBronze", colors.medalBronze, colors.onMedal)
                 Swatch("firstPlace", colors.firstPlaceHighlight, colors.onMedal)
                 Swatch("onHeader", scheme.primary, colors.onHeader)
-                PlayerLevel.entries.forEach { level ->
-                    val c = colors.level(level)
-                    Swatch(level.name.lowercase(), c.fill, c.content, border = c.rim)
+                colors.levels.forEachIndexed { index, c ->
+                    Swatch("level ${index + 1}", c.fill, c.content, border = c.rim)
                 }
             }
 

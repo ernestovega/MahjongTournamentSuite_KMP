@@ -3,8 +3,8 @@ package com.etologic.mahjongtournamentsuite.presentation.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.font.FontFamily
-import mahjongtournamentsuite.ui.generated.resources.Res
-import mahjongtournamentsuite.ui.generated.resources.go3v2
+import mahjongtournamentsuite.designsystem.generated.resources.Res
+import mahjongtournamentsuite.designsystem.generated.resources.go3v2
 import org.jetbrains.compose.resources.Font
 
 @Composable

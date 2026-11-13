@@ -19,7 +19,7 @@ class ButtonConventionTest {
 
     /** The main source sets of every module. Gradle runs the tests with the module folder as the working directory. */
     private fun sourceFiles(): List<File> {
-        val roots = listOf("ui", "adminApp", "playerApp", "androidApp", "playerAndroidApp")
+        val roots = listOf("designsystem", "ui", "adminApp", "playerApp", "androidApp", "playerAndroidApp")
             .map { File("../$it/src") }
             .filter { it.exists() }
         return roots.flatMap { root ->
