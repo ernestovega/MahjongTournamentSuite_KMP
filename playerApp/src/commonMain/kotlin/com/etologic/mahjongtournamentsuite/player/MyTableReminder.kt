@@ -310,7 +310,13 @@ internal fun MyTableReminderDialog(
                     Icon(Icons.Default.TableRestaurant, contentDescription = null, Modifier.size(48.dp))
                 }
             },
-            title = { Text(stringResource(Res.string.my_table_title, tableId, roundId), textAlign = TextAlign.Center) },
+            title = {
+                Text(
+                    stringResource(Res.string.my_table_title, tableId, roundId),
+                    style = MaterialTheme.typography.titleMedium,
+                    textAlign = TextAlign.Center,
+                )
+            },
             text = {
                 Column(
                     Modifier.fillMaxWidth().semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
@@ -319,33 +325,39 @@ internal fun MyTableReminderDialog(
                 ) {
                     Text(
                         myTableReminderTime(moment),
-                        style = MaterialTheme.typography.titleMedium,
+                        // The time is what the player must see first, so it is the biggest text.
+                        style = MaterialTheme.typography.headlineSmall,
                         // The accent of the brand, like a table in play.
                         color = MaterialTheme.colorScheme.tertiary,
                         textAlign = TextAlign.Center,
                     )
                 }
             },
+            // Both buttons in one centered column: the table first, "Later" below it.
             confirmButton = {
-                FocusedButton(
-                    onClick = onOpen,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiary,
-                        contentColor = MaterialTheme.colorScheme.onTertiary,
-                    ),
-                    focusRequester = openRequester,
-                    buttonModifier = Modifier.focusLoop(previous = laterRequester, next = laterRequester),
+                Column(
+                    Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
                 ) {
-                    Text(stringResource(Res.string.my_table_go))
-                }
-            },
-            dismissButton = {
-                FocusedTextButton(
-                    onClick = onDismiss,
-                    focusRequester = laterRequester,
-                    buttonModifier = Modifier.focusLoop(previous = openRequester, next = openRequester),
-                ) {
-                    Text(stringResource(Res.string.my_table_dismiss))
+                    FocusedButton(
+                        onClick = onOpen,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary,
+                            contentColor = MaterialTheme.colorScheme.onTertiary,
+                        ),
+                        focusRequester = openRequester,
+                        buttonModifier = Modifier.focusLoop(previous = laterRequester, next = laterRequester),
+                    ) {
+                        Text(stringResource(Res.string.my_table_go))
+                    }
+                    FocusedTextButton(
+                        onClick = onDismiss,
+                        focusRequester = laterRequester,
+                        buttonModifier = Modifier.focusLoop(previous = openRequester, next = openRequester),
+                    ) {
+                        Text(stringResource(Res.string.my_table_dismiss))
+                    }
                 }
             },
         )
