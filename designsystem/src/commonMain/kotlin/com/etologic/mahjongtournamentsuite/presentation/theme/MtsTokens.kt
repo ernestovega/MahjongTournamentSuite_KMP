@@ -157,7 +157,6 @@ data class MtsColors(
 // the greys are the silver of the medals, and the text on all of them is white.
 private val MedalGold = Color(0xFFFFAC33)
 private val MedalSilver = Color(0xFF8A99A8)
-private val MedalBronze = Color(0xFFA9632F)
 private val Warning = Color(0xFFB26A00)
 
 // Beginner, intermediate, advanced, expert and master.
@@ -166,7 +165,7 @@ private val LevelColorsByLevel = listOf(
     MtsLevelColors(MahjongGreen, MahjongGreenDark, Color.White),
     MtsLevelColors(Color(0xFFF2692E), Color(0xFFB53B10), Color.White),
     MtsLevelColors(Color(0xFF8E5CD9), Color(0xFF6538AD), Color.White),
-    MtsLevelColors(Color(0xFF5B616E), Color(0xFF15181E), Color.White),
+    MtsLevelColors(Color(0xFF15181E), Color.Black, Color.White),
 )
 
 internal val LightMtsColors = MtsColors(
@@ -181,7 +180,7 @@ internal val LightMtsColors = MtsColors(
     draw = MedalSilver,
     medalGold = MedalGold,
     medalSilver = MedalSilver,
-    medalBronze = MedalBronze,
+    medalBronze = Warning,
     onMedal = Color.White,
     firstPlaceHighlight = MedalGold,
     onHeader = Color.White,
