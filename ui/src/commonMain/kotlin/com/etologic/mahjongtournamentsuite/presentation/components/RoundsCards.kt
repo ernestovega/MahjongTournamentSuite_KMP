@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -414,12 +415,19 @@ private val TwoColumnsWidth = SectionMinWidth * 2 + 24.dp
 /** The charts of a team are taller, so their tooltips with a line for each player leave the bars in sight. */
 private val TeamChartHeight = 240.dp
 
-/** The colors of the players of a team in the stacked bars: solid shades of one color, from the darkest to the palest. */
+/**
+ * The colors of the players of a team in the stacked bars: solid shades of one color with clear steps between them.
+ * The shades go away from the background, so none of them melts into the card: darker on a light theme, lighter on a dark one.
+ */
 @Composable
 private fun memberColors(): List<Color> {
     val primary = MaterialTheme.colorScheme.primary
-    // From a dark green to a pale one, with clear steps between them so the four players are easy to tell apart.
-    return listOf(lerp(primary, Color.Black, 0.45f), primary, lerp(primary, Color.White, 0.45f), lerp(primary, Color.White, 0.78f))
+    val dark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+    return if (dark) {
+        listOf(lerp(primary, Color.White, 0.62f), lerp(primary, Color.White, 0.3f), primary, lerp(primary, Color.Black, 0.35f))
+    } else {
+        listOf(lerp(primary, Color.Black, 0.55f), lerp(primary, Color.Black, 0.25f), primary, lerp(primary, Color.White, 0.4f))
+    }
 }
 
 /**

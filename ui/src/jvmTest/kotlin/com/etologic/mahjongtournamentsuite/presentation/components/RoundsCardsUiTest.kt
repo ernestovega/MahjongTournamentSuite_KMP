@@ -181,13 +181,18 @@ class RoundsCardsUiTest {
     }
 
     @Test
-    fun onAWideScreenTheViewsShareTheWidthInColumns() = runDesktopComposeUiTest(width = 1100, height = 1300) {
+    fun onAWideScreenTheViewsShareTheWidthInColumns() = wideTeamCard(dark = false, name = "rounds-team-wide")
+
+    @Test
+    fun onAWideScreenInTheDarkTheme() = wideTeamCard(dark = true, name = "rounds-team-wide-dark")
+
+    private fun wideTeamCard(dark: Boolean, name: String) = runDesktopComposeUiTest(width = 1100, height = 1300) {
         val slots = (1..16).map { TournamentPlayer(id = it, name = "Player $it", team = (it - 1) % 4 + 1) }
         val statistics = CalculateStatisticsUseCase()(slots, teamTables())
         val memberNames = mapOf(1 to "Ana López", 5 to "Bea Ruiz", 9 to "Carla Gil", 13 to "Diego Sanz")
         val members = statistics.players.filter { it.playerId in memberNames }.sortedBy { it.playerId }
         val combined = com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics(-1, members.flatMap { it.results })
-        show(width = 1060) {
+        show(dark, width = 1060) {
             TeamRoundsCard(
                 rounds = combined.byRound(rounds),
                 members = members.map { memberNames.getValue(it.playerId) to it.byRound(rounds) },
@@ -199,6 +204,6 @@ class RoundsCardsUiTest {
         val score = onNodeWithTag(roundViewTag(RoundView.POINTS)).fetchSemanticsNode().boundsInRoot
         // The place and the score are side by side, not one under the other.
         assertEquals(place.top, score.top)
-        snapshot("rounds-team-wide", onRoot().captureToImage())
+        snapshot(name, onRoot().captureToImage())
     }
 }
