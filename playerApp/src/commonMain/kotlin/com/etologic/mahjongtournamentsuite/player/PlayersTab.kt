@@ -73,6 +73,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
 import mahjongtournamentsuite.playerapp.generated.resources.player_position
+import mahjongtournamentsuite.playerapp.generated.resources.player_tournaments_all
 import mahjongtournamentsuite.playerapp.generated.resources.players_search_empty
 import mahjongtournamentsuite.playerapp.generated.resources.players_search_hint
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
@@ -241,6 +242,8 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
         value = (statistics.tournament(route.tournamentId) as? AppResult.Success)?.value?.profiles?.get(slotId)
     }
     var tab by rememberPersistentInt("playerTab", route.tab)
+    // 1 when the choice "All" shows the statistics of the player over all the tournaments.
+    var allTournaments by rememberPersistentInt("playerAllTournaments", 0)
     // The statistics tell this screen when they load, so the progress bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
     // The tab row hides when the content scrolls down and shows when it scrolls up.
@@ -294,7 +297,18 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                     // The choice of another tournament of the player opens the same player there, in place of this screen.
                     val selector: (@Composable () -> Unit)? = profile?.emaId?.takeIf { it.isNotBlank() }?.let { emaId ->
                         {
-                            PlayerTournamentSelector(emaId, view.tournament) { otherId ->
+                            PlayerTournamentSelector(emaId, view.tournament, all = allTournaments == 1 && tab == PlayerTab.STATISTICS) { otherId ->
+                                when (otherId) {
+                                    ALL_TOURNAMENTS -> {
+                                        allTournaments = 1
+                                        tab = PlayerTab.STATISTICS
+                                        return@PlayerTournamentSelector
+                                    }
+                                    view.tournament.id -> {
+                                        allTournaments = 0
+                                        return@PlayerTournamentSelector
+                                    }
+                                }
                                 scope.launch {
                                     val data = (statistics.tournament(otherId) as? AppResult.Success)?.value ?: return@launch
                                     val otherSlot = data.profiles.entries.firstOrNull { it.value.emaId == emaId }?.key ?: return@launch
@@ -305,7 +319,8 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                             }
                         }
                     }
-                    PlayerContent(view, slotId, tab, { statisticsLoading = it }, selector) { table ->
+                    val allOf = profile?.emaId?.takeIf { allTournaments == 1 && it.isNotBlank() }
+                    PlayerContent(view, slotId, tab, allOf, { statisticsLoading = it }, selector) { table ->
                         navController.navigate(TableRoute(route.tournamentId, table.roundId, table.tableId))
                     }
                 }
@@ -319,6 +334,8 @@ private fun ColumnScope.PlayerContent(
     view: PlayerTournamentView,
     slotId: Int,
     tab: Int,
+    /** The EMA number of the player when the choice "All" shows the statistics over all the tournaments. */
+    allOf: String?,
     onStatisticsLoading: (Boolean) -> Unit,
     /** Above the tables and above the statistics: the choice of another tournament of the player. */
     top: (@Composable () -> Unit)?,
@@ -326,7 +343,9 @@ private fun ColumnScope.PlayerContent(
 ) {
     val ranking = view.rankings.players.firstOrNull { it.playerId == slotId }
     val tables = view.tables.filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
-    if (tab == PlayerTab.STATISTICS) {
+    if (tab == PlayerTab.STATISTICS && allOf != null) {
+        PersonStatisticsTab(allOf, onLoadingChange = onStatisticsLoading, top = top)
+    } else if (tab == PlayerTab.STATISTICS) {
         val places = remember(view, slotId) { view.rankingsByRound().placesOfPlayer(slotId) }
         PlayerSlotStatisticsTab(
             view.tournament.id,
@@ -363,11 +382,11 @@ private fun ColumnScope.PlayerContent(
 }
 
 /**
- * The tournaments of the player with the EMA number [emaId], the newest first, with [current] chosen. Another choice
- * gives its id to [onSelect]. Until the list loads, only [current] is in it.
+ * The tournaments of the player with the EMA number [emaId], the newest first, after the choice "All" ([ALL_TOURNAMENTS]).
+ * [current] is chosen, or "All" when [all]. A choice gives its id to [onSelect]. Until the list loads, only [current] is in it.
  */
 @Composable
-private fun PlayerTournamentSelector(emaId: String, current: Tournament, onSelect: (String) -> Unit) {
+private fun PlayerTournamentSelector(emaId: String, current: Tournament, all: Boolean, onSelect: (String) -> Unit) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     val tournaments by produceState(listOf(current), emaId, current.id) {
         val played = (presenter.person(emaId) as? AppResult.Success)?.value?.tournaments?.map { it.first } ?: return@produceState
@@ -375,12 +394,16 @@ private fun PlayerTournamentSelector(emaId: String, current: Tournament, onSelec
     }
     SelectField(
         label = stringResource(Res.string.scope_tournament),
-        options = tournaments.map { it.id to it.name },
-        selected = current.id,
-        onSelect = { if (it != current.id) onSelect(it) },
+        // "All" goes first: the statistics of the player over all the tournaments.
+        options = listOf(ALL_TOURNAMENTS to stringResource(Res.string.player_tournaments_all)) + tournaments.map { it.id to it.name },
+        selected = if (all) ALL_TOURNAMENTS else current.id,
+        onSelect = onSelect,
         modifier = Modifier.fillMaxWidth(),
     )
 }
+
+/** The key of the choice "All" of the tournaments of a player. A tournament id is never empty. */
+private const val ALL_TOURNAMENTS = ""
 
 /** The tabs of the tournament screen. The values are fixed ids, saved through a page refresh. [visible] gives the order. */
 internal object MainTab {

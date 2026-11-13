@@ -164,6 +164,7 @@
     <string name="tab_tables_me">Me</string>
     <string name="tab_tables_team">My team</string>
     <string name="tab_tables_all">All</string>
+    <string name="player_tournaments_all">All</string>
     <string name="tables_team_empty">The tables of the members of your team show here when the organizers draw the round.</string>
     <string name="progress_title">Progress</string>
     <string name="progress_rounds_label">Rounds</string>
