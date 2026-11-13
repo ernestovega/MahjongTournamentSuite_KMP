@@ -66,7 +66,7 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
 
         // Round 1. The seats open a few minutes before the planned start. The player sets them before the gong.
         openMyTable(1)
-        c.waitForText("Set the seats of the table to start entering hands.")
+        c.waitForText("Waiting for the starting gong", substring = true)
         c.clickButton("Set the seats")
         c.waitForText("Who sits at East?")
         listOf("South", "West", "North").forEach { next ->

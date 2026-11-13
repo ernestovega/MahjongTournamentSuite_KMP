@@ -106,9 +106,22 @@ class TournamentJourneyTest : AdminE2eTest() {
     /** Play on the Timer of the tournament. The Timer opens in its own window, which the test closes again. */
     private fun startRoundOnTheTimer(tournamentId: String, round: Int) {
         c.clickButton("Timer")
-        c.waitForText("Start timer")
-        repeat(round) { if (!c.isOnScreen("Round $round")) c.clickButton("Increase round") }
-        c.waitForText("Round $round")
+        c.waitForAnyText("Start timer", "Pause timer")
+        // The Timer opens on the round in play, and it hides the round arrows while its clock runs.
+        // The organizer pauses the previous round first, and then moves to the next round.
+        val deadline = System.currentTimeMillis() + 30_000
+        while (true) {
+            c.settle()
+            if (c.isOnScreen("Round $round") && c.isOnScreen("Start timer")) break
+            check(System.currentTimeMillis() < deadline) { "The Timer did not reach round $round" }
+            when {
+                c.isOnScreen("Pause timer") -> {
+                    c.clickButton("Pause timer")
+                    c.waitForText("Start timer")
+                }
+                c.isOnScreen("Increase round") -> c.clickButton("Increase round")
+            }
+        }
         c.waitForText("Press Play when the starting gong sounds", substring = true)
         c.clickButton("Start timer")
         c.waitForText("Pause timer")
@@ -138,9 +151,39 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.onAllNodes(emptyChoice).let { it[it.fetchSemanticsNodes().size - 1].performClick() }
         c.onAllNodes(playerOption(loser)).onLast().performClick()
         c.onAllNodes(hasSetTextAction() and hasText("")).onLast().performTextInput("8")
-        c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState)).onLast().performClick()
+        val toggles = c.onAllNodes(SemanticsMatcher.keyIsDefined(SemanticsProperties.ToggleableState))
+        toggles.onLast().performClick()
+        // The editor does not close a table by itself after hand 16, unlike the phones. The organizer turns on the
+        // "Completed" switch. The switches above the rows are "Manual scores" and then "Completed", as in TableEditingTest.
+        toggles[1].performScrollTo()
+        toggles[1].performClick()
         c.clickButton("Save")
         c.waitForText("16 of 16 hands done.")
+        closeTableNotices()
+    }
+
+    /** The editor tells when the phones change a table. The test closes that notice, as the organizer would. */
+    private fun closeTableNotices() {
+        c.settle()
+        while (c.isOnScreen("Table updated") || c.isOnScreen("Tables updated")) {
+            c.clickButton("OK")
+            c.settle()
+        }
+    }
+
+    /** The server saves in the background of the screen. This waits until it reports [completed], up to 30 s. */
+    private fun waitForTournamentCompleted(tournamentId: String, tables: List<JourneyApi.DrawTable>, completed: Boolean) {
+        val deadline = System.currentTimeMillis() + 30_000
+        while (JourneyApi.tournament(tournamentId).getBoolean("isCompleted") != completed) {
+            if (System.currentTimeMillis() > deadline) {
+                val states = tables.joinToString { table ->
+                    val data = JourneyApi.table(tournamentId, table)
+                    "R${table.roundId}T${table.tableId}=${data.optBoolean("isCompleted")}/v${data.optInt("version")}"
+                }
+                error("The tournament is ${if (completed) "not " else ""}completed. Tables: $states")
+            }
+            Thread.sleep(500)
+        }
     }
 
     /**
@@ -180,7 +223,12 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.selectTable(firstTable.tableId)
         c.waitForText("15 of 16 hands done.", timeoutMs = 60_000)
         writeTheLastHandInTheEditor(winner = 1, loser = firstTable.playerIds.first { it != 1 })
-        check(!JourneyApi.tournament(tournamentId).getBoolean("isCompleted")) { "The tournament finished after round 1" }
+        val tableDeadline = System.currentTimeMillis() + 30_000
+        while (!JourneyApi.table(tournamentId, firstTable).getBoolean("isCompleted")) {
+            check(System.currentTimeMillis() < tableDeadline) { "The last hand of the editor did not complete table ${firstTable.tableId}" }
+            Thread.sleep(500)
+        }
+        waitForTournamentCompleted(tournamentId, tables, completed = false)
 
         // Round 2: the same, and the last hand of the organizer finishes the tournament.
         startRoundOnTheTimer(tournamentId, 2)
@@ -190,7 +238,7 @@ class TournamentJourneyTest : AdminE2eTest() {
         c.selectTable(lastTable.tableId)
         c.waitForText("15 of 16 hands done.", timeoutMs = 60_000)
         writeTheLastHandInTheEditor(winner = 1, loser = lastTable.playerIds.first { it != 1 })
-        check(JourneyApi.tournament(tournamentId).getBoolean("isCompleted")) { "The last hand did not finish the tournament" }
+        waitForTournamentCompleted(tournamentId, tables, completed = true)
 
         // The ranking hides the first three places until the organizer shows them. Slot 1 won every hand of its tables.
         c.clickButton("Ranking")
