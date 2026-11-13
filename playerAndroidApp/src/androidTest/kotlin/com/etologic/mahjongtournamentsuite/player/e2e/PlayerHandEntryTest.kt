@@ -81,7 +81,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.clickButton("Add win")
         c.waitForText("Winner")
         c.pickSeat("South", which = 0)
-        c.clickButton("Self draw")
+        c.clickButton("Self-draw")
         c.field("Hand score (8 or more)").performTextInput("12")
         c.clickButton("Review")
         c.waitForText("Check hand")
@@ -107,7 +107,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun winDialogShowsWinnerLoserScoreAndChickenFields() {
         openActivePlayerTable()
         c.clickButton("Add win")
-        listOf("Winner", "Self draw", "Loser (who discarded)", "Hand score (8 or more)", "Chicken hand").forEach { c.waitForText(it) }
+        listOf("Winner", "Self-draw", "Loser (who discarded)", "Hand score (8 or more)", "Chicken hand").forEach { c.waitForText(it) }
     }
 
     @Test
