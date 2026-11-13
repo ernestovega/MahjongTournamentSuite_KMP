@@ -380,11 +380,7 @@ fun TournamentScreen(
                     },
                 )
             }
-            RoundEditorAction.Timer -> openTimer(
-                navController,
-                tournamentId,
-                tournament?.timerRound(allTables.filter { it.hasProgress }.map { it.roundId }.toSet()) ?: 1,
-            )
+            RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
         }
     }
@@ -557,3 +553,5 @@ internal fun Tournament.timerRound(
     val lastPlayed = (roundClocks.map { it.roundId } + roundsWithHands).maxOrNull() ?: 0
     return (lastPlayed + 1).coerceAtMost(numRounds).coerceAtLeast(1)
 }
+
+private fun List<TournamentTable>.roundsWithHands(): Set<Int> = filter { it.hasProgress }.map { it.roundId }.toSet()
