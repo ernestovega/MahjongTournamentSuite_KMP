@@ -75,15 +75,14 @@ private class IconShape(
 private val LevelIcons: Map<PlayerLevel, List<IconShape>> = mapOf(
     // A sprout.
     PlayerLevel.BEGINNER to listOf(
-        IconShape("M12 22 V12", stroke = 2.2f),
-        IconShape("M12 14 C12 8.5 8 6 3.5 7 C3.5 11.5 7 14.5 12 14 Z"),
-        IconShape("M12 11.5 C12 6 15.5 3 20.5 3.5 C20.5 9 17 12.5 12 11.5 Z"),
+        IconShape("M12 20.1 V12.1", stroke = 2.2f),
+        IconShape("M12 13.7 C12 9.3 8.8 7.3 5.2 8.1 C5.2 11.7 8 14.1 12 13.7 Z"),
+        IconShape("M12 11.7 C12 7.3 14.8 4.9 18.8 5.3 C18.8 9.7 16 12.5 12 11.7 Z"),
     ),
     // A tree with a round crown and a white trunk.
     PlayerLevel.INTERMEDIATE to listOf(
         IconShape("M10.8 13 H13.2 V22.6 H10.8 Z"),
         IconShape("M12 2 A5.4 5.4 0 1 1 11.99 2.0 Z M7.4 6.8 A4 4 0 1 1 7.39 6.8 Z M16.6 6.8 A4 4 0 1 1 16.59 6.8 Z M12 7.6 A4.4 4.4 0 1 1 11.99 7.6 Z"),
-        IconShape("M12 16.4 L9.2 13.4 M12 14.8 L14.8 11.8", detail = true, stroke = 1.3f),
     ),
     // A flame.
     PlayerLevel.ADVANCED to listOf(
@@ -92,21 +91,21 @@ private val LevelIcons: Map<PlayerLevel, List<IconShape>> = mapOf(
     ),
     // A rocket that flies up to the right, with a window, two fins, a flame and a white trail.
     PlayerLevel.EXPERT to listOf(
-        IconShape("M12 17.6 V23.4", stroke = 1.5f, tint = Color.White.copy(alpha = 0.85f), rotation = 45f),
-        IconShape("M9.9 17.2 V21", stroke = 1.1f, tint = Color.White.copy(alpha = 0.55f), rotation = 45f),
-        IconShape("M14.1 17.2 V21", stroke = 1.1f, tint = Color.White.copy(alpha = 0.55f), rotation = 45f),
-        IconShape("M 10.34 11.84 H 13.66 L 12 16.16 Z", detail = true, rotation = 45f),
-        IconShape("M 9.34 8.82 L 7.1 11.56 V 13.28 L 9.34 11.7 Z M 14.66 8.82 L 16.9 11.56 V 13.28 L 14.66 11.7 Z", rotation = 45f),
-        IconShape("M 12 0.9 C 14.16 2.63 14.81 5.51 14.81 8.24 V 11.7 H 9.19 V 8.24 C 9.19 5.51 9.84 2.63 12 0.9 Z", rotation = 45f),
-        IconShape("M 12 4.79 A 1.44 1.44 0 1 1 11.99 4.79 Z", detail = true, rotation = 45f),
+        IconShape("M12 18.5 V23.2", stroke = 1.5f, tint = Color.White.copy(alpha = 0.85f), rotation = 45f),
+        IconShape("M9.56 18.03 V22.44", stroke = 1.1f, tint = Color.White.copy(alpha = 0.55f), rotation = 45f),
+        IconShape("M14.44 18.03 V22.44", stroke = 1.1f, tint = Color.White.copy(alpha = 0.55f), rotation = 45f),
+        IconShape("M10.07 11.81 H13.93 L12 16.83 Z", detail = true, rotation = 45f),
+        IconShape("M8.91 8.31 L6.32 11.49 V13.48 L8.91 11.65 ZM15.09 8.31 L17.68 11.49 V13.48 L15.09 11.65 Z", rotation = 45f),
+        IconShape("M12 -0.88 C14.51 1.13 15.26 4.47 15.26 7.64 V11.65 H8.74 V7.64 C8.74 4.47 9.49 1.13 12 -0.88 Z", rotation = 45f),
+        IconShape("M12 3.64 A1.67 1.67 0 1 1 11.99 3.64 Z", detail = true, rotation = 45f),
     ),
     // A black hole: a glowing ring, a black center and a tilted disc around it, like the rings of Saturn.
     // The back half of the disc goes behind the center and the front half over it.
     PlayerLevel.MASTER to listOf(
-        IconShape("M0.6 12 A11.4 3.6 0 0 1 23.4 12", stroke = 1.6f, tint = Color.White.copy(alpha = 0.6f), rotation = -18f),
+        IconShape("M1.2 12 A10.8 4 0 0 1 22.8 12", stroke = 3f, tint = Color.White.copy(alpha = 0.6f), rotation = -18f),
         IconShape("M12 4.6 A7.4 7.4 0 1 1 11.99 4.6 Z", stroke = 2.8f, tint = Color.White),
         IconShape("M12 6.4 A5.6 5.6 0 1 1 11.99 6.4 Z", tint = Color(0xFF0B0B12)),
-        IconShape("M0.6 12 A11.4 3.6 0 0 0 23.4 12", stroke = 1.8f, tint = Color.White, rotation = -18f),
+        IconShape("M1.2 12 A10.8 4 0 0 0 22.8 12", stroke = 3f, tint = Color.White, rotation = -18f),
     ),
 )
 
