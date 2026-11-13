@@ -151,7 +151,12 @@ class RoundsCardsUiTest {
                 teamCount = 4,
             )
         }
-        onNodeWithContentDescription("Round 3 · Place 1 of 4 ·", substring = true).assertExists()
+        // The tooltips add up the team and give the share of each player.
+        onNodeWithContentDescription("Round 3\nPlace 1 of 4\n", substring = true).assertExists()
+        onNodeWithContentDescription("Ana López: 4 points", substring = true).assertExists()
+        onNodeWithContentDescription("Ana López: #1, 4 pts, score", substring = true).assertExists()
+        // Every player is in the tooltips of the place, the score and the four skills.
+        assertEquals(6, onAllNodesWithContentDescription("Diego Sanz: ", substring = true).fetchSemanticsNodes().size)
         memberNames.values.forEach { onNodeWithText(it).assertExists() }
         // The ring of the team adds up the hands of its four tables.
         onNodeWithText("Round 3 · ${combined.results.filter { it.roundId == 3 }.sumOf { it.handsPlayed }} hands").assertExists()

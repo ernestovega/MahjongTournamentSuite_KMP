@@ -97,11 +97,12 @@ private fun DrawScope.selection(index: Int?, slot: Float, color: Color) {
 
 /**
  * The tooltip of the selected round: a bubble over [anchorY], the top of its bar or its point. The text comes as
- * "Round 3 · Table 1 · place 1": the first part is the title and every other part is a bullet point. Without room over
+ * "Round 3 · Table 1 · place 1", or as lines: the first part is the title and every other part is a bullet point. Without room over
  * the anchor, the bubble goes beside the round.
  */
 private fun DrawScope.tooltip(text: String, index: Int, slot: Float, anchorY: Float, measurer: TextMeasurer, background: Color, content: Color) {
-    val parts = text.split(" · ")
+    // Several lines are the title and one bullet point for each line. One line splits at " · ".
+    val parts = if ('\n' in text) text.split('\n') else text.split(" · ")
     val annotated = buildAnnotatedString {
         withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(parts.first()) }
         parts.drop(1).forEach { append("\n• $it") }
@@ -235,12 +236,9 @@ fun RoundLineChart(
         // The value of the selected round, over its point on the first line.
         val first = series.firstOrNull()
         val value = selected?.let { first?.values?.getOrNull(it) }
-        if (selected != null && tooltip != null) {
-            roundNames(names, slot, selected, measurer, colors.onSurfaceVariant, colors.primary)
-            tooltip(tooltip, selected, slot, value?.let { y(it) } ?: ((top + bottom) / 2f), measurer, colors.inverseSurface, colors.inverseOnSurface)
-            return@RoundCanvas
-        }
-        val labelled: List<Int> = if (allValues) first?.values?.indices?.toList().orEmpty() else listOfNotNull(selected)
+        // With a tooltip, the selected round has its value in the tooltip.
+        val labelled: List<Int> = (if (allValues) first?.values?.indices?.toList().orEmpty() else listOfNotNull(selected))
+            .filterNot { tooltip != null && it == selected }
         labelled.forEach { index ->
             val v = first?.values?.getOrNull(index) ?: return@forEach
             val bold = index == selected
@@ -254,5 +252,8 @@ fun RoundLineChart(
             drawText(layout, topLeft = Offset(x, ty))
         }
         roundNames(names, slot, selected, measurer, colors.onSurfaceVariant, colors.primary)
+        if (selected != null && tooltip != null) {
+            tooltip(tooltip, selected, slot, value?.let { y(it) } ?: ((top + bottom) / 2f), measurer, colors.inverseSurface, colors.inverseOnSurface)
+        }
     }
 }

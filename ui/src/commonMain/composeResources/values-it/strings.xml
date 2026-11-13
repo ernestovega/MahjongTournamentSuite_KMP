@@ -356,8 +356,10 @@
     <string name="rounds_points_detail">Turno %1$d · Tavolo %2$d · Posizione %3$d · %4$s punti · Punteggio %5$d</string>
     <string name="rounds_hands_detail">Turno %1$d · %2$d tavoli su %3$d · %4$d mani · %5$d patte · %6$d penalità</string>
     <string name="rounds_empty_detail">Turno %1$d · Ancora nessun tavolo finito</string>
-    <string name="rounds_team_points_detail">Turno %1$d · %2$s punti</string>
     <string name="rounds_avg_hand_value">Valore medio della mano</string>
     <string name="rounds_place_points_detail">Turno %1$d · Posizione %2$d di %3$d · %4$s punti tavolo</string>
     <string name="rounds_hands_of_round">Turno %1$d · %2$d mani</string>
+    <string name="rounds_member_points">%1$s: %2$s punti</string>
+    <string name="rounds_member_result">%1$s: #%2$d, %3$s pt, punteggio %4$d</string>
+    <string name="rounds_team_score_detail">Turno %1$d · %2$s punti · Punteggio %3$d</string>
 </resources>

@@ -356,8 +356,10 @@
     <string name="rounds_points_detail">Round %1$d · Table %2$d · Place %3$d · %4$s points · Score %5$d</string>
     <string name="rounds_hands_detail">Round %1$d · %2$d of %3$d tables · %4$d hands · %5$d drawn · %6$d penalties</string>
     <string name="rounds_empty_detail">Round %1$d · No finished table yet</string>
-    <string name="rounds_team_points_detail">Round %1$d · %2$s points</string>
     <string name="rounds_avg_hand_value">Avg. hand value</string>
     <string name="rounds_place_points_detail">Round %1$d · Place %2$d of %3$d · %4$s table points</string>
     <string name="rounds_hands_of_round">Round %1$d · %2$d hands</string>
+    <string name="rounds_member_points">%1$s: %2$s points</string>
+    <string name="rounds_member_result">%1$s: #%2$d, %3$s pts, score %4$d</string>
+    <string name="rounds_team_score_detail">Round %1$d · %2$s points · Score %3$d</string>
 </resources>

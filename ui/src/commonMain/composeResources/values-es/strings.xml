@@ -356,8 +356,10 @@
     <string name="rounds_points_detail">Ronda %1$d · Mesa %2$d · Puesto %3$d · %4$s puntos · Score %5$d</string>
     <string name="rounds_hands_detail">Ronda %1$d · %2$d de %3$d mesas · %4$d manos · %5$d empates · %6$d penalizaciones</string>
     <string name="rounds_empty_detail">Ronda %1$d · Aún sin mesas terminadas</string>
-    <string name="rounds_team_points_detail">Ronda %1$d · %2$s puntos</string>
     <string name="rounds_avg_hand_value">Valor medio de la mano</string>
     <string name="rounds_place_points_detail">Ronda %1$d · Puesto %2$d de %3$d · %4$s puntos de mesa</string>
     <string name="rounds_hands_of_round">Ronda %1$d · %2$d manos</string>
+    <string name="rounds_member_points">%1$s: %2$s puntos</string>
+    <string name="rounds_member_result">%1$s: #%2$d, %3$s pts, score %4$d</string>
+    <string name="rounds_team_score_detail">Ronda %1$d · %2$s puntos · Score %3$d</string>
 </resources>

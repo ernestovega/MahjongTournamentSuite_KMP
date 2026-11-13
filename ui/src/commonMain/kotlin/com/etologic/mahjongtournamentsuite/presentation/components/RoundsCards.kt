@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRound
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
@@ -49,10 +50,12 @@ import mahjongtournamentsuite.ui.generated.resources.rounds_cumulative_note
 import mahjongtournamentsuite.ui.generated.resources.rounds_empty_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_hands_of_round
+import mahjongtournamentsuite.ui.generated.resources.rounds_member_points
+import mahjongtournamentsuite.ui.generated.resources.rounds_member_result
 import mahjongtournamentsuite.ui.generated.resources.rounds_place_points_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_points_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_round_n
-import mahjongtournamentsuite.ui.generated.resources.rounds_team_points_detail
+import mahjongtournamentsuite.ui.generated.resources.rounds_team_score_detail
 import mahjongtournamentsuite.ui.generated.resources.rounds_title
 import mahjongtournamentsuite.ui.generated.resources.rounds_view_place
 import mahjongtournamentsuite.ui.generated.resources.skill_deal_in_rate
@@ -142,6 +145,8 @@ private fun SkillCharts(
     onSelect: (Int) -> Unit,
     /** True writes under the charts that the lines add up the rounds and the dots are each round alone. */
     note: Boolean = true,
+    /** The tooltip of the selected round of each chart, by the index of its line. Null leaves only the values. */
+    tooltips: ((Int) -> String?)? = null,
 ) {
     val color = MaterialTheme.colorScheme.primary
     Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
@@ -164,6 +169,7 @@ private fun SkillCharts(
                 format = formats[index],
                 height = 110.dp,
                 allValues = true,
+                tooltip = tooltips?.invoke(index),
             )
         }
         if (note) {
@@ -190,6 +196,40 @@ private fun PlayerSkillCharts(names: List<String>, rounds: List<PlayerRound>, se
     onSelect = onSelect,
 )
 
+/**
+ * The skills of a team: the lines and the dots add up the tables of all its players, and the tooltip of the selected
+ * round gives the value of each player up to that round.
+ */
+@Composable
+private fun TeamSkillCharts(
+    names: List<String>,
+    rounds: List<PlayerRound>,
+    members: List<Pair<String, List<PlayerRound>>>,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+) {
+    val title = stringResource(Res.string.rounds_round_n, rounds[selected].roundId)
+    SkillCharts(
+        names = names,
+        lines = playerSkills.map { skill ->
+            Triple(skill.title, { i: Int -> rounds[i].takeUnless { it.isEmpty }?.cumulative?.let(skill.read) }, { i: Int -> skill.read(rounds[i].round) })
+        },
+        minValues = playerSkills.map { it.minValue },
+        formats = playerSkills.map { it.format },
+        selected = selected,
+        onSelect = onSelect,
+        tooltips = { line ->
+            val skill = playerSkills[line]
+            if (rounds[selected].isEmpty) {
+                null
+            } else {
+                (listOf(title) + members.map { (name, memberRounds) -> "$name: " + (memberRounds.getOrNull(selected)?.cumulative?.let(skill.read)?.let(skill.format) ?: "—") })
+                    .joinToString("\n")
+            }
+        },
+    )
+}
+
 /** The place in the ranking at the end of each round. The first place is at the top. */
 @Composable
 private fun PlaceView(
@@ -200,6 +240,9 @@ private fun PlaceView(
     /** The table points of each round, or null for a round without tables. */
     points: List<Double?>,
     selected: Int,
+    /** More lines for the tooltip of the selected round, such as the points of each player of a team. */
+    extra: List<String> = emptyList(),
+    height: Dp = 180.dp,
     onSelect: (Int) -> Unit,
 ) {
     val values = roundIds.mapIndexed { index, id -> if (points[index] != null) places[id]?.toDouble() else null }
@@ -208,6 +251,7 @@ private fun PlaceView(
         stringResource(Res.string.rounds_empty_detail, roundIds[selected])
     } else {
         stringResource(Res.string.rounds_place_points_detail, roundIds[selected], place.roundToInt(), of, formatPoints(points[selected] ?: 0.0))
+            .let { if (extra.isEmpty()) it else (it.split(" · ") + extra).joinToString("\n") }
     }
     RoundLineChart(
         names = names,
@@ -219,6 +263,7 @@ private fun PlaceView(
         inverted = true,
         format = { "#${it.roundToInt()}" },
         tooltip = tip,
+        height = height,
     )
 }
 
@@ -270,7 +315,14 @@ fun PlayerRoundsCard(
  * A tap on a ring selects its round, and the legend under the row gives the counts and the shares of that round.
  */
 @Composable
-private fun PlayerHandsView(names: List<String>, rounds: List<PlayerRound>, selected: Int, onSelect: (Int) -> Unit) {
+private fun PlayerHandsView(
+    names: List<String>,
+    rounds: List<PlayerRound>,
+    selected: Int,
+    /** The players of a team. With them, each line of the legend says how many hands of it each player had. */
+    members: List<Pair<String, List<PlayerRound>>> = emptyList(),
+    onSelect: (Int) -> Unit,
+) {
     val won = MaterialTheme.colorScheme.primary
     val lost = MaterialTheme.colorScheme.error
     val neutral = MaterialTheme.colorScheme.outline
@@ -326,10 +378,22 @@ private fun PlayerHandsView(names: List<String>, rounds: List<PlayerRound>, sele
         style = MaterialTheme.typography.labelLarge,
         fontWeight = FontWeight.Bold,
     )
-    parts(s).forEach { (label, value, color) ->
+    val memberParts = members.map { (name, memberRounds) -> name to memberRounds.getOrNull(selected)?.round?.let { parts(it) } }
+    parts(s).forEachIndexed { index, (label, value, color) ->
         LegendRow(color, stringResource(label), "$value · ${(100.0 * value / s.handsPlayed).roundToInt()}%")
+        if (memberParts.isNotEmpty()) {
+            Text(
+                memberParts.joinToString(" · ") { (name, p) -> "${name.substringBefore(' ')} ${p?.get(index)?.second ?: "—"}" },
+                Modifier.fillMaxWidth().padding(start = MtsTheme.spacing.xl),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
+
+/** The charts of a team are taller, so their tooltips with a line for each player leave the bars in sight. */
+private val TeamChartHeight = 240.dp
 
 /** The colors of the players of a team in the stacked bars. */
 @Composable
@@ -359,30 +423,58 @@ fun TeamRoundsCard(
     val colors = memberColors()
     RoundsCardFrame(views, modifier) { view ->
         when (view) {
-            RoundView.PLACE -> PlaceView(names, rounds.map { it.roundId }, places.orEmpty(), teamCount, rounds.map { round -> round.round.totalPoints.takeIf { !round.isEmpty } }, selected) { selected = it }
+            RoundView.PLACE -> {
+                val pointsLines = members.map { (name, memberRounds) ->
+                    val r = memberRounds.getOrNull(selected)?.round?.takeIf { it.results.isNotEmpty() }
+                    stringResource(Res.string.rounds_member_points, name, r?.let { formatPoints(it.totalPoints) } ?: "—")
+                }
+                PlaceView(
+                    names,
+                    rounds.map { it.roundId },
+                    places.orEmpty(),
+                    teamCount,
+                    rounds.map { round -> round.round.totalPoints.takeIf { !round.isEmpty } },
+                    selected,
+                    extra = pointsLines,
+                    height = TeamChartHeight,
+                ) { selected = it }
+            }
             RoundView.POINTS -> {
                 val round = rounds[selected]
+                val memberLines = members.map { (name, memberRounds) ->
+                    val result = memberRounds.getOrNull(selected)?.round?.results?.firstOrNull()
+                    if (result == null) {
+                        "$name: —"
+                    } else {
+                        stringResource(Res.string.rounds_member_result, name, result.position, formatPoints(result.points), result.score)
+                    }
+                }
                 val tip = if (round.isEmpty) {
                     stringResource(Res.string.rounds_empty_detail, round.roundId)
                 } else {
-                    stringResource(Res.string.rounds_team_points_detail, round.roundId, formatPoints(round.round.totalPoints))
+                    (
+                        listOf(stringResource(Res.string.rounds_team_score_detail, round.roundId, formatPoints(round.round.totalPoints), round.round.totalScore)).flatMap { it.split(" · ") } +
+                            memberLines
+                        ).joinToString("\n")
                 }
                 RoundBarChart(
                     names = names,
                     bars = rounds.indices.map { index ->
                         members.mapIndexed { m, (_, memberRounds) -> BarPart(memberRounds.getOrNull(index)?.round?.totalPoints ?: 0.0, colors[m % colors.size]) }
                     },
-                    labels = rounds.map { round -> round.round.results.takeIf { it.isNotEmpty() }?.let { formatPoints(round.round.totalPoints) } },
+                    labels = rounds.map { round -> round.round.results.takeIf { it.isNotEmpty() }?.let { round.round.totalScore.toString() } },
                     selected = selected,
                     onSelect = { selected = it },
+                    maxValue = max(4.0 * members.size.coerceAtLeast(1), rounds.maxOf { it.round.totalPoints }),
                     tooltip = tip,
+                    height = TeamChartHeight,
                 )
                 members.forEachIndexed { m, (name, memberRounds) ->
                     LegendRow(colors[m % colors.size], name, memberRounds.getOrNull(selected)?.round?.takeIf { it.results.isNotEmpty() }?.let { formatPoints(it.totalPoints) } ?: "—")
                 }
             }
-            RoundView.SKILLS -> PlayerSkillCharts(names, rounds, selected) { selected = it }
-            else -> PlayerHandsView(names, rounds, selected) { selected = it }
+            RoundView.SKILLS -> TeamSkillCharts(names, rounds, members, selected) { selected = it }
+            else -> PlayerHandsView(names, rounds, selected, members) { selected = it }
         }
     }
 }
