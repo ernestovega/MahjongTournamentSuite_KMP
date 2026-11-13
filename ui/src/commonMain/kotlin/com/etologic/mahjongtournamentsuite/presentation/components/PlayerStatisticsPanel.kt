@@ -47,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.dropShadow
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
@@ -54,6 +55,7 @@ import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.shadow.Shadow
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -73,6 +75,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -291,12 +294,14 @@ fun StatCard(
     compact: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val shape = MaterialTheme.shapes.large
     Surface(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.large,
+        // The same soft shadow under every card. An elevation shadow grows with the distance from the top of the
+        // window, so the cards lower on the screen had a bigger shadow than the cards at the top.
+        modifier = modifier.dropShadow(shape, CardShadow),
+        shape = shape,
         // The color is opaque, so the shadow does not show through the card.
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f).compositeOver(MaterialTheme.colorScheme.surface),
-        shadowElevation = 2.dp,
     ) {
         Column(
             Modifier.padding(if (compact) MtsTheme.spacing.md else MtsTheme.spacing.lg),
@@ -1464,3 +1469,6 @@ private fun PlaceHistory(results: List<TableResult>, tournaments: List<Tournamen
         }
     }
 }
+
+/** The shadow of a [StatCard]. */
+private val CardShadow = Shadow(radius = 4.dp, color = Color.Black.copy(alpha = 0.25f), offset = DpOffset(0.dp, 1.dp))

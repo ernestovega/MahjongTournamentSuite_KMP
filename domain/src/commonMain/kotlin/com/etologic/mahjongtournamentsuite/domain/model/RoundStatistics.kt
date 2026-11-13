@@ -38,12 +38,15 @@ data class TournamentRoundTotals(
     val winningScoreSum: Int,
     val highestHand: RoundRecord?,
     val highestTableScore: RoundRecord?,
+    /** The completed tables with hands, the ones that the hands come from. */
+    val tablesWithHands: Int = 0,
 ) {
     val handsWon: Int get() = handsPlayed - drawnHands
     val winsByDiscard: Int get() = handsWon - selfDraws
     val drawRate: Double? get() = if (handsPlayed > 0) drawnHands.toDouble() / handsPlayed else null
     val selfDrawRate: Double? get() = if (handsWon > 0) selfDraws.toDouble() / handsWon else null
     val averageHandScore: Double? get() = if (handsWon > 0) winningScoreSum.toDouble() / handsWon else null
+    val averageHandsPerTable: Double? get() = if (tablesWithHands > 0) handsPlayed.toDouble() / tablesWithHands else null
 
     operator fun plus(other: TournamentRoundTotals): TournamentRoundTotals = TournamentRoundTotals(
         roundId = maxOf(roundId, other.roundId),
@@ -56,6 +59,7 @@ data class TournamentRoundTotals(
         winningScoreSum = winningScoreSum + other.winningScoreSum,
         highestHand = listOfNotNull(highestHand, other.highestHand).maxByOrNull { it.value },
         highestTableScore = listOfNotNull(highestTableScore, other.highestTableScore).maxByOrNull { it.value },
+        tablesWithHands = tablesWithHands + other.tablesWithHands,
     )
 }
 
@@ -86,6 +90,7 @@ fun TournamentStatistics.byRound(rounds: List<Int>): List<TournamentRoundSlice> 
                 .flatMap { table -> table.players.flatMap { player -> player.results.map { player.playerId to it } } }
                 .maxByOrNull { it.second.score }
                 ?.let { RoundRecord(it.second.score, it.first) },
+            tablesWithHands = counted.size,
         )
     }
     return single.runningReduce { total, next -> total + next }.zip(single) { cumulative, round -> TournamentRoundSlice(round, cumulative) }

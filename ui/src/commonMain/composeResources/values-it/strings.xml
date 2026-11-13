@@ -124,7 +124,6 @@
     <string name="card_unfold">Espandi</string>
     <string name="more_information">Altre informazioni</string>
     <string name="stats_records">Record</string>
-    <string name="stats_hands_by_round">Mani per turno</string>
     <string name="stat_highest_rank">Posizione migliore</string>
     <string name="rank_of">su %1$d</string>
     <string name="stat_highest_table_score">Miglior punteggio di tavolo</string>
