@@ -1,7 +1,10 @@
 package com.etologic.mahjongtournamentsuite.player
 
+import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TableResult
+import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRankings
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -46,5 +49,20 @@ class PlayersTeamsTest {
         assertTrue(row.matches("esp drag"))
         assertFalse(row.matches("ana"))
         assertTrue(row.matches("  "))
+    }
+
+    @Test
+    fun thePlacesByRoundComeFromTheRankingAfterEachRound() {
+        fun rankings(vararg players: Pair<Int, Int>) = TournamentRankings(
+            players = players.map { (slot, position) -> PlayerRanking(position, slot, teamId = slot % 2, points = 0.0, score = 0) },
+            teams = listOf(TeamRanking(players.size % 2 + 1, teamId = 1, points = 0.0, score = 0)),
+            chickenHands = emptyList(),
+            bestHands = emptyList(),
+        )
+        val byRound = mapOf(1 to rankings(1 to 2, 2 to 1), 2 to rankings(1 to 1, 2 to 2))
+        assertEquals(mapOf(1 to 2, 2 to 1), byRound.placesOfPlayer(1))
+        assertEquals(emptyMap(), byRound.placesOfPlayer(9))
+        assertEquals(mapOf(1 to 1, 2 to 1), byRound.placesOfTeam(1))
+        assertEquals(emptyMap(), byRound.placesOfTeam(5))
     }
 }

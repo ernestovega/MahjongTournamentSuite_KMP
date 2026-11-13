@@ -102,6 +102,9 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedOutlinedButton as OutlinedButton
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedTextButton as TextButton
+import com.etologic.mahjongtournamentsuite.domain.model.byRound
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerRoundsCard
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentRoundsCard
 
 /**
  * Tells the screen that the tab is loading. The screen shows its progress bar under the top bar while this is true.
@@ -303,6 +306,7 @@ fun TournamentStatisticsTab(
     ) {
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
         val loaded = data ?: return@Column
+        TournamentRoundsCard(loaded.statistics.byRound(loaded.tournament.roundIds()), loaded.names, Modifier.fillMaxWidth(), onOpenPlayer)
         TournamentStatisticsPanel(
             statistics = loaded.statistics,
             names = loaded.names,
@@ -321,6 +325,9 @@ fun PlayerSlotStatisticsTab(
     slotId: Int,
     /** The place, points and score of the player in the tournament. They show in the first card, also when there are no statistics. */
     ranking: PlayerRanking? = null,
+    /** The place of the player at the end of each round, for the "By round" card. */
+    places: Map<Int, Int>? = null,
+    playerCount: Int = 0,
     onLoadingChange: (Boolean) -> Unit = {},
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
@@ -346,10 +353,12 @@ fun PlayerSlotStatisticsTab(
             standing?.invoke(Modifier.fillMaxWidth())
             AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
         } else {
+            // The header, the place and the rounds go over the whole width, then the other cards.
+            loaded.profiles[slotId]?.let { PlayerStatisticsHeader(it) }
+            standing?.invoke(Modifier.fillMaxWidth())
+            PlayerRoundsCard(stats.byRound(loaded.tournament.roundIds()), places, playerCount, Modifier.fillMaxWidth())
             PlayerStatisticsPanel(
                 stats,
-                header = loaded.profiles[slotId]?.let { profile -> { PlayerStatisticsHeader(profile) } },
-                leading = standing,
                 tournaments = listOf(loaded.tournament),
                 rivalNames = loaded.rivalNames,
             )

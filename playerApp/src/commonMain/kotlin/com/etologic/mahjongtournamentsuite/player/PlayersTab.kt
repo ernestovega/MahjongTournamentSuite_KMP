@@ -240,7 +240,8 @@ private fun ColumnScope.PlayerDetail(
         }
     }
     if (tab == 1) {
-        PlayerSlotStatisticsTab(view.tournament.id, slotId, ranking = ranking, onLoadingChange = onStatisticsLoading)
+        val places = remember(view, slotId) { view.rankingsByRound().placesOfPlayer(slotId) }
+        PlayerSlotStatisticsTab(view.tournament.id, slotId, ranking = ranking, places = places, playerCount = view.players.size, onLoadingChange = onStatisticsLoading)
     } else if (tables.isEmpty()) {
         Box(Modifier.padding(16.dp)) {
             AppEmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message))

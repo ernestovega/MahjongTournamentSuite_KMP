@@ -26,12 +26,14 @@ import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerStatistics
 import com.etologic.mahjongtournamentsuite.domain.model.TeamRanking
+import com.etologic.mahjongtournamentsuite.domain.model.byRound
 import com.etologic.mahjongtournamentsuite.domain.usecase.TournamentStatisticsData
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStandingCard
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerStatisticsPanel
 import com.etologic.mahjongtournamentsuite.presentation.components.StatCard
+import com.etologic.mahjongtournamentsuite.presentation.components.TeamRoundsCard
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentScrollState
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -66,6 +68,9 @@ internal fun TeamStatisticsTab(
     tournamentId: String,
     members: List<Int>,
     ranking: TeamRanking?,
+    /** The place of the team at the end of each round. */
+    places: Map<Int, Int>?,
+    teamCount: Int,
     onOpenPlayer: (Int) -> Unit,
     onLoadingChange: (Boolean) -> Unit,
 ) {
@@ -94,6 +99,13 @@ internal fun TeamStatisticsTab(
         // The place of the team first, then its players, then the statistics of all their tables together.
         standing?.invoke(Modifier.fillMaxWidth())
         MembersCard(loaded, members, onOpenPlayer)
+        combined?.let {
+            val roundIds = loaded.tournament.roundIds()
+            val memberRounds = members.mapNotNull { slot ->
+                loaded.statistics.players.firstOrNull { it.playerId == slot }?.let { (loaded.names[slot] ?: "-") to it.byRound(roundIds) }
+            }
+            TeamRoundsCard(it.byRound(roundIds), memberRounds, places, teamCount, Modifier.fillMaxWidth())
+        }
         Text(
             stringResource(Res.string.team_statistics_note),
             Modifier.fillMaxWidth(),

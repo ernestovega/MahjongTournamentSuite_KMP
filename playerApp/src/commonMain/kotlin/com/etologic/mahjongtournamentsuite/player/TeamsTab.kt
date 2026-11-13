@@ -288,6 +288,8 @@ private fun ColumnScope.TeamDetail(
             tournamentId = view.tournament.id,
             members = view.membersOf(teamId),
             ranking = view.rankings.teams.firstOrNull { it.teamId == teamId },
+            places = remember(view, teamId) { view.rankingsByRound().placesOfTeam(teamId) },
+            teamCount = view.rankings.teams.size,
             onOpenPlayer = onOpenPlayer,
             onLoadingChange = onStatisticsLoading,
         )
