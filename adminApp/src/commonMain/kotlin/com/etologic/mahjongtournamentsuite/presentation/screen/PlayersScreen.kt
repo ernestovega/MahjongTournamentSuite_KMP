@@ -1,5 +1,6 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
@@ -1156,8 +1157,9 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                 if (players.isNotEmpty() && filteredPlayers.isEmpty() && !loading) {
                     AppEmptyState(Icons.Default.Search, stringResource(Res.string.no_matches), stringResource(Res.string.no_tournament_players_match), compact = true)
                 }
+                val compact = LocalCompactLayout.current
                 Column(Modifier.fillMaxWidth()) {
-                    DataTableHeaderRow {
+                    if (!compact) DataTableHeaderRow {
                         TournamentPlayerHeader("ID", Modifier.width(TournamentPlayerIdColumnWidth), TextAlign.Center)
                         TournamentPlayerHeader(stringResource(Res.string.ema_number), Modifier.width(TournamentPlayerEmaColumnWidth))
                         TournamentPlayerHeader(stringResource(Res.string.country), Modifier.width(TournamentPlayerCountryColumnWidth), TextAlign.Center)
@@ -1186,81 +1188,46 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                 clickFocusable = false,
                                 highlighted = focusedAssignRowIndex == index || focusedClearRowIndex == index,
                             ) {
-                                Text(
-                                    text = slot.id.toString(),
-                                    modifier = Modifier.width(TournamentPlayerIdColumnWidth),
-                                    textAlign = TextAlign.Center,
-                                )
-                                Text(
-                                    assigned?.emaId ?: "—",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
-                                    textAlign = TextAlign.Center,
-                                )
-                                Box(
-                                    modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    CountryFlag(
-                                        code = playerCountry,
-                                        contentDescription = playerCountry.ifBlank { stringResource(Res.string.no_country) },
-                                    )
-                                }
-                                Box(
-                                    modifier = Modifier
-                                        .width(TournamentPlayerPhotoColumnWidth)
-                                        .height(TournamentPlayerPhotoSize),
-                                    contentAlignment = Alignment.Center,
-                                ) {
+                                if (compact) {
+                                    // A phone shows the player in one cell: photo, name, then the other columns as small text.
                                     TournamentPlayerPhoto(
                                         photoUrl = assigned?.photoUrl,
                                         playerName = playerName.orEmpty(),
-                                        columnWidth = TournamentPlayerPhotoColumnWidth,
+                                        columnWidth = 44.dp,
                                     )
-                                }
-                                // The first name is on the first line and the last name on the second line.
-                                Text(
-                                    if (assigned == null) {
-                                        stringResource(Res.string.not_assigned)
-                                    } else {
-                                        assigned.firstName.trim() + "\n" + assigned.lastName.trim()
-                                    } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
-                                    modifier = Modifier.weight(1.2f),
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                if (isTeamsTournament) {
-                                    Text(
-                                        text = teamNamesById[slot.team] ?: teamLabel(slot.team),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
-                                        textAlign = TextAlign.Center,
-                                        maxLines = 2,
-                                        overflow = TextOverflow.Ellipsis,
-                                    )
-                                }
-                                Text(
-                                    text = tableNumbersByPlayerId[slot.id] ?: "—",
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.width(TournamentPlayerTablesColumnWidth),
-                                    textAlign = TextAlign.Center,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Box(
-                                    modifier = Modifier.width(TournamentPlayerAccountColumnWidth),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    if (slot.assignedEmaId.isNullOrBlank()) {
-                                        Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    } else {
-                                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                            AccountStateIcon(slot.hasAccount)
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                        Text(
+                                            text = (assigned?.let { "${it.firstName.trim()} ${it.lastName.trim()}" } ?: stringResource(Res.string.not_assigned)) +
+                                                (slot.substitution?.let { " (${it.label()})" } ?: ""),
+                                            style = MaterialTheme.typography.bodyLarge,
+                                            color = if (assigned == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface,
+                                            textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            if (playerCountry.isNotBlank()) CountryFlag(code = playerCountry, contentDescription = playerCountry)
                                             Text(
-                                                text = slot.email ?: "",
+                                                text = listOfNotNull(
+                                                    "#${slot.id}",
+                                                    assigned?.emaId?.let { "EMA $it" },
+                                                    if (isTeamsTournament) teamNamesById[slot.team] ?: teamLabel(slot.team) else null,
+                                                ).joinToString(" · "),
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                        }
+                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                            if (!slot.assignedEmaId.isNullOrBlank()) {
+                                                AccountStateIcon(slot.hasAccount, Modifier.size(16.dp))
+                                            }
+                                            Text(
+                                                text = listOfNotNull(
+                                                    tableNumbersByPlayerId[slot.id]?.let { "${stringResource(Res.string.tables)}: $it" },
+                                                    slot.email?.takeIf { it.isNotBlank() },
+                                                ).joinToString(" · "),
                                                 style = MaterialTheme.typography.bodySmall,
                                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 maxLines = 1,
@@ -1268,9 +1235,93 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             )
                                         }
                                     }
+                                } else {
+                                    Text(
+                                        text = slot.id.toString(),
+                                        modifier = Modifier.width(TournamentPlayerIdColumnWidth),
+                                        textAlign = TextAlign.Center,
+                                    )
+                                    Text(
+                                        assigned?.emaId ?: "—",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.width(TournamentPlayerEmaColumnWidth),
+                                        textAlign = TextAlign.Center,
+                                    )
+                                    Box(
+                                        modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CountryFlag(
+                                            code = playerCountry,
+                                            contentDescription = playerCountry.ifBlank { stringResource(Res.string.no_country) },
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .width(TournamentPlayerPhotoColumnWidth)
+                                            .height(TournamentPlayerPhotoSize),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        TournamentPlayerPhoto(
+                                            photoUrl = assigned?.photoUrl,
+                                            playerName = playerName.orEmpty(),
+                                            columnWidth = TournamentPlayerPhotoColumnWidth,
+                                        )
+                                    }
+                                    // The first name is on the first line and the last name on the second line.
+                                    Text(
+                                        if (assigned == null) {
+                                            stringResource(Res.string.not_assigned)
+                                        } else {
+                                            assigned.firstName.trim() + "\n" + assigned.lastName.trim()
+                                        } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
+                                        modifier = Modifier.weight(1.2f),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    if (isTeamsTournament) {
+                                        Text(
+                                            text = teamNamesById[slot.team] ?: teamLabel(slot.team),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.width(TournamentPlayerTeamColumnWidth),
+                                            textAlign = TextAlign.Center,
+                                            maxLines = 2,
+                                            overflow = TextOverflow.Ellipsis,
+                                        )
+                                    }
+                                    Text(
+                                        text = tableNumbersByPlayerId[slot.id] ?: "—",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.width(TournamentPlayerTablesColumnWidth),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                    )
+                                    Box(
+                                        modifier = Modifier.width(TournamentPlayerAccountColumnWidth),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        if (slot.assignedEmaId.isNullOrBlank()) {
+                                            Text("—", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        } else {
+                                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                                AccountStateIcon(slot.hasAccount)
+                                                Text(
+                                                    text = slot.email ?: "",
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                        }
+                                    }
                                 }
                                 Box(
-                                    modifier = Modifier.width(TournamentPlayerActionColumnWidth),
+                                    modifier = if (compact) Modifier else Modifier.width(TournamentPlayerActionColumnWidth),
                                     contentAlignment = Alignment.CenterEnd,
                                 ) {
                                     if (!slot.isAssigned) {

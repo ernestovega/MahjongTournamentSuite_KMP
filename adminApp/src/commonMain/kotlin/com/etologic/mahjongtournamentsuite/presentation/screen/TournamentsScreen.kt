@@ -1,5 +1,16 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
+import com.etologic.mahjongtournamentsuite.presentation.components.TrophyIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
+import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -371,15 +382,51 @@ fun TournamentsScreen(
             )
         },
     ) {
+        val compact = LocalCompactLayout.current
         Box(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(PaddingValues(horizontal = 24.dp, vertical = 24.dp)),
+                    .padding(
+                        if (compact) PaddingValues(start = CompactScreenSidePadding, end = CompactScreenSidePadding, top = 12.dp) else PaddingValues(horizontal = 24.dp, vertical = 24.dp),
+                    ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-            SectionCard(
+            if (compact && tournaments.isNotEmpty()) {
+                // A phone shows one card per tournament instead of the wide table.
+                val listState = rememberPersistentLazyListState("tournaments")
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(bottom = 32.dp),
+                ) {
+                    itemsIndexed(tournaments, key = { _, tournament -> tournament.id }) { index, tournament ->
+                        CompactTournamentCard(
+                            modifier = Modifier
+                                .then(tournamentFocusRequesters.getOrNull(index)?.let { Modifier.focusRequester(it) } ?: Modifier)
+                                .onFocusChanged {
+                                    if (it.isFocused) lastFocusedTournamentId = tournament.id
+                                    if (it.isFocused) lastFocusedControl = "tournament"
+                                },
+                            tournament = tournament,
+                            enabled = !isLoading,
+                            showEdit = canEditTournament,
+                            onClick = {
+                                lastFocusedTournamentId = tournament.id
+                                lastFocusedControl = "tournament"
+                                openTournament(tournament)
+                            },
+                            onEdit = {
+                                lastFocusedTournamentId = tournament.id
+                                lastFocusedControl = "tournament"
+                                editDialogTournament = tournament
+                            },
+                        )
+                    }
+                }
+            } else SectionCard(
                 content = {
                     when {
                         !isRefreshing && tournaments.isEmpty() -> {
@@ -760,6 +807,109 @@ private fun TournamentTableRow(
                         imageVector = Icons.Default.Edit,
                         contentDescription = editDescription,
                     )
+                }
+            }
+        }
+    }
+}
+
+/** One tournament on a phone: its color, logo, name, place, dates, players and features, and the edit button. */
+@Composable
+private fun CompactTournamentCard(
+    modifier: Modifier = Modifier,
+    tournament: Tournament,
+    enabled: Boolean,
+    showEdit: Boolean,
+    onClick: () -> Unit,
+    onEdit: () -> Unit,
+) {
+    val accent = tournament.primaryColor.toTournamentColorOrNull() ?: MaterialTheme.colorScheme.primary
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        onClick = onClick,
+        enabled = enabled,
+    ) {
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Min)) {
+            // The color of the tournament marks the card, as the color column does in the table.
+            Box(Modifier.width(6.dp).fillMaxHeight().background(accent))
+            Row(
+                modifier = Modifier.weight(1f).padding(start = 12.dp, top = 12.dp, bottom = 12.dp, end = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                val shape = MaterialTheme.shapes.small
+                if (tournament.associationLogoUrl.isNullOrBlank()) {
+                    Box(
+                        Modifier.size(44.dp).background(MaterialTheme.colorScheme.surfaceVariant, shape),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Icon(Icons.Default.EmojiEvents, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                } else {
+                    AsyncImage(
+                        model = tournament.associationLogoUrl,
+                        contentDescription = stringResource(Res.string.logo_for, tournament.name),
+                        contentScale = ContentScale.Fit,
+                        modifier = Modifier.size(44.dp).clip(shape),
+                    )
+                }
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = tournament.name,
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        CountryFlag(
+                            code = emaCountryFlagCode(tournament.hostCountry).orEmpty(),
+                            contentDescription = tournament.hostCountry.ifBlank { stringResource(Res.string.no_host_country) },
+                        )
+                        Text(
+                            text = listOf(tournament.hostCity, tournamentDateRange(tournament)).filter { it.isNotBlank() }.joinToString(" · "),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Default.People, contentDescription = stringResource(Res.string.players), modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text("${tournament.numPlayers}", style = MaterialTheme.typography.labelLarge)
+                        }
+                        if (tournament.isTeams) {
+                            AppTooltipBox(stringResource(Res.string.feature_team)) {
+                                Icon(Icons.Default.Groups, contentDescription = stringResource(Res.string.feature_team), modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                            }
+                        }
+                        if (tournament.countBestHands) {
+                            AppTooltipBox(stringResource(Res.string.feature_best_on)) {
+                                TrophyIcon(contentDescription = stringResource(Res.string.feature_best_on), modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        if (tournament.countChickenHands) {
+                            AppTooltipBox(stringResource(Res.string.feature_chicken_on)) {
+                                ChickenIcon(contentDescription = stringResource(Res.string.feature_chicken_on), modifier = Modifier.size(18.dp))
+                            }
+                        }
+                        if (tournament.shortName.isNotBlank()) {
+                            Text(
+                                text = tournament.shortName,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
+                    }
+                }
+                if (showEdit) {
+                    IconButton(enabled = enabled, onClick = onEdit) {
+                        Icon(Icons.Default.Edit, contentDescription = stringResource(Res.string.edit_tournament_named, tournament.name))
+                    }
                 }
             }
         }

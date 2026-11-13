@@ -50,6 +50,26 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.material3.Text
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 
+/**
+ * True when the window is as narrow as a phone. The screens then show lists of cards instead of wide tables,
+ * stack the panels and use smaller margins. An app turns it on with [ProvideCompactLayout]; it is false otherwise.
+ */
+val LocalCompactLayout = compositionLocalOf { false }
+
+/** Windows narrower than this use the compact layout. The top bar buttons also lose their labels under this width. */
+val CompactLayoutMaxWidth = 600.dp
+
+/** The side margin of a screen in the compact layout. */
+val CompactScreenSidePadding = 12.dp
+
+/** Gives [LocalCompactLayout] to [content] from the width of the window. */
+@Composable
+fun ProvideCompactLayout(content: @Composable () -> Unit) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalCompactLayout provides (maxWidth < CompactLayoutMaxWidth)) { content() }
+    }
+}
+
 /** The scroll state of a [ScreenColumn] and the top of its viewport in the window. A section uses them to stick or to scroll. */
 class ScreenScroll(val state: ScrollState) {
     var viewportTop by mutableFloatStateOf(0f)
@@ -143,6 +163,17 @@ fun ScreenColumn(
     ) {
         val scrollState = rememberPersistentScrollState("screen")
         val layoutDirection = LocalLayoutDirection.current
+        // A phone keeps the margins small, so the content has room.
+        val contentPadding = if (LocalCompactLayout.current) {
+            PaddingValues(
+                start = CompactScreenSidePadding,
+                top = contentPadding.calculateTopPadding().coerceAtMost(CompactScreenSidePadding),
+                end = CompactScreenSidePadding,
+                bottom = contentPadding.calculateBottomPadding(),
+            )
+        } else {
+            contentPadding
+        }
         // The column fills the width. The side space keeps the content inside maxWidth and lets a full-bleed row use it.
         val sideSpace = ((this.maxWidth - maxWidth) / 2).coerceAtLeast(0.dp)
         val sidePadding = PaddingValues(

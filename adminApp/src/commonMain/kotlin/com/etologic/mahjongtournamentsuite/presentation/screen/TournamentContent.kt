@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
+import androidx.compose.material3.HorizontalDivider
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -104,9 +108,13 @@ internal fun TournamentContent(
 ) {
     val selectedEditor = selectedTableId?.let { tableEditors[it] }
     val roundTableCount = allTables.count { it.roundId == selectedRoundId }
+    val compact = LocalCompactLayout.current
     Column(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp, vertical = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(20.dp),
+        modifier = Modifier.fillMaxSize().padding(
+            horizontal = if (compact) CompactScreenSidePadding else 24.dp,
+            vertical = if (compact) 12.dp else 16.dp,
+        ),
+        verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 20.dp),
     ) {
         RoundTableStrip(
             rounds = rounds,
@@ -119,7 +127,29 @@ internal fun TournamentContent(
             onSelectRound = onSelectRound,
             onSelectTable = onSelectTable,
         )
-        if (selectedEditor != null) {
+        if (selectedEditor != null && compact) {
+            // A phone has no room for the labelled button: the title goes to the start and the button keeps its icon.
+            Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = stringResource(Res.string.round_table_header, selectedEditor.roundId, selectedEditor.tableId),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                if (canResetTable) {
+                    val resetLabel = stringResource(Res.string.reset_table)
+                    AppTooltipBox(resetLabel) {
+                        FocusedIconButton(
+                            onClick = { onResetTable(selectedEditor.tableId) },
+                            enabled = enabled,
+                            modifier = Modifier.testTag("resetTableButton"),
+                        ) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = resetLabel, tint = MaterialTheme.colorScheme.error)
+                        }
+                    }
+                }
+            }
+        } else if (selectedEditor != null) {
             // The same space on both sides keeps the title centred when the admin button shows.
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f))
@@ -278,71 +308,86 @@ private fun RoundTableStrip(
     }
     val roundMenu = rememberSelectMenuState()
     val roundStatus = roundCompletionStatus(tables)
-    Card(modifier = Modifier.fillMaxWidth().appFocusGroup(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+    val roundPicker: @Composable () -> Unit = {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
+        FocusedIconButton(
+            onClick = { rounds.getOrNull(roundIndex - 1)?.let { onSelectRound(it.roundId) } },
+            enabled = enabled && roundIndex > 0,
+        ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = stringResource(Res.string.previous_round)) }
+        Box {
+            FocusedOutlinedButton(
+                onClick = roundMenu::open,
+                enabled = enabled,
+                focusRequester = roundFocusRequester,
+            ) {
+                Text(stringResource(Res.string.round_n_text, selectedRoundId?.toString() ?: "-"), style = MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.width(8.dp))
+                StatusIconWithTooltip(roundStatus)
+                Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
+            }
+            val roundOptions = rounds.map { round ->
+                SelectOption(
+                    key = round.roundId,
+                    label = stringResource(Res.string.round_n, round.roundId),
+                    trailingIcon = { StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId })) },
+                )
+            }
+            SelectMenu(roundMenu, roundOptions, selectedRoundId, onSelectRound)
+        }
+        FocusedIconButton(
+            onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },
+            enabled = enabled && roundIndex in 0 until rounds.lastIndex,
+        ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_round)) }
+        }
+    }
+    val tableChips: @Composable (Modifier) -> Unit = { modifier ->
+        LazyRow(
+            state = chipsState,
+            modifier = modifier,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(0.dp)) {
-            FocusedIconButton(
-                onClick = { rounds.getOrNull(roundIndex - 1)?.let { onSelectRound(it.roundId) } },
-                enabled = enabled && roundIndex > 0,
-            ) { Icon(Icons.AutoMirrored.Filled.NavigateBefore, contentDescription = stringResource(Res.string.previous_round)) }
-            Box {
-                FocusedOutlinedButton(
-                    onClick = roundMenu::open,
-                    enabled = enabled,
-                    focusRequester = roundFocusRequester,
+            itemsIndexed(tables, key = { _, table -> table.tableId }) { index, table ->
+                val editor = tableEditors[table.tableId]
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(stringResource(Res.string.round_n_text, selectedRoundId?.toString() ?: "-"), style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.width(8.dp))
-                    StatusIconWithTooltip(roundStatus)
-                    Icon(Icons.Default.KeyboardArrowDown, contentDescription = null)
-                }
-                val roundOptions = rounds.map { round ->
-                    SelectOption(
-                        key = round.roundId,
-                        label = stringResource(Res.string.round_n, round.roundId),
-                        trailingIcon = { StatusIconWithTooltip(roundCompletionStatus(allTables.filter { it.roundId == round.roundId })) },
+                    if (index > 0) {
+                        Box(Modifier.height(24.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                    }
+                    TableChip(
+                        label = "${table.tableId}",
+                        status = editor?.completionStatus ?: tableCompletionStatus(table),
+                        hasUnsavedChanges = editor?.hasUnsavedChanges == true,
+                        selected = table.tableId == selectedTableId,
+                        // A table that is not loaded yet stays disabled until its data arrives.
+                        enabled = enabled && editor != null,
+                        onClick = { onSelectTable(table.tableId) },
+                        loaded = editor != null,
+                        modifier = Modifier.testTag("table-chip-${table.tableId}"),
                     )
                 }
-                SelectMenu(roundMenu, roundOptions, selectedRoundId, onSelectRound)
             }
-            FocusedIconButton(
-                onClick = { rounds.getOrNull(roundIndex + 1)?.let { onSelectRound(it.roundId) } },
-                enabled = enabled && roundIndex in 0 until rounds.lastIndex,
-            ) { Icon(Icons.AutoMirrored.Filled.NavigateNext, contentDescription = stringResource(Res.string.next_round)) }
+        }
+    }
+    Card(modifier = Modifier.fillMaxWidth().appFocusGroup(), elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)) {
+        if (LocalCompactLayout.current) {
+            // A phone shows the round picker over the tables, so both have the full width.
+            Column(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp)) {
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { roundPicker() }
+                HorizontalDivider(Modifier.padding(horizontal = 8.dp, vertical = 4.dp), color = MaterialTheme.colorScheme.outlineVariant)
+                tableChips(Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 4.dp))
             }
-            Box(Modifier.height(32.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
-            LazyRow(
-                state = chipsState,
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                itemsIndexed(tables, key = { _, table -> table.tableId }) { index, table ->
-                    val editor = tableEditors[table.tableId]
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        if (index > 0) {
-                            Box(Modifier.height(24.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
-                        }
-                        TableChip(
-                            label = "${table.tableId}",
-                            status = editor?.completionStatus ?: tableCompletionStatus(table),
-                            hasUnsavedChanges = editor?.hasUnsavedChanges == true,
-                            selected = table.tableId == selectedTableId,
-                            // A table that is not loaded yet stays disabled until its data arrives.
-                            enabled = enabled && editor != null,
-                            onClick = { onSelectTable(table.tableId) },
-                            loaded = editor != null,
-                            modifier = Modifier.testTag("table-chip-${table.tableId}"),
-                        )
-                    }
-                }
+                roundPicker()
+                Box(Modifier.height(32.dp).width(1.dp).background(MaterialTheme.colorScheme.outlineVariant))
+                tableChips(Modifier.weight(1f))
             }
         }
     }

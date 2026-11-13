@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -156,6 +160,36 @@ internal fun TableHandsCard(
                 color = MaterialTheme.colorScheme.error,
             )
         }
+        if (LocalCompactLayout.current) {
+            // A phone shows each hand as a card, under a line with the player of each seat.
+            val seatNames = listOf(editor.playerEastId, editor.playerSouthId, editor.playerWestId, editor.playerNorthId)
+                .map { playerNameOrNull(it, playerNamesById)?.asString() ?: "-" }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                SeatNamesRow(seatNames)
+                editor.hands.forEachIndexed { index, hand ->
+                    CompactHandCard(
+                        index = index,
+                        hand = hand,
+                        playerIds = editor.playerIds,
+                        playerNamesById = playerNamesById,
+                        enabled = handsEnabled,
+                        forceDoneChecked = editor.isCompleted,
+                        result = if (hand.isBlank) SeatTextValues.EMPTY else handResults.getOrNull(index).orZero(),
+                        subtotal = if (hand.isBlank) SeatTextValues.EMPTY else handSubtotals.getOrNull(index).orZero(),
+                        navigation = rowNavigators.getOrNull(index) ?: HandRowKeyboardNavigator(),
+                        previousNavigation = rowNavigators.getOrNull(index - 1),
+                        nextNavigation = rowNavigators.getOrNull(index + 1),
+                    )
+                }
+                Text(
+                    text = stringResource(Res.string.total_scores),
+                    style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                SeatValuesRow(values = editor.calculatedHandScoreTotals, names = seatNames)
+            }
+            return@SectionCard
+        }
         Column {
         GridTable(
             modifier = Modifier.onGloballyPositioned { coordinates ->
@@ -223,6 +257,30 @@ internal fun TableHandsCard(
             }
         }
         HandsTotalsRow(totals = editor.calculatedHandScoreTotals)
+        }
+    }
+}
+
+/** The wind and the player of each seat, over the compact hand cards. */
+@Composable
+private fun SeatNamesRow(names: List<String>) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.shapes.small)
+            .padding(vertical = 6.dp),
+    ) {
+        names.forEachIndexed { seat, name ->
+            Column(Modifier.weight(1f).padding(horizontal = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                SeatWindIcon(seat, Modifier.size(20.dp))
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.labelSmall,
+                    textAlign = TextAlign.Center,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
     }
 }

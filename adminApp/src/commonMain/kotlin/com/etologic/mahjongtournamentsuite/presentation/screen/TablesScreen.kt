@@ -1,5 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
+import mahjongtournamentsuite.adminapp.generated.resources.round_table_header
+import androidx.compose.foundation.layout.Column
+import androidx.compose.ui.text.font.FontWeight
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -244,11 +248,12 @@ fun TablesScreen(
                         }
 
                         else -> {
+                            val compact = LocalCompactLayout.current
                             LazyColumnWithScrollbar(
                                 state = tablesListState,
                                 modifier = Modifier.fillMaxWidth(),
                             ) {
-                                item {
+                                if (!compact) item {
                                     DataTableHeaderRow {
                                         Text(
                                             text = stringResource(Res.string.round),
@@ -321,36 +326,64 @@ fun TablesScreen(
                                             )
                                         },
                                     ) {
-                                        Text(
-                                            text = table.roundId.toString(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.weight(0.7f),
-                                        )
-                                        Text(
-                                            text = table.tableId.toString(),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            modifier = Modifier.weight(0.7f),
-                                        )
-                                        Text(
-                                            text = playersLabel,
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(2.8f),
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                        )
-                                        Text(
-                                            text = stringResource(if (table.isCompleted) Res.string.yes else Res.string.no),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.9f),
-                                        )
-                                        Text(
-                                            text = stringResource(if (table.useTotalsOnly) Res.string.yes else Res.string.no),
-                                            style = MaterialTheme.typography.bodyMedium,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                            modifier = Modifier.weight(0.9f),
-                                        )
+                                        if (compact) {
+                                            // A phone shows the round and the table as a title, and the rest under it.
+                                            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                                Text(
+                                                    text = stringResource(Res.string.round_table_header, table.roundId, table.tableId),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    fontWeight = FontWeight.SemiBold,
+                                                )
+                                                Text(
+                                                    text = playersLabel,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 2,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                                Text(
+                                                    text = stringResource(Res.string.done) + ": " +
+                                                        stringResource(if (table.isCompleted) Res.string.yes else Res.string.no) + " · " +
+                                                        stringResource(Res.string.manual_results) + ": " +
+                                                        stringResource(if (table.useTotalsOnly) Res.string.yes else Res.string.no),
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                    maxLines = 1,
+                                                    overflow = TextOverflow.Ellipsis,
+                                                )
+                                            }
+                                        } else {
+                                            Text(
+                                                text = table.roundId.toString(),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                modifier = Modifier.weight(0.7f),
+                                            )
+                                            Text(
+                                                text = table.tableId.toString(),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                modifier = Modifier.weight(0.7f),
+                                            )
+                                            Text(
+                                                text = playersLabel,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(2.8f),
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis,
+                                            )
+                                            Text(
+                                                text = stringResource(if (table.isCompleted) Res.string.yes else Res.string.no),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.9f),
+                                            )
+                                            Text(
+                                                text = stringResource(if (table.useTotalsOnly) Res.string.yes else Res.string.no),
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                modifier = Modifier.weight(0.9f),
+                                            )
+                                        }
                                         RowActionsMenu(
                                             enabled = !isLoading,
                                             items = listOf(

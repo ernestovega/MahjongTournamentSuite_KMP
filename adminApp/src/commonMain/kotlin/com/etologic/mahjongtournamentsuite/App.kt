@@ -62,6 +62,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.theme.LocalThemeController
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
+import com.etologic.mahjongtournamentsuite.presentation.components.ProvideCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.theme.rememberThemeController
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
@@ -121,8 +122,11 @@ private fun AppWithModules(content: @Composable () -> Unit) {
                 produceState(FeatureFlags()) { value = repository.load() }.value
             },
         ) {
-            // The user cannot enter before accepting the anonymous analytics.
-            ConsentGate(content)
+            // The screens change their layout on a phone.
+            ProvideCompactLayout {
+                // The user cannot enter before accepting the anonymous analytics.
+                ConsentGate(content)
+            }
         }
     }
 }
