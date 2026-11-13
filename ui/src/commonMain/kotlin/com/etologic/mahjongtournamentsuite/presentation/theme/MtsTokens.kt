@@ -236,15 +236,19 @@ object MtsTheme {
     val shapes: MtsShapes get() = MtsShapes
 
     val colors: MtsColors
-        @Composable @ReadOnlyComposable get() = LocalMtsColors.current
+        @Composable @ReadOnlyComposable
+        get() = LocalMtsColors.current
 
     val typography: MtsTypography
-        @Composable @ReadOnlyComposable get() = LocalMtsTypography.current
+        @Composable @ReadOnlyComposable
+        get() = LocalMtsTypography.current
             ?: MtsTypography.from(androidx.compose.material3.MaterialTheme.typography)
 
     val windowWidth: MtsWindowWidth
-        @Composable @ReadOnlyComposable get() = LocalMtsWindowWidth.current
+        @Composable @ReadOnlyComposable
+        get() = LocalMtsWindowWidth.current
 
     val layout: MtsLayout
-        @Composable @ReadOnlyComposable get() = MtsLayout.forWidth(LocalMtsWindowWidth.current)
+        @Composable @ReadOnlyComposable
+        get() = MtsLayout.forWidth(LocalMtsWindowWidth.current)
 }
