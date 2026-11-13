@@ -3,6 +3,12 @@ import test from "node:test";
 
 import {
   calculateTableSummary,
+  defaultHand,
+  HANDS_COPY_FIELD,
+  handsCopyUpdate,
+  handsCopyVersionUpdate,
+  handsFromCopy,
+  HANDS_PER_TABLE,
   isTournamentCompleteAfterTableSave,
   tableStateFromData,
 } from "./tableManagerService";
@@ -201,4 +207,34 @@ test("table summary status in hands mode ignores stale manual scores", () => {
   }, []);
 
   assert.equal(summary.completionStatus, "incomplete");
+});
+
+const sixteenHands = () => Array.from({ length: HANDS_PER_TABLE }, (_, index) => defaultHand(index + 1));
+
+test("the copy of the hands counts only for the version it was written for", () => {
+  const table = { version: 4, ...handsCopyUpdate(4, sixteenHands()) };
+
+  assert.equal(handsFromCopy(table)?.length, HANDS_PER_TABLE);
+  assert.equal(handsFromCopy({ ...table, version: 5 }), null);
+  assert.equal(handsFromCopy({ version: 4 }), null);
+});
+
+test("a copy without all the hands is not used", () => {
+  assert.equal(handsFromCopy({ version: 0, ...handsCopyUpdate(0, sixteenHands().slice(1)) }), null);
+});
+
+test("the copy keeps only the fields of a hand and sorts the hands", () => {
+  const hands = sixteenHands().reverse().map((hand) => ({ ...hand, updatedAt: "now", handScore: String(hand.handId) }));
+  const copy = handsCopyUpdate(1, hands)[HANDS_COPY_FIELD] as { hands: Array<Record<string, unknown>> };
+
+  assert.equal(copy.hands[0].handId, 1);
+  assert.equal(copy.hands[0].handScore, "1");
+  assert.equal("updatedAt" in copy.hands[0], false);
+});
+
+test("a new version keeps a valid copy valid and leaves an old copy alone", () => {
+  const valid = { version: 2, ...handsCopyUpdate(2, sixteenHands()) };
+
+  assert.deepEqual(handsCopyVersionUpdate(valid, 3), { [`${HANDS_COPY_FIELD}.version`]: 3 });
+  assert.deepEqual(handsCopyVersionUpdate({ ...valid, version: 3 }, 4), {});
 });

@@ -17,7 +17,7 @@ import {
 } from "./matchTime";
 import { scheduleRoundCloses } from "./matchTimeTaskService";
 import { roundClockViews, type RoundClockView } from "./roundClock";
-import { defaultHand, HANDS_PER_TABLE } from "./tableManagerService";
+import { defaultHand, HANDS_PER_TABLE, handsCopyUpdate } from "./tableManagerService";
 import {
   normalizeAgendaItems,
   normalizeMatchDuration,
@@ -350,6 +350,7 @@ export async function createTournament(params: {
       completionStatus: "empty",
       bestHandScores: [],
       chickenHandCount: 0,
+      ...handsCopyUpdate(0, Array.from({ length: HANDS_PER_TABLE }, (_, index) => defaultHand(index + 1))),
       version: 0,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),

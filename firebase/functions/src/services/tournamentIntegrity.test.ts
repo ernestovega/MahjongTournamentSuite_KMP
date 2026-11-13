@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import { checkTournamentIntegrity, type IntegrityInput } from "./tournamentIntegrity";
+import { handsCopyUpdate } from "./tableManagerService";
 
 const hand = (handId: number, extra: Record<string, unknown> = {}) => ({
   id: String(handId),
@@ -144,4 +145,17 @@ test("a round without a date or a start time is a warning", () => {
   assert.deepEqual(schedules([{ roundId: 1, date: "2026-10-01", startTime: null }]).map((f) => [f.severity, f.code]), [["warning", "schedule.incomplete"]]);
   assert.deepEqual(schedules([{ roundId: 1, date: null, startTime: "09:00" }]).map((f) => [f.severity, f.code]), [["warning", "schedule.incomplete"]]);
   assert.deepEqual(schedules([{ roundId: 1, date: "2026-10-01", startTime: "09:00" }]), []);
+});
+
+test("a copy of the hands that differs from the hand documents is an error, and an old copy is ignored", () => {
+  const input = valid();
+  const table = input.tables[0];
+  Object.assign(table.data, handsCopyUpdate(0, table.hands.map((item) => item.data)));
+  assert.ok(!codes(input).includes("counters.handsCopy"), "an equal copy is fine");
+
+  table.hands[0].data.handScore = "8";
+  assert.ok(codes(input).includes("counters.handsCopy"));
+
+  table.data.version = 1;
+  assert.ok(!codes(input).includes("counters.handsCopy"), "a copy of an older version is not used, so it is not checked");
 });

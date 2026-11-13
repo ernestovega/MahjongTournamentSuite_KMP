@@ -3,6 +3,7 @@ import { FieldValue, Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { badRequest, conflict, notFound } from "../api/httpError";
 import { tablePointsOf } from "./handScoring";
+import { handsCopyVersionUpdate } from "./tableManagerService";
 import { readSubstitution, SUBSTITUTION_REASONS, type PlayerSubstitution } from "./playerSubstitution";
 import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 import { loadAccountsByEmaId, type AccountInfo } from "./playerAccountsService";
@@ -179,6 +180,8 @@ function changeTable(
   transaction.update(table.ref, {
     forcedZeroPlayerId: forcedZeroPlayerId ?? FieldValue.delete(),
     ...points,
+    // The hands do not change, so their copy in the table stays valid with the new version.
+    ...handsCopyVersionUpdate(table.data(), version),
     version,
     updatedAt: FieldValue.serverTimestamp(),
   });
