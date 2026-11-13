@@ -34,6 +34,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,6 +46,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
@@ -56,6 +58,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.PlayerCountry
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.SelectField
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
@@ -65,6 +68,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersi
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
 import com.etologic.mahjongtournamentsuite.presentation.util.normalizeSearchText
+import kotlinx.coroutines.launch
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.filter_clear
 import mahjongtournamentsuite.playerapp.generated.resources.filter_search_label
@@ -74,6 +78,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.players_search_hint
 import mahjongtournamentsuite.playerapp.generated.resources.ranking_teams
 import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import mahjongtournamentsuite.playerapp.generated.resources.scope_players
+import mahjongtournamentsuite.playerapp.generated.resources.scope_tournament
 import mahjongtournamentsuite.playerapp.generated.resources.stats_title
 import mahjongtournamentsuite.playerapp.generated.resources.tab_info
 import mahjongtournamentsuite.playerapp.generated.resources.tab_ranking
@@ -231,6 +236,7 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
     val slotId = route.slotId
     // The photo, the country and the EMA number of the player, for the top bar.
     val statistics = koinInject<PlayerStatisticsPresenter>()
+    val scope = rememberCoroutineScope()
     val profile by produceState<PlayerProfile?>(null, route.tournamentId, slotId) {
         value = (statistics.tournament(route.tournamentId) as? AppResult.Success)?.value?.profiles?.get(slotId)
     }
@@ -285,7 +291,21 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
                         }
                         return@Column
                     }
-                    PlayerContent(view, slotId, tab, { statisticsLoading = it }) { table ->
+                    // The choice of another tournament of the player opens the same player there, in place of this screen.
+                    val selector: (@Composable () -> Unit)? = profile?.emaId?.takeIf { it.isNotBlank() }?.let { emaId ->
+                        {
+                            PlayerTournamentSelector(emaId, view.tournament) { otherId ->
+                                scope.launch {
+                                    val data = (statistics.tournament(otherId) as? AppResult.Success)?.value ?: return@launch
+                                    val otherSlot = data.profiles.entries.firstOrNull { it.value.emaId == emaId }?.key ?: return@launch
+                                    navController.navigate(TournamentPlayerRoute(otherId, otherSlot, tab)) {
+                                        popUpTo<TournamentPlayerRoute> { inclusive = true }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    PlayerContent(view, slotId, tab, { statisticsLoading = it }, selector) { table ->
                         navController.navigate(TableRoute(route.tournamentId, table.roundId, table.tableId))
                     }
                 }
@@ -300,14 +320,25 @@ private fun ColumnScope.PlayerContent(
     slotId: Int,
     tab: Int,
     onStatisticsLoading: (Boolean) -> Unit,
+    /** Above the tables and above the statistics: the choice of another tournament of the player. */
+    top: (@Composable () -> Unit)?,
     onOpenTable: (PlayerTable) -> Unit,
 ) {
     val ranking = view.rankings.players.firstOrNull { it.playerId == slotId }
     val tables = view.tables.filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
     if (tab == PlayerTab.STATISTICS) {
         val places = remember(view, slotId) { view.rankingsByRound().placesOfPlayer(slotId) }
-        PlayerSlotStatisticsTab(view.tournament.id, slotId, ranking = ranking, places = places, playerCount = view.players.size, onLoadingChange = onStatisticsLoading)
+        PlayerSlotStatisticsTab(
+            view.tournament.id,
+            slotId,
+            ranking = ranking,
+            places = places,
+            playerCount = view.players.size,
+            onLoadingChange = onStatisticsLoading,
+            top = top,
+        )
     } else if (tables.isEmpty()) {
+        top?.let { Box(Modifier.padding(start = 16.dp, top = 12.dp, end = 16.dp)) { it() } }
         Box(Modifier.padding(16.dp)) {
             AppEmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message))
         }
@@ -321,6 +352,7 @@ private fun ColumnScope.PlayerContent(
                 verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md),
                 contentPadding = PaddingValues(16.dp),
             ) {
+                top?.let { item(key = "tournament") { it() } }
                 items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
                     TableSummaryCard(view, table, highlightSlot = slotId, showRound = true) { onOpenTable(table) }
                 }
@@ -328,6 +360,26 @@ private fun ColumnScope.PlayerContent(
             TableScrollbar(state, tables, Modifier.align(Alignment.CenterEnd))
         }
     }
+}
+
+/**
+ * The tournaments of the player with the EMA number [emaId], the newest first, with [current] chosen. Another choice
+ * gives its id to [onSelect]. Until the list loads, only [current] is in it.
+ */
+@Composable
+private fun PlayerTournamentSelector(emaId: String, current: Tournament, onSelect: (String) -> Unit) {
+    val presenter = koinInject<PlayerStatisticsPresenter>()
+    val tournaments by produceState(listOf(current), emaId, current.id) {
+        val played = (presenter.person(emaId) as? AppResult.Success)?.value?.tournaments?.map { it.first } ?: return@produceState
+        value = (if (played.any { it.id == current.id }) played else played + current).reversed()
+    }
+    SelectField(
+        label = stringResource(Res.string.scope_tournament),
+        options = tournaments.map { it.id to it.name },
+        selected = current.id,
+        onSelect = { if (it != current.id) onSelect(it) },
+        modifier = Modifier.fillMaxWidth(),
+    )
 }
 
 /** The tabs of the tournament screen. The values are fixed ids, saved through a page refresh. [visible] gives the order. */

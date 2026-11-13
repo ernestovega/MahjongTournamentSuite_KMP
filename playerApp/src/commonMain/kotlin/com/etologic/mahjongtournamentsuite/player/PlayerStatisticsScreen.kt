@@ -328,6 +328,8 @@ fun PlayerSlotStatisticsTab(
     places: Map<Int, Int>? = null,
     playerCount: Int = 0,
     onLoadingChange: (Boolean) -> Unit = {},
+    /** Above the cards, for example the choice of another tournament of the player. */
+    top: (@Composable () -> Unit)? = null,
 ) {
     val presenter = koinInject<PlayerStatisticsPresenter>()
     var data by remember(tournamentId) { mutableStateOf<TournamentStatisticsData?>(null) }
@@ -345,6 +347,7 @@ fun PlayerSlotStatisticsTab(
         verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg),
     ) {
         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+        top?.invoke()
         val loaded = data ?: return@Column
         val stats = loaded.statistics.players.firstOrNull { it.playerId == slotId }
         val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier) } }
