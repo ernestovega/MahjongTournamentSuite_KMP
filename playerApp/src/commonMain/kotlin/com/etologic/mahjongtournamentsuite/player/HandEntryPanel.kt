@@ -769,7 +769,7 @@ private fun ReviewHand(
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     windOf(winner)?.let { WindIcon(it, size = 28.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
+                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Normal)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)

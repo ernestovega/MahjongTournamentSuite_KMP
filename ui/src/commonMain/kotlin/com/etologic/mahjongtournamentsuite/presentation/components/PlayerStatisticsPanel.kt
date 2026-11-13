@@ -500,7 +500,7 @@ private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
             name,
             if (open != null) Modifier.clickable(onClick = open) else Modifier,
             style = MaterialTheme.typography.titleLarge.inTextFont(),
-            fontWeight = FontWeight.Bold,
+            fontWeight = FontWeight.Normal,
             textAlign = TextAlign.Center,
             color = if (open != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
             textDecoration = if (open != null) TextDecoration.Underline else null,
