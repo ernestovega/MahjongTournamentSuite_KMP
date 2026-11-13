@@ -352,11 +352,12 @@ fun PlayerSlotStatisticsTab(
             standing?.invoke(Modifier.fillMaxWidth())
             AppEmptyState(StatisticsIcon, stringResource(Res.string.stats_empty_title), stringResource(Res.string.stats_player_empty_message))
         } else {
-            // The place and the rounds go over the whole width, then the other cards. The top bar shows who the player is.
+            // The place goes over the whole width, then the other cards, with the rounds after the places.
+            // The top bar shows who the player is.
             standing?.invoke(Modifier.fillMaxWidth())
-            PlayerRoundsCard(stats.byRound(loaded.tournament.roundIds()), places, playerCount, Modifier.fillMaxWidth())
             PlayerStatisticsPanel(
                 stats,
+                afterPlaces = { modifier -> PlayerRoundsCard(stats.byRound(loaded.tournament.roundIds()), places, playerCount, modifier) },
                 tournaments = listOf(loaded.tournament),
                 rivalNames = loaded.rivalNames,
             )
