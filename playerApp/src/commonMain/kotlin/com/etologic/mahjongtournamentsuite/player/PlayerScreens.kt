@@ -40,7 +40,7 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.GridView
+import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Leaderboard
 import androidx.compose.material.icons.filled.MyLocation
 import androidx.compose.material.icons.filled.PanTool
@@ -1004,7 +1004,7 @@ fun TournamentScreen(navController: NavHostController, tournamentId: String, req
                                     trackingName = MainTab.trackingName(id),
                                     icon = {
                                         val icon = when (id) {
-                                            MainTab.TABLES -> Icons.Default.GridView
+                                            MainTab.TABLES -> Icons.Default.TableRestaurant
                                             MainTab.RANKING -> Icons.Default.Leaderboard
                                             MainTab.PLAYERS -> Icons.Default.Person
                                             MainTab.TEAMS -> Icons.Default.Groups
