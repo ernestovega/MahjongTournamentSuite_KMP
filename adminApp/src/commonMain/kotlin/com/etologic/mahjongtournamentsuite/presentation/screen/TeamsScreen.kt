@@ -413,7 +413,7 @@ fun TeamsScreen(
                             ) {
                                 if (compact) {
                                     // A phone shows the team name over its players, and the edit button as an icon.
-                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                                         Text(
                                             text = "#${team.id} · ${team.name}",
                                             style = MaterialTheme.typography.bodyLarge,

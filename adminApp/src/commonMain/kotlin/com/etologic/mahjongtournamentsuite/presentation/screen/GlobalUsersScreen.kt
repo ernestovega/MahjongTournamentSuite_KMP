@@ -549,7 +549,7 @@ private fun UsersTable(
                                 overflow = TextOverflow.Ellipsis,
                             )
                         }
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             if (country.isNotBlank()) CountryFlag(code = country, contentDescription = stringResource(Res.string.country_n, country))
                             Text(
                                 listOfNotNull(roleLabel, user.emaId?.let { "EMA $it" }, statusLabel).joinToString(" · "),

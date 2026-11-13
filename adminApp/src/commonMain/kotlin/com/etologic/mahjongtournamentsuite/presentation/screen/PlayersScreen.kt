@@ -1207,7 +1207,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             maxLines = 2,
                                             overflow = TextOverflow.Ellipsis,
                                         )
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                                             if (playerCountry.isNotBlank()) CountryFlag(code = playerCountry, contentDescription = playerCountry)
                                             Text(
                                                 text = listOfNotNull(
@@ -1221,7 +1221,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 overflow = TextOverflow.Ellipsis,
                                             )
                                         }
-                                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                                             if (!slot.assignedEmaId.isNullOrBlank()) {
                                                 AccountStateIcon(slot.hasAccount, Modifier.size(16.dp))
                                             }

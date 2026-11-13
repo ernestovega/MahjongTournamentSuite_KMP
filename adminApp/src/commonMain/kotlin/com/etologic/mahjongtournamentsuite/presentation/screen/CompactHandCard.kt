@@ -98,7 +98,7 @@ internal fun CompactHandCard(
             .clip(shape)
             .border(1.dp, borderColor, shape)
             .background(background)
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            .padding(horizontal = 12.dp, vertical = 8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -207,7 +207,7 @@ internal fun CompactHandCard(
         val penaltyBackground = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.2f)
         hand.penaltyRows.forEachIndexed { penaltyIndex, penalty ->
             Column(
-                modifier = Modifier.fillMaxWidth().clip(shape).background(penaltyBackground).padding(6.dp),
+                modifier = Modifier.fillMaxWidth().clip(shape).background(penaltyBackground).padding(8.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -224,7 +224,7 @@ internal fun CompactHandCard(
                         )
                     }
                 }
-                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                     (0..3).forEach { seat ->
                         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                             SeatWindIcon(seat, Modifier.size(16.dp))

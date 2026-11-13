@@ -267,7 +267,7 @@ private fun SeatNamesRow(names: List<String>) {
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerHighest, MaterialTheme.shapes.small)
-            .padding(vertical = 6.dp),
+            .padding(vertical = 8.dp),
     ) {
         names.forEachIndexed { seat, name ->
             Column(Modifier.weight(1f).padding(horizontal = 2.dp), horizontalAlignment = Alignment.CenterHorizontally) {

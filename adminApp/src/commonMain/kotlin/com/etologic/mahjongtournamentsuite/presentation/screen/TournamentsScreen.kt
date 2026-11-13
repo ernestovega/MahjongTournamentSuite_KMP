@@ -867,7 +867,7 @@ private fun CompactTournamentCard(
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         CountryFlag(
                             code = emaCountryFlagCode(tournament.hostCountry).orEmpty(),
                             contentDescription = tournament.hostCountry.ifBlank { stringResource(Res.string.no_host_country) },
