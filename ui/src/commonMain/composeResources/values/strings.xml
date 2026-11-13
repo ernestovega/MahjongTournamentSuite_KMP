@@ -348,4 +348,18 @@
     <string name="app_chooser_hint">You can switch between the apps at any time with the button in the top bar.</string>
     <string name="top_bar_activity">Activity</string>
     <string name="design_system">Design system</string>
+    <string name="rounds_title">By round</string>
+    <string name="rounds_view_place">Ranking place</string>
+    <string name="round_short">R%1$d</string>
+    <string name="rounds_round_n">Round %1$d</string>
+    <string name="rounds_cumulative_note">Lines: everything up to each round. Dots: that round alone.</string>
+    <string name="rounds_place_detail">Round %1$d: place %2$d of %3$d</string>
+    <string name="rounds_points_detail">Round %1$d · Table %2$d · place %3$d · %4$s points · score %5$d</string>
+    <string name="rounds_hands_detail">Round %1$d · %2$d of %3$d tables · %4$d hands · %5$d drawn · %6$d penalties</string>
+    <string name="rounds_empty_detail">Round %1$d has no finished table yet.</string>
+    <string name="rounds_column_table">Table</string>
+    <string name="rounds_column_place">Place</string>
+    <string name="rounds_column_won">Won</string>
+    <string name="rounds_column_deal_ins">Deal-ins</string>
+    <string name="rounds_team_points_detail">Round %1$d · %2$s points</string>
 </resources>

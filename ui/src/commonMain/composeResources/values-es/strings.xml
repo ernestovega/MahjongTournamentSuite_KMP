@@ -348,4 +348,18 @@
     <string name="app_chooser_hint">Luego podrás cambiar de una app a otra cuando quieras con el botón de la barra superior.</string>
     <string name="top_bar_activity">Actividad</string>
     <string name="design_system">Design system</string>
+    <string name="rounds_title">Por ronda</string>
+    <string name="rounds_view_place">Puesto</string>
+    <string name="round_short">R%1$d</string>
+    <string name="rounds_round_n">Ronda %1$d</string>
+    <string name="rounds_cumulative_note">Líneas: acumulado hasta cada ronda. Puntos: solo esa ronda.</string>
+    <string name="rounds_place_detail">Ronda %1$d: puesto %2$d de %3$d</string>
+    <string name="rounds_points_detail">Ronda %1$d · Mesa %2$d · puesto %3$d · %4$s puntos · score %5$d</string>
+    <string name="rounds_hands_detail">Ronda %1$d · %2$d de %3$d mesas · %4$d manos · %5$d empates · %6$d penalizaciones</string>
+    <string name="rounds_empty_detail">La ronda %1$d aún no tiene mesas terminadas.</string>
+    <string name="rounds_column_table">Mesa</string>
+    <string name="rounds_column_place">Puesto</string>
+    <string name="rounds_column_won">Ganadas</string>
+    <string name="rounds_column_deal_ins">Descartes</string>
+    <string name="rounds_team_points_detail">Ronda %1$d · %2$s puntos</string>
 </resources>

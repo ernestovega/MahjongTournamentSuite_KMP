@@ -348,4 +348,18 @@
     <string name="app_chooser_hint">Potrai poi passare da un\'app all\'altra in qualsiasi momento con il pulsante della barra in alto.</string>
     <string name="top_bar_activity">Attività</string>
     <string name="design_system">Design system</string>
+    <string name="rounds_title">Per turno</string>
+    <string name="rounds_view_place">Posizione</string>
+    <string name="round_short">T%1$d</string>
+    <string name="rounds_round_n">Turno %1$d</string>
+    <string name="rounds_cumulative_note">Linee: totale fino a ogni turno. Punti: solo quel turno.</string>
+    <string name="rounds_place_detail">Turno %1$d: posizione %2$d di %3$d</string>
+    <string name="rounds_points_detail">Turno %1$d · Tavolo %2$d · posizione %3$d · %4$s punti · punteggio %5$d</string>
+    <string name="rounds_hands_detail">Turno %1$d · %2$d tavoli su %3$d · %4$d mani · %5$d patte · %6$d penalità</string>
+    <string name="rounds_empty_detail">Il turno %1$d non ha ancora tavoli finiti.</string>
+    <string name="rounds_column_table">Tavolo</string>
+    <string name="rounds_column_place">Posto</string>
+    <string name="rounds_column_won">Vinte</string>
+    <string name="rounds_column_deal_ins">Scarti</string>
+    <string name="rounds_team_points_detail">Turno %1$d · %2$s punti</string>
 </resources>
