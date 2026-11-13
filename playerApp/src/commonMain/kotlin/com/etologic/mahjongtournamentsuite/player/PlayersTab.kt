@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,13 +44,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.usecase.PlayerProfile
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
 import com.etologic.mahjongtournamentsuite.presentation.components.MtsTabRow
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerCountryAndEma
 import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerPhoto
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
@@ -78,6 +83,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.tables_empty_title
 import mahjongtournamentsuite.playerapp.generated.resources.tables_player_empty_message
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
+import org.koin.compose.koinInject
 import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedIconButton as IconButton
 
 /** The test tag of the search field of the player list. */
@@ -212,6 +218,9 @@ internal object PlayerTab {
     const val STATISTICS = 1
 }
 
+/** The photo in the top bar is as tall as the name and the line under it. */
+private val TopBarPhotoSize = 40.dp
+
 /**
  * The screen of one player of a tournament, over the tournament screen: the tables and the statistics of the player,
  * in two tabs. Back goes to the screen that opened it, with its tab and its scroll as they were.
@@ -220,6 +229,11 @@ internal object PlayerTab {
 internal fun TournamentPlayerScreen(navController: NavHostController, route: TournamentPlayerRoute) {
     val (view, message) = rememberTournamentView(route.tournamentId)
     val slotId = route.slotId
+    // The photo, the country and the EMA number of the player, for the top bar.
+    val statistics = koinInject<PlayerStatisticsPresenter>()
+    val profile by produceState<PlayerProfile?>(null, route.tournamentId, slotId) {
+        value = (statistics.tournament(route.tournamentId) as? AppResult.Success)?.value?.profiles?.get(slotId)
+    }
     var tab by rememberPersistentInt("playerTab", route.tab)
     // The statistics tell this screen when they load, so the progress bar stays until the content shows.
     var statisticsLoading by remember { mutableStateOf(false) }
@@ -227,8 +241,10 @@ internal fun TournamentPlayerScreen(navController: NavHostController, route: Tou
     val hideOnScroll = rememberHideOnScrollState()
     // Only the back button: the profile stays on the screens of the tournaments and of the tournament.
     AppScaffold(
-        title = view?.takeIf { slotId in it.players }?.nameOf(slotId) ?: stringResource(Res.string.scope_player),
-        subtitle = view?.tournament?.name,
+        title = view?.takeIf { slotId in it.players }?.nameOf(slotId) ?: profile?.name ?: stringResource(Res.string.scope_player),
+        // Photo on the left, name as the title, flag and EMA number under it.
+        titleLeading = profile?.let { { PlayerPhoto(it.photoUrl, it.name, size = TopBarPhotoSize) } },
+        subtitleContent = profile?.takeIf { it.country.isNotBlank() || it.emaId.isNotBlank() }?.let { { PlayerCountryAndEma(it.country, it.emaId) } },
         isLoading = (view == null && message == null) || (tab == PlayerTab.STATISTICS && statisticsLoading),
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },

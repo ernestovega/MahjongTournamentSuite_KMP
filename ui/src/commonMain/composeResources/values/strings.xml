@@ -155,7 +155,7 @@
     <string name="outcome_by_self_draw">By self-draw</string>
     <string name="outcome_hands_lost">Hands lost</string>
     <string name="outcome_by_discard_deal_in">By discard (deal-in)</string>
-    <string name="outcome_lost_to_self_draw">By selfdraw</string>
+    <string name="outcome_lost_to_self_draw">By self-draw</string>
     <string name="outcome_neutral_hands">Neutral hands</string>
     <string name="outcome_third_player_win">Third player win</string>
     <string name="outcome_hands_drawn">Hands drawn</string>

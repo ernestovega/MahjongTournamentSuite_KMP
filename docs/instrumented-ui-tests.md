@@ -116,7 +116,7 @@ The pull request from `develop` to `main` does not run the UI tests until the ap
 | `PlayerHomeTest` | 12 | Tournament card, schedule, roles, theme, sign out. |
 | `PlayerTournamentTest` | 13 | Tabs, my tables, all tables, ranking, info. |
 | `PlayerStatisticsTest` | 10 | Tournament and personal statistics, and the message for an account with no EMA number. |
-| `PlayerHandEntryTest` | 10 | Add draw, add win (discard and self draw), penalty dialog, review, cancel. |
+| `PlayerHandEntryTest` | 10 | Add draw, add win (discard and self-draw), penalty dialog, review, cancel. |
 | `PlayerRoundStartTest` | 2 | Waiting for the gong until the Timer starts the round, and a player who sets the seats of a table without seats. |
 | `TournamentJourneyTest` | 1 | A whole tournament from the admin app: the form, the picker for a player, Play on the Timer for each round, tables that the phones fill in, the last hand in the table editor and the ranking. |
 | `PlayerTournamentJourneyTest` | 1 | A whole tournament from the phone of one player: seats before the gong, hands from this phone and from the other phones of the table, the hand 16 that closes the table, the last hand of the tournament and the ranking. |

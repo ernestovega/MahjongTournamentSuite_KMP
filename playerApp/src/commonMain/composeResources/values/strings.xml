@@ -93,7 +93,7 @@
     <string name="stat_hands">Hands</string>
     <string name="table_details">Details</string>
     <string name="hand_penalty">Pen.</string>
-    <string name="hand_self_pick">Self-pick</string>
+    <string name="hand_self_pick">Self-draw</string>
     <string name="hand_discard">Discard</string>
     <string name="hand_draw">Draw</string>
     <string name="tables_player_empty_message">This player has no table in this tournament yet.</string>
@@ -117,7 +117,7 @@
     <string name="entry_add_win">Add win</string>
     <string name="entry_add_penalty">Add penalty</string>
     <string name="entry_winner">Winner</string>
-    <string name="entry_self_draw">Self draw</string>
+    <string name="entry_self_draw">Self-draw</string>
     <string name="entry_loser">Loser (who discarded)</string>
     <string name="entry_hand_score">Hand score (8 or more)</string>
     <string name="entry_chicken_limit">A chicken hand has 12 points or less.</string>
@@ -152,10 +152,10 @@
     <string name="changed_table_row">%1$s %2$s: %3$s (%4$s points)</string>
     <string name="changed_saved_hands">Saved hands: %1$d of %2$d</string>
     <string name="changed_last_hand_from">Last hand %1$d: %2$s won with %3$d from %4$s</string>
-    <string name="changed_last_hand_self">Last hand %1$d: %2$s won with %3$d (self draw)</string>
+    <string name="changed_last_hand_self">Last hand %1$d: %2$s won with %3$d (self-draw)</string>
     <string name="changed_your_hand">Your hand, not saved</string>
     <string name="changed_entered_from">%1$s won with %2$d from %3$s</string>
-    <string name="changed_entered_self">%1$s won with %2$d (self draw)</string>
+    <string name="changed_entered_self">%1$s won with %2$d (self-draw)</string>
     <string name="changed_entered_chicken">%1$s - chicken hand</string>
     <string name="changed_already">If the hand is already in the table, do not enter it again.</string>
     <string name="changed_call_staff">You can call a staff member to check the table, or close this window and go on.</string>

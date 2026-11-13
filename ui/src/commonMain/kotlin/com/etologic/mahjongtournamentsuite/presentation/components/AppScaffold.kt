@@ -29,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
@@ -70,6 +71,10 @@ private val AppLoadingBarHeight = 4.dp
 fun AppScaffold(
     title: String,
     subtitle: String? = null,
+    /** Drawn in place of [subtitle], for a subtitle with more than text, such as a flag. */
+    subtitleContent: @Composable (() -> Unit)? = null,
+    /** Left of the title and the subtitle, as tall as both, such as the photo of a player. */
+    titleLeading: @Composable (() -> Unit)? = null,
     titleAction: @Composable (() -> Unit)? = null,
     isLoading: Boolean = false,
     showProgress: Boolean = isLoading,
@@ -118,24 +123,30 @@ fun AppScaffold(
                         val sidePadding = if (rootLeadingActions != null) 0.dp else AppTopBarSidePadding
                         val titleContent: @Composable () -> Unit = {
                             Row(
-                                horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+                                horizontalArrangement = Arrangement.spacedBy(if (titleLeading != null) MtsTheme.spacing.sm else MtsTheme.spacing.xs),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
+                                if (titleLeading != null) titleLeading()
                                 Box(modifier = Modifier.weight(1f, fill = false)) {
-                                    if (subtitle == null) {
+                                    if (subtitle == null && subtitleContent == null) {
                                         EllipsizedTitleText(title)
                                     } else {
                                         Column(
                                             verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
-                                            horizontalAlignment = Alignment.CenterHorizontally,
+                                            // With a picture on the left, the texts line up on its side.
+                                            horizontalAlignment = if (titleLeading != null) Alignment.Start else Alignment.CenterHorizontally,
                                         ) {
                                             EllipsizedTitleText(title)
-                                            EllipsizedTitleText(
-                                                text = subtitle,
-                                                style = MaterialTheme.typography.bodySmall,
-                                                // Same color as the title, in the light and the dark theme.
-                                                color = LocalContentColor.current,
-                                            )
+                                            if (subtitleContent != null) {
+                                                ProvideTextStyle(MaterialTheme.typography.bodySmall) { subtitleContent() }
+                                            } else if (subtitle != null) {
+                                                EllipsizedTitleText(
+                                                    text = subtitle,
+                                                    style = MaterialTheme.typography.bodySmall,
+                                                    // Same color as the title, in the light and the dark theme.
+                                                    color = LocalContentColor.current,
+                                                )
+                                            }
                                         }
                                     }
                                 }

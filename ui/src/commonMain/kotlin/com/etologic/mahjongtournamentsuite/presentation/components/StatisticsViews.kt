@@ -321,31 +321,7 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     /** A button at the end of the row, for example to change the player. */
     action: (@Composable () -> Unit)? = null,
 ) {
-    val photo: @Composable () -> Unit = {
-        if (profile.photoUrl.isNullOrBlank()) {
-            Box(
-                modifier = Modifier
-                    .size(HeaderImageSize)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = stringResource(Res.string.player_photo_none),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(HeaderImageSize * 0.62f),
-                )
-            }
-        } else {
-            AsyncImage(
-                model = profile.photoUrl,
-                contentDescription = stringResource(Res.string.photo_of, profile.name),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.size(HeaderImageSize).clip(CircleShape),
-            )
-        }
-    }
+    val photo: @Composable () -> Unit = { PlayerPhoto(profile.photoUrl, profile.name) }
     val texts: @Composable (Alignment.Horizontal) -> Unit = { alignment ->
         Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(profile.name, style = MaterialTheme.typography.titleLarge.inTextFont())
@@ -362,6 +338,47 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     HeaderCard(modifier, fillWidth, action) {
         photo()
         texts(Alignment.Start)
+    }
+}
+
+/** The round photo of a player, or a person icon when there is none. */
+@Composable
+fun PlayerPhoto(photoUrl: String?, name: String, size: Dp = HeaderImageSize) {
+    if (photoUrl.isNullOrBlank()) {
+        Box(
+            modifier = Modifier
+                .size(size)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = stringResource(Res.string.player_photo_none),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(size * 0.62f),
+            )
+        }
+    } else {
+        AsyncImage(
+            model = photoUrl,
+            contentDescription = stringResource(Res.string.photo_of, name),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier.size(size).clip(CircleShape),
+        )
+    }
+}
+
+/** The flag and the EMA number of a player, in one line, for a subtitle. Nothing when both are empty. */
+@Composable
+fun PlayerCountryAndEma(country: String, emaId: String, style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodySmall) {
+    Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
+        if (country.isNotBlank()) {
+            CountryFlag(country, width = 18.dp, contentDescription = stringResource(Res.string.country_n, country))
+        }
+        if (emaId.isNotBlank()) {
+            Text(stringResource(Res.string.rival_ema, emaId), style = style, maxLines = 1)
+        }
     }
 }
 

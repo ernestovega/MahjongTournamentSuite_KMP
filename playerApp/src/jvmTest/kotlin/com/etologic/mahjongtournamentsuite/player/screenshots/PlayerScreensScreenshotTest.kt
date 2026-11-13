@@ -63,14 +63,14 @@ class PlayerScreensScreenshotTest {
     fun tournamentPlayers() = playerScreenshots("tournament-players", ready = { openTab("Players") }) { nav -> TournamentScreen(nav, ONGOING) }
 
     @Test
-    fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText("Madrid Open 2026", substring = true) }) { nav ->
+    fun tournamentPlayerTables() = playerScreenshots("tournament-player-tables", ready = { waitForText("EMA 04010001", substring = true) }) { nav ->
         TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1))
     }
 
     @Test
     fun tournamentPlayerStatistics() = playerScreenshots(
         "tournament-player-statistics",
-        ready = { waitForText("Madrid Open 2026", substring = true) },
+        ready = { waitForText("EMA 04010001", substring = true) },
     ) { nav -> TournamentPlayerScreen(nav, TournamentPlayerRoute(ONGOING, slotId = 1, tab = PlayerTab.STATISTICS)) }
 
     @Test
