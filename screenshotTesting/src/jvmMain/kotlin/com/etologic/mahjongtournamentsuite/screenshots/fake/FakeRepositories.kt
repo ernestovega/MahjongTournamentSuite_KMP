@@ -8,6 +8,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.AuthSession
 import com.etologic.mahjongtournamentsuite.domain.model.Country
 import com.etologic.mahjongtournamentsuite.domain.model.CreateTournamentRequest
+import com.etologic.mahjongtournamentsuite.domain.model.DigestResult
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupDetail
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorGroupsPage
 import com.etologic.mahjongtournamentsuite.domain.model.ErrorLogCursor
@@ -23,6 +24,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.PersonTournamentDigest
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
+import com.etologic.mahjongtournamentsuite.domain.model.RankingTable
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
@@ -50,6 +52,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.usecase.CalculateStatisticsUseCase
 import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 
 /** What a write of a screenshot test gets: screenshots never write, so a write that runs is a mistake of the test. */
@@ -197,7 +200,10 @@ open class ScreenshotAdminRepository(
     override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> = ok(ActivityPage(entries = emptyList(), nextCursor = null))
 }
 
-/** Statistics of the server: an empty overview and no history, until a test gives more. */
+/**
+ * Statistics of the server: an empty overview, and the history of a person computed from the tables of every
+ * tournament that has started. A null EMA number is the signed-in player.
+ */
 open class ScreenshotStatisticsRepository : StatisticsRepository {
     override suspend fun loadOverview(): AppResult<StatisticsOverview> = ok(
         StatisticsOverview(
@@ -206,7 +212,21 @@ open class ScreenshotStatisticsRepository : StatisticsRepository {
         ),
     )
 
-    override suspend fun loadPerson(emaId: String?): AppResult<List<PersonTournamentDigest>> = ok(emptyList())
+    override suspend fun loadPerson(emaId: String?): AppResult<List<PersonTournamentDigest>> {
+        val person = emaId ?: ScreenshotData.playerAccount.emaId.orEmpty()
+        return ok(
+            ScreenshotData.tournaments.filter { it.id != ScreenshotData.UPCOMING }.mapNotNull { tournament ->
+                val players = ScreenshotData.tournamentPlayers(tournament.isTeams)
+                val slotId = players.firstOrNull { it.assignedEmaId == person }?.id ?: return@mapNotNull null
+                val tables = (1..4).flatMap { round ->
+                    (1..4).map { table -> ScreenshotData.table(tournament.id, round, table).let { (state, hands) -> RankingTable(state, hands) } }
+                }
+                val statistics = CalculateStatisticsUseCase()(players, tables, tournament.id)
+                val results = statistics.players.first { it.playerId == slotId }.results
+                PersonTournamentDigest(tournament.id, results.map { DigestResult(person, slotId, it) })
+            },
+        )
+    }
     override suspend fun loadStandings(emaId: String?, tournamentIds: List<String>): AppResult<Map<String, Standing>> = ok(emptyMap())
 }
 

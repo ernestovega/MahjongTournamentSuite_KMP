@@ -127,12 +127,17 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 @Composable
-fun RankingStandaloneScreen(tournamentId: String) {
+fun RankingStandaloneScreen(
+    tournamentId: String,
+    /** The clock of the "loaded at" label. The screenshot tests fix it. */
+    clock: Clock = Clock.System,
+) {
     val themeController = rememberScreenThemeController()
 
     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
         RankingStandaloneContent(
             tournamentId = tournamentId,
+            clock = clock,
             themePreference = themeController.preference,
             onToggleTheme = themeController.onTogglePreference,
         )
@@ -142,6 +147,7 @@ fun RankingStandaloneScreen(tournamentId: String) {
 @Composable
 private fun RankingStandaloneContent(
     tournamentId: String,
+    clock: Clock,
     themePreference: ThemePreference,
     onToggleTheme: () -> Unit,
 ) {
@@ -166,7 +172,7 @@ private fun RankingStandaloneContent(
         when (val result = presenter.load(tournamentId, force)) {
             is AppResult.Success -> {
                 snapshot = result.value
-                loadedAt = Clock.System.now()
+                loadedAt = clock.now()
                 pageIndex = 0
                 remainingSeconds = intervalSeconds
             }

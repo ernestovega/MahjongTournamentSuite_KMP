@@ -8,6 +8,7 @@ plugins {
     alias(libs.plugins.composeMultiplatform)
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kover)
+    alias(libs.plugins.roborazzi)
 }
 
 kotlin {
@@ -58,6 +59,7 @@ kotlin {
             implementation(compose.desktop.currentOs)
         }
         jvmTest.dependencies {
+            implementation(projects.screenshotTesting)
             implementation(libs.kotlin.test)
             implementation(libs.compose.ui.test.junit4.desktop)
             implementation(libs.kotlinx.coroutines.test)

@@ -5,7 +5,8 @@ import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.isRoot
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.runDesktopComposeUiTest
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
@@ -29,6 +30,12 @@ enum class ScreenSize(val width: Int, val height: Int) {
 data class Variant(val size: ScreenSize, val dark: Boolean) {
     val fileName: String get() = "${size.name.lowercase()}-${if (dark) "dark" else "light"}.png"
 }
+
+/** Components and dialogs: phone width, light and dark. Their size does not depend on the window. */
+val componentVariants: List<Variant> = listOf(Variant(ScreenSize.Phone, false), Variant(ScreenSize.Phone, true))
+
+/** Dialogs: phone and desktop, light and dark. A dialog keeps its width on a tablet, so the tablet adds nothing. */
+val dialogVariants: List<Variant> = listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) }
 
 val allVariants: List<Variant> = ScreenSize.entries.flatMap { size -> listOf(Variant(size, false), Variant(size, true)) }
 
@@ -65,11 +72,11 @@ fun screenshots(
                 } catch (e: Throwable) {
                     // The image of a screen that never got ready shows why: an error, an empty list, another text.
                     val file = File("build/outputs/roborazzi/not-ready/$name/${variant.fileName}").apply { parentFile.mkdirs() }
-                    ImageIO.write(onRoot().captureToImage().toAwtImage(), "png", file)
+                    ImageIO.write(onAllNodes(isRoot()).onFirst().captureToImage().toAwtImage(), "png", file)
                     throw AssertionError("Not ready, see ${file.path}: ${e.message}", e)
                 }
                 waitForIdle()
-                onRoot().captureRoboImage("screenshots/$name/${variant.fileName}", roborazziOptions = options)
+                onAllNodes(isRoot()).onFirst().captureRoboImage("screenshots/$name/${variant.fileName}", roborazziOptions = options)
             }
         } catch (e: Throwable) {
             failures += AssertionError("$name ${variant.fileName}: ${e.message}", e)

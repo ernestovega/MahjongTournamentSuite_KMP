@@ -19,13 +19,14 @@ import kotlin.random.Random
 
 /**
  * The data of the screenshots: the same on every run (fixed seed, fixed dates, no "now"), so an image changes only when
- * a screen changes. 16 players in 4 teams play 4 rounds of 4 tables. In [ONGOING] rounds 1 and 2 are complete, round 3
+ * a screen changes. The screens compare dates with today, so every tournament is in the past except [UPCOMING], which is
+ * in 2099: no image changes with the date. 16 players in 4 teams play 4 rounds of 4 tables. In [ONGOING] rounds 1 and 2 are complete, round 3
  * is halfway and round 4 has not started; [COMPLETED] has every round complete.
  */
 object ScreenshotData {
     const val ONGOING = "madrid-open-2026"
     const val COMPLETED = "lisbon-cup-2025"
-    const val UPCOMING = "berlin-riichi-2027"
+    const val UPCOMING = "berlin-spring-2099"
     const val INDIVIDUAL = "paris-classic-2026"
 
     const val HANDS_PER_TABLE = 16
@@ -232,9 +233,9 @@ object ScreenshotData {
             eventEndDate = "2026-03-08", roundSchedules = schedule("2026-03-07"), timeZone = "Europe/Paris", isCompleted = true,
         ),
         Tournament(
-            id = UPCOMING, name = "Berlin Spring 2027", isTeams = false, numPlayers = 16, numRounds = 4, shortName = "BS27",
-            primaryColor = "#C62828", hostCountry = "DE", hostCity = "Berlin", eventStartDate = "2027-04-10",
-            eventEndDate = "2027-04-11", roundSchedules = schedule("2027-04-10"), timeZone = "Europe/Berlin", isPublic = false,
+            id = UPCOMING, name = "Berlin Spring 2099", isTeams = false, numPlayers = 16, numRounds = 4, shortName = "BS99",
+            primaryColor = "#C62828", hostCountry = "DE", hostCity = "Berlin", eventStartDate = "2099-04-10",
+            eventEndDate = "2099-04-11", roundSchedules = schedule("2099-04-10"), timeZone = "Europe/Berlin", isPublic = false,
         ),
     )
 

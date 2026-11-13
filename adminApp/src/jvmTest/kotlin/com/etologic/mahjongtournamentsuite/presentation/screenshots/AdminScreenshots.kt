@@ -3,6 +3,9 @@ package com.etologic.mahjongtournamentsuite.presentation.screenshots
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.InternalComposeUiApi
+import androidx.compose.ui.LocalSystemTheme
+import androidx.compose.ui.SystemTheme
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithText
@@ -35,7 +38,7 @@ import org.koin.dsl.module
  * Screenshots of an admin screen with the same frame as the app (theme, logo, adaptive top bar, compact layout on a
  * phone) and the fake repositories of [modules]. A Logger is always there. The images go to adminApp/screenshots/<name>/.
  */
-@OptIn(ExperimentalTestApi::class)
+@OptIn(ExperimentalTestApi::class, InternalComposeUiApi::class)
 internal fun adminScreenshots(
     name: String,
     modules: () -> List<Module> = { adminModules() },
@@ -53,6 +56,8 @@ internal fun adminScreenshots(
     KoinContext(koin) {
         CompositionLocalProvider(
             LocalThemeController provides ThemeController(preference, variant.dark, {}),
+            // The Timer and the rankings keep a theme of their own that starts from the system theme.
+            LocalSystemTheme provides if (variant.dark) SystemTheme.Dark else SystemTheme.Light,
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
             LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,

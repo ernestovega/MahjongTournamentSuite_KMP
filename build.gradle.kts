@@ -64,6 +64,8 @@ subprojects {
         tasks.withType<Test>().configureEach {
             if (org.gradle.internal.os.OperatingSystem.current().isLinux) {
                 environment("FONTCONFIG_FILE", rootProject.file("screenshotTesting/fonts/fonts.conf").absolutePath)
+                // Times on screen, such as "loaded 10:00", use the zone of the machine.
+                systemProperty("user.timezone", "UTC")
             }
         }
     }

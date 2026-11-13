@@ -46,6 +46,7 @@ kotlin {
         jvmTest.dependencies {
             implementation(libs.kotlin.test)
             implementation(project(":screenshotTesting"))
+            implementation(compose.materialIconsExtended)
         }
     }
 }
