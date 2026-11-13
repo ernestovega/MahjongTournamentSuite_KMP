@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
 import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
@@ -25,12 +26,27 @@ class PlayerMatchTimeTest : PlayerE2eTest() {
 
     private fun openMyTable(account: String, tournament: String) {
         start(account, ready = "My tournaments")
+        closeTableReminders()
         c.openTournament(tournament)
-        // The Me list has only the tables of the signed-in player.
+        // The Me list has only the tables of the signed-in player. The filter shows once the tournament has loaded.
+        c.waitForText("Me")
         c.clickButton("Me")
         c.waitForText("Table 1", substring = true)
         c.onAllNodes(hasText("Table 1", substring = true) and hasClickAction()).onFirst().performClick()
         c.waitForText("Round 1 - Table 1")
+    }
+
+    /**
+     * The over account also plays in the extra time tournament, where a round is in play. The "Go to my table" reminder
+     * then shows at the bottom of the list, over the Open button of the last card. A tap there opens that other table.
+     */
+    private fun closeTableReminders() {
+        repeat(2) {
+            val shown = runCatching {
+                c.waitUntil(5_000) { c.onAllNodes(hasContentDescription(REMINDER_CLOSE)).fetchSemanticsNodes().isNotEmpty() }
+            }.isSuccess
+            if (shown) c.clickButton(REMINDER_CLOSE)
+        }
     }
 
     @Test
@@ -59,3 +75,5 @@ class PlayerMatchTimeTest : PlayerE2eTest() {
         c.assertNoText("Add draw")
     }
 }
+
+private const val REMINDER_CLOSE = "Close the reminder"
