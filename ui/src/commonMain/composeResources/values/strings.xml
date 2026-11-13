@@ -360,6 +360,6 @@
     <string name="rounds_place_points_detail">Round %1$d · Place %2$d of %3$d · %4$s table points</string>
     <string name="rounds_hands_of_round">Round %1$d · %2$d hands</string>
     <string name="rounds_member_points">%1$s: %2$s points</string>
-    <string name="rounds_member_result">%1$s: #%2$d, %3$s pts, score %4$d</string>
-    <string name="rounds_team_score_detail">Round %1$d · %2$s points · Score %3$d</string>
+    <string name="rounds_member_result">%1$s: %4$d (#%2$d, %3$s pts)</string>
+    <string name="rounds_team_score_detail">Round %1$d · Score %3$d · %2$s points</string>
 </resources>

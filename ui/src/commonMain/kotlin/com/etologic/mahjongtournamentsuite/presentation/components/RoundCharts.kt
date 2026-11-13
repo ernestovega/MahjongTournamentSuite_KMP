@@ -131,7 +131,7 @@ private fun DrawScope.tooltip(text: String, index: Int, slot: Float, anchorY: Fl
 }
 
 /**
- * Stacked bars, one for each round, from zero up. [labels] go over the bars. A round with no parts shows a dash.
+ * Stacked bars, one for each round: the positive parts from zero up and the negative ones from zero down. [labels] go over the bars. A round with no parts shows a dash.
  * [maxValue] is the top of the scale, so several charts can share it.
  */
 @Composable
@@ -142,33 +142,44 @@ fun RoundBarChart(
     selected: Int?,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    maxValue: Double = bars.maxOfOrNull { bar -> bar.sumOf { it.value } }?.takeIf { it > 0 } ?: 1.0,
+    maxValue: Double = bars.maxOfOrNull { bar -> bar.filter { it.value > 0 }.sumOf { it.value } }?.takeIf { it > 0 } ?: 1.0,
     height: Dp = 180.dp,
     /** The text of the selected round, in a bubble over its bar. Parts split by " · " show as bullet points. */
     tooltip: String? = null,
 ) {
     val measurer = rememberTextMeasurer()
     val colors = MaterialTheme.colorScheme
+    // The negative parts, like a negative score, go down from the zero line. Without them the zero line is the bottom.
+    val minValue = bars.minOfOrNull { bar -> bar.filter { it.value < 0 }.sumOf { it.value } }?.coerceAtMost(0.0) ?: 0.0
     RoundCanvas(names.size, height, onSelect, modifier, tooltip) { slot ->
         selection(selected, slot, colors.primary.copy(alpha = 0.08f))
         val top = AxisSpace.toPx()
         val bottom = size.height - AxisSpace.toPx()
-        drawLine(colors.outlineVariant, Offset(0f, bottom), Offset(size.width, bottom), 1.dp.toPx())
+        val range = maxValue - minValue
+        val zero = top + ((bottom - top) * (maxValue / range)).toFloat()
+        fun extent(value: Double) = ((bottom - top) * (kotlin.math.abs(value) / range)).toFloat()
+        drawLine(colors.outlineVariant, Offset(0f, zero), Offset(size.width, zero), 1.dp.toPx())
         val barWidth = slot * 0.56f
-        var selectedTop = bottom
+        var selectedTop = zero
         bars.forEachIndexed { index, parts ->
             val left = slot * index + (slot - barWidth) / 2f
-            var y = bottom
+            var up = zero
             parts.filter { it.value > 0 }.forEach { part ->
-                val h = ((bottom - top) * (part.value / maxValue)).toFloat()
-                drawRect(part.color, Offset(left, y - h), Size(barWidth, h))
-                y -= h
+                val h = extent(part.value)
+                drawRect(part.color, Offset(left, up - h), Size(barWidth, h))
+                up -= h
             }
-            if (index == selected) selectedTop = y
-            val label = labels.getOrNull(index) ?: if (parts.none { it.value > 0 }) "—" else null
+            var down = zero
+            parts.filter { it.value < 0 }.forEach { part ->
+                val h = extent(part.value)
+                drawRect(part.color, Offset(left, down), Size(barWidth, h))
+                down += h
+            }
+            if (index == selected) selectedTop = up
+            val label = labels.getOrNull(index) ?: if (parts.none { it.value != 0.0 }) "—" else null
             if (label != null && !(index == selected && tooltip != null)) {
                 val layout = measurer.measure(label, TextStyle(fontSize = 11.sp, color = colors.onSurface, fontWeight = FontWeight.Bold))
-                drawText(layout, topLeft = Offset(slot * index + (slot - layout.size.width) / 2f, (y - layout.size.height - 2.dp.toPx()).coerceAtLeast(0f)))
+                drawText(layout, topLeft = Offset(slot * index + (slot - layout.size.width) / 2f, (up - layout.size.height - 2.dp.toPx()).coerceAtLeast(0f)))
             }
         }
         roundNames(names, slot, selected, measurer, colors.onSurfaceVariant, colors.primary)

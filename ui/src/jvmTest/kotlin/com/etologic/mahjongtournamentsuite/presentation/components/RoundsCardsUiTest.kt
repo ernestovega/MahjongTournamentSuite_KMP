@@ -154,7 +154,7 @@ class RoundsCardsUiTest {
         // The tooltips add up the team and give the share of each player.
         onNodeWithContentDescription("Round 3\nPlace 1 of 4\n", substring = true).assertExists()
         onNodeWithContentDescription("Ana López: 4 points", substring = true).assertExists()
-        onNodeWithContentDescription("Ana López: #1, 4 pts, score", substring = true).assertExists()
+        onNodeWithContentDescription("Ana López: 33 (#1, 4 pts)", substring = true).assertExists()
         // Every player is in the tooltips of the place, the score and the four skills.
         assertEquals(6, onAllNodesWithContentDescription("Diego Sanz: ", substring = true).fetchSemanticsNodes().size)
         memberNames.values.forEach { onNodeWithText(it).assertExists() }

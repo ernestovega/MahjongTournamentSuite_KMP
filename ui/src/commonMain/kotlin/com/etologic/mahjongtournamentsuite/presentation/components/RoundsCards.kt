@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -295,11 +296,10 @@ fun PlayerRoundsCard(
                 }
                 RoundBarChart(
                     names = names,
-                    bars = rounds.map { round -> round.round.results.map { BarPart(it.points, positionColor(it.position)) } },
+                    bars = rounds.map { round -> round.round.results.map { BarPart(it.score.toDouble(), positionColor(it.position)) } },
                     labels = rounds.map { round -> round.round.results.takeIf { it.isNotEmpty() }?.sumOf { it.score }?.toString() },
                     selected = selected,
                     onSelect = { selected = it },
-                    maxValue = max(4.0, rounds.maxOf { it.round.totalPoints }),
                     tooltip = tip,
                 )
             }
@@ -353,7 +353,7 @@ private fun PlayerHandsView(
                     thickness = 0.3f,
                 )
                 Text(
-                    names[index] + (s.handsPlayed.takeIf { it > 0 }?.let { " · $it" } ?: ""),
+                    names[index],
                     style = MaterialTheme.typography.labelMedium,
                     color = if (index == selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     fontWeight = if (index == selected) FontWeight.Bold else null,
@@ -379,15 +379,13 @@ private fun PlayerHandsView(
         fontWeight = FontWeight.Bold,
     )
     val memberParts = members.map { (name, memberRounds) -> name to memberRounds.getOrNull(selected)?.round?.let { parts(it) } }
+    // The legend has the totals. For a team, a touch on a line, or the mouse over it, shows how many each player had.
     parts(s).forEachIndexed { index, (label, value, color) ->
-        LegendRow(color, stringResource(label), "$value · ${(100.0 * value / s.handsPlayed).roundToInt()}%")
-        if (memberParts.isNotEmpty()) {
-            Text(
-                memberParts.joinToString(" · ") { (name, p) -> "${name.substringBefore(' ')} ${p?.get(index)?.second ?: "—"}" },
-                Modifier.fillMaxWidth().padding(start = MtsTheme.spacing.xl),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+        val row = @Composable { LegendRow(color, stringResource(label), "$value · ${(100.0 * value / s.handsPlayed).roundToInt()}%") }
+        if (memberParts.isEmpty()) {
+            row()
+        } else {
+            AppTooltipBox(memberParts.joinToString("\n") { (name, p) -> "$name: ${p?.get(index)?.second ?: "—"}" }) { row() }
         }
     }
 }
@@ -395,14 +393,9 @@ private fun PlayerHandsView(
 /** The charts of a team are taller, so their tooltips with a line for each player leave the bars in sight. */
 private val TeamChartHeight = 240.dp
 
-/** The colors of the players of a team in the stacked bars. */
+/** The colors of the players of a team in the stacked bars: soft solid shades of one color, from the strongest to the palest. */
 @Composable
-private fun memberColors(): List<Color> = listOf(
-    MaterialTheme.colorScheme.primary,
-    MtsTheme.colors.info,
-    MtsTheme.colors.warning,
-    MaterialTheme.colorScheme.tertiary,
-)
+private fun memberColors(): List<Color> = listOf(0f, 0.3f, 0.5f, 0.68f).map { lerp(MaterialTheme.colorScheme.primary, Color.White, it) }
 
 /**
  * The "By round" card of a team. [rounds] has the tables of all its players. [members] gives each player with its own
@@ -436,7 +429,7 @@ fun TeamRoundsCard(
                     rounds.map { round -> round.round.totalPoints.takeIf { !round.isEmpty } },
                     selected,
                     extra = pointsLines,
-                    height = TeamChartHeight,
+                    height = TeamChartHeight / 2,
                 ) { selected = it }
             }
             RoundView.POINTS -> {
@@ -460,17 +453,16 @@ fun TeamRoundsCard(
                 RoundBarChart(
                     names = names,
                     bars = rounds.indices.map { index ->
-                        members.mapIndexed { m, (_, memberRounds) -> BarPart(memberRounds.getOrNull(index)?.round?.totalPoints ?: 0.0, colors[m % colors.size]) }
+                        members.mapIndexed { m, (_, memberRounds) -> BarPart((memberRounds.getOrNull(index)?.round?.totalScore ?: 0).toDouble(), colors[m % colors.size]) }
                     },
                     labels = rounds.map { round -> round.round.results.takeIf { it.isNotEmpty() }?.let { round.round.totalScore.toString() } },
                     selected = selected,
                     onSelect = { selected = it },
-                    maxValue = max(4.0 * members.size.coerceAtLeast(1), rounds.maxOf { it.round.totalPoints }),
                     tooltip = tip,
                     height = TeamChartHeight,
                 )
                 members.forEachIndexed { m, (name, memberRounds) ->
-                    LegendRow(colors[m % colors.size], name, memberRounds.getOrNull(selected)?.round?.takeIf { it.results.isNotEmpty() }?.let { formatPoints(it.totalPoints) } ?: "—")
+                    LegendRow(colors[m % colors.size], name, memberRounds.getOrNull(selected)?.round?.takeIf { it.results.isNotEmpty() }?.totalScore?.toString() ?: "—")
                 }
             }
             RoundView.SKILLS -> TeamSkillCharts(names, rounds, members, selected) { selected = it }
