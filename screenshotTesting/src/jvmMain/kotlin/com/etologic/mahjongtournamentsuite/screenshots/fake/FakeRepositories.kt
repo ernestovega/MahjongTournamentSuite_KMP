@@ -25,7 +25,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerRanking
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerSubstitution
 import com.etologic.mahjongtournamentsuite.domain.model.ResolvedVenueLink
 import com.etologic.mahjongtournamentsuite.domain.model.SavedCredentials
-import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 import com.etologic.mahjongtournamentsuite.domain.model.StatisticsOverview
 import com.etologic.mahjongtournamentsuite.domain.model.SupportMessage
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -51,6 +50,7 @@ import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.StatisticsRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.SupportRepository
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
+import com.etologic.mahjongtournamentsuite.domain.usecase.Standing
 
 /** What a write of a screenshot test gets: screenshots never write, so a write that runs is a mistake of the test. */
 private fun <T> noWrite(): AppResult<T> = AppResult.Failure(AppError.Unexpected("Screenshots do not write"))
@@ -67,12 +67,29 @@ open class ScreenshotTournamentRepository(
     override suspend fun createTournament(request: CreateTournamentRequest): AppResult<Tournament> = noWrite()
     override suspend fun renameTournament(tournamentId: String, name: String): AppResult<Unit> = noWrite()
     override suspend fun updateTournamentSettings(
-        tournamentId: String, name: String, shortName: String, primaryColor: String, eventStartDate: String,
-        eventEndDate: String, hostCountry: String, hostCity: String, venue: TournamentVenue,
-        associationLogoContentType: String?, associationLogoBytes: ByteArray?, associationLogoSourceTournamentId: String?,
-        removeAssociationLogo: Boolean, roundSchedules: List<TournamentRoundSchedule>, agendaItems: List<TournamentAgendaItem>,
-        countBestHands: Boolean?, countChickenHands: Boolean?, matchDurationMinutes: Int?, matchEndMode: MatchEndMode?,
-        matchExtraMinutes: Int?, timeZone: String?, isPublic: Boolean?, showTableDiffs: Boolean?,
+        tournamentId: String,
+        name: String,
+        shortName: String,
+        primaryColor: String,
+        eventStartDate: String,
+        eventEndDate: String,
+        hostCountry: String,
+        hostCity: String,
+        venue: TournamentVenue,
+        associationLogoContentType: String?,
+        associationLogoBytes: ByteArray?,
+        associationLogoSourceTournamentId: String?,
+        removeAssociationLogo: Boolean,
+        roundSchedules: List<TournamentRoundSchedule>,
+        agendaItems: List<TournamentAgendaItem>,
+        countBestHands: Boolean?,
+        countChickenHands: Boolean?,
+        matchDurationMinutes: Int?,
+        matchEndMode: MatchEndMode?,
+        matchExtraMinutes: Int?,
+        timeZone: String?,
+        isPublic: Boolean?,
+        showTableDiffs: Boolean?,
     ): AppResult<Tournament> = noWrite()
 
     override suspend fun generateTournamentIdCards(tournamentId: String, sheet: IdCardSheetLayout?): AppResult<ByteArray> = noWrite()
@@ -81,17 +98,14 @@ open class ScreenshotTournamentRepository(
     override suspend fun generateEmaReport(tournamentId: String, rankings: List<PlayerRanking>): AppResult<ByteArray> = noWrite()
     override suspend fun deleteTournament(tournamentId: String): AppResult<Unit> = noWrite()
 
-    override suspend fun listTournamentMembers(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentMember>> =
-        ok(listOf(TournamentMember("editor-1", "bruno@example.test", GlobalUserRole.EDITOR)))
+    override suspend fun listTournamentMembers(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentMember>> = ok(listOf(TournamentMember("editor-1", "bruno@example.test", GlobalUserRole.EDITOR)))
 
     override suspend fun upsertTournamentMember(tournamentId: String, uid: String): AppResult<Unit> = noWrite()
     override suspend fun removeTournamentMember(tournamentId: String, uid: String): AppResult<Unit> = noWrite()
 
-    override suspend fun listTournamentPlayers(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentPlayer>> =
-        ok(ScreenshotData.tournamentPlayers(teams(tournamentId)))
+    override suspend fun listTournamentPlayers(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentPlayer>> = ok(ScreenshotData.tournamentPlayers(teams(tournamentId)))
 
-    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentTeam>> =
-        ok(if (teams(tournamentId)) ScreenshotData.teams() else emptyList())
+    override suspend fun listTournamentTeams(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentTeam>> = ok(if (teams(tournamentId)) ScreenshotData.teams() else emptyList())
 
     override suspend fun updateTournamentTeam(tournamentId: String, teamId: Int, name: String, emaIds: List<String?>): AppResult<Unit> = noWrite()
     override suspend fun listCountries(refreshMode: RefreshMode): AppResult<List<Country>> = ok(ScreenshotData.countries)
@@ -99,11 +113,9 @@ open class ScreenshotTournamentRepository(
     override suspend fun assignTournamentPlayer(tournamentId: String, tournamentPlayerId: Int, emaId: String?): AppResult<Unit> = noWrite()
     override suspend fun setPlayerSubstitution(tournamentId: String, tournamentPlayerId: Int, substitution: PlayerSubstitution?): AppResult<Unit> = noWrite()
 
-    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> =
-        ok((1..4).map(::TournamentRound))
+    override suspend fun listTournamentRounds(tournamentId: String, refreshMode: RefreshMode): AppResult<List<TournamentRound>> = ok((1..4).map(::TournamentRound))
 
-    override suspend fun listTournamentTables(tournamentId: String, roundId: Int?, refreshMode: RefreshMode): AppResult<List<TournamentTable>> =
-        ok(ScreenshotData.tables(tournamentId, roundId))
+    override suspend fun listTournamentTables(tournamentId: String, roundId: Int?, refreshMode: RefreshMode): AppResult<List<TournamentTable>> = ok(ScreenshotData.tables(tournamentId, roundId))
 
     override suspend fun getTableWithHands(
         tournamentId: String,
@@ -112,14 +124,16 @@ open class ScreenshotTournamentRepository(
         refreshMode: RefreshMode,
     ): AppResult<Pair<TableState, List<TableHand>>> = ok(ScreenshotData.table(tournamentId, roundId, tableId))
 
-    override suspend fun getRoundTablesWithHands(tournamentId: String, roundId: Int, refreshMode: RefreshMode) =
-        ok((1..4).map { ScreenshotData.table(tournamentId, roundId, it) })
+    override suspend fun getRoundTablesWithHands(tournamentId: String, roundId: Int, refreshMode: RefreshMode) = ok((1..4).map { ScreenshotData.table(tournamentId, roundId, it) })
 
-    override suspend fun getAllTablesWithHands(tournamentId: String, refreshMode: RefreshMode) =
-        ok((1..4).flatMap { round -> (1..4).map { ScreenshotData.table(tournamentId, round, it) } })
+    override suspend fun getAllTablesWithHands(tournamentId: String, refreshMode: RefreshMode) = ok((1..4).flatMap { round -> (1..4).map { ScreenshotData.table(tournamentId, round, it) } })
 
     override suspend fun saveTableState(
-        tournamentId: String, roundId: Int, tableId: Int, expectedVersion: Long, tablePatch: Map<String, Any?>,
+        tournamentId: String,
+        roundId: Int,
+        tableId: Int,
+        expectedVersion: Long,
+        tablePatch: Map<String, Any?>,
         handPatches: Map<Int, Map<String, Any?>>,
     ): AppResult<Pair<TableState, List<TableHand>>> = noWrite()
 
@@ -177,12 +191,10 @@ open class ScreenshotAdminRepository(
     override suspend fun updateUserPhoto(uid: String, contentType: String, bytes: ByteArray): AppResult<ManagedUser> = noWrite()
     override suspend fun removeUserPhoto(uid: String): AppResult<ManagedUser> = noWrite()
     override suspend fun sendPasswordResets(uids: List<String>): AppResult<List<PasswordResetResult>> = noWrite()
-    override suspend fun loadErrorGroups(sinceMillis: Long?, cursor: ErrorLogCursor?): AppResult<ErrorGroupsPage> =
-        ok(ErrorGroupsPage(groups = emptyList(), nextCursor = null))
+    override suspend fun loadErrorGroups(sinceMillis: Long?, cursor: ErrorLogCursor?): AppResult<ErrorGroupsPage> = ok(ErrorGroupsPage(groups = emptyList(), nextCursor = null))
 
     override suspend fun loadErrorGroup(id: String, reportCursor: ErrorLogCursor?): AppResult<ErrorGroupDetail> = noWrite()
-    override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> =
-        ok(ActivityPage(entries = emptyList(), nextCursor = null))
+    override suspend fun loadActivity(filter: ActivityFilter, cursor: String?): AppResult<ActivityPage> = ok(ActivityPage(entries = emptyList(), nextCursor = null))
 }
 
 /** Statistics of the server: an empty overview and no history, until a test gives more. */

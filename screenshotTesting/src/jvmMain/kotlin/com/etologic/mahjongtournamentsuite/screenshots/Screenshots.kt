@@ -1,9 +1,9 @@
 package com.etologic.mahjongtournamentsuite.screenshots
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.graphics.toAwtImage
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.runDesktopComposeUiTest
@@ -11,6 +11,10 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.github.takahirom.roborazzi.ExperimentalRoborazziApi
 import com.github.takahirom.roborazzi.RoborazziOptions
 import io.github.takahirom.roborazzi.captureRoboImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.setMain
 import java.io.File
 import javax.imageio.ImageIO
 
@@ -41,7 +45,7 @@ private val options = RoborazziOptions(
  * With `recordRoborazziJvm` it writes the reference images, with `verifyRoborazziJvm` it compares against them, and with a
  * plain `jvmTest` it only checks that the screen renders. All the variants run even if one fails.
  */
-@OptIn(ExperimentalTestApi::class)
+@OptIn(ExperimentalTestApi::class, ExperimentalCoroutinesApi::class)
 fun screenshots(
     name: String,
     variants: List<Variant> = allVariants,
@@ -49,6 +53,8 @@ fun screenshots(
     content: @Composable (Variant) -> Unit,
 ) {
     val failures = mutableListOf<Throwable>()
+    // Some screens switch to Dispatchers.Main after a request. The JVM tests have no Main, so it runs in place.
+    Dispatchers.setMain(Dispatchers.Unconfined)
     for (variant in variants) {
         try {
             runDesktopComposeUiTest(variant.size.width, variant.size.height) {
@@ -69,6 +75,7 @@ fun screenshots(
             failures += AssertionError("$name ${variant.fileName}: ${e.message}", e)
         }
     }
+    Dispatchers.resetMain()
     if (failures.isNotEmpty()) {
         val error = AssertionError("${failures.size} screenshot(s) of $name failed:\n" + failures.joinToString("\n") { it.message.orEmpty() })
         failures.forEach(error::addSuppressed)

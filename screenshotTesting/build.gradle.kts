@@ -17,7 +17,7 @@ kotlin {
             api(libs.compose.ui.test.junit4.desktop)
             api(libs.roborazzi.compose.desktop)
             // Dispatchers.Main for the screens that switch to it (sign in, navigation after a request).
-            api(libs.kotlinx.coroutines.swing)
+            implementation(libs.kotlinx.coroutines.test)
             implementation(libs.kotlin.test)
         }
     }

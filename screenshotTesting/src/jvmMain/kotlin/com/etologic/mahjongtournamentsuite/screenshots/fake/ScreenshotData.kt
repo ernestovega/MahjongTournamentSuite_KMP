@@ -1,8 +1,8 @@
 package com.etologic.mahjongtournamentsuite.screenshots.fake
 
 import com.etologic.mahjongtournamentsuite.domain.model.Country
-import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.ManagedUser
 import com.etologic.mahjongtournamentsuite.domain.model.Player
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TablePoints
@@ -42,10 +42,14 @@ object ScreenshotData {
     )
 
     /** The player base: the 16 players of the tournaments and 4 more who never played. */
-    val players: List<Player> = (people + listOf(
-        Person("Erik", "Hansen", "NO"), Person("Zofia", "Nowak", "PL"), Person("Aoife", "Byrne", "IE"),
-        Person("Mikko", "Virtanen", "FI"),
-    )).mapIndexed { index, person ->
+    val players: List<Player> = (
+        people + listOf(
+            Person("Erik", "Hansen", "NO"),
+            Person("Zofia", "Nowak", "PL"),
+            Person("Aoife", "Byrne", "IE"),
+            Person("Mikko", "Virtanen", "FI"),
+        )
+        ).mapIndexed { index, person ->
         Player(emaId = "0401%04d".format(index + 1), firstName = person.first, lastName = person.last, country = person.country)
     }
 
@@ -124,7 +128,13 @@ object ScreenshotData {
                 val loser = playerIds.indexOf(hand.playerLooserId.toIntOrNull())
                 for (seat in 0 until 4) {
                     if (seat == winner) continue
-                    val pays = if (loser < 0) score + 8 else if (seat == loser) score + 8 else 8
+                    val pays = if (loser < 0) {
+                        score + 8
+                    } else if (seat == loser) {
+                        score + 8
+                    } else {
+                        8
+                    }
                     totals[seat] -= pays
                     totals[winner] += pays
                 }
@@ -171,24 +181,29 @@ object ScreenshotData {
         return state to hands
     }
 
-    fun tables(tournamentId: String, roundId: Int? = null): List<TournamentTable> =
-        (1..4).filter { roundId == null || it == roundId }.flatMap { round ->
-            (1..4).map { tableId ->
-                val (state, hands) = table(tournamentId, round, tableId)
-                TournamentTable(
-                    roundId = round,
-                    tableId = tableId,
-                    playerIds = state.playerIds,
-                    isCompleted = state.isCompleted,
-                    useTotalsOnly = false,
-                    hasProgress = hands.isNotEmpty(),
-                    completionStatus = if (state.isCompleted) "COMPLETED" else if (hands.isNotEmpty()) "IN_PROGRESS" else "EMPTY",
-                    bestHandScores = hands.mapNotNull { it.handScore.toIntOrNull() }.sortedDescending().take(1),
-                    chickenHandCount = hands.count { it.isChickenHand },
-                    version = state.version,
-                )
-            }
+    fun tables(tournamentId: String, roundId: Int? = null): List<TournamentTable> = (1..4).filter { roundId == null || it == roundId }.flatMap { round ->
+        (1..4).map { tableId ->
+            val (state, hands) = table(tournamentId, round, tableId)
+            TournamentTable(
+                roundId = round,
+                tableId = tableId,
+                playerIds = state.playerIds,
+                isCompleted = state.isCompleted,
+                useTotalsOnly = false,
+                hasProgress = hands.isNotEmpty(),
+                completionStatus = if (state.isCompleted) {
+                    "COMPLETED"
+                } else if (hands.isNotEmpty()) {
+                    "IN_PROGRESS"
+                } else {
+                    "EMPTY"
+                },
+                bestHandScores = hands.mapNotNull { it.handScore.toIntOrNull() }.sortedDescending().take(1),
+                chickenHandCount = hands.count { it.isChickenHand },
+                version = state.version,
+            )
         }
+    }
 
     /** Checks that the fake tables add up, so the screens never show impossible totals. */
     fun points(state: TableState): List<String>? = TablePoints.fromScores(
@@ -239,11 +254,19 @@ object ScreenshotData {
     val users: List<ManagedUser> = listOf(
         ManagedUser("admin-1", "ada@example.test", "Ada", GlobalUserRole.ADMIN, false, emptyList()),
         ManagedUser(
-            "editor-1", "bruno@example.test", "Bruno", GlobalUserRole.EDITOR, false,
+            "editor-1",
+            "bruno@example.test",
+            "Bruno",
+            GlobalUserRole.EDITOR,
+            false,
             listOf(TournamentAssignment(ONGOING, "Madrid Open 2026")),
         ),
         ManagedUser(
-            "editor-2", "carla@example.test", "Carla", GlobalUserRole.EDITOR, true,
+            "editor-2",
+            "carla@example.test",
+            "Carla",
+            GlobalUserRole.EDITOR,
+            true,
             listOf(TournamentAssignment(COMPLETED, "Lisbon Cup 2025")),
         ),
     ) + players.take(6).mapIndexed { index, player ->
