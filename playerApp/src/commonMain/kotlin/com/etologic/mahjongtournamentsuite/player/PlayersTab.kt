@@ -1,6 +1,20 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material.icons.filled.TableRestaurant
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.unit.Dp
+import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalHideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
+import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.hideOnScroll
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberHideOnScrollState
+import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentInt
+import mahjongtournamentsuite.playerapp.generated.resources.scope_player
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,9 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavHostController
-import androidx.navigation.toRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.AppEmptyState
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactTab
 import com.etologic.mahjongtournamentsuite.presentation.components.HideOnScrollTabs
@@ -106,27 +118,10 @@ internal fun PlayerListRow.matches(query: String): Boolean {
     return words.all { it in text }
 }
 
-/**
- * The Players tab of a tournament. Without a chosen player it lists the players, with a search on top.
- * With [selectedSlot] it shows the screen of that player: the tables and the statistics, in two tabs.
- */
+/** The Players tab of a tournament: the players, with a search on top. A tap opens the screen of the player ([onSelect]). */
 @Composable
-internal fun ColumnScope.PlayersTab(
-    view: PlayerTournamentView,
-    selectedSlot: Int?,
-    /** 0 shows the tables of the chosen player and 1 the statistics. */
-    playerTab: Int,
-    onPlayerTabChange: (Int) -> Unit,
-    onSelect: (Int) -> Unit,
-    onOpenTable: (PlayerTable) -> Unit,
-    onStatisticsLoading: (Boolean) -> Unit,
-) {
-    // A restored slot that the tournament no longer has shows the list.
-    if (selectedSlot != null && selectedSlot in view.players) {
-        PlayerDetail(view, selectedSlot, playerTab, onPlayerTabChange, onOpenTable, onStatisticsLoading)
-    } else {
-        PlayerList(view, onSelect)
-    }
+internal fun PlayersTab(view: PlayerTournamentView, onSelect: (Int) -> Unit) {
+    PlayerList(view, onSelect)
 }
 
 @Composable
@@ -211,33 +206,91 @@ internal fun PlayerListCard(row: PlayerListRow, onClick: () -> Unit) {
     }
 }
 
-/** The screen of one player inside the Players tab: the tables and the statistics of the player in the tournament. */
+/** The tabs of the screen of a player. The values are fixed ids, used in [TournamentPlayerRoute]. */
+internal object PlayerTab {
+    const val TABLES = 0
+    const val STATISTICS = 1
+}
+
+/**
+ * The screen of one player of a tournament, over the tournament screen: the tables and the statistics of the player,
+ * in two tabs. Back goes to the screen that opened it, with its tab and its scroll as they were.
+ */
 @Composable
-private fun ColumnScope.PlayerDetail(
-    view: PlayerTournamentView,
-    slotId: Int,
-    tab: Int,
-    onTabChange: (Int) -> Unit,
-    onOpenTable: (PlayerTable) -> Unit,
-    onStatisticsLoading: (Boolean) -> Unit,
-) {
-    val ranking = view.rankings.players.firstOrNull { it.playerId == slotId }
-    val tables = view.tables.filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
-    HideOnScrollTabs(tab to slotId) {
-        MtsTabRow(
-            selectedTabIndex = tab,
-        ) {
-            listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_stats)).forEachIndexed { index, title ->
-                CompactTab(
-                    selected = tab == index,
-                    onClick = { onTabChange(index) },
-                    title = title,
-                    trackingName = if (index == 0) "PlayerTables" else "PlayerStatistics",
-                )
+internal fun TournamentPlayerScreen(navController: NavHostController, route: TournamentPlayerRoute) {
+    val (view, message) = rememberTournamentView(route.tournamentId)
+    val slotId = route.slotId
+    var tab by rememberPersistentInt("playerTab", route.tab)
+    // The statistics tell this screen when they load, so the progress bar stays until the content shows.
+    var statisticsLoading by remember { mutableStateOf(false) }
+    // The tab row hides when the content scrolls down and shows when it scrolls up.
+    val hideOnScroll = rememberHideOnScrollState()
+    val account = rememberAccountActions(navController)
+    account.Dialogs()
+    AppScaffold(
+        rootLeadingActions = { account.Buttons() },
+        title = view?.takeIf { slotId in it.players }?.nameOf(slotId) ?: stringResource(Res.string.scope_player),
+        subtitle = view?.tournament?.name,
+        isLoading = (view == null && message == null) || (tab == PlayerTab.STATISTICS && statisticsLoading),
+        autoFocusFirst = false,
+        onBack = { navController.popBackStack() },
+    ) {
+        CompositionLocalProvider(LocalHideOnScroll provides hideOnScroll) {
+            ScreenColumn(maxWidth = Dp.Infinity, contentPadding = PaddingValues(0.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                if (view == null) {
+                    MessageDialog(message)
+                    return@ScreenColumn
+                }
+                HideOnScrollTabs(tab) {
+                    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                        MtsTabRow(selectedTabIndex = tab, modifier = Modifier.widthIn(max = TournamentColumnWidth)) {
+                            listOf(stringResource(Res.string.tab_tables), stringResource(Res.string.tab_stats)).forEachIndexed { index, title ->
+                                CompactTab(
+                                    selected = tab == index,
+                                    onClick = { tab = index },
+                                    title = title,
+                                    trackingName = if (index == PlayerTab.TABLES) "PlayerTables" else "PlayerStatistics",
+                                    icon = {
+                                        val icon = if (index == PlayerTab.TABLES) Icons.Default.TableRestaurant else StatisticsIcon
+                                        Icon(icon, contentDescription = null, Modifier.size(20.dp))
+                                    },
+                                )
+                            }
+                        }
+                    }
+                }
+                Column(
+                    Modifier.weight(1f).align(Alignment.CenterHorizontally).hideOnScroll(hideOnScroll)
+                        .widthIn(max = TournamentColumnWidth).fillMaxWidth(),
+                ) {
+                    MessageDialog(message)
+                    if (slotId !in view.players) {
+                        // A saved screen of a player that the tournament no longer has.
+                        Box(Modifier.padding(16.dp)) {
+                            AppEmptyState(Icons.Default.People, stringResource(Res.string.tables_empty_title), stringResource(Res.string.tables_player_empty_message))
+                        }
+                        return@Column
+                    }
+                    PlayerContent(view, slotId, tab, { statisticsLoading = it }) { table ->
+                        navController.navigate(TableRoute(route.tournamentId, table.roundId, table.tableId))
+                    }
+                }
             }
         }
     }
-    if (tab == 1) {
+}
+
+@Composable
+private fun ColumnScope.PlayerContent(
+    view: PlayerTournamentView,
+    slotId: Int,
+    tab: Int,
+    onStatisticsLoading: (Boolean) -> Unit,
+    onOpenTable: (PlayerTable) -> Unit,
+) {
+    val ranking = view.rankings.players.firstOrNull { it.playerId == slotId }
+    val tables = view.tables.filter { slotId in it.playerSlots() }.sortedBy { it.roundId }
+    if (tab == PlayerTab.STATISTICS) {
         val places = remember(view, slotId) { view.rankingsByRound().placesOfPlayer(slotId) }
         PlayerSlotStatisticsTab(view.tournament.id, slotId, ranking = ranking, places = places, playerCount = view.players.size, onLoadingChange = onStatisticsLoading)
     } else if (tables.isEmpty()) {
@@ -297,27 +350,4 @@ internal object MainTab {
         STATISTICS -> "Statistics"
         else -> "Info"
     }
-}
-
-/** The keys of the request to open a player, in the saved state of the tournament screen. */
-internal const val OPEN_PLAYER_KEY = "openPlayer"
-internal const val OPEN_PLAYER_FROM_TABLE_KEY = "openPlayerFromTable"
-
-/**
- * Opens [slotId] in the Players tab of the tournament, from the table [roundId]-[tableId]. The table closes, and the
- * back button of the player opens it again. Without the tournament under the table, the tournament opens on top.
- */
-internal fun NavHostController.openPlayerFromTable(tournamentId: String, roundId: Int, tableId: Int, slotId: Int) {
-    val tournament = currentBackStack.value.lastOrNull { entry ->
-        entry.destination.hasRoute<TournamentRoute>() && entry.toRoute<TournamentRoute>().tournamentId == tournamentId
-    }
-    val target = if (tournament != null) {
-        popBackStack(tournament.destination.id, inclusive = false)
-        tournament
-    } else {
-        navigate(TournamentRoute(tournamentId))
-        currentBackStackEntry ?: return
-    }
-    target.savedStateHandle[OPEN_PLAYER_FROM_TABLE_KEY] = "$roundId:$tableId"
-    target.savedStateHandle[OPEN_PLAYER_KEY] = slotId
 }

@@ -30,13 +30,13 @@ class PlayerTournamentTest : PlayerE2eTest() {
         c.waitForText("Search")
         c.waitUntil(20_000) { c.onAllNodes(playerLine).fetchSemanticsNodes().isNotEmpty() }
         c.onAllNodes(playerLine).onFirst().performClick()
-        // The player shows in the same tab, with its tables and its statistics.
+        // The player opens on its own screen, with its tables and its statistics.
         c.waitForText("Stats")
         c.clickButton("Stats")
         c.waitForNoText("Something went wrong. Please try again.")
         c.clickButton("Back")
         c.waitForText("Search")
-        // The tournament is still open: one more back leaves it.
+        // Back goes to the tournament, on the Players tab. One more back leaves it.
         c.waitForText("Test - Live ongoing tournament")
     }
 

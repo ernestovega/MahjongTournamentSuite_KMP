@@ -43,6 +43,7 @@ private inline fun <reified T : Any> kind(): RouteKind<T> = RouteKind(
 private val savedKinds: List<RouteKind<*>> = listOf(
     kind<TournamentsRoute>(),
     kind<TournamentRoute>(),
+    kind<TournamentPlayerRoute>(),
     kind<TableRoute>(),
     kind<StatisticsRoute>(),
 )

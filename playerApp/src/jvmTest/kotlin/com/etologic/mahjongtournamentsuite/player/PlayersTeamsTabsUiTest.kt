@@ -47,7 +47,7 @@ class PlayersTeamsTabsUiTest {
 
     @Test
     fun thePlayersShowByNameAndTheSearchFiltersThem() {
-        rule.setContent { MtsTheme(useDarkTheme = false) { Column(Modifier.fillMaxSize()) { PlayersTab(view, null, 0, {}, {}, {}, {}) } } }
+        rule.setContent { MtsTheme(useDarkTheme = false) { Column(Modifier.fillMaxSize()) { PlayersTab(view) {} } } }
         listOf("Ana Lopez", "Bea Ruiz", "Carla Gil", "Dani Sol").forEach { rule.onNodeWithText(it).assertIsDisplayed() }
         // The team and the place in the ranking show on each line.
         rule.onNodeWithText("#2").assertIsDisplayed()
@@ -58,19 +58,18 @@ class PlayersTeamsTabsUiTest {
     }
 
     @Test
-    fun aTapOnAPlayerOpensItsScreenWithTablesAndStats() {
+    fun aTapOnAPlayerAsksToOpenItsScreen() {
         var selected by mutableStateOf<Int?>(null)
         rule.setContent {
             MtsTheme(useDarkTheme = false) {
-                Column(Modifier.fillMaxSize()) { PlayersTab(view, selected, 0, {}, { selected = it }, {}, {}) }
+                Column(Modifier.fillMaxSize()) { PlayersTab(view) { selected = it } }
             }
         }
         rule.onNodeWithText("Bea Ruiz").performClick()
         rule.waitForIdle()
         assertEquals(2, selected)
-        rule.onNodeWithText("Stats").assertIsDisplayed()
-        rule.onNodeWithText("This player has no table in this tournament yet.").assertIsDisplayed()
-        rule.onNodeWithText("Ana Lopez").assertDoesNotExist()
+        // The player opens on its own screen, so the list stays under it.
+        rule.onNodeWithText("Ana Lopez").assertIsDisplayed()
     }
 
     @Test
