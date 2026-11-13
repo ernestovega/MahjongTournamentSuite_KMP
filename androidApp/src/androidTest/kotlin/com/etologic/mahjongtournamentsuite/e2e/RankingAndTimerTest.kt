@@ -67,28 +67,28 @@ class RankingAndTimerTest : AdminE2eTest() {
         c.clickButton("Timer")
     }
 
+    /** The tournament list opens a Timer without a tournament. It picks its round and never waits for a gong. */
     @Test
-    fun theTournamentListHasNoTimer() {
-        start(E2eAccounts.ADMIN)
-        c.assertNoText("Timer")
+    fun theTournamentListOpensAnIndependentTimer() {
+        start(E2eAccounts.ADMIN, ready = PROFILE_BUTTON)
+        c.clickButton("Timer")
+        c.waitForText("Round 1")
+        c.waitForText("Start timer")
+        c.assertNoText("Press Start when the starting gong sounds", substring = true)
+        c.clickButton("Increase round")
+        c.waitForText("Round 2")
+        c.clickButton("Decrease round")
+        c.waitForText("Round 1")
     }
 
     @Test
     fun timerOfARoundNotStartedWaitsForTheGong() {
         openTimer()
-        listOf("Round 1", "2:00:00", "Start timer", "Reset timer", "The round started earlier", "Increase round", "Decrease round")
+        listOf("Round 1", "2:00:00", "Start timer", "Reset timer", "The round started earlier", "Start")
             .forEach { c.waitForText(it) }
-        c.waitForText("Press Play when the starting gong sounds", substring = true)
-    }
-
-    @Test
-    fun timerRoundCanChange() {
-        openTimer()
-        c.waitForText("Round 1")
-        c.clickButton("Increase round")
-        c.waitForText("Round 2")
-        c.clickButton("Decrease round")
-        c.waitForText("Round 1")
+        c.waitForText("Press Start when the starting gong sounds", substring = true)
+        // The tournament decides the round of its Timer.
+        c.assertNoText("Increase round")
     }
 
     @Test
@@ -97,7 +97,7 @@ class RankingAndTimerTest : AdminE2eTest() {
         c.waitForText("2:00:00")
         c.clickButton("Start timer")
         c.waitForNoText("2:00:00")
-        c.waitForNoText("Press Play when the starting gong sounds", substring = true)
+        c.waitForNoText("Press Start when the starting gong sounds", substring = true)
         // The server keeps the clock: the tournament carries it for every Timer and every player.
         val clocks = E2eApi.call("GET", "/public/tournaments/$UPCOMING_ID/round-clocks", null).json().getJSONArray("roundClocks")
         check(clocks.length() == 1 && clocks.getJSONObject(0).getInt("roundId") == 1) { "Round 1 has no clock: $clocks" }

@@ -504,6 +504,8 @@
     <string name="status_partial">Partiellement terminé</string>
     <string name="timer_pause">Mettre le minuteur en pause</string>
     <string name="timer_start">Démarrer le minuteur</string>
+    <string name="timer_gong_start">Démarrer</string>
+    <string name="timer_gong_resume">Reprendre</string>
     <string name="round_table_header">Tour %1$d • Table %2$d</string>
     <string name="used_by">Utilisé par %1$s</string>
     <string name="showing_first_of">Affichage des %1$d premiers sur %2$d. Tapez plus pour réduire la liste.</string>
@@ -728,7 +730,7 @@
     <string name="activity_action_table_reset">Table réinitialisée</string>
     <string name="activity_action_table_conflict">Enregistrement refusé : la table avait changé</string>
     <string name="activity_action_script_run">Script de maintenance exécuté</string>
-    <string name="timer_waiting_gong">Appuyez sur Play au son du gong de départ. Les joueurs peuvent ensuite ajouter des mains.</string>
+    <string name="timer_waiting_gong">Appuyez sur Démarrer au son du gong de départ. Les joueurs peuvent ensuite ajouter des mains.</string>
     <string name="timer_paused">En pause. Les joueurs peuvent encore ajouter des mains.</string>
     <string name="timer_offline">Pas de connexion. Le minuteur enverra le changement au retour du réseau.</string>
     <string name="timer_load_failed">Le tournoi n'a pas pu être chargé. Le minuteur réessaie.</string>

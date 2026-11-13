@@ -504,6 +504,8 @@
     <string name="status_partial">Parcialmente completa</string>
     <string name="timer_pause">Pausar el temporizador</string>
     <string name="timer_start">Iniciar el temporizador</string>
+    <string name="timer_gong_start">Iniciar</string>
+    <string name="timer_gong_resume">Reanudar</string>
     <string name="round_table_header">Ronda %1$d • Mesa %2$d</string>
     <string name="used_by">Usado por %1$s</string>
     <string name="showing_first_of">Se muestran los primeros %1$d de %2$d. Escribe más para acotar la lista.</string>
@@ -728,7 +730,7 @@
     <string name="activity_action_table_reset">Mesa reiniciada</string>
     <string name="activity_action_table_conflict">Guardado rechazado: la mesa había cambiado</string>
     <string name="activity_action_script_run">Script de mantenimiento ejecutado</string>
-    <string name="timer_waiting_gong">Pulsa Play cuando suene el gong inicial. Desde ese momento los jugadores pueden añadir manos.</string>
+    <string name="timer_waiting_gong">Pulsa Iniciar cuando suene el gong inicial. Desde ese momento los jugadores pueden añadir manos.</string>
     <string name="timer_paused">En pausa. Los jugadores pueden seguir añadiendo manos.</string>
     <string name="timer_offline">Sin conexión. El temporizador enviará el cambio cuando vuelva la red.</string>
     <string name="timer_load_failed">No se pudo cargar el torneo. El temporizador lo vuelve a intentar.</string>

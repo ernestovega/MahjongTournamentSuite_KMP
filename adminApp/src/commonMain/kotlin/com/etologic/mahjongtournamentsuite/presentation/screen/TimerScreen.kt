@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -32,7 +33,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_mes
 import mahjongtournamentsuite.adminapp.generated.resources.timer_started_ago_title
 import mahjongtournamentsuite.adminapp.generated.resources.timer_waiting_gong
 import androidx.compose.material.icons.filled.Pause
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.AlertDialog
@@ -74,6 +74,8 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
+import com.etologic.mahjongtournamentsuite.presentation.components.FocusedTextButton
+import com.etologic.mahjongtournamentsuite.presentation.components.GongIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.components.focusLoop
 import com.etologic.mahjongtournamentsuite.presentation.components.toDigitsInput
@@ -96,6 +98,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_n
 import mahjongtournamentsuite.adminapp.generated.resources.set
 import mahjongtournamentsuite.adminapp.generated.resources.set_time
 import mahjongtournamentsuite.adminapp.generated.resources.time_is_up
+import mahjongtournamentsuite.adminapp.generated.resources.timer_gong_resume
+import mahjongtournamentsuite.adminapp.generated.resources.timer_gong_start
 import mahjongtournamentsuite.adminapp.generated.resources.timer_pause
 import mahjongtournamentsuite.adminapp.generated.resources.timer_start
 import org.jetbrains.compose.resources.stringResource
@@ -370,30 +374,54 @@ internal fun TimerContent(
             }
 
             Box(modifier = Modifier.fillMaxWidth()) {
-                FocusedIconButton(
-                    focusRequester = startFocusRequester,
-                    showFocusHighlight = !isRunning,
-                    enabled = state.canControl,
-                    onClick = { scope.launch { if (isRunning) controller.pause() else controller.play() } },
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .alpha(if (isRunning) 0.5f else 1f),
-                    buttonModifier = Modifier
-                        .size(56.dp)
-                        .focusLoop(
-                            previous = when {
-                                isRunning -> startFocusRequester
-                                showRoundButtons -> roundUpFocusRequester
-                                else -> themeFocusRequester
-                            },
-                            next = if (isRunning) startFocusRequester else resetFocusRequester,
-                        ),
-                ) {
-                    Icon(
-                        imageVector = if (isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                        contentDescription = stringResource(if (isRunning) Res.string.timer_pause else Res.string.timer_start),
-                        modifier = Modifier.size(34.dp),
-                    )
+                val startPrevious = when {
+                    isRunning -> startFocusRequester
+                    showRoundButtons -> roundUpFocusRequester
+                    else -> themeFocusRequester
+                }
+                val startNext = if (isRunning) startFocusRequester else resetFocusRequester
+                if (isRunning) {
+                    FocusedIconButton(
+                        focusRequester = startFocusRequester,
+                        showFocusHighlight = false,
+                        enabled = state.canControl,
+                        onClick = { scope.launch { controller.pause() } },
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .alpha(0.5f),
+                        buttonModifier = Modifier
+                            .size(56.dp)
+                            .focusLoop(previous = startPrevious, next = startNext),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Pause,
+                            contentDescription = stringResource(Res.string.timer_pause),
+                            modifier = Modifier.size(34.dp),
+                        )
+                    }
+                } else {
+                    // The gong starts the round, or resumes it after a pause.
+                    FocusedTextButton(
+                        focusRequester = startFocusRequester,
+                        enabled = state.canControl,
+                        onClick = { scope.launch { controller.play() } },
+                        shape = MaterialTheme.shapes.large,
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp),
+                        modifier = Modifier.align(Alignment.Center),
+                        buttonModifier = Modifier.focusLoop(previous = startPrevious, next = startNext),
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Icon(
+                                imageVector = GongIcon,
+                                contentDescription = stringResource(Res.string.timer_start),
+                                modifier = Modifier.size(72.dp),
+                            )
+                            Text(
+                                text = stringResource(if (isStarted) Res.string.timer_gong_resume else Res.string.timer_gong_start),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                        }
+                    }
                 }
 
                 if (!isRunning) {

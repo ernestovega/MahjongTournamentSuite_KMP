@@ -504,6 +504,8 @@
     <string name="status_partial">Parzialmente completo</string>
     <string name="timer_pause">Metti in pausa il timer</string>
     <string name="timer_start">Avvia il timer</string>
+    <string name="timer_gong_start">Avvia</string>
+    <string name="timer_gong_resume">Riprendi</string>
     <string name="round_table_header">Turno %1$d • Tavolo %2$d</string>
     <string name="used_by">Usato da %1$s</string>
     <string name="showing_first_of">Visualizzati i primi %1$d su %2$d. Scrivi di più per restringere l'elenco.</string>
@@ -728,7 +730,7 @@
     <string name="activity_action_table_reset">Tavolo azzerato</string>
     <string name="activity_action_table_conflict">Salvataggio rifiutato: il tavolo era cambiato</string>
     <string name="activity_action_script_run">Script di manutenzione eseguito</string>
-    <string name="timer_waiting_gong">Premi Play al suono del gong iniziale. Da quel momento i giocatori possono aggiungere mani.</string>
+    <string name="timer_waiting_gong">Premi Avvia al suono del gong iniziale. Da quel momento i giocatori possono aggiungere mani.</string>
     <string name="timer_paused">In pausa. I giocatori possono ancora aggiungere mani.</string>
     <string name="timer_offline">Nessuna connessione. Il timer invierà la modifica quando torna la rete.</string>
     <string name="timer_load_failed">Impossibile caricare il torneo. Il timer riprova.</string>

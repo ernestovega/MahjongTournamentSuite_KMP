@@ -122,7 +122,7 @@ class TournamentJourneyTest : AdminE2eTest() {
                 c.isOnScreen("Increase round") -> c.clickButton("Increase round")
             }
         }
-        c.waitForText("Press Play when the starting gong sounds", substring = true)
+        c.waitForText("Press Start when the starting gong sounds", substring = true)
         c.clickButton("Start timer")
         c.waitForText("Pause timer")
         check(JourneyApi.hasClock(tournamentId, round)) { "Round $round has no clock on the server" }

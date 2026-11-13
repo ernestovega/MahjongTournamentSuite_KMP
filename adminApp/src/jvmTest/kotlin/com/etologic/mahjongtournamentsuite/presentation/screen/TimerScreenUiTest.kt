@@ -52,8 +52,10 @@ class TimerScreenUiTest {
     fun aRoundWithoutClockWaitsForTheGongAndShowsTheWholeMatch() = runComposeUiTest {
         show(server())
 
-        onNodeWithText("Press Play when the starting gong sounds", substring = true).assertExists()
+        onNodeWithText("Press Start when the starting gong sounds", substring = true).assertExists()
         onNodeWithText("2:00:00").assertExists()
+        // The gong starts the round.
+        onNodeWithText("Start").assertExists()
         onNodeWithContentDescription("Reset timer").assertIsNotEnabled()
         onNodeWithContentDescription("The round started earlier").assertIsEnabled()
     }
@@ -68,7 +70,7 @@ class TimerScreenUiTest {
         waitForIdle()
 
         assertEquals(listOf<Pair<Int, RoundClockAction>>(1 to RoundClockAction.Start()), server.clockActions.toList())
-        onNodeWithText("Press Play when the starting gong sounds", substring = true).assertDoesNotExist()
+        onNodeWithText("Press Start when the starting gong sounds", substring = true).assertDoesNotExist()
         onNodeWithContentDescription("Pause timer").assertExists()
     }
 
@@ -85,6 +87,7 @@ class TimerScreenUiTest {
         show(server(RoundClock(roundId = 1, startedAtMs = now - 40 * min, pausedAtMs = now - 10 * min)))
 
         onNodeWithText("Paused. The players can still add hands.").assertExists()
+        onNodeWithText("Resume").assertExists()
         // 30 minutes of play: the 10 minutes of the pause do not count.
         onNodeWithText("1:30:00").assertExists()
         onNodeWithContentDescription("Set time").assertIsEnabled()
@@ -115,7 +118,7 @@ class TimerScreenUiTest {
 
         assertEquals(RoundClockAction.Reset(force = true), server.clockActions.last().second)
         assertEquals(emptyList<RoundClock>(), server.roundClocks)
-        onNodeWithText("Press Play when the starting gong sounds", substring = true).assertExists()
+        onNodeWithText("Press Start when the starting gong sounds", substring = true).assertExists()
     }
 
     @Test
@@ -164,7 +167,7 @@ class TimerScreenUiTest {
         val server = server()
         show(server, tournamentId = null)
 
-        onNodeWithText("Press Play when the starting gong sounds", substring = true).assertDoesNotExist()
+        onNodeWithText("Press Start when the starting gong sounds", substring = true).assertDoesNotExist()
         onNodeWithContentDescription("Increase round").performClick()
         mainClock.advanceTimeBy(600)
         waitForIdle()

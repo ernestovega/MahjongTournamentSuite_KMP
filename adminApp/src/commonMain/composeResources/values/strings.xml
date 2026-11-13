@@ -504,6 +504,8 @@
     <string name="status_partial">Partially complete</string>
     <string name="timer_pause">Pause timer</string>
     <string name="timer_start">Start timer</string>
+    <string name="timer_gong_start">Start</string>
+    <string name="timer_gong_resume">Resume</string>
     <string name="round_table_header">Round %1$d • Table %2$d</string>
     <string name="used_by">Used by %1$s</string>
     <string name="showing_first_of">Showing the first %1$d of %2$d. Type more to narrow the list.</string>
@@ -728,7 +730,7 @@
     <string name="activity_action_table_reset">Table reset</string>
     <string name="activity_action_table_conflict">Save refused: the table had changed</string>
     <string name="activity_action_script_run">Maintenance script run</string>
-    <string name="timer_waiting_gong">Press Play when the starting gong sounds. The players can add hands from then on.</string>
+    <string name="timer_waiting_gong">Press Start when the starting gong sounds. The players can add hands from then on.</string>
     <string name="timer_paused">Paused. The players can still add hands.</string>
     <string name="timer_offline">No connection. The Timer sends the change when the network is back.</string>
     <string name="timer_load_failed">The tournament could not be loaded. The Timer tries again.</string>
