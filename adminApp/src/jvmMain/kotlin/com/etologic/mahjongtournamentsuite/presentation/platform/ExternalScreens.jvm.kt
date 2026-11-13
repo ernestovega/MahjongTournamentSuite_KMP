@@ -5,7 +5,7 @@ import com.etologic.mahjongtournamentsuite.StandaloneWindows
 
 actual fun openTimer(
     navController: NavHostController,
-    tournamentId: String,
+    tournamentId: String?,
     initialRound: Int,
 ) {
     StandaloneWindows.openTimer(tournamentId, initialRound)

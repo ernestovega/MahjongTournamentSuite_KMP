@@ -29,8 +29,13 @@ data class RoundTimerState(
     /** The server refused a reset because the round has hands. The screen asks for a confirmation. */
     val confirmReset: Boolean = false,
     val loadFailed: Boolean = false,
+    /** A Timer opened without a tournament. Its clock lives only on this device and touches no data. */
+    val independent: Boolean = false,
 ) {
-    val numRounds: Int get() = tournament?.numRounds ?: 1
+    val numRounds: Int get() = if (independent) MAX_INDEPENDENT_ROUNDS else tournament?.numRounds ?: 1
+
+    /** Play, Pause and the other buttons work once the tournament loaded, or at once without a tournament. */
+    val canControl: Boolean get() = independent || tournament != null
     val durationMinutes: Int get() = tournament?.matchDurationMinutes ?: DEFAULT_MATCH_DURATION_MINUTES
     val clock: RoundClock? get() = clocks.firstOrNull { it.roundId == roundId }
     val isStarted: Boolean get() = clock != null
@@ -49,24 +54,33 @@ data class RoundTimerState(
     fun totalSeconds(): Long = (clock?.durationMs(durationMinutes) ?: (durationMinutes * 60_000L)) / 1000
 }
 
+/** The highest round that a Timer without a tournament can show. */
+const val MAX_INDEPENDENT_ROUNDS = 99
+
 data class PendingClockAction(val roundId: Int, val action: RoundClockAction, val pressedAtDeviceMs: Long)
 
 /**
+ * The Timer of a tournament, or a Timer without a tournament when [tournamentId] is null. The latter keeps its clock on
+ * this device only: it never calls the server and lets the administrator pick any round.
+ *
  * The Timer of a tournament. Play, Pause, Reset and "Set time" change the clock of the round on the server, so every
  * Timer of the round and the apps of the players follow the same clock. Without network, the Timer applies the action
  * at once and sends it again, with the time that passed since the press, until the server takes it.
  */
 class RoundTimerController(
     private val repository: TournamentRepository,
-    private val tournamentId: String,
+    private val tournamentId: String?,
     initialRound: Int,
     private val deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
-    private val mutableState = MutableStateFlow(RoundTimerState(roundId = initialRound.coerceAtLeast(1)))
+    private val mutableState = MutableStateFlow(
+        RoundTimerState(roundId = initialRound.coerceAtLeast(1), independent = tournamentId == null),
+    )
     val state: StateFlow<RoundTimerState> = mutableState.asStateFlow()
 
     /** Loads the tournament and the clocks. The screen calls it at start and then every few seconds. */
     suspend fun refresh() {
+        val tournamentId = tournamentId ?: return
         if (mutableState.value.tournament == null) {
             when (val result = repository.listTournaments(RefreshMode.IF_CHANGED)) {
                 is AppResult.Success -> {
@@ -119,11 +133,18 @@ class RoundTimerController(
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }
 
     private suspend fun perform(action: RoundClockAction) {
+        if (tournamentId == null) {
+            val nowMs = deviceNowMs()
+            val pending = PendingClockAction(mutableState.value.roundId, action, nowMs)
+            mutableState.update { it.copy(clocks = it.clocks.applyLocally(pending, it.durationMinutes, nowMs)) }
+            return
+        }
         val pending = PendingClockAction(mutableState.value.roundId, action, deviceNowMs())
         send(pending)
     }
 
     private suspend fun send(pending: PendingClockAction) {
+        val tournamentId = tournamentId ?: return
         val agoSeconds = ((deviceNowMs() - pending.pressedAtDeviceMs) / 1000).coerceAtLeast(0)
         val action = when (val action = pending.action) {
             is RoundClockAction.Start -> action.copy(agoSeconds = action.agoSeconds + agoSeconds)

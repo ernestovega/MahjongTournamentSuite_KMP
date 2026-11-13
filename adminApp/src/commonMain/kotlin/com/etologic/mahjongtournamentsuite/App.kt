@@ -138,7 +138,7 @@ private fun AppWithModules(content: @Composable () -> Unit) {
 }
 
 @Composable
-fun TimerApp(tournamentId: String, initialRound: Int = 1) {
+fun TimerApp(tournamentId: String?, initialRound: Int = 1) {
     AppWithModules {
         TrackedScreen("Timer") { TimerStandaloneScreen(tournamentId = tournamentId, initialRound = initialRound) }
     }

@@ -153,4 +153,42 @@ class RoundTimerControllerTest {
         val allOver = (1..3).map { RoundClock(it, now - 1000 * minute) }
         assertEquals(3, base.copy(roundClocks = allOver).timerRound(now))
     }
+
+    @Test
+    fun aTimerWithoutTournamentKeepsItsClockOnTheDeviceAndNeverCallsTheServer() = runTest {
+        val repository = FakeTournamentRepository()
+        val controller = RoundTimerController(repository, null, 1) { deviceNow }
+        controller.refresh()
+
+        val initial = controller.state.value
+        assertTrue(initial.canControl)
+        assertFalse(initial.isStarted)
+        assertEquals(120 * 60L, initial.remainingSeconds(deviceNow))
+
+        controller.play()
+        deviceNow += 30 * minute
+        controller.pause()
+        deviceNow += 5 * minute
+        assertEquals(90 * 60L, controller.state.value.remainingSeconds(deviceNow))
+        controller.play()
+        controller.setRemainingMinutes(10)
+        assertEquals(10 * 60L, controller.state.value.remainingSeconds(deviceNow))
+        controller.reset()
+        assertFalse(controller.state.value.isStarted)
+        assertFalse(controller.state.value.confirmReset)
+
+        assertTrue(repository.clockActions.isEmpty())
+    }
+
+    @Test
+    fun aTimerWithoutTournamentPicksAnyRound() = runTest {
+        val controller = RoundTimerController(FakeTournamentRepository(), null, 1) { deviceNow }
+
+        controller.selectRound(12)
+        assertEquals(12, controller.state.value.roundId)
+        controller.selectRound(MAX_INDEPENDENT_ROUNDS + 1)
+        assertEquals(MAX_INDEPENDENT_ROUNDS, controller.state.value.roundId)
+        controller.selectRound(0)
+        assertEquals(1, controller.state.value.roundId)
+    }
 }

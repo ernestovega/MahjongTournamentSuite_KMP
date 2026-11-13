@@ -103,7 +103,8 @@ import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
 
 @Composable
 fun TimerStandaloneScreen(
-    tournamentId: String,
+    /** Null opens a Timer without a tournament, which keeps its clock on this device. */
+    tournamentId: String?,
     initialRound: Int = 1,
 ) {
     val themeController = rememberScreenThemeController()
@@ -161,6 +162,8 @@ internal fun TimerContent(
     val maxTimeSeconds = state.totalSeconds()
     val timeLeftSeconds = state.remainingSeconds(now)
     val hasFinished = isStarted && timeLeftSeconds <= 0L
+    // Only a Timer without a tournament picks its round. The Timer of a tournament follows the tournament.
+    val showRoundButtons = state.independent && !isRunning
 
     var dialog by remember { mutableStateOf<TimerDialog?>(null) }
 
@@ -244,7 +247,7 @@ internal fun TimerContent(
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (!isRunning) {
+            if (showRoundButtons) {
                 FocusedIconButton(
                     enabled = roundNum > 1,
                     onClick = { controller.selectRound(roundNum - 1) },
@@ -270,7 +273,7 @@ internal fun TimerContent(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(horizontal = 8.dp),
             )
-            if (!isRunning) {
+            if (showRoundButtons) {
                 FocusedIconButton(
                     enabled = roundNum < state.numRounds,
                     onClick = { controller.selectRound(roundNum + 1) },
@@ -354,7 +357,7 @@ internal fun TimerContent(
                 state.isOffline -> stringResource(Res.string.timer_offline)
                 hasFinished -> stringResource(Res.string.time_is_up)
                 isStarted && !isRunning -> stringResource(Res.string.timer_paused)
-                !isStarted -> stringResource(Res.string.timer_waiting_gong)
+                !isStarted && !state.independent -> stringResource(Res.string.timer_waiting_gong)
                 else -> null
             }
             if (status != null) {
@@ -370,7 +373,7 @@ internal fun TimerContent(
                 FocusedIconButton(
                     focusRequester = startFocusRequester,
                     showFocusHighlight = !isRunning,
-                    enabled = state.tournament != null,
+                    enabled = state.canControl,
                     onClick = { scope.launch { if (isRunning) controller.pause() else controller.play() } },
                     modifier = Modifier
                         .align(Alignment.Center)
@@ -378,7 +381,11 @@ internal fun TimerContent(
                     buttonModifier = Modifier
                         .size(56.dp)
                         .focusLoop(
-                            previous = if (isRunning) startFocusRequester else roundUpFocusRequester,
+                            previous = when {
+                                isRunning -> startFocusRequester
+                                showRoundButtons -> roundUpFocusRequester
+                                else -> themeFocusRequester
+                            },
                             next = if (isRunning) startFocusRequester else resetFocusRequester,
                         ),
                 ) {
@@ -412,7 +419,7 @@ internal fun TimerContent(
                         // A started round can change its remaining time. A round that is not started can start earlier.
                         FocusedIconButton(
                             focusRequester = setTimeFocusRequester,
-                            enabled = state.tournament != null,
+                            enabled = state.canControl,
                             buttonModifier = Modifier.focusLoop(
                                 previous = resetFocusRequester,
                                 next = themeFocusRequester,
@@ -429,7 +436,7 @@ internal fun TimerContent(
                             focusRequester = themeFocusRequester,
                             buttonModifier = Modifier.focusLoop(
                                 previous = setTimeFocusRequester,
-                                next = roundDownFocusRequester,
+                                next = if (showRoundButtons) roundDownFocusRequester else startFocusRequester,
                             ),
                         ) {
                             Icon(
