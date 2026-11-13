@@ -146,7 +146,7 @@ The web, the admin app and the player app have independent versions in `gradle/l
 - Unit tests belong primarily in `domain` and `data`.
 - Compose UI tests run on the JVM (`jvmTest`). Android instrumented UI tests are described in `docs/instrumented-ui-tests.md`.
 - If adding tests, prefer focused common tests before platform-specific ones.
-- A push to `main` deploys to production only after the Kotlin, integration and script tests pass (`.github/workflows/firebase.yml`).
+- A push to `main` deploys to production without running the tests (they only run on pull requests, `.github/workflows/firebase.yml`). Run the Kotlin, integration and script tests locally before pushing.
 
 ## Keyboard Focus And Interaction
 

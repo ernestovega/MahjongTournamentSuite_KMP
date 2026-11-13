@@ -1,12 +1,12 @@
-# Runs the tests on every pull request to main and on every push to main. A push to main deploys Firebase only when
-# the Kotlin tests, the integration tests and the script tests pass. The Android apps go to Google Play only when the
-# workflow is started by hand (docs/android-release.md).
+# Runs every test on the pull request from develop to main. When main changes, deploys Firebase and publishes the
+# Android apps that have a new version code on Google Play (docs/android-release.md).
 # Setup of the Google Cloud credentials: docs/ci-deploy.md
 # The name says what it does, not where: the tests run in GitHub runners, only the deploy goes to Firebase.
 name: Tests and deploy
 
 on:
   pull_request:
+    # The work is merged into develop without a pull request. A pull request from develop to main runs every test.
     branches: [main]
   push:
     branches: [main]
@@ -55,6 +55,7 @@ jobs:
 
   integration:
     name: Functions integration tests
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -84,6 +85,7 @@ jobs:
 
   kotlin:
     name: Kotlin tests
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     # A hung UI test must not use a long time.
     timeout-minutes: 20
@@ -109,6 +111,7 @@ jobs:
 
   scripts:
     name: Scripts and diagnostics tests
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -163,9 +166,6 @@ jobs:
 
   deploy:
     name: Deploy to Firebase
-    # The work goes to main without a pull request, so these tests are the only ones that run before a deploy.
-    # The unit tests of the functions run below, and the predeploy step of firebase.json builds both web apps.
-    needs: [integration, kotlin, scripts]
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 60
