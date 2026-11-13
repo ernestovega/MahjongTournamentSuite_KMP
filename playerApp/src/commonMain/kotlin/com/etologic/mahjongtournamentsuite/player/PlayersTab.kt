@@ -256,7 +256,7 @@ private fun ColumnScope.PlayerDetail(
                 contentPadding = PaddingValues(16.dp),
             ) {
                 items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
-                    TableSummaryCard(view, table, highlightSlot = slotId) { onOpenTable(table) }
+                    TableSummaryCard(view, table, highlightSlot = slotId, showRound = true) { onOpenTable(table) }
                 }
             }
             TableScrollbar(state, tables, Modifier.align(Alignment.CenterEnd))

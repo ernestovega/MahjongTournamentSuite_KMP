@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -92,6 +91,8 @@ internal fun TeamStatisticsTab(
         val teamId = loaded.slots.firstOrNull { it.id in members }?.team ?: 0
         val standing: (@Composable (Modifier) -> Unit)? = ranking?.let { { modifier -> PlayerStandingCard(it.position, it.points, it.score, modifier) } }
         val combined = teamStatistics(teamId, members, loaded.statistics.players)
+        // The place of the team first, then its players, then the statistics of all their tables together.
+        standing?.invoke(Modifier.fillMaxWidth())
         MembersCard(loaded, members, onOpenPlayer)
         Text(
             stringResource(Res.string.team_statistics_note),
@@ -100,66 +101,42 @@ internal fun TeamStatisticsTab(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        if (combined == null) {
-            standing?.invoke(Modifier.fillMaxWidth())
-        } else {
-            PlayerStatisticsPanel(
-                combined,
-                leading = standing,
-                tournaments = listOf(loaded.tournament),
-                rivalNames = loaded.rivalNames,
-            )
+        combined?.let {
+            PlayerStatisticsPanel(it, tournaments = listOf(loaded.tournament), rivalNames = loaded.rivalNames)
         }
     }
 }
 
-/** One line for each player of the team: points, score and win rate in the tournament. */
+/** One line for each player of the team: the name, then the points, the score and the win rate in the tournament. */
 @Composable
 private fun MembersCard(data: TournamentStatisticsData, members: List<Int>, onOpenPlayer: (Int) -> Unit) {
     val stats = data.statistics.players.associateBy { it.playerId }
     val rows = members.sortedByDescending { stats[it]?.totalPoints ?: 0.0 }
     val muted = MaterialTheme.colorScheme.onSurfaceVariant
     StatCard(stringResource(Res.string.team_members), Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("", Modifier.weight(1f))
-            HeaderCell(stringResource(Res.string.team_member_points))
-            HeaderCell(stringResource(Res.string.team_member_score))
-            HeaderCell(stringResource(Res.string.team_member_win_rate))
-        }
         rows.forEach { slot ->
             val player = stats[slot]
-            Row(
-                Modifier.fillMaxWidth().clickable { onOpenPlayer(slot) }.padding(vertical = MtsTheme.spacing.sm),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            Column(
+                Modifier.fillMaxWidth().clickable { onOpenPlayer(slot) }.padding(vertical = MtsTheme.spacing.xs),
+                verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
             ) {
-                Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PlayerFlag(data.slots.firstOrNull { it.id == slot }?.country)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                    PlayerFlag(data.profiles[slot]?.country?.takeIf { it.isNotBlank() } ?: data.slots.firstOrNull { it.id == slot }?.country)
                     Text(data.names[slot] ?: "-", maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
                 }
-                ValueCell(player?.let { formatPoints(it.totalPoints) } ?: "-")
-                ValueCell(player?.totalScore?.toString() ?: "-")
-                ValueCell(player?.winRate?.let { "${(it * 100).roundToInt()}%" } ?: "-", color = muted)
+                val numbers = listOf(
+                    stringResource(Res.string.team_member_points) to (player?.let { formatPoints(it.totalPoints) } ?: "-"),
+                    stringResource(Res.string.team_member_score) to (player?.totalScore?.toString() ?: "-"),
+                    stringResource(Res.string.team_member_win_rate) to (player?.winRate?.let { "${(it * 100).roundToInt()}%" } ?: "-"),
+                )
+                Text(
+                    numbers.joinToString("  ·  ") { (label, value) -> "$label $value" },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = muted,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
             }
         }
     }
 }
-
-@Composable
-private fun HeaderCell(text: String) = Text(
-    text,
-    Modifier.width(64.dp),
-    style = MaterialTheme.typography.labelSmall,
-    color = MaterialTheme.colorScheme.onSurfaceVariant,
-    textAlign = TextAlign.End,
-    maxLines = 2,
-)
-
-@Composable
-private fun ValueCell(text: String, color: androidx.compose.ui.graphics.Color = MaterialTheme.colorScheme.onSurface) = Text(
-    text,
-    Modifier.width(64.dp),
-    style = MaterialTheme.typography.bodyMedium,
-    color = color,
-    textAlign = TextAlign.End,
-)

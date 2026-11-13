@@ -1290,7 +1290,14 @@ private fun RoundHeader(roundId: Int, start: String?) {
 
 /** A table with its four players. The points of the table show only for a complete table. */
 @Composable
-internal fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, highlightSlot: Int?, onClick: () -> Unit) {
+internal fun TableSummaryCard(
+    view: PlayerTournamentView,
+    table: PlayerTable,
+    highlightSlot: Int?,
+    /** True in a list without round headers, such as the tables of one player: the header names the round too. */
+    showRound: Boolean = false,
+    onClick: () -> Unit,
+) {
     val colors = MaterialTheme.colorScheme
     val complete = table.isComplete
     val ongoing = !complete && table.doneHands > 0
@@ -1317,7 +1324,7 @@ internal fun TableSummaryCard(view: PlayerTournamentView, table: PlayerTable, hi
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
-                stringResource(Res.string.table_n, table.tableId),
+                if (showRound) stringResource(Res.string.stats_round_table, table.roundId, table.tableId) else stringResource(Res.string.table_n, table.tableId),
                 Modifier.weight(1f),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,

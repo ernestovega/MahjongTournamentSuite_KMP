@@ -277,7 +277,7 @@ private fun ColumnScope.TeamDetail(
                     ) {
                         items(tables, key = { "${it.roundId}_${it.tableId}" }) { table ->
                             // The card marks the first player of the team at the table.
-                            TableSummaryCard(view, table, highlightSlot = table.playerSlots().firstOrNull { it in members }) { onOpenTable(table) }
+                            TableSummaryCard(view, table, highlightSlot = table.playerSlots().firstOrNull { it in members }, showRound = true) { onOpenTable(table) }
                         }
                     }
                     TableScrollbar(state, tables, Modifier.align(Alignment.CenterEnd))

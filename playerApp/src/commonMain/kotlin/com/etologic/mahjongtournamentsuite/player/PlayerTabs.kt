@@ -54,7 +54,8 @@ internal fun CompactTab(
                 Modifier.padding(horizontal = 2.dp),
                 style = style,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                softWrap = false,
+                overflow = TextOverflow.Clip,
                 autoSize = TextAutoSize.StepBased(minFontSize = 9.sp, maxFontSize = style.fontSize, stepSize = 0.5.sp),
             )
         }
