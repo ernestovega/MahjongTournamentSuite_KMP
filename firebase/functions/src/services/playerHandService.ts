@@ -169,10 +169,12 @@ function buildPatch(table: Data, seats: [string, string, string, string], hands:
   const handsAfter = hands.map((hand) => (hand.handId === next.handId ? { ...hand, ...handPatch } : hand));
   const handScores = handSeatScores(handsAfter.find((hand) => hand.handId === next.handId) as Data, seats);
   if (handScores == null) throw badRequest("The hand result is not valid");
-  // The last hand closes the table, like the Completed switch of an editor.
-  const tableAfter = isLastHand ? { ...table, isCompleted: true } : table;
+  // The last hand closes the table, like the Completed switch of an editor. The sixteenth hand is always the last one:
+  // the app does not offer the "last hand" box there, and a table with every hand done takes no more hands.
+  const closes = isLastHand || handsAfter.every((hand) => hand.isDone);
+  const tableAfter = closes ? { ...table, isCompleted: true } : table;
   const totals = tableTotalsPatch(tableAfter, handsAfter);
-  return { next, handPatch, totals, handScores, tablePatch: isLastHand ? { ...totals, isCompleted: true } : totals };
+  return { next, handPatch, totals, handScores, tablePatch: closes ? { ...totals, isCompleted: true } : totals };
 }
 
 /** In the extra time after the end of the match, the hand in play is the last hand of the table. */

@@ -262,8 +262,12 @@ def wait_booted(device: Device, timeout: float = 420) -> None:
     while time.time() < deadline:
         if device.process and device.process.poll() is not None:
             raise RuntimeError(f"Emulator {device.serial} stopped. See {OUT}/emulator-*.log")
-        if adb(device.serial, "shell", "getprop sys.boot_completed", check=False, timeout=15).strip() == "1":
-            return
+        # Early in a cold boot adbd can accept the shell and then not answer. That is "not booted yet".
+        try:
+            if adb(device.serial, "shell", "getprop sys.boot_completed", check=False, timeout=15).strip() == "1":
+                return
+        except subprocess.TimeoutExpired:
+            pass
         time.sleep(3)
     raise RuntimeError(f"Emulator {device.serial} did not boot in {timeout} s.")
 

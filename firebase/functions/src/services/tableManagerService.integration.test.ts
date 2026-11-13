@@ -174,6 +174,30 @@ describe("table save with the Firestore emulator", () => {
     assert.equal(error.status, 404);
   });
 
+  it("completes the table and the tournament when the editor marks the sixteenth hand done", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }] });
+    const draws = Array.from({ length: 15 }, (_, index) => ({ handId: index + 1, patch: { handScore: "0", isDone: true } }));
+    await save(id, 1, 0, { playerEastId: "1", playerSouthId: "2", playerWestId: "3", playerNorthId: "4" }, draws);
+    assert.equal((await readTable(id, 1, 1)).isCompleted, false);
+
+    // No Completed switch: only the Done box of hand 16.
+    const result = await save(id, 1, 1, {}, [{ handId: 16, patch: { playerWinnerId: "1", playerLooserId: "2", handScore: "8", isDone: true } }]);
+
+    assert.equal(result.table.isCompleted, true);
+    assert.equal((await readTable(id, 1, 1)).isCompleted, true);
+    assert.equal((await readTournament(id)).isCompleted, true);
+  });
+
+  it("keeps a table open while a hand is not done, and a totals-only table follows its switch", async () => {
+    const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }, { roundId: 1, tableId: 2 }] });
+    const fifteen = Array.from({ length: 15 }, (_, index) => ({ handId: index + 1, patch: { handScore: "0", isDone: true } }));
+    await save(id, 1, 0, {}, [...fifteen, { handId: 16, patch: { playerWinnerId: "1", handScore: "8" } }]);
+    assert.equal((await readTable(id, 1, 1)).isCompleted, false);
+
+    await save(id, 2, 0, { useTotalsOnly: true });
+    assert.equal((await readTable(id, 1, 2)).isCompleted, false);
+  });
+
   it("separates tables of different rounds with the same table number", async () => {
     const id = await seedTournament({ tables: [{ roundId: 1, tableId: 1 }, { roundId: 2, tableId: 1 }] });
 

@@ -274,6 +274,22 @@ describe("hand entry by a player", () => {
     assert.equal((await readTable(fixture.tournamentId, 1, 1)).isCompleted, false);
   });
 
+  it("completes the table with the sixteenth hand, which the app sends without the last-hand flag", async () => {
+    const fixture = await seedTable();
+    for (let handId = 1; handId <= 15; handId++) {
+      await recordHand({ ...at(fixture), uid: fixture.uid, input: parseHandInput({ isDraw: true }), expectedVersion: handId - 1 });
+    }
+    assert.equal((await readTable(fixture.tournamentId, 1, 1)).isCompleted, false);
+
+    const last = await recordHand({ ...at(fixture), uid: fixture.uid, input: hand("2", "3"), expectedVersion: 15 });
+
+    assert.equal(last.handId, 16);
+    const table = await readTable(fixture.tournamentId, 1, 1);
+    assert.equal(table.isCompleted, true);
+    assert.equal(table.playerSouthScore, "34");
+    await rejects(previewHand({ ...at(fixture), uid: fixture.uid, input: hand("1", "4") }), 409);
+  });
+
   it("applies one hand when two records race with the same version", async () => {
     const fixture = await seedTable();
 

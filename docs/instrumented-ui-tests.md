@@ -118,6 +118,18 @@ The pull request from `develop` to `main` does not run the UI tests until the ap
 | `PlayerStatisticsTest` | 10 | Tournament and personal statistics, and the message for an account with no EMA number. |
 | `PlayerHandEntryTest` | 10 | Add draw, add win (discard and self draw), penalty dialog, review, cancel. |
 | `PlayerRoundStartTest` | 2 | Waiting for the gong until the Timer starts the round, and a player who sets the seats of a table without seats. |
+| `TournamentJourneyTest` | 1 | A whole tournament from the admin app: the form, the picker for a player, Play on the Timer for each round, tables that the phones fill in, the last hand in the table editor and the ranking. |
+| `PlayerTournamentJourneyTest` | 1 | A whole tournament from the phone of one player: seats before the gong, hands from this phone and from the other phones of the table, the hand 16 that closes the table, the last hand of the tournament and the ranking. |
+
+## Journey tests
+
+`TournamentJourneyTest` (admin app) and `PlayerTournamentJourneyTest` (player app) play a whole new tournament of 16 players and 2 rounds.
+The app under test plays one person. The other people play through the API of the local backend, as from their own devices: the organizers create, assign and press Play, and the 16 players set the seats and write the hands from their phones.
+
+- Each test makes its own players with `POST /__e2e/journey-players`: EMA players 10000901 to 10000916, each with a player account `journey01@e2e.test` to `journey16@e2e.test`.
+- At the end the test deletes the tournament and calls `DELETE /__e2e/journey-players`, so the counts that other tests check (accounts, EMA players) stay the same.
+- Slot 1 wins the hands of its tables and the other tables only draw, so slot 1 is first in the final ranking.
+- Each test takes 2 to 4 minutes.
 
 ## Test accounts
 

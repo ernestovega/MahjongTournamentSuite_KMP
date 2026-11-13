@@ -189,6 +189,53 @@ async function main(): Promise<void> {
       res.status(500).json({ error: String(error) });
     }
   });
+  // The journey tests play a whole new tournament. They need their own EMA players, each with a player account, so
+  // the players of the new tournament can write hands from their phones. The EMA ids 10000901 and up are not in the
+  // registry of the other tests. The DELETE removes the accounts and the EMA players again, so the counts that other
+  // tests check stay the same.
+  const JOURNEY_FIRST_EMA = 10000901;
+  const journeyEmail = (index: number) => `journey${String(index + 1).padStart(2, "0")}@e2e.test`;
+  app.post("/__e2e/journey-players", async (req, res) => {
+    try {
+      const count = Math.min(Math.max(Number(req.query.count ?? 16), 1), 64);
+      const players: { email: string; emaId: string; firstName: string; lastName: string }[] = [];
+      for (let index = 0; index < count; index += 1) {
+        const emaId = String(JOURNEY_FIRST_EMA + index);
+        const firstName = FIRST_NAMES[index % FIRST_NAMES.length];
+        const lastName = `JOURNEY${String(index + 1).padStart(2, "0")}`;
+        await db.doc(`emaPlayerRegistry/${emaId}`).set({ firstName, lastName, country: COUNTRIES[index % COUNTRIES.length] });
+        const email = journeyEmail(index);
+        const existing = await auth.getUserByEmail(email).catch(() => null);
+        const uid = existing?.uid ?? `e2e-journey-${index + 1}`;
+        if (existing == null) await account({ uid, email }, "PLAYER");
+        await setAccountEmaId({ uid, emaId });
+        players.push({ email, emaId, firstName, lastName });
+      }
+      res.status(200).json({ players });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
+  app.delete("/__e2e/journey-players", async (_req, res) => {
+    try {
+      for (let index = 0; index < 64; index += 1) {
+        const emaId = String(JOURNEY_FIRST_EMA + index);
+        const user = await auth.getUserByEmail(journeyEmail(index)).catch(() => null);
+        if (user != null) {
+          await setAccountEmaId({ uid: user.uid, emaId: null }).catch(() => undefined);
+          await auth.deleteUser(user.uid);
+          await db.doc(`users/${user.uid}`).delete();
+        }
+        await db.doc(`emaIdIndex/${emaId}`).delete();
+        await db.doc(`emaPlayerRegistry/${emaId}`).delete();
+      }
+      res.status(200).json({ ok: true });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: String(error) });
+    }
+  });
   // Tests call this to get back the original data of some tournaments, for example after they changed a table.
   app.post("/__e2e/reset", async (req, res) => {
     try {
