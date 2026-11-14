@@ -3,6 +3,8 @@ import { FieldPath, Timestamp, type DocumentData, type Query, type QueryDocument
 import { badRequest } from "../api/httpError";
 import { db } from "../firebase";
 import { ACTIVITY_COLLECTION } from "./activityLog";
+import { tableVersionKey } from "./dataVersionsService";
+import { EMA_PLAYER_REGISTRY_COLLECTION } from "./playersService";
 
 /**
  * The activity screen of the admin app reads one list, newest first, from the two write logs: the activity log
@@ -61,6 +63,11 @@ export type FeedEntry = {
   tableId: number | null;
   version: number | null;
   changes: FeedFieldChange[];
+  /**
+   * The names of the players: the four players of the table of a table save, or the player that an activity record
+   * names as its target (`player 5`). Empty when the player has no EMA player assigned.
+   */
+  players: string[];
 };
 
 export type FeedPage = { entries: FeedEntry[]; nextCursor: string | null };
@@ -133,6 +140,7 @@ export function activityEntryFrom(id: string, data: DocumentData): FeedEntry {
     tableId: null,
     version: null,
     changes: [],
+    players: [],
   };
 }
 
@@ -163,6 +171,7 @@ export function tableEntryFrom(id: string, tournamentId: string, data: DocumentD
         handId: intOrNull(change.handId) ?? 0,
       })),
     ],
+    players: [],
   };
 }
 
@@ -282,6 +291,7 @@ export function entryHasText(entry: FeedEntry, key: string): boolean {
     entry.tableId === null ? null : `table ${entry.tableId}`,
     ...entry.details.flatMap((detail) => [detail.key, detail.value]),
     ...entry.changes.flatMap((change) => [change.field, change.from, change.to]),
+    ...entry.players,
   ];
   return texts.some((text) => text !== null && searchKey(text).includes(key));
 }
@@ -296,11 +306,12 @@ const MAX_SEARCH_PAGES = 10;
  */
 export async function listActivityFeed(filter: FeedFilter, limit: number, cursorText?: unknown): Promise<FeedPage> {
   const key = filter.text ? searchKey(filter.text) : "";
-  if (!key) return readFeedPage(filter, limit, cursorText);
+  const names = new PlayerNames();
+  if (!key) return readFeedPage(filter, limit, cursorText, names);
   const entries: FeedEntry[] = [];
   let cursor: unknown = cursorText;
   for (let pages = 0; pages < MAX_SEARCH_PAGES; pages++) {
-    const page = await readFeedPage(filter, limit, cursor);
+    const page = await readFeedPage(filter, limit, cursor, names);
     entries.push(...page.entries.filter((entry) => entryHasText(entry, key)));
     cursor = page.nextCursor;
     if (page.nextCursor === null || entries.length >= limit) break;
@@ -308,7 +319,64 @@ export async function listActivityFeed(filter: FeedFilter, limit: number, cursor
   return { entries, nextCursor: typeof cursor === "string" ? cursor : null };
 }
 
-async function readFeedPage(filter: FeedFilter, limit: number, cursorText?: unknown): Promise<FeedPage> {
+/** The slot that an activity record names as its target, such as `player 5`. */
+function targetSlot(entry: FeedEntry): number | null {
+  const match = /^player (\d+)$/.exec(entry.target ?? "");
+  return match ? Number(match[1]) : null;
+}
+
+/**
+ * Reads the names of the players of the entries, once per request: the tables, then the slots, then the EMA players.
+ * The slot shows the EMA player assigned now, the same as the apps show it.
+ */
+export class PlayerNames {
+  private readonly tables = new Map<string, number[]>();
+  private readonly slots = new Map<string, string | null>();
+  private readonly names = new Map<string, string>();
+
+  async fill(entries: FeedEntry[]): Promise<void> {
+    const tableKey = (entry: FeedEntry) => `${entry.tournamentId}/${tableVersionKey(entry.roundId ?? 0, entry.tableId ?? 0)}`;
+    const tableEntries = entries.filter((entry) => entry.kind === "table" && entry.tournamentId && entry.roundId !== null && entry.tableId !== null);
+    const missingTables = [...new Set(tableEntries.map(tableKey))].filter((key) => !this.tables.has(key));
+    if (missingTables.length > 0) {
+      const snapshots = await db.getAll(...missingTables.map((key) => db.collection("tournaments").doc(key.split("/")[0]).collection("tables").doc(key.split("/")[1])));
+      snapshots.forEach((snapshot, index) => {
+        const ids = snapshot.exists && Array.isArray(snapshot.get("playerIds")) ? (snapshot.get("playerIds") as unknown[]).map(Number) : [];
+        this.tables.set(missingTables[index], ids.filter((id) => Number.isInteger(id)));
+      });
+    }
+    const slotsOf = new Map<FeedEntry, string[]>();
+    for (const entry of entries) {
+      if (!entry.tournamentId) continue;
+      const ids = entry.kind === "table" ? this.tables.get(tableKey(entry)) ?? [] : [targetSlot(entry)].filter((id): id is number => id !== null);
+      if (ids.length > 0) slotsOf.set(entry, ids.map((id) => `${entry.tournamentId}/${id}`));
+    }
+    const missingSlots = [...new Set([...slotsOf.values()].flat())].filter((key) => !this.slots.has(key));
+    if (missingSlots.length > 0) {
+      const snapshots = await db.getAll(...missingSlots.map((key) => db.collection("tournaments").doc(key.split("/")[0]).collection("players").doc(key.split("/")[1])));
+      snapshots.forEach((snapshot, index) => {
+        const emaId = snapshot.exists ? snapshot.get("assignedEmaId") : null;
+        this.slots.set(missingSlots[index], typeof emaId === "string" && emaId !== "" ? emaId : null);
+      });
+    }
+    const missingPlayers = [...new Set([...this.slots.values()])].filter((id): id is string => id !== null && !this.names.has(id));
+    if (missingPlayers.length > 0) {
+      const snapshots = await db.getAll(...missingPlayers.map((id) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(id)));
+      snapshots.forEach((snapshot, index) => {
+        const name = snapshot.exists ? `${String(snapshot.get("firstName") ?? "")} ${String(snapshot.get("lastName") ?? "")}`.trim() : "";
+        this.names.set(missingPlayers[index], name);
+      });
+    }
+    for (const [entry, keys] of slotsOf) {
+      entry.players = keys
+        .map((key) => this.slots.get(key))
+        .map((emaId) => (emaId ? this.names.get(emaId) ?? "" : ""))
+        .filter((name) => name !== "");
+    }
+  }
+}
+
+async function readFeedPage(filter: FeedFilter, limit: number, cursorText?: unknown, names = new PlayerNames()): Promise<FeedPage> {
   const cursor = decodeFeedCursor(cursorText);
   const [activity, tables] = await Promise.all([
     readActivity(filter, cursor.a, limit),
@@ -319,12 +387,13 @@ async function readFeedPage(filter: FeedFilter, limit: number, cursorText?: unkn
     ? activityEntryFrom(doc.ref.path, doc.data())
     : tableEntryFrom(doc.ref.path, doc.ref.parent.parent?.id ?? "", doc.data())));
   const ids = [...new Set(entries.map((entry) => entry.tournamentId).filter((id): id is string => !!id))];
-  const names = await tournamentNames(ids);
+  const tournaments = await tournamentNames(ids);
   for (const entry of entries) {
     if (!entry.tournamentId) continue;
     // The record of a delete keeps the name of the tournament as its target.
-    entry.tournamentName = names.get(entry.tournamentId) ?? (entry.action === "tournament.delete" ? entry.target : null);
+    entry.tournamentName = tournaments.get(entry.tournamentId) ?? (entry.action === "tournament.delete" ? entry.target : null);
   }
+  await names.fill(entries);
   const done = next.a === "end" && next.t === "end";
   return { entries, nextCursor: done ? null : encodeFeedCursor(next) };
 }

@@ -73,6 +73,7 @@ class ActivityScreenUiTest {
         tableId = if (isTableSave) 4 else null,
         version = if (isTableSave) 7 else null,
         changes = changes,
+        players = if (isTableSave) listOf("Lucía Martín", "Hugo García", "Claire Dubois", "Jonas Becker") else emptyList(),
     )
 
     private val save = entry(
@@ -133,6 +134,7 @@ class ActivityScreenUiTest {
         // The origin filter chip and the row of the table save.
         onAllNodesWithText("Player app").assertCountEquals(2)
         onNodeWithText("Madrid Open · Round 2 · Table 4").assertExists()
+        onNodeWithText("Lucía Martín · Hugo García · Claire Dubois · Jonas Becker").assertExists()
         onNodeWithText("Player assigned").assertExists()
         onNodeWithText("Ana Admin").assertExists()
     }

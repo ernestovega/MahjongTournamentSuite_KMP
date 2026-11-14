@@ -24,8 +24,10 @@ The list is newest first and loads 50 entries at a time. It filters by tournamen
 other changes), by origin (admin app, player app, or automatic: the server and the maintenance scripts), by a period
 with a start and an end date and time (local time of the device, the end minute included), by person (from the
 detail of an entry) and by a free text search: any entry that holds the text anywhere (the person, the tournament, the
-target, a value, a changed field), without case or accents. Table saves store player ids, not names, so a player's
-name finds their own saves from the player app and the records that name them, not every hand they won. The detail shows every changed value.
+target, a value, a changed field), without case or accents. Each entry also carries the names of its
+players (`players`): the four players of the table of a table save, or the player that a record names as its target
+(`player 5`), from the EMA player assigned to the slot now. The list shows them and the search finds them, so a
+player's name finds every save of their tables. The detail shows every changed value.
 
 The screen reads `GET /admin/activity` (admin only). Its parameters are `limit`, `tournamentId`, `uid`,
 `source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`), `from` (inclusive) and `to`

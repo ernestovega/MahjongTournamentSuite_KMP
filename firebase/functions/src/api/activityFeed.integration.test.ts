@@ -6,6 +6,7 @@ import { Timestamp } from "firebase-admin/firestore";
 import { db } from "../firebase";
 import { createAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 import { ACTIVITY_COLLECTION } from "../services/activityLog";
+import { EMA_PLAYER_REGISTRY_COLLECTION } from "../services/playersService";
 
 type Entry = {
   id: string;
@@ -21,6 +22,7 @@ type Entry = {
   roundId: number | null;
   tableId: number | null;
   changes: Array<{ field: string; from: string | null; to: string | null; handId?: number }>;
+  players: string[];
 };
 type Page = { entries: Entry[]; nextCursor: string | null };
 
@@ -199,6 +201,35 @@ describe("activity feed API", () => {
     assert.deepEqual(byTarget.map((entry) => entry.at - BASE), [1000]);
     const none = mine((await readAll("&q=nothing-like-this", 50)).flat());
     assert.deepEqual(none, []);
+  });
+
+  it("names the players of a table and of a player record, and finds them by name", async () => {
+    const registry = db.collection(EMA_PLAYER_REGISTRY_COLLECTION);
+    const people = [["99000001", "Lucía", "Martín"], ["99000002", "Hugo", "García"], ["99000003", "Claire", "Dubois"], ["99000004", "Jonas", "Becker"]];
+    try {
+      for (const [emaId, firstName, lastName] of people) await registry.doc(emaId).set({ emaId, firstName, lastName, country: "ESP" });
+      const tournament = db.collection("tournaments").doc(T1);
+      for (let slot = 1; slot <= 5; slot += 1) {
+        await tournament.collection("players").doc(String(slot)).set({ id: slot, ...(slot <= 4 ? { assignedEmaId: people[slot - 1][0] } : {}) });
+      }
+      await tournament.collection("tables").doc("2_4").set({ roundId: 2, tableId: 4, playerIds: [1, 2, 3, 4] });
+      await tableSave(1000, T1);
+      await activity(2000, "player.assign", T1);
+      await db.collection(ACTIVITY_COLLECTION).add({
+        action: "player.assign", uid: "u1", name: "Admin", tournamentId: T1, target: "player 2", details: {},
+        at: Timestamp.fromMillis(BASE + 3000),
+      });
+
+      const all = mine((await readAll("", 50)).flat());
+      assert.deepEqual(all.map((entry) => entry.players), [["Hugo García"], [], ["Lucía Martín", "Hugo García", "Claire Dubois", "Jonas Becker"]]);
+
+      const byName = mine((await readAll("&q=lucia", 1)).flat());
+      assert.deepEqual(byName.map((entry) => entry.at - BASE), [1000]);
+      const both = mine((await readAll("&q=garcia", 50)).flat());
+      assert.deepEqual(both.map((entry) => entry.at - BASE), [3000, 1000]);
+    } finally {
+      for (const [emaId] of people) await registry.doc(emaId).delete();
+    }
   });
 
   it("refuses a bad cursor, source, origin or period", async () => {

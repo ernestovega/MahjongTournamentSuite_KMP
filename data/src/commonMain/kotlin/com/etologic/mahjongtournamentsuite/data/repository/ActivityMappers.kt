@@ -22,6 +22,7 @@ internal fun ActivityEntryDto.toDomain() = ActivityEntry(
     tableId = tableId,
     version = version,
     changes = changes.map { ActivityFieldChange(it.field, it.from, it.to, it.handId) },
+    players = players,
 )
 
 internal fun ActivityPageDto.toDomain() = ActivityPage(entries.map { it.toDomain() }, nextCursor)

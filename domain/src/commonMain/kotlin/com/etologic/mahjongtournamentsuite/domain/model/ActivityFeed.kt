@@ -64,6 +64,8 @@ data class ActivityEntry(
     val tableId: Int?,
     val version: Int?,
     val changes: List<ActivityFieldChange>,
+    /** The players of the table of a table save, or the player that a change names. Empty when unknown. */
+    val players: List<String> = emptyList(),
 )
 
 /** One page of the write log, newest first. [nextCursor] is null on the last page. The app sends it back unchanged. */

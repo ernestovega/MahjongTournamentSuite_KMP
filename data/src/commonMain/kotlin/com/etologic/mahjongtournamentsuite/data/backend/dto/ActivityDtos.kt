@@ -33,6 +33,7 @@ data class ActivityEntryDto(
     val tableId: Int? = null,
     val version: Int? = null,
     val changes: List<ActivityFieldChangeDto> = emptyList(),
+    val players: List<String> = emptyList(),
 )
 
 @Serializable

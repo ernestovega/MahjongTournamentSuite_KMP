@@ -608,6 +608,7 @@ private fun ActivityTable(
                         if (where.isNotBlank()) {
                             Text(where, style = MaterialTheme.typography.bodySmall, maxLines = 2, overflow = TextOverflow.Ellipsis)
                         }
+                        PlayersLine(entry)
                         Text(
                             listOf(dateTime(entry.at), personLabel(entry), originLabel(originOf(entry))).joinToString(" · "),
                             style = MaterialTheme.typography.bodySmall,
@@ -638,6 +639,7 @@ private fun ActivityTable(
                     if (where.isNotBlank()) {
                         Text(where, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
+                    PlayersLine(entry)
                     if (entry.isTableSave && entry.changes.isNotEmpty()) {
                         Text(stringResource(Res.string.activity_changes_count, entry.changes.size), style = MaterialTheme.typography.bodySmall)
                     }
@@ -684,6 +686,7 @@ private fun ActivityEntryDialog(
                             entry.uid?.let { Text(it, style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace) }
                             val where = whereLabel(entry)
                             if (where.isNotBlank()) Text(where, style = MaterialTheme.typography.bodyMedium)
+                            PlayersLine(entry)
                             entry.version?.let { Text(stringResource(Res.string.activity_version, it), style = MaterialTheme.typography.bodySmall) }
                             if (entry.details.isNotEmpty()) {
                                 Text(stringResource(Res.string.activity_details), style = MaterialTheme.typography.titleSmall)
@@ -750,6 +753,19 @@ private fun whereLabel(entry: ActivityEntry): String {
     val tableId = entry.tableId
     val table = if (roundId != null && tableId != null) stringResource(Res.string.activity_table, roundId, tableId) else null
     return listOfNotNull(entry.tournamentName ?: entry.tournamentId, table, entry.target).joinToString(" · ")
+}
+
+/** The players of the table, or the player that the change names. */
+@Composable
+private fun PlayersLine(entry: ActivityEntry) {
+    if (entry.players.isEmpty()) return
+    Text(
+        entry.players.joinToString(" · "),
+        style = MaterialTheme.typography.bodySmall,
+        fontWeight = FontWeight.SemiBold,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
 }
 
 @Composable
