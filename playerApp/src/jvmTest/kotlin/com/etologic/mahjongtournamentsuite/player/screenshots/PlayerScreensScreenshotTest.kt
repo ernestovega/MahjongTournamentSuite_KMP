@@ -1,10 +1,15 @@
 package com.etologic.mahjongtournamentsuite.player.screenshots
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
 import com.etologic.mahjongtournamentsuite.player.PlayerTab
 import com.etologic.mahjongtournamentsuite.player.RoundMoment
@@ -17,6 +22,7 @@ import com.etologic.mahjongtournamentsuite.player.TournamentPlayerScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentScreen
 import com.etologic.mahjongtournamentsuite.player.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
 import kotlin.test.Test
@@ -36,6 +42,11 @@ class PlayerScreensScreenshotTest {
     @Test
     fun myTableReminder() = playerScreenshots("dialogs/my-table-reminder", variants = dialogVariants, ready = { waitForText("Go to my table") }) {
         MyTableReminderDialog("Madrid Open 2026", roundId = 3, tableId = 7, moment = RoundMoment.StartedAgo(12 * 60_000L), onOpen = {}, onDismiss = {})
+    }
+
+    @Test
+    fun myTableButton() = playerScreenshots("components/my-table-button", variants = componentVariants, ready = { waitForText("Go to my table") }) {
+        Box(Modifier.fillMaxSize()) { MyTableButton(onClick = {}, modifier = Modifier.align(Alignment.BottomEnd)) }
     }
 
     @Test

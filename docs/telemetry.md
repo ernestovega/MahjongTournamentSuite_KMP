@@ -53,7 +53,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 | `hand_previewed`, `hand_recorded`, `penalty_added` | A player enters a hand (player app) | `hands` for penalties |
 | `seats_assigned` | A player sets the seats of the table before the first hand (player app) | |
 | `round_clock` | A button of the Timer (admin app) | `action`: `started` (the gong), `paused`, `resumed`, `started_ago` ("The round started N minutes ago"), `time_set`, `reset`. `kind`: `tournament` or `independent`. The confirmation of a reset of a round with hands is not counted again |
-| `table_reminder` | The reminder of the own table (player app) | `action`: `shown` (once for each round), `opened` (the button to the table), `closed`. `kind`: `starts_soon`, `awaiting_gong` or `playing` |
+| `table_reminder` | The reminder of the own table (player app) | `action`: `shown` (once for each round), `opened` (the button to the table), `closed`, `button` (the floating "Go to my table" button while the round plays). `kind`: `starts_soon`, `awaiting_gong` or `playing` |
 | `support_sent` | The support form sent a message (sign-in of both apps) | none |
 | `action_failed` | Any request fails | `action`, `reason` |
 | `app_error` | The app caught a bug | `report_id`, `action`, `kind`, `reason` |
