@@ -40,6 +40,7 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassEmpty
+import androidx.compose.material.icons.filled.HourglassTop
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Leaderboard
@@ -2031,13 +2032,18 @@ private fun RoundClockLine(tournament: Tournament, roundId: Int) {
     // A screen reader still says what the time is.
     val description = if (remaining > 0 && !clock.isPaused) stringResource(Res.string.round_clock_remaining, formatClock(remaining)) else text
     val red = remaining <= 15 * 60_000L
-    Text(
-        text,
-        Modifier.testTag("round-clock").semantics { contentDescription = description },
-        style = MaterialTheme.typography.headlineSmall,
-        fontWeight = FontWeight.Bold,
-        color = if (red) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
-    )
+    val color = if (red) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
+    // An hourglass before the time, in the same color.
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+        Icon(Icons.Default.HourglassTop, contentDescription = null, Modifier.size(24.dp), tint = color)
+        Text(
+            text,
+            Modifier.testTag("round-clock").semantics { contentDescription = description },
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold,
+            color = color,
+        )
+    }
 }
 
 /** Milliseconds as "h:mm:ss", rounded up, so the line shows 0:00:00 only at the end. */
