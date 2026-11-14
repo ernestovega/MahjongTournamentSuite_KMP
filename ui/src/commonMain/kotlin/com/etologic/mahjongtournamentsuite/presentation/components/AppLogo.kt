@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.etologic.mahjongtournamentsuite.presentation.theme.MtsSpacing
 import mahjongtournamentsuite.ui.generated.resources.Res
 import mahjongtournamentsuite.ui.generated.resources.app_logo_description
 import org.jetbrains.compose.resources.stringResource
@@ -100,7 +101,7 @@ fun AppLoading(modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(28.dp, Alignment.CenterVertically),
+        verticalArrangement = Arrangement.spacedBy(MtsSpacing.xxl, Alignment.CenterVertically),
     ) {
         AppLogo(size = 160.dp)
         CircularProgressIndicator()
