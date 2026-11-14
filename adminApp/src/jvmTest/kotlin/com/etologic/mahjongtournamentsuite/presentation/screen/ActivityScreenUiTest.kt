@@ -158,9 +158,11 @@ class ActivityScreenUiTest {
 
     @Test
     fun openedFromATournamentItStartsFilteredByIt() = runComposeUiTest {
-        val admin = show(tournaments = listOf(tournament("t2", "Barcelona Cup"), tournament("t1", "Madrid Open")), initialTournamentId = "t2")
-        assertEquals("t2", admin.activityRequests.first().first.tournamentId)
-        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Barcelona Cup").fetchSemanticsNodes().isNotEmpty() }
+        val admin = show(tournaments = listOf(tournament("t2", "Barcelona Cup"), tournament("t1", "Valencia Open")), initialTournamentId = "t1")
+        assertEquals("t1", admin.activityRequests.first().first.tournamentId)
+        // The menu shows the tournament, not "All tournaments".
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Valencia Open").fetchSemanticsNodes().isNotEmpty() }
+        onAllNodesWithText("All tournaments").assertCountEquals(0)
     }
 
     @Test
