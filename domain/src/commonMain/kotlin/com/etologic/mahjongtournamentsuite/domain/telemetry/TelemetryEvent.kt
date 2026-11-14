@@ -246,6 +246,9 @@ object TelemetryReminderAction {
     /** The player closed the reminder. */
     const val CLOSED = "closed"
 
+    /** The player pressed the floating button "Go to my table" while the round plays. */
+    const val BUTTON = "button"
+
     /** Every value of this object. A test checks it against the rules of GA4. */
     val all: List<String> = listOf(SHOWN, OPENED, CLOSED)
 }

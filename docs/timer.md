@@ -52,6 +52,7 @@ When the player app opens or returns to the front, a signed-in player who plays 
 - A round with no clock shows "Waiting for the starting gong" for at most one match duration after the planned time.
 - A completed table gives no reminder. Closing the reminder or opening the table hides it until the next round. The web keeps that through a page refresh (session storage); Android keeps it while the app process lives.
 - Before the gong the app checks the clocks again every minute while the reminder shows, so it turns into "Started ... ago" without leaving the app.
+- While the round plays (after the gong) and the table of the player is not completed, every screen but the table shows a floating pink button "Go to my table" at the bottom right, also after the player closed the dialog. Leaving a table checks again, so a table that the players just completed loses its button.
 - Code: `playerApp/.../player/MyTableReminder.kt`.
 
 ## Controls

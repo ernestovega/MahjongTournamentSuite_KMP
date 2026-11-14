@@ -114,4 +114,23 @@ class MyTableReminderUiTest {
         kotlin.test.assertEquals("t/2", storage.values["handledTableReminders"])
         onNodeWithText("Tournament list").assertExists()
     }
+
+    @Test
+    fun whileTheRoundPlaysAButtonGoesBackToTheTableFromEveryScreenButTheTable() = runComposeUiTest {
+        show(MemoryStorage())
+
+        waitUntil(timeoutMillis = 5_000) { runCatching { onNodeWithTag(MY_TABLE_REMINDER_TAG).assertExists() }.isSuccess }
+        // The dialog first, then the button.
+        onNodeWithTag(MY_TABLE_BUTTON_TAG).assertDoesNotExist()
+        onNodeWithText("Later").performClick()
+        waitForIdle()
+        onNodeWithTag(MY_TABLE_BUTTON_TAG).assertExists()
+
+        onNodeWithTag(MY_TABLE_BUTTON_TAG).performClick()
+        waitForIdle()
+        onNodeWithText("Table 2").assertExists()
+        // No button on the table screen.
+        onNodeWithTag(MY_TABLE_BUTTON_TAG).assertDoesNotExist()
+        onNodeWithTag(MY_TABLE_REMINDER_TAG).assertDoesNotExist()
+    }
 }

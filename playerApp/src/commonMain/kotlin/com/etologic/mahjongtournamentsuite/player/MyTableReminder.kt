@@ -1,10 +1,15 @@
 package com.etologic.mahjongtournamentsuite.player
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material3.AlertDialog
@@ -66,6 +71,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.my_table_title
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
+import com.etologic.mahjongtournamentsuite.presentation.components.DebouncedExtendedFloatingActionButton as ExtendedFloatingActionButton
 
 /** Where a round of the player is in time, for the reminder of the own table. */
 sealed interface RoundMoment {
@@ -176,10 +182,13 @@ private const val TICK_MS = 15_000L
  * round in play or about to start, it says how long until the start, or since the gong, and opens the table.
  */
 @Composable
-internal fun MyTableReminder(navController: NavHostController, sessionStorage: SessionStateStorage?) {
+internal fun BoxScope.MyTableReminder(navController: NavHostController, sessionStorage: SessionStateStorage?) {
     val presenter = koinInject<MyTableReminderPresenter>()
     val handled = remember(sessionStorage) { HandledReminders(sessionStorage) }
-    var active by remember { mutableStateOf<MyActiveTable?>(null) }
+    // The table of the player in a round that starts soon or is in play, closed or not. The button uses it.
+    var current by remember { mutableStateOf<MyActiveTable?>(null) }
+    // Bumped when the player closes the dialog or follows it, so the dialog hides.
+    var handledCount by remember { mutableIntStateOf(0) }
     var resumes by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { resumes++ }
 
@@ -189,33 +198,35 @@ internal fun MyTableReminder(navController: NavHostController, sessionStorage: S
         destination.hasRoute<SplashRoute>() ||
         destination.hasRoute<SignInRoute>() ||
         destination.hasRoute<SupportRoute>()
+    val onATable = destination?.hasRoute<TableRoute>() == true
     // A sign-in or a sign-out opens the screens again from a new bottom entry, so the check runs again for the account.
     val rootId = navController.currentBackStack.value.firstOrNull { it.destination !is NavGraph }?.id
     val lifecycle = LocalLifecycleOwner.current.lifecycle
 
-    LaunchedEffect(resumes, rootId, outsideTheApp) {
-        if (outsideTheApp) return@LaunchedEffect
+    // Leaving a table checks again, so a table that the players just completed loses its button.
+    LaunchedEffect(resumes, rootId, outsideTheApp, onATable) {
+        if (outsideTheApp || onATable) return@LaunchedEffect
         while (true) {
-            active = presenter.find()?.takeUnless { it.key in handled }
-            // Before the gong the reminder checks again, so it turns into "started" without leaving the app.
-            val current = active ?: break
-            val moment = current.tournament.reminderMoment(current.roundId, current.tournament.currentVenueDateTime())
+            current = presenter.find()
+            // Before the gong the app checks again, so the reminder turns into "started" without leaving the app.
+            val found = current ?: break
+            val moment = found.tournament.reminderMoment(found.roundId, found.tournament.currentVenueDateTime())
             if (moment !is RoundMoment.StartsIn && moment != RoundMoment.AwaitingGong) break
             delay(RECHECK_MS)
             lifecycle.currentStateFlow.first { it.isAtLeast(Lifecycle.State.RESUMED) }
         }
     }
 
-    val shown = active ?: return
-    // The player is at the table already: the reminder did its job.
-    val onTheTable = destination?.hasRoute<TableRoute>() == true && entry?.toRoute<TableRoute>() == shown.route
+    val shown = current ?: return
+    // The player is at the table already: the dialog did its job.
+    val onTheTable = onATable && entry?.toRoute<TableRoute>() == shown.route
     LaunchedEffect(onTheTable, shown.key) {
-        if (onTheTable) {
+        if (onTheTable && shown.key !in handled) {
             handled.add(shown.key)
-            active = null
+            handledCount++
         }
     }
-    if (onTheTable || outsideTheApp) return
+    if (onATable || outsideTheApp) return
 
     var now by remember { mutableStateOf(shown.tournament.currentVenueDateTime()) }
     LaunchedEffect(shown) {
@@ -227,7 +238,7 @@ internal fun MyTableReminder(navController: NavHostController, sessionStorage: S
     val moment = shown.tournament.reminderMoment(shown.roundId, now)
     if (moment == null) {
         // The match is over.
-        LaunchedEffect(shown.key) { active = null }
+        LaunchedEffect(shown.key) { current = null }
         return
     }
     val telemetry = LocalTelemetry.current
@@ -235,27 +246,64 @@ internal fun MyTableReminder(navController: NavHostController, sessionStorage: S
         TelemetryEvent.TABLE_REMINDER,
         mapOf(TelemetryParam.ACTION to action, TelemetryParam.KIND to moment.telemetryKind()),
     )
-    // One "shown" for each round, the first time the reminder appears.
-    LaunchedEffect(shown.key) { track(TelemetryReminderAction.SHOWN) }
+    val open = {
+        handled.add(shown.key)
+        handledCount++
+        navController.navigate(shown.route)
+    }
 
-    MyTableReminderDialog(
-        tournamentName = shown.tournament.shortName.ifBlank { shown.tournament.name },
-        roundId = shown.roundId,
-        tableId = shown.tableId,
-        moment = moment,
-        onOpen = {
-            track(TelemetryReminderAction.OPENED)
-            handled.add(shown.key)
-            active = null
-            navController.navigate(shown.route)
-        },
-        onDismiss = {
-            track(TelemetryReminderAction.CLOSED)
-            handled.add(shown.key)
-            active = null
-        },
-    )
+    // handledCount makes the check run again after a close.
+    val dialogOpen = remember(shown.key, handledCount) { shown.key !in handled }
+    if (dialogOpen) {
+        // One "shown" for each round, the first time the reminder appears.
+        LaunchedEffect(shown.key) { track(TelemetryReminderAction.SHOWN) }
+        MyTableReminderDialog(
+            tournamentName = shown.tournament.shortName.ifBlank { shown.tournament.name },
+            roundId = shown.roundId,
+            tableId = shown.tableId,
+            moment = moment,
+            onOpen = {
+                track(TelemetryReminderAction.OPENED)
+                open()
+            },
+            onDismiss = {
+                track(TelemetryReminderAction.CLOSED)
+                handled.add(shown.key)
+                handledCount++
+            },
+        )
+    } else if (moment is RoundMoment.StartedAgo) {
+        // While the round plays, a button on every screen goes back to the table.
+        MyTableButton(
+            onClick = {
+                track(TelemetryReminderAction.BUTTON)
+                open()
+            },
+            modifier = Modifier.align(Alignment.BottomEnd),
+        )
+    }
 }
+
+/** The floating button that opens the table of the player while the round plays. */
+@Composable
+internal fun MyTableButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
+    ExtendedFloatingActionButton(
+        onClick = onClick,
+        modifier = modifier
+            .navigationBarsPadding()
+            .padding(MtsTheme.spacing.lg)
+            .testTag(MY_TABLE_BUTTON_TAG),
+        // The accent of the brand, like the button of the dialog.
+        containerColor = MaterialTheme.colorScheme.tertiary,
+        contentColor = MaterialTheme.colorScheme.onTertiary,
+    ) {
+        Icon(Icons.Default.TableRestaurant, contentDescription = null)
+        Spacer(Modifier.width(MtsTheme.spacing.sm))
+        Text(stringResource(Res.string.my_table_go))
+    }
+}
+
+internal const val MY_TABLE_BUTTON_TAG = "myTableButton"
 
 /** The word of the moment in the analytics. */
 private fun RoundMoment.telemetryKind(): String = when (this) {
