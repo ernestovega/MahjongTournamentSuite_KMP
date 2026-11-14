@@ -37,6 +37,7 @@ data class SuiteStart(val section: SuiteSection, val signIn: Boolean = false)
  * - Each part keeps its screens while the other one is open. Leaving the admin part after a sign-out, or without the
  *   rights, starts the player part again, because its screens belong to the old session. The admin part keeps its
  *   screens only for the same account.
+ * - Each part has its own Koin graph, because the player part reads the public data with other repositories.
  * - The admin part has no sign-in of its own: it sends the user to the sign-in of the player part.
  * - Back on the first screen of the admin part returns to the player part.
  */
@@ -103,13 +104,13 @@ fun SuiteRoot(
                     // The telemetry of each part starts with the name of the part. See AndroidTelemetry.
                     AndroidPlatformContext.currentApp = "player"
                     // The app has one version for both parts: the admin version. See docs/versioning.md.
-                    PlayerApp(appVersion = AppVersion.admin, openSignIn = playerSignIn)
+                    PlayerApp(appVersion = AppVersion.admin, openSignIn = playerSignIn, isolatedKoin = true)
                 }
             }
             SuiteSection.ADMIN -> key(adminAccount) {
                 savedParts.SaveableStateProvider(SuiteSection.ADMIN.name + adminAccount) {
                     AndroidPlatformContext.currentApp = "admin"
-                    App()
+                    App(isolatedKoin = true)
                 }
             }
         }

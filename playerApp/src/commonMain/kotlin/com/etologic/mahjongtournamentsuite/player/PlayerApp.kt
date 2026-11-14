@@ -61,6 +61,10 @@ import com.etologic.mahjongtournamentsuite.presentation.telemetry.ConsentGate
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
 import org.koin.compose.getKoin
 import org.koin.compose.KoinApplication
+import org.koin.compose.KoinIsolatedContext
+import org.koin.dsl.KoinConfiguration
+import org.koin.dsl.koinApplication
+import androidx.compose.runtime.DisposableEffect
 import org.koin.dsl.koinConfiguration
 import org.koin.dsl.module
 
@@ -137,8 +141,10 @@ fun PlayerApp(
     openSignIn: Boolean = false,
     /** Set only by the old Android player app: opens the page of the new app. See [MovedAppNotice]. */
     onInstallSuiteApp: (() -> Unit)? = null,
+    /** True in the Android app of the suite, which also holds the admin part. See [PlayerKoin]. */
+    isolatedKoin: Boolean = false,
 ) {
-    KoinApplication(configuration = koinConfiguration { modules(dataModule, playerModule) }) {
+    PlayerKoin(isolatedKoin, koinConfiguration { modules(dataModule, playerModule) }) {
         val themeController = rememberThemeController()
         CompositionLocalProvider(
             LocalTelemetry provides (getKoin().getOrNull<Telemetry>() ?: NoTelemetry),
@@ -218,4 +224,20 @@ private fun PlayerNavHost(
         }
         screen<StatisticsRoute> { entry -> StatisticsScreen(navController, entry.toRoute<StatisticsRoute>()) }
     }
+}
+
+/**
+ * Starts the Koin graph of the app. Normally it is the global graph of Koin, which the other windows of the app share.
+ * The Android app of the suite holds the player part and the admin part, which need different graphs, so each part
+ * gets its own [isolated] graph, closed when the part leaves the screen.
+ */
+@Composable
+internal fun PlayerKoin(isolated: Boolean, configuration: KoinConfiguration, content: @Composable () -> Unit) {
+    if (!isolated) {
+        KoinApplication(configuration = configuration, content = content)
+        return
+    }
+    val application = remember { koinApplication(configuration) }
+    DisposableEffect(application) { onDispose { application.close() } }
+    KoinIsolatedContext(application, content)
 }

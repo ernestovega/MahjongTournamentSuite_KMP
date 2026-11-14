@@ -78,6 +78,10 @@ import mahjongtournamentsuite.adminapp.generated.resources.app_logo
 import mahjongtournamentsuite.adminapp.generated.resources.app_logo_dark
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.KoinApplication
+import org.koin.compose.KoinIsolatedContext
+import org.koin.dsl.KoinConfiguration
+import org.koin.dsl.koinApplication
+import androidx.compose.runtime.DisposableEffect
 import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 import org.koin.dsl.koinConfiguration
@@ -88,8 +92,10 @@ import org.koin.dsl.koinConfiguration
 fun App(
     sessionStorage: SessionStateStorage? = null,
     appVersion: String = AppVersion.admin,
+    /** True in the Android app of the suite, which also holds the player part. See [AppKoin]. */
+    isolatedKoin: Boolean = false,
 ) {
-    AppWithModules {
+    AppWithModules(isolatedKoin) {
         CompositionLocalProvider(LocalAppVersion provides appVersion) {
             ProvideAppLanguage {
                 MahjongTournamentSuiteApp(sessionStorage)
@@ -113,8 +119,9 @@ fun RankingApp(tournamentId: String) {
 }
 
 @Composable
-private fun AppWithModules(content: @Composable () -> Unit) {
-    KoinApplication(
+private fun AppWithModules(isolatedKoin: Boolean = false, content: @Composable () -> Unit) {
+    AppKoin(
+        isolated = isolatedKoin,
         configuration = koinConfiguration {
             modules(dataModule, presentationModule)
         },
@@ -241,4 +248,20 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
             }
         }
     }
+}
+
+/**
+ * Starts the Koin graph of the app. Normally it is the global graph of Koin, which the other windows of the app share.
+ * The Android app of the suite holds the player part and the admin part, which need different graphs, so each part
+ * gets its own [isolated] graph, closed when the part leaves the screen.
+ */
+@Composable
+internal fun AppKoin(isolated: Boolean, configuration: KoinConfiguration, content: @Composable () -> Unit) {
+    if (!isolated) {
+        KoinApplication(configuration = configuration, content = content)
+        return
+    }
+    val application = remember { koinApplication(configuration) }
+    DisposableEffect(application) { onDispose { application.close() } }
+    KoinIsolatedContext(application, content)
 }
