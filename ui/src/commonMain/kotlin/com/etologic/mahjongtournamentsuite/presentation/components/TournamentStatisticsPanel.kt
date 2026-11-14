@@ -388,6 +388,7 @@ private fun LeaderSkills(leader: Leader, names: Map<Int, String>, onOpenPlayer: 
                 names[playerId] ?: "Player $playerId",
                 Modifier.weight(1f, fill = false),
                 style = MaterialTheme.typography.bodyLarge.inTextFont(),
+                fontWeight = FontWeight.Bold,
                 // A name in the color of the links shows that the player opens.
                 color = if (onOpenPlayer != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
                 maxLines = 1,

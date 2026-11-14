@@ -41,6 +41,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -641,6 +642,7 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
                 profile.name,
                 Modifier.weight(1f, fill = false),
                 style = MaterialTheme.typography.titleMedium.inTextFont(),
+                fontWeight = FontWeight.Bold,
                 color = mtsTabContentColor(),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,

@@ -202,7 +202,8 @@ internal fun PlayerListCard(row: PlayerListRow, onClick: () -> Unit) {
             Column(Modifier.weight(1f)) {
                 Text(
                     row.name,
-                    fontWeight = if (row.mine) FontWeight.Bold else null,
+                    // The names of the players are always bold.
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )

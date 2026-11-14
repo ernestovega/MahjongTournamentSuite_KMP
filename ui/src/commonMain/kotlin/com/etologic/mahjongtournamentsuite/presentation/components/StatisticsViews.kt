@@ -220,7 +220,7 @@ fun LineChart(series: List<Pair<String, List<Int>>>, modifier: Modifier = Modifi
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Canvas(Modifier.width(12.dp).height(12.dp)) { drawCircle(colors[index % colors.size]) }
                     Spacer(Modifier.width(6.dp))
-                    Text(name, style = MaterialTheme.typography.bodySmall)
+                    Text(name, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                 }
             }
         }
@@ -304,7 +304,7 @@ private fun TableHeaderRow() {
 @Composable
 private fun TableValuesRow(name: String, cells: List<String>) {
     Row(Modifier.fillMaxWidth().padding(vertical = MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
-        Text(name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(2.2f))
+        Text(name, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.Bold, modifier = Modifier.weight(2.2f))
         cells.forEach {
             Text(it, style = MaterialTheme.typography.bodyLarge, textAlign = TextAlign.End, modifier = Modifier.weight(1f))
         }
@@ -324,7 +324,7 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
     val photo: @Composable () -> Unit = { PlayerPhoto(profile.photoUrl, profile.name) }
     val texts: @Composable (Alignment.Horizontal) -> Unit = { alignment ->
         Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(profile.name, style = MaterialTheme.typography.titleLarge.inTextFont())
+            Text(profile.name, style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg), verticalAlignment = Alignment.CenterVertically) {
                 if (profile.country.isNotBlank()) {
                     CountryFlag(profile.country, width = 24.dp, contentDescription = stringResource(Res.string.country_n, profile.country))

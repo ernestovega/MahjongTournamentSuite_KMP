@@ -1328,7 +1328,8 @@ internal fun TableSummaryCard(
                         seat.name,
                         Modifier.weight(1f),
                         style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = if (highlighted) FontWeight.Bold else null,
+                        // The names of the players are always bold.
+                        fontWeight = FontWeight.Bold,
                         color = colors.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -1644,7 +1645,8 @@ private fun RankingLine(row: RankingRow, compact: Boolean = false, trailing: Boo
         Column(Modifier.weight(1f)) {
             Text(
                 row.title,
-                fontWeight = if (row.mine) FontWeight.Bold else null,
+                // The names of the players are always bold.
+                fontWeight = FontWeight.Bold,
                 textDecoration = if (row.excluded) TextDecoration.LineThrough else null,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -1719,8 +1721,9 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
     account.Dialogs()
     AppScaffold(
         rootLeadingActions = { account.Buttons() },
-        title = view?.tournament?.name ?: stringResource(Res.string.scope_tournament),
-        subtitle = view?.roundStartOf(roundId),
+        // The round and the table are the title. The tournament is the subtitle.
+        title = stringResource(Res.string.stats_round_table, roundId, tableId),
+        subtitle = view?.tournament?.name,
         isLoading = view == null && message == null,
         autoFocusFirst = false,
         onBack = { navController.popBackStack() },
@@ -1734,15 +1737,7 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
         ) {
             MessageDialog(message)
             if (view == null || table == null) return@ScreenColumn
-            Text(
-                stringResource(Res.string.stats_round_table, roundId, tableId),
-                Modifier.fillMaxWidth(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
             val complete = view.isFinished(table, now)
-            if (!complete) RoundClockLine(view.tournament, roundId)
             val handNumber = minOf(table.doneHands + 1, 16)
             TableSeatsView(
                 seats = table.seatsFor(view, withLevelChange = true),
@@ -1751,9 +1746,10 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
                 showPoints = complete,
                 windsKnown = table.seatsAssigned,
                 showIds = details,
-                // The differences make sense only while the table is in play: it has hands and it is not finished.
-                // The organizers can also hide them for the whole tournament.
-                diffsAvailable = view.tournament.showTableDiffs && !complete && table.doneHands > 0,
+                // The differences need hands, also on a finished table. The organizers can hide them for the whole tournament.
+                diffsAvailable = view.tournament.showTableDiffs && table.doneHands > 0,
+                // The time left of the round is at the top left, above the seats.
+                leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
                 // On a table that takes hands, a tap on a player starts a hand won by that player.
                 onPlayerClick = { slot ->
                     if (view.canAddHands(table, now)) {
@@ -1787,8 +1783,9 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
 
 @Composable
 private fun HandHistory(view: PlayerTournamentView, table: PlayerTable, details: Boolean, onDetailsChange: (Boolean) -> Unit) {
-    // Extra space separates the list from the players and the button above.
-    Box(Modifier.fillMaxWidth().padding(top = MtsTheme.spacing.lg), contentAlignment = Alignment.Center) {
+    // A divider and extra space separate the list from the players and the buttons above.
+    HorizontalDivider(Modifier.padding(top = MtsTheme.spacing.lg))
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
             stringResource(Res.string.stat_hands),
             style = MaterialTheme.typography.headlineSmall,
@@ -1872,7 +1869,7 @@ private fun PenaltyRow(view: PlayerTournamentView, seatSlots: List<Int?>, values
                         view.nameOf(seatSlots.getOrNull(seat)),
                         Modifier.weight(1f),
                         style = if (receives) MaterialTheme.typography.titleSmall.inTextFont() else MaterialTheme.typography.titleMedium.inTextFont(),
-                        fontWeight = FontWeight.Normal,
+                        fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -1910,7 +1907,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                         view.nameOf(winnerSlot),
                         Modifier.weight(1f, fill = false),
                         style = MaterialTheme.typography.titleMedium.inTextFont(),
-                        fontWeight = FontWeight.Normal,
+                        fontWeight = FontWeight.Bold,
                         color = MtsTheme.colors.gain,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
@@ -1929,7 +1926,7 @@ private fun HandRow(view: PlayerTournamentView, hand: TableHand) {
                             view.nameOf(loserSlot),
                             Modifier.weight(1f, fill = false),
                             style = MaterialTheme.typography.titleSmall.inTextFont(),
-                            fontWeight = FontWeight.Normal,
+                            fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.error,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
@@ -2028,15 +2025,17 @@ private fun RoundClockLine(tournament: Tournament, roundId: Int) {
     val text = when {
         remaining <= 0 -> stringResource(Res.string.round_clock_over)
         clock.isPaused -> stringResource(Res.string.round_clock_paused, formatClock(remaining))
-        else -> stringResource(Res.string.round_clock_remaining, formatClock(remaining))
+        // Only the time: its place at the top of the table says what it is.
+        else -> formatClock(remaining)
     }
+    // A screen reader still says what the time is.
+    val description = if (remaining > 0 && !clock.isPaused) stringResource(Res.string.round_clock_remaining, formatClock(remaining)) else text
     val red = remaining <= 15 * 60_000L
     Text(
         text,
-        Modifier.fillMaxWidth().testTag("round-clock"),
-        style = MaterialTheme.typography.titleMedium,
+        Modifier.testTag("round-clock").semantics { contentDescription = description },
+        style = MaterialTheme.typography.headlineSmall,
         fontWeight = FontWeight.Bold,
-        textAlign = TextAlign.Center,
         color = if (red) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
     )
 }

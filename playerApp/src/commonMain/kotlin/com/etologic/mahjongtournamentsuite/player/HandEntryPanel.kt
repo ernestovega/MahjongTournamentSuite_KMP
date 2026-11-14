@@ -301,7 +301,8 @@ fun HandEntryPanel(
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
-    // The draw is on the left and the penalty on the right. The win is the main action, so it is twice as wide.
+    // The draw is on the left and the penalty on the right. The win is the main action, so it is the widest, and the
+    // penalty, with the longest text, is a bit wider than the draw.
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedButton(
             onClick = { modeName = EntryMode.DRAW.name },
@@ -310,7 +311,7 @@ fun HandEntryPanel(
         ) { Text(stringResource(Res.string.entry_add_draw), textAlign = TextAlign.Center) }
         Button(
             onClick = { modeName = EntryMode.WIN.name },
-            modifier = Modifier.weight(2f),
+            modifier = Modifier.weight(1.4f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
         ) { Text(stringResource(Res.string.entry_add_win), textAlign = TextAlign.Center) }
         OutlinedButton(
@@ -318,7 +319,7 @@ fun HandEntryPanel(
                 if (penaltyDrafts.isEmpty()) penaltyDrafts.add(PenaltyDraft())
                 modeName = EntryMode.PENALTY.name
             },
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1.25f),
             contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp),
         ) { Text(stringResource(Res.string.entry_add_penalty), textAlign = TextAlign.Center) }
     }

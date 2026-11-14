@@ -240,6 +240,8 @@ fun TableSeatsView(
     showIds: Boolean = false,
     /** The Diffs switch needs a table in play. Without it, the switch is hidden and the differences are off. */
     diffsAvailable: Boolean = true,
+    /** At the start of the row of the Diffs switch, above the seats, such as the time left of the round. */
+    leading: @Composable (() -> Unit)? = null,
     onPlayerClick: (Int) -> Unit = {},
 ) {
     require(seats.size == 4) { "A table has four seats." }
@@ -254,22 +256,27 @@ fun TableSeatsView(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, onPlayerClick)
-        if (diffsAvailable) Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Row(
-                Modifier.clickable { showDiffs = !showDiffs },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
-                Switch(
-                    checked = showDiffs,
-                    onCheckedChange = { showDiffs = it },
-                    modifier = Modifier.padding(start = 8.dp),
-                )
+        // The row above the seats: the leading content on the left, and the Diffs switch with its info on the right.
+        if (leading != null || diffsAvailable) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { leading?.invoke() }
+                if (diffsAvailable) {
+                    DiffsInfo()
+                    Row(
+                        Modifier.clickable { showDiffs = !showDiffs },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
+                        Switch(
+                            checked = showDiffs,
+                            onCheckedChange = { showDiffs = it },
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
             }
-            Box(Modifier.weight(1f))
-            DiffsInfo()
         }
+        SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, onPlayerClick)
     }
 }
 
@@ -399,7 +406,7 @@ private fun SeatCard(
                     if (showIds && seat.slotId != null) "${seat.slotId} ${seat.name}" else seat.name,
                     Modifier.weight(1f, fill = false),
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = if (seat.isMine) FontWeight.Bold else null,
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                     // A name always takes one row.
                     maxLines = 1,
