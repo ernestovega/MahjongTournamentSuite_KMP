@@ -250,7 +250,7 @@ object TelemetryReminderAction {
     const val BUTTON = "button"
 
     /** Every value of this object. A test checks it against the rules of GA4. */
-    val all: List<String> = listOf(SHOWN, OPENED, CLOSED)
+    val all: List<String> = listOf(SHOWN, OPENED, CLOSED, BUTTON)
 }
 
 /** The values of [TelemetryParam.KIND] in `table_reminder`: what the reminder said when the player saw it. */
