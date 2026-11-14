@@ -1,13 +1,12 @@
 package com.etologic.mahjongtournamentsuite.player.e2e
 
-import androidx.compose.ui.semantics.SemanticsActions
-import androidx.compose.ui.semantics.getOrNull
-import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.performClick
 import androidx.test.espresso.Espresso
 import org.junit.Test
 
-/** The one app of the suite holds the player part and the admin part. These tests switch between them. */
+/**
+ * The one app of the suite holds the player part and the admin part. These tests switch between them on a phone.
+ * The sign-out in the admin part, which goes back to the player part, is in SignInTest of the admin tests (tablet).
+ */
 class SuiteSwitchTest : PlayerE2eTest() {
     private companion object {
         /** The Edit button of a tournament: only the admin part has it. On a phone "New tournament" is in a menu. */
@@ -44,21 +43,6 @@ class SuiteSwitchTest : PlayerE2eTest() {
         c.clickButton("Player view")
         c.waitForText("Management")
         c.assertNoText(ADMIN_LIST)
-    }
-
-    @Test
-    fun signOutInTheAdminPartLeavesThePlayerPartSignedOut() {
-        start(E2eAccounts.ADMIN)
-        c.clickButton("Management")
-        c.waitForText(ADMIN_LIST)
-        // The profile button of the admin part has no text, only the label of its click action.
-        val profile = SemanticsMatcher("profile button") { it.config.getOrNull(SemanticsActions.OnClick)?.label == "Open profile" }
-        c.waitUntil(20_000) { c.onAllNodes(profile).fetchSemanticsNodes().isNotEmpty() }
-        c.onNode(profile).performClick()
-        c.clickButton("Logout")
-        c.clickButton("Yes, sign out")
-        c.waitForText("Sign in")
-        c.assertNoText("Management")
     }
 
     @Test
