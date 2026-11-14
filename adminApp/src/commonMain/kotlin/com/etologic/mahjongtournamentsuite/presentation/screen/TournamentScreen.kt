@@ -106,7 +106,6 @@ private sealed class RoundEditorAction {
     data object Rankings : RoundEditorAction()
     data object Statistics : RoundEditorAction()
     data object Timer : RoundEditorAction()
-    /** Who wrote what and when in this tournament. Only for administrators. */
     data object Activity : RoundEditorAction()
     data object Export : RoundEditorAction()
 }
