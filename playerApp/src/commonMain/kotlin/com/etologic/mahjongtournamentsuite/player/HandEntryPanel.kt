@@ -17,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -364,16 +365,21 @@ fun HandEntryPanel(
                                 winner = slot
                                 if (loser == slot) loser = null
                             }
-                            CheckRow(stringResource(Res.string.entry_self_draw), selfDraw) {
-                                selfDraw = it
-                                if (it) {
+                            // Self-draw is the first choice of who discarded: nobody did.
+                            SectionLabel(stringResource(Res.string.entry_loser))
+                            PlayerChoices(
+                                seatIds.filter { it != winner },
+                                if (selfDraw) null else loser,
+                                view,
+                                ::windOf,
+                                selfDraw = SelfDrawChoice(stringResource(Res.string.entry_self_draw), selfDraw) {
+                                    selfDraw = true
                                     loser = null
                                     chicken = false
-                                }
-                            }
-                            if (!selfDraw) {
-                                SectionLabel(stringResource(Res.string.entry_loser))
-                                PlayerChoices(seatIds.filter { it != winner }, loser, view, ::windOf) { loser = it }
+                                },
+                            ) {
+                                selfDraw = false
+                                loser = it
                             }
                             OutlinedTextField(
                                 value = score,
@@ -614,15 +620,18 @@ private fun PlayerChoices(
     selected: Int?,
     view: PlayerTournamentView,
     windOf: (Int) -> SeatWind,
+    /** When set, the first choice is Self-draw and the players follow it. */
+    selfDraw: SelfDrawChoice? = null,
     onSelect: (Int) -> Unit,
 ) {
+    val choices: List<Int?> = (if (selfDraw != null) listOf(null) else emptyList()) + slots
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        slots.chunked(2).forEach { pair ->
+        choices.chunked(2).forEach { pair ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 pair.forEach { slot ->
-                    val isSelected = slot == selected
+                    val isSelected = if (slot == null) selfDraw?.selected == true else slot == selected
                     Surface(
-                        modifier = Modifier.weight(1f).clickable { onSelect(slot) },
+                        modifier = Modifier.weight(1f).clickable { if (slot == null) selfDraw?.onSelect?.invoke() else onSelect(slot) },
                         shape = MaterialTheme.shapes.medium,
                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         border = BorderStroke(
@@ -635,9 +644,13 @@ private fun PlayerChoices(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            WindIcon(windOf(slot), size = 24.dp)
+                            if (slot == null) {
+                                Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(24.dp))
+                            } else {
+                                WindIcon(windOf(slot), size = 24.dp)
+                            }
                             Text(
-                                view.firstNameOf(slot),
+                                if (slot == null) selfDraw?.label.orEmpty() else view.firstNameOf(slot),
                                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
                                 maxLines = 1,
                             )
@@ -650,6 +663,9 @@ private fun PlayerChoices(
         }
     }
 }
+
+/** The Self-draw choice that comes before the players in [PlayerChoices]. */
+private class SelfDrawChoice(val label: String, val selected: Boolean, val onSelect: () -> Unit)
 
 /**
  * One penalty. The player chooses who is penalized and the amount. The amount is positive and the app

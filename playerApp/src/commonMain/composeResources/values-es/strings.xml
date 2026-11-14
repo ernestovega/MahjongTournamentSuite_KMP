@@ -118,8 +118,8 @@
     <string name="entry_add_penalty">Añadir penalización</string>
     <string name="entry_winner">Ganador</string>
     <string name="entry_self_draw">Del muro</string>
-    <string name="entry_loser">Perdedor (quien descartó)</string>
-    <string name="entry_hand_score">Puntuación de la mano (8 o más)</string>
+    <string name="entry_loser">Quién descartó</string>
+    <string name="entry_hand_score">Puntuación de la mano</string>
     <string name="entry_chicken_limit">Una mano de pollo tiene 12 puntos o menos.</string>
     <string name="chicken_hand">Mano de pollo</string>
     <string name="entry_draw_explanation">Ningún jugador gana esta mano. Todos los asientos puntúan cero.</string>

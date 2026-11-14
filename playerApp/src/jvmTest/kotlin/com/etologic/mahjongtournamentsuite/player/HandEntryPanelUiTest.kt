@@ -337,4 +337,20 @@ class HandEntryPanelUiTest {
         onNodeWithText("Add win").assertIsDisplayed()
         onNodeWithText("Change the seats").assertDoesNotExist()
     }
+
+    @Test
+    fun selfDrawIsTheFirstChoiceOfWhoDiscarded() = runComposeUiTest {
+        show(MatchEndMode.FINISH_HAND, "11:00")
+
+        awaitText("Add win")
+        onNodeWithText("Add win").performClick()
+        awaitText("Who discarded")
+        onNodeWithText("Self-draw").assertIsDisplayed()
+        onAllNodesWithText("Player 2").onFirst().performClick()
+        onNodeWithText("Hand score").assertIsDisplayed()
+        // A self-drawn hand is never a chicken hand, so the choice hides it.
+        onNodeWithText("Chicken hand").assertIsDisplayed()
+        onNodeWithText("Self-draw").performClick()
+        onNodeWithText("Chicken hand").assertDoesNotExist()
+    }
 }

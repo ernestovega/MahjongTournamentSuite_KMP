@@ -118,8 +118,8 @@
     <string name="entry_add_penalty">Ajouter une pénalité</string>
     <string name="entry_winner">Gagnant</string>
     <string name="entry_self_draw">Du mur</string>
-    <string name="entry_loser">Perdant (qui a défaussé)</string>
-    <string name="entry_hand_score">Score de la main (8 ou plus)</string>
+    <string name="entry_loser">Qui a défaussé</string>
+    <string name="entry_hand_score">Score de la main</string>
     <string name="entry_chicken_limit">Une main poule a 12 points ou moins.</string>
     <string name="chicken_hand">Main poule</string>
     <string name="entry_draw_explanation">Aucun joueur ne gagne cette main. Chaque place marque zéro.</string>
