@@ -179,6 +179,28 @@ describe("activity feed API", () => {
     assert.deepEqual(since.map((entry) => entry.at - BASE), [4000, 3000]);
   });
 
+  it("searches a text anywhere in the entry, without case or accents", async () => {
+    await activity(1000, "player.assign", T1, "u1");
+    await db.collection(ACTIVITY_COLLECTION).add({
+      action: "registry.update", uid: "u3", name: "Admin", tournamentId: null, target: "EMA 04120001",
+      details: { firstName: "José", lastName: "Núñez" }, at: Timestamp.fromMillis(BASE + 2000),
+    });
+    await tableSave(3000, T2, "u2");
+    // Many records without the text between the matches: the search must still reach the oldest one.
+    for (let i = 0; i < 12; i += 1) await activity(1500 + i, "team.update", T2, "u9");
+
+    for (const limit of [1, 2, 50]) {
+      const byDetail = mine((await readAll("&q=nunez", limit)).flat());
+      assert.deepEqual(byDetail.map((entry) => entry.at - BASE), [2000], `detail limit ${limit}`);
+      const byName = mine((await readAll("&q=PLAYER%20123", limit)).flat());
+      assert.deepEqual(byName.map((entry) => entry.at - BASE), [3000], `name limit ${limit}`);
+    }
+    const byTarget = mine((await readAll(`&q=${encodeURIComponent("player 5")}&tournamentId=${T1}`, 2)).flat());
+    assert.deepEqual(byTarget.map((entry) => entry.at - BASE), [1000]);
+    const none = mine((await readAll("&q=nothing-like-this", 50)).flat());
+    assert.deepEqual(none, []);
+  });
+
   it("refuses a bad cursor, source, origin or period", async () => {
     for (const query of ["cursor=nope", "source=x", "origin=x", "from=abc", "from=-1", "from=10&to=5", `cursor=${Buffer.from("{\"a\":1}").toString("base64url")}`]) {
       const response = await server.request("GET", `/admin/activity?${query}`, { token: admin.token });

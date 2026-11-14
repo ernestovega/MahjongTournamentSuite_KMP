@@ -20,6 +20,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -76,6 +77,7 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
 import com.etologic.mahjongtournamentsuite.presentation.util.localizedDateTimeOrNull
 import com.etologic.mahjongtournamentsuite.presentation.util.toUiText
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
@@ -138,6 +140,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_period_clear
 import mahjongtournamentsuite.adminapp.generated.resources.activity_period_from_short
 import mahjongtournamentsuite.adminapp.generated.resources.activity_period_to_short
 import mahjongtournamentsuite.adminapp.generated.resources.activity_person_filter
+import mahjongtournamentsuite.adminapp.generated.resources.activity_search_clear
 import mahjongtournamentsuite.adminapp.generated.resources.activity_source_all
 import mahjongtournamentsuite.adminapp.generated.resources.activity_source_other
 import mahjongtournamentsuite.adminapp.generated.resources.activity_source_tables
@@ -148,6 +151,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.activity_version
 import mahjongtournamentsuite.adminapp.generated.resources.app_activity
 import mahjongtournamentsuite.adminapp.generated.resources.close
 import mahjongtournamentsuite.adminapp.generated.resources.errors_reload
+import mahjongtournamentsuite.adminapp.generated.resources.search
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
@@ -160,6 +164,9 @@ private val WhenColumnWidth = 150.dp
 private val WIDE_FILTERS_MIN_WIDTH = 720.dp
 private val FILTER_COLUMN_GAP = 24.dp
 private const val MILLIS_PER_MINUTE = 60_000L
+
+/** The search reads the list again only after the typing stops for this long. */
+private const val SEARCH_DELAY_MILLIS = 400L
 
 /** The uid of the activity records of the maintenance scripts. */
 private const val SCRIPT_UID = "script"
@@ -201,14 +208,18 @@ private const val ALL_TOURNAMENTS = ""
 
 /** Who wrote what and when, for administrators: table saves and every other change, newest first, with filters. */
 @Composable
-fun ActivityScreen(navController: NavHostController) {
+fun ActivityScreen(
+    navController: NavHostController,
+    /** The tournament the filter starts on, for example when an administrator opens Activity from a tournament. */
+    initialTournamentId: String? = null,
+) {
     val presenter = koinInject<ActivityPresenter>()
     var entries by remember { mutableStateOf<List<ActivityEntry>>(emptyList()) }
     var nextCursor by remember { mutableStateOf<String?>(null) }
     var loading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<UiText?>(null) }
     var tournaments by remember { mutableStateOf<List<Tournament>>(emptyList()) }
-    var tournamentId by rememberSaveable { mutableStateOf(ALL_TOURNAMENTS) }
+    var tournamentId by rememberSaveable { mutableStateOf(initialTournamentId ?: ALL_TOURNAMENTS) }
     var sourceName by rememberSaveable { mutableStateOf(ActivitySource.ALL.name) }
     val source = ActivitySource.valueOf(sourceName)
     var originName by rememberSaveable { mutableStateOf<String?>(null) }
@@ -218,6 +229,8 @@ fun ActivityScreen(navController: NavHostController) {
     var periodPicker by remember { mutableStateOf<PeriodEnd?>(null) }
     var personUid by rememberSaveable { mutableStateOf<String?>(null) }
     var personName by rememberSaveable { mutableStateOf<String?>(null) }
+    var searchText by rememberSaveable { mutableStateOf("") }
+    var appliedSearch by rememberSaveable { mutableStateOf("") }
     var openEntryId by rememberSaveable { mutableStateOf<String?>(null) }
     var restoreEntryId by remember { mutableStateOf<String?>(null) }
     var reloadCount by remember { mutableStateOf(0) }
@@ -231,11 +244,19 @@ fun ActivityScreen(navController: NavHostController) {
         origin = origin,
         fromMillis = fromMillis,
         toMillis = toMillis,
+        text = appliedSearch.trim().ifEmpty { null },
     )
+
+    // Typing does not read the list on every key: the search waits until the typing stops.
+    LaunchedEffect(searchText) {
+        if (searchText.isNotBlank()) delay(SEARCH_DELAY_MILLIS)
+        appliedSearch = searchText
+    }
 
     LaunchedEffect(Unit) {
         when (val result = presenter.loadTournaments()) {
-            is AppResult.Success -> tournaments = result.value.sortedBy { it.name.lowercase() }
+            // Newest first, the same order as the list of tournaments.
+            is AppResult.Success -> tournaments = result.value
             // The filter then offers only "all tournaments". The list still works.
             is AppResult.Failure -> Unit
         }
@@ -294,6 +315,8 @@ fun ActivityScreen(navController: NavHostController) {
             // The filters are the first item of the list, so they scroll away with the entries.
             val filtersBar: @Composable () -> Unit = {
                 ActivityFiltersBar(
+                    searchText = searchText,
+                    onSearchText = { searchText = it },
                     tournaments = tournaments,
                     tournamentId = tournamentId,
                     onTournament = { tournamentId = it },
@@ -361,6 +384,8 @@ fun ActivityScreen(navController: NavHostController) {
 
 @Composable
 private fun ActivityFiltersBar(
+    searchText: String,
+    onSearchText: (String) -> Unit,
     tournaments: List<Tournament>,
     tournamentId: String,
     onTournament: (String) -> Unit,
@@ -409,10 +434,28 @@ private fun ActivityFiltersBar(
             }
         }
     }
+    // Any text of an entry: a player, a person, a tournament, a value.
+    val searchField: @Composable () -> Unit = {
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = onSearchText,
+            label = { Text(stringResource(Res.string.search)) },
+            singleLine = true,
+            trailingIcon = {
+                if (searchText.isNotEmpty()) {
+                    FocusedIconButton(onClick = { onSearchText("") }) {
+                        Icon(Icons.Default.Close, contentDescription = stringResource(Res.string.activity_search_clear))
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+        )
+    }
     BoxWithConstraints(Modifier.fillMaxWidth().appFocusGroup()) {
         if (maxWidth >= WIDE_FILTERS_MIN_WIDTH) {
             // Two equal columns, so each row lines up: tournament over type on the left, period over origin on the right.
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                searchField()
                 Row(horizontalArrangement = Arrangement.spacedBy(FILTER_COLUMN_GAP), verticalAlignment = Alignment.Bottom) {
                     tournamentField(Modifier.weight(1f))
                     periodGroup(Modifier.weight(1f))
@@ -435,6 +478,7 @@ private fun ActivityFiltersBar(
         } else {
             // One column on a phone. Each filter takes one full line, and the lists of options become menus.
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                searchField()
                 tournamentField(Modifier.fillMaxWidth())
                 periodGroup(Modifier.fillMaxWidth())
                 SelectField(

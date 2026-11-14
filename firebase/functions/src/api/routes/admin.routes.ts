@@ -112,7 +112,8 @@ export function adminRouter(): Router {
   /**
    * Who wrote what and when: the activity log and the table saves of every tournament in one list, newest first.
    * Filters: `tournamentId`, `uid`, `source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`)
-   * and the period `from` (inclusive) and `to` (exclusive) in milliseconds. Send `nextCursor` back as `cursor`.
+   * the period `from` (inclusive) and `to` (exclusive) in milliseconds, and `q`, a free text that the entry must hold
+   * (case and accents do not count). Send `nextCursor` back as `cursor`.
    */
   router.get("/activity", requireAuth, requireAdmin, async (req, res, next) => {
     try {
@@ -127,7 +128,10 @@ export function adminRouter(): Router {
       const fromMs = req.query.from === undefined ? undefined : numberQuery(req.query.from, "from");
       const toMs = req.query.to === undefined ? undefined : numberQuery(req.query.to, "to");
       if (fromMs !== undefined && toMs !== undefined && toMs <= fromMs) throw badRequest("to must be after from");
-      res.status(200).json(await listActivityFeed({ tournamentId, uid, source, origin, fromMs, toMs }, limit, req.query.cursor));
+      const text = typeof req.query.q === "string" ? req.query.q.trim().slice(0, 100) : "";
+      res.status(200).json(await listActivityFeed(
+        { tournamentId, uid, source, origin, fromMs, toMs, text: text || undefined }, limit, req.query.cursor,
+      ));
     } catch (error) {
       next(error);
     }

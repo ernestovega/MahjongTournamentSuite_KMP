@@ -32,6 +32,8 @@ export type FeedFilter = {
   fromMs?: number;
   /** Milliseconds since the epoch. Keeps the records written before this time. */
   toMs?: number;
+  /** Free text. Keeps the entries that hold it anywhere: person, tournament, target, values. Case and accents do not count. */
+  text?: string;
 };
 
 /** One value of a change, as text. Null when the field had no value. */
@@ -267,8 +269,46 @@ async function tournamentNames(ids: string[]): Promise<Map<string, string>> {
   return names;
 }
 
-/** One page of the merged write log, newest first. Pass `nextCursor` back as [cursorText] to read the next page. */
+/** Lower case and without accents, so "Jose" finds "José". */
+export function searchKey(text: string): string {
+  return text.normalize("NFD").replace(/\p{M}/gu, "").toLowerCase().trim();
+}
+
+/** Whether [key] (from [searchKey]) is in any text of the entry. */
+export function entryHasText(entry: FeedEntry, key: string): boolean {
+  const texts: Array<string | null> = [
+    entry.action, entry.uid, entry.name, entry.source, entry.tournamentId, entry.tournamentName, entry.target,
+    entry.roundId === null ? null : `round ${entry.roundId}`,
+    entry.tableId === null ? null : `table ${entry.tableId}`,
+    ...entry.details.flatMap((detail) => [detail.key, detail.value]),
+    ...entry.changes.flatMap((change) => [change.field, change.from, change.to]),
+  ];
+  return texts.some((text) => text !== null && searchKey(text).includes(key));
+}
+
+/** A text search reads at most this many pages of the logs in one request; `nextCursor` goes on from there. */
+const MAX_SEARCH_PAGES = 10;
+
+/**
+ * One page of the merged write log, newest first. Pass `nextCursor` back as [cursorText] to read the next page.
+ * With a text, the server reads page after page until it has [limit] matches, reads [MAX_SEARCH_PAGES] pages or the
+ * logs end. A page can then be shorter than [limit] and still have a `nextCursor`.
+ */
 export async function listActivityFeed(filter: FeedFilter, limit: number, cursorText?: unknown): Promise<FeedPage> {
+  const key = filter.text ? searchKey(filter.text) : "";
+  if (!key) return readFeedPage(filter, limit, cursorText);
+  const entries: FeedEntry[] = [];
+  let cursor: unknown = cursorText;
+  for (let pages = 0; pages < MAX_SEARCH_PAGES; pages++) {
+    const page = await readFeedPage(filter, limit, cursor);
+    entries.push(...page.entries.filter((entry) => entryHasText(entry, key)));
+    cursor = page.nextCursor;
+    if (page.nextCursor === null || entries.length >= limit) break;
+  }
+  return { entries, nextCursor: typeof cursor === "string" ? cursor : null };
+}
+
+async function readFeedPage(filter: FeedFilter, limit: number, cursorText?: unknown): Promise<FeedPage> {
   const cursor = decodeFeedCursor(cursorText);
   const [activity, tables] = await Promise.all([
     readActivity(filter, cursor.a, limit),

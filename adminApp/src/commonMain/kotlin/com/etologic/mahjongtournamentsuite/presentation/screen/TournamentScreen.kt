@@ -38,6 +38,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentRound
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.map
+import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
@@ -105,6 +106,8 @@ private sealed class RoundEditorAction {
     data object Rankings : RoundEditorAction()
     data object Statistics : RoundEditorAction()
     data object Timer : RoundEditorAction()
+    /** Who wrote what and when in this tournament. Only for administrators. */
+    data object Activity : RoundEditorAction()
     data object Export : RoundEditorAction()
 }
 
@@ -382,6 +385,7 @@ fun TournamentScreen(
             }
             RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
+            RoundEditorAction.Activity -> navController.navigate(ActivityRoute(tournamentId))
         }
     }
 
@@ -461,6 +465,11 @@ fun TournamentScreen(
             AppTopBarLeadingActions(
                 onTimer = { requestAction(RoundEditorAction.Timer) },
                 onRanking = { requestAction(RoundEditorAction.Rankings) },
+                onActivity = if (adminStatus?.isAdmin == true) {
+                    { requestAction(RoundEditorAction.Activity) }
+                } else {
+                    null
+                },
             )
         },
         actions = {

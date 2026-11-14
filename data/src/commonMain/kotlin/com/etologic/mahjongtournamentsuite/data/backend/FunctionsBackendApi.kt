@@ -147,11 +147,13 @@ class FunctionsBackendApi(
         origin: String?,
         fromMillis: Long?,
         toMillis: Long?,
+        text: String?,
         cursor: String?,
     ): ActivityPageDto = get(
         path = "/admin/activity?limit=$ACTIVITY_PAGE_SIZE&source=$source" +
             tournamentId.query("tournamentId") + uid.query("uid") + origin.query("origin") +
-            fromMillis?.toString().query("from") + toMillis?.toString().query("to") + cursor.query("cursor"),
+            fromMillis?.toString().query("from") + toMillis?.toString().query("to") + text.query("q") +
+            cursor.query("cursor"),
         idToken = idToken,
     )
 

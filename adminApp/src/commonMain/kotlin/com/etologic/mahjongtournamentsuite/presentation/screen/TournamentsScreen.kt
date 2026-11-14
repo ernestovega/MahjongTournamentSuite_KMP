@@ -362,7 +362,7 @@ fun TournamentsScreen(
                     null
                 },
                 onActivity = if (adminStatus?.isAdmin == true) {
-                    { navController.navigate(ActivityRoute) }
+                    { navController.navigate(ActivityRoute()) }
                 } else {
                     null
                 },

@@ -30,6 +30,8 @@ data class ActivityFilter(
     val fromMillis: Long? = null,
     /** Milliseconds since the epoch. Keeps the changes before this time. */
     val toMillis: Long? = null,
+    /** Free text, such as a player's name: keeps the changes that hold it anywhere. Case and accents do not count. */
+    val text: String? = null,
 )
 
 /** One value that a write changed. [handId] is null for a field of the table or of the tournament. */

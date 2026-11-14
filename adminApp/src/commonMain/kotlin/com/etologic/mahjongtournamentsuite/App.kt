@@ -222,7 +222,9 @@ private fun MahjongTournamentSuiteApp(sessionStorage: SessionStateStorage?) {
                         )
                     }
                     screen<ErrorsRoute> { ErrorsScreen(navController) }
-                    screen<ActivityRoute> { ActivityScreen(navController) }
+                    screen<ActivityRoute> { backStackEntry ->
+                        ActivityScreen(navController, initialTournamentId = backStackEntry.toRoute<ActivityRoute>().tournamentId)
+                    }
                     screen<DesignSystemRoute> { DesignSystemScreen(navController) }
                     screen<StatisticsRoute> { backStackEntry ->
                         StatisticsScreen(navController, backStackEntry.toRoute<StatisticsRoute>())

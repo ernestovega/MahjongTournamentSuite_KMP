@@ -13,8 +13,10 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
@@ -25,6 +27,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.ActivityOrigin
 import com.etologic.mahjongtournamentsuite.domain.model.ActivitySource
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
+import com.etologic.mahjongtournamentsuite.domain.model.Tournament
 import com.etologic.mahjongtournamentsuite.domain.repository.AdminRepository
 import com.etologic.mahjongtournamentsuite.presentation.presenter.ActivityPresenter
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
@@ -39,6 +42,7 @@ import java.io.File
 import javax.imageio.ImageIO
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 import kotlin.time.Clock
 
 /** An administrator reads who wrote what and when: the list, the filters, the next page and one entry. */
@@ -85,6 +89,8 @@ class ActivityScreenUiTest {
         entries: List<ActivityEntry> = listOf(save, assign),
         pageSize: Int = Int.MAX_VALUE,
         widthDp: Int? = null,
+        tournaments: List<Tournament> = emptyList(),
+        initialTournamentId: String? = null,
     ): FakeAdminRepository {
         val admin = FakeAdminRepository(GlobalUserRole.ADMIN).apply {
             activity = entries
@@ -99,7 +105,7 @@ class ActivityScreenUiTest {
                             single { Logger.withTag("ui-test") }
                             single<AdminRepository> { admin }
                             single { AppMemoryStore() }
-                            factory { ActivityPresenter(get()) { AppResult.Success(emptyList()) } }
+                            factory { ActivityPresenter(get()) { AppResult.Success(tournaments) } }
                         },
                     )
                 }.koin
@@ -108,7 +114,7 @@ class ActivityScreenUiTest {
                 CompositionLocalProvider(LocalThemeController provides themeController) {
                     MtsTheme(useDarkTheme = false) {
                         if (widthDp == null) {
-                            ActivityScreen(rememberNavController())
+                            ActivityScreen(rememberNavController(), initialTournamentId = initialTournamentId)
                         } else {
                             Box(Modifier.size(widthDp.dp, 760.dp)) { ActivityScreen(rememberNavController()) }
                         }
@@ -151,6 +157,33 @@ class ActivityScreenUiTest {
     }
 
     @Test
+    fun openedFromATournamentItStartsFilteredByIt() = runComposeUiTest {
+        val admin = show(tournaments = listOf(tournament("t2", "Barcelona Cup"), tournament("t1", "Madrid Open")), initialTournamentId = "t2")
+        assertEquals("t2", admin.activityRequests.first().first.tournamentId)
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Barcelona Cup").fetchSemanticsNodes().isNotEmpty() }
+    }
+
+    @Test
+    fun theTournamentMenuKeepsTheOrderOfTheTournamentList() = runComposeUiTest {
+        // The list of tournaments comes newest first; the menu must not sort it by name.
+        show(tournaments = listOf(tournament("t2", "Zaragoza Open"), tournament("t1", "Alicante Cup")))
+        onNodeWithText("All tournaments").performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Alicante Cup").fetchSemanticsNodes().isNotEmpty() }
+        val zaragoza = onNodeWithText("Zaragoza Open").fetchSemanticsNode().boundsInRoot.top
+        val alicante = onNodeWithText("Alicante Cup").fetchSemanticsNode().boundsInRoot.top
+        assertTrue(zaragoza < alicante, "Zaragoza Open ($zaragoza) should be above Alicante Cup ($alicante)")
+    }
+
+    @Test
+    fun theSearchAsksTheServerWithTheTextOnceTheTypingStops() = runComposeUiTest {
+        val admin = show()
+        onNodeWithText("Search").performTextInput("José")
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.text == "José" }
+        onNodeWithContentDescription("Clear search").performClick()
+        waitUntil(timeoutMillis = 5_000) { admin.activityRequests.last().first.text == null }
+    }
+
+    @Test
     fun loadMoreReadsTheNextPage() = runComposeUiTest {
         val admin = show(pageSize = 1)
         onAllNodesWithText("Player assigned").assertCountEquals(0)
@@ -170,6 +203,8 @@ class ActivityScreenUiTest {
         waitUntil(timeoutMillis = 5_000) { onAllNodesWithText("Person: Player 123").fetchSemanticsNodes().isNotEmpty() }
         assertEquals("u2", admin.activityRequests.last().first.uid)
     }
+
+    private fun tournament(id: String, name: String) = Tournament(id = id, name = name, isTeams = false, numPlayers = 8, numRounds = 5)
 
     /** With MTS_SCREENSHOT_DIR set, saves the screen at a desktop and a phone width to check the filters by eye. */
     @Test

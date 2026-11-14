@@ -17,15 +17,21 @@ leaves no record. New scripts that write must run through `runScript` in `script
 
 ## Activity screen
 
-Administrators read both logs in one list in the admin app: **Activity** in the top bar of the tournament list.
+Administrators read both logs in one list in the admin app: **Activity** in the top bar of the tournament list, or
+in the top bar of a tournament, which opens it filtered by that tournament. The tournament menu keeps the order of the
+tournament list, newest first.
 The list is newest first and loads 50 entries at a time. It filters by tournament, by kind (table saves or
 other changes), by origin (admin app, player app, or automatic: the server and the maintenance scripts), by a period
-with a start and an end date and time (local time of the device, the end minute included) and by person (from the
-detail of an entry). The detail shows every changed value.
+with a start and an end date and time (local time of the device, the end minute included), by person (from the
+detail of an entry) and by a free text search: any entry that holds the text anywhere (the person, the tournament, the
+target, a value, a changed field), without case or accents. Table saves store player ids, not names, so a player's
+name finds their own saves from the player app and the records that name them, not every hand they won. The detail shows every changed value.
 
 The screen reads `GET /admin/activity` (admin only). Its parameters are `limit`, `tournamentId`, `uid`,
 `source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`), `from` (inclusive) and `to`
-(exclusive) in milliseconds, and `cursor`. The answer has `entries` and a `nextCursor`, which the app
+(exclusive) in milliseconds, `q` (the search text) and `cursor`. Firestore cannot search text, so with `q` the server
+reads page after page and keeps the matches, up to 10 pages per request; such a page can be shorter than the limit
+and still have a `nextCursor`. The answer has `entries` and a `nextCursor`, which the app
 sends back unchanged. The cursor keeps the place of each log, so the merged pages never skip or repeat an entry.
 The queries need the indexes in `firebase/firestore.indexes.json` (`activity` and `changes`).
 

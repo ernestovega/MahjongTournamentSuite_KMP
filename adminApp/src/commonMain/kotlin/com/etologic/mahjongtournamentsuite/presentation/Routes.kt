@@ -67,9 +67,12 @@ data class StatisticsRoute(
 @Serializable
 data object ErrorsRoute
 
-/** Who wrote what and when in the database. Only administrators can open it. */
+/**
+ * Who wrote what and when in the database. Only administrators can open it.
+ * [tournamentId] opens it with the tournament filter on that tournament; null shows all tournaments.
+ */
 @Serializable
-data object ActivityRoute
+data class ActivityRoute(val tournamentId: String? = null)
 
 /** The catalog of the design system. It is in no menu: administrators open it from their profile. */
 @Serializable
