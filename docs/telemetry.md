@@ -29,6 +29,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 - The apps send no email, no name, no EMA id and no tournament id.
 - A parameter holds a fixed word or a count.
 - The user properties are `app`, `platform`, `env`, `role` and `language`.
+- `app` is `admin` or `player`. On Android one app holds both parts, so `app` is the part that is open: each part starts its telemetry again when the user switches (`AndroidPlatformContext.currentApp`). The old player app (`com.etologic.mahjongtournamentsuite.player`) always sends `player`.
 - `env` is `prod`, `dev` or `debug`. Filter the reports on `env = prod`.
 - The server removes emails, long numbers and tokens from the text of an error report before it saves it.
 

@@ -95,7 +95,12 @@ dependencies {
     androidTestImplementation(libs.androidx.test.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
+    // The one Android app of the suite holds both applications. See SuiteRoot.
     implementation(projects.adminApp)
+    implementation(projects.playerApp)
+    implementation(projects.ui)
+    implementation(projects.data)
+    implementation(projects.domain)
     implementation(libs.androidx.activity.compose)
     debugImplementation(libs.compose.uiTooling)
     implementation(libs.compose.uiToolingPreview)

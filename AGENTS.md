@@ -50,6 +50,9 @@ The project uses a simple Clean Architecture split:
 
 - `androidApp` and `playerAndroidApp`
   - Android application entry points only
+  - `androidApp` (`com.etologic.mahjongtournamentsuite`) is the one Android app of the suite: it opens `playerApp` and
+    switches to `adminApp` for admins and editors (`SuiteRoot`). `playerAndroidApp` is the old player app; it only shows
+    the notice that sends its users to the new app. See `docs/android-release.md`.
 
 - `firebase`
   - Cloud Functions API, Firestore and Storage rules (clients never read Firestore directly), indexes

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Runs the instrumented UI tests of the admin and player apps on several emulators at the same time.
+"""Runs the instrumented UI tests of the admin and player parts of the Android app on several emulators at the same time.
 
 Every emulator gets its own local backend (its own Auth and Firestore emulators and API port), because the tests reset
 the test-* tournaments and would break each other on a shared backend. The tests go to the emulators from one queue:
@@ -37,11 +37,14 @@ ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "build" / "e2e-parallel"
 FUNCTIONS = ROOT / "firebase" / "functions"
 
+# One Android app holds both parts. Its test APK has the tests of both, told apart by their package ("tests").
 MODULES = {
-    # The admin app is a desktop style tool: a landscape tablet screen (1280x800 dp, as in CI).
-    "admin": {"module": "androidApp", "package": "com.etologic.mahjongtournamentsuite", "size": "1920x1200", "density": "240"},
-    # The player app runs on a normal phone screen. On a very small screen the sign-in button leaves the visible area.
-    "player": {"module": "playerAndroidApp", "package": "com.etologic.mahjongtournamentsuite.player", "size": "1080x2400", "density": "420"},
+    # The admin part is a desktop style tool: a landscape tablet screen (1280x800 dp, as in CI).
+    "admin": {"module": "androidApp", "package": "com.etologic.mahjongtournamentsuite", "tests": "com.etologic.mahjongtournamentsuite.e2e.",
+              "size": "1920x1200", "density": "240"},
+    # The player part runs on a normal phone screen. On a very small screen the sign-in button leaves the visible area.
+    "player": {"module": "androidApp", "package": "com.etologic.mahjongtournamentsuite", "tests": "com.etologic.mahjongtournamentsuite.player.e2e.",
+               "size": "1080x2400", "density": "420"},
 }
 HARNESS_ERRORS = (
     "must be called on the main thread",
@@ -435,16 +438,16 @@ def main() -> int:
         log(f"Starting {count} local backends on ports {', '.join(str(b.api_port) for b in backends)}.")
 
         if not options.no_build:
-            tasks = [f":{MODULES[a]['module']}:{t}" for a in apps for t in ("assembleDebug", "assembleDebugAndroidTest")]
+            tasks = list(dict.fromkeys(f":{MODULES[a]['module']}:{t}" for a in apps for t in ("assembleDebug", "assembleDebugAndroidTest")))
             log("Building the apps: " + " ".join(tasks))
             gradle = subprocess.run(["./gradlew", *tasks], cwd=ROOT, stdout=(OUT / "gradle.log").open("w"), stderr=subprocess.STDOUT)
             if gradle.returncode != 0:
                 raise RuntimeError(f"Gradle failed. See {OUT / 'gradle.log'}")
         apks = test_tools()
-        for app in apps:
-            module = ROOT / MODULES[app]["module"] / "build" / "outputs" / "apk"
+        for module_name in dict.fromkeys(MODULES[a]["module"] for a in apps):
+            module = ROOT / module_name / "build" / "outputs" / "apk"
             apks += sorted((module / "debug").glob("*.apk"))[:1] + sorted((module / "androidTest" / "debug").glob("*.apk"))[:1]
-        packages = [MODULES[a]["package"] for a in apps]
+        packages = list(dict.fromkeys(MODULES[a]["package"] for a in apps))
 
         for device in devices:
             wait_booted(device)
@@ -462,7 +465,7 @@ def main() -> int:
         groups: list[tuple[str, list[str]]] = []
         wanted = [t.strip() for t in (options.tests or "").split(",") if t.strip()]
         for app in apps:
-            names = list_tests(devices[0], runners[app], wanted)
+            names = [n for n in list_tests(devices[0], runners[app], wanted) if n.startswith(MODULES[app]["tests"])]
             log(f"{app}: {len(names)} tests.")
             for start in range(0, len(names), CHUNK):
                 groups.append((app, names[start:start + CHUNK]))

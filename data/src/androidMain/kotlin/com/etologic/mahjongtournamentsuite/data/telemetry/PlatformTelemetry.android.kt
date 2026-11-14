@@ -9,10 +9,18 @@ actual fun providePlatformTelemetry(): PlatformTelemetry {
     return createAndroidTelemetry(context, debuggable)
 }
 
+/** The callback of the last part that started. The handler goes in one time, so a crash is reported one time. */
+@Volatile
+private var crashCallback: ((Throwable) -> Unit)? = null
+
 actual fun installCrashHandler(onCrash: (Throwable) -> Unit) {
+    // The app of the suite starts the telemetry again each time it switches between the admin and the player part.
+    val first = crashCallback == null
+    crashCallback = onCrash
+    if (!first) return
     val previous = Thread.getDefaultUncaughtExceptionHandler()
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
-        onCrash(throwable)
+        crashCallback?.invoke(throwable)
         previous?.uncaughtException(thread, throwable)
     }
 }

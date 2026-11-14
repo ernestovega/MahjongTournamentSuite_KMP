@@ -2,6 +2,8 @@ package com.etologic.mahjongtournamentsuite.data.telemetry
 
 import android.content.Context
 import android.os.Bundle
+import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
+import com.etologic.mahjongtournamentsuite.domain.AppVersion
 import com.etologic.mahjongtournamentsuite.domain.telemetry.NoTelemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.Telemetry
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryProperty
@@ -104,7 +106,10 @@ internal fun createAndroidTelemetry(context: Context, debuggable: Boolean): Plat
     } else {
         NoTelemetry
     }
-    // The package name tells the two apps apart.
-    val app = if (context.packageName.endsWith(".player")) "player" else "admin"
-    return PlatformTelemetry(analytics, app, "android", env, language, AndroidPendingCrashStore(context))
+    // The old player app holds only the player part. The app of the suite holds both and says which one is open.
+    val legacyPlayerApp = context.packageName.endsWith(".player")
+    val app = if (legacyPlayerApp) "player" else AndroidPlatformContext.currentApp ?: "admin"
+    // The app of the suite has one version, the admin version, for both parts. See docs/versioning.md.
+    val version = if (legacyPlayerApp) AppVersion.player else AppVersion.admin
+    return PlatformTelemetry(analytics, app, "android", env, language, AndroidPendingCrashStore(context), version)
 }

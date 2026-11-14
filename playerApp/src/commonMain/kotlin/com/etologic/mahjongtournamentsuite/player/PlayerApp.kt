@@ -135,6 +135,8 @@ fun PlayerApp(
     appVersion: String = AppVersion.player,
     /** True when the admin app sent the user here to sign in. */
     openSignIn: Boolean = false,
+    /** Set only by the old Android player app: opens the page of the new app. See [MovedAppNotice]. */
+    onInstallSuiteApp: (() -> Unit)? = null,
 ) {
     KoinApplication(configuration = koinConfiguration { modules(dataModule, playerModule) }) {
         val themeController = rememberThemeController()
@@ -156,6 +158,7 @@ fun PlayerApp(
                     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                             PlayerNavigation(openTournamentId, sessionStorage, openSignIn)
+                            onInstallSuiteApp?.let { MovedAppNotice(it) }
                         }
                     }
                 }

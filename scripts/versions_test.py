@@ -33,7 +33,7 @@ class ProductsOfTest(unittest.TestCase):
 
     def test_each_app_module_goes_into_its_own_products(self):
         self.assertEqual(versions.products_of("adminApp/src/commonMain/kotlin/A.kt"), {"web", "admin"})
-        self.assertEqual(versions.products_of("playerApp/src/commonMain/kotlin/A.kt"), {"web", "player"})
+        self.assertEqual(versions.products_of("playerApp/src/commonMain/kotlin/A.kt"), {"web", "admin", "player"})
         self.assertEqual(versions.products_of("androidApp/src/main/AndroidManifest.xml"), {"admin"})
         self.assertEqual(versions.products_of("playerAndroidApp/build.gradle.kts"), {"player"})
 
@@ -43,8 +43,8 @@ class ProductsOfTest(unittest.TestCase):
         self.assertEqual(versions.products_of("data/src/androidMain/kotlin/A.kt"), {"admin", "player"})
         # The desktop app is the admin app.
         self.assertEqual(versions.products_of("data/src/jvmMain/kotlin/A.kt"), {"admin"})
-        # An Android source set of the player module only goes into the player app.
-        self.assertEqual(versions.products_of("playerApp/src/androidMain/kotlin/A.kt"), {"player"})
+        # An Android source set of the player module goes into both Android apps: the app of the suite holds it too.
+        self.assertEqual(versions.products_of("playerApp/src/androidMain/kotlin/A.kt"), {"admin", "player"})
 
     def test_tests_docs_ci_and_scripts_go_into_no_product(self):
         for path in (
@@ -155,17 +155,18 @@ class GitRepoTest(unittest.TestCase):
         self.assertEqual(self.quiet(versions.check, "main")[0], 0)
 
     def test_a_product_change_without_a_bump_fails(self):
-        self.write("playerApp/src/commonMain/kotlin/A.kt", "code")
+        self.write("adminApp/src/commonMain/kotlin/A.kt", "code")
         self.commit()
         result, out = self.quiet(versions.check, "main")
         self.assertEqual(result, 1)
-        self.assertIn("bump player", out)
+        self.assertIn("bump admin", out)
         self.assertIn("bump web", out)
-        self.assertNotIn("bump admin", out)
+        self.assertNotIn("bump player", out)
 
     def test_bumping_the_products_that_changed_passes(self):
         self.write("playerApp/src/commonMain/kotlin/A.kt", "code")
         self.quiet(versions.bump, "player")
+        self.quiet(versions.bump, "admin")
         self.quiet(versions.bump, "web")
         self.commit()
         self.assertEqual(self.quiet(versions.check, "main")[0], 0)

@@ -1,6 +1,39 @@
 # Android release
 
-Both Android apps (`androidApp`, the admin app, and `playerAndroidApp`, the player app) are published on Google Play
+## One app for the whole suite
+
+`androidApp` (`com.etologic.mahjongtournamentsuite`, name **MTS**) is the one Android app of the suite. It holds both
+applications, like the web site:
+
+- It opens the player part (`playerApp`), which everyone uses, with or without an account.
+- Admins and editors see the **Management** button in the top bar, and the chooser after the sign-in. It switches to
+  the admin part (`adminApp`) inside the same app, with the same session. **Player view**, or Back on the first screen
+  of the admin part, returns. Each part keeps its screens while the other one is open.
+- The admin part has no sign-in of its own: without a session, or after a sign-out, it goes to the player part, as on
+  the web (`leaveAdminForPlayerApp`, `SuiteAppHost`).
+- The code is `androidApp/src/main/.../SuiteRoot.kt`. Both parts show the version of the app, which is the admin version
+  (see [versioning.md](versioning.md)).
+
+`playerAndroidApp` (`com.etologic.mahjongtournamentsuite.player`, **MTS Player**) is the old player app. Its last version
+shows a notice at each start: the app has moved, with a button to the page of MTS on Google Play (`MovedAppNotice`).
+
+### Moving the testers to the one app
+
+1. Run the workflow **Tests and deploy** on `main` with the admin and player versions bumped. It uploads MTS (the
+   merged app) and the last MTS Player (with the notice) to internal testing.
+2. In Play Console, update the store listing of MTS (`com.etologic.mahjongtournamentsuite`): name, short and full
+   description for players and organizers, and screenshots of both parts.
+3. Tell the testers of MTS Player to install MTS. Add them to the internal testing list of MTS if they are not there.
+4. After a few days, unpublish MTS Player in Play Console (**Release > Setup > Advanced settings > App availability >
+   Unpublish**). Unpublishing keeps the package name reserved; it can never be used by another app.
+5. Firebase: the Android app `...player` can stay in the project for the old installs. App Check with Play Integrity is
+   needed only for MTS. Remove the player app and its SHA-1 from the Android API key when nobody uses it any more.
+
+The steps below still apply to both apps while MTS Player exists.
+
+## Play App Signing
+
+Both Android apps (`androidApp` and `playerAndroidApp`) are published on Google Play
 with **Play App Signing**: Google keeps the app signing key, and we sign every upload with our own **upload key**.
 Each app has its own upload keystore.
 

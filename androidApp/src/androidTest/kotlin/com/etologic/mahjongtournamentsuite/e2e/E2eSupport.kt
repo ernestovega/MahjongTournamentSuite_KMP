@@ -107,7 +107,11 @@ class AdminAppRule {
         InstrumentationRegistry.getInstrumentation().targetContext
             .getSharedPreferences("mts_telemetry", android.content.Context.MODE_PRIVATE)
             .edit().putBoolean("consent", true).commit()
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        // The app opens the player part. These tests start in the admin part, as the Management button does.
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        scenario = ActivityScenario.launch(
+            android.content.Intent(context, MainActivity::class.java).putExtra(MainActivity.EXTRA_SECTION, "admin"),
+        )
         // The first frame can come a little later than the launch. Wait until the app has a Compose screen.
         repeat(50) {
             if (runCatching { compose.waitForIdle() }.isSuccess) return
@@ -153,7 +157,10 @@ fun ComposeTestRule.waitForNoText(text: String, substring: Boolean = false, time
 fun SemanticsNodeInteractionsProvider.text(text: String, substring: Boolean = false): SemanticsNodeInteraction =
     onNodeWithText(text, substring = substring)
 
-/** Types into the sign-in form and presses the button. */
+/**
+ * Types into the sign-in form and presses the button. The admin part has no sign-in of its own: without a session it
+ * shows the sign-in form of the player part, as on the web.
+ */
 fun ComposeTestRule.signIn(email: String, password: String = E2eAccounts.PASSWORD) {
     waitForText("Sign in")
     onNodeWithText("Email").performTextInput(email)

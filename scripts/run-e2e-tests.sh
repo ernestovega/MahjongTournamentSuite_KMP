@@ -5,11 +5,18 @@
 # fails with "must be called on the main thread" or "State must be at least 'CREATED'". The app code is the same code
 # that runs on a device, so this script runs only those tests again. Other failures stay failures.
 #
-# Usage: scripts/run-e2e-tests.sh [androidApp|playerAndroidApp] [test class or class#method, comma separated]
+# One app holds the admin and the player part. The tests of each part are in their own package.
+# Usage: scripts/run-e2e-tests.sh [admin|player] [test class or class#method, comma separated]
 set -uo pipefail
 
-module="${1:-androidApp}"
+part="${1:-admin}"
 filter="${2:-}"
+module="androidApp"
+case "$part" in
+  admin) package="com.etologic.mahjongtournamentsuite.e2e" ;;
+  player) package="com.etologic.mahjongtournamentsuite.player.e2e" ;;
+  *) echo "Unknown part: $part (admin or player)" >&2; exit 2 ;;
+esac
 max_runs=4
 root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 results="$root/$module/build/outputs/androidTest-results/connected"
@@ -17,7 +24,11 @@ status_file="$(mktemp)"
 
 run_gradle() {
   local args=()
-  [ -n "$1" ] && args+=("-Pandroid.testInstrumentationRunnerArguments.class=$1")
+  if [ -n "$1" ]; then
+    args+=("-Pandroid.testInstrumentationRunnerArguments.class=$1")
+  else
+    args+=("-Pandroid.testInstrumentationRunnerArguments.package=$package")
+  fi
   [ -n "${E2E_WAIT_MS:-}" ] && args+=("-Pandroid.testInstrumentationRunnerArguments.e2eWaitMs=$E2E_WAIT_MS")
   rm -rf "$results"
   (cd "$root" && ./gradlew ":$module:connectedDebugAndroidTest" ${args[@]+"${args[@]}"} > "$root/build/e2e-gradle.log" 2>&1)
@@ -48,9 +59,8 @@ adb shell settings put secure autofill_service null > /dev/null 2>&1 || true
 # The seed writes round times in the time zone of this computer. The emulator must use the same zone.
 adb shell service call alarm 3 s16 "$(readlink /etc/localtime | sed 's#.*/zoneinfo/##')" > /dev/null 2>&1 || true
 
-# The tests look for English texts. The apps follow the device language, so they get an English locale.
+# The tests look for English texts. The app follows the device language, so it gets an English locale.
 adb shell cmd locale set-app-locales com.etologic.mahjongtournamentsuite --locales en-US > /dev/null 2>&1 || true
-adb shell cmd locale set-app-locales com.etologic.mahjongtournamentsuite.player --locales en-US > /dev/null 2>&1 || true
 
 # Gradle installs and removes the app for every run, so the log must be read while the tests run.
 if [ -n "${E2E_LOGCAT:-}" ]; then

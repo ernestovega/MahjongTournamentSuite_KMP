@@ -11,8 +11,9 @@ enum class SuiteApp {
 
 /**
  * Opens the other application of the suite. On the web both live on the same site: the player app at `/` and the
- * admin app at `/admin/`, with one shared session. On Android it opens the other app, or its Google Play page when it
- * is not installed. Null on the desktop, where the two applications are separate programs.
+ * admin app at `/admin/`, with one shared session. On Android the one app of the suite holds both and switches between
+ * them; the old player app opens the other app, or its Google Play page when it is not installed. Null on the desktop,
+ * where the two applications are separate programs.
  */
 @Composable
 expect fun rememberAppSwitcher(): ((SuiteApp) -> Unit)?
@@ -25,8 +26,8 @@ val LocalSuiteAppSwitcher = staticCompositionLocalOf<((SuiteApp) -> Unit)?> { nu
 fun currentAppSwitcher(): ((SuiteApp) -> Unit)? = LocalSuiteAppSwitcher.current ?: rememberAppSwitcher()
 
 /**
- * The admin app on the web has no sign-in of its own: the site signs in through the player app. Goes to the player
- * app, to its sign-in when [signIn] is true, and returns true. Returns false where the admin app keeps its own sign-in:
- * Android, the desktop, and the local dev server, which serves the admin app at the root.
+ * The admin app on the web and in the Android app has no sign-in of its own: it signs in through the player app. Goes
+ * to the player app, to its sign-in when [signIn] is true, and returns true. Returns false where the admin app keeps
+ * its own sign-in: the desktop, and the local dev server, which serves the admin app at the root.
  */
 expect fun leaveAdminForPlayerApp(signIn: Boolean): Boolean

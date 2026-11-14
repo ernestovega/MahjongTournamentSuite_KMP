@@ -8,6 +8,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.etologic.mahjongtournamentsuite.data.platform.AndroidPlatformContext
 
+/**
+ * The Android app that holds both applications of the suite sets this while it shows them. Then the two applications
+ * switch inside that app, and the admin part has no sign-in of its own, like on the web: it goes back to the player
+ * part with [SuiteAppHost.switchTo]. The old player app, which holds only the player application, leaves it null.
+ */
+object SuiteAppHost {
+    /** Shows [SuiteApp]. With `signIn` true the player part opens its sign-in form. */
+    var switchTo: ((app: SuiteApp, signIn: Boolean) -> Unit)? = null
+}
+
 /** The package names of the two Android apps. Each manifest lists the other one in `<queries>`, so it can be found. */
 private fun SuiteApp.packageName(): String = when (this) {
     SuiteApp.PLAYER -> "com.etologic.mahjongtournamentsuite.player"
@@ -17,7 +27,12 @@ private fun SuiteApp.packageName(): String = when (this) {
 @Composable
 actual fun rememberAppSwitcher(): ((SuiteApp) -> Unit)? {
     val context = AndroidPlatformContext.requireContext()
-    return remember(context) { { app -> openSuiteApp(context, app) } }
+    return remember(context) {
+        { app ->
+            val host = SuiteAppHost.switchTo
+            if (host != null) host(app, false) else openSuiteApp(context, app)
+        }
+    }
 }
 
 /** Opens the installed app. Without it, opens its page in the Play Store app, or in the browser without the Play Store. */
@@ -39,4 +54,8 @@ private fun openSuiteApp(context: Context, app: SuiteApp) {
     }
 }
 
-actual fun leaveAdminForPlayerApp(signIn: Boolean): Boolean = false
+actual fun leaveAdminForPlayerApp(signIn: Boolean): Boolean {
+    val host = SuiteAppHost.switchTo ?: return false
+    host(SuiteApp.PLAYER, signIn)
+    return true
+}

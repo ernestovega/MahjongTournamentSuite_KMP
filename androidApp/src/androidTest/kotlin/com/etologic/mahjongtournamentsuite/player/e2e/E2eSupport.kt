@@ -22,7 +22,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.platform.app.InstrumentationRegistry
-import com.etologic.mahjongtournamentsuite.player.MainActivity
+import com.etologic.mahjongtournamentsuite.MainActivity
 import com.etologic.mahjongtournamentsuite.data.network.BackendUrlOverride
 import android.os.ParcelFileDescriptor
 import androidx.compose.ui.semantics.SemanticsActions

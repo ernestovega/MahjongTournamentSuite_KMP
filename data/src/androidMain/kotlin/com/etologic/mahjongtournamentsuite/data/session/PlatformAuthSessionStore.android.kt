@@ -30,3 +30,15 @@ actual class PlatformAuthSessionStore actual constructor(
     }
 }
 
+
+/**
+ * The account of the saved session, or null without one. The Android app of the suite keeps the screens of its admin
+ * part only for the same account.
+ */
+fun storedSessionUid(): String? {
+    val file = File(AndroidPlatformContext.requireContext().filesDir, "auth_session.json")
+    if (!file.exists()) return null
+    val text = file.readText()
+    if (text.isBlank()) return null
+    return runCatching { Json { ignoreUnknownKeys = true }.decodeFromString(StoredAuthSession.serializer(), text).uid }.getOrNull()
+}

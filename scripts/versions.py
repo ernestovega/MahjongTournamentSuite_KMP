@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Versions of the three products: the web, the admin app and the player app.
+"""Versions of the three products: the web, the Android app (with the desktop admin app) and the old player app.
 
 The versions live in gradle/libs.versions.toml. See docs/versioning.md.
 
@@ -26,7 +26,7 @@ CATALOG = "gradle/libs.versions.toml"
 
 WEB, ADMIN, PLAYER = "web", "admin", "player"
 PRODUCTS = (WEB, ADMIN, PLAYER)
-LABELS = {WEB: "Web", ADMIN: "Admin app", PLAYER: "Player app"}
+LABELS = {WEB: "Web", ADMIN: "Android app and desktop admin app", PLAYER: "Old player app"}
 # The web has no version code because no store needs one.
 HAS_CODE = {WEB: False, ADMIN: True, PLAYER: True}
 
@@ -37,7 +37,9 @@ MODULES = {
     "designsystem": {WEB, ADMIN, PLAYER},
     "ui": {WEB, ADMIN, PLAYER},
     "adminApp": {WEB, ADMIN},
-    "playerApp": {WEB, PLAYER},
+    # The Android app of the suite (androidApp, the admin version) holds the player part too. The old player app
+    # (playerAndroidApp) only gets the notice that sends its users to it.
+    "playerApp": {WEB, ADMIN, PLAYER},
     "androidApp": {ADMIN},
     "playerAndroidApp": {PLAYER},
 }

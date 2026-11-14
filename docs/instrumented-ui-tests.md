@@ -1,6 +1,6 @@
 # Instrumented UI tests
 
-The instrumented UI tests run the real Android app on an emulator. The app talks to the real API code.
+The instrumented UI tests run the real Android app on an emulator. One app (`androidApp`) holds the admin part and the player part; the tests of each part are in their own package. The app talks to the real API code.
 The API runs on the Firebase Auth and Firestore emulators on your computer.
 No test touches the production project.
 
@@ -10,10 +10,10 @@ No test touches the production project.
 | --- | --- | --- |
 | Local backend | `firebase/functions/src/scripts/startE2eBackend.ts` | Starts the API on port 5055. Fills the emulators with an EMA registry, accounts and the `test-*` tournaments. |
 | Seed data | `firebase/functions/src/scripts/seedTestTournaments.ts` | Writes 13 tournaments for the normal, corner and error cases. |
-| Admin app tests | `androidApp/src/androidTest/.../e2e` | Compose UI tests of the admin app. |
-| Player app tests | `playerAndroidApp/src/androidTest/.../player/e2e` | Compose UI tests of the player app, including hand entry. |
+| Admin part tests | `androidApp/src/androidTest/.../e2e` | Compose UI tests of the admin part. They start the app in the admin part (`MainActivity.EXTRA_SECTION`). |
+| Player part tests | `androidApp/src/androidTest/.../player/e2e` | Compose UI tests of the player part, including hand entry, and the switch between the two parts (`SuiteSwitchTest`). |
 | Test runner script | `scripts/run-e2e-tests.sh` | Runs the tests and starts again the tests that hit the harness error. |
-| Parallel runner | `scripts/run-e2e-parallel.py` | Runs both apps on several emulators at once, each with its own local backend. |
+| Parallel runner | `scripts/run-e2e-parallel.py` | Runs both parts on several emulators at once, each with its own local backend. |
 | Backend address | `BackendUrlOverride` in `data/src/androidMain` | Tests point the app to `http://10.0.2.2:5055/api`. Release builds never set it. |
 | Debug network rule | `androidApp/src/debug/res/xml/network_security_config.xml` | Allows plain http to `10.0.2.2` in debug builds only. |
 
@@ -22,27 +22,27 @@ No test touches the production project.
 1. Start the local backend. Keep the terminal open. Use JDK 21.
    `cd firebase/functions && npm run e2e:backend`
 2. Start an emulator.
-   - Admin app: use the tablet image `Pixel_Tablet`. The admin app is a desktop style tool. On a phone it hides the buttons in menus.
-   - Player app: use a phone. Set the size to a normal phone with `adb shell wm size 1080x2400` and `adb shell wm density 420`.
+   - Admin part: use the tablet image `Pixel_Tablet`. The admin part is a desktop style tool. On a phone it hides the buttons in menus.
+   - Player part: use a phone. Set the size to a normal phone with `adb shell wm size 1080x2400` and `adb shell wm density 420`.
      On a very small screen the sign-in button leaves the visible area.
 3. Turn off the Google autofill service on the emulator. Its "Save password?" window covers the app after a sign-in.
    `adb shell settings put secure autofill_service null`
    The run script does this for you.
 4. Run the tests.
-   - Admin app: `scripts/run-e2e-tests.sh androidApp`
-   - Player app: `scripts/run-e2e-tests.sh playerAndroidApp`
-   - One class: `scripts/run-e2e-tests.sh androidApp com.etologic.mahjongtournamentsuite.e2e.SignInTest`
+   - Admin part: `scripts/run-e2e-tests.sh admin`
+   - Player part: `scripts/run-e2e-tests.sh player`
+   - One class: `scripts/run-e2e-tests.sh admin com.etologic.mahjongtournamentsuite.e2e.SignInTest`
    - Set `ANDROID_SERIAL` when more than one emulator runs.
 
-The plain Gradle task `./gradlew :androidApp:connectedDebugAndroidTest` also works. It does not start failed tests again.
+The plain Gradle task `./gradlew :androidApp:connectedDebugAndroidTest` also works, for the tests of both parts on one device. It does not start failed tests again.
 
 ## Run the tests on several emulators at once
 
 `scripts/run-e2e-parallel.py` does all the steps above by itself and splits the tests over several emulators.
 Use JDK 21 and run it from the repository root on the Mac. Do not start `npm run e2e:backend` first: the script starts its own backends.
 
-- Both apps on 3 new emulators: `scripts/run-e2e-parallel.py`
-- One app, 2 emulators: `scripts/run-e2e-parallel.py --app player -n 2` (`--app admin` for the admin app)
+- Both parts on 3 new emulators: `scripts/run-e2e-parallel.py`
+- One part, 2 emulators: `scripts/run-e2e-parallel.py --app player -n 2` (`--app admin` for the admin part)
 - Some classes or methods: `--tests com.etologic.mahjongtournamentsuite.e2e.SignInTest,com.etologic.mahjongtournamentsuite.player.e2e.PlayerHomeTest`
 - Emulators that already run: `--serials emulator-5554,emulator-5556`. The script then only changes their screen size, and resets it at the end.
 - `--show` shows the emulator windows, `--avd NAME` picks the AVD, `--no-build` skips Gradle, `--keep` leaves emulators and backends running.
@@ -53,7 +53,7 @@ How it works:
 - Every emulator gets its own backend: Auth and Firestore emulators on ports 9300+10·i, API on port 5060+i, project `demo-mts-e2e-<i+1>`.
   The tests reset the `test-*` tournaments, so two emulators on one backend would break each other's tests.
   The app gets the address in the `e2eBackendUrl` argument (`http://10.0.2.2:506i/api`).
-- The tests go out in groups of 5 from one queue. An emulator that finishes takes the next group, so both apps share the emulators.
+- The tests go out in groups of 5 from one queue. An emulator that finishes takes the next group, so both parts share the emulators. Both parts use the same APKs; the script picks the tests of each part by package.
   Before an admin group the screen becomes a landscape tablet (1920x1200, density 240). Before a player group it becomes a phone (1080x2400, density 420).
 - It runs the AndroidX Test Orchestrator with `adb shell am instrument`, not Gradle, because one Gradle build cannot run different tests on different devices.
   It takes the orchestrator and test services APKs from the Gradle cache, or from Google Maven.
@@ -72,7 +72,7 @@ In both cases the runner starts the local backend on the emulators, like `npm ru
 ### On an emulator in the GitHub runner (default)
 
 - Free, because the repository is public.
-- The admin app runs on a `pixel_tablet` emulator and the player app on a `pixel_6` emulator, both API 34.
+- The admin part runs on a `pixel_tablet` emulator and the player part on a `pixel_6` emulator, both API 34. Both jobs build the same app.
 - It uses `scripts/run-e2e-tests.sh`, so only the tests that hit the harness error start again.
 - The results, the reports, the screenshots of failed tests and the backend log are saved as artifacts of the run.
 

@@ -211,4 +211,8 @@
     <string name="my_table_started">Iniziato %1$s fa</string>
     <string name="my_table_go">Vai al mio tavolo</string>
     <string name="my_table_dismiss">Più tardi</string>
+    <string name="moved_app_title">L'app si è trasferita</string>
+    <string name="moved_app_message">MTS Player ora fa parte dell'app MTS, insieme alla gestione per gli organizzatori. Questa app non riceve più aggiornamenti. Installa MTS e accedi con lo stesso account.</string>
+    <string name="moved_app_install">Installa MTS</string>
+    <string name="moved_app_later">Più tardi</string>
 </resources>

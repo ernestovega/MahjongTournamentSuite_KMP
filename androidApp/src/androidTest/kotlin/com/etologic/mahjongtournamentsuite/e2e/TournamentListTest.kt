@@ -78,10 +78,11 @@ class TournamentListTest : AdminE2eTest() {
         start(E2eAccounts.OUTSIDER, ready = "No tournaments yet")
     }
 
-    /** The admin app is for admins and editors. The splash screen signs a player out and shows the sign-in form. */
+    /** The admin part is for admins and editors. A player who reaches it goes back to the player part, signed in. */
     @Test
-    fun playerSessionIsSignedOutAtTheStart() {
-        start(E2eAccounts.PLAYER, ready = "Need help?")
+    fun playerSessionGoesBackToThePlayerPart() {
+        start(E2eAccounts.PLAYER, ready = "My tournaments")
+        c.assertNoText("Management")
         c.assertNoText(PROFILE_BUTTON)
         c.assertNoText("New tournament")
         c.assertNoText("App errors")

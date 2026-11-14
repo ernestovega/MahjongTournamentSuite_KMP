@@ -103,7 +103,7 @@
     <string name="team_members">Membres</string>
     <string name="teams_search_hint">Équipe ou joueur</string>
     <string name="teams_search_empty">Aucune équipe ne correspond à la recherche.</string>
-    <string name="team_statistics_note">Les statistiques additionnent les tables de tous les joueurs de l’équipe.</string>
+    <string name="team_statistics_note">Les statistiques additionnent les tables de tous les joueurs de l'équipe.</string>
     <string name="team_member_win_rate">Taux de victoire</string>
     <string name="team_member_points">Points</string>
     <string name="team_member_score">Score</string>
@@ -211,4 +211,8 @@
     <string name="my_table_started">A commencé il y a %1$s</string>
     <string name="my_table_go">Aller à ma table</string>
     <string name="my_table_dismiss">Plus tard</string>
+    <string name="moved_app_title">L'application a déménagé</string>
+    <string name="moved_app_message">MTS Player fait maintenant partie de l'application MTS, avec la gestion pour les organisateurs. Cette application ne reçoit plus de mises à jour. Installez MTS et connectez-vous avec le même compte.</string>
+    <string name="moved_app_install">Installer MTS</string>
+    <string name="moved_app_later">Plus tard</string>
 </resources>

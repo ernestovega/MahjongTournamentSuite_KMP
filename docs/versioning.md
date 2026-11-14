@@ -5,8 +5,8 @@ There are three products, and each one has its own version:
 | Product | What it is | Where it is shown |
 |---|---|---|
 | **Web** | Both web apps (admin and player) and everything else that is deployed to Firebase: functions, rules and indexes. | Profile dialog and sign-in screen of both web apps |
-| **Admin app** | The admin app on Android (`androidApp`) and on desktop. | Profile dialog and sign-in screen of the admin app |
-| **Player app** | The player app on Android (`playerAndroidApp`). | Profile dialog and sign-in screen of the player app |
+| **Admin app** | The Android app of the suite (`androidApp`), which holds the admin part and the player part, and the admin app on desktop. | Profile dialog of both parts on Android, and of the desktop app |
+| **Player app** | The old player app on Android (`playerAndroidApp`). It only gets the notice that sends its users to the app of the suite. See [android-release.md](android-release.md). | Profile dialog of the old player app |
 
 The versions are in `gradle/libs.versions.toml`:
 
@@ -37,7 +37,7 @@ The **Build and test** job runs `python3 scripts/versions.py check` on every pul
 Which files go into which product:
 
 - `domain`, `data`, `ui`: all three. Their `wasmJsMain`/`webMain` sources only go into the web, `androidMain` into both apps, and `jvmMain` into the admin app (desktop).
-- `adminApp`: web and admin app. `playerApp`: web and player app. The same source set rules apply.
+- `adminApp`: web and admin app. `playerApp`: web, admin app (the Android app holds the player part) and player app. The same source set rules apply.
 - `androidApp`: admin app. `playerAndroidApp`: player app.
 - `firebase/`, `firebase.json`, `public/`, `kotlin-js-store/`: web.
 - The Gradle build (`build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradle/`): all three. A change in `libs.versions.toml` that only touches the version lines needs no bump.
