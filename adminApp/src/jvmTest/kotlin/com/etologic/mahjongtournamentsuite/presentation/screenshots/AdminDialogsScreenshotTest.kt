@@ -35,6 +35,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PasswordResetsRes
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerAccountsBulkDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerSubstitutionDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.ResetTableDialog
+import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendSummaryDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SendingDialog
 import com.etologic.mahjongtournamentsuite.presentation.screen.SlotEmailDialog
@@ -98,6 +99,11 @@ class AdminDialogsScreenshotTest {
     @Test
     fun tableUpdates() = dialog("table-updates") {
         TableUpdatesDialog(listOf(TableUpdateNotice(TableKey(3, 2), emptyList(), saveRejected = true)), onDismiss = {})
+    }
+
+    @Test
+    fun roundControl() = adminScreenshots("dialogs/round-control", variants = dialogVariants, ready = { waitForText("2:00:00") }) {
+        RoundControlDialog(ONGOING, initialRound = 3, onDismiss = {})
     }
 
     @Test

@@ -204,6 +204,15 @@ describe("match time", () => {
       await recordHand({ tournamentId: closed.tournamentId, roundId: 1, tableId: 1, uid: closed.uid, input: win(), expectedVersion: 2 });
     });
 
+    it("an admin marks a table as completed, like the Completed switch of the editor", async () => {
+      const running = await seedTimedTable(30, "STOP");
+      const answer = await control(running.tournamentId, { completeTables: [1] });
+      assert.equal(answer.completed, 1);
+      assert.equal((await readTable(running.tournamentId, 1, 1)).isCompleted, true);
+      await assert.rejects(recordHand({ tournamentId: running.tournamentId, roundId: 1, tableId: 1, uid: running.uid, input: win(), expectedVersion: 1 }));
+      assert.equal((await control(running.tournamentId, { completeTables: [1] })).completed, 0);
+    });
+
     it("open seats ignore the planned start, closed seats refuse them", async () => {
       const early = await seedTimedTable(30, "STOP");
       const later = new Date(Date.now() + 5 * 60 * 60_000).toISOString();

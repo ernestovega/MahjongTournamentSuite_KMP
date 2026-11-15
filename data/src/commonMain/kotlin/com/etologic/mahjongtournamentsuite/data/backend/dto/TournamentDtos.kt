@@ -506,6 +506,7 @@ data class RoundControlRequestDto(
     val seats: String? = null,
     val table: TableControlDto? = null,
     val reopenTables: List<Int>? = null,
+    val completeTables: List<Int>? = null,
 )
 
 @Serializable

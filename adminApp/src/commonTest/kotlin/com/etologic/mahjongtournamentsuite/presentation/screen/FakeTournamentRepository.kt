@@ -248,6 +248,10 @@ internal class FakeTournamentRepository : TournamentRepository {
             val key = TableKey(roundId, tableId)
             this.tables[key]?.let { (table, hands) -> this.tables[key] = table.copy(isCompleted = false) to hands }
         }
+        change.completeTables.forEach { tableId ->
+            val key = TableKey(roundId, tableId)
+            this.tables[key]?.let { (table, hands) -> this.tables[key] = table.copy(isCompleted = true) to hands }
+        }
         return AppResult.Success(RoundClocks(roundClocks, serverNowMs, roundControls))
     }
 

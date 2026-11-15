@@ -16,7 +16,6 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesTag
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
-import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.SignInScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.StatisticsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TablesScreen
@@ -111,11 +110,6 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun timer() = adminScreenshots("timer", ready = { waitForText("2:00:00") }) { TimerStandaloneScreen(ONGOING, initialRound = 3) }
-
-    @Test
-    fun roundControl() = adminScreenshots("round-control", ready = { waitForText("2:00:00") }) { nav ->
-        RoundControlScreen(nav, ONGOING, initialRound = 3)
-    }
 
     @Test
     fun timerIndependent() = adminScreenshots("timer-independent") { TimerStandaloneScreen(null) }

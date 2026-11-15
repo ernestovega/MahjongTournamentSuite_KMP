@@ -20,13 +20,14 @@ import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 /**
  * Round control, the plan B of the Timer: an admin runs the clock of a round without the Timer and decides by hand
  * what the players can do, for the round or for one table.
  */
 @OptIn(ExperimentalTestApi::class)
-class RoundControlScreenUiTest {
+class RoundControlDialogUiTest {
     private val now = 1_000_000_000L
     private val min = 60_000L
 
@@ -42,9 +43,10 @@ class RoundControlScreenUiTest {
         val controller = RoundTimerController(server, "t1", round, deviceNowMs = { now })
         setContent {
             MtsTheme(useDarkTheme = false) {
-                RoundControlContent(
+                RoundControlDialogContent(
                     controller = controller,
                     loadTables = { roundId, mode -> server.listTournamentTables("t1", roundId, mode) },
+                    onDismiss = {},
                     deviceNowMs = { now },
                 )
             }
@@ -131,21 +133,42 @@ class RoundControlScreenUiTest {
     }
 
     @Test
-    fun reopenOpensACompletedTableAndItsHandEntry() = runComposeUiTest {
+    fun inPlayReopensACompletedTableLikeTheSwitchOfTheEditor() = runComposeUiTest {
         val server = server(RoundClock(roundId = 1, startedAtMs = now - 130 * min))
         show(server)
 
-        onNodeWithTag("reopen_1").assertDoesNotExist()
-        onNodeWithTag("reopen_2").performScrollTo().performClick()
+        onNodeWithTag("table_2_completed").assertIsSelected()
+        onNodeWithTag("table_2_in_play").performScrollTo().performClick()
         settle()
 
-        assertEquals(
-            listOf(1 to RoundControlChange(table = 2 to ControlMode.OPEN, reopenTables = listOf(2))),
-            server.controlChanges.toList(),
-        )
+        assertEquals(listOf(1 to RoundControlChange(reopenTables = listOf(2))), server.controlChanges.toList())
         assertFalse(server.tables.getValue(TableKey(1, 2)).first.isCompleted)
-        onNodeWithTag("reopen_2").assertDoesNotExist()
-        onNodeWithTag("table_2_open").assertIsSelected()
+        onNodeWithTag("table_2_in_play").assertIsSelected()
+    }
+
+    @Test
+    fun completedMarksATableAsCompleted() = runComposeUiTest {
+        val server = server()
+        show(server)
+
+        onNodeWithTag("table_1_completed").performScrollTo().performClick()
+        settle()
+
+        assertEquals(listOf(1 to RoundControlChange(completeTables = listOf(1))), server.controlChanges.toList())
+        assertTrue(server.tables.getValue(TableKey(1, 1)).first.isCompleted)
+        onNodeWithTag("table_1_completed").assertIsSelected()
+    }
+
+    @Test
+    fun anEndedRoundAndTheRoundInPlayAreShown() = runComposeUiTest {
+        val controller = show(server(RoundClock(roundId = 1, startedAtMs = now - 130 * min), RoundClock(roundId = 2, startedAtMs = now - 10 * min)))
+        // The dialog opens at the round in play.
+        onNodeWithText("This is the round in play.").assertExists()
+        controller.selectRound(1)
+        settle()
+
+        onNodeWithText("Time is over").assertExists()
+        onNodeWithText("The round in play is round 2.").assertExists()
     }
 
     @Test

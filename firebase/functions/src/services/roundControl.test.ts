@@ -34,4 +34,7 @@ test("the request body names what changes", () => {
   assert.throws(() => parseRoundControlChange({ hands: "maybe" }));
   assert.throws(() => parseRoundControlChange({ table: { tableId: 0, hands: "open" } }));
   assert.throws(() => parseRoundControlChange({ reopenTables: [1, "x"] }));
+  assert.deepEqual(parseRoundControlChange({ completeTables: [3, 3] }), { completeTables: [3] });
+  assert.throws(() => parseRoundControlChange({ completeTables: 3 }));
+  assert.throws(() => parseRoundControlChange({ reopenTables: [3], completeTables: [3] }));
 });

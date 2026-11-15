@@ -82,6 +82,8 @@ export type RoundControlChange = {
   table?: { tableId: number; hands: ControlMode | "auto" };
   /** Tables to open again after the end of the time closed them, so their players can go on. */
   reopenTables?: number[];
+  /** Tables to mark as completed, like the Completed switch of the table editor. */
+  completeTables?: number[];
 };
 
 const parseMode = (value: unknown, field: string): ControlMode | "auto" => {
@@ -101,13 +103,23 @@ export function parseRoundControlChange(body: unknown): RoundControlChange {
     if (!Number.isInteger(tableId) || tableId <= 0) throw badRequest("table.tableId must be a positive integer");
     change.table = { tableId, hands: parseMode(table.hands, "table.hands") };
   }
-  if (data.reopenTables !== undefined) {
-    if (!Array.isArray(data.reopenTables)) throw badRequest("reopenTables must be a list of table ids");
-    const ids = data.reopenTables.map(Number);
-    if (ids.some((id) => !Number.isInteger(id) || id <= 0)) throw badRequest("reopenTables must be a list of table ids");
-    change.reopenTables = [...new Set(ids)];
+  const tableIds = (field: "reopenTables" | "completeTables"): number[] | undefined => {
+    const value = data[field];
+    if (value === undefined) return undefined;
+    if (!Array.isArray(value)) throw badRequest(`${field} must be a list of table ids`);
+    const ids = value.map(Number);
+    if (ids.some((id) => !Number.isInteger(id) || id <= 0)) throw badRequest(`${field} must be a list of table ids`);
+    return [...new Set(ids)];
+  };
+  change.reopenTables = tableIds("reopenTables");
+  change.completeTables = tableIds("completeTables");
+  if (change.reopenTables === undefined) delete change.reopenTables;
+  if (change.completeTables === undefined) delete change.completeTables;
+  if (change.reopenTables?.some((id) => change.completeTables?.includes(id))) {
+    throw badRequest("A table cannot be reopened and completed at once");
   }
-  if (change.hands === undefined && change.seats === undefined && change.table === undefined && change.reopenTables === undefined) {
+  if (change.hands === undefined && change.seats === undefined && change.table === undefined && change.reopenTables === undefined &&
+    change.completeTables === undefined) {
     throw badRequest("Nothing to change");
   }
   return change;

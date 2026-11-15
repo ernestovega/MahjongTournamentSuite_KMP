@@ -115,4 +115,6 @@ data class RoundControlChange(
     val table: Pair<Int, ControlMode>? = null,
     /** Tables that the end of the time closed, to open again so their players go on. */
     val reopenTables: List<Int> = emptyList(),
+    /** Tables to mark as completed, like the Completed switch of the table editor. */
+    val completeTables: List<Int> = emptyList(),
 )

@@ -123,7 +123,7 @@ export async function updateRoundControl(params: {
   change: RoundControlChange;
   actor: ChangeActor | null;
   nowMs?: number;
-}): Promise<RoundClocksAnswer & { reopened: number }> {
+}): Promise<RoundClocksAnswer & { reopened: number; completed: number }> {
   const ref = db.doc(`tournaments/${params.tournamentId}`);
   const { change } = params;
   await db.runTransaction(async (transaction) => {
@@ -146,6 +146,10 @@ export async function updateRoundControl(params: {
   for (const tableId of change.reopenTables ?? []) {
     if (await reopenTable(params.tournamentId, params.roundId, tableId, params.actor)) reopened += 1;
   }
+  let completed = 0;
+  for (const tableId of change.completeTables ?? []) {
+    if (await setTableCompleted(params.tournamentId, params.roundId, tableId, true, params.actor)) completed += 1;
+  }
   const changedControls = change.hands !== undefined || change.seats !== undefined || change.table !== undefined;
   // The apps read the controls with the tournament and the clocks, so the shared revision changes too.
   if (changedControls) await bumpGlobalDataVersion("tournaments");
@@ -154,26 +158,39 @@ export async function updateRoundControl(params: {
     actor: params.actor,
     tournamentId: params.tournamentId,
     target: change.table != null ? `round ${params.roundId}, table ${change.table.tableId}` : `round ${params.roundId}`,
-    details: { ...change, reopened },
+    details: { ...change, reopened, completed },
   });
   const answer = await getRoundClocks(params.tournamentId, params.nowMs);
-  return { ...answer, reopened };
+  return { ...answer, reopened, completed };
 }
 
 /** Opens a completed table again, so its players can add the hands they miss. False when it was open already. */
-async function reopenTable(tournamentId: string, roundId: number, tableId: number, actor: ChangeActor | null): Promise<boolean> {
+function reopenTable(tournamentId: string, roundId: number, tableId: number, actor: ChangeActor | null): Promise<boolean> {
+  return setTableCompleted(tournamentId, roundId, tableId, false, actor);
+}
+
+/**
+ * Marks a table as completed or not, like the Completed switch of the table editor. False when it already was.
+ * The mark of the close stays set, so the end of the time never closes a table that an admin opened again.
+ */
+async function setTableCompleted(
+  tournamentId: string,
+  roundId: number,
+  tableId: number,
+  completed: boolean,
+  actor: ChangeActor | null,
+): Promise<boolean> {
   const tableRef = db.doc(`tournaments/${tournamentId}/tables/${tableVersionKey(roundId, tableId)}`);
   return db.runTransaction(async (transaction) => {
     const table = await transaction.get(tableRef);
     if (!table.exists) throw notFound(`Table ${tableId} not found`);
-    if (table.get("isCompleted") !== true) return false;
+    if ((table.get("isCompleted") === true) === completed) return false;
     await saveTableStateInTransaction(transaction, {
       tournamentId,
       roundId,
       tableId,
       expectedVersion: Number(table.get("version") ?? 0),
-      // The mark of the close stays, so the end of the time does not close the table again.
-      tablePatch: { isCompleted: false, matchTimeChecked: true } as Partial<TableState>,
+      tablePatch: { isCompleted: completed, matchTimeChecked: true } as Partial<TableState>,
       handPatches: [],
       actor: actor ?? { uid: "system", name: "Round control", source: "system" },
     });

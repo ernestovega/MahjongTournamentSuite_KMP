@@ -780,13 +780,14 @@
     <string name="round_control_closed">Closed</string>
     <string name="round_control_manual_warning">This round is in manual mode: the clock no longer decides what the players can do. It stays like this until you set everything back to Automatic.</string>
     <string name="round_control_tables">Tables</string>
-    <string name="round_control_tables_help">A table follows the round unless you give it its own mode. Reopen opens a completed table, so its players can add the hands they miss.</string>
+    <string name="round_control_tables_help">Completed is the same mark as the Completed switch of the table editor: a completed table takes no hands. The mode of a table wins over the mode of the round.</string>
     <string name="round_control_table_completed">Completed</string>
     <string name="round_control_table_in_play">In play</string>
     <string name="round_control_table_round">Like the round</string>
-    <string name="round_control_reopen">Reopen</string>
     <string name="round_control_no_tables">This round has no tables yet.</string>
     <string name="round_control_completed_notice">The tournament is completed. You can still reopen tables, but its clocks cannot change.</string>
     <string name="timer_manual_warning">Manual round control is on: the clock does not decide what the players can do. Change it in Round control.</string>
     <string name="activity_action_round_control">Round control changed</string>
+    <string name="round_control_round_in_play">This is the round in play.</string>
+    <string name="round_control_other_round_in_play">The round in play is round %1$d.</string>
 </resources>

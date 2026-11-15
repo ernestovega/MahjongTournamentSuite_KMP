@@ -780,13 +780,14 @@
     <string name="round_control_closed">Chiuso</string>
     <string name="round_control_manual_warning">Questo turno è in modalità manuale: l'orologio non decide più cosa possono fare i giocatori. Resta così finché non rimetti tutto su Automatico.</string>
     <string name="round_control_tables">Tavoli</string>
-    <string name="round_control_tables_help">Un tavolo segue il turno, salvo che gli dai una modalità propria. Riapri apre un tavolo completato, così i suoi giocatori aggiungono le mani che mancano.</string>
+    <string name="round_control_tables_help">Completato è lo stesso segno dell'interruttore Completed dell'editor dei tavoli: un tavolo completato non accetta mani. La modalità di un tavolo vale più di quella del turno.</string>
     <string name="round_control_table_completed">Completato</string>
     <string name="round_control_table_in_play">In gioco</string>
     <string name="round_control_table_round">Come il turno</string>
-    <string name="round_control_reopen">Riapri</string>
     <string name="round_control_no_tables">Questo turno non ha ancora tavoli.</string>
     <string name="round_control_completed_notice">Il torneo è completato. Puoi ancora riaprire tavoli, ma i suoi orologi non possono cambiare.</string>
     <string name="timer_manual_warning">Controllo manuale del turno attivo: l'orologio non decide cosa possono fare i giocatori. Cambialo in Controllo del turno.</string>
     <string name="activity_action_round_control">Controllo del turno modificato</string>
+    <string name="round_control_round_in_play">È il turno in gioco.</string>
+    <string name="round_control_other_round_in_play">Il turno in gioco è il turno %1$d.</string>
 </resources>

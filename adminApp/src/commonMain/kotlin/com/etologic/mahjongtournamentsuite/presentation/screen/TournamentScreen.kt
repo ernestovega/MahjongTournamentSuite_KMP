@@ -35,7 +35,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.model.isAssigned
 import com.etologic.mahjongtournamentsuite.domain.model.map
 import com.etologic.mahjongtournamentsuite.presentation.ActivityRoute
-import com.etologic.mahjongtournamentsuite.presentation.RoundControlRoute
 import com.etologic.mahjongtournamentsuite.presentation.PlayersRoute
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.TeamsRoute
@@ -157,6 +156,8 @@ fun TournamentScreen(
     var pendingAction by remember { mutableStateOf<RoundEditorAction?>(null) }
     // The table the admin asked to empty. A dialog asks before the server clears it.
     var tableToReset by remember { mutableStateOf<Int?>(null) }
+    // The round that the Round control dialog opens at, or null while it is closed.
+    var roundControlRound by remember { mutableStateOf<Int?>(null) }
     var editingTournament by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
@@ -386,9 +387,7 @@ fun TournamentScreen(
             RoundEditorAction.Timer -> openTimer(navController, tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1)
             RoundEditorAction.Export -> scope.launch { exportResults() }
             RoundEditorAction.Activity -> navController.navigate(ActivityRoute(tournamentId))
-            RoundEditorAction.RoundControl -> navController.navigate(
-                RoundControlRoute(tournamentId, tournament?.timerRound(allTables.roundsWithHands()) ?: 1),
-            )
+            RoundEditorAction.RoundControl -> roundControlRound = tournament?.timerRound(allTables.roundsWithHands()) ?: 1
         }
     }
 
@@ -426,6 +425,9 @@ fun TournamentScreen(
             restoreSaveFocus = false
             saveFocusRequester.requestFocus()
         }
+    }
+    roundControlRound?.let { round ->
+        RoundControlDialog(tournamentId = tournamentId, initialRound = round, onDismiss = { roundControlRound = null })
     }
     tableToReset?.let { tableId ->
         ResetTableDialog(

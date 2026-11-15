@@ -109,6 +109,7 @@ internal fun RoundControlChange.toDto() = RoundControlRequestDto(
     seats = seats?.toDto(),
     table = table?.let { (tableId, mode) -> TableControlDto(tableId, mode.toDto()) },
     reopenTables = reopenTables.ifEmpty { null },
+    completeTables = completeTables.ifEmpty { null },
 )
 
 internal fun RoundClockAction.toDto(): RoundClockActionRequestDto = when (this) {

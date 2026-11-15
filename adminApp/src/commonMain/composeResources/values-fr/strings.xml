@@ -780,13 +780,14 @@
     <string name="round_control_closed">Fermé</string>
     <string name="round_control_manual_warning">Ce tour est en mode manuel : l'horloge ne décide plus de ce que les joueurs peuvent faire. Il reste ainsi jusqu'à ce que vous remettiez tout en Automatique.</string>
     <string name="round_control_tables">Tables</string>
-    <string name="round_control_tables_help">Une table suit le tour, sauf si vous lui donnez son propre mode. Rouvrir ouvre une table terminée, pour que ses joueurs ajoutent les mains qui manquent.</string>
+    <string name="round_control_tables_help">Terminée est la même marque que l'interrupteur Completed de l'éditeur de tables : une table terminée n'accepte plus de mains. Le mode d'une table l'emporte sur celui du tour.</string>
     <string name="round_control_table_completed">Terminée</string>
     <string name="round_control_table_in_play">En jeu</string>
     <string name="round_control_table_round">Comme le tour</string>
-    <string name="round_control_reopen">Rouvrir</string>
     <string name="round_control_no_tables">Ce tour n'a pas encore de tables.</string>
     <string name="round_control_completed_notice">Le tournoi est terminé. Vous pouvez encore rouvrir des tables, mais ses horloges ne peuvent pas changer.</string>
     <string name="timer_manual_warning">Contrôle manuel du tour actif : l'horloge ne décide pas de ce que les joueurs peuvent faire. Changez-le dans Contrôle du tour.</string>
     <string name="activity_action_round_control">Contrôle du tour modifié</string>
+    <string name="round_control_round_in_play">C'est le tour en jeu.</string>
+    <string name="round_control_other_round_in_play">Le tour en jeu est le tour %1$d.</string>
 </resources>

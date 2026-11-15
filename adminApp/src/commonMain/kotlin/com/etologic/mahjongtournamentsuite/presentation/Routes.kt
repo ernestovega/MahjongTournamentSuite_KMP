@@ -74,10 +74,6 @@ data object ErrorsRoute
 @Serializable
 data class ActivityRoute(val tournamentId: String? = null)
 
-/** Round control, the plan B of the Timer: clock buttons and manual control of the players. Only administrators. */
-@Serializable
-data class RoundControlRoute(val tournamentId: String, val roundId: Int = 1)
-
 /** The catalog of the design system. It is in no menu: administrators open it from their profile. */
 @Serializable
 data object DesignSystemRoute
