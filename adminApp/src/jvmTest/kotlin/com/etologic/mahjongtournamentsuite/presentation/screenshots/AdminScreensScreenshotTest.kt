@@ -1,6 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeLeft
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
@@ -10,6 +13,7 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.ErrorsScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.GlobalUsersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerBaseScreen
+import com.etologic.mahjongtournamentsuite.presentation.screen.PlayerRoundTablesTag
 import com.etologic.mahjongtournamentsuite.presentation.screen.PlayersScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RankingStandaloneScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.RoundControlScreen
@@ -49,6 +53,23 @@ class AdminScreensScreenshotTest {
         "players-many-rounds",
         modules = { adminModules(tournaments = ManyRoundsTournamentRepository()) },
         ready = { waitForText("04010001", substring = true) },
+    ) { nav -> PlayersScreen(nav, ONGOING) }
+
+    /** The 24 rounds after a swipe: the strips are scrolled to the middle and go past both edges of the row. */
+    @Test
+    fun playersManyRoundsScrolled() = adminScreenshots(
+        "players-many-rounds-scrolled",
+        modules = { adminModules(tournaments = ManyRoundsTournamentRepository()) },
+        ready = {
+            waitForText("04010001", substring = true)
+            onAllNodesWithTag(PlayerRoundTablesTag).fetchSemanticsNodes().indices.forEach { index ->
+                // A slow swipe, so it does not fling to the end.
+                onAllNodesWithTag(PlayerRoundTablesTag)[index].performTouchInput {
+                    swipeLeft(startX = right * 0.8f, endX = right * 0.5f, durationMillis = 1_000)
+                }
+            }
+            waitForIdle()
+        },
     ) { nav -> PlayersScreen(nav, ONGOING) }
 
     /** Seven rounds, the most usual length: the strip fits without scrolling. */
