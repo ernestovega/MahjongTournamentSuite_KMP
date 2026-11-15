@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -31,8 +30,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.unit.dp
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.UserProfile
@@ -80,11 +77,8 @@ fun ProfileDialog(
     var photoProfile by remember(profile.uid) { mutableStateOf(profile) }
     var saving by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf<UiText?>(null) }
-    val aliasFocusRequester = remember { FocusRequester() }
     val trimmedAlias = alias.trim()
     val canSave = !saving && trimmedAlias.isNotEmpty() && trimmedAlias != profile.alias.trim()
-
-    LaunchedEffect(Unit) { aliasFocusRequester.requestFocusOnOpen() }
 
     // The function reads the state when it runs. A callback that captured older values could save a stale alias.
     fun save() {
@@ -150,7 +144,7 @@ fun ProfileDialog(
                         isError = error != null,
                         singleLine = true,
                         enabled = !saving,
-                        modifier = Modifier.fillMaxWidth().focusRequester(aliasFocusRequester),
+                        modifier = Modifier.fillMaxWidth(),
                     )
                     OutlinedTextField(
                         value = profile.email,
