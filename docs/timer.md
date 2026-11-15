@@ -75,7 +75,7 @@ While the clock runs, the screen hides all controls except Pause. The other cont
 
 ## Round control (plan B, admins only)
 
-The "Round control" button of the tournament screen (admins only) opens a dialog that works without the Timer. It shows which round is in play, and an ended round shows its time and "Time is over" in red, like the Timer. It holds the clock buttons of a round (Start, "The round started earlier", Pause, Resume, Stop, Set time, Reset, each with the same confirmations as the Timer) and the manual control of what the players can do. Picking a round there changes nothing on the server.
+The "Round control" button of the tournament screen (admins only) opens a wide dialog that works without the Timer. On top, one chip per round with the status icon of its tables and a play mark on the round whose clock runs. Below, the clock (an ended round shows its time and "Time is over" in red, like the Timer), "What the players can do" (hand entry and seats: Follow the clock, Open or Closed) and the tables. Info buttons explain each part. It holds the clock buttons of a round (Start, "The round started earlier", Pause, Resume, Stop, Set time, Reset, each with the same confirmations as the Timer) and the manual control of what the players can do. Picking a round there changes nothing on the server.
 
 The control lives in the tournament document, apart from the settings:
 

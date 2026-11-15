@@ -45,7 +45,7 @@ class RoundControlDialogUiTest {
             MtsTheme(useDarkTheme = false) {
                 RoundControlDialogContent(
                     controller = controller,
-                    loadTables = { roundId, mode -> server.listTournamentTables("t1", roundId, mode) },
+                    loadTables = { mode -> server.listTournamentTables("t1", null, mode) },
                     onDismiss = {},
                     deviceNowMs = { now },
                 )
@@ -163,12 +163,13 @@ class RoundControlDialogUiTest {
     fun anEndedRoundAndTheRoundInPlayAreShown() = runComposeUiTest {
         val controller = show(server(RoundClock(roundId = 1, startedAtMs = now - 130 * min), RoundClock(roundId = 2, startedAtMs = now - 10 * min)))
         // The dialog opens at the round in play.
-        onNodeWithText("This is the round in play.").assertExists()
+        onNodeWithTag("round_chip_2").assertIsSelected()
+        onNodeWithContentDescription("This is the round in play.", useUnmergedTree = true).assertExists()
         controller.selectRound(1)
         settle()
 
         onNodeWithText("Time is over").assertExists()
-        onNodeWithText("The round in play is round 2.").assertExists()
+        onNodeWithTag("round_chip_1").assertIsSelected()
     }
 
     @Test
@@ -177,10 +178,10 @@ class RoundControlDialogUiTest {
         show(server)
 
         onNodeWithText("This round is in manual mode", substring = true).assertExists()
-        onNodeWithContentDescription("Increase round").performClick()
+        onNodeWithTag("round_chip_2").performClick()
         settle()
 
-        onNodeWithText("Round 2").assertExists()
+        onNodeWithTag("round_chip_2").assertIsSelected()
         onNodeWithText("This round is in manual mode", substring = true).assertDoesNotExist()
         onNodeWithTag("seats_auto").assertIsSelected()
     }

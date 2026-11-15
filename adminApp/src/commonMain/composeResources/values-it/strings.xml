@@ -771,16 +771,16 @@
     <string name="round_control_running">In corso</string>
     <string name="round_control_paused">In pausa</string>
     <string name="round_control_over">Tempo scaduto</string>
-    <string name="round_control_hands">Inserimento mani dei giocatori</string>
-    <string name="round_control_hands_help">Automatico segue l'orologio: aperto da Avvia fino alla fine del tempo.</string>
-    <string name="round_control_seats">Posti ai tavoli</string>
-    <string name="round_control_seats_help">Automatico segue l'orologio e l'inizio previsto. I giocatori scelgono il posto prima della prima mano.</string>
-    <string name="round_control_auto">Automatico</string>
+    <string name="round_control_hands">Inserimento mani</string>
+    <string name="round_control_hands_help">Secondo l'orologio: aperto da Avvia fino alla fine del tempo. Aperto: i giocatori aggiungono mani qualunque cosa dica l'orologio. Chiuso: nessuno aggiunge mani. Una modalità manuale resta finché non rimetti Secondo l'orologio.</string>
+    <string name="round_control_seats">Posti</string>
+    <string name="round_control_seats_help">Secondo l'orologio: da 10 minuti prima dell'inizio previsto fino alla prima mano. Aperto: i giocatori scelgono il posto in qualsiasi momento prima della prima mano. Chiuso: non possono sceglierlo.</string>
+    <string name="round_control_auto">Secondo l'orologio</string>
     <string name="round_control_open">Aperto</string>
     <string name="round_control_closed">Chiuso</string>
-    <string name="round_control_manual_warning">Questo turno è in modalità manuale: l'orologio non decide più cosa possono fare i giocatori. Resta così finché non rimetti tutto su Automatico.</string>
+    <string name="round_control_manual_warning">Questo turno è in modalità manuale: l'orologio non decide più cosa possono fare i giocatori. Resta così finché non rimetti tutto su Secondo l'orologio.</string>
     <string name="round_control_tables">Tavoli</string>
-    <string name="round_control_tables_help">Completato è lo stesso segno dell'interruttore Completed dell'editor dei tavoli: un tavolo completato non accetta mani. La modalità di un tavolo vale più di quella del turno.</string>
+    <string name="round_control_tables_help">In gioco / Completato è lo stesso segno dell'interruttore Completed dell'editor dei tavoli: un tavolo completato non accetta mani. Inserimento mani di un tavolo: Come il turno usa la modalità del turno; Aperto o Chiuso vale di più.</string>
     <string name="round_control_table_completed">Completato</string>
     <string name="round_control_table_in_play">In gioco</string>
     <string name="round_control_table_round">Come il turno</string>
@@ -790,4 +790,7 @@
     <string name="activity_action_round_control">Controllo del turno modificato</string>
     <string name="round_control_round_in_play">È il turno in gioco.</string>
     <string name="round_control_other_round_in_play">Il turno in gioco è il turno %1$d.</string>
+    <string name="round_control_clock_help">Gli stessi pulsanti del Timer. Premi Avvia al gong: con Secondo l'orologio, i giocatori aggiungono mani da allora fino alla fine del tempo. Stop termina subito il turno.</string>
+    <string name="round_control_players">Cosa possono fare i giocatori</string>
+    <string name="round_control_table_hands">Inserimento mani</string>
 </resources>

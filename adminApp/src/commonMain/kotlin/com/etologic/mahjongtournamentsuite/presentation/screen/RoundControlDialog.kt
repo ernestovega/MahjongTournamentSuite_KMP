@@ -1,23 +1,32 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,17 +43,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.ControlMode
+import com.etologic.mahjongtournamentsuite.domain.model.RoundControl
 import com.etologic.mahjongtournamentsuite.domain.model.RoundControlChange
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
 import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepository
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedButton
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton
 import com.etologic.mahjongtournamentsuite.presentation.components.FocusedOutlinedButton
+import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.ScrollableColumnWithScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.LocalTelemetry
@@ -55,13 +66,12 @@ import kotlinx.coroutines.launch
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.cancel
 import mahjongtournamentsuite.adminapp.generated.resources.close
-import mahjongtournamentsuite.adminapp.generated.resources.decrease_round
 import mahjongtournamentsuite.adminapp.generated.resources.enter_remaining_time_in_minutes
-import mahjongtournamentsuite.adminapp.generated.resources.increase_round
 import mahjongtournamentsuite.adminapp.generated.resources.remaining_time
 import mahjongtournamentsuite.adminapp.generated.resources.reset_timer
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_auto
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_clock
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_clock_help
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_closed
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_completed_notice
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_hands
@@ -70,14 +80,15 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_control_manual_
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_no_tables
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_not_started
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_open
-import mahjongtournamentsuite.adminapp.generated.resources.round_control_other_round_in_play
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_over
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_paused
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_players
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_round_in_play
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_running
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_seats
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_seats_help
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_completed
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_in_play
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_round
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_tables
@@ -123,29 +134,32 @@ fun RoundControlDialog(
     val controller = remember(tournamentId) { RoundTimerController(repository, tournamentId, initialRound, telemetry = telemetry) }
     RoundControlDialogContent(
         controller = controller,
-        loadTables = { roundId, mode -> repository.listTournamentTables(tournamentId, roundId, mode) },
+        loadTables = { mode -> repository.listTournamentTables(tournamentId, null, mode) },
         onDismiss = onDismiss,
     )
 }
 
-/** How often the screen reads the clocks and the tables, to follow the other admins and the players. */
+/** How often the dialog reads the clocks and the tables, to follow the other admins and the players. */
 private const val ROUND_CONTROL_POLL_MS = 5_000L
+
+/** From this width the clock and the rules of the players sit side by side. */
+private val TWO_COLUMNS_MIN_WIDTH = 760.dp
 
 private enum class RoundControlPrompt { SetTime, StartedAgo, ConfirmStop }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun RoundControlDialogContent(
     controller: RoundTimerController,
-    loadTables: suspend (roundId: Int, mode: RefreshMode) -> AppResult<List<TournamentTable>>,
+    /** Every table of the tournament: the round strip shows the status of each round. */
+    loadTables: suspend (mode: RefreshMode) -> AppResult<List<TournamentTable>>,
     onDismiss: () -> Unit,
     deviceNowMs: () -> Long = { Clock.System.now().toEpochMilliseconds() },
 ) {
     val scope = rememberCoroutineScope()
     val state by controller.state.collectAsState()
-    var tables by remember { mutableStateOf<List<TournamentTable>?>(null) }
+    var allTables by remember { mutableStateOf<List<TournamentTable>?>(null) }
     var error by remember { mutableStateOf<AppError?>(null) }
-    var dialog by remember { mutableStateOf<RoundControlPrompt?>(null) }
+    var prompt by remember { mutableStateOf<RoundControlPrompt?>(null) }
     var busy by remember { mutableStateOf(false) }
     // Bumped after a table changes its completed mark, so the tables load again at once.
     var tablesRevision by remember { mutableStateOf(0) }
@@ -156,12 +170,11 @@ internal fun RoundControlDialogContent(
             delay(ROUND_CONTROL_POLL_MS)
         }
     }
-    LaunchedEffect(state.roundId) { tables = null }
-    LaunchedEffect(state.roundId, state.tournament != null, tablesRevision) {
+    LaunchedEffect(state.tournament != null, tablesRevision) {
         if (state.tournament == null) return@LaunchedEffect
         var mode = if (tablesRevision > 0) RefreshMode.FORCE else RefreshMode.IF_CHANGED
         while (true) {
-            (loadTables(state.roundId, mode) as? AppResult.Success)?.let { result -> tables = result.value.sortedBy { it.tableId } }
+            (loadTables(mode) as? AppResult.Success)?.let { result -> allTables = result.value }
             mode = RefreshMode.IF_CHANGED
             delay(ROUND_CONTROL_POLL_MS)
         }
@@ -186,13 +199,11 @@ internal fun RoundControlDialogContent(
 
     val remaining = state.remainingSeconds(now)
     val finished = state.isStarted && remaining <= 0L
-    val canClock = state.canControl && !state.isOffline
-    val control = state.control
-    // The round whose clock runs now, if any. The dialog says when the admin looks at another round.
+    // The round whose clock runs now, if any.
     val runningRound = state.clocks.runningRound(state.durationMinutes, state.serverNow(now))
 
     error?.let { AppErrorDialog(it.toUiText(), onDismiss = { error = null }) }
-    when (dialog) {
+    when (prompt) {
         RoundControlPrompt.SetTime -> MinutesDialog(
             name = "RoundControlSetTime",
             title = stringResource(Res.string.remaining_time),
@@ -200,10 +211,10 @@ internal fun RoundControlDialogContent(
             initialMinutes = ((remaining + 59) / 60).coerceAtLeast(1),
             allowZero = false,
             onApply = { minutes ->
-                dialog = null
+                prompt = null
                 scope.launch { controller.setRemainingMinutes(minutes) }
             },
-            onDismiss = { dialog = null },
+            onDismiss = { prompt = null },
         )
         RoundControlPrompt.StartedAgo -> MinutesDialog(
             name = "RoundControlStartedAgo",
@@ -212,10 +223,10 @@ internal fun RoundControlDialogContent(
             initialMinutes = 0,
             allowZero = true,
             onApply = { minutes ->
-                dialog = null
+                prompt = null
                 scope.launch { controller.startedMinutesAgo(minutes.toInt()) }
             },
-            onDismiss = { dialog = null },
+            onDismiss = { prompt = null },
         )
         RoundControlPrompt.ConfirmStop -> ConfirmDialog(
             name = "RoundControlConfirmStop",
@@ -223,10 +234,10 @@ internal fun RoundControlDialogContent(
             message = stringResource(Res.string.timer_stop_confirm_message),
             confirm = stringResource(Res.string.timer_stop_confirm),
             onConfirm = {
-                dialog = null
+                prompt = null
                 scope.launch { controller.stop() }
             },
-            onDismiss = { dialog = null },
+            onDismiss = { prompt = null },
         )
         null -> Unit
     }
@@ -244,7 +255,10 @@ internal fun RoundControlDialogContent(
     val scrollState = rememberScrollState()
     TrackedDialog("RoundControl") {
         AlertDialog(
-            modifier = Modifier.appFocusGroup(),
+            // Twice the standard width (560 dp), so the clock and the rules of the players fit side by side.
+            // A phone keeps 16 dp on each side.
+            modifier = Modifier.appFocusGroup().padding(16.dp).widthIn(max = 1120.dp).fillMaxWidth(),
+            properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = onDismiss,
             title = {
                 Column {
@@ -255,137 +269,44 @@ internal fun RoundControlDialogContent(
                 }
             },
             text = {
-                ScrollableColumnWithScrollbar(state = scrollState, modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                        // The round. Picking a round changes nothing on the server.
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            FocusedIconButton(enabled = state.roundId > 1, onClick = { controller.selectRound(state.roundId - 1) }) {
-                                Icon(Icons.Default.Remove, contentDescription = stringResource(Res.string.decrease_round), modifier = Modifier.size(18.dp))
-                            }
-                            Text(
-                                text = stringResource(Res.string.round_n, state.roundId),
-                                style = MaterialTheme.typography.headlineSmall,
-                                modifier = Modifier.padding(horizontal = 8.dp).testTag("round_control_round"),
-                            )
-                            FocusedIconButton(enabled = state.roundId < state.numRounds, onClick = { controller.selectRound(state.roundId + 1) }) {
-                                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.increase_round), modifier = Modifier.size(18.dp))
-                            }
-                        }
-                        when {
-                            runningRound == state.roundId -> Text(
-                                stringResource(Res.string.round_control_round_in_play),
-                                color = MaterialTheme.colorScheme.primary,
-                                fontWeight = FontWeight.SemiBold,
-                            )
-                            runningRound != null -> Text(
-                                stringResource(Res.string.round_control_other_round_in_play, runningRound),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        if (state.tournamentCompleted) Notice(stringResource(Res.string.round_control_completed_notice), warning = false)
-                        if (control.isManual) Notice(stringResource(Res.string.round_control_manual_warning), warning = true)
-
-                        Section(title = stringResource(Res.string.round_control_clock)) {
-                            val status = when {
-                                !state.isStarted -> Res.string.round_control_not_started
-                                finished -> Res.string.round_control_over
-                                !state.isRunning -> Res.string.round_control_paused
-                                else -> Res.string.round_control_running
-                            }
-                            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                                // Like the Timer: an ended round shows its time and its state in red.
-                                val statusColor = if (finished) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
-                                Text(
-                                    formatHms(remaining),
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    fontWeight = FontWeight.SemiBold,
-                                    color = if (finished) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
-                                )
-                                Text(stringResource(status), style = MaterialTheme.typography.titleMedium, color = statusColor)
-                            }
-                            if (state.isOffline) Text(stringResource(Res.string.timer_offline), color = MaterialTheme.colorScheme.error)
-                            state.latePlannedStart(now)?.let { Text(stringResource(Res.string.timer_late_start, it), color = MaterialTheme.colorScheme.error) }
-                            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                when {
-                                    !state.isStarted -> {
-                                        FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
-                                            Text(stringResource(Res.string.timer_gong_start))
-                                        }
-                                        FocusedOutlinedButton(enabled = canClock, onClick = { dialog = RoundControlPrompt.StartedAgo }) {
-                                            Text(stringResource(Res.string.timer_started_ago))
-                                        }
-                                    }
-                                    !finished -> {
-                                        if (state.isRunning) {
-                                            FocusedButton(enabled = canClock, onClick = { scope.launch { controller.pause() } }) {
-                                                Text(stringResource(Res.string.timer_pause))
-                                            }
-                                        } else {
-                                            FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
-                                                Text(stringResource(Res.string.timer_gong_resume))
-                                            }
-                                        }
-                                        FocusedOutlinedButton(enabled = canClock, onClick = { dialog = RoundControlPrompt.ConfirmStop }) {
-                                            Text(stringResource(Res.string.timer_stop))
-                                        }
-                                    }
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    // The rounds stay on top while the rest scrolls.
+                    RoundStrip(
+                        numRounds = state.numRounds,
+                        selected = state.roundId,
+                        runningRound = runningRound,
+                        allTables = allTables,
+                        onSelect = controller::selectRound,
+                    )
+                    ScrollableColumnWithScrollbar(state = scrollState, modifier = Modifier.fillMaxWidth().heightIn(max = 560.dp)) {
+                        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                            if (state.tournamentCompleted) Notice(stringResource(Res.string.round_control_completed_notice), warning = false)
+                            if (state.control.isManual) Notice(stringResource(Res.string.round_control_manual_warning), warning = true)
+                            BoxWithConstraints(Modifier.fillMaxWidth()) {
+                                val clock: @Composable (Modifier) -> Unit = { modifier ->
+                                    ClockCard(state, now, remaining, finished, modifier, onPrompt = { prompt = it }, scope = scope, controller = controller)
                                 }
-                                if (state.isStarted) {
-                                    FocusedOutlinedButton(enabled = canClock, onClick = { dialog = RoundControlPrompt.SetTime }) {
-                                        Text(stringResource(Res.string.set_time))
+                                val rules: @Composable (Modifier) -> Unit = { modifier ->
+                                    PlayersCard(state.control.hands, state.control.seats, enabled = !busy, modifier = modifier, onChange = ::change)
+                                }
+                                if (maxWidth >= TWO_COLUMNS_MIN_WIDTH) {
+                                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.height(IntrinsicSize.Min)) {
+                                        clock(Modifier.weight(1f).fillMaxHeight())
+                                        rules(Modifier.weight(1f).fillMaxHeight())
                                     }
-                                    FocusedOutlinedButton(enabled = canClock, onClick = { scope.launch { controller.askReset() } }) {
-                                        Text(stringResource(Res.string.reset_timer))
+                                } else {
+                                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                        clock(Modifier.fillMaxWidth())
+                                        rules(Modifier.fillMaxWidth())
                                     }
                                 }
                             }
-                        }
-
-                        Section(title = stringResource(Res.string.round_control_hands)) {
-                            Text(stringResource(Res.string.round_control_hands_help), style = MaterialTheme.typography.bodySmall)
-                            ModeChips(tag = "hands", selected = control.hands, enabled = !busy) { change(RoundControlChange(hands = it)) }
-                        }
-                        Section(title = stringResource(Res.string.round_control_seats)) {
-                            Text(stringResource(Res.string.round_control_seats_help), style = MaterialTheme.typography.bodySmall)
-                            ModeChips(tag = "seats", selected = control.seats, enabled = !busy) { change(RoundControlChange(seats = it)) }
-                        }
-
-                        Section(title = stringResource(Res.string.round_control_tables)) {
-                            Text(stringResource(Res.string.round_control_tables_help), style = MaterialTheme.typography.bodySmall)
-                            val rows = tables
-                            when {
-                                rows == null -> Unit
-                                rows.isEmpty() -> Text(stringResource(Res.string.round_control_no_tables))
-                                else -> rows.forEachIndexed { index, table ->
-                                    if (index > 0) HorizontalDivider()
-                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                                            Text("${stringResource(Res.string.table)} ${table.tableId}", fontWeight = FontWeight.SemiBold)
-                                            // The same mark as the Completed switch of the table editor. A completed table takes no hand.
-                                            FilterChip(
-                                                selected = !table.isCompleted,
-                                                enabled = !busy,
-                                                onClick = { if (table.isCompleted) change(RoundControlChange(reopenTables = listOf(table.tableId))) },
-                                                label = { Text(stringResource(Res.string.round_control_table_in_play)) },
-                                                modifier = Modifier.testTag("table_${table.tableId}_in_play"),
-                                            )
-                                            FilterChip(
-                                                selected = table.isCompleted,
-                                                enabled = !busy,
-                                                onClick = { if (!table.isCompleted) change(RoundControlChange(completeTables = listOf(table.tableId))) },
-                                                label = { Text(stringResource(Res.string.round_control_table_completed)) },
-                                                modifier = Modifier.testTag("table_${table.tableId}_completed"),
-                                            )
-                                        }
-                                        ModeChips(
-                                            tag = "table_${table.tableId}",
-                                            selected = control.tables[table.tableId] ?: ControlMode.AUTO,
-                                            enabled = !busy,
-                                            autoLabel = Res.string.round_control_table_round,
-                                        ) { mode -> change(RoundControlChange(table = table.tableId to mode)) }
-                                    }
-                                }
-                            }
+                            TablesCard(
+                                tables = allTables?.filter { it.roundId == state.roundId }?.sortedBy { it.tableId },
+                                control = state.control,
+                                enabled = !busy,
+                                onChange = ::change,
+                            )
                         }
                     }
                 }
@@ -394,6 +315,206 @@ internal fun RoundControlDialogContent(
                 FocusedButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
             },
         )
+    }
+}
+
+/** One chip per round, with the status of its tables and a play mark on the round whose clock runs. */
+@Composable
+private fun RoundStrip(
+    numRounds: Int,
+    selected: Int,
+    runningRound: Int?,
+    allTables: List<TournamentTable>?,
+    onSelect: (Int) -> Unit,
+) {
+    val listState = rememberLazyListState()
+    LaunchedEffect(selected) { listState.animateScrollToItem((selected - 2).coerceAtLeast(0)) }
+    LazyRow(state = listState, horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+        items((1..numRounds.coerceAtLeast(1)).toList()) { round ->
+            FilterChip(
+                selected = round == selected,
+                onClick = { onSelect(round) },
+                label = { Text(stringResource(Res.string.round_n, round)) },
+                leadingIcon = if (round == runningRound) {
+                    {
+                        Icon(
+                            Icons.Default.PlayArrow,
+                            contentDescription = stringResource(Res.string.round_control_round_in_play),
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    }
+                } else {
+                    null
+                },
+                trailingIcon = allTables?.let { tables ->
+                    { StatusIconWithTooltip(roundCompletionStatus(tables.filter { it.roundId == round })) }
+                },
+                modifier = Modifier.testTag("round_chip_$round"),
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ClockCard(
+    state: RoundTimerState,
+    now: Long,
+    remaining: Long,
+    finished: Boolean,
+    modifier: Modifier,
+    onPrompt: (RoundControlPrompt) -> Unit,
+    scope: kotlinx.coroutines.CoroutineScope,
+    controller: RoundTimerController,
+) {
+    val canClock = state.canControl && !state.isOffline
+    Card(
+        title = stringResource(Res.string.round_control_clock),
+        info = stringResource(Res.string.round_control_clock_help),
+        modifier = modifier,
+    ) {
+        val status = when {
+            !state.isStarted -> Res.string.round_control_not_started
+            finished -> Res.string.round_control_over
+            !state.isRunning -> Res.string.round_control_paused
+            else -> Res.string.round_control_running
+        }
+        // Like the Timer: an ended round shows its time and its state in red.
+        val color = if (finished) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Text(formatHms(remaining), style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.SemiBold, color = color)
+            Text(
+                stringResource(status),
+                style = MaterialTheme.typography.titleMedium,
+                color = if (finished) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        if (state.isOffline) Text(stringResource(Res.string.timer_offline), color = MaterialTheme.colorScheme.error)
+        state.latePlannedStart(now)?.let { Text(stringResource(Res.string.timer_late_start, it), color = MaterialTheme.colorScheme.error) }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            when {
+                !state.isStarted -> {
+                    FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
+                        Text(stringResource(Res.string.timer_gong_start))
+                    }
+                    FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.StartedAgo) }) {
+                        Text(stringResource(Res.string.timer_started_ago))
+                    }
+                }
+                !finished -> {
+                    if (state.isRunning) {
+                        FocusedButton(enabled = canClock, onClick = { scope.launch { controller.pause() } }) {
+                            Text(stringResource(Res.string.timer_pause))
+                        }
+                    } else {
+                        FocusedButton(enabled = canClock, onClick = { scope.launch { controller.play() } }) {
+                            Text(stringResource(Res.string.timer_gong_resume))
+                        }
+                    }
+                    FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.ConfirmStop) }) {
+                        Text(stringResource(Res.string.timer_stop))
+                    }
+                }
+            }
+            if (state.isStarted) {
+                FocusedOutlinedButton(enabled = canClock, onClick = { onPrompt(RoundControlPrompt.SetTime) }) {
+                    Text(stringResource(Res.string.set_time))
+                }
+                FocusedOutlinedButton(enabled = canClock, onClick = { scope.launch { controller.askReset() } }) {
+                    Text(stringResource(Res.string.reset_timer))
+                }
+            }
+        }
+    }
+}
+
+/** What the players of the round can do: add hands and set the seats. */
+@Composable
+private fun PlayersCard(
+    hands: ControlMode,
+    seats: ControlMode,
+    enabled: Boolean,
+    modifier: Modifier,
+    onChange: (RoundControlChange) -> Unit,
+) {
+    Card(title = stringResource(Res.string.round_control_players), info = null, modifier = modifier) {
+        LabeledModes(
+            label = stringResource(Res.string.round_control_hands),
+            info = stringResource(Res.string.round_control_hands_help),
+        ) { ModeChips(tag = "hands", selected = hands, enabled = enabled) { onChange(RoundControlChange(hands = it)) } }
+        LabeledModes(
+            label = stringResource(Res.string.round_control_seats),
+            info = stringResource(Res.string.round_control_seats_help),
+        ) { ModeChips(tag = "seats", selected = seats, enabled = enabled) { onChange(RoundControlChange(seats = it)) } }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TablesCard(
+    tables: List<TournamentTable>?,
+    control: RoundControl,
+    enabled: Boolean,
+    onChange: (RoundControlChange) -> Unit,
+) {
+    Card(title = stringResource(Res.string.round_control_tables), info = stringResource(Res.string.round_control_tables_help), modifier = Modifier.fillMaxWidth()) {
+        when {
+            tables == null -> Unit
+            tables.isEmpty() -> Text(stringResource(Res.string.round_control_no_tables))
+            else -> tables.forEachIndexed { index, table ->
+                if (index > 0) HorizontalDivider()
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "${stringResource(Res.string.table)} ${table.tableId}",
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.widthIn(min = 72.dp),
+                    )
+                    // The same mark as the Completed switch of the table editor. A completed table takes no hand.
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        FilterChip(
+                            selected = !table.isCompleted,
+                            enabled = enabled,
+                            onClick = { if (table.isCompleted) onChange(RoundControlChange(reopenTables = listOf(table.tableId))) },
+                            label = { Text(stringResource(Res.string.round_control_table_in_play)) },
+                            modifier = Modifier.testTag("table_${table.tableId}_in_play"),
+                        )
+                        FilterChip(
+                            selected = table.isCompleted,
+                            enabled = enabled,
+                            onClick = { if (!table.isCompleted) onChange(RoundControlChange(completeTables = listOf(table.tableId))) },
+                            label = { Text(stringResource(Res.string.round_control_table_completed)) },
+                            modifier = Modifier.testTag("table_${table.tableId}_completed"),
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Text(stringResource(Res.string.round_control_table_hands), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        ModeChips(
+                            tag = "table_${table.tableId}",
+                            selected = control.tables[table.tableId] ?: ControlMode.AUTO,
+                            enabled = enabled,
+                            autoLabel = Res.string.round_control_table_round,
+                        ) { mode -> onChange(RoundControlChange(table = table.tableId to mode)) }
+                    }
+                }
+            }
+        }
+    }
+}
+
+/** A label with an info button, above its chips. */
+@Composable
+private fun LabeledModes(label: String, info: String, chips: @Composable () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(label, style = MaterialTheme.typography.titleSmall)
+            InfoTooltipIcon(info)
+        }
+        chips()
     }
 }
 
@@ -424,12 +545,17 @@ private fun ModeChips(
     }
 }
 
+/** A titled block with an outline. [info] adds an info button after the title. */
 @Composable
-private fun Section(title: String, content: @Composable () -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        HorizontalDivider()
-        Text(title, style = MaterialTheme.typography.titleMedium)
-        content()
+private fun Card(title: String, info: String?, modifier: Modifier, content: @Composable ColumnScope.() -> Unit) {
+    OutlinedCard(modifier = modifier) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(title, style = MaterialTheme.typography.titleMedium)
+                info?.let { InfoTooltipIcon(it) }
+            }
+            content()
+        }
     }
 }
 

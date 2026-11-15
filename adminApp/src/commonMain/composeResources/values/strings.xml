@@ -771,16 +771,16 @@
     <string name="round_control_running">Running</string>
     <string name="round_control_paused">Paused</string>
     <string name="round_control_over">Time is over</string>
-    <string name="round_control_hands">Hand entry of the players</string>
-    <string name="round_control_hands_help">Automatic follows the clock: open from Start until the end of the time.</string>
-    <string name="round_control_seats">Seats of the tables</string>
-    <string name="round_control_seats_help">Automatic follows the clock and the planned start. The players choose their seats before the first hand.</string>
-    <string name="round_control_auto">Automatic</string>
+    <string name="round_control_hands">Hand entry</string>
+    <string name="round_control_hands_help">Follow the clock: open from Start until the end of the time. Open: the players add hands whatever the clock says. Closed: nobody adds hands. A manual mode stays until you set Follow the clock again.</string>
+    <string name="round_control_seats">Seats</string>
+    <string name="round_control_seats_help">Follow the clock: from 10 minutes before the planned start until the first hand. Open: the players set the seats at any time before the first hand. Closed: they cannot set them.</string>
+    <string name="round_control_auto">Follow the clock</string>
     <string name="round_control_open">Open</string>
     <string name="round_control_closed">Closed</string>
-    <string name="round_control_manual_warning">This round is in manual mode: the clock no longer decides what the players can do. It stays like this until you set everything back to Automatic.</string>
+    <string name="round_control_manual_warning">This round is in manual mode: the clock no longer decides what the players can do. It stays like this until you set everything back to Follow the clock.</string>
     <string name="round_control_tables">Tables</string>
-    <string name="round_control_tables_help">Completed is the same mark as the Completed switch of the table editor: a completed table takes no hands. The mode of a table wins over the mode of the round.</string>
+    <string name="round_control_tables_help">In play / Completed is the same mark as the Completed switch of the table editor: a completed table takes no hands. Hand entry of a table: Like the round uses the mode of the round; Open or Closed wins over it.</string>
     <string name="round_control_table_completed">Completed</string>
     <string name="round_control_table_in_play">In play</string>
     <string name="round_control_table_round">Like the round</string>
@@ -790,4 +790,7 @@
     <string name="activity_action_round_control">Round control changed</string>
     <string name="round_control_round_in_play">This is the round in play.</string>
     <string name="round_control_other_round_in_play">The round in play is round %1$d.</string>
+    <string name="round_control_clock_help">The same buttons as the Timer. Press Start when the starting gong sounds: with Follow the clock, the players add hands from then until the end of the time. Stop ends the round now.</string>
+    <string name="round_control_players">What the players can do</string>
+    <string name="round_control_table_hands">Hand entry</string>
 </resources>
