@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -293,10 +294,13 @@ fun StatCard(
     onToggle: (() -> Unit)? = null,
     /** A help text. An info icon on the right of the title shows it in a tooltip. */
     info: String? = null,
+    /** An optional line around the card, for cards in a list that must not merge. */
+    border: BorderStroke? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = MaterialTheme.shapes.large
     Surface(
+        border = border,
         // The same soft shadow under every card. An elevation shadow grows with the distance from the top of the
         // window, so the cards lower on the screen had a bigger shadow than the cards at the top.
         modifier = modifier.dropShadow(shape, CardShadow),
@@ -1222,13 +1226,18 @@ fun PlayerTournamentsSection(
                 Text(stringResource(if (anyVisibleOpen) Res.string.fold_all else Res.string.unfold_all), maxLines = 1, softWrap = false)
             }
         }
-        visible.forEach { (tournament, stats) ->
+        visible.forEachIndexed { index, (tournament, stats) ->
             val open = expanded[tournament.id] ?: false
             StatCard(
                 tournament.name,
-                Modifier.fillMaxWidth().onGloballyPositioned { cardTops[tournament.id] = contentY(it) },
+                // More room between two tournaments and a line around each card, so the tournaments do not merge.
+                Modifier
+                    .padding(top = if (index > 0) TOURNAMENT_CARD_EXTRA_GAP else 0.dp)
+                    .fillMaxWidth()
+                    .onGloballyPositioned { cardTops[tournament.id] = contentY(it) },
                 expanded = open,
                 onToggle = { expanded[tournament.id] = !open },
+                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
             ) {
                 val hasHands = stats.tablesWithHands > 0
                 StatGrid(Modifier.fillMaxWidth()) {
@@ -1291,6 +1300,9 @@ fun PlayerTournamentsSection(
         }
     }
 }
+
+/** The room between two tournament cards, on top of the gap of the section. */
+private val TOURNAMENT_CARD_EXTRA_GAP = 16.dp
 
 /** The number of tournaments that show at the start, and the number that one tap of "show more" adds. */
 private const val INITIAL_TOURNAMENTS = 5

@@ -27,6 +27,7 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PersonSearch
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -584,7 +585,11 @@ private fun OthersStatistics(
             // The bar with the player and the tabs hide and show with the tab rows above them.
             HideOnScrollTabs(emaId) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (profile != null && !changing) OthersPlayerBar(profile) { changing = true }
+                    if (profile != null && !changing) {
+                        OthersPlayerBar(profile) { changing = true }
+                        // The same line that a tab row has at its bottom, so the bar and the tabs under it do not merge.
+                        HorizontalDivider(Modifier.widthIn(max = OthersMaxWidth).fillMaxWidth())
+                    }
                     OthersViewTabs(view) { viewName = it.name }
                 }
             }
