@@ -14,7 +14,7 @@ EMA player (Players > EMA players):
 | Last name | Testers |
 | Country | USA |
 | Hide from the public | yes |
-| Photo | `firebase/functions/assets/google-play-tester.webp` (the Play Console icon) |
+| Photo | `firebase/functions/assets/google-play-tester.png` (the Play Console icon) |
 
 Account (Users):
 

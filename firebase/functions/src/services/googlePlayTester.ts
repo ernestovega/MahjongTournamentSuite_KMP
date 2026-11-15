@@ -30,8 +30,8 @@ export const GOOGLE_PLAY_TESTER = {
  * The photo of the EMA player (the Play Console icon). The account has no photo of its own, so it shows this one.
  * The path works from lib/services and from src/services.
  */
-const PHOTO_PATH = resolve(__dirname, "../../assets/google-play-tester.webp");
-const PHOTO_CONTENT_TYPE = "image/webp";
+const PHOTO_PATH = resolve(__dirname, "../../assets/google-play-tester.png");
+const PHOTO_CONTENT_TYPE = "image/png";
 
 function photoBase64(): string {
   return readFileSync(PHOTO_PATH).toString("base64");
