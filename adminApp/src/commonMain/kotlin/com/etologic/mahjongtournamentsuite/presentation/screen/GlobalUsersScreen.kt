@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -51,6 +52,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -59,6 +61,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import coil3.compose.AsyncImage
 import com.etologic.mahjongtournamentsuite.domain.model.AdminStatus
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.GlobalUserRole
@@ -133,6 +136,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_match
 import mahjongtournamentsuite.adminapp.generated.resources.no_tournaments_selected
 import mahjongtournamentsuite.adminapp.generated.resources.optional_display_name
 import mahjongtournamentsuite.adminapp.generated.resources.password_reset_sent_to
+import mahjongtournamentsuite.adminapp.generated.resources.photo
+import mahjongtournamentsuite.adminapp.generated.resources.photo_of
 import mahjongtournamentsuite.adminapp.generated.resources.plus_more
 import mahjongtournamentsuite.adminapp.generated.resources.role
 import mahjongtournamentsuite.adminapp.generated.resources.role_admin
@@ -518,6 +523,12 @@ private fun UsersTable(
                 DataTableHeaderRow {
                     if (selectable) Spacer(Modifier.width(UserCheckboxColumnWidth))
                     Text(
+                        stringResource(Res.string.photo),
+                        modifier = Modifier.width(PlayerPhotoColumnWidth),
+                        style = MaterialTheme.typography.labelLarge,
+                        textAlign = TextAlign.Center,
+                    )
+                    Text(
                         stringResource(Res.string.country),
                         modifier = Modifier.width(UserCountryColumnWidth),
                         style = MaterialTheme.typography.labelLarge,
@@ -551,6 +562,23 @@ private fun UsersTable(
                 val country = user.emaId?.let(countryByEmaId::get).orEmpty()
                 val roleLabel = user.roles.sorted().map { it.label() }.joinToString(" + ").ifBlank { user.role.label() }
                 val statusLabel = stringResource(if (user.disabled) Res.string.user_status_disabled else Res.string.user_status_active)
+                // The own photo of the account, or the photo of its EMA player.
+                Box(
+                    modifier = Modifier.width(PlayerPhotoColumnWidth).height(PlayerPhotoSize),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    val photoUrl = user.photoUrl
+                    if (photoUrl.isNullOrBlank()) {
+                        PlayerPhotoPlaceholder(PlayerPhotoSize)
+                    } else {
+                        AsyncImage(
+                            model = photoUrl,
+                            contentDescription = stringResource(Res.string.photo_of, user.alias.ifBlank { user.email }),
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.size(PlayerPhotoSize),
+                        )
+                    }
+                }
                 if (compact) {
                     // A phone shows the alias over the email, and the other columns as one small line.
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {

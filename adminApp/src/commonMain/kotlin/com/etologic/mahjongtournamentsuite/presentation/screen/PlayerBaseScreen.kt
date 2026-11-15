@@ -928,8 +928,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
     }
 }
 
-private val PlayerPhotoSize = 40.dp
-private val PlayerPhotoColumnWidth = 48.dp
+internal val PlayerPhotoSize = 40.dp
+internal val PlayerPhotoColumnWidth = 48.dp
 private val PlayerCountryColumnWidth = 64.dp
 private val PlayerEmaColumnWidth = 96.dp
 private const val MaxPlayerPhotoBytes = 5 * 1024 * 1024
@@ -951,7 +951,7 @@ private fun PlayerTableHeader(
 }
 
 @Composable
-private fun PlayerPhotoPlaceholder(size: androidx.compose.ui.unit.Dp) {
+internal fun PlayerPhotoPlaceholder(size: androidx.compose.ui.unit.Dp) {
     Box(
         modifier = Modifier
             .size(size)
