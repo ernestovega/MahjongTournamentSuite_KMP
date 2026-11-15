@@ -107,25 +107,9 @@ internal fun TournamentContent(
     val selectedEditor = selectedTableId?.let { tableEditors[it] }
     val roundTableCount = allTables.count { it.roundId == selectedRoundId }
     val compact = LocalCompactLayout.current
-    Column(
-        modifier = Modifier.fillMaxSize().padding(
-            horizontal = screenLayout.screenGutter,
-            vertical = screenLayout.sectionGap,
-        ),
-        verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
-    ) {
-        RoundTableStrip(
-            rounds = rounds,
-            allTables = allTables,
-            tableEditors = tableEditors,
-            selectedRoundId = selectedRoundId,
-            selectedTableId = selectedTableId,
-            enabled = enabled,
-            roundFocusRequester = roundFocusRequester,
-            onSelectRound = onSelectRound,
-            onSelectTable = onSelectTable,
-        )
-        if (selectedEditor != null && compact) {
+    // The title of the table scrolls with the table, so that it does not take room on a phone.
+    val tableHeader: @Composable (TableManagerEditorState) -> Unit = { selectedEditor ->
+        if (compact) {
             // A phone has no room for the labelled button: the title goes to the start and the button keeps its icon.
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(
@@ -147,7 +131,7 @@ internal fun TournamentContent(
                     }
                 }
             }
-        } else if (selectedEditor != null) {
+        } else {
             // The same space on both sides keeps the title centred when the admin button shows.
             Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Spacer(Modifier.weight(1f))
@@ -172,6 +156,25 @@ internal fun TournamentContent(
                 }
             }
         }
+    }
+    Column(
+        modifier = Modifier.fillMaxSize().padding(
+            horizontal = screenLayout.screenGutter,
+            vertical = screenLayout.sectionGap,
+        ),
+        verticalArrangement = Arrangement.spacedBy(screenLayout.sectionGap),
+    ) {
+        RoundTableStrip(
+            rounds = rounds,
+            allTables = allTables,
+            tableEditors = tableEditors,
+            selectedRoundId = selectedRoundId,
+            selectedTableId = selectedTableId,
+            enabled = enabled,
+            roundFocusRequester = roundFocusRequester,
+            onSelectRound = onSelectRound,
+            onSelectTable = onSelectTable,
+        )
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
             if (selectedEditor != null) {
                 val tableId = selectedEditor.tableId
@@ -187,6 +190,8 @@ internal fun TournamentContent(
                         .verticalScroll(scrollState)
                         .padding(bottom = 96.dp),
                 ) {
+                    tableHeader(selectedEditor)
+                    Spacer(Modifier.height(screenLayout.sectionGap))
                     CompositionLocalProvider(LocalStickyHeaderHost provides stickyHost) {
                         TableEditorPanel(
                             editor = selectedEditor,

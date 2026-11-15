@@ -98,7 +98,12 @@ internal fun TableResultsCard(
         verticalSpacing = 20.dp,
         centerTitle = true,
         titleActionAtStart = true,
-        titleAction = { HandSummaryTitleAction(editor, otherTablesBestHandScores) },
+        // Without the summary and the Edit seats button, the switch is alone and goes to the centre on a phone.
+        titleAction = if (editor.hasCompleteSeatPositions || hasHandSummary(editor, otherTablesBestHandScores)) {
+            { HandSummaryTitleAction(editor, otherTablesBestHandScores) }
+        } else {
+            null
+        },
         actions = {
             Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg), verticalAlignment = Alignment.CenterVertically) {
                 if (editor.hasCompleteSeatPositions) {

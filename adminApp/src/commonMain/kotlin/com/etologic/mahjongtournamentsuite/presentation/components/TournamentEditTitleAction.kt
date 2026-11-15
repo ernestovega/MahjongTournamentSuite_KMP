@@ -2,14 +2,9 @@ package com.etologic.mahjongtournamentsuite.presentation.components
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import com.etologic.mahjongtournamentsuite.presentation.components.FocusedIconButton as IconButton
 import com.etologic.mahjongtournamentsuite.presentation.store.AppMemoryStore
 import mahjongtournamentsuite.adminapp.generated.resources.Res
 import mahjongtournamentsuite.adminapp.generated.resources.edit_tournament
@@ -17,37 +12,41 @@ import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.koinInject
 
 /**
- * Pencil button for the top bar title. It opens the edit tournament dialog.
+ * Pencil button for the top bar title. [onEdit] opens the edit tournament dialog, see [TournamentEditDialog].
  * It shows only for admin and editor users, and only when the tournament is loaded.
+ * On a phone it can be an option of the three-dots menu. The menu closes on the click, so the screen keeps the dialog.
  */
 @Composable
 fun TournamentEditTitleAction(
     tournamentId: String,
-    onDeleted: () -> Unit,
+    onEdit: () -> Unit,
 ) {
     val store = koinInject<AppMemoryStore>()
     val adminStatus by store.adminStatus.collectAsState()
     val tournaments by store.tournaments.collectAsState()
-    var showDialog by remember { mutableStateOf(false) }
+    if (adminStatus == null || tournaments.none { it.id == tournamentId }) return
 
-    val tournament = tournaments.firstOrNull { it.id == tournamentId }
-    if (adminStatus == null || tournament == null) return
+    AppTopBarButton(
+        text = stringResource(Res.string.edit_tournament),
+        icon = Icons.Default.Edit,
+        onClick = onEdit,
+        showLabel = false,
+    )
+}
 
-    IconButton(onClick = { showDialog = true }) {
-        Icon(
-            imageVector = Icons.Default.Edit,
-            contentDescription = stringResource(Res.string.edit_tournament),
-        )
-    }
-
-    if (showDialog) {
-        EditTournamentDialog(
-            tournament = tournament,
-            onDismiss = { showDialog = false },
-            onDeleted = {
-                showDialog = false
-                onDeleted()
-            },
-        )
-    }
+/** The edit tournament dialog of [TournamentEditTitleAction]. */
+@Composable
+fun TournamentEditDialog(
+    tournamentId: String,
+    onDismiss: () -> Unit,
+    onDeleted: () -> Unit,
+) {
+    val store = koinInject<AppMemoryStore>()
+    val tournaments by store.tournaments.collectAsState()
+    val tournament = tournaments.firstOrNull { it.id == tournamentId } ?: return
+    EditTournamentDialog(
+        tournament = tournament,
+        onDismiss = onDismiss,
+        onDeleted = onDeleted,
+    )
 }
