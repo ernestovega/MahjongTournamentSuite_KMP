@@ -1,6 +1,9 @@
 package com.etologic.mahjongtournamentsuite.presentation.screenshots
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import com.etologic.mahjongtournamentsuite.domain.model.AppResult
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentTable
+import com.etologic.mahjongtournamentsuite.domain.repository.RefreshMode
 import com.etologic.mahjongtournamentsuite.presentation.StatisticsRoute
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
 import com.etologic.mahjongtournamentsuite.presentation.screen.ActivityScreen
@@ -18,7 +21,9 @@ import com.etologic.mahjongtournamentsuite.presentation.screen.TimerStandaloneSc
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentScreen
 import com.etologic.mahjongtournamentsuite.presentation.screen.TournamentsScreen
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotAuthRepository
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
+import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotTournamentRepository
 import kotlin.test.Test
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -37,6 +42,14 @@ class AdminScreensScreenshotTest {
 
     @Test
     fun players() = adminScreenshots("players", ready = { waitForText("04010001", substring = true) }) { nav -> PlayersScreen(nav, ONGOING) }
+
+    /** A long tournament: the round and table strip under each player scrolls sideways when the rounds do not fit. */
+    @Test
+    fun playersManyRounds() = adminScreenshots(
+        "players-many-rounds",
+        modules = { adminModules(tournaments = ManyRoundsTournamentRepository()) },
+        ready = { waitForText("04010001", substring = true) },
+    ) { nav -> PlayersScreen(nav, ONGOING) }
 
     @Test
     fun teams() = adminScreenshots("teams", ready = { waitForText("Red Dragons", substring = true) }) { nav -> TeamsScreen(nav, ONGOING) }
@@ -81,4 +94,17 @@ class AdminScreensScreenshotTest {
 /** A "loaded at" time that does not change between runs. */
 private object FixedClock : Clock {
     override fun now(): Instant = Instant.parse("2026-05-16T10:00:00Z")
+}
+
+/** The tables of [ONGOING] repeated over 24 rounds, with the table numbers shuffled so every round differs. */
+private class ManyRoundsTournamentRepository : ScreenshotTournamentRepository() {
+    override suspend fun listTournamentTables(tournamentId: String, roundId: Int?, refreshMode: RefreshMode): AppResult<List<TournamentTable>> {
+        val base = ScreenshotData.tables(tournamentId)
+        val tables = (1..24).flatMap { round ->
+            base.filter { it.roundId == (round - 1) % 4 + 1 }.map { table ->
+                table.copy(roundId = round, tableId = (table.tableId * 7 + round * 5) % 40 + 1)
+            }
+        }
+        return AppResult.Success(tables.filter { roundId == null || it.roundId == roundId })
+    }
 }
