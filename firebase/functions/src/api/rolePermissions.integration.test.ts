@@ -9,6 +9,9 @@ import { requireAuth } from "./middleware/requireAuth";
 import { requireTournamentEditor } from "./middleware/requireTournamentEditor";
 import { buildApp, MOUNTED_ROUTERS } from "./app";
 import { seedTournament } from "../testing/firestoreFixtures";
+import { getGlobalDataVersions } from "../services/dataVersionsService";
+import { setGlobalUserRole } from "../services/usersService";
+import { upsertTournamentMember } from "../services/membersService";
 import { createAccount, signInTestAccount, requireAuthEmulator, startServer, type TestAccount, type TestServer } from "../testing/authFixtures";
 
 /**
@@ -454,6 +457,20 @@ describe("tournament rules for assigned editors", () => {
     admin = await createAccount({ role: "ADMIN" });
   });
   after(async () => { await server.close(); });
+
+  it("an account that just became an editor lists its tournaments with the token it already has", async () => {
+    const promoted = await createAccount({ role: "PLAYER" });
+    const before = (await getGlobalDataVersions()).tournaments.revision;
+    await setGlobalUserRole(promoted.uid, "EDITOR");
+    await upsertTournamentMember({ tournamentId: t1, uid: promoted.uid });
+    assert.ok((await getGlobalDataVersions()).tournaments.revision > before, "cached tournament lists become old");
+
+    // The token was issued while the account was a player, so it has no editor claim.
+    const list = await server.request("GET", "/tournaments", { token: promoted.token });
+    assert.equal(list.status, 200);
+    const ids = (list.body as { tournaments: Array<{ id: string }> }).tournaments.map((tournament) => tournament.id);
+    assert.deepEqual(ids, [t1]);
+  });
 
   it("an assigned editor cannot add or remove editors, an admin can", async () => {
     const colleague = await createAccount({ role: "EDITOR" });
