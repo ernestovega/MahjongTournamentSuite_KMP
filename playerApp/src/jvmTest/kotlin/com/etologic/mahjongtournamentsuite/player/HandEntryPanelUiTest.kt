@@ -5,6 +5,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -150,14 +151,16 @@ class HandEntryPanelUiTest {
     }
 
     @Test
-    fun whileThePlayersPlayTheyCanMarkTheLastHandThemselves() = runComposeUiTest {
+    fun whileThePlayersPlayAHandIsNotTheLastOne() = runComposeUiTest {
         val repository = RecordingHandRepository()
         show(MatchEndMode.FINISH_HAND, "11:00", repository)
 
         onNodeWithText("Add draw").performClick()
-        onNodeWithText("Last hand of the table").assertIsDisplayed()
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
+        // Only hand 16 and a hand in the extra time end the table. The review has no last-hand box.
+        awaitText("Confirm")
+        onNodeWithText("Last hand", substring = true).assertDoesNotExist()
 
         assertEquals(listOf(false), repository.previews.map { it.isLastHand })
     }
@@ -169,10 +172,10 @@ class HandEntryPanelUiTest {
 
         onNodeWithText("The time is over. You can add the hand in play. After it, the table is completed.").assertIsDisplayed()
         onNodeWithText("Add draw").performClick()
-        onNodeWithText("The time is over. This hand is the last hand of the table.").assertIsDisplayed()
-        onNodeWithText("Last hand of the table").assertDoesNotExist()
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
+        // The hand in the extra time ends the table on its own.
+        awaitText("Confirm")
 
         assertEquals(listOf(true), repository.previews.map { it.isLastHand })
     }
@@ -236,7 +239,7 @@ class HandEntryPanelUiTest {
 
         awaitText("Añadir empate")
         onNodeWithText("Añadir empate").performClick()
-        awaitText("Última mano de la mesa")
+        awaitText("Revisar")
         onNodeWithText("Ningún jugador gana esta mano. Todos los asientos puntúan cero.").assertIsDisplayed()
         onNodeWithText("Revisar").assertIsDisplayed()
         onNodeWithText("Cancelar").assertIsDisplayed()
@@ -339,18 +342,60 @@ class HandEntryPanelUiTest {
     }
 
     @Test
-    fun selfDrawIsTheFirstChoiceOfWhoDiscarded() = runComposeUiTest {
+    fun aWinIsAskedInSmallSteps() = runComposeUiTest {
         show(MatchEndMode.FINISH_HAND, "11:00")
 
         awaitText("Add win")
         onNodeWithText("Add win").performClick()
-        awaitText("Who discarded")
-        onNodeWithText("Self-draw").assertIsDisplayed()
+        // Step 1: a tap on the winner goes on, with no OK button.
+        awaitText("Who won?")
+        onNodeWithText("Who discarded?").assertDoesNotExist()
         onAllNodesWithText("Player 2").onFirst().performClick()
-        onNodeWithText("Hand score").assertIsDisplayed()
-        // A self-drawn hand is never a chicken hand, so the choice hides it.
-        onNodeWithText("Chicken hand").assertIsDisplayed()
+        // Step 2: Self-draw or one of the other three players.
+        awaitText("Who discarded?")
         onNodeWithText("Self-draw").performClick()
+        // Step 3: the score. A self-drawn hand is never a chicken hand.
+        awaitText("Hand score")
         onNodeWithText("Chicken hand").assertDoesNotExist()
+        onNodeWithText("Back").performClick()
+        awaitText("Who discarded?")
+        onAllNodesWithText("Player 1").onFirst().performClick()
+        awaitText("Hand score")
+        onNodeWithText("Chicken hand").assertIsDisplayed()
+    }
+
+    @Test
+    fun onAPhoneTheScoreIsTypedOnTheNumpad() = runComposeUiTest {
+        val view = view(MatchEndMode.FINISH_HAND, 0, "11:00")
+        setContent {
+            MtsTheme(useDarkTheme = false) {
+                KoinApplication(application = { modules(module { single { PlayerTablePresenter(RecordingHandRepository()) } }) }) {
+                    androidx.compose.runtime.CompositionLocalProvider(LocalNumpadEntry provides true) {
+                        HandEntryPanel(
+                            tournamentId = "t",
+                            roundId = 1,
+                            tableId = 1,
+                            view = view,
+                            table = view.tables.single(),
+                            now = LocalDateTime.parse("2026-10-10T11:00"),
+                            onSaved = {},
+                        )
+                    }
+                }
+            }
+        }
+        awaitText("Add win")
+        onNodeWithText("Add win").performClick()
+        awaitText("Who won?")
+        onAllNodesWithText("Player 2").onFirst().performClick()
+        awaitText("Who discarded?")
+        onNodeWithText("Self-draw").performClick()
+        awaitText("Hand score")
+        // A leading zero does nothing. Delete takes the last digit away.
+        listOf("0", "1", "2", "5").forEach { key -> onAllNodesWithText(key).let { nodes -> nodes[nodes.fetchSemanticsNodes().size - 1] }.performClick() }
+        onNodeWithContentDescription("Delete").performClick()
+        onAllNodesWithText("12").onFirst().assertIsDisplayed()
+        onNodeWithText("Clear").performClick()
+        assertEquals(0, onAllNodesWithText("12").fetchSemanticsNodes().size)
     }
 }

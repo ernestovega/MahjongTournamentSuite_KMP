@@ -85,6 +85,13 @@ class RoundTimerController(
     )
     val state: StateFlow<RoundTimerState> = mutableState.asStateFlow()
 
+    /**
+     * True until the first clocks of the server arrive, unless the administrator picks a round or presses a button first.
+     * The round of the opening comes from the clocks that the tournament screen knew, which can be old: the first
+     * clocks of the server move the Timer to the round whose clock runs.
+     */
+    private var followRunningRound = tournamentId != null
+
     /** Loads the tournament and the clocks. The screen calls it at start and then every few seconds. */
     suspend fun refresh() {
         val tournamentId = tournamentId ?: return
@@ -115,6 +122,7 @@ class RoundTimerController(
     }
 
     fun selectRound(roundId: Int) {
+        followRunningRound = false
         mutableState.update { it.copy(roundId = roundId.coerceIn(1, it.numRounds.coerceAtLeast(1)), confirmReset = false) }
     }
 
@@ -140,6 +148,7 @@ class RoundTimerController(
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }
 
     private suspend fun perform(action: RoundClockAction) {
+        followRunningRound = false
         track(action)
         if (tournamentId == null) {
             val nowMs = deviceNowMs()
@@ -203,9 +212,23 @@ class RoundTimerController(
     private fun apply(clocks: RoundClocks, sentAtDeviceMs: Long) {
         val receivedAt = deviceNowMs()
         val offset = clocks.serverNowMs - (sentAtDeviceMs + receivedAt) / 2
-        mutableState.update { it.copy(clocks = clocks.clocks, serverOffsetMs = offset, loadFailed = false) }
+        val follow = followRunningRound
+        followRunningRound = false
+        mutableState.update { state ->
+            val running = if (follow) clocks.clocks.runningRound(state.durationMinutes, clocks.serverNowMs) else null
+            state.copy(
+                clocks = clocks.clocks,
+                serverOffsetMs = offset,
+                loadFailed = false,
+                roundId = running?.coerceIn(1, state.numRounds.coerceAtLeast(1)) ?: state.roundId,
+            )
+        }
     }
 }
+
+/** The highest round whose clock runs or is paused before the end of its time, or null. */
+internal fun List<RoundClock>.runningRound(durationMinutes: Int, nowMs: Long): Int? = filter { it.remainingMs(durationMinutes, nowMs) > 0 }
+    .maxOfOrNull { it.roundId }
 
 /** The clocks after an action that the server did not take yet. The server does the same on its side later. */
 internal fun List<RoundClock>.applyLocally(pending: PendingClockAction, durationMinutes: Int, serverNowMs: Long): List<RoundClock> {

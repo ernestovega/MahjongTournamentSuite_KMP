@@ -65,7 +65,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.clickButton("Add draw")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.waitForText("Confirm and save")
+        c.waitForText("Confirm")
         c.clickButton("Edit")
         c.waitForText("No player wins this hand. Every seat scores zero.")
     }
@@ -75,7 +75,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         openActivePlayerTable()
         c.clickButton("Add draw")
         c.clickButton("Review")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
         c.waitForText("13/16", substring = true)
     }
 
@@ -83,13 +83,14 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun savedSelfDrawWinMovesTheTableToTheNextHand() {
         openActivePlayerTable()
         c.clickButton("Add win")
-        c.waitForText("Winner")
-        c.pickSeat("South", which = 0)
+        c.waitForText("Who won?")
+        c.pickPlayer(1)
+        c.waitForText("Who discarded?")
         c.clickButton("Self-draw")
         c.field("Hand score").performTextInput("12")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
         c.waitForText("13/16", substring = true)
     }
 
@@ -97,21 +98,26 @@ class PlayerHandEntryTest : PlayerE2eTest() {
     fun savedDiscardWinMovesTheTableToTheNextHand() {
         openActivePlayerTable()
         c.clickButton("Add win")
-        c.waitForText("Who discarded")
-        c.pickSeat("South", which = 0)
-        c.pickSeat("East", which = 1)
+        c.waitForText("Who won?")
+        c.pickPlayer(1)
+        c.waitForText("Who discarded?")
+        c.pickPlayer(0)
         c.field("Hand score").performTextInput("10")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
         c.waitForText("13/16", substring = true)
     }
 
     @Test
-    fun winDialogShowsWinnerLoserScoreAndChickenFields() {
+    fun winDialogAsksWinnerLoserAndScoreInSteps() {
         openActivePlayerTable()
         c.clickButton("Add win")
-        listOf("Winner", "Self-draw", "Who discarded", "Hand score", "Chicken hand").forEach { c.waitForText(it) }
+        c.waitForText("Who won?")
+        c.pickPlayer(1)
+        listOf("Who discarded?", "Self-draw").forEach { c.waitForText(it) }
+        c.pickPlayer(0)
+        listOf("Hand score", "Chicken hand").forEach { c.waitForText(it) }
     }
 
     @Test

@@ -97,11 +97,11 @@
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TableSeats.kt">
         <error line="3" column="1" source="standard:import-ordering" />
         <error line="13" column="1" source="standard:no-unused-imports" />
-        <error line="41" column="1" source="standard:no-unused-imports" />
-        <error line="43" column="1" source="standard:no-unused-imports" />
-        <error line="131" column="57" source="standard:function-signature" />
-        <error line="308" column="5" source="standard:spacing-between-declarations-with-comments" />
-        <error line="456" column="90" source="standard:function-signature" />
+        <error line="40" column="1" source="standard:no-unused-imports" />
+        <error line="42" column="1" source="standard:no-unused-imports" />
+        <error line="130" column="57" source="standard:function-signature" />
+        <error line="319" column="5" source="standard:spacing-between-declarations-with-comments" />
+        <error line="472" column="90" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/TopBarMenu.kt">
         <error line="3" column="1" source="standard:import-ordering" />

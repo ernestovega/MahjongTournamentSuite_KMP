@@ -17,6 +17,7 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onLast
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
@@ -30,6 +31,7 @@ import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.isEnabled
 import androidx.compose.ui.test.isRoot
+import com.etologic.mahjongtournamentsuite.player.PLAYER_CHOICE_TAG
 import org.junit.rules.ExternalResource
 import org.junit.rules.TestWatcher
 import org.junit.runner.Description
@@ -299,15 +301,11 @@ fun ComposeTestRule.scrollListTo(text: String, substring: Boolean = false) {
 }
 
 /**
- * Chooses a seat in a hand dialog. The dialog lists the seats of the winner first and then the seats of the loser.
- * The wind icons carry the wind name as description. The page behind the dialog has icons too, so the dialog entries
- * are the last ones in the tree.
- * [which] is 0 for the winner list and 1 for the loser list.
+ * Chooses the player at [index] in a step of a hand dialog: the winner or who discarded. The dialogs show no winds,
+ * so the players are found by their tag, in the order of the dialog.
  */
-fun ComposeTestRule.pickSeat(wind: String, which: Int) {
-    val nodes = onAllNodes(hasContentDescription(wind), useUnmergedTree = true)
-    val count = nodes.fetchSemanticsNodes().size
-    nodes[count - 2 + which].performClick()
+fun ComposeTestRule.pickPlayer(index: Int) {
+    onAllNodesWithTag(PLAYER_CHOICE_TAG)[index].performClick()
 }
 
 /** Presses the last button with this text. A dialog is the last one in the tree, so this reaches its button, not the page's. */

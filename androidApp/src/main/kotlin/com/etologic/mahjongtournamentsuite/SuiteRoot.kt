@@ -104,7 +104,8 @@ fun SuiteRoot(
                     // The telemetry of each part starts with the name of the part. See AndroidTelemetry.
                     AndroidPlatformContext.currentApp = "player"
                     // The app has one version for both parts: the admin version. See docs/versioning.md.
-                    PlayerApp(appVersion = AppVersion.admin, openSignIn = playerSignIn, isolatedKoin = true)
+                    // Phones and tablets type the score of a hand on the numpad of the app, not on the system keyboard.
+                    PlayerApp(appVersion = AppVersion.admin, openSignIn = playerSignIn, numpadEntry = true, isolatedKoin = true)
                 }
             }
             SuiteSection.ADMIN -> key(adminAccount) {

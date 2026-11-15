@@ -41,6 +41,9 @@ import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.HorizontalRule
 import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.HourglassTop
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedDate
+import com.etologic.mahjongtournamentsuite.presentation.util.formatLocalizedTime
+import mahjongtournamentsuite.playerapp.generated.resources.round_starts_at
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.TableRestaurant
 import androidx.compose.material.icons.filled.Leaderboard
@@ -207,7 +210,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_all
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_me
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_team
 import mahjongtournamentsuite.playerapp.generated.resources.table_details
-import mahjongtournamentsuite.playerapp.generated.resources.table_done
 import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
 import mahjongtournamentsuite.playerapp.generated.resources.table_hands_done
 import mahjongtournamentsuite.playerapp.generated.resources.table_n
@@ -1743,12 +1745,17 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             TableSeatsView(
                 seats = table.seatsFor(view, withLevelChange = true),
                 handNumber = handNumber,
-                centerLabel = if (complete) stringResource(Res.string.table_done) else stringResource(Res.string.table_hand_progress, handNumber, table.hands.size),
+                // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
+                centerLabel = when {
+                    complete -> ""
+                    view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
+                    else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
+                },
                 showPoints = complete,
                 windsKnown = table.seatsAssigned,
                 showIds = details,
-                // The differences need hands, also on a finished table. The organizers can hide them for the whole tournament.
-                diffsAvailable = view.tournament.showTableDiffs && table.doneHands > 0,
+                // The switch shows whenever the tournament allows the differences, also before the first hand and on a finished table.
+                diffsAvailable = view.tournament.showTableDiffs,
                 // The time left of the round is at the top left, above the seats.
                 leading = if (complete) null else ({ RoundClockLine(view.tournament, roundId) }),
                 // On a table that takes hands, a tap on a player starts a hand won by that player.
@@ -2015,7 +2022,8 @@ internal fun MessageDialog(message: UiText?) {
 /** The time left of the round, every second, from the clock that the Timer started. Nothing before the Play. */
 @Composable
 private fun RoundClockLine(tournament: Tournament, roundId: Int) {
-    val clock = tournament.clockOf(roundId) ?: return
+    // Before the gong the place of the time left shows when the round starts.
+    val clock = tournament.clockOf(roundId) ?: return RoundStartLine(tournament, roundId)
     val nowMs by produceState(Clock.System.now().toEpochMilliseconds(), clock) {
         while (true) {
             value = Clock.System.now().toEpochMilliseconds()
@@ -2043,6 +2051,31 @@ private fun RoundClockLine(tournament: Tournament, roundId: Int) {
             fontWeight = FontWeight.Bold,
             color = color,
         )
+    }
+}
+
+/**
+ * The planned start of a round that has not started: a clock icon and the time, with the date before it when the round
+ * is not today. Nothing when the round has no planned time.
+ */
+@Composable
+private fun RoundStartLine(tournament: Tournament, roundId: Int) {
+    val schedule = tournament.roundSchedules.firstOrNull { it.roundId == roundId } ?: return
+    val time = schedule.startTime?.ifBlank { null } ?: return
+    val date = schedule.date?.ifBlank { null }
+    val today = tournament.currentVenueDateTime().date.toString()
+    val text = listOfNotNull(
+        date?.takeIf { it != today }?.let { formatLocalizedDate(it, withYear = false) },
+        formatLocalizedTime(time),
+    ).joinToString(" ")
+    val color = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        Modifier.testTag("round-start"),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs),
+    ) {
+        Icon(Icons.Default.Schedule, contentDescription = stringResource(Res.string.round_starts_at), Modifier.size(24.dp), tint = color)
+        Text(text, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, color = color)
     }
 }
 

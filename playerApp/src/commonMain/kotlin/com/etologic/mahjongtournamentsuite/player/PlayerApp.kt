@@ -139,6 +139,8 @@ fun PlayerApp(
     appVersion: String = AppVersion.admin,
     /** True when the admin app sent the user here to sign in. */
     openSignIn: Boolean = false,
+    /** True on a phone or a tablet app: the score of a hand is typed on a numpad of the app, not on the system keyboard. */
+    numpadEntry: Boolean = false,
     /** True in the Android app of the suite, which also holds the admin part. See [PlayerKoin]. */
     isolatedKoin: Boolean = false,
 ) {
@@ -152,6 +154,7 @@ fun PlayerApp(
             LocalAppLogo provides painterResource(Res.drawable.app_logo),
             LocalAppLogoOnDark provides painterResource(Res.drawable.app_logo_dark),
             LocalAdaptiveTopBar provides true,
+            LocalNumpadEntry provides numpadEntry,
             LocalFeatureFlags provides koinInject<FeatureFlagsRepository>().let { repository ->
                 produceState(FeatureFlags()) { value = repository.load() }.value
             },

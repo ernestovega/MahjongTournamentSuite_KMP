@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -54,6 +53,7 @@ import mahjongtournamentsuite.ui.generated.resources.diffs_label
 import mahjongtournamentsuite.ui.generated.resources.diffs_other
 import mahjongtournamentsuite.ui.generated.resources.diffs_self
 import mahjongtournamentsuite.ui.generated.resources.icon_chicken
+import mahjongtournamentsuite.ui.generated.resources.icon_self_draw
 import mahjongtournamentsuite.ui.generated.resources.icon_sad_face
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy
 import mahjongtournamentsuite.ui.generated.resources.icon_trophy_bronze
@@ -64,7 +64,6 @@ import mahjongtournamentsuite.ui.generated.resources.icon_wind_south
 import mahjongtournamentsuite.ui.generated.resources.icon_wind_west
 import mahjongtournamentsuite.ui.generated.resources.penalty_n
 import mahjongtournamentsuite.ui.generated.resources.place_1st
-import mahjongtournamentsuite.ui.generated.resources.place_1st_long
 import mahjongtournamentsuite.ui.generated.resources.place_2nd
 import mahjongtournamentsuite.ui.generated.resources.place_3rd
 import mahjongtournamentsuite.ui.generated.resources.points_short
@@ -153,6 +152,17 @@ fun ChickenIcon(size: Dp = 22.dp, modifier: Modifier = Modifier) {
     Icon(
         painter = painterResource(Res.drawable.icon_chicken),
         contentDescription = stringResource(Res.string.chicken_hand),
+        modifier = modifier.size(size),
+        tint = Color.Unspecified,
+    )
+}
+
+/** The explosion of a self-draw. A label beside it says the words, so it has no description of its own. */
+@Composable
+fun SelfDrawIcon(size: Dp = 22.dp, modifier: Modifier = Modifier) {
+    Icon(
+        painter = painterResource(Res.drawable.icon_self_draw),
+        contentDescription = null,
         modifier = modifier.size(size),
         tint = Color.Unspecified,
     )
@@ -256,25 +266,26 @@ fun TableSeatsView(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // The row above the seats: the leading content on the left, and the Diffs switch with its info on the right.
-        if (leading != null || diffsAvailable) {
+        // The row above the seats: the leading content on the left and the Diffs switch with its info on the right.
+        // Without the Diffs switch, the leading content is in the middle.
+        if (diffsAvailable) {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f)) { leading?.invoke() }
-                if (diffsAvailable) {
-                    DiffsInfo()
-                    Row(
-                        Modifier.clickable { showDiffs = !showDiffs },
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
-                        Switch(
-                            checked = showDiffs,
-                            onCheckedChange = { showDiffs = it },
-                            modifier = Modifier.padding(start = 8.dp),
-                        )
-                    }
+                DiffsInfo()
+                Row(
+                    Modifier.clickable { showDiffs = !showDiffs },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
+                    Switch(
+                        checked = showDiffs,
+                        onCheckedChange = { showDiffs = it },
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
                 }
             }
+        } else if (leading != null) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { leading() }
         }
         SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, onPlayerClick)
     }
@@ -325,18 +336,23 @@ private fun SeatsCross(
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             card(3, Modifier.weight(1f))
-            Surface(
-                modifier = Modifier.padding(horizontal = MtsTheme.spacing.sm).size(64.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        centerLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
+            // A blank label hides the circle and keeps its place, so the seats do not move.
+            if (centerLabel.isBlank()) {
+                Box(Modifier.padding(horizontal = MtsTheme.spacing.sm).size(64.dp))
+            } else {
+                Surface(
+                    modifier = Modifier.padding(horizontal = MtsTheme.spacing.sm).size(64.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            centerLabel,
+                            style = MaterialTheme.typography.labelMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
                 }
             }
             card(1, Modifier.weight(1f))
@@ -426,10 +442,8 @@ private fun DiffsTable(diffs: SeatDiffs) {
         stringResource(Res.string.place_2nd) to diffs.pointsToBeSecond,
         stringResource(Res.string.place_3rd) to diffs.pointsToBeThird,
     ).mapNotNull { (label, value) -> value?.let { label to it } }
-    if (rows.isEmpty()) {
-        Text(stringResource(Res.string.place_1st_long), style = MaterialTheme.typography.labelMedium, color = MtsTheme.colors.gain)
-        return
-    }
+    // The first player has nothing to catch up, so the card shows nothing.
+    if (rows.isEmpty()) return
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         DiffsRow("", stringResource(Res.string.diffs_self), stringResource(Res.string.diffs_him), stringResource(Res.string.diffs_other), header = true)
         rows.forEach { (label, value) -> DiffsRow(label, "${value.bySelfPick}", "${value.byDirectHu}", "${value.byIndirectHu}") }
@@ -440,10 +454,12 @@ private fun DiffsTable(diffs: SeatDiffs) {
 private fun DiffsRow(label: String, self: String, him: String, other: String, header: Boolean = false) {
     val style = MaterialTheme.typography.labelSmall
     val color = if (header) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.onSurface
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(label, Modifier.width(26.dp), style = style, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    // The four columns share the width of the card with no gap between them, and every text keeps to one line,
+    // so the table stays short on the narrow cards of a phone.
+    Row(Modifier.widthIn(max = 180.dp).fillMaxWidth()) {
+        Text(label, Modifier.weight(0.8f), style = style, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, softWrap = false)
         listOf(self, him, other).forEach { cell ->
-            Text(cell, Modifier.width(34.dp), style = style, color = color, textAlign = TextAlign.End)
+            Text(cell, Modifier.weight(1f), style = style, color = color, textAlign = TextAlign.Center, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }

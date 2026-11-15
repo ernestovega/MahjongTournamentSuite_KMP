@@ -333,8 +333,47 @@ export class PlayerNames {
   private readonly tables = new Map<string, number[]>();
   private readonly slots = new Map<string, string | null>();
   private readonly names = new Map<string, string>();
+  private readonly emaOfUid = new Map<string, string | null>();
 
   async fill(entries: FeedEntry[]): Promise<void> {
+    await this.fillPlayers(entries);
+    await this.fillPeople(entries);
+  }
+
+  /** The EMA players' names, read once each. */
+  private async loadNames(emaIds: Array<string | null>): Promise<void> {
+    const missing = [...new Set(emaIds)].filter((id): id is string => id !== null && !this.names.has(id));
+    if (missing.length === 0) return;
+    const snapshots = await db.getAll(...missing.map((id) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(id)));
+    snapshots.forEach((snapshot, index) => {
+      const name = snapshot.exists ? `${String(snapshot.get("firstName") ?? "")} ${String(snapshot.get("lastName") ?? "")}`.trim() : "";
+      this.names.set(missing[index], name);
+    });
+  }
+
+  /**
+   * The player app stores `Player <EMA id>` as the name of whoever saved a table, and nothing on a refused save. An
+   * account linked to an EMA player shows that player's name instead.
+   */
+  private async fillPeople(entries: FeedEntry[]): Promise<void> {
+    const uids = [...new Set(entries.map((entry) => entry.uid))]
+      .filter((uid): uid is string => uid !== null && uid !== SCRIPT_UID && uid !== "system" && !this.emaOfUid.has(uid));
+    if (uids.length > 0) {
+      const snapshots = await db.getAll(...uids.map((uid) => db.collection("users").doc(uid)));
+      snapshots.forEach((snapshot, index) => {
+        const emaId = snapshot.exists ? snapshot.get("emaId") : null;
+        this.emaOfUid.set(uids[index], typeof emaId === "string" && emaId !== "" ? emaId : null);
+      });
+    }
+    await this.loadNames([...this.emaOfUid.values()]);
+    for (const entry of entries) {
+      const emaId = entry.uid ? this.emaOfUid.get(entry.uid) : null;
+      const name = emaId ? this.names.get(emaId) : "";
+      if (name) entry.name = name;
+    }
+  }
+
+  private async fillPlayers(entries: FeedEntry[]): Promise<void> {
     const tableKey = (entry: FeedEntry) => `${entry.tournamentId}/${tableVersionKey(entry.roundId ?? 0, entry.tableId ?? 0)}`;
     const tableEntries = entries.filter((entry) => entry.kind === "table" && entry.tournamentId && entry.roundId !== null && entry.tableId !== null);
     const missingTables = [...new Set(tableEntries.map(tableKey))].filter((key) => !this.tables.has(key));
@@ -359,14 +398,7 @@ export class PlayerNames {
         this.slots.set(missingSlots[index], typeof emaId === "string" && emaId !== "" ? emaId : null);
       });
     }
-    const missingPlayers = [...new Set([...this.slots.values()])].filter((id): id is string => id !== null && !this.names.has(id));
-    if (missingPlayers.length > 0) {
-      const snapshots = await db.getAll(...missingPlayers.map((id) => db.collection(EMA_PLAYER_REGISTRY_COLLECTION).doc(id)));
-      snapshots.forEach((snapshot, index) => {
-        const name = snapshot.exists ? `${String(snapshot.get("firstName") ?? "")} ${String(snapshot.get("lastName") ?? "")}`.trim() : "";
-        this.names.set(missingPlayers[index], name);
-      });
-    }
+    await this.loadNames([...this.slots.values()]);
     for (const [entry, keys] of slotsOf) {
       entry.players = keys
         .map((key) => this.slots.get(key))

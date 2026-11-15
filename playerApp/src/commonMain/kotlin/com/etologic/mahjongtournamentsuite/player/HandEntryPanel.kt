@@ -16,8 +16,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.ui.window.DialogProperties
+import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_clear
+import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_delete
+import androidx.compose.foundation.layout.height
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material.icons.filled.EmojiEvents
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
@@ -38,6 +49,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -50,14 +63,15 @@ import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
+import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
-import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
 import com.etologic.mahjongtournamentsuite.presentation.components.signedText
-import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
@@ -87,6 +101,7 @@ import mahjongtournamentsuite.playerapp.generated.resources.chicken_hand
 import mahjongtournamentsuite.playerapp.generated.resources.details_col_hand
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_another_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_draw
+import mahjongtournamentsuite.playerapp.generated.resources.entry_back
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_penalty
 import mahjongtournamentsuite.playerapp.generated.resources.entry_add_win
 import mahjongtournamentsuite.playerapp.generated.resources.entry_check_hand
@@ -96,11 +111,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_confirm_save
 import mahjongtournamentsuite.playerapp.generated.resources.entry_draw_explanation
 import mahjongtournamentsuite.playerapp.generated.resources.entry_edit
 import mahjongtournamentsuite.playerapp.generated.resources.entry_extra_time
-import mahjongtournamentsuite.playerapp.generated.resources.entry_extra_time_last
 import mahjongtournamentsuite.playerapp.generated.resources.entry_from
 import mahjongtournamentsuite.playerapp.generated.resources.entry_hand_score
-import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand
-import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand_note
 import mahjongtournamentsuite.playerapp.generated.resources.entry_loser
 import mahjongtournamentsuite.playerapp.generated.resources.entry_others_each
 import mahjongtournamentsuite.playerapp.generated.resources.entry_others_get
@@ -141,6 +153,9 @@ private const val MAX_PENALTIES = 5
 
 /** The three things that a player can add to the table. */
 private enum class EntryMode { WIN, DRAW, PENALTY }
+
+/** The steps of a win: one small dialog each. The review comes after the score. */
+private enum class WinStep { WINNER, LOSER, SCORE }
 
 /**
  * Entry for the player who writes the scores down. It has three buttons: add a win, add a draw and add a penalty.
@@ -185,7 +200,6 @@ fun HandEntryPanel(
     var penaltyReview by remember { mutableStateOf(false) }
     var score by remember { mutableStateOf("") }
     var chicken by remember { mutableStateOf(false) }
-    var lastHand by remember { mutableStateOf(false) }
     // When the time is over, the players can record the hand in play. That hand is the last hand of the table.
     val phase = view.matchPhaseOf(table.roundId, now)
     val extraTime = phase == MatchPhase.EXTRA_TIME
@@ -193,6 +207,7 @@ fun HandEntryPanel(
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<UiText?>(null) }
     var modeName by rememberSaveable { mutableStateOf("") }
+    var winStep by remember { mutableStateOf(WinStep.WINNER) }
     val mode = EntryMode.entries.firstOrNull { it.name == modeName }
     val isDraw = mode == EntryMode.DRAW
     // What the table shows when the server accepted the data. The dialog stays open until the table shows something new.
@@ -209,14 +224,14 @@ fun HandEntryPanel(
         (selfDraw || (loser != null && loser != winner)) &&
         (!chicken || (!selfDraw && !chickenTooHigh))
     fun proposal() = if (isDraw) {
-        HandProposal(winnerSlotId = null, loserSlotId = null, score = 0, isLastHand = lastHand || extraTime)
+        HandProposal(winnerSlotId = null, loserSlotId = null, score = 0, isLastHand = extraTime)
     } else {
         HandProposal(
             winnerSlotId = winner!!,
             loserSlotId = if (selfDraw) null else loser,
             score = parsed!!,
             isChickenHand = chicken,
-            isLastHand = lastHand || extraTime,
+            isLastHand = extraTime,
         )
     }
 
@@ -229,10 +244,10 @@ fun HandEntryPanel(
         penaltyDrafts.clear()
         score = ""
         chicken = false
-        lastHand = false
         awaitingKey = null
         message = null
         modeName = ""
+        winStep = WinStep.WINNER
     }
 
     // The table is not what the player saw, for example because a staff member saved a hand.
@@ -265,7 +280,6 @@ fun HandEntryPanel(
 
     // The winds turn after every hand, so the wind follows the hand in play.
     val handInPlay = minOf(table.doneHands + 1, 16)
-    fun windOf(slot: Int): SeatWind = windOfChair(chairOf(seats.indexOf(slot), handInPlay), handInPlay)
 
     if (table.table.useTotalsOnly) {
         Text(stringResource(Res.string.entry_totals_only), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -341,94 +355,150 @@ fun HandEntryPanel(
             winner = slot
             if (loser == slot) loser = null
             modeName = EntryMode.WIN.name
+            // The tap on the seat already says who won.
+            winStep = WinStep.LOSER
         }
         onPreselectHandled()
     }
 
     val review = preview
     val saving = busy || awaitingKey != null
-    if ((mode == EntryMode.WIN || mode == EntryMode.DRAW) && review == null) {
+
+    // The server computes the result of the hand. The review shows it, and a change of "last hand" asks again,
+    // because the last hand also gives the points of the table.
+    fun requestPreview() {
+        scope.launch {
+            busy = true
+            message = null
+            when (val result = presenter.preview(tournamentId, roundId, tableId, proposal())) {
+                is AppResult.Success -> preview = result.value
+                is AppResult.Failure ->
+                    if (result.error is AppError.Conflict) {
+                        tableChanged(result.error.toUiText())
+                    } else {
+                        message = result.error.toUiText()
+                    }
+            }
+            busy = false
+        }
+    }
+
+    val entryTitle: @Composable () -> Unit = {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
+            HandNumberLabel(handInPlay)
+        }
+    }
+    val cancelButton: @Composable () -> Unit = {
+        TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) }
+    }
+    fun backButton(to: WinStep): @Composable () -> Unit = {
+        TextButton(onClick = { winStep = to }) { Text(stringResource(Res.string.entry_back)) }
+    }
+    if (mode == EntryMode.DRAW && review == null) {
         TrackedDialog("EntryAddDraw") {
             AlertDialog(
                 onDismissRequest = { finishEntry() },
-                title = {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
-                        HandLabel(handInPlay)
-                    }
-                },
+                title = entryTitle,
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        if (!isDraw) {
-                            SectionLabel(stringResource(Res.string.entry_winner))
-                            PlayerChoices(seatIds, winner, view, ::windOf) { slot ->
-                                winner = slot
-                                if (loser == slot) loser = null
+                        Text(stringResource(Res.string.entry_draw_explanation))
+                        message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
+                    }
+                },
+                confirmButton = {
+                    Button(enabled = !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                },
+                dismissButton = cancelButton,
+            )
+        }
+    }
+    // A win is asked in small steps: who won, who discarded, and the score. A tap on a player goes to the next step.
+    if (mode == EntryMode.WIN && review == null) {
+        TrackedDialog(
+            when (winStep) {
+                WinStep.WINNER -> "EntryWinWinner"
+                WinStep.LOSER -> "EntryWinLoser"
+                WinStep.SCORE -> "EntryWinScore"
+            },
+        ) {
+            AlertDialog(
+                onDismissRequest = { finishEntry() },
+                title = entryTitle,
+                text = {
+                    Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        when (winStep) {
+                            WinStep.WINNER -> {
+                                StepQuestion(stringResource(Res.string.entry_winner))
+                                PlayerChoices(byWind(seats, handInPlay), winner, view, columns = 1, seats = seats, handNumber = handInPlay) { slot ->
+                                    winner = slot
+                                    if (loser == slot) loser = null
+                                    winStep = WinStep.LOSER
+                                }
                             }
-                            // Self-draw is the first choice of who discarded: nobody did.
-                            SectionLabel(stringResource(Res.string.entry_loser))
-                            PlayerChoices(
-                                seatIds.filter { it != winner },
-                                if (selfDraw) null else loser,
-                                view,
-                                ::windOf,
-                                selfDraw = SelfDrawChoice(stringResource(Res.string.entry_self_draw), selfDraw) {
+                            WinStep.LOSER -> {
+                                WinSoFar(view, winner)
+                                StepQuestion(stringResource(Res.string.entry_loser))
+                                SelfDrawButton(stringResource(Res.string.entry_self_draw)) {
                                     selfDraw = true
                                     loser = null
                                     chicken = false
-                                },
-                            ) {
-                                selfDraw = false
-                                loser = it
+                                    winStep = WinStep.SCORE
+                                }
+                                HorizontalDivider()
+                                PlayerChoices(
+                                    byWind(seats, handInPlay).filter { it != winner },
+                                    if (selfDraw) null else loser,
+                                    view,
+                                    columns = 1,
+                                    seats = seats,
+                                    handNumber = handInPlay,
+                                ) {
+                                    selfDraw = false
+                                    loser = it
+                                    winStep = WinStep.SCORE
+                                }
                             }
-                            OutlinedTextField(
-                                value = score,
-                                onValueChange = { score = it.filter(Char::isDigit) },
-                                label = { Text(stringResource(Res.string.entry_hand_score)) },
-                                singleLine = true,
-                                isError = chickenTooHigh,
-                                supportingText = if (chickenTooHigh) {
-                                    { Text(stringResource(Res.string.entry_chicken_limit)) }
-                                } else {
-                                    null
-                                },
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }) { chicken = it }
-                        } else {
-                            Text(stringResource(Res.string.entry_draw_explanation))
-                        }
-                        if (extraTime) {
-                            Text(stringResource(Res.string.entry_extra_time_last))
-                        } else if (handInPlay < 16) {
-                            CheckRow(stringResource(Res.string.entry_last_hand), lastHand) { lastHand = it }
+                            WinStep.SCORE -> {
+                                WinSoFar(view, winner, loser = if (selfDraw) null else loser, selfDraw = selfDraw)
+                                // On a phone or a tablet app the numpad below types the score, so the system keyboard never
+                                // opens: the field cannot take the focus.
+                                val numpad = LocalNumpadEntry.current
+                                OutlinedTextField(
+                                    value = score,
+                                    onValueChange = { score = it.filter(Char::isDigit) },
+                                    label = { Text(stringResource(Res.string.entry_hand_score)) },
+                                    singleLine = true,
+                                    readOnly = numpad,
+                                    isError = chickenTooHigh,
+                                    supportingText = if (chickenTooHigh) {
+                                        { Text(stringResource(Res.string.entry_chicken_limit)) }
+                                    } else {
+                                        null
+                                    },
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    modifier = Modifier.fillMaxWidth().then(if (numpad) Modifier.focusProperties { canFocus = false } else Modifier),
+                                )
+                                // A self-drawn hand is never a chicken hand.
+                                if (!selfDraw) CheckRow(stringResource(Res.string.chicken_hand), chicken, icon = { ChickenIcon(20.dp) }) { chicken = it }
+                                if (numpad) ScoreNumpad(score) { score = it }
+                            }
                         }
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
                 },
                 confirmButton = {
-                    Button(
-                        enabled = valid && !busy,
-                        onClick = {
-                            scope.launch {
-                                busy = true
-                                message = null
-                                when (val result = presenter.preview(tournamentId, roundId, tableId, proposal())) {
-                                    is AppResult.Success -> preview = result.value
-                                    is AppResult.Failure ->
-                                        if (result.error is AppError.Conflict) {
-                                            tableChanged(result.error.toUiText())
-                                        } else {
-                                            message = result.error.toUiText()
-                                        }
-                                }
-                                busy = false
-                            }
-                        },
-                    ) { Text(stringResource(Res.string.entry_review)) }
+                    if (winStep == WinStep.SCORE) {
+                        Button(enabled = valid && !busy, onClick = { requestPreview() }) { Text(stringResource(Res.string.entry_review)) }
+                    } else {
+                        cancelButton()
+                    }
                 },
-                dismissButton = { TextButton(onClick = { finishEntry() }) { Text(stringResource(Res.string.action_cancel)) } },
+                dismissButton = when (winStep) {
+                    WinStep.WINNER -> null
+                    WinStep.LOSER -> backButton(WinStep.WINNER)
+                    WinStep.SCORE -> backButton(WinStep.LOSER)
+                },
             )
         }
     }
@@ -441,49 +511,53 @@ fun HandEntryPanel(
                         message = null
                     }
                 },
+                // Wider than a usual dialog on a phone, so the last-hand box fits on the line of the buttons.
+                modifier = Modifier.padding(horizontal = 16.dp).widthIn(max = 560.dp),
+                properties = DialogProperties(usePlatformDefaultWidth = false),
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(Res.string.entry_check_hand))
-                        HandLabel(review.handId)
+                        HandNumberLabel(review.handId)
                     }
                 },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
+                        ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, extraTime)
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_hand))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
                 },
+                // Hand 16 and a hand in the extra time end the table on their own. No other hand is the last one.
                 confirmButton = {
-                    Button(
-                        enabled = !saving,
-                        onClick = {
-                            scope.launch {
-                                busy = true
-                                message = null
-                                when (val result = presenter.record(tournamentId, roundId, tableId, proposal(), review.tableVersion)) {
-                                    is AppResult.Success -> {
-                                        awaitingKey = progressKey
-                                        onSaved()
-                                    }
-                                    is AppResult.Failure ->
-                                        if (result.error is AppError.Conflict) {
-                                            tableChanged(result.error.toUiText())
-                                        } else {
-                                            message = result.error.toUiText()
-                                            preview = null
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextButton(enabled = !saving, onClick = {
+                            preview = null
+                            message = null
+                        }) { Text(stringResource(Res.string.entry_edit)) }
+                        Button(
+                            enabled = !saving,
+                            onClick = {
+                                scope.launch {
+                                    busy = true
+                                    message = null
+                                    when (val result = presenter.record(tournamentId, roundId, tableId, proposal(), review.tableVersion)) {
+                                        is AppResult.Success -> {
+                                            awaitingKey = progressKey
+                                            onSaved()
                                         }
+                                        is AppResult.Failure ->
+                                            if (result.error is AppError.Conflict) {
+                                                tableChanged(result.error.toUiText())
+                                            } else {
+                                                message = result.error.toUiText()
+                                                preview = null
+                                            }
+                                    }
+                                    busy = false
                                 }
-                                busy = false
-                            }
-                        },
-                    ) { Text(stringResource(Res.string.entry_confirm_save)) }
-                },
-                dismissButton = {
-                    TextButton(enabled = !saving, onClick = {
-                        preview = null
-                        message = null
-                    }) { Text(stringResource(Res.string.entry_edit)) }
+                            },
+                        ) { Text(stringResource(Res.string.entry_confirm_save)) }
+                    }
                 },
             )
         }
@@ -501,7 +575,6 @@ fun HandEntryPanel(
                                 draft = draft,
                                 seats = seats,
                                 view = view,
-                                windOf = ::windOf,
                                 onChange = { penaltyDrafts[index] = it },
                                 onRemove = {
                                     penaltyDrafts.removeAt(index)
@@ -545,7 +618,7 @@ fun HandEntryPanel(
                 title = { Text(stringResource(Res.string.entry_check_penalty)) },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        penaltyEntries.forEach { PenaltyLine(it, view, seats, ::windOf) }
+                        penaltyEntries.forEach { PenaltyLine(it, view, seats) }
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_penalty))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
@@ -596,10 +669,9 @@ private fun SavingRow(waitingForTable: Boolean, text: String) {
 
 /** One penalty in the review: who loses the points and who receives them. */
 @Composable
-private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats: List<Int?>, windOf: (Int) -> SeatWind) {
+private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats: List<Int?>) {
     val slot = seats.getOrNull(penalty.seatIndex)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (slot != null) WindIcon(windOf(slot), size = 24.dp)
         Text(view.firstNameOf(slot), Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1)
         Text("-${penalty.amount}", style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
         if (penalty.shared) {
@@ -613,25 +685,155 @@ private fun SectionLabel(text: String) {
     Text(text, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
-/** Two players per row. Each choice shows the wind icon and the first name. */
+/** True where the score of a hand is typed on [ScoreNumpad]: the phone and tablet apps, not the web. */
+val LocalNumpadEntry = staticCompositionLocalOf { false }
+
+/** The longest score the numpad types. */
+private const val NUMPAD_MAX_DIGITS = 4
+
+/**
+ * A numpad for the score of a hand: 1 to 9, then clear, 0 and delete. The keys answer at once, with no debounce,
+ * so fast typing keeps every digit.
+ */
+@Composable
+private fun ScoreNumpad(value: String, onChange: (String) -> Unit) {
+    val keys = listOf("1", "2", "3", "4", "5", "6", "7", "8", "9", NUMPAD_CLEAR, "0", NUMPAD_DELETE)
+    Column(Modifier.fillMaxWidth().testTag(SCORE_NUMPAD_TAG), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        keys.chunked(3).forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                row.forEach { key ->
+                    val isDigit = key.first().isDigit()
+                    Surface(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(52.dp)
+                            .clickable {
+                                onChange(
+                                    when (key) {
+                                        NUMPAD_CLEAR -> ""
+                                        NUMPAD_DELETE -> value.dropLast(1)
+                                        // No leading zero, and no more digits than a score has.
+                                        else -> if (value.length >= NUMPAD_MAX_DIGITS || (value.isEmpty() && key == "0")) value else value + key
+                                    },
+                                )
+                            },
+                        shape = MaterialTheme.shapes.medium,
+                        color = if (isDigit) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.surfaceContainerHighest,
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                    ) {
+                        Box(contentAlignment = Alignment.Center) {
+                            when (key) {
+                                NUMPAD_DELETE -> Icon(
+                                    Icons.AutoMirrored.Filled.Backspace,
+                                    contentDescription = stringResource(Res.string.entry_numpad_delete),
+                                    Modifier.size(24.dp),
+                                )
+                                NUMPAD_CLEAR -> Text(stringResource(Res.string.entry_numpad_clear), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                                else -> Text(key, style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+private const val NUMPAD_CLEAR = "C"
+private const val NUMPAD_DELETE = "DEL"
+
+/** The tag of the numpad of the score, for the tests. */
+const val SCORE_NUMPAD_TAG = "score-numpad"
+
+/** The number of the hand in the title of the dialogs, without the wind: "#5". */
+@Composable
+private fun HandNumberLabel(handId: Int) {
+    Text("#$handId", color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** The tag of each player to choose in the dialogs of a hand, for the tests. */
+const val PLAYER_CHOICE_TAG = "player-choice"
+
+/** The question of a step of a win. */
+@Composable
+private fun StepQuestion(text: String) {
+    Text(text, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+}
+
+/** What the steps before chose: the winner, and on the score step who discarded or Self-draw. */
+@Composable
+private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = null, selfDraw: Boolean = false) {
+    val slot = winner ?: return
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+        Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.gain)
+        Text(view.firstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        if (selfDraw) {
+            Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            SelfDrawIcon(18.dp)
+            Text(stringResource(Res.string.entry_self_draw), color = MtsTheme.colors.selfPick, fontWeight = FontWeight.Bold, maxLines = 1)
+        } else if (loser != null) {
+            Text(stringResource(Res.string.entry_from), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
+        }
+    }
+}
+
+/**
+ * Self-draw, centered above the players who could have discarded. Green bold text with the explosion, with no fill and no
+ * border, so it never looks like a player.
+ */
+@Composable
+private fun SelfDrawButton(label: String, onClick: () -> Unit) {
+    val color = MtsTheme.colors.selfPick
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Surface(
+            modifier = Modifier.widthIn(min = 200.dp).clip(MtsTheme.shapes.pill).clickable(onClick = onClick),
+            shape = MtsTheme.shapes.pill,
+            // No fill and no border: the explosion and the green bold text set it apart from the players.
+            color = Color.Transparent,
+            contentColor = color,
+        ) {
+            Row(
+                Modifier.padding(horizontal = MtsTheme.spacing.xl, vertical = MtsTheme.spacing.md),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+            ) {
+                SelfDrawIcon(24.dp)
+                Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, maxLines = 1)
+            }
+        }
+    }
+}
+
+/** The wind of [slot] in hand [handNumber]. [seats] are the slots in the order east, south, west, north of hand 1. */
+private fun currentWindOf(seats: List<Int?>, slot: Int, handNumber: Int): SeatWind? {
+    val index = seats.indexOf(slot).takeIf { it >= 0 } ?: return null
+    return windOfChair(chairOf(index, handNumber), handNumber)
+}
+
+/** The players of the table in the order of their winds in hand [handNumber]: East first. */
+private fun byWind(seats: List<Int?>, handNumber: Int): List<Int> = seats.filterNotNull().sortedBy { currentWindOf(seats, it, handNumber)?.ordinal ?: 0 }
+
+/** The players to choose from, [columns] per row. Each choice shows the first name. */
 @Composable
 private fun PlayerChoices(
     slots: List<Int>,
     selected: Int?,
     view: PlayerTournamentView,
-    windOf: (Int) -> SeatWind,
-    /** When set, the first choice is Self-draw and the players follow it. */
-    selfDraw: SelfDrawChoice? = null,
+    columns: Int = 2,
+    /** The seats of the table in the order east, south, west, north of hand 1. With them, each choice shows its wind. */
+    seats: List<Int?>? = null,
+    /** The hand in play, for the wind of each player now. */
+    handNumber: Int = 1,
     onSelect: (Int) -> Unit,
 ) {
-    val choices: List<Int?> = (if (selfDraw != null) listOf(null) else emptyList()) + slots
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        choices.chunked(2).forEach { pair ->
+        slots.chunked(columns).forEach { group ->
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                pair.forEach { slot ->
-                    val isSelected = if (slot == null) selfDraw?.selected == true else slot == selected
+                group.forEach { slot ->
+                    val isSelected = slot == selected
                     Surface(
-                        modifier = Modifier.weight(1f).clickable { if (slot == null) selfDraw?.onSelect?.invoke() else onSelect(slot) },
+                        modifier = Modifier.weight(1f).testTag(PLAYER_CHOICE_TAG).clickable { onSelect(slot) },
                         shape = MaterialTheme.shapes.medium,
                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         border = BorderStroke(
@@ -644,28 +846,25 @@ private fun PlayerChoices(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            if (slot == null) {
-                                Icon(Icons.Default.Bolt, contentDescription = null, Modifier.size(24.dp))
-                            } else {
-                                WindIcon(windOf(slot), size = 24.dp)
+                            // The wind of the player in this hand and the flag before the name, as on the table.
+                            if (seats != null) {
+                                currentWindOf(seats, slot, handNumber)?.let { WindIcon(it, size = 20.dp) }
+                                PlayerFlag(view.players[slot]?.country, width = 22.dp)
                             }
                             Text(
-                                if (slot == null) selfDraw?.label.orEmpty() else view.firstNameOf(slot),
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                view.firstNameOf(slot),
+                                fontWeight = FontWeight.Bold,
                                 maxLines = 1,
                             )
                         }
                     }
                 }
-                // An odd last row keeps the width of one choice.
-                if (pair.size == 1) Box(Modifier.weight(1f))
+                // A short last row keeps the width of the other choices.
+                repeat(columns - group.size) { Box(Modifier.weight(1f)) }
             }
         }
     }
 }
-
-/** The Self-draw choice that comes before the players in [PlayerChoices]. */
-private class SelfDrawChoice(val label: String, val selected: Boolean, val onSelect: () -> Unit)
 
 /**
  * One penalty. The player chooses who is penalized and the amount. The amount is positive and the app
@@ -677,7 +876,6 @@ private fun PenaltyCard(
     draft: PenaltyDraft,
     seats: List<Int?>,
     view: PlayerTournamentView,
-    windOf: (Int) -> SeatWind,
     onChange: (PenaltyDraft) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -695,7 +893,7 @@ private fun PenaltyCard(
             }
             SectionLabel(stringResource(Res.string.entry_penalized_player))
             val slots = seats.filterNotNull()
-            PlayerChoices(slots, draft.seat?.let { seats.getOrNull(it) }, view, windOf) { slot ->
+            PlayerChoices(slots, draft.seat?.let { seats.getOrNull(it) }, view) { slot ->
                 onChange(draft.copy(seat = seats.indexOf(slot)))
             }
             OutlinedTextField(
@@ -762,8 +960,6 @@ private fun ReviewHand(
     lastHand: Boolean,
 ) {
     val showPoints = preview.handId >= 16 || lastHand
-    fun windOf(slot: Int?): SeatWind? = preview.seatSlotIds.indexOf(slot).takeIf { it >= 0 }
-        ?.let { windOfChair(chairOf(it, preview.handId), preview.handId) }
     if (isDraw) {
         Surface(
             shape = MaterialTheme.shapes.medium,
@@ -786,20 +982,22 @@ private fun ReviewHand(
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    windOf(winner)?.let { WindIcon(it, size = 28.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Normal)
+                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
-                    if (chicken) ChickenIcon(24.dp)
+                    if (chicken) ChickenIcon(32.dp)
                 }
+                // Who paid is as large as who won, so both read at a glance.
                 if (selfDraw) {
-                    Text(stringResource(Res.string.entry_self_draw))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xs)) {
+                        SelfDrawIcon(24.dp)
+                        Text(stringResource(Res.string.entry_self_draw), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
+                    }
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                        Text(stringResource(Res.string.entry_from))
-                        windOf(loser)?.let { WindIcon(it, size = 20.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                        Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.entry_from), style = MaterialTheme.typography.titleLarge.inTextFont())
+                        Text(view.firstNameOf(loser), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -811,7 +1009,9 @@ private fun ReviewHand(
         HeaderText(stringResource(Res.string.scope_table), Modifier.weight(1f))
         if (showPoints) HeaderText(stringResource(Res.string.entry_points), Modifier.weight(0.9f))
     }
-    preview.seatSlotIds.forEachIndexed { index, slot ->
+    // The players in the order of their winds in this hand, each with its wind.
+    preview.seatSlotIds.indices.sortedBy { currentWindOf(preview.seatSlotIds, preview.seatSlotIds[it], preview.handId)?.ordinal ?: it }.forEach { index ->
+        val slot = preview.seatSlotIds[index]
         val change = preview.handScores.getOrNull(index) ?: 0
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Row(
@@ -819,8 +1019,9 @@ private fun ReviewHand(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
-                windOf(slot)?.let { WindIcon(it, size = 20.dp) }
-                Text(view.firstNameOf(slot), maxLines = 1)
+                currentWindOf(preview.seatSlotIds, slot, preview.handId)?.let { WindIcon(it, size = 20.dp) }
+                PlayerFlag(view.players[slot]?.country, width = 22.dp)
+                Text(view.firstNameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Text(
                 signedText(change),
@@ -834,13 +1035,6 @@ private fun ReviewHand(
                 Text(preview.tablePoints.getOrNull(index).orEmpty(), Modifier.weight(0.9f), textAlign = TextAlign.End, fontWeight = FontWeight.Bold)
             }
         }
-    }
-    if (lastHand && preview.handId < 16) {
-        Text(
-            stringResource(Res.string.entry_last_hand_note),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
     }
 }
 
