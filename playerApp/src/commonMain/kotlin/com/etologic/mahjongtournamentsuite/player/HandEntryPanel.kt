@@ -23,6 +23,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.contentColorFor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -38,6 +40,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -630,13 +633,31 @@ private fun PlayerChoices(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 pair.forEach { slot ->
                     val isSelected = if (slot == null) selfDraw?.selected == true else slot == selected
+                    // Self-draw is not a player, so it looks different at a glance: a pill in the color of self-draw
+                    // hands, tinted like that chip, and solid with white text when chosen.
+                    val selfPick = MtsTheme.colors.selfPick
+                    val background = when {
+                        slot == null && isSelected -> selfPick
+                        slot == null -> selfPick.copy(alpha = 0.18f)
+                        isSelected -> MaterialTheme.colorScheme.primaryContainer
+                        else -> MaterialTheme.colorScheme.surface
+                    }
                     Surface(
                         modifier = Modifier.weight(1f).clickable { if (slot == null) selfDraw?.onSelect?.invoke() else onSelect(slot) },
-                        shape = MaterialTheme.shapes.medium,
-                        color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
+                        shape = if (slot == null) MtsTheme.shapes.pill else MaterialTheme.shapes.medium,
+                        color = background,
+                        contentColor = when {
+                            slot == null && isSelected -> Color.White
+                            slot == null -> selfPick
+                            else -> contentColorFor(background)
+                        },
                         border = BorderStroke(
                             if (isSelected) 2.dp else 1.dp,
-                            if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                            when {
+                                slot == null -> selfPick
+                                isSelected -> MaterialTheme.colorScheme.primary
+                                else -> MaterialTheme.colorScheme.outlineVariant
+                            },
                         ),
                     ) {
                         Row(
@@ -651,7 +672,9 @@ private fun PlayerChoices(
                             }
                             Text(
                                 if (slot == null) selfDraw?.label.orEmpty() else view.firstNameOf(slot),
-                                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                // Self-draw uses the font of the self-draw chip of the list of hands.
+                                style = if (slot == null) MaterialTheme.typography.labelLarge else LocalTextStyle.current,
+                                fontWeight = if (isSelected || slot == null) FontWeight.Bold else FontWeight.Normal,
                                 maxLines = 1,
                             )
                         }
