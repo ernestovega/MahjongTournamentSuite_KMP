@@ -9,6 +9,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -763,72 +764,75 @@ fun TournamentDateRangePickerDialog(
             modifier = Modifier.appFocusGroup(),
             properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
-            Surface(
-                modifier = Modifier
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
-                    .widthIn(max = 420.dp)
-                    .fillMaxWidth()
-                    .fillMaxHeight(0.9f)
-                    .heightIn(max = 720.dp),
-                shape = DatePickerDefaults.shape,
-                color = pickerColors.containerColor,
-                tonalElevation = DatePickerDefaults.TonalElevation,
-            ) {
-                Column {
-                    DateRangePicker(
-                        state = state,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .weight(1f),
-                        colors = pickerColors,
-                        title = {
-                            DateRangePickerDefaults.DateRangePickerTitle(
-                                displayMode = state.displayMode,
-                                modifier = Modifier.padding(
-                                    start = 24.dp,
-                                    top = 24.dp,
-                                    end = 24.dp,
-                                    bottom = 8.dp,
-                                ),
-                                contentColor = pickerColors.titleContentColor,
-                            )
-                        },
-                        headline = {
-                            ProvideTextStyle(MaterialTheme.typography.titleMedium) {
-                                DateRangePickerDefaults.DateRangePickerHeadline(
-                                    selectedStartDateMillis = state.selectedStartDateMillis,
-                                    selectedEndDateMillis = state.selectedEndDateMillis,
+            // The calendar needs 360 dp for its seven columns. On a small phone the side padding gives way, so Sunday is not cut.
+            BoxWithConstraints {
+                Surface(
+                    modifier = Modifier
+                        .padding(horizontal = ((maxWidth - 360.dp) / 2).coerceIn(0.dp, 16.dp), vertical = 12.dp)
+                        .widthIn(max = 420.dp)
+                        .fillMaxWidth()
+                        .fillMaxHeight(0.9f)
+                        .heightIn(max = 720.dp),
+                    shape = DatePickerDefaults.shape,
+                    color = pickerColors.containerColor,
+                    tonalElevation = DatePickerDefaults.TonalElevation,
+                ) {
+                    Column {
+                        DateRangePicker(
+                            state = state,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f),
+                            colors = pickerColors,
+                            title = {
+                                DateRangePickerDefaults.DateRangePickerTitle(
                                     displayMode = state.displayMode,
-                                    dateFormatter = dateFormatter,
-                                    modifier = Modifier.padding(start = 24.dp, end = 8.dp, bottom = 16.dp),
-                                    contentColor = pickerColors.headlineContentColor,
+                                    modifier = Modifier.padding(
+                                        start = 24.dp,
+                                        top = 24.dp,
+                                        end = 24.dp,
+                                        bottom = 8.dp,
+                                    ),
+                                    contentColor = pickerColors.titleContentColor,
                                 )
-                            }
-                        },
-                    )
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
-                        horizontalArrangement = Arrangement.End,
-                    ) {
-                        FocusedTextButton(onClick = onDismiss) {
-                            Text(stringResource(Res.string.cancel))
-                        }
-                        FocusedTextButton(
-                            enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
-                            onClick = {
-                                val startMillis = state.selectedStartDateMillis
-                                val endMillis = state.selectedEndDateMillis
-                                if (startMillis != null && endMillis != null) {
-                                    onDatesSelected(
-                                        epochMillisToDisplayDate(startMillis),
-                                        epochMillisToDisplayDate(endMillis),
+                            },
+                            headline = {
+                                ProvideTextStyle(MaterialTheme.typography.titleMedium) {
+                                    DateRangePickerDefaults.DateRangePickerHeadline(
+                                        selectedStartDateMillis = state.selectedStartDateMillis,
+                                        selectedEndDateMillis = state.selectedEndDateMillis,
+                                        displayMode = state.displayMode,
+                                        dateFormatter = dateFormatter,
+                                        modifier = Modifier.padding(start = 24.dp, end = 8.dp, bottom = 16.dp),
+                                        contentColor = pickerColors.headlineContentColor,
                                     )
                                 }
                             },
+                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 16.dp, end = 16.dp, bottom = 8.dp),
+                            horizontalArrangement = Arrangement.End,
                         ) {
-                            Text(stringResource(Res.string.ok))
+                            FocusedTextButton(onClick = onDismiss) {
+                                Text(stringResource(Res.string.cancel))
+                            }
+                            FocusedTextButton(
+                                enabled = state.selectedStartDateMillis != null && state.selectedEndDateMillis != null,
+                                onClick = {
+                                    val startMillis = state.selectedStartDateMillis
+                                    val endMillis = state.selectedEndDateMillis
+                                    if (startMillis != null && endMillis != null) {
+                                        onDatesSelected(
+                                            epochMillisToDisplayDate(startMillis),
+                                            epochMillisToDisplayDate(endMillis),
+                                        )
+                                    }
+                                },
+                            ) {
+                                Text(stringResource(Res.string.ok))
+                            }
                         }
                     }
                 }

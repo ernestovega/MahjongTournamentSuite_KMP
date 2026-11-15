@@ -25,6 +25,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsSco
 import com.etologic.mahjongtournamentsuite.screenshots.componentVariants
 import com.etologic.mahjongtournamentsuite.screenshots.dialogVariants
 import com.etologic.mahjongtournamentsuite.screenshots.fake.ScreenshotData.ONGOING
+import java.util.Locale
 import kotlin.test.Test
 
 /** Every screen and tab of the player app with the data of ScreenshotData, signed in as Lucía (player 1). */
@@ -40,7 +41,11 @@ class PlayerScreensScreenshotTest {
     }
 
     @Test
-    fun myTableReminder() = playerScreenshots("dialogs/my-table-reminder", variants = dialogVariants, ready = { waitForText("Go to my table") }) {
+    fun myTableReminder() = playerScreenshots(
+        "dialogs/my-table-reminder",
+        variants = dialogVariants,
+        ready = { waitForText(if (Locale.getDefault().language == "es") "Ir a mi mesa" else "Go to my table") },
+    ) {
         MyTableReminderDialog("Madrid Open 2026", roundId = 3, tableId = 7, moment = RoundMoment.StartedAgo(12 * 60_000L), onOpen = {}, onDismiss = {})
     }
 

@@ -226,6 +226,7 @@ internal class FakeTournamentRepository : TournamentRepository {
             is RoundClockAction.SetRemaining -> current?.let {
                 it.copy(adjustMs = it.elapsedMs(serverNowMs) + action.remainingSeconds * 1000 - duration * 60_000L)
             }
+            RoundClockAction.Stop -> current?.stoppedAt(serverNowMs, duration, extraMs = 0)
         }
         roundClocks = (roundClocks.filter { it.roundId != roundId } + listOfNotNull(updated)).sortedBy { it.roundId }
         return AppResult.Success(RoundClocks(roundClocks, serverNowMs))

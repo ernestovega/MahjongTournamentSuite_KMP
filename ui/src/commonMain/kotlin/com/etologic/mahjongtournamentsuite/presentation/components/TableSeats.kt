@@ -417,7 +417,6 @@ private fun SeatCard(
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 SeatLevelMedal(seat)
-                if (seat.country.isNotBlank()) PlayerFlag(seat.country, width = 22.dp)
                 Text(
                     if (showIds && seat.slotId != null) "${seat.slotId} ${seat.name}" else seat.name,
                     Modifier.weight(1f, fill = false),
@@ -429,6 +428,8 @@ private fun SeatCard(
                     overflow = TextOverflow.Ellipsis,
                 )
             }
+            // The flag is under the name, so a long name has the whole width of the card.
+            if (seat.country.isNotBlank()) PlayerFlag(seat.country, width = 22.dp)
             seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
             if (showDiffs) DiffsTable(diffs)
         }

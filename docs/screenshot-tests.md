@@ -10,6 +10,10 @@ resizes something on a screen fails the test and shows where.
 - Each screen is drawn in six variants: phone (412×915 dp, compact), tablet (800×1280 dp, medium) and desktop
   (1440×900 dp, expanded), each one light and dark. Density 1. A component gallery is drawn on the phone only
   (`componentVariants`), and a dialog on the phone and the desktop (`dialogVariants`), light and dark.
+- Every dialog also has a small phone in Spanish (`narrow-light-es.png`, 360×760 dp): the Spanish texts are longer, so
+  this variant shows the labels, titles and buttons that do not fit on a phone. A new dialog uses `dialogVariants`
+  (or `componentDialogVariants` in `ui`), so it gets this variant too. A `ready` step that waits for a text must accept
+  the Spanish one as well (see `myTableReminder` in the player app).
 - The images are in `<module>/screenshots/<name>/<size>-<theme>.png`:
   - `designsystem`: the catalog and the galleries of its components (`components/...`).
   - `ui`: the shared components (`components/...`) and the shared dialogs (`dialog-...`).

@@ -77,7 +77,7 @@ test("the request body names the action", () => {
   assert.deepEqual(parseRoundClockAction({ action: "start", agoSeconds: 90 }), { kind: "start", agoMs: 90_000 });
   assert.deepEqual(parseRoundClockAction({ action: "setRemaining", remainingSeconds: 60 }), { kind: "setRemaining", remainingMs: 60_000 });
   assert.deepEqual(parseRoundClockAction({ action: "reset" }), { kind: "reset" });
-  assert.throws(() => parseRoundClockAction({ action: "stop" }));
+  assert.throws(() => parseRoundClockAction({ action: "halt" }));
   assert.throws(() => parseRoundClockAction({ action: "start", agoSeconds: -1 }));
   assert.throws(() => parseRoundClockAction({ action: "setRemaining" }));
 });
@@ -100,4 +100,30 @@ test("stored clocks are read safely and sorted by round", () => {
     { roundId: 3, startedAtMs: NOW, pausedAtMs: null, pausedMs: 0, adjustMs: 0 },
   ]);
   assert.deepEqual(roundClockViews({ numRounds: 2 }), []);
+});
+
+test("Stop ends the match and the extra time now, also during a pause", () => {
+  const extra = 15 * MIN;
+  const ended = (clock: RoundClock, at: number, extraMs: number) =>
+    clockRemainingMs(clock, 120, at) === 0 && at - clock.startedAtMs - clock.pausedMs >= 120 * MIN + clock.adjustMs + extraMs;
+
+  // Stopped 40 minutes into a match of 120 with 15 minutes of extra time.
+  const stopped = applyRoundClockAction(started(), { kind: "stop" }, 120, NOW + 40 * MIN, extra);
+  assert.ok(stopped != null && ended(stopped, NOW + 40 * MIN, extra));
+  assert.equal(clockEndMs(stopped, 120), NOW + 25 * MIN);
+
+  // A paused clock runs again and ends now.
+  const paused = applyRoundClockAction(started({ pausedAtMs: NOW + 30 * MIN }), { kind: "stop" }, 120, NOW + 50 * MIN, extra);
+  assert.ok(paused != null && paused.pausedAtMs == null && ended(paused, NOW + 50 * MIN, extra));
+  assert.equal(paused.pausedMs, 20 * MIN);
+
+  // A stop within the first minutes moves the start back, so the extra time is over too.
+  const early = applyRoundClockAction(started(), { kind: "stop" }, 120, NOW + 5 * MIN, extra);
+  assert.ok(early != null && ended(early, NOW + 5 * MIN, extra));
+  assert.equal(early.startedAtMs, NOW - 10 * MIN);
+
+  // A second Stop, or a Stop of a round that is over, changes nothing.
+  assert.equal(applyRoundClockAction(stopped, { kind: "stop" }, 120, NOW + 41 * MIN, extra), stopped);
+  assert.throws(() => applyRoundClockAction(null, { kind: "stop" }, 120, NOW));
+  assert.deepEqual(parseRoundClockAction({ action: "stop" }), { kind: "stop" });
 });

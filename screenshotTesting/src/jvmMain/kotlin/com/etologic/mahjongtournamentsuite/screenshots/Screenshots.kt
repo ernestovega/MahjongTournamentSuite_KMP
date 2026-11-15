@@ -17,27 +17,42 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import java.io.File
+import java.util.Locale
 import javax.imageio.ImageIO
 
 /** The window sizes of the screenshots, in dp at density 1. Phone is compact (< 600 dp), tablet medium, desktop expanded. */
 enum class ScreenSize(val width: Int, val height: Int) {
     Phone(412, 915),
+
+    /** A small phone. With the Spanish texts, which are longer than the English ones, it shows what does not fit. */
+    Narrow(360, 760),
     Tablet(800, 1280),
     Desktop(1440, 900),
 }
 
-/** One screenshot of a screen: a window size and a theme. */
-data class Variant(val size: ScreenSize, val dark: Boolean) {
-    val fileName: String get() = "${size.name.lowercase()}-${if (dark) "dark" else "light"}.png"
+/** One screenshot of a screen: a window size, a theme and a language (English, or Spanish when [spanish]). */
+data class Variant(val size: ScreenSize, val dark: Boolean, val spanish: Boolean = false) {
+    val fileName: String get() = "${size.name.lowercase()}-${if (dark) "dark" else "light"}${if (spanish) "-es" else ""}.png"
 }
 
-/** Components and dialogs: phone width, light and dark. Their size does not depend on the window. */
+/** A small phone in Spanish, light: the longest texts in the least space. */
+val narrowSpanish: Variant = Variant(ScreenSize.Narrow, dark = false, spanish = true)
+
+/** Components: phone width, light and dark. Their size does not depend on the window. */
 val componentVariants: List<Variant> = listOf(Variant(ScreenSize.Phone, false), Variant(ScreenSize.Phone, true))
 
-/** Dialogs: phone and desktop, light and dark. A dialog keeps its width on a tablet, so the tablet adds nothing. */
-val dialogVariants: List<Variant> = listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) }
+/**
+ * Dialogs: phone and desktop, light and dark, and a small phone in Spanish. A dialog keeps its width on a tablet, so the
+ * tablet adds nothing. On a phone a dialog takes the width of the window, so the small phone catches the texts that do not fit.
+ */
+val dialogVariants: List<Variant> =
+    listOf(ScreenSize.Phone, ScreenSize.Desktop).flatMap { listOf(Variant(it, false), Variant(it, true)) } + narrowSpanish
 
-val allVariants: List<Variant> = ScreenSize.entries.flatMap { size -> listOf(Variant(size, false), Variant(size, true)) }
+/** A component that is a dialog: [componentVariants] and the small phone in Spanish. */
+val componentDialogVariants: List<Variant> = componentVariants + narrowSpanish
+
+/** Screens: phone, tablet and desktop, light and dark. */
+val allVariants: List<Variant> = listOf(ScreenSize.Phone, ScreenSize.Tablet, ScreenSize.Desktop).flatMap { size -> listOf(Variant(size, false), Variant(size, true)) }
 
 /** Small differences of antialiasing between machines do not fail a test; a changed color or a moved text does. */
 @OptIn(ExperimentalRoborazziApi::class)
@@ -62,7 +77,10 @@ fun screenshots(
     val failures = mutableListOf<Throwable>()
     // Some screens switch to Dispatchers.Main after a request. The JVM tests have no Main, so it runs in place.
     Dispatchers.setMain(Dispatchers.Unconfined)
+    val locale = Locale.getDefault()
     for (variant in variants) {
+        // The texts of the apps follow the language of the system.
+        Locale.setDefault(if (variant.spanish) Locale.forLanguageTag("es") else locale)
         try {
             runDesktopComposeUiTest(variant.size.width, variant.size.height) {
                 setContent { content(variant) }
@@ -82,6 +100,7 @@ fun screenshots(
             failures += AssertionError("$name ${variant.fileName}: ${e.message}", e)
         }
     }
+    Locale.setDefault(locale)
     Dispatchers.resetMain()
     if (failures.isNotEmpty()) {
         val error = AssertionError("${failures.size} screenshot(s) of $name failed:\n" + failures.joinToString("\n") { it.message.orEmpty() })
