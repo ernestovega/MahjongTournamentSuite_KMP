@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The background colors of MtsTheme. -->
+    <color name="mts_background">#F2FFFA</color>
+    <color name="mts_background_light">#F2FFFA</color>
+    <color name="mts_background_dark">#414141</color>
+</resources>

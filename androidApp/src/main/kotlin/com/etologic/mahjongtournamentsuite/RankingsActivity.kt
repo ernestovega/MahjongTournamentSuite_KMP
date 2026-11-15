@@ -10,6 +10,7 @@ class RankingsActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         initAndroidApp(applicationContext)
+        useAppThemeWindowBackground()
         setContent {
             RankingApp(intent.getStringExtra(EXTRA_TOURNAMENT_ID).orEmpty())
         }

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The window shows the background of the app (MtsTheme) until the app draws, so the start does not flash white. -->
+    <style name="Theme.Mts" parent="@android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/mts_background</item>
+    </style>
+</resources>

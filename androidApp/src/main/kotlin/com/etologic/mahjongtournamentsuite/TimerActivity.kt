@@ -10,6 +10,7 @@ class TimerActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         initAndroidApp(applicationContext)
+        useAppThemeWindowBackground()
         setContent {
             TimerApp(
                 tournamentId = intent.getStringExtra(EXTRA_TOURNAMENT_ID)?.ifEmpty { null },

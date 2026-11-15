@@ -22,6 +22,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         initAndroidApp(applicationContext)
+        useAppThemeWindowBackground()
         // A new activity starts where the intent says. A restored one keeps the part that was open.
         val initial = if (savedInstanceState == null) intent.suiteStart() else null
 

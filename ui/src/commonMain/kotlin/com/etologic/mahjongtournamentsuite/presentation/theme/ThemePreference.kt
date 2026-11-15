@@ -90,13 +90,13 @@ val LocalThemeController = staticCompositionLocalOf<ThemeController> {
     error("ThemeController not provided")
 }
 
+/** The theme that the user chose in the app, or null before the first choice. */
+fun storedThemePreference(): ThemePreference? = ThemePreferenceStorage.load()
+    ?.let { stored -> runCatching { ThemePreference.valueOf(stored) }.getOrNull() }
+
 @Composable
 fun rememberThemeController(): ThemeController {
-    val initialPreference = remember {
-        ThemePreferenceStorage.load()
-            ?.let { stored -> runCatching { ThemePreference.valueOf(stored) }.getOrNull() }
-            ?: ThemePreference.System
-    }
+    val initialPreference = remember { storedThemePreference() ?: ThemePreference.System }
     var preferenceName by rememberSaveable { mutableStateOf(initialPreference.name) }
     val preference = remember(preferenceName) {
         runCatching { ThemePreference.valueOf(preferenceName) }.getOrDefault(ThemePreference.System)
