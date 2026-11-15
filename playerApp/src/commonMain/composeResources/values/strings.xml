@@ -200,6 +200,7 @@
     <string name="seats_save">Save the seats</string>
     <string name="seats_restart">Start again</string>
     <string name="entry_seats_first">Set the seats of the table to start entering hands.</string>
+    <string name="round_starts_at">Starts at</string>
     <string name="round_clock_remaining">Time left: %1$s</string>
     <string name="round_clock_paused">Paused · Time left: %1$s</string>
     <string name="round_clock_over">The match time is over.</string>

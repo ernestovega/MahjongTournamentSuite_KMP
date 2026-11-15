@@ -325,18 +325,23 @@ private fun SeatsCross(
         }
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             card(3, Modifier.weight(1f))
-            Surface(
-                modifier = Modifier.padding(horizontal = MtsTheme.spacing.sm).size(64.dp),
-                shape = CircleShape,
-                color = MaterialTheme.colorScheme.secondaryContainer,
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    Text(
-                        centerLabel,
-                        style = MaterialTheme.typography.labelMedium,
-                        textAlign = TextAlign.Center,
-                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                    )
+            // A blank label hides the circle and keeps its place, so the seats do not move.
+            if (centerLabel.isBlank()) {
+                Box(Modifier.padding(horizontal = MtsTheme.spacing.sm).size(64.dp))
+            } else {
+                Surface(
+                    modifier = Modifier.padding(horizontal = MtsTheme.spacing.sm).size(64.dp),
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Text(
+                            centerLabel,
+                            style = MaterialTheme.typography.labelMedium,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                        )
+                    }
                 }
             }
             card(1, Modifier.weight(1f))

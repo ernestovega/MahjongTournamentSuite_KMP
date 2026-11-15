@@ -200,6 +200,7 @@
     <string name="seats_save">Guardar los asientos</string>
     <string name="seats_restart">Empezar de nuevo</string>
     <string name="entry_seats_first">Asigna los asientos de la mesa para empezar a añadir manos.</string>
+    <string name="round_starts_at">Empieza a las</string>
     <string name="round_clock_remaining">Tiempo restante: %1$s</string>
     <string name="round_clock_paused">En pausa · Tiempo restante: %1$s</string>
     <string name="round_clock_over">El tiempo de juego ha terminado.</string>

@@ -200,6 +200,7 @@
     <string name="seats_save">Salva i posti</string>
     <string name="seats_restart">Ricomincia</string>
     <string name="entry_seats_first">Assegna i posti del tavolo per iniziare ad aggiungere mani.</string>
+    <string name="round_starts_at">Inizia alle</string>
     <string name="round_clock_remaining">Tempo rimasto: %1$s</string>
     <string name="round_clock_paused">In pausa · Tempo rimasto: %1$s</string>
     <string name="round_clock_over">Il tempo di gioco è finito.</string>

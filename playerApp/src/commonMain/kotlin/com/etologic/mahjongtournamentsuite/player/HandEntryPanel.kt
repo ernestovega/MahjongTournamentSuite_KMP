@@ -844,7 +844,7 @@ private fun SelfDrawButton(label: String, selected: Boolean, onClick: () -> Unit
             border = BorderStroke(if (selected) 2.dp else 1.dp, color),
         ) {
             Row(
-                Modifier.padding(horizontal = 24.dp, vertical = 14.dp),
+                Modifier.padding(horizontal = MtsTheme.spacing.xl, vertical = MtsTheme.spacing.md),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
             ) {
