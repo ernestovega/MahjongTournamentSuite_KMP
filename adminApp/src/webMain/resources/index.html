@@ -4,6 +4,15 @@
     <!-- The site serves this app at /admin/, so every path here is relative. The player app is at /. -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- The colors of the page before anything loads: the browser does not paint a white page in dark mode.
+         loading.js then sets data-theme from the theme of the app, and styles.css repeats these colors. -->
+    <meta name="color-scheme" content="light dark">
+    <style>
+        html { background: #F2FFFA; }
+        html[data-theme="light"] { color-scheme: light; }
+        html[data-theme="dark"] { background: #414141; color-scheme: dark; }
+        @media (prefers-color-scheme: dark) { html:not([data-theme]) { background: #414141; } }
+    </style>
     <title>MahjongTournamentSuite</title>
     <meta name="description" content="Organize and manage Mahjong tournaments: players, tables, rounds and rankings.">
     <meta property="og:type" content="website">
