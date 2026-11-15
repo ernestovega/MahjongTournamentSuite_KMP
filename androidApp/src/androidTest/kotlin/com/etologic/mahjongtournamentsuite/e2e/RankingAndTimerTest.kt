@@ -107,6 +107,37 @@ class RankingAndTimerTest : AdminE2eTest() {
     }
 
     @Test
+    fun stopEndsTheRoundOnTheServerAfterAConfirmation() {
+        openTimer()
+        c.waitForText("2:00:00")
+        // A round that has not started cannot stop.
+        c.assertNoText("Stop the round")
+        c.clickButton("Start timer")
+        c.waitForNoText("2:00:00")
+        c.clickButton("Stop the round")
+        c.waitForText("Stop the round?")
+        c.clickButton("Stop")
+        c.waitForText("Time is up.")
+        c.waitForText("0:00:00")
+        c.assertNoText("Stop the round")
+        // The clock stays on the server, over: the round counts as played.
+        val clock = E2eApi.call("GET", "/public/tournaments/$UPCOMING_ID/round-clocks", null).json().getJSONArray("roundClocks").getJSONObject(0)
+        check(clock.getInt("roundId") == 1 && clock.isNull("pausedAtMs")) { "Round 1 did not stop: $clock" }
+    }
+
+    @Test
+    fun cancelingTheStopKeepsTheRoundRunning() {
+        openTimer()
+        c.clickButton("Start timer")
+        c.waitForNoText("2:00:00")
+        c.clickButton("Stop the round")
+        c.clickButton("Cancel")
+        c.waitForNoText("Stop the round?")
+        c.waitForText("Pause timer")
+        c.assertNoText("Time is up.")
+    }
+
+    @Test
     fun aRoundInPlayOpensWithItsClock() {
         openTimer(tournament = "Test - Live ongoing tournament")
         // Round 4 of the live tournament started at its planned time, so the Timer opens on it and runs.
