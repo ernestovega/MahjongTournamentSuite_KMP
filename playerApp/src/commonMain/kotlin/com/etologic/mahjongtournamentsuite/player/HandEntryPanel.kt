@@ -53,6 +53,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -444,7 +445,7 @@ fun HandEntryPanel(
                             WinStep.LOSER -> {
                                 WinSoFar(view, winner)
                                 StepQuestion(stringResource(Res.string.entry_loser))
-                                SelfDrawButton(stringResource(Res.string.entry_self_draw), selected = selfDraw) {
+                                SelfDrawButton(stringResource(Res.string.entry_self_draw)) {
                                     selfDraw = true
                                     loser = null
                                     chicken = false
@@ -829,19 +830,19 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = nul
 }
 
 /**
- * Self-draw, centered above the players who could have discarded. It is a pill in the color of self-draw hands, like the
- * self-draw chip of the list of hands, so it never looks like a player.
+ * Self-draw, centered above the players who could have discarded. Green bold text with the explosion, with no fill and no
+ * border, so it never looks like a player.
  */
 @Composable
-private fun SelfDrawButton(label: String, selected: Boolean, onClick: () -> Unit) {
+private fun SelfDrawButton(label: String, onClick: () -> Unit) {
     val color = MtsTheme.colors.selfPick
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Surface(
-            modifier = Modifier.widthIn(min = 200.dp).clickable(onClick = onClick),
+            modifier = Modifier.widthIn(min = 200.dp).clip(MtsTheme.shapes.pill).clickable(onClick = onClick),
             shape = MtsTheme.shapes.pill,
-            color = if (selected) color else color.copy(alpha = 0.18f),
-            contentColor = if (selected) Color.White else color,
-            border = BorderStroke(if (selected) 2.dp else 1.dp, color),
+            // No fill and no border: the explosion and the green bold text set it apart from the players.
+            color = Color.Transparent,
+            contentColor = color,
         ) {
             Row(
                 Modifier.padding(horizontal = MtsTheme.spacing.xl, vertical = MtsTheme.spacing.md),

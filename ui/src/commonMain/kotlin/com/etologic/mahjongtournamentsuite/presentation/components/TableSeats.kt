@@ -31,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -269,55 +268,28 @@ fun TableSeatsView(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        // The row above the seats: the leading content in the middle, and the Diffs switch with its info on the right.
-        if (leading != null || diffsAvailable) {
-            CenteredWithTrailing(
-                center = { leading?.invoke() },
-                trailing = {
-                    if (diffsAvailable) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            DiffsInfo()
-                            Row(
-                                Modifier.clickable { showDiffs = !showDiffs },
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
-                                Switch(
-                                    checked = showDiffs,
-                                    onCheckedChange = { showDiffs = it },
-                                    modifier = Modifier.padding(start = 8.dp),
-                                )
-                            }
-                        }
-                    }
-                },
-            )
+        // The row above the seats: the leading content on the left and the Diffs switch with its info on the right.
+        // Without the Diffs switch, the leading content is in the middle.
+        if (diffsAvailable) {
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { leading?.invoke() }
+                DiffsInfo()
+                Row(
+                    Modifier.clickable { showDiffs = !showDiffs },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(stringResource(Res.string.diffs_label), style = MaterialTheme.typography.labelLarge)
+                    Switch(
+                        checked = showDiffs,
+                        onCheckedChange = { showDiffs = it },
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
+                }
+            }
+        } else if (leading != null) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { leading() }
         }
         SeatsCross(placed, diffs, centerLabel, showPoints, showDiffs && diffsAvailable, showIds, onPlayerClick)
-    }
-}
-
-/**
- * A row of the full width with [center] in the middle and [trailing] at the end. On a narrow screen the middle moves to
- * the left as far as it needs, so it never covers the end.
- */
-@Composable
-private fun CenteredWithTrailing(center: @Composable () -> Unit, trailing: @Composable () -> Unit) {
-    Layout(contents = listOf(center, trailing), modifier = Modifier.fillMaxWidth()) { (centerItems, trailingItems), constraints ->
-        val width = constraints.maxWidth
-        val loose = constraints.copy(minWidth = 0, minHeight = 0)
-        val end = trailingItems.map { it.measure(loose) }
-        val endWidth = end.maxOfOrNull { it.width } ?: 0
-        val gap = if (endWidth > 0) 8.dp.roundToPx() else 0
-        val middle = centerItems.map { it.measure(loose.copy(maxWidth = (width - endWidth - gap).coerceAtLeast(0))) }
-        val height = (end + middle).maxOfOrNull { it.height } ?: 0
-        layout(width, height) {
-            end.forEach { it.placeRelative(width - it.width, (height - it.height) / 2) }
-            middle.forEach {
-                val x = minOf((width - it.width) / 2, width - endWidth - gap - it.width).coerceAtLeast(0)
-                it.placeRelative(x, (height - it.height) / 2)
-            }
-        }
     }
 }
 
