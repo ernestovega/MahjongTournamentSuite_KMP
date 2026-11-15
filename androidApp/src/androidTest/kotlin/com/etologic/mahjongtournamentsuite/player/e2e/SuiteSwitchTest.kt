@@ -40,6 +40,8 @@ class SuiteSwitchTest : PlayerE2eTest() {
         start(E2eAccounts.ADMIN)
         c.clickButton("Management")
         c.waitForText(ADMIN_LIST)
+        // On a phone the buttons at the start of the top bar are in the first menu.
+        c.clickButton("Menu")
         c.clickButton("Player view")
         c.waitForText("Management")
         c.assertNoText(ADMIN_LIST)

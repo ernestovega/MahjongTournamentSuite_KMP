@@ -107,7 +107,9 @@ class PlayerTournamentTest : PlayerE2eTest() {
     fun backReturnsToMyTournaments() {
         open()
         c.clickButton("Back")
-        c.waitForText("My tournaments")
+        // The list keeps its scroll position, so the filters above the cards can be out of view. The cards show.
+        c.waitForText("You play in this tournament", substring = true)
+        c.assertNoText("Ranking")
     }
 
     @Test

@@ -26,7 +26,11 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.clickButton(tableText)
     }
 
-    private fun openActivePlayerTable() = openTable(E2eAccounts.PLAYER, "11/16 hands")
+    /** The table of a player who can type hands. The buttons show once the table has loaded. */
+    private fun openActivePlayerTable() {
+        openTable(E2eAccounts.PLAYER, "11/16 hands")
+        c.waitForText("Add win")
+    }
 
     @Test
     fun tableShowsSeatsHandNumberAndHands() {
