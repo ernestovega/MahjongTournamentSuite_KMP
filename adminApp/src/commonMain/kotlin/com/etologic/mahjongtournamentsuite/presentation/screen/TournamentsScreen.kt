@@ -91,6 +91,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppScaffold
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarActions
 import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarLeadingActions
+import com.etologic.mahjongtournamentsuite.presentation.components.AppTopBarTimerAction
 import com.etologic.mahjongtournamentsuite.presentation.components.AppVersionLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.CompactScreenSidePadding
@@ -354,8 +355,6 @@ fun TournamentsScreen(
                 } else {
                     null
                 },
-                // A Timer without a tournament, for any use apart from a tournament. It changes no data.
-                onTimer = { openTimer(navController, tournamentId = null) },
                 onErrors = if (adminStatus?.isAdmin == true) {
                     { navController.navigate(ErrorsRoute) }
                 } else {
@@ -371,6 +370,8 @@ fun TournamentsScreen(
             )
         },
         actions = {
+            // A Timer without a tournament, for any use apart from a tournament. It changes no data.
+            AppTopBarTimerAction(onTimer = { openTimer(navController, tournamentId = null) })
             AppTopBarActions(
                 onPlayerBase = {
                     lastFocusedControl = "player-base"

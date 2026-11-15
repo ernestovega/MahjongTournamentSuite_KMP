@@ -55,6 +55,17 @@ fun AppTopBarLeadingActions(
     }
 }
 
+/**
+ * The Timer as the first button at the right of the top bar, before the buttons of the screen, as in the list of
+ * tournaments. On a phone it goes first in the three-dots menu.
+ */
+@Composable
+fun AppTopBarTimerAction(onTimer: () -> Unit) {
+    TopBarButtonsLayout {
+        AppTopBarButton(stringResource(Res.string.top_bar_timer), Icons.Default.AccessTime, onTimer)
+    }
+}
+
 @Composable
 private fun ThemeModeToggleButton() {
     val themeController = LocalThemeController.current
