@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountActionResult
@@ -52,7 +53,9 @@ import com.etologic.mahjongtournamentsuite.domain.model.PlayerAccountOutcome
 import com.etologic.mahjongtournamentsuite.domain.model.TournamentPlayer
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.CountryFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.DialogButtonRow
 import com.etologic.mahjongtournamentsuite.presentation.components.InfoTooltipIcon
+import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.appFocusGroup
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.util.UiText
@@ -168,6 +171,9 @@ fun PlayerAccountsBulkDialog(
         )
     }
 
+    val compact = LocalCompactLayout.current
+    val resultWidth = if (compact) CompactResultColumnWidth else ResultColumnWidth
+
     TrackedDialog("InvitationsAndReminders") {
         AlertDialog(
             modifier = Modifier.appFocusGroup().padding(horizontal = 16.dp, vertical = 16.dp).widthIn(max = 960.dp).fillMaxSize(),
@@ -177,40 +183,49 @@ fun PlayerAccountsBulkDialog(
             text = {
                 BoxWithConstraints(Modifier.fillMaxSize()) {
                     Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            AccountFilter.entries.forEach { option ->
-                                val count = players.count { it.matches(option) }
-                                FilterChip(
-                                    selected = filter == option,
-                                    onClick = {
-                                        filter = option
-                                        selected = emptySet()
-                                    },
-                                    leadingIcon = { Icon(option.icon, contentDescription = null, Modifier.size(18.dp)) },
-                                    label = { Text(stringResource(Res.string.filter_chip_count, stringResource(option.label), count)) },
-                                )
-                            }
-                        }
-                        OutlinedTextField(
-                            value = query,
-                            onValueChange = { query = it },
-                            modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            label = { Text(stringResource(Res.string.search)) },
-                        )
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            TextButton(
-                                enabled = shown.isNotEmpty() && !busy,
-                                onClick = { selected = shown.map { it.id }.toSet() },
-                            ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
-                            TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
-                                Text(stringResource(Res.string.clear))
-                            }
-                            Text(stringResource(Res.string.selected_count, chosen.size), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
+                        // The filters scroll away with the rows, so the list gets the whole height on a phone.
                         LazyColumn(Modifier.fillMaxWidth().weight(1f).testTag("account_list")) {
+                            item(key = "filters") {
+                                Column(Modifier.padding(bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        AccountFilter.entries.forEach { option ->
+                                            val count = players.count { it.matches(option) }
+                                            FilterChip(
+                                                selected = filter == option,
+                                                onClick = {
+                                                    filter = option
+                                                    selected = emptySet()
+                                                },
+                                                leadingIcon = { Icon(option.icon, contentDescription = null, Modifier.size(18.dp)) },
+                                                label = { Text(stringResource(Res.string.filter_chip_count, stringResource(option.label), count)) },
+                                            )
+                                        }
+                                    }
+                                    OutlinedTextField(
+                                        value = query,
+                                        onValueChange = { query = it },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        singleLine = true,
+                                        label = { Text(stringResource(Res.string.search)) },
+                                    )
+                                    FlowRow(verticalArrangement = Arrangement.Center, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        TextButton(
+                                            enabled = shown.isNotEmpty() && !busy,
+                                            onClick = { selected = shown.map { it.id }.toSet() },
+                                        ) { Text(stringResource(Res.string.select_all_shown, shown.size)) }
+                                        TextButton(enabled = selected.isNotEmpty() && !busy, onClick = { selected = emptySet() }) {
+                                            Text(stringResource(Res.string.clear))
+                                        }
+                                        Text(
+                                            stringResource(Res.string.selected_count, chosen.size),
+                                            Modifier.align(Alignment.CenterVertically),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                }
+                            }
                             // The titles stay at the top while the rows scroll under them.
-                            stickyHeader { ColumnTitles() }
+                            stickyHeader { ColumnTitles(compact) }
                             items(shown, key = { it.id }) { slot ->
                                 val result = results.firstOrNull { it.playerId == slot.id }
                                 Row(
@@ -230,16 +245,30 @@ fun PlayerAccountsBulkDialog(
                                     Box(Modifier.width(FlagColumnWidth), contentAlignment = Alignment.Center) {
                                         CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
                                     }
-                                    Text(
-                                        emaIdOf(slot) ?: "—",
-                                        Modifier.width(EmaColumnWidth),
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        maxLines = 1,
-                                    )
-                                    Text(nameOf(slot), Modifier.weight(1f), maxLines = 1)
-                                    EmailCell(slot, Modifier.weight(1f))
-                                    ResultCell(slot, result)
+                                    if (compact) {
+                                        // A phone has no room for the EMA and email columns: they go under the name.
+                                        Column(Modifier.weight(1f)) {
+                                            Text(nameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                            Text(
+                                                emaIdOf(slot) ?: "—",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                maxLines = 1,
+                                            )
+                                            EmailCell(slot, Modifier)
+                                        }
+                                    } else {
+                                        Text(
+                                            emaIdOf(slot) ?: "—",
+                                            Modifier.width(EmaColumnWidth),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 1,
+                                        )
+                                        Text(nameOf(slot), Modifier.weight(1f), maxLines = 1)
+                                        EmailCell(slot, Modifier.weight(1f))
+                                    }
+                                    ResultCell(slot, result, resultWidth)
                                 }
                             }
                         }
@@ -249,19 +278,21 @@ fun PlayerAccountsBulkDialog(
                     }
                 }
             },
+            // The summary of the selection is at the left of the buttons. When both do not fit, it goes on a line above them.
             confirmButton = {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                DialogButtonRow(
+                    start = {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            InfoTooltipIcon(stringResource(Res.string.bulk_info))
+                            Text(
+                                stringResource(Res.string.send_summary, chosen.count { !it.hasAccount }, chosen.count { it.hasAccount }),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
-                    InfoTooltipIcon(stringResource(Res.string.bulk_info))
-                    Text(
-                        stringResource(Res.string.send_summary, chosen.count { !it.hasAccount }, chosen.count { it.hasAccount }),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Spacer(Modifier.weight(1f))
                     TextButton(onClick = onDismiss) { Text(stringResource(Res.string.close)) }
                     Button(
                         enabled = chosen.isNotEmpty() && !busy,
@@ -285,10 +316,11 @@ private val IdColumnWidth = 36.dp
 private val FlagColumnWidth = 32.dp
 private val EmaColumnWidth = 68.dp
 private val ResultColumnWidth = 120.dp
+private val CompactResultColumnWidth = 72.dp
 
 /** The titles of the columns of the list. They use the same widths as the rows, so each title sits over its column. */
 @Composable
-private fun ColumnTitles() {
+private fun ColumnTitles(compact: Boolean) {
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -307,10 +339,14 @@ private fun ColumnTitles() {
         Spacer(Modifier.width(CheckboxColumnWidth))
         Title(Res.string.id, Modifier.width(IdColumnWidth))
         Title(Res.string.country, Modifier.width(FlagColumnWidth), TextAlign.Center)
-        Title(Res.string.ema_id, Modifier.width(EmaColumnWidth))
-        Title(Res.string.name, Modifier.weight(1f))
-        Title(Res.string.email, Modifier.weight(1f))
-        Title(Res.string.account, Modifier.width(ResultColumnWidth), TextAlign.Center)
+        if (compact) {
+            Title(Res.string.name, Modifier.weight(1f))
+        } else {
+            Title(Res.string.ema_id, Modifier.width(EmaColumnWidth))
+            Title(Res.string.name, Modifier.weight(1f))
+            Title(Res.string.email, Modifier.weight(1f))
+        }
+        Title(Res.string.account, Modifier.width(if (compact) CompactResultColumnWidth else ResultColumnWidth), TextAlign.Center)
     }
 }
 
@@ -342,9 +378,9 @@ private fun EmailCell(slot: TournamentPlayer, modifier: Modifier) {
  * A send that went out shows the date and time of the email under the text.
  */
 @Composable
-private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult?) {
+private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult?, width: Dp) {
     if (result == null) {
-        Box(Modifier.width(ResultColumnWidth), contentAlignment = Alignment.Center) { AccountStateIcon(slot.hasAccount) }
+        Box(Modifier.width(width), contentAlignment = Alignment.Center) { AccountStateIcon(slot.hasAccount) }
         return
     }
     val text = when {
@@ -353,7 +389,7 @@ private fun ResultCell(slot: TournamentPlayer, result: PlayerAccountActionResult
         else -> stringResource((result.reason ?: PlayerAccountFailure.UNEXPECTED).textRes())
     }
     val color = if (result.outcome == PlayerAccountOutcome.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
-    Column(Modifier.width(ResultColumnWidth), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(Modifier.width(width), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text, color = color, style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center)
         // Only an email that went out has a time. A failure shows its reason alone.
         localizedDateTimeOrNull(result.sentAt).takeIf { result.outcome != PlayerAccountOutcome.FAILED }?.let {
