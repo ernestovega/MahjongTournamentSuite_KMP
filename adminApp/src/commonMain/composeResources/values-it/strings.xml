@@ -793,4 +793,5 @@
     <string name="round_control_clock_help">Gli stessi pulsanti del Timer. Premi Avvia al gong: con Secondo l'orologio, i giocatori aggiungono mani da allora fino alla fine del tempo. Stop termina subito il turno.</string>
     <string name="round_control_players">Cosa possono fare i giocatori</string>
     <string name="round_control_table_hands">Inserimento mani</string>
+    <string name="round_control_table_status">Stato</string>
 </resources>

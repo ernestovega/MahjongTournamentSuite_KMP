@@ -91,6 +91,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_c
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_hands
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_in_play
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_round
+import mahjongtournamentsuite.adminapp.generated.resources.round_control_table_status
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_tables
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_tables_help
 import mahjongtournamentsuite.adminapp.generated.resources.round_control_title
@@ -464,44 +465,53 @@ private fun TablesCard(
             tables.isEmpty() -> Text(stringResource(Res.string.round_control_no_tables))
             else -> tables.forEachIndexed { index, table ->
                 if (index > 0) HorizontalDivider()
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                    itemVerticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        "${stringResource(Res.string.table)} ${table.tableId}",
-                        fontWeight = FontWeight.SemiBold,
-                        modifier = Modifier.widthIn(min = 72.dp),
-                    )
-                    // The same mark as the Completed switch of the table editor. A completed table takes no hand.
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        FilterChip(
-                            selected = !table.isCompleted,
-                            enabled = enabled,
-                            onClick = { if (table.isCompleted) onChange(RoundControlChange(reopenTables = listOf(table.tableId))) },
-                            label = { Text(stringResource(Res.string.round_control_table_in_play)) },
-                            modifier = Modifier.testTag("table_${table.tableId}_in_play"),
-                        )
-                        FilterChip(
-                            selected = table.isCompleted,
-                            enabled = enabled,
-                            onClick = { if (!table.isCompleted) onChange(RoundControlChange(completeTables = listOf(table.tableId))) },
-                            label = { Text(stringResource(Res.string.round_control_table_completed)) },
-                            modifier = Modifier.testTag("table_${table.tableId}_completed"),
-                        )
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                        Text(stringResource(Res.string.round_control_table_hands), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        ModeChips(
-                            tag = "table_${table.tableId}",
-                            selected = control.tables[table.tableId] ?: ControlMode.AUTO,
-                            enabled = enabled,
-                            autoLabel = Res.string.round_control_table_round,
-                        ) { mode -> onChange(RoundControlChange(table = table.tableId to mode)) }
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("${stringResource(Res.string.table)} ${table.tableId}", fontWeight = FontWeight.SemiBold)
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        // The same mark as the Completed switch of the table editor. A completed table takes no hand.
+                        SubCard(stringResource(Res.string.round_control_table_status)) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                                FilterChip(
+                                    selected = !table.isCompleted,
+                                    enabled = enabled,
+                                    onClick = { if (table.isCompleted) onChange(RoundControlChange(reopenTables = listOf(table.tableId))) },
+                                    label = { Text(stringResource(Res.string.round_control_table_in_play)) },
+                                    modifier = Modifier.testTag("table_${table.tableId}_in_play"),
+                                )
+                                FilterChip(
+                                    selected = table.isCompleted,
+                                    enabled = enabled,
+                                    onClick = { if (!table.isCompleted) onChange(RoundControlChange(completeTables = listOf(table.tableId))) },
+                                    label = { Text(stringResource(Res.string.round_control_table_completed)) },
+                                    modifier = Modifier.testTag("table_${table.tableId}_completed"),
+                                )
+                            }
+                        }
+                        SubCard(stringResource(Res.string.round_control_table_hands)) {
+                            ModeChips(
+                                tag = "table_${table.tableId}",
+                                selected = control.tables[table.tableId] ?: ControlMode.AUTO,
+                                enabled = enabled,
+                                autoLabel = Res.string.round_control_table_round,
+                            ) { mode -> onChange(RoundControlChange(table = table.tableId to mode)) }
+                        }
                     }
                 }
             }
+        }
+    }
+}
+
+/** A small titled group inside a table row. */
+@Composable
+private fun SubCard(title: String, content: @Composable () -> Unit) {
+    Surface(
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        shape = MaterialTheme.shapes.medium,
+    ) {
+        Column(Modifier.padding(horizontal = 12.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(title, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            content()
         }
     }
 }

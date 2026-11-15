@@ -793,4 +793,5 @@
     <string name="round_control_clock_help">The same buttons as the Timer. Press Start when the starting gong sounds: with Follow the clock, the players add hands from then until the end of the time. Stop ends the round now.</string>
     <string name="round_control_players">What the players can do</string>
     <string name="round_control_table_hands">Hand entry</string>
+    <string name="round_control_table_status">Status</string>
 </resources>

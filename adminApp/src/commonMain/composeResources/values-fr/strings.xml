@@ -793,4 +793,5 @@
     <string name="round_control_clock_help">Les mêmes boutons que le Timer. Appuyez sur Démarrer au gong : avec Selon l'horloge, les joueurs ajoutent des mains jusqu'à la fin du temps. Stop termine le tour tout de suite.</string>
     <string name="round_control_players">Ce que les joueurs peuvent faire</string>
     <string name="round_control_table_hands">Saisie des mains</string>
+    <string name="round_control_table_status">État</string>
 </resources>
