@@ -4,7 +4,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -88,27 +90,35 @@ internal fun SeatsAssignment(
     TrackedDialog("AssignSeats") {
         AlertDialog(
             onDismissRequest = { if (!busy) close() },
-            title = { Text(stringResource(Res.string.seats_title)) },
+            // The question of the seat to pick is the title. Once the four seats are set, the title names the table's seats.
+            title = {
+                if (complete) {
+                    Text(stringResource(Res.string.seats_title))
+                } else {
+                    val wind = SeatWind.entries[picks.size]
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.md)) {
+                        WindIcon(wind, size = 32.dp)
+                        Text(stringResource(Res.string.seats_who_sits, wind.label()))
+                    }
+                }
+            },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                    picks.forEachIndexed { index, slot ->
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            WindIcon(SeatWind.entries[index], size = 20.dp)
-                            Text("${SeatWind.entries[index].label()}: ${view.nameOf(slot)}")
-                        }
-                    }
+                    // Each player keeps its own button. A button that moves up to the place of the picked one would
+                    // take its last press and ignore a quick second pick.
                     if (!complete) {
-                        val wind = SeatWind.entries[picks.size]
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            WindIcon(wind, size = 20.dp)
-                            Text(stringResource(Res.string.seats_who_sits, wind.label()), style = MaterialTheme.typography.titleSmall)
-                        }
-                        // Each player keeps its own button. A button that moves up to the place of the picked one would
-                        // take its last press and ignore a quick second pick.
                         left.forEach { slot ->
                             key(slot) {
                                 OutlinedButton(onClick = { picks.add(slot) }, modifier = Modifier.fillMaxWidth().testTag(SEAT_OPTION_TAG)) { Text(view.nameOf(slot)) }
                             }
+                        }
+                    }
+                    // The seats already set grow below the names, above the buttons of the dialog.
+                    if (picks.isNotEmpty() && !complete) HorizontalDivider(modifier = Modifier.padding(vertical = MtsTheme.spacing.xs))
+                    picks.forEachIndexed { index, slot ->
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
+                            WindIcon(SeatWind.entries[index], size = 20.dp)
+                            Text("${SeatWind.entries[index].label()}: ${view.nameOf(slot)}")
                         }
                     }
                 }
