@@ -80,7 +80,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         openActivePlayerTable()
         c.clickButton("Add win")
         c.waitForText("Who won?")
-        c.pickSeat("South")
+        c.pickPlayer(1)
         c.waitForText("Who discarded?")
         c.clickButton("Self-draw")
         c.field("Hand score").performTextInput("12")
@@ -95,9 +95,9 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         openActivePlayerTable()
         c.clickButton("Add win")
         c.waitForText("Who won?")
-        c.pickSeat("South")
+        c.pickPlayer(1)
         c.waitForText("Who discarded?")
-        c.pickSeat("East")
+        c.pickPlayer(0)
         c.field("Hand score").performTextInput("10")
         c.clickButton("Review")
         c.waitForText("Check hand")
@@ -110,9 +110,9 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         openActivePlayerTable()
         c.clickButton("Add win")
         c.waitForText("Who won?")
-        c.pickSeat("South")
+        c.pickPlayer(1)
         listOf("Who discarded?", "Self-draw").forEach { c.waitForText(it) }
-        c.pickSeat("East")
+        c.pickPlayer(0)
         listOf("Hand score", "Chicken hand").forEach { c.waitForText(it) }
     }
 

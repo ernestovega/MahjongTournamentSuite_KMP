@@ -92,7 +92,7 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
         waitForHandInPlay(2)
         c.clickButton("Add win")
         c.waitForText("Who won?")
-        c.pickSeat("East")
+        c.pickPlayer(0)
         c.waitForText("Who discarded?")
         c.clickButton("Self-draw")
         c.field("Hand score").performTextInput("8")

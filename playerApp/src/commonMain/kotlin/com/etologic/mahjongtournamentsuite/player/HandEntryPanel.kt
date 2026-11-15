@@ -65,14 +65,10 @@ import com.etologic.mahjongtournamentsuite.domain.model.PenaltyEntry
 import com.etologic.mahjongtournamentsuite.domain.model.seatPoints
 import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.HandLabel
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
-import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
-import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
 import com.etologic.mahjongtournamentsuite.presentation.components.signedText
-import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
 import com.etologic.mahjongtournamentsuite.presentation.telemetry.TrackedDialog
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.inTextFont
@@ -286,7 +282,6 @@ fun HandEntryPanel(
 
     // The winds turn after every hand, so the wind follows the hand in play.
     val handInPlay = minOf(table.doneHands + 1, 16)
-    fun windOf(slot: Int): SeatWind = windOfChair(chairOf(seats.indexOf(slot), handInPlay), handInPlay)
 
     if (table.table.useTotalsOnly) {
         Text(stringResource(Res.string.entry_totals_only), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -393,7 +388,7 @@ fun HandEntryPanel(
     val entryTitle: @Composable () -> Unit = {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(if (isDraw) Res.string.entry_add_draw else Res.string.entry_add_win))
-            HandLabel(handInPlay)
+            HandNumberLabel(handInPlay)
         }
     }
     val cancelButton: @Composable () -> Unit = {
@@ -437,14 +432,14 @@ fun HandEntryPanel(
                         when (winStep) {
                             WinStep.WINNER -> {
                                 StepQuestion(stringResource(Res.string.entry_winner))
-                                PlayerChoices(seatIds, winner, view, ::windOf) { slot ->
+                                PlayerChoices(seatIds, winner, view) { slot ->
                                     winner = slot
                                     if (loser == slot) loser = null
                                     winStep = WinStep.LOSER
                                 }
                             }
                             WinStep.LOSER -> {
-                                WinSoFar(view, winner, ::windOf)
+                                WinSoFar(view, winner)
                                 StepQuestion(stringResource(Res.string.entry_loser))
                                 SelfDrawButton(stringResource(Res.string.entry_self_draw), selected = selfDraw) {
                                     selfDraw = true
@@ -453,14 +448,14 @@ fun HandEntryPanel(
                                     winStep = WinStep.SCORE
                                 }
                                 HorizontalDivider()
-                                PlayerChoices(seatIds.filter { it != winner }, if (selfDraw) null else loser, view, ::windOf, columns = 1) {
+                                PlayerChoices(seatIds.filter { it != winner }, if (selfDraw) null else loser, view, columns = 1) {
                                     selfDraw = false
                                     loser = it
                                     winStep = WinStep.SCORE
                                 }
                             }
                             WinStep.SCORE -> {
-                                WinSoFar(view, winner, ::windOf, loser = if (selfDraw) null else loser, selfDraw = selfDraw)
+                                WinSoFar(view, winner, loser = if (selfDraw) null else loser, selfDraw = selfDraw)
                                 // On a phone or a tablet app the numpad below types the score, so the system keyboard never
                                 // opens: the field cannot take the focus.
                                 val numpad = LocalNumpadEntry.current
@@ -517,7 +512,7 @@ fun HandEntryPanel(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         Text(stringResource(Res.string.entry_check_hand))
-                        HandLabel(review.handId)
+                        HandNumberLabel(review.handId)
                     }
                 },
                 text = {
@@ -607,7 +602,6 @@ fun HandEntryPanel(
                                 draft = draft,
                                 seats = seats,
                                 view = view,
-                                windOf = ::windOf,
                                 onChange = { penaltyDrafts[index] = it },
                                 onRemove = {
                                     penaltyDrafts.removeAt(index)
@@ -651,7 +645,7 @@ fun HandEntryPanel(
                 title = { Text(stringResource(Res.string.entry_check_penalty)) },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        penaltyEntries.forEach { PenaltyLine(it, view, seats, ::windOf) }
+                        penaltyEntries.forEach { PenaltyLine(it, view, seats) }
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_penalty))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
@@ -702,10 +696,9 @@ private fun SavingRow(waitingForTable: Boolean, text: String) {
 
 /** One penalty in the review: who loses the points and who receives them. */
 @Composable
-private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats: List<Int?>, windOf: (Int) -> SeatWind) {
+private fun PenaltyLine(penalty: PenaltyEntry, view: PlayerTournamentView, seats: List<Int?>) {
     val slot = seats.getOrNull(penalty.seatIndex)
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (slot != null) WindIcon(windOf(slot), size = 24.dp)
         Text(view.firstNameOf(slot), Modifier.weight(1f, fill = false), fontWeight = FontWeight.Bold, maxLines = 1)
         Text("-${penalty.amount}", style = MaterialTheme.typography.titleMedium.inTextFont(), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.error)
         if (penalty.shared) {
@@ -779,6 +772,15 @@ private const val NUMPAD_DELETE = "DEL"
 /** The tag of the numpad of the score, for the tests. */
 const val SCORE_NUMPAD_TAG = "score-numpad"
 
+/** The number of the hand in the title of the dialogs, without the wind: "#5". */
+@Composable
+private fun HandNumberLabel(handId: Int) {
+    Text("#$handId", color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** The tag of each player to choose in the dialogs of a hand, for the tests. */
+const val PLAYER_CHOICE_TAG = "player-choice"
+
 /** The question of a step of a win. */
 @Composable
 private fun StepQuestion(text: String) {
@@ -787,11 +789,10 @@ private fun StepQuestion(text: String) {
 
 /** What the steps before chose: the winner, and on the score step who discarded or Self-draw. */
 @Composable
-private fun WinSoFar(view: PlayerTournamentView, winner: Int?, windOf: (Int) -> SeatWind, loser: Int? = null, selfDraw: Boolean = false) {
+private fun WinSoFar(view: PlayerTournamentView, winner: Int?, loser: Int? = null, selfDraw: Boolean = false) {
     val slot = winner ?: return
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
         Icon(Icons.Default.EmojiEvents, contentDescription = null, Modifier.size(20.dp), tint = MtsTheme.colors.gain)
-        WindIcon(windOf(slot), size = 20.dp)
         Text(view.firstNameOf(slot), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         if (selfDraw) {
             Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -799,7 +800,6 @@ private fun WinSoFar(view: PlayerTournamentView, winner: Int?, windOf: (Int) -> 
             Text(stringResource(Res.string.entry_self_draw), color = MtsTheme.colors.selfPick, fontWeight = FontWeight.Bold, maxLines = 1)
         } else if (loser != null) {
             Text(stringResource(Res.string.entry_from), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            WindIcon(windOf(loser), size = 20.dp)
             Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false))
         }
     }
@@ -832,13 +832,12 @@ private fun SelfDrawButton(label: String, selected: Boolean, onClick: () -> Unit
     }
 }
 
-/** The players to choose from, [columns] per row. Each choice shows the wind icon and the first name. */
+/** The players to choose from, [columns] per row. Each choice shows the first name. */
 @Composable
 private fun PlayerChoices(
     slots: List<Int>,
     selected: Int?,
     view: PlayerTournamentView,
-    windOf: (Int) -> SeatWind,
     columns: Int = 2,
     onSelect: (Int) -> Unit,
 ) {
@@ -848,7 +847,7 @@ private fun PlayerChoices(
                 group.forEach { slot ->
                     val isSelected = slot == selected
                     Surface(
-                        modifier = Modifier.weight(1f).clickable { onSelect(slot) },
+                        modifier = Modifier.weight(1f).testTag(PLAYER_CHOICE_TAG).clickable { onSelect(slot) },
                         shape = MaterialTheme.shapes.medium,
                         color = if (isSelected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface,
                         border = BorderStroke(
@@ -861,7 +860,6 @@ private fun PlayerChoices(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
-                            WindIcon(windOf(slot), size = 24.dp)
                             Text(
                                 view.firstNameOf(slot),
                                 fontWeight = FontWeight.Bold,
@@ -887,7 +885,6 @@ private fun PenaltyCard(
     draft: PenaltyDraft,
     seats: List<Int?>,
     view: PlayerTournamentView,
-    windOf: (Int) -> SeatWind,
     onChange: (PenaltyDraft) -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -905,7 +902,7 @@ private fun PenaltyCard(
             }
             SectionLabel(stringResource(Res.string.entry_penalized_player))
             val slots = seats.filterNotNull()
-            PlayerChoices(slots, draft.seat?.let { seats.getOrNull(it) }, view, windOf) { slot ->
+            PlayerChoices(slots, draft.seat?.let { seats.getOrNull(it) }, view) { slot ->
                 onChange(draft.copy(seat = seats.indexOf(slot)))
             }
             OutlinedTextField(
@@ -972,8 +969,6 @@ private fun ReviewHand(
     lastHand: Boolean,
 ) {
     val showPoints = preview.handId >= 16 || lastHand
-    fun windOf(slot: Int?): SeatWind? = preview.seatSlotIds.indexOf(slot).takeIf { it >= 0 }
-        ?.let { windOfChair(chairOf(it, preview.handId), preview.handId) }
     if (isDraw) {
         Surface(
             shape = MaterialTheme.shapes.medium,
@@ -996,20 +991,19 @@ private fun ReviewHand(
         ) {
             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), horizontalAlignment = Alignment.CenterHorizontally) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    windOf(winner)?.let { WindIcon(it, size = 28.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Normal)
+                    Text(view.firstNameOf(winner), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
                     Text(stringResource(Res.string.entry_wins, score), style = MaterialTheme.typography.headlineSmall.inTextFont(), fontWeight = FontWeight.Bold)
                     if (chicken) ChickenIcon(24.dp)
                 }
+                // Who paid is as large as who won, so both read at a glance.
                 if (selfDraw) {
-                    Text(stringResource(Res.string.entry_self_draw))
+                    Text(stringResource(Res.string.entry_self_draw), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm)) {
-                        Text(stringResource(Res.string.entry_from))
-                        windOf(loser)?.let { WindIcon(it, size = 20.dp, tint = MaterialTheme.colorScheme.onPrimaryContainer) }
-                        Text(view.firstNameOf(loser), fontWeight = FontWeight.Bold)
+                        Text(stringResource(Res.string.entry_from), style = MaterialTheme.typography.titleLarge.inTextFont())
+                        Text(view.firstNameOf(loser), style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -1029,7 +1023,6 @@ private fun ReviewHand(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
-                windOf(slot)?.let { WindIcon(it, size = 20.dp) }
                 Text(view.firstNameOf(slot), maxLines = 1)
             }
             Text(
