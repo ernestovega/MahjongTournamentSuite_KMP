@@ -109,18 +109,6 @@ internal fun CompactHandCard(
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (rowEnabled) 1f else 0.6f),
             )
             Spacer(Modifier.weight(1f))
-            if (showChicken) {
-                ToggleLabel(stringResource(Res.string.chicken), rowEnabled)
-                HandToggleControl(
-                    width = 48.dp,
-                    label = null,
-                    checked = hand.isChickenHand,
-                    enabled = rowEnabled,
-                    isChanged = hand.hasChickenHandChanged,
-                    onCheckedChange = { hand.updateChickenHand(it) },
-                    focusRequester = navigation.chicken,
-                )
-            }
             ToggleLabel(stringResource(Res.string.done), doneEnabled)
             HandToggleControl(
                 width = 48.dp,
@@ -189,19 +177,33 @@ internal fun CompactHandCard(
                 singleLine = true,
                 textStyle = MaterialTheme.typography.bodyLarge.copy(textAlign = TextAlign.Center),
             )
-            Row(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    text = stringResource(Res.string.penalty),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+            // The chicken check is next to the score: both describe the winning hand.
+            if (showChicken) {
+                ToggleLabel(stringResource(Res.string.chicken), rowEnabled)
+                HandToggleControl(
+                    width = 48.dp,
+                    label = null,
+                    checked = hand.isChickenHand,
+                    enabled = rowEnabled,
+                    isChanged = hand.hasChickenHandChanged,
+                    onCheckedChange = { hand.updateChickenHand(it) },
+                    focusRequester = navigation.chicken,
                 )
-                IconButton(onClick = { penaltyRowToFocus = hand.addPenaltyRow() }, enabled = rowEnabled) {
-                    Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_penalty_to_hand, index + 1))
-                }
+            }
+        }
+        // The button to add a penalty is under the score, so the score field keeps its width.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.End,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = stringResource(Res.string.penalty),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            IconButton(onClick = { penaltyRowToFocus = hand.addPenaltyRow() }, enabled = rowEnabled) {
+                Icon(Icons.Default.Add, contentDescription = stringResource(Res.string.add_penalty_to_hand, index + 1))
             }
         }
         val penaltyBackground = MaterialTheme.colorScheme.tertiaryContainer.copy(alpha = 0.2f)

@@ -314,14 +314,30 @@ private fun HandsTotalsRow(totals: SeatTextValues) {
     }
 }
 
-/** Chicken hand count and best hand scores, next to the section title. */
+/** True when [HandSummaryTitleAction] shows something: a chicken hand or a best hand of the tournament. */
 @Composable
-internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTablesBestHandScores: List<Int>) {
+internal fun hasHandSummary(editor: TableManagerEditorState, otherTablesBestHandScores: List<Int>): Boolean {
+    val options = LocalHandStatOptions.current
+    val chickenHandCount = if (options.countChickenHands) editor.chickenHandCount else 0
+    return chickenHandCount > 0 || summaryBestHands(editor, otherTablesBestHandScores).isNotEmpty()
+}
+
+/** The best hands of this table that are among the best hands of the tournament. */
+@Composable
+private fun summaryBestHands(editor: TableManagerEditorState, otherTablesBestHandScores: List<Int>) = run {
     // Only the best hands of the tournament show. The medal is the place in the tournament.
     val tournamentScores = topHandScores(otherTablesBestHandScores + editor.bestCompletedHands.map { it.first })
     val threshold = tournamentScores.lastOrNull()
     val options = LocalHandStatOptions.current
-    val bestHands = editor.bestCompletedHands.filter { options.countBestHands && threshold != null && it.first >= threshold }
+    editor.bestCompletedHands.filter { options.countBestHands && threshold != null && it.first >= threshold }
+}
+
+/** Chicken hand count and best hand scores, next to the section title. */
+@Composable
+internal fun HandSummaryTitleAction(editor: TableManagerEditorState, otherTablesBestHandScores: List<Int>) {
+    val tournamentScores = topHandScores(otherTablesBestHandScores + editor.bestCompletedHands.map { it.first })
+    val options = LocalHandStatOptions.current
+    val bestHands = summaryBestHands(editor, otherTablesBestHandScores)
     val chickenHandCount = if (options.countChickenHands) editor.chickenHandCount else 0
     if (chickenHandCount == 0 && bestHands.isEmpty()) return
     // Each stat is a group: icon, value and winner. The groups have the same space between them.

@@ -6,14 +6,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.Assessment
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -29,8 +26,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.etologic.mahjongtournamentsuite.domain.model.AppResult
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
@@ -56,6 +51,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.StatisticsScope
+import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.TournamentEditTitleAction
 import com.etologic.mahjongtournamentsuite.presentation.components.UnsavedChangesDialog
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberPersistentOptionalInt
@@ -161,6 +157,7 @@ fun TournamentScreen(
     var pendingAction by remember { mutableStateOf<RoundEditorAction?>(null) }
     // The table the admin asked to empty. A dialog asks before the server clears it.
     var tableToReset by remember { mutableStateOf<Int?>(null) }
+    var editingTournament by remember { mutableStateOf(false) }
     var restoreSaveFocus by remember { mutableStateOf(false) }
     val poller = remember(activity, pollSchedule) { TableSyncPoller(pollSchedule, activity) }
 
@@ -448,19 +445,31 @@ fun TournamentScreen(
         TableUpdatesDialog(notices = sync.updateNotices, onDismiss = sync::dismissNotices)
     }
     errorMessage?.let { message -> AppErrorDialog(message) { errorMessage = null } }
+    if (editingTournament) {
+        TournamentEditDialog(
+            tournamentId = tournamentId,
+            onDismiss = { editingTournament = false },
+            onDeleted = {
+                editingTournament = false
+                navController.navigate(TournamentsRoute) {
+                    popUpTo(TournamentsRoute) { inclusive = true }
+                }
+            },
+        )
+    }
 
+    // The results the screen holds, and when the server was last asked. Support can ask for this.
+    // It is the subtitle of the top bar, so it takes no room from the table.
+    val dataStatus = dataStatus(
+        revision = allTables.takeIf { it.isNotEmpty() }?.let { rows -> tournamentDataRevision(rows.map { it.version }) },
+        at = sync.lastCheckedAt,
+    ).asString()
     Box(modifier = Modifier.trackActivity(activity)) {
     AppScaffold(
         title = tournament?.name?.ifBlank { null } ?: stringResource(Res.string.scope_tournament),
+        subtitle = dataStatus.ifBlank { null },
         titleAction = {
-            TournamentEditTitleAction(
-                tournamentId = tournamentId,
-                onDeleted = {
-                    navController.navigate(TournamentsRoute) {
-                        popUpTo(TournamentsRoute) { inclusive = true }
-                    }
-                },
-            )
+            TournamentEditTitleAction(tournamentId = tournamentId, onEdit = { editingTournament = true })
         },
         isLoading = isLoading,
         showBackgroundLogo = isLoading && tournament == null,
@@ -521,21 +530,7 @@ fun TournamentScreen(
                 countChickenHands = tournament?.countChickenHands ?: true,
             ),
         ) {
-        // The results the screen holds, and when the server was last asked. Support can ask for this.
-        val dataStatus = dataStatus(
-            revision = allTables.takeIf { it.isNotEmpty() }?.let { rows -> tournamentDataRevision(rows.map { it.version }) },
-            at = sync.lastCheckedAt,
-        ).asString()
         Column(Modifier.fillMaxSize()) {
-        if (dataStatus.isNotBlank()) {
-            Text(
-                dataStatus,
-                Modifier.fillMaxWidth().padding(top = 4.dp, end = 24.dp),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.End,
-            )
-        }
         Box(Modifier.weight(1f).fillMaxWidth()) {
         TournamentContent(
             rounds = rounds,

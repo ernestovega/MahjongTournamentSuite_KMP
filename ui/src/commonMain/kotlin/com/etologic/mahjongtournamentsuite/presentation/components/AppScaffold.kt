@@ -47,6 +47,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
@@ -122,40 +123,7 @@ fun AppScaffold(
                         // so the icons line up with the 16 dp of the content.
                         val sidePadding = if (rootLeadingActions != null) 0.dp else AppTopBarSidePadding
                         val titleContent: @Composable () -> Unit = {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(if (titleLeading != null) MtsTheme.spacing.sm else MtsTheme.spacing.xs),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                if (titleLeading != null) titleLeading()
-                                Box(modifier = Modifier.weight(1f, fill = false)) {
-                                    if (subtitle == null && subtitleContent == null) {
-                                        EllipsizedTitleText(title)
-                                    } else {
-                                        Column(
-                                            verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
-                                            // With a picture on the left, the texts line up on its side.
-                                            horizontalAlignment = if (titleLeading != null) Alignment.Start else Alignment.CenterHorizontally,
-                                        ) {
-                                            EllipsizedTitleText(title)
-                                            if (subtitleContent != null) {
-                                                ProvideTextStyle(MaterialTheme.typography.bodySmall) { subtitleContent() }
-                                            } else if (subtitle != null) {
-                                                EllipsizedTitleText(
-                                                    text = subtitle,
-                                                    style = MaterialTheme.typography.bodySmall,
-                                                    // Same color as the title, in the light and the dark theme.
-                                                    color = LocalContentColor.current,
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                                if (titleAction != null) {
-                                    CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                        titleAction()
-                                    }
-                                }
-                            }
+                            TopBarTitle(title, subtitle, subtitleContent, titleLeading, titleAction, isLoading)
                         }
 
                         val navigationContent: @Composable () -> Unit = {
@@ -212,26 +180,54 @@ fun AppScaffold(
                         )
 
                         when {
-                            compact && rootLeadingActions != null -> {
-                                // One icon at the left: the back button, or the root actions when there is no back button.
-                                // One three-dots menu at the right. The root actions are in it when the back button is present.
-                                val hasBack = onBack != null
+                            compact -> {
+                                // On a phone the bar never has more than two icons: one at the left and one at the right.
+                                // The left one is the back button. Without a back button it is the buttons left of the
+                                // title, or one menu with them. With a back button those buttons go first in the
+                                // three-dots menu at the right, so there is never a second menu at the left.
+                                val hasBack = onBack != null && navigationIcon == null
+                                val leftButtons: (@Composable () -> Unit)? =
+                                    if (navigationIcon == null && leadingActions == null && rootLeadingActions == null) {
+                                        null
+                                    } else {
+                                        {
+                                            navigationIcon?.invoke()
+                                            leadingActions?.invoke()
+                                            rootLeadingActions?.invoke()
+                                        }
+                                    }
+                                val hasLeftIcon = hasBack || leftButtons != null
+                                val hasMenuButtons = actions != null || (hasBack && leftButtons != null)
+                                // The title button, such as the pencil, joins the menu when the bar already has two icons.
+                                val titleActionInMenu = titleAction != null && hasLeftIcon && hasMenuButtons
                                 CompositionLocalProvider(LocalTopBarLabels provides false) {
                                     CenterAlignedTopAppBar(
-                                        title = titleContent,
+                                        title = if (titleActionInMenu) {
+                                            { TopBarTitle(title, subtitle, subtitleContent, titleLeading, titleAction = null, isLoading) }
+                                        } else {
+                                            titleContent
+                                        },
                                         navigationIcon = {
-                                            if (hasBack) {
-                                                AppBackButton(onClick = onBack!!, showLabel = false)
-                                            } else {
-                                                CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
-                                                    rootLeadingActions()
+                                            Box(modifier = Modifier.padding(start = sidePadding)) {
+                                                when {
+                                                    hasBack -> AppBackButton(onClick = onBack!!, showLabel = false)
+                                                    // The root buttons of the player stay visible while they fit. More buttons share one menu.
+                                                    rootLeadingActions != null && navigationIcon == null && leadingActions == null -> {
+                                                        val rightIcons = if (hasMenuButtons || titleAction != null) 1 else 0
+                                                        TopBarIconsOrMenu(maxIcons = 2 - rightIcons, isLoading = isLoading, content = rootLeadingActions)
+                                                    }
+                                                    leftButtons != null -> {
+                                                        // Its icon is not the three dots, so it does not look like the menu at the right.
+                                                        TopBarOverflowMenu(isLoading, icon = Icons.Default.Menu, content = leftButtons)
+                                                    }
                                                 }
                                             }
                                         },
                                         actions = {
-                                            if (hasBack || actions != null) {
+                                            if (hasMenuButtons || titleActionInMenu) {
                                                 TopBarOverflowMenu(isLoading) {
-                                                    if (hasBack) rootLeadingActions()
+                                                    if (hasBack) leftButtons?.invoke()
+                                                    if (titleActionInMenu) titleAction?.invoke()
                                                     actions?.invoke()
                                                 }
                                             }
@@ -239,36 +235,6 @@ fun AppScaffold(
                                         colors = colors,
                                     )
                                 }
-                            }
-                            compact -> {
-                                CenterAlignedTopAppBar(
-                                    title = titleContent,
-                                    navigationIcon = {
-                                        Row(
-                                            modifier = Modifier.padding(start = AppTopBarSidePadding),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            if (onBack != null && navigationIcon == null) {
-                                                // The buttons are collapsed, so the back button drops its label.
-                                                AppBackButton(onClick = onBack, showLabel = false)
-                                            }
-                                            if (navigationIcon != null || leadingActions != null) {
-                                                // The menu at the start has the profile and the other sections. Its icon is not the
-                                                // three dots, so it does not look like the actions menu at the end.
-                                                TopBarOverflowMenu(isLoading, icon = Icons.Default.Menu) {
-                                                    navigationIcon?.invoke()
-                                                    leadingActions?.invoke()
-                                                }
-                                            }
-                                        }
-                                    },
-                                    actions = {
-                                        if (actions != null) {
-                                            TopBarOverflowMenu(isLoading) { actions() }
-                                        }
-                                    },
-                                    colors = colors,
-                                )
                             }
                             else -> CenterAlignedTopAppBar(
                                 title = titleContent,
@@ -299,6 +265,79 @@ fun AppScaffold(
                         content()
                     }
                 }
+            }
+        }
+    }
+}
+
+/** The title and the subtitle of the top bar, with the picture at the left and the title button at the right. */
+@Composable
+private fun TopBarTitle(
+    title: String,
+    subtitle: String?,
+    subtitleContent: @Composable (() -> Unit)?,
+    titleLeading: @Composable (() -> Unit)?,
+    titleAction: @Composable (() -> Unit)?,
+    isLoading: Boolean,
+) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(if (titleLeading != null) MtsTheme.spacing.sm else MtsTheme.spacing.xs),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        if (titleLeading != null) titleLeading()
+        Box(modifier = Modifier.weight(1f, fill = false)) {
+            if (subtitle == null && subtitleContent == null) {
+                EllipsizedTitleText(title)
+            } else {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(MtsTheme.spacing.xxs),
+                    // With a picture on the left, the texts line up on its side.
+                    horizontalAlignment = if (titleLeading != null) Alignment.Start else Alignment.CenterHorizontally,
+                ) {
+                    EllipsizedTitleText(title)
+                    if (subtitleContent != null) {
+                        ProvideTextStyle(MaterialTheme.typography.bodySmall) { subtitleContent() }
+                    } else if (subtitle != null) {
+                        EllipsizedTitleText(
+                            text = subtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            // Same color as the title, in the light and the dark theme.
+                            color = LocalContentColor.current,
+                        )
+                    }
+                }
+            }
+        }
+        if (titleAction != null) {
+            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) {
+                titleAction()
+            }
+        }
+    }
+}
+
+/**
+ * The top bar buttons in a row while there are at most [maxIcons] of them. With more, one menu holds them all,
+ * so that the bar keeps its maximum of two icons on a phone.
+ */
+@Composable
+private fun TopBarIconsOrMenu(maxIcons: Int, isLoading: Boolean, content: @Composable () -> Unit) {
+    SubcomposeLayout { constraints ->
+        val loose = constraints.copy(minWidth = 0, minHeight = 0)
+        val icons = subcompose("icons") {
+            CompositionLocalProvider(LocalAppButtonsEnabled provides !isLoading) { content() }
+        }
+        val placeables = if (icons.size <= maxIcons) {
+            icons.map { it.measure(loose) }
+        } else {
+            subcompose("menu") { TopBarOverflowMenu(isLoading, icon = Icons.Default.Menu, content = content) }.map { it.measure(loose) }
+        }
+        val height = placeables.maxOfOrNull { it.height } ?: 0
+        layout(placeables.sumOf { it.width }, height) {
+            var x = 0
+            placeables.forEach {
+                it.placeRelative(x, (height - it.height) / 2)
+                x += it.width
             }
         }
     }
