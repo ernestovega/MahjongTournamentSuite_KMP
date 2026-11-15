@@ -63,6 +63,8 @@ export async function upsertTournamentMember(params: {
   await Promise.all([
     bumpTournamentDataVersion(params.tournamentId, "members"),
     bumpGlobalDataVersion("users"),
+    // An editor lists only the tournaments assigned to it.
+    bumpGlobalDataVersion("tournaments"),
   ]);
 }
 
@@ -78,5 +80,7 @@ export async function removeTournamentMember(params: {
   await Promise.all([
     bumpTournamentDataVersion(params.tournamentId, "members"),
     bumpGlobalDataVersion("users"),
+    // An editor lists only the tournaments assigned to it.
+    bumpGlobalDataVersion("tournaments"),
   ]);
 }

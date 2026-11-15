@@ -193,6 +193,8 @@ export async function setGlobalUserRole(uid: string, role: GlobalUserRole): Prom
   else if (role === "EDITOR") claims.editor = true;
   else claims.player = true;
   await auth.setCustomUserClaims(uid, claims);
+  // The role decides which tournaments the account lists, so the cached lists are old.
+  await bumpGlobalDataVersion("tournaments");
 }
 
 export async function updateManagedUser(params: {
@@ -318,7 +320,11 @@ export async function syncUserTournamentAssignments(
     batch.update(db.doc(`tournaments/${tournamentId}`), tournamentVersionUpdate("members"));
     operationCount++;
   });
-  if (operationCount > 0) await batch.commit();
+  if (operationCount > 0) {
+    await batch.commit();
+    // An editor lists only the tournaments assigned to it, so the cached lists are old.
+    await bumpGlobalDataVersion("tournaments");
+  }
 }
 
 export async function setManagedUserDisabled(uid: string, disabled: boolean): Promise<void> {

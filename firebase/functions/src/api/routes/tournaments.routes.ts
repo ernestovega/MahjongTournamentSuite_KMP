@@ -9,7 +9,7 @@ import { requireAdmin } from "../middleware/requireAdmin";
 import { requireTournamentEditor } from "../middleware/requireTournamentEditor";
 import { runAccountAction, savePendingEmails } from "../../services/playerAccountsService";
 import { assertSafeDocumentId, badRequest, forbidden } from "../httpError";
-import { hasAdminClaim } from "../../models/globalRole";
+import { getGlobalUserRole, hasAdminClaim, type GlobalUserRole } from "../../models/globalRole";
 import { listTournamentMembers, removeTournamentMember, upsertTournamentMember } from "../../services/membersService";
 import {
   createTournament,
@@ -117,15 +117,27 @@ export function tournamentsRouter(): Router {
     },
   );
 
+  /**
+   * The role that decides which tournaments an account lists. A token keeps the claims of the moment it was issued,
+   * for up to one hour, so an account that just became an editor still has a token without the claim.
+   * Then the account itself is read.
+   */
+  const listingRole = async (decoded: { uid: string; admin?: boolean; editor?: boolean }): Promise<GlobalUserRole> => {
+    if (decoded.admin === true) return "ADMIN";
+    if (decoded.editor === true) return "EDITOR";
+    const user = await auth.getUser(decoded.uid).catch(() => null);
+    return user ? getGlobalUserRole(user) : "PLAYER";
+  };
+
   // Admins see every tournament. Editors see the ones assigned to them. The player app reads /public instead.
   router.get("/", requireAuth, async (_req, res, next) => {
     try {
-      const decoded = res.locals.auth as { uid: string; admin?: boolean; editor?: boolean };
+      const role = await listingRole(res.locals.auth as { uid: string; admin?: boolean; editor?: boolean });
       let tournaments: Awaited<ReturnType<typeof listAllTournaments>>;
-      if (decoded.admin === true) {
+      if (role === "ADMIN") {
         tournaments = await listAllTournaments();
-      } else if (decoded.editor === true) {
-        tournaments = await listTournamentsForUser(decoded.uid);
+      } else if (role === "EDITOR") {
+        tournaments = await listTournamentsForUser((res.locals.auth as { uid: string }).uid);
       } else {
         tournaments = [];
       }
@@ -152,8 +164,9 @@ export function tournamentsRouter(): Router {
    * It is the same rule as the tournament list above.
    */
   const visibleTournamentIds = async (decoded: { uid: string; admin?: boolean; editor?: boolean }) => {
-    if (decoded.admin === true) return null;
-    if (decoded.editor !== true) return new Set<string>();
+    const role = await listingRole(decoded);
+    if (role === "ADMIN") return null;
+    if (role !== "EDITOR") return new Set<string>();
     return new Set((await listTournamentsForUser(decoded.uid)).map((tournament) => tournament.id));
   };
 
