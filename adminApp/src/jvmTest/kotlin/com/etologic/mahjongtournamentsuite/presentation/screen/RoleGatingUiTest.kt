@@ -223,6 +223,21 @@ class RoleGatingUiTest {
     }
 
     @Test
+    fun aSearchThatHidesTheSelectedEmaPlayerSelectsTheFirstVisibleOne() = runComposeUiTest {
+        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val babbage = Player(emaId = "10002", firstName = "Charles", lastName = "Babbage", country = "GBR")
+        show(world, listOf(player.copy(country = "GBR"), babbage)) { PlayerBaseScreen(rememberNavController()) }
+
+        awaitText("10001")
+        onAllNodes(hasText("10001", substring = true) and !hasSetTextAction()).onFirst().performClick()
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Ada") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+
+        onAllNodes(hasSetTextAction()).onFirst().performTextInput("Babb")
+        waitUntil(timeoutMillis = 5_000) { onAllNodes(hasText("Charles") and hasSetTextAction()).fetchSemanticsNodes().isNotEmpty() }
+        onAllNodes(hasText("Ada") and hasSetTextAction()).assertCountEquals(0)
+    }
+
+    @Test
     fun editorCanReadButNotAddEmaPlayers() = runComposeUiTest {
         val world = World(GlobalUserRole.EDITOR, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.EDITOR) }
         show(world, listOf(player)) { PlayerBaseScreen(rememberNavController()) }

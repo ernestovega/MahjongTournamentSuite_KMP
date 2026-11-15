@@ -232,6 +232,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
     val playersListState = rememberPersistentLazyListState("players")
     // A player that was just created or saved. The list scrolls to it once it is in the list.
     var scrollToEmaId by remember { mutableStateOf<String?>(null) }
+    // A phone shows the details instead of the list, so it does not choose the first player by itself.
+    val autoSelect = !LocalCompactLayout.current
 
     fun select(player: Player?) {
         selectedEmaId = player?.emaId
@@ -404,6 +406,15 @@ fun PlayerBaseScreen(navController: NavHostController) {
         saving = false
     }
     LaunchedEffect(Unit) { refresh() }
+    // A search or a filter that hides the selected player selects the first player of the list (a phone, with no
+    // details beside the list, selects nobody). Unsaved changes keep the player, so they are not lost.
+    LaunchedEffect(filteredPlayers.map { it.emaId }, loading) {
+        val current = selectedEmaId ?: return@LaunchedEffect
+        if (loading || scrollToEmaId != null || hasPlayerChanges) return@LaunchedEffect
+        if (filteredPlayers.none { it.emaId == current }) {
+            select(filteredPlayers.firstOrNull()?.takeIf { autoSelect })
+        }
+    }
     // The store gives the new list a frame later, so this runs again when the player arrives.
     LaunchedEffect(scrollToEmaId, filteredPlayers) {
         val target = scrollToEmaId ?: return@LaunchedEffect
@@ -429,8 +440,6 @@ fun PlayerBaseScreen(navController: NavHostController) {
             selectedCountryCodes = availableSelection
         }
     }
-    // A phone shows the details instead of the list, so it does not choose the first player by itself.
-    val autoSelect = !LocalCompactLayout.current
     LaunchedEffect(loading, filteredPlayers.map { it.emaId }) {
         if (!playerFocusApplied && !loading) {
             val index = filteredPlayers.indexOfFirst { it.emaId == lastFocusedPlayerEmaId }
