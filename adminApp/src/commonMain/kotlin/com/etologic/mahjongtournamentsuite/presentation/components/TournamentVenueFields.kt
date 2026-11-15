@@ -221,7 +221,6 @@ fun TournamentPlaceFields(
             EmaCountryDropdown(
                 selectedCode = hostCountry,
                 onCountrySelected = onHostCountryChange,
-                countries = countries,
                 enabled = enabled && PlaceField.COUNTRY !in locked,
                 modifier = Modifier.weight(1f),
                 focusRequester = countryFocusRequester,

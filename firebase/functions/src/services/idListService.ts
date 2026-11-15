@@ -2,7 +2,7 @@ import type { Buffer as ExcelBuffer } from "exceljs";
 
 import { excelJs, sharp } from "./lazyModules";
 
-import { flagSvgFor, IdCardsDocument, loadIdCardsDocument, MISSING_FLAG_SVG, splitPlayerName } from "./idCardsService";
+import { flagOrPlaceholderSvg, flagSvgFor, IdCardsDocument, loadIdCardsDocument, splitPlayerName } from "./idCardsService";
 
 export const ID_LIST_BASE_HEADERS = [
   "Tournament short name",
@@ -50,11 +50,11 @@ export async function buildIdList(model: IdCardsDocument): Promise<Buffer> {
     row.height = 24;
 
     const countryCode = player.countryCode?.trim().toUpperCase() ?? "";
-    const flagSvg = flagSvgFor(countryCode);
-    const imageKey = flagSvg == null ? "missing" : countryCode;
+    const flagSvg = flagOrPlaceholderSvg(countryCode);
+    const imageKey = countryCode.length === 0 ? "guest" : flagSvgFor(countryCode) == null ? "missing" : countryCode;
     let imageId = flagImageIds.get(imageKey);
     if (imageId == null) {
-      const png = await sharp()(Buffer.from(flagSvg ?? MISSING_FLAG_SVG)).resize(36, 27, { fit: "fill" }).png().toBuffer();
+      const png = await sharp()(Buffer.from(flagSvg)).resize(36, 27, { fit: "fill" }).png().toBuffer();
       imageId = workbook.addImage({ buffer: png as unknown as ExcelBuffer, extension: "png" });
       flagImageIds.set(imageKey, imageId);
     }

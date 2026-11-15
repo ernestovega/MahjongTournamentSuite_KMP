@@ -86,7 +86,6 @@ import kotlinx.coroutines.coroutineScope
 import mahjongtournamentsuite.playerapp.generated.resources.Res
 import mahjongtournamentsuite.playerapp.generated.resources.action_cancel
 import mahjongtournamentsuite.playerapp.generated.resources.action_change
-import mahjongtournamentsuite.playerapp.generated.resources.country_n
 import mahjongtournamentsuite.playerapp.generated.resources.scope_by_tournaments
 import mahjongtournamentsuite.playerapp.generated.resources.scope_me
 import mahjongtournamentsuite.playerapp.generated.resources.scope_my_tournaments
@@ -635,8 +634,9 @@ private fun OthersPlayerBar(profile: PlayerProfile, onChange: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(Modifier.weight(1f), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
-            if (profile.country.isNotBlank()) {
-                CountryFlag(profile.country, width = 24.dp, contentDescription = stringResource(Res.string.country_n, profile.country))
+            // A player of the EMA list without country is a guest: the flag is the globe.
+            if (profile.country.isNotBlank() || profile.emaId.isNotBlank()) {
+                CountryFlag(profile.country, width = 24.dp)
                 Spacer(Modifier.width(12.dp))
             }
             Text(

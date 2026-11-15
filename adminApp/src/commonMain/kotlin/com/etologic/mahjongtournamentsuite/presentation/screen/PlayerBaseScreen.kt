@@ -174,7 +174,8 @@ fun PlayerBaseScreen(navController: NavHostController) {
     var newEmaId by remember { mutableStateOf("") }
     var newFirstName by remember { mutableStateOf("") }
     var newLastName by remember { mutableStateOf("") }
-    var newCountry by remember { mutableStateOf("") }
+    // Null until the admin picks a country. An empty code is "No country" (a guest).
+    var newCountry by remember { mutableStateOf<String?>(null) }
     var newPhoto by remember { mutableStateOf<SelectedImage?>(null) }
     var newPlayerError by remember { mutableStateOf<UiText?>(null) }
     var searchQuery by remember { mutableStateOf("") }
@@ -273,7 +274,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         newEmaId = ""
         newFirstName = ""
         newLastName = ""
-        newCountry = ""
+        newCountry = null
         newPhoto = null
         newPlayerError = null
         showNewPlayerDialog = true
@@ -288,7 +289,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
     }
     fun save() = scope.launch {
         val currentPlayer = selected ?: return@launch
-        if (firstName.isBlank() || lastName.isBlank() || !country.trim().matches(Regex("^[A-Za-z]{3}$"))) {
+        if (firstName.isBlank() || lastName.isBlank() || !isValidPlayerCountry(country)) {
             error = UiText.of(Res.string.player_error_required_fields)
             return@launch
         }
@@ -347,14 +348,14 @@ fun PlayerBaseScreen(navController: NavHostController) {
         val normalizedEmaId = rawEmaId.padStart(8, '0')
         val normalizedFirstName = newFirstName.trim()
         val normalizedLastName = newLastName.trim()
-        val normalizedCountry = newCountry.trim().uppercase()
+        val normalizedCountry = newCountry?.trim()?.uppercase()
         newPlayerError = when {
             rawEmaId.isEmpty() -> UiText.of(Res.string.player_error_ema_required)
             !rawEmaId.matches(Regex("\\d{1,8}")) -> UiText.of(Res.string.player_error_ema_digits)
             players.any { it.emaId == normalizedEmaId } -> UiText.of(Res.string.player_error_ema_exists)
             normalizedFirstName.isEmpty() -> UiText.of(Res.string.player_error_first_name)
             normalizedLastName.isEmpty() -> UiText.of(Res.string.player_error_last_name)
-            !normalizedCountry.matches(Regex("^[A-Za-z]{3}$")) -> UiText.of(Res.string.player_error_country)
+            normalizedCountry == null || !isValidPlayerCountry(normalizedCountry) -> UiText.of(Res.string.player_error_country)
             else -> null
         }
         if (newPlayerError != null) return@launch
@@ -366,7 +367,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     emaId = normalizedEmaId,
                     firstName = normalizedFirstName,
                     lastName = normalizedLastName,
-                    country = normalizedCountry,
+                    country = normalizedCountry.orEmpty(),
                 ),
             )
         ) {
@@ -557,6 +558,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                     newPlayerError = null
                                 },
                                 label = stringResource(Res.string.country),
+                                allowNoCountry = true,
                                 modifier = Modifier.fillMaxWidth(),
                             )
                             PlayerPhotoPreview(
@@ -757,7 +759,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                             modifier = if (compact) Modifier else Modifier.width(PlayerCountryColumnWidth),
                                             contentAlignment = Alignment.Center,
                                         ) {
-                                            CountryFlagWithTooltip(player.country, countries)
+                                            CountryFlag(code = player.country)
                                         }
                                         if (compact) {
                                             Column(Modifier.weight(1f)) {
@@ -828,6 +830,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                                         onCountrySelected = { country = it },
                                         enabled = canEdit,
                                         label = stringResource(Res.string.country),
+                                        allowNoCountry = true,
                                         modifier = Modifier.fillMaxWidth(),
                                     )
                                     TournamentOptionSwitch(
@@ -1008,10 +1011,5 @@ private fun validatePlayerPhoto(image: SelectedImage): UiText? = when {
     else -> null
 }
 
-@Composable
-private fun CountryFlagWithTooltip(code: String, countries: List<Country>) {
-    val country = countries.firstOrNull { it.code == code }
-    AppTooltipBox(country?.name ?: code) {
-        CountryFlag(code = code, contentDescription = country?.name ?: code)
-    }
-}
+/** A player has the three-letter code of the EMA, or an empty code when they have no country (a guest). */
+private fun isValidPlayerCountry(code: String): Boolean = code.trim().let { it.isEmpty() || it.matches(Regex("^[A-Za-z]{3}$")) }

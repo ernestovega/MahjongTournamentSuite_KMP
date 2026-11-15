@@ -47,7 +47,7 @@ for code in "${codes[@]}"; do
   download "$(flag_codepoints "$lowercase_code")" "$tmp_dir/flag_$lowercase_code.svg"
 done
 # name:codepoint
-for icon in icon_chicken:1f414 icon_trophy:1f3c6 icon_status_empty:26aa icon_status_in_progress:23f3 \
+for icon in icon_chicken:1f414 icon_trophy:1f3c6 icon_globe:1f310 icon_status_empty:26aa icon_status_in_progress:23f3 \
   icon_status_manual:2611 icon_status_completed:2705; do
   download "${icon#*:}" "$tmp_dir/${icon%%:*}.svg"
 done
@@ -76,4 +76,4 @@ cp "$tmp_dir"/*.svg "$flags_dir"/
   echo '}'
 } > "$source_file"
 
-echo "Downloaded ${#codes[@]} flag SVG files and 6 icon SVG files."
+echo "Downloaded ${#codes[@]} flag SVG files and 7 icon SVG files."

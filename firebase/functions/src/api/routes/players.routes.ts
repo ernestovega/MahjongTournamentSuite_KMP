@@ -33,7 +33,8 @@ export function playersRouter(): Router {
       const lastName = String(req.body?.lastName ?? "").trim();
       const country = String(req.body?.country ?? "").trim().toUpperCase();
       if (!firstName || !lastName) throw badRequest("First name and last name are required");
-      if (!/^[A-Z]{3}$/.test(country)) throw badRequest("Player country must use a three-letter EMA code");
+      // An empty country is a player without country (a guest).
+      if (!/^([A-Z]{3})?$/.test(country)) throw badRequest("Player country must use a three-letter EMA code or be empty");
       const created = await createPlayer({ emaId, firstName, lastName, country });
       await recordActivity({
         action: "registry.create", actor: actorFromToken(res.locals.auth), target: `EMA ${emaId}`,
@@ -53,7 +54,8 @@ export function playersRouter(): Router {
       const lastName = String(req.body?.lastName ?? "").trim();
       const country = String(req.body?.country ?? "").trim().toUpperCase();
       if (!firstName || !lastName) throw badRequest("First name and last name are required");
-      if (!/^[A-Z]{3}$/.test(country)) throw badRequest("Player country must use a three-letter EMA code");
+      // An empty country is a player without country (a guest).
+      if (!/^([A-Z]{3})?$/.test(country)) throw badRequest("Player country must use a three-letter EMA code or be empty");
       const hiddenFromPublic = typeof req.body?.hiddenFromPublic === "boolean" ? req.body.hiddenFromPublic : undefined;
       await updatePlayer({ previousEmaId: emaId, emaId: newEmaId, firstName, lastName, country, hiddenFromPublic });
       await recordActivity({

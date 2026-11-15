@@ -238,7 +238,7 @@
     <string name="player_error_ema_required">Il numero EMA è obbligatorio.</string>
     <string name="player_error_first_name">Il nome è obbligatorio.</string>
     <string name="player_error_last_name">Il cognome è obbligatorio.</string>
-    <string name="player_error_country">Il paese deve usare un codice EMA di tre lettere.</string>
+    <string name="player_error_country">Scegli un paese, o «Nessun paese» per un ospite.</string>
     <string name="photo_error_type">Scegli un'immagine JPEG, PNG, WebP o GIF.</string>
     <string name="photo_error_size">Scegli una foto di 5 MB o meno.</string>
     <string name="assign_all_before_id_cards">Assegna un giocatore EMA a ogni posto del torneo prima di creare i cartellini.</string>

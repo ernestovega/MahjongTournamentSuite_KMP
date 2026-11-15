@@ -284,8 +284,8 @@
         <error line="162" column="27" source="standard:statement-wrapping" />
         <error line="162" column="51" source="standard:statement-wrapping" />
         <error line="162" column="77" source="standard:statement-wrapping" />
-        <error line="262" column="89" source="standard:function-signature" />
-        <error line="266" column="58" source="standard:function-signature" />
+        <error line="261" column="89" source="standard:function-signature" />
+        <error line="265" column="58" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/di/PresentationModule.kt">
         <error line="3" column="1" source="standard:import-ordering" />

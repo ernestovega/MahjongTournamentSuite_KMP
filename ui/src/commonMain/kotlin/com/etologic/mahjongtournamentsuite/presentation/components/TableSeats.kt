@@ -429,7 +429,7 @@ private fun SeatCard(
                 )
             }
             // The flag is under the name, so a long name has the whole width of the card.
-            if (seat.country.isNotBlank()) PlayerFlag(seat.country, width = 22.dp)
+            PlayerFlag(seat.country, width = 22.dp)
             seat.levelChange?.takeIf { LocalFeatureFlags.current.levelsEnabled }?.let { LevelChangeTag(it) }
             if (showDiffs) DiffsTable(diffs)
         }

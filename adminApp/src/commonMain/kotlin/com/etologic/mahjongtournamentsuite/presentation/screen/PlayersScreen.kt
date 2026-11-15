@@ -134,7 +134,6 @@ import mahjongtournamentsuite.adminapp.generated.resources.edit_email
 import mahjongtournamentsuite.adminapp.generated.resources.ema_number
 import mahjongtournamentsuite.adminapp.generated.resources.filter_by_code
 import mahjongtournamentsuite.adminapp.generated.resources.name
-import mahjongtournamentsuite.adminapp.generated.resources.no_country
 import mahjongtournamentsuite.adminapp.generated.resources.no_ema_players_match
 import mahjongtournamentsuite.adminapp.generated.resources.no_generated_players
 import mahjongtournamentsuite.adminapp.generated.resources.no_matches
@@ -1209,7 +1208,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                                            if (playerCountry.isNotBlank()) CountryFlag(code = playerCountry, contentDescription = playerCountry)
+                                            if (assigned != null) CountryFlag(code = playerCountry)
                                             Text(
                                                 text = listOfNotNull(
                                                     "#${slot.id}",
@@ -1255,10 +1254,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                         modifier = Modifier.width(TournamentPlayerCountryColumnWidth),
                                         contentAlignment = Alignment.Center,
                                     ) {
-                                        CountryFlag(
-                                            code = playerCountry,
-                                            contentDescription = playerCountry.ifBlank { stringResource(Res.string.no_country) },
-                                        )
+                                        // An empty slot has no flag. A player without country shows the globe of the guests.
+                                        if (assigned != null) CountryFlag(code = playerCountry)
                                     }
                                     Box(
                                         modifier = Modifier

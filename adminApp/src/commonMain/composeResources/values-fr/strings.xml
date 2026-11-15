@@ -238,7 +238,7 @@
     <string name="player_error_ema_required">Le numéro EMA est obligatoire.</string>
     <string name="player_error_first_name">Le prénom est obligatoire.</string>
     <string name="player_error_last_name">Le nom est obligatoire.</string>
-    <string name="player_error_country">Le pays doit utiliser un code EMA de trois lettres.</string>
+    <string name="player_error_country">Choisissez un pays, ou « Aucun pays » pour un invité.</string>
     <string name="photo_error_type">Choisissez une image JPEG, PNG, WebP ou GIF.</string>
     <string name="photo_error_size">Choisissez une photo de 5 Mo maximum.</string>
     <string name="assign_all_before_id_cards">Attribuez un joueur EMA à chaque place du tournoi avant de créer les cartes d'identité.</string>

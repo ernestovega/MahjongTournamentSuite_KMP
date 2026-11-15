@@ -238,7 +238,7 @@
     <string name="player_error_ema_required">EMA number is required.</string>
     <string name="player_error_first_name">First name is required.</string>
     <string name="player_error_last_name">Last name is required.</string>
-    <string name="player_error_country">Country must use a three-letter EMA code.</string>
+    <string name="player_error_country">Choose a country, or “No country” for a guest.</string>
     <string name="photo_error_type">Choose a JPEG, PNG, WebP, or GIF image.</string>
     <string name="photo_error_size">Choose a photo that is 5 MB or smaller.</string>
     <string name="assign_all_before_id_cards">Assign an EMA player to every tournament slot before creating ID cards.</string>

@@ -7,10 +7,13 @@ import {
   buildIdCardsPdf,
   CARD_HEIGHT,
   CARD_WIDTH,
+  flagOrPlaceholderSvg,
+  GUEST_FLAG_SVG,
   idCardSheetCardOrigin,
   idCardSheetGrid,
   type IdCardSheetOptions,
   iso2CountryCode,
+  MISSING_FLAG_SVG,
   SHEET_MARGIN,
   sheetPageSize,
 } from "./idCardsService";
@@ -18,6 +21,20 @@ import {
 test("supports the European flag proof code without changing the EU guest code", () => {
   assert.equal(iso2CountryCode("EUR"), "EU");
   assert.equal(iso2CountryCode("EU"), null);
+});
+
+test("knows the EMA (IOC) and ISO codes of every country", () => {
+  assert.equal(iso2CountryCode("GER"), "DE");
+  assert.equal(iso2CountryCode("DEU"), "DE");
+  assert.equal(iso2CountryCode("CRO"), "HR");
+  assert.equal(iso2CountryCode("TPE"), "TW");
+  assert.equal(iso2CountryCode("KOS"), "XK");
+});
+
+test("a player without country has the globe and an unknown code the question mark", () => {
+  assert.equal(flagOrPlaceholderSvg(""), GUEST_FLAG_SVG);
+  assert.equal(flagOrPlaceholderSvg("ZZZ"), MISSING_FLAG_SVG);
+  assert.notEqual(flagOrPlaceholderSvg("CRO"), MISSING_FLAG_SVG);
 });
 
 test("creates one front and one back page for each player", async () => {

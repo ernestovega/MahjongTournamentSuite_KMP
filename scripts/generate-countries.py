@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+"""Generates the list of all countries for the apps and the backend.
+
+It writes:
+- ui/.../components/WorldCountries.kt: every country with a flag, its EMA code and its name resource.
+- the country_xx strings of ui (English, Spanish, French, Italian). A name already in the file stays as it is.
+- firebase/functions/src/services/countryCodes.ts: three-letter codes to two-letter codes, for the flags of the PDFs.
+
+The EMA ranking uses the IOC codes (GER, NED, SUI...). A country without IOC code uses its ISO alpha-3 code.
+Old players can also have an ISO alpha-3 code (DEU, NLD...), so both map to the same flag.
+
+Needs: pip install babel. Source of the IOC codes: https://github.com/datasets/country-codes (ODC-PDDL).
+Run it from the root of the repository: python3 scripts/generate-countries.py
+"""
+import csv
+import io
+import re
+import urllib.request
+from pathlib import Path
+
+from babel import Locale
+
+ROOT = Path(__file__).resolve().parent.parent
+FLAGS_SCRIPT = ROOT / "scripts/download-country-flags.sh"
+KOTLIN = ROOT / "ui/src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/WorldCountries.kt"
+TYPESCRIPT = ROOT / "firebase/functions/src/services/countryCodes.ts"
+STRINGS = {
+    "en": ROOT / "ui/src/commonMain/composeResources/values/strings.xml",
+    "es": ROOT / "ui/src/commonMain/composeResources/values-es/strings.xml",
+    "fr": ROOT / "ui/src/commonMain/composeResources/values-fr/strings.xml",
+    "it": ROOT / "ui/src/commonMain/composeResources/values-it/strings.xml",
+}
+CSV_URL = "https://raw.githubusercontent.com/datasets/country-codes/main/data/country-codes.csv"
+
+# Codes that are not in the ISO table, or that the EMA writes in another way.
+EXTRA_THREE_LETTER = {"XK": "KOS"}
+# Old or alternative codes that the data can have.
+EXTRA_ALIASES = {"EUR": "EU", "UK": "GB", "ENG": "GB", "SCO": "GB", "WAL": "GB"}
+
+
+def flag_codes() -> list[str]:
+    text = FLAGS_SCRIPT.read_text()
+    block = re.search(r"readonly codes=\(([^)]*)\)", text).group(1)
+    return sorted(code for code in block.split() if code != "EU")
+
+
+def read_table() -> list[dict]:
+    with urllib.request.urlopen(CSV_URL) as response:
+        return list(csv.DictReader(io.StringIO(response.read().decode("utf-8"))))
+
+
+def xml_escape(value: str) -> str:
+    return value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("'", "\\'").replace('"', '\\"')
+
+
+def main() -> None:
+    codes = flag_codes()
+    rows = {row["ISO3166-1-Alpha-2"]: row for row in read_table() if row["ISO3166-1-Alpha-2"]}
+    ema_code: dict[str, str] = {}
+    aliases: dict[str, str] = {}
+    for code in codes:
+        row = rows.get(code, {})
+        ioc = (row.get("IOC") or "").strip().upper()
+        alpha3 = (row.get("ISO3166-1-Alpha-3") or "").strip().upper()
+        ema_code[code] = ioc or EXTRA_THREE_LETTER.get(code) or alpha3
+        if not ema_code[code]:
+            raise SystemExit(f"No three-letter code for {code}")
+    # The IOC codes first: they are the codes of the EMA. An ISO code never replaces one of them.
+    for code in codes:
+        aliases[ema_code[code]] = code
+    for code in codes:
+        alpha3 = (rows.get(code, {}).get("ISO3166-1-Alpha-3") or "").strip().upper()
+        if alpha3 and alpha3 not in aliases:
+            aliases[alpha3] = code
+    for alias, code in EXTRA_ALIASES.items():
+        aliases.setdefault(alias, code)
+
+    write_strings(codes)
+    write_kotlin(codes, ema_code, aliases)
+    write_typescript(aliases)
+
+
+def write_strings(codes: list[str]) -> None:
+    for language, path in STRINGS.items():
+        text = path.read_text()
+        existing = dict(re.findall(r'<string name="country_([a-z]{2})">(.*?)</string>', text))
+        locale = Locale(language)
+        lines = []
+        for code in codes + ["EU"]:
+            key = code.lower()
+            name = existing.get(key) or xml_escape(locale.territories.get(code) or code)
+            lines.append(f'    <string name="country_{key}">{name}</string>')
+        pattern = r'\n    <string name="country_[a-z]{2}">.*?</string>'
+        first = re.search(pattern, text)
+        position = first.start() if first else text.rindex("\n</resources>")
+        before = re.sub(pattern, "", text[:position])
+        after = re.sub(pattern, "", text[position:])
+        path.write_text(before + "\n" + "\n".join(lines) + after)
+
+
+def write_kotlin(codes: list[str], ema_code: dict[str, str], aliases: dict[str, str]) -> None:
+    names = ["Res"] + [f"country_{c.lower()}" for c in codes + ["EU"]]
+    imports = "\n".join(f"import mahjongtournamentsuite.ui.generated.resources.{name}" for name in sorted(names))
+    countries = "\n".join(f'    WorldCountry("{c}", "{ema_code[c]}", Res.string.country_{c.lower()}),' for c in codes)
+    alias_lines = "\n".join(f'    "{alias}" to "{code}",' for alias, code in sorted(aliases.items()))
+    KOTLIN.write_text(f"""// Generated by scripts/generate-countries.py. Do not edit by hand.
+package com.etologic.mahjongtournamentsuite.presentation.components
+
+{imports}
+import org.jetbrains.compose.resources.StringResource
+
+/** A country: its two-letter code (the flag), the three-letter code that the EMA uses, and its name. */
+data class WorldCountry(val code: String, val emaCode: String, val name: StringResource)
+
+/** Every country with a flag, by two-letter code. */
+val WorldCountries: List<WorldCountry> = listOf(
+{countries}
+)
+
+internal val EuropeanUnionName: StringResource = Res.string.country_eu
+
+/** Three-letter codes (EMA/IOC and ISO alpha-3) to two-letter codes. */
+internal val threeLetterCountryCodeToIso2: Map<String, String> = mapOf(
+{alias_lines}
+)
+""")
+
+
+def write_typescript(aliases: dict[str, str]) -> None:
+    entries = "\n".join(f'  {alias}: "{code}",' for alias, code in sorted(aliases.items()))
+    TYPESCRIPT.write_text(f"""// Generated by scripts/generate-countries.py. Do not edit by hand.
+
+/** Three-letter codes (EMA/IOC and ISO alpha-3) to two-letter codes. */
+export const threeLetterCountryCodeToIso2: Record<string, string> = {{
+{entries}
+}};
+""")
+
+
+if __name__ == "__main__":
+    main()

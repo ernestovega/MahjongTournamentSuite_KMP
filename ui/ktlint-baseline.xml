@@ -80,16 +80,16 @@
         <error line="52" column="1" source="standard:no-unused-imports" />
         <error line="53" column="1" source="standard:no-unused-imports" />
         <error line="56" column="1" source="standard:no-unused-imports" />
-        <error line="132" column="23" source="standard:argument-list-wrapping" />
-        <error line="285" column="46" source="standard:argument-list-wrapping" />
-        <error line="285" column="87" source="standard:argument-list-wrapping" />
-        <error line="285" column="129" source="standard:argument-list-wrapping" />
-        <error line="285" column="169" source="standard:argument-list-wrapping" />
-        <error line="319" column="28" source="standard:parameter-list-wrapping" />
-        <error line="319" column="28" source="standard:wrapping" />
-        <error line="319" column="28" source="standard:function-signature" />
-        <error line="319" column="52" source="standard:parameter-list-wrapping" />
-        <error line="319" column="52" source="standard:function-signature" />
+        <error line="131" column="23" source="standard:argument-list-wrapping" />
+        <error line="284" column="46" source="standard:argument-list-wrapping" />
+        <error line="284" column="87" source="standard:argument-list-wrapping" />
+        <error line="284" column="129" source="standard:argument-list-wrapping" />
+        <error line="284" column="169" source="standard:argument-list-wrapping" />
+        <error line="318" column="28" source="standard:parameter-list-wrapping" />
+        <error line="318" column="28" source="standard:wrapping" />
+        <error line="318" column="28" source="standard:function-signature" />
+        <error line="318" column="52" source="standard:parameter-list-wrapping" />
+        <error line="318" column="52" source="standard:function-signature" />
     </file>
     <file name="src/commonMain/kotlin/com/etologic/mahjongtournamentsuite/presentation/components/SubstitutionText.kt">
         <error line="3" column="1" source="standard:import-ordering" />

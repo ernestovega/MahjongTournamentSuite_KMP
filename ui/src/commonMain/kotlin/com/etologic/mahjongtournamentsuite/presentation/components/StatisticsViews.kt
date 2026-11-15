@@ -66,7 +66,6 @@ import mahjongtournamentsuite.ui.generated.resources.column_player
 import mahjongtournamentsuite.ui.generated.resources.column_points
 import mahjongtournamentsuite.ui.generated.resources.column_score
 import mahjongtournamentsuite.ui.generated.resources.column_wins
-import mahjongtournamentsuite.ui.generated.resources.country_n
 import mahjongtournamentsuite.ui.generated.resources.photo_of
 import mahjongtournamentsuite.ui.generated.resources.player_photo_none
 import mahjongtournamentsuite.ui.generated.resources.rival_ema
@@ -326,8 +325,8 @@ fun PlayerStatisticsHeader(profile: PlayerProfile, modifier: Modifier = Modifier
         Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(profile.name, style = MaterialTheme.typography.titleLarge.inTextFont(), fontWeight = FontWeight.Bold)
             Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.lg), verticalAlignment = Alignment.CenterVertically) {
-                if (profile.country.isNotBlank()) {
-                    CountryFlag(profile.country, width = 24.dp, contentDescription = stringResource(Res.string.country_n, profile.country))
+                if (profile.country.isNotBlank() || profile.emaId.isNotBlank()) { // No country: the globe of a guest.
+                    CountryFlag(profile.country, width = 24.dp)
                 }
                 if (profile.emaId.isNotBlank()) {
                     Text(stringResource(Res.string.rival_ema, profile.emaId), style = MaterialTheme.typography.bodyMedium)
@@ -373,8 +372,8 @@ fun PlayerPhoto(photoUrl: String?, name: String, size: Dp = HeaderImageSize) {
 @Composable
 fun PlayerCountryAndEma(country: String, emaId: String, style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodySmall) {
     Row(horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm), verticalAlignment = Alignment.CenterVertically) {
-        if (country.isNotBlank()) {
-            CountryFlag(country, width = 18.dp, contentDescription = stringResource(Res.string.country_n, country))
+        if (country.isNotBlank() || emaId.isNotBlank()) { // No country: the globe of a guest.
+            CountryFlag(country, width = 18.dp)
         }
         if (emaId.isNotBlank()) {
             Text(stringResource(Res.string.rival_ema, emaId), style = style, maxLines = 1)
