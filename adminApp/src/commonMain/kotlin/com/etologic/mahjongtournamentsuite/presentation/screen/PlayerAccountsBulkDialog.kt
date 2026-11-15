@@ -231,7 +231,7 @@ fun PlayerAccountsBulkDialog(
                                 Row(
                                     Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    horizontalArrangement = Arrangement.spacedBy(columnGap(compact)),
                                 ) {
                                     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 24.dp) {
                                         Checkbox(
@@ -240,9 +240,9 @@ fun PlayerAccountsBulkDialog(
                                             onCheckedChange = { checked -> selected = if (checked) selected + slot.id else selected - slot.id },
                                         )
                                     }
-                                    Text(slot.id.toString(), Modifier.width(IdColumnWidth))
+                                    Text(slot.id.toString(), Modifier.width(idColumnWidth(compact)))
                                     val country = countryOf(slot)
-                                    Box(Modifier.width(FlagColumnWidth), contentAlignment = Alignment.Center) {
+                                    Box(Modifier.width(flagColumnWidth(compact)), contentAlignment = Alignment.Center) {
                                         CountryFlag(code = country, contentDescription = country.ifBlank { stringResource(Res.string.no_country) })
                                     }
                                     if (compact) {
@@ -316,7 +316,12 @@ private val IdColumnWidth = 36.dp
 private val FlagColumnWidth = 32.dp
 private val EmaColumnWidth = 68.dp
 private val ResultColumnWidth = 120.dp
-private val CompactResultColumnWidth = 72.dp
+private val CompactResultColumnWidth = 64.dp
+
+// A phone has little width, so the columns sit closer and the narrow ones shrink: the name gets the room.
+private fun columnGap(compact: Boolean) = if (compact) 4.dp else 8.dp
+private fun idColumnWidth(compact: Boolean) = if (compact) 28.dp else IdColumnWidth
+private fun flagColumnWidth(compact: Boolean) = if (compact) 28.dp else FlagColumnWidth
 
 /** The titles of the columns of the list. They use the same widths as the rows, so each title sits over its column. */
 @Composable
@@ -324,7 +329,7 @@ private fun ColumnTitles(compact: Boolean) {
     Row(
         Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainerHigh).padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(columnGap(compact)),
     ) {
         @Composable
         fun Title(textRes: StringResource, modifier: Modifier, align: TextAlign = TextAlign.Start) = Text(
@@ -337,8 +342,8 @@ private fun ColumnTitles(compact: Boolean) {
             textAlign = align,
         )
         Spacer(Modifier.width(CheckboxColumnWidth))
-        Title(Res.string.id, Modifier.width(IdColumnWidth))
-        Title(Res.string.country, Modifier.width(FlagColumnWidth), TextAlign.Center)
+        Title(Res.string.id, Modifier.width(idColumnWidth(compact)))
+        Title(Res.string.country, Modifier.width(flagColumnWidth(compact)), TextAlign.Center)
         if (compact) {
             Title(Res.string.name, Modifier.weight(1f))
         } else {
