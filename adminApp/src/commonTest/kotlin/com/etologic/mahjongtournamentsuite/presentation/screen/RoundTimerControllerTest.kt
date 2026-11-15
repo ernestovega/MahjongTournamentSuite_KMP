@@ -171,6 +171,45 @@ class RoundTimerControllerTest {
     }
 
     @Test
+    fun aLateRoundStillInPlayWinsOverTheNextRound() {
+        val base = Tournament(id = "t", name = "T", isTeams = false, numPlayers = 8, numRounds = 4, matchDurationMinutes = 120)
+        val now = 10 * 60 * minute
+        // Round 2 started late: its time is over, but tables with hands are still open.
+        val lateRound = base.copy(roundClocks = listOf(RoundClock(1, now - 1000 * minute), RoundClock(2, now - 125 * minute)))
+
+        assertEquals(2, lateRound.timerRound(roundsWithHands = setOf(1, 2), roundsInPlay = setOf(2), nowMs = now))
+        // Once its tables close, the Timer moves on to round 3.
+        assertEquals(3, lateRound.timerRound(roundsWithHands = setOf(1, 2), nowMs = now))
+        // Hands entered in the editor for round 3 without a clock: round 3 was played, so the Timer opens at 4.
+        assertEquals(4, lateRound.timerRound(roundsWithHands = setOf(1, 2, 3), roundsInPlay = setOf(3), nowMs = now))
+    }
+
+    @Test
+    fun theFirstClocksOfTheServerMoveTheTimerToTheRunningRound() = runTest {
+        // The tournament screen knew old clocks and asked for round 3, but round 2 still runs on the server.
+        val (repository, controller) = setup(numRounds = 4, initialRound = 3)
+        repository.roundClocks = listOf(RoundClock(1, repository.serverNowMs - 300 * minute), RoundClock(2, repository.serverNowMs - 30 * minute))
+        controller.refresh()
+
+        assertEquals(2, controller.state.value.roundId)
+        assertTrue(controller.state.value.isRunning)
+    }
+
+    @Test
+    fun onlyTheFirstClocksMoveTheTimer() = runTest {
+        val (repository, controller) = setup(numRounds = 4, initialRound = 3)
+        controller.refresh()
+        assertEquals(3, controller.state.value.roundId)
+
+        // Another Timer starts round 2 later, and the administrator looks at round 4: the Timer stays there.
+        controller.selectRound(4)
+        repository.roundClocks = listOf(RoundClock(2, repository.serverNowMs - 30 * minute))
+        controller.refresh()
+
+        assertEquals(4, controller.state.value.roundId)
+    }
+
+    @Test
     fun aTimerWithoutTournamentKeepsItsClockOnTheDeviceAndNeverCallsTheServer() = runTest {
         val repository = FakeTournamentRepository()
         val controller = RoundTimerController(repository, null, 1) { deviceNow }
