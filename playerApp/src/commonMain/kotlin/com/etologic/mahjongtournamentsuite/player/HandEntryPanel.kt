@@ -69,6 +69,10 @@ import com.etologic.mahjongtournamentsuite.presentation.components.AppErrorDialo
 import com.etologic.mahjongtournamentsuite.presentation.components.ChickenIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.SelfDrawIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.SeatWind
+import com.etologic.mahjongtournamentsuite.presentation.components.windOfChair
+import com.etologic.mahjongtournamentsuite.presentation.components.chairOf
+import com.etologic.mahjongtournamentsuite.presentation.components.PlayerFlag
+import com.etologic.mahjongtournamentsuite.presentation.components.WindIcon
 import com.etologic.mahjongtournamentsuite.presentation.components.label
 import com.etologic.mahjongtournamentsuite.presentation.components.signedColor
 import com.etologic.mahjongtournamentsuite.presentation.components.signedText
@@ -436,7 +440,7 @@ fun HandEntryPanel(
                         when (winStep) {
                             WinStep.WINNER -> {
                                 StepQuestion(stringResource(Res.string.entry_winner))
-                                PlayerChoices(seatIds, winner, view) { slot ->
+                                PlayerChoices(byWind(seats, handInPlay), winner, view, columns = 1, seats = seats, handNumber = handInPlay) { slot ->
                                     winner = slot
                                     if (loser == slot) loser = null
                                     winStep = WinStep.LOSER
@@ -452,7 +456,14 @@ fun HandEntryPanel(
                                     winStep = WinStep.SCORE
                                 }
                                 HorizontalDivider()
-                                PlayerChoices(seatIds.filter { it != winner }, if (selfDraw) null else loser, view, columns = 1) {
+                                PlayerChoices(
+                                    byWind(seats, handInPlay).filter { it != winner },
+                                    if (selfDraw) null else loser,
+                                    view,
+                                    columns = 1,
+                                    seats = seats,
+                                    handNumber = handInPlay,
+                                ) {
                                     selfDraw = false
                                     loser = it
                                     winStep = WinStep.SCORE
@@ -856,6 +867,15 @@ private fun SelfDrawButton(label: String, onClick: () -> Unit) {
     }
 }
 
+/** The wind of [slot] in hand [handNumber]. [seats] are the slots in the order east, south, west, north of hand 1. */
+private fun currentWindOf(seats: List<Int?>, slot: Int, handNumber: Int): SeatWind? {
+    val index = seats.indexOf(slot).takeIf { it >= 0 } ?: return null
+    return windOfChair(chairOf(index, handNumber), handNumber)
+}
+
+/** The players of the table in the order of their winds in hand [handNumber]: East first. */
+private fun byWind(seats: List<Int?>, handNumber: Int): List<Int> = seats.filterNotNull().sortedBy { currentWindOf(seats, it, handNumber)?.ordinal ?: 0 }
+
 /** The players to choose from, [columns] per row. Each choice shows the first name. */
 @Composable
 private fun PlayerChoices(
@@ -863,6 +883,10 @@ private fun PlayerChoices(
     selected: Int?,
     view: PlayerTournamentView,
     columns: Int = 2,
+    /** The seats of the table in the order east, south, west, north of hand 1. With them, each choice shows its wind. */
+    seats: List<Int?>? = null,
+    /** The hand in play, for the wind of each player now. */
+    handNumber: Int = 1,
     onSelect: (Int) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -884,6 +908,11 @@ private fun PlayerChoices(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
+                            // The wind of the player in this hand and the flag before the name, as on the table.
+                            if (seats != null) {
+                                currentWindOf(seats, slot, handNumber)?.let { WindIcon(it, size = 20.dp) }
+                                PlayerFlag(view.players[slot]?.country, width = 22.dp)
+                            }
                             Text(
                                 view.firstNameOf(slot),
                                 fontWeight = FontWeight.Bold,
@@ -1042,7 +1071,9 @@ private fun ReviewHand(
         HeaderText(stringResource(Res.string.scope_table), Modifier.weight(1f))
         if (showPoints) HeaderText(stringResource(Res.string.entry_points), Modifier.weight(0.9f))
     }
-    preview.seatSlotIds.forEachIndexed { index, slot ->
+    // The players in the order of their winds in this hand, each with its wind.
+    preview.seatSlotIds.indices.sortedBy { currentWindOf(preview.seatSlotIds, preview.seatSlotIds[it], preview.handId)?.ordinal ?: it }.forEach { index ->
+        val slot = preview.seatSlotIds[index]
         val change = preview.handScores.getOrNull(index) ?: 0
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             Row(
@@ -1050,6 +1081,7 @@ private fun ReviewHand(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
+                currentWindOf(preview.seatSlotIds, slot, preview.handId)?.let { WindIcon(it, size = 20.dp) }
                 Text(view.firstNameOf(slot), maxLines = 1)
             }
             Text(
