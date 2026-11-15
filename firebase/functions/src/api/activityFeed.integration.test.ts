@@ -14,6 +14,7 @@ type Entry = {
   at: number;
   action: string;
   uid: string | null;
+  name: string | null;
   source: string | null;
   tournamentId: string | null;
   tournamentName: string | null;
@@ -229,6 +230,28 @@ describe("activity feed API", () => {
       assert.deepEqual(both.map((entry) => entry.at - BASE), [3000, 1000]);
     } finally {
       for (const [emaId] of people) await registry.doc(emaId).delete();
+    }
+  });
+
+  it("shows the name of the EMA player of the account instead of Player <EMA id>", async () => {
+    const registry = db.collection(EMA_PLAYER_REGISTRY_COLLECTION);
+    try {
+      await registry.doc("99000009").set({ emaId: "99000009", firstName: "Ana", lastName: "Pérez", country: "ESP" });
+      await db.collection("users").doc("feed-player").set({ emaId: "99000009" });
+      await tableSave(1000, T1, "feed-player");
+      await db.collection("tournaments").doc(T1).collection("changes").add({
+        kind: "conflict", roundId: 2, tableId: 4, uid: "feed-player", name: null, source: "player",
+        tableChanges: [], handChanges: [], at: Timestamp.fromMillis(BASE + 2000),
+      });
+      await tableSave(3000, T1, "feed-no-profile");
+
+      const all = mine((await readAll("", 50)).flat());
+      assert.deepEqual(all.map((entry) => entry.name), ["Player 123", "Ana Pérez", "Ana Pérez"]);
+      const found = mine((await readAll("&q=perez", 1)).flat());
+      assert.deepEqual(found.map((entry) => entry.at - BASE), [2000, 1000]);
+    } finally {
+      await registry.doc("99000009").delete();
+      await db.collection("users").doc("feed-player").delete();
     }
   });
 

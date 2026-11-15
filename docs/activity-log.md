@@ -27,7 +27,8 @@ detail of an entry) and by a free text search: any entry that holds the text any
 target, a value, a changed field), without case or accents. Each entry also carries the names of its
 players (`players`): the four players of the table of a table save, or the player that a record names as its target
 (`player 5`), from the EMA player assigned to the slot now. The list shows them and the search finds them, so a
-player's name finds every save of their tables. The detail shows every changed value.
+player's name finds every save of their tables. The person of an entry whose account is linked to an EMA
+player shows that player's name, because the player app stores only `Player <EMA id>` (or nothing on a refused save). The detail shows every changed value.
 
 The screen reads `GET /admin/activity` (admin only). Its parameters are `limit`, `tournamentId`, `uid`,
 `source` (`all`, `tables` or `other`), `origin` (`admin`, `player` or `system`), `from` (inclusive) and `to`
