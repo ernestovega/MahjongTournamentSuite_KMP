@@ -359,10 +359,11 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                     Triple(StatisticsScope.PERSON, stringResource(Res.string.scope_overall), StatisticsIcon),
                     Triple(StatisticsScope.PERSON_TOURNAMENTS, stringResource(Res.string.scope_by_tournaments), Icons.Default.EmojiEvents),
                 )
+                // Both tab rows have the same width, so the second one lines up under the first.
                 Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     MtsTabRow(
                         selectedTabIndex = subTabs.indexOfFirst { it.first == scope },
-                        modifier = Modifier.widthIn(max = StatisticsTabWidth * subTabs.size),
+                        modifier = Modifier.widthIn(max = StatisticsTabWidth * mainTabs.size),
                     ) {
                         subTabs.forEach { (item, title, icon) ->
                             CompactTab(

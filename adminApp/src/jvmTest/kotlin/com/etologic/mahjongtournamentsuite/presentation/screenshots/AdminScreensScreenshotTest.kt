@@ -97,6 +97,12 @@ class AdminScreensScreenshotTest {
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.TOURNAMENT.name, tournamentId = ONGOING))
     }
 
+    /** The statistics of one person: the second tab row is as wide as the first one. */
+    @Test
+    fun statisticsPerson() = adminScreenshots("statistics-person", ready = { waitForText("Skills", substring = true) }) { nav ->
+        StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name, emaId = ScreenshotData.playerAccount.emaId))
+    }
+
     @Test
     fun activity() = adminScreenshots("activity") { nav -> ActivityScreen(nav) }
 
