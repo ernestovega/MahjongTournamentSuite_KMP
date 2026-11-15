@@ -14,28 +14,14 @@ applications, like the web site:
 - The code is `androidApp/src/main/.../SuiteRoot.kt`. Both parts show the version of the app, which is the admin version
   (see [versioning.md](versioning.md)).
 
-`playerAndroidApp` (`com.etologic.mahjongtournamentsuite.player`, **MTS Player**) is the old player app. It is only in
-internal testing, so it gets no notice of the move: it is unpublished once MTS holds both parts.
-
-### Moving the testers to the one app
-
-1. Run the workflow **Tests and deploy** on `main` with the admin and player versions bumped. It uploads MTS (the
-   merged app) to internal testing.
-2. In Play Console, update the store listing of MTS (`com.etologic.mahjongtournamentsuite`): name, short and full
-   description for players and organizers, and screenshots of both parts.
-3. Add the testers of MTS Player to the internal testing list of MTS if they are not there.
-4. Unpublish MTS Player in Play Console (**Release > Setup > Advanced settings > App availability >
-   Unpublish**). Unpublishing keeps the package name reserved; it can never be used by another app.
-5. Firebase: the Android app `...player` can stay in the project for the old installs. App Check with Play Integrity is
-   needed only for MTS. Remove the player app and its SHA-1 from the Android API key when nobody uses it any more.
-
-The steps below still apply to both apps while MTS Player exists.
+There was a separate player app, **MTS Player** (`com.etologic.mahjongtournamentsuite.player`, module
+`playerAndroidApp`). It was only in internal testing. In November 2026 it was deleted in Play Console and in Firebase,
+its entries were removed from the Android API key, and the module was removed from the code.
 
 ## Play App Signing
 
-Both Android apps (`androidApp` and `playerAndroidApp`) are published on Google Play
-with **Play App Signing**: Google keeps the app signing key, and we sign every upload with our own **upload key**.
-Each app has its own upload keystore.
+The Android app (`androidApp`) is published on Google Play with **Play App Signing**: Google keeps the app signing
+key, and we sign every upload with our own **upload key**.
 
 ## Upload keystores
 
@@ -43,13 +29,11 @@ The keystores and their passwords are never in the repository, which is public. 
 repository (for example `~/keystores/`) and keep a copy of each file and its passwords in a password manager.
 Losing an upload key is recoverable (Play Console lets you reset it), but it takes days.
 
-Create one keystore per app:
+Create the keystore:
 
 ```bash
 mkdir -p ~/keystores
 keytool -genkeypair -v -keystore ~/keystores/mts-admin-upload.jks -alias upload \
-  -keyalg RSA -keysize 2048 -validity 10000
-keytool -genkeypair -v -keystore ~/keystores/mts-player-upload.jks -alias upload \
   -keyalg RSA -keysize 2048 -validity 10000
 ```
 
@@ -66,11 +50,6 @@ mts.signing.admin.storeFile=/Users/<you>/keystores/mts-admin-upload.jks
 mts.signing.admin.storePassword=...
 mts.signing.admin.keyAlias=upload
 mts.signing.admin.keyPassword=...
-
-mts.signing.player.storeFile=/Users/<you>/keystores/mts-player-upload.jks
-mts.signing.player.storePassword=...
-mts.signing.player.keyAlias=upload
-mts.signing.player.keyPassword=...
 ```
 
 | local.properties | Environment variable |
@@ -80,13 +59,13 @@ mts.signing.player.keyPassword=...
 | `mts.signing.admin.keyAlias` | `MTS_ADMIN_SIGNING_KEY_ALIAS` |
 | `mts.signing.admin.keyPassword` | `MTS_ADMIN_SIGNING_KEY_PASSWORD` |
 
-The player app uses the same names with `player` / `PLAYER`. Without these values the release build is not signed,
+Without these values the release build is not signed,
 and the debug build is not affected.
 
-Build the bundles for Google Play by hand (CI does it on every merge to `main`, see below):
+Build the bundle for Google Play by hand (CI does it on every merge to `main`, see below):
 
 ```bash
-./gradlew :androidApp:bundleRelease :playerAndroidApp:bundleRelease
+./gradlew :androidApp:bundleRelease
 ```
 
 ## Automatic upload to Google Play
@@ -121,7 +100,7 @@ Google Play access uses the same service account and Workload Identity Federatio
    ```
 
 2. In Play Console, **Users and permissions > Invite new users**, invite
-   `github-deployer@mahjong-tournament-suite.iam.gserviceaccount.com`. Under **App permissions** add both apps with
+   `github-deployer@mahjong-tournament-suite.iam.gserviceaccount.com`. Under **App permissions** add the app with
    **Release to testing tracks** (add **Release to production...** only if `PLAY_TRACK` is `production`).
 3. Add these secrets to the environment `production` (**Settings > Environments > production > Environment
    secrets**). From the Mac, with the GitHub CLI signed in:
@@ -130,24 +109,21 @@ Google Play access uses the same service account and Workload Identity Federatio
    base64 -i ~/keystores/mts-admin-upload.jks | gh secret set MTS_ADMIN_UPLOAD_KEYSTORE_BASE64 --env production
    gh secret set MTS_ADMIN_UPLOAD_STORE_PASSWORD --env production   # asks for the value
    gh secret set MTS_ADMIN_UPLOAD_KEY_PASSWORD --env production
-   base64 -i ~/keystores/mts-player-upload.jks | gh secret set MTS_PLAYER_UPLOAD_KEYSTORE_BASE64 --env production
-   gh secret set MTS_PLAYER_UPLOAD_STORE_PASSWORD --env production
-   gh secret set MTS_PLAYER_UPLOAD_KEY_PASSWORD --env production
    ```
 
-   The key alias is `upload`. If a keystore uses another alias, add `MTS_ADMIN_UPLOAD_KEY_ALIAS` or
-   `MTS_PLAYER_UPLOAD_KEY_ALIAS`. Without the secrets the job fails with a message that points here.
+   The key alias is `upload`. If the keystore uses another alias, add `MTS_ADMIN_UPLOAD_KEY_ALIAS`.
+   The secrets `MTS_PLAYER_UPLOAD_*` of the old player app are no longer used and can be deleted. Without the secrets the job fails with a message that points here.
 
 ## Firebase API key
 
 The Android API key in `google-services.json` is a public Firebase client key. In Google Cloud it is restricted to the
-two package names and the SHA-1 of each certificate that signs an installed app:
+package name of the app and the SHA-1 of each certificate that signs an installed app:
 
 - the debug keystore of each developer machine (`~/.android/debug.keystore`),
-- the **app signing key** of each app, from Play Console → Test and release → App integrity
+- the **app signing key** of the app, from Play Console → Test and release → App integrity
   (installs from Google Play are signed with this key, not with the upload key),
 - the upload key, only if you install release builds by hand.
 
 When a certificate is missing, that build cannot reach Firebase (Analytics stops sending data). Add each new SHA-1
 in Google Cloud → APIs & Services → Credentials → "Android key (auto created by Firebase)", and also in the Firebase
-console under the settings of each Android app.
+console under the settings of the Android app.

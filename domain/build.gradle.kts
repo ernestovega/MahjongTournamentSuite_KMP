@@ -25,12 +25,6 @@ abstract class GenerateAppVersionConstantsTask : DefaultTask() {
     @get:Input
     abstract val adminVersionCode: Property<String>
 
-    @get:Input
-    abstract val playerVersionName: Property<String>
-
-    @get:Input
-    abstract val playerVersionCode: Property<String>
-
     @get:OutputDirectory
     abstract val outputDir: DirectoryProperty
 
@@ -45,18 +39,14 @@ abstract class GenerateAppVersionConstantsTask : DefaultTask() {
             """
             package com.etologic.mahjongtournamentsuite.domain
 
-            /** The versions of the three products. They come from gradle/libs.versions.toml. See docs/versioning.md. */
+            /** The versions of the two products. They come from gradle/libs.versions.toml. See docs/versioning.md. */
             object AppVersion {
                 /** Both web apps: everything deployed to Firebase. */
                 const val web: String = "${webVersionName.get()}"
 
-                /** The admin app on Android and desktop. */
+                /** The Android app (player and admin parts) and the desktop admin app. */
                 const val admin: String = "${adminVersionName.get()}"
                 const val adminCode: Int = ${adminVersionCode.get()}
-
-                /** The player app on Android. */
-                const val player: String = "${playerVersionName.get()}"
-                const val playerCode: Int = ${playerVersionCode.get()}
             }
             """.trimIndent(),
         )
@@ -71,8 +61,6 @@ val generateAppVersionConstants by tasks.registering(GenerateAppVersionConstants
     webVersionName.set(catalogVersion("web-versionName"))
     adminVersionName.set(catalogVersion("admin-versionName"))
     adminVersionCode.set(catalogVersion("admin-versionCode"))
-    playerVersionName.set(catalogVersion("player-versionName"))
-    playerVersionCode.set(catalogVersion("player-versionCode"))
     outputDir.set(generatedAppVersionDir)
 }
 

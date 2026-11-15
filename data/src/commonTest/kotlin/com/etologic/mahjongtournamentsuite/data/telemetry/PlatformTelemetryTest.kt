@@ -14,6 +14,6 @@ class PlatformTelemetryTest {
         assertEquals(AppVersion.web, platform("player", "web").appVersion)
         assertEquals(AppVersion.admin, platform("admin", "android").appVersion)
         assertEquals(AppVersion.admin, platform("admin", "desktop").appVersion)
-        assertEquals(AppVersion.player, platform("player", "android").appVersion)
+        assertEquals(AppVersion.admin, platform("player", "android").appVersion)
     }
 }

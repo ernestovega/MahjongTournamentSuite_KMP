@@ -12,8 +12,7 @@ enum class SuiteApp {
 /**
  * Opens the other application of the suite. On the web both live on the same site: the player app at `/` and the
  * admin app at `/admin/`, with one shared session. On Android the one app of the suite holds both and switches between
- * them; the old player app opens the other app, or its Google Play page when it is not installed. Null on the desktop,
- * where the two applications are separate programs.
+ * them. Null on the desktop, where the two applications are separate programs.
  */
 @Composable
 expect fun rememberAppSwitcher(): ((SuiteApp) -> Unit)?

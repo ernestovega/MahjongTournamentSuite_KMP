@@ -136,7 +136,7 @@ private val playerModule = module {
 fun PlayerApp(
     openTournamentId: String? = null,
     sessionStorage: SessionStateStorage? = null,
-    appVersion: String = AppVersion.player,
+    appVersion: String = AppVersion.admin,
     /** True when the admin app sent the user here to sign in. */
     openSignIn: Boolean = false,
     /** True in the Android app of the suite, which also holds the admin part. See [PlayerKoin]. */

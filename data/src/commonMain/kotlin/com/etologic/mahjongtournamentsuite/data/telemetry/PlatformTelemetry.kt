@@ -21,13 +21,12 @@ class PlatformTelemetry(
     /** The version of the installed app, when the platform knows it better than [app] does. */
     private val version: String? = null,
 ) {
-    /** The version of the product that runs: the web, the admin app or the player app. See docs/versioning.md. */
+    /** The version of the product that runs: the web, or the Android and desktop app. See docs/versioning.md. */
     val appVersion: String
         get() = when {
             version != null -> version
             platform == "web" -> AppVersion.web
-            app == "admin" -> AppVersion.admin
-            else -> AppVersion.player
+            else -> AppVersion.admin
         }
 }
 

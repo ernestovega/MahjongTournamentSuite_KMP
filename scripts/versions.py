@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Versions of the three products: the web, the Android app (with the desktop admin app) and the old player app.
+"""Versions of the two products: the web, and the Android app (with the desktop admin app).
 
 The versions live in gradle/libs.versions.toml. See docs/versioning.md.
 
     python3 scripts/versions.py show
-    python3 scripts/versions.py bump <web|admin|player>
+    python3 scripts/versions.py bump <web|admin>
     python3 scripts/versions.py check [--base origin/main]
 
 `check` lists the files that the branch changed since it left the base branch, finds the products
@@ -24,24 +24,22 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 CATALOG = "gradle/libs.versions.toml"
 
-WEB, ADMIN, PLAYER = "web", "admin", "player"
-PRODUCTS = (WEB, ADMIN, PLAYER)
-LABELS = {WEB: "Web", ADMIN: "Android app and desktop admin app", PLAYER: "Old player app"}
+WEB, ADMIN = "web", "admin"
+PRODUCTS = (WEB, ADMIN)
+LABELS = {WEB: "Web", ADMIN: "Android app and desktop admin app"}
 # The web has no version code because no store needs one.
-HAS_CODE = {WEB: False, ADMIN: True, PLAYER: True}
+HAS_CODE = {WEB: False, ADMIN: True}
 
 # The products that each Gradle module goes into.
 MODULES = {
-    "domain": {WEB, ADMIN, PLAYER},
-    "data": {WEB, ADMIN, PLAYER},
-    "designsystem": {WEB, ADMIN, PLAYER},
-    "ui": {WEB, ADMIN, PLAYER},
+    "domain": {WEB, ADMIN},
+    "data": {WEB, ADMIN},
+    "designsystem": {WEB, ADMIN},
+    "ui": {WEB, ADMIN},
     "adminApp": {WEB, ADMIN},
-    # The Android app of the suite (androidApp, the admin version) holds the player part too. The old player app
-    # (playerAndroidApp) only gets the notice that sends its users to it.
-    "playerApp": {WEB, ADMIN, PLAYER},
+    # The Android app (androidApp, the admin version) holds the player part too.
+    "playerApp": {WEB, ADMIN},
     "androidApp": {ADMIN},
-    "playerAndroidApp": {PLAYER},
 }
 
 # The products that each platform source set goes into. Other source sets, such as commonMain,
@@ -50,7 +48,7 @@ SOURCE_SETS = {
     "wasmJsMain": {WEB},
     "webMain": {WEB},
     "jsMain": {WEB},
-    "androidMain": {ADMIN, PLAYER},
+    "androidMain": {ADMIN},
     # The desktop app is the admin app.
     "jvmMain": {ADMIN},
 }
@@ -58,7 +56,7 @@ SOURCE_SETS = {
 # Root files of the Gradle build. A change can touch every product.
 BUILD_FILES = {"build.gradle.kts", "settings.gradle.kts", "gradle.properties", "gradlew", "gradlew.bat"}
 
-VERSION_LINE = re.compile(r'^(?P<product>web|admin|player)-version(?P<kind>Name|Code)\s*=\s*"(?P<value>[^"]*)"\s*$', re.M)
+VERSION_LINE = re.compile(r'^(?P<product>web|admin)-version(?P<kind>Name|Code)\s*=\s*"(?P<value>[^"]*)"\s*$', re.M)
 
 
 def git(*args: str) -> str:

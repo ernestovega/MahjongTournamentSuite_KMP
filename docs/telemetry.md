@@ -29,7 +29,7 @@ A platform without Analytics settings also sends no error log and shows no conse
 - The apps send no email, no name, no EMA id and no tournament id.
 - A parameter holds a fixed word or a count.
 - The user properties are `app`, `platform`, `env`, `role` and `language`.
-- `app` is `admin` or `player`. On Android one app holds both parts, so `app` is the part that is open: each part starts its telemetry again when the user switches (`AndroidPlatformContext.currentApp`). The old player app (`com.etologic.mahjongtournamentsuite.player`) always sends `player`.
+- `app` is `admin` or `player`. On Android one app holds both parts, so `app` is the part that is open: each part starts its telemetry again when the user switches (`AndroidPlatformContext.currentApp`).
 - `env` is `prod`, `dev` or `debug`. Filter the reports on `env = prod`.
 - The server removes emails, long numbers and tokens from the text of an error report before it saves it.
 
@@ -119,13 +119,11 @@ Do these steps one time. The Firebase project is `mahjong-tournament-suite`.
 2. Link a GA4 property. Create one if the project has none.
 3. In the GA4 property, open Admin > Data collection and modification > Data retention. Set event data retention to 14 months.
 
-### 2. Android (both apps)
+### 2. Android
 
-1. In Project settings > General, add two Android apps:
-   - `com.etologic.mahjongtournamentsuite` (admin)
-   - `com.etologic.mahjongtournamentsuite.player` (player)
-2. Download `google-services.json` of each app.
-3. Save the files as `androidApp/google-services.json` and `playerAndroidApp/google-services.json`.
+1. In Project settings > General, add the Android app `com.etologic.mahjongtournamentsuite`.
+2. Download its `google-services.json`.
+3. Save the file as `androidApp/google-services.json`.
    The file holds no secret. You can commit it, so CI builds and the UI tests also send data.
 4. Build and run the app. Accept the consent screen. Check the events in DebugView (step 6).
 

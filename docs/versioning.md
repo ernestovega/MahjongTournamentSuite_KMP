@@ -1,12 +1,13 @@
 # Versions
 
-There are three products, and each one has its own version:
+There are two products, and each one has its own version:
 
 | Product | What it is | Where it is shown |
 |---|---|---|
 | **Web** | Both web apps (admin and player) and everything else that is deployed to Firebase: functions, rules and indexes. | Profile dialog and sign-in screen of both web apps |
-| **Admin app** | The Android app of the suite (`androidApp`), which holds the admin part and the player part, and the admin app on desktop. | Profile dialog of both parts on Android, and of the desktop app |
-| **Player app** | The old player app on Android (`playerAndroidApp`). It only gets the notice that sends its users to the app of the suite. See [android-release.md](android-release.md). | Profile dialog of the old player app |
+| **Admin app** | The Android app (`androidApp`), which holds the admin part and the player part, and the admin app on desktop. | Profile dialog of both parts on Android, and of the desktop app |
+
+There was a third product, the player app on Android (`playerAndroidApp`, `com.etologic.mahjongtournamentsuite.player`). It was removed in November 2026, when the Android app took the player part. See [android-release.md](android-release.md).
 
 The versions are in `gradle/libs.versions.toml`:
 
@@ -14,11 +15,9 @@ The versions are in `gradle/libs.versions.toml`:
 web-versionName = "1.0.2"
 admin-versionName = "1.0.1"
 admin-versionCode = "1"
-player-versionName = "1.0.1"
-player-versionCode = "1"
 ```
 
-The names are `MAJOR.MINOR.PATCH`. The patch counts the pull requests merged to `main` that changed the product, counted from PR #1: PR #2 set the web to 1.0.1 and PR #15 set the web to 1.0.2 and both apps to 1.0.1. The apps also have a version code for Google Play, which goes up by one with every new version. The web has no version code. The build generates the object `AppVersion` in `domain` from these values, and the apps show the right one through `LocalAppVersion`.
+The names are `MAJOR.MINOR.PATCH`. The patch counts the pull requests merged to `main` that changed the product, counted from PR #1: PR #2 set the web to 1.0.1 and PR #15 set the web to 1.0.2 and both apps to 1.0.1. The Android app also has a version code for Google Play, which goes up by one with every new version. The web has no version code. The build generates the object `AppVersion` in `domain` from these values, and the apps show the right one through `LocalAppVersion`.
 
 ## Bump a version
 
@@ -36,11 +35,11 @@ The **Build and test** job runs `python3 scripts/versions.py check` on every pul
 
 Which files go into which product:
 
-- `domain`, `data`, `ui`: all three. Their `wasmJsMain`/`webMain` sources only go into the web, `androidMain` into both apps, and `jvmMain` into the admin app (desktop).
-- `adminApp`: web and admin app. `playerApp`: web, admin app (the Android app holds the player part) and player app. The same source set rules apply.
-- `androidApp`: admin app. `playerAndroidApp`: player app.
+- `domain`, `data`, `ui`: both. Their `wasmJsMain`/`webMain` sources only go into the web, and `androidMain` and `jvmMain` into the admin app.
+- `adminApp`: web and admin app. `playerApp`: web and admin app (the Android app holds the player part). The same source set rules apply.
+- `androidApp`: admin app.
 - `firebase/`, `firebase.json`, `public/`, `kotlin-js-store/`: web.
-- The Gradle build (`build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradle/`): all three. A change in `libs.versions.toml` that only touches the version lines needs no bump.
+- The Gradle build (`build.gradle.kts`, `settings.gradle.kts`, `gradle.properties`, `gradle/`): both. A change in `libs.versions.toml` that only touches the version lines needs no bump.
 - Tests, Markdown files, `docs/`, `scripts/` and `.github/`: none.
 
 A pull request can also bump a product that it did not change. The check only fails when a version goes down, or when a name and its code do not go up together.

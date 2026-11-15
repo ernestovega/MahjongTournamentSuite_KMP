@@ -36,7 +36,7 @@ jobs:
           # The version check compares the branch with main.
           fetch-depth: 0
 
-      # Fails when the web, the admin app or the player app changed without a higher version.
+      # Fails when the web or the Android and desktop app changed without a higher version.
       # See docs/versioning.md.
       - name: Check versions
         run: python3 scripts/versions.py check --base "origin/${{ github.base_ref }}"
@@ -107,7 +107,7 @@ jobs:
         run: >
           ./gradlew
           :domain:jvmTest :data:jvmTest :designsystem:jvmTest :ui:jvmTest :adminApp:jvmTest :playerApp:jvmTest
-          :androidApp:testDebugUnitTest :playerAndroidApp:testDebugUnitTest
+          :androidApp:testDebugUnitTest
 
   scripts:
     name: Scripts and diagnostics tests
@@ -252,16 +252,16 @@ jobs:
         run: python3 scripts/play.py pending
 
       - uses: actions/setup-java@v5
-        if: steps.pending.outputs.admin == 'true' || steps.pending.outputs.player == 'true'
+        if: steps.pending.outputs.admin == 'true'
         with:
           distribution: temurin
           java-version: 21
 
       - uses: gradle/actions/setup-gradle@v5
-        if: steps.pending.outputs.admin == 'true' || steps.pending.outputs.player == 'true'
+        if: steps.pending.outputs.admin == 'true'
 
       # The upload keystores come from secrets of the environment "production". The build reads them through the
-      # variables MTS_ADMIN_SIGNING_* and MTS_PLAYER_SIGNING_*.
+      # variables MTS_ADMIN_SIGNING_*.
       - name: Build the admin app
         if: steps.pending.outputs.admin == 'true'
         env:
@@ -278,29 +278,9 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 --decode > "$MTS_ADMIN_SIGNING_STORE_FILE"
           ./gradlew :androidApp:bundleRelease
 
-      - name: Build the player app
-        if: steps.pending.outputs.player == 'true'
-        env:
-          KEYSTORE_BASE64: ${{ secrets.MTS_PLAYER_UPLOAD_KEYSTORE_BASE64 }}
-          MTS_PLAYER_SIGNING_STORE_PASSWORD: ${{ secrets.MTS_PLAYER_UPLOAD_STORE_PASSWORD }}
-          MTS_PLAYER_SIGNING_KEY_PASSWORD: ${{ secrets.MTS_PLAYER_UPLOAD_KEY_PASSWORD }}
-          MTS_PLAYER_SIGNING_KEY_ALIAS: ${{ secrets.MTS_PLAYER_UPLOAD_KEY_ALIAS || 'upload' }}
-        run: |
-          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$MTS_PLAYER_SIGNING_STORE_PASSWORD" ]; then
-            echo "::error::The player upload keystore secrets are missing. See docs/android-release.md."
-            exit 1
-          fi
-          export MTS_PLAYER_SIGNING_STORE_FILE="$RUNNER_TEMP/mts-player-upload.jks"
-          echo "$KEYSTORE_BASE64" | base64 --decode > "$MTS_PLAYER_SIGNING_STORE_FILE"
-          ./gradlew :playerAndroidApp:bundleRelease
-
       - name: Upload the admin app
         if: steps.pending.outputs.admin == 'true'
         run: python3 scripts/play.py upload admin androidApp/build/outputs/bundle/release/*.aab
-
-      - name: Upload the player app
-        if: steps.pending.outputs.player == 'true'
-        run: python3 scripts/play.py upload player playerAndroidApp/build/outputs/bundle/release/*.aab
 
       - name: Remove the keystores
         if: always()

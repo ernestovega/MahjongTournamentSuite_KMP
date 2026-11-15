@@ -20,8 +20,6 @@ CATALOG_TEXT = """[versions]
 web-versionName = "1.0.4"
 admin-versionName = "1.0.3"
 admin-versionCode = "3"
-player-versionName = "1.0.3"
-player-versionCode = "3"
 kotlin = "2.0.0"
 """
 
@@ -29,22 +27,21 @@ kotlin = "2.0.0"
 class ProductsOfTest(unittest.TestCase):
     def test_shared_modules_go_into_every_product(self):
         for module in ("domain", "data", "ui"):
-            self.assertEqual(versions.products_of(f"{module}/src/commonMain/kotlin/A.kt"), {"web", "admin", "player"})
+            self.assertEqual(versions.products_of(f"{module}/src/commonMain/kotlin/A.kt"), {"web", "admin"})
 
     def test_each_app_module_goes_into_its_own_products(self):
         self.assertEqual(versions.products_of("adminApp/src/commonMain/kotlin/A.kt"), {"web", "admin"})
-        self.assertEqual(versions.products_of("playerApp/src/commonMain/kotlin/A.kt"), {"web", "admin", "player"})
+        self.assertEqual(versions.products_of("playerApp/src/commonMain/kotlin/A.kt"), {"web", "admin"})
         self.assertEqual(versions.products_of("androidApp/src/main/AndroidManifest.xml"), {"admin"})
-        self.assertEqual(versions.products_of("playerAndroidApp/build.gradle.kts"), {"player"})
 
     def test_platform_source_sets_narrow_the_products(self):
         self.assertEqual(versions.products_of("data/src/wasmJsMain/kotlin/A.kt"), {"web"})
         self.assertEqual(versions.products_of("adminApp/src/webMain/resources/telemetry.js"), {"web"})
-        self.assertEqual(versions.products_of("data/src/androidMain/kotlin/A.kt"), {"admin", "player"})
+        self.assertEqual(versions.products_of("data/src/androidMain/kotlin/A.kt"), {"admin"})
         # The desktop app is the admin app.
         self.assertEqual(versions.products_of("data/src/jvmMain/kotlin/A.kt"), {"admin"})
-        # An Android source set of the player module goes into both Android apps: the app of the suite holds it too.
-        self.assertEqual(versions.products_of("playerApp/src/androidMain/kotlin/A.kt"), {"admin", "player"})
+        # An Android source set of the player module goes into the Android app, which holds the player part.
+        self.assertEqual(versions.products_of("playerApp/src/androidMain/kotlin/A.kt"), {"admin"})
 
     def test_tests_docs_ci_and_scripts_go_into_no_product(self):
         for path in (
@@ -72,8 +69,8 @@ class ProductsOfTest(unittest.TestCase):
         self.assertEqual(versions.products_of(".firebaserc"), {"web"})
 
     def test_root_build_files_and_gradle_files_touch_every_product(self):
-        self.assertEqual(versions.products_of("build.gradle.kts"), {"web", "admin", "player"})
-        self.assertEqual(versions.products_of("gradle/wrapper/gradle-wrapper.properties"), {"web", "admin", "player"})
+        self.assertEqual(versions.products_of("build.gradle.kts"), {"web", "admin"})
+        self.assertEqual(versions.products_of("gradle/wrapper/gradle-wrapper.properties"), {"web", "admin"})
 
     def test_the_catalog_is_left_to_check(self):
         # check() compares the catalog without its version lines. products_of() must not decide it alone.
@@ -87,7 +84,6 @@ class CatalogTest(unittest.TestCase):
             {
                 "web": {"name": "1.0.4"},
                 "admin": {"name": "1.0.3", "code": "3"},
-                "player": {"name": "1.0.3", "code": "3"},
             },
         )
 
@@ -146,7 +142,6 @@ class GitRepoTest(unittest.TestCase):
         self.quiet(versions.bump, "web")
         self.assertEqual(self.catalog()["admin"], {"name": "1.0.4", "code": "4"})
         self.assertEqual(self.catalog()["web"], {"name": "1.0.5"})
-        self.assertEqual(self.catalog()["player"], {"name": "1.0.3", "code": "3"})
 
     def test_a_branch_that_only_changes_tests_and_docs_needs_no_bump(self):
         self.write("data/src/commonTest/kotlin/ATest.kt", "test")
@@ -161,11 +156,9 @@ class GitRepoTest(unittest.TestCase):
         self.assertEqual(result, 1)
         self.assertIn("bump admin", out)
         self.assertIn("bump web", out)
-        self.assertNotIn("bump player", out)
 
     def test_bumping_the_products_that_changed_passes(self):
         self.write("playerApp/src/commonMain/kotlin/A.kt", "code")
-        self.quiet(versions.bump, "player")
         self.quiet(versions.bump, "admin")
         self.quiet(versions.bump, "web")
         self.commit()
@@ -193,7 +186,7 @@ class GitRepoTest(unittest.TestCase):
         self.commit()
         result, out = self.quiet(versions.check, "main")
         self.assertEqual(result, 1)
-        for product in ("web", "admin", "player"):
+        for product in ("web", "admin"):
             self.assertIn(f"bump {product}", out)
 
     def test_a_catalog_change_of_only_the_version_lines_needs_nothing_else(self):

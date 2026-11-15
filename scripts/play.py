@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
-"""Publishes the Android apps on Google Play. See docs/android-release.md.
+"""Publishes the Android app on Google Play. See docs/android-release.md.
 
     python3 scripts/play.py pending
-    python3 scripts/play.py upload <admin|player> <path/to/app-release.aab>
+    python3 scripts/play.py upload admin <path/to/app-release.aab>
 
-`pending` asks Google Play which version codes each app already has, and lists the apps whose version code in
-gradle/libs.versions.toml is not there yet. In GitHub Actions it also writes `admin=true|false` and
-`player=true|false` to $GITHUB_OUTPUT, so the workflow only builds and uploads the apps that have a new version.
+`pending` asks Google Play which version codes the app already has, and says whether its version code in
+gradle/libs.versions.toml is not there yet. In GitHub Actions it also writes `admin=true|false` to $GITHUB_OUTPUT,
+so the workflow only builds and uploads the app when it has a new version.
 
 `upload` uploads the bundle and releases it on the track $PLAY_TRACK (default `internal`) with the status
 $PLAY_RELEASE_STATUS (default `completed`, which rolls it out to the testers at once).
 
 Both sign in with Application Default Credentials, which google-github-actions/auth sets up in the workflow.
-The service account needs access to both apps in Play Console.
+The service account needs access to the app in Play Console.
 """
 
 from __future__ import annotations
@@ -31,9 +31,8 @@ from versions import CATALOG, ROOT, read_versions  # noqa: E402
 
 PACKAGES = {
     "admin": "com.etologic.mahjongtournamentsuite",
-    "player": "com.etologic.mahjongtournamentsuite.player",
 }
-LABELS = {"admin": "Admin app", "player": "Player app"}
+LABELS = {"admin": "Android app"}
 SCOPE = "https://www.googleapis.com/auth/androidpublisher"
 
 

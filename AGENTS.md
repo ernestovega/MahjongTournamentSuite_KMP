@@ -48,11 +48,10 @@ The project uses a simple Clean Architecture split:
 - `playerApp`
   - the player app (Android, desktop and web), same layers as `adminApp`
 
-- `androidApp` and `playerAndroidApp`
-  - Android application entry points only
+- `androidApp`
+  - Android application entry point only
   - `androidApp` (`com.etologic.mahjongtournamentsuite`) is the one Android app of the suite: it opens `playerApp` and
-    switches to `adminApp` for admins and editors (`SuiteRoot`). `playerAndroidApp` is the old player app; it only shows
-    the notice that sends its users to the new app. See `docs/android-release.md`.
+    switches to `adminApp` for admins and editors (`SuiteRoot`). See `docs/android-release.md`.
 
 - `firebase`
   - Cloud Functions API, Firestore and Storage rules (clients never read Firestore directly), indexes
@@ -133,7 +132,7 @@ Treat those as tooling noise unless a specific failure appears.
 
 ## Versions
 
-The web, the admin app and the player app have independent versions in `gradle/libs.versions.toml`. Every pull request to `main` must bump the version of each product it changes, or the **Build and test** check fails. Run `python3 scripts/versions.py check` before pushing, and bump with `python3 scripts/versions.py bump <web|admin|player>`, which only raises the patch (third number). Never change MAJOR or MINOR: the owner does that by hand. Details: `docs/versioning.md`.
+The web and the admin app (Android and desktop) have independent versions in `gradle/libs.versions.toml`. Every pull request to `main` must bump the version of each product it changes, or the **Build and test** check fails. Run `python3 scripts/versions.py check` before pushing, and bump with `python3 scripts/versions.py bump <web|admin>`, which only raises the patch (third number). Never change MAJOR or MINOR: the owner does that by hand. Details: `docs/versioning.md`.
 
 ## Editing Guidance
 

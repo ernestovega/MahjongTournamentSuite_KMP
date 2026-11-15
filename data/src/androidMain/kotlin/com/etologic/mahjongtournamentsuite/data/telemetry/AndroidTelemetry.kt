@@ -106,10 +106,8 @@ internal fun createAndroidTelemetry(context: Context, debuggable: Boolean): Plat
     } else {
         NoTelemetry
     }
-    // The old player app holds only the player part. The app of the suite holds both and says which one is open.
-    val legacyPlayerApp = context.packageName.endsWith(".player")
-    val app = if (legacyPlayerApp) "player" else AndroidPlatformContext.currentApp ?: "admin"
-    // The app of the suite has one version, the admin version, for both parts. See docs/versioning.md.
-    val version = if (legacyPlayerApp) AppVersion.player else AppVersion.admin
-    return PlatformTelemetry(analytics, app, "android", env, language, AndroidPendingCrashStore(context), version)
+    // The app holds both parts and says which one is open. It has one version, the admin version, for both parts.
+    // See docs/versioning.md.
+    val app = AndroidPlatformContext.currentApp ?: "admin"
+    return PlatformTelemetry(analytics, app, "android", env, language, AndroidPendingCrashStore(context), AppVersion.admin)
 }
