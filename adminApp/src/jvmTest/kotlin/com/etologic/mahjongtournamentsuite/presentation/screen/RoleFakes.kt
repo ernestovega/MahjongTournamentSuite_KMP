@@ -188,7 +188,10 @@ internal class FakePlayerRepository(private val players: List<Player> = emptyLis
     /** The players that the screen saved, in order. */
     val saved = mutableListOf<Player>()
     override suspend fun listPlayers(refreshMode: RefreshMode) = AppResult.Success(players)
-    override suspend fun createPlayer(player: Player): AppResult<Player> = error("unused")
+    override suspend fun createPlayer(player: Player): AppResult<Player> {
+        saved += player
+        return AppResult.Success(player)
+    }
     override suspend fun updatePlayer(previousEmaId: String, player: Player): AppResult<Unit> {
         saved += player
         return AppResult.Success(Unit)

@@ -3,6 +3,9 @@ package com.etologic.mahjongtournamentsuite.presentation.screen
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
+import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertCountEquals
@@ -190,6 +193,33 @@ class RoleGatingUiTest {
         show(world, listOf(player)) { PlayerBaseScreen(rememberNavController()) }
 
         onNodeWithText("New player").assertExists()
+    }
+
+    @Test
+    fun aNewEmaPlayerWithoutCountryShowsInTheListAfterTheDialogCloses() = runComposeUiTest {
+        val world = World(GlobalUserRole.ADMIN, emptyList()).also { it.store.adminStatus.value = AdminStatus("me", GlobalUserRole.ADMIN) }
+        val many = (1..80).map { Player(emaId = "${20000 + it}", firstName = "First$it", lastName = "Aaa${it.toString().padStart(2, '0')}", country = "ESP") }
+        val registry = FakePlayerRepository(many)
+        show(world, registry = registry) { PlayerBaseScreen(rememberNavController()) }
+
+        awaitText("20001")
+        onNodeWithText("New player").performClick()
+        awaitText("Add player")
+        onNode(hasText("EMA number") and hasSetTextAction() and hasAnyAncestor(isDialog())).performTextInput("99999")
+        onNode(hasText("First name") and hasSetTextAction() and hasAnyAncestor(isDialog())).performTextInput("Test")
+        onNode(hasText("Last name") and hasSetTextAction() and hasAnyAncestor(isDialog())).performTextInput("Zulu")
+        onNode(hasText("Country") and hasAnyAncestor(isDialog())).performClick()
+        awaitText("No country")
+        onAllNodesWithText("No country").onFirst().performClick()
+        waitForIdle()
+        onNode(hasText("Add player") and hasClickAction() and hasAnyAncestor(isDialog())).performClick()
+        waitUntil(timeoutMillis = 5_000) { registry.saved.isNotEmpty() }
+        assertEquals("", registry.saved.single().country)
+
+        // The list scrolls to the new player, the last one by name.
+        waitUntil(timeoutMillis = 5_000) {
+            onAllNodes(hasText("00099999") and !hasSetTextAction()).fetchSemanticsNodes().isNotEmpty()
+        }
     }
 
     @Test

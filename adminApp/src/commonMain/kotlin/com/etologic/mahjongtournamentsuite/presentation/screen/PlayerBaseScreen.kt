@@ -229,6 +229,9 @@ fun PlayerBaseScreen(navController: NavHostController) {
     }
     var playerFocusApplied by remember { mutableStateOf(false) }
     var lastFocusedPlayerEmaId by rememberSaveable { mutableStateOf<String?>(null) }
+    val playersListState = rememberPersistentLazyListState("players")
+    // A player that was just created or saved. The list scrolls to it once it is in the list.
+    var scrollToEmaId by remember { mutableStateOf<String?>(null) }
 
     fun select(player: Player?) {
         selectedEmaId = player?.emaId
@@ -337,6 +340,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
         upsertPlayerLocally(currentPlayer.emaId, finalPlayer)
         pendingPhoto = null
         select(finalPlayer)
+        scrollToEmaId = finalPlayer.emaId
         when (val result = presenter.loadPlayers(force = true)) {
             is AppResult.Success -> store.upsertBasePlayers(result.value)
             is AppResult.Failure -> error = result.error.toUiText()
@@ -385,6 +389,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                     upsertPlayerLocally(createdPlayer.emaId, createdPlayer)
                     showNewPlayerDialog = false
                     select(createdPlayer)
+                    scrollToEmaId = createdPlayer.emaId
                     pendingPhoto = photo
                     error = result.error.toUiText()
                     saving = false
@@ -395,9 +400,28 @@ fun PlayerBaseScreen(navController: NavHostController) {
         upsertPlayerLocally(finalPlayer.emaId, finalPlayer)
         showNewPlayerDialog = false
         select(finalPlayer)
+        scrollToEmaId = finalPlayer.emaId
         saving = false
     }
     LaunchedEffect(Unit) { refresh() }
+    // The store gives the new list a frame later, so this runs again when the player arrives.
+    LaunchedEffect(scrollToEmaId, filteredPlayers) {
+        val target = scrollToEmaId ?: return@LaunchedEffect
+        val index = filteredPlayers.indexOfFirst { it.emaId == target }
+        when {
+            index >= 0 -> {
+                val visible = playersListState.layoutInfo.visibleItemsInfo
+                val fullyVisible = visible.size > 2 && index in (visible.first().index + 1) until visible.last().index
+                if (!fullyVisible) playersListState.animateScrollToItem(index)
+                scrollToEmaId = null
+            }
+            // A search or a country filter hides the player: they are cleared, so the list shows it.
+            players.any { it.emaId == target } -> {
+                searchQuery = ""
+                selectedCountryCodes = emptySet()
+            }
+        }
+    }
     LaunchedEffect(existingPlayerCountryCodes) {
         val availableCountryCodes = existingPlayerCountryCodes.toSet()
         val availableSelection = selectedCountryCodes.intersect(availableCountryCodes)
@@ -725,7 +749,7 @@ fun PlayerBaseScreen(navController: NavHostController) {
                             }
                             DataTableDivider()
                             LazyColumnWithScrollbar(
-                                state = rememberPersistentLazyListState("players"),
+                                state = playersListState,
                                 modifier = Modifier.weight(1f),
                             ) {
                                 itemsIndexed(filteredPlayers, key = { _, player -> player.emaId }) { index, player ->
