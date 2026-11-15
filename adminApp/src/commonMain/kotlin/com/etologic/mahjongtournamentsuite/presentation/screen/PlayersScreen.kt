@@ -1,6 +1,7 @@
 package com.etologic.mahjongtournamentsuite.presentation.screen
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -9,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -59,6 +62,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -91,6 +95,7 @@ import com.etologic.mahjongtournamentsuite.presentation.components.IdCardsExport
 import com.etologic.mahjongtournamentsuite.presentation.components.ExportFile
 import com.etologic.mahjongtournamentsuite.presentation.components.rememberBackgroundExports
 import com.etologic.mahjongtournamentsuite.presentation.components.LazyColumnWithScrollbar
+import com.etologic.mahjongtournamentsuite.presentation.components.PlatformHorizontalScrollbar
 import com.etologic.mahjongtournamentsuite.presentation.components.LoadMissingSession
 import com.etologic.mahjongtournamentsuite.presentation.components.LocalCompactLayout
 import com.etologic.mahjongtournamentsuite.presentation.components.ScreenColumn
@@ -148,7 +153,8 @@ import mahjongtournamentsuite.adminapp.generated.resources.send_invitation
 import mahjongtournamentsuite.adminapp.generated.resources.send_reminder
 import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.substitution
-import mahjongtournamentsuite.adminapp.generated.resources.tables
+import mahjongtournamentsuite.adminapp.generated.resources.round
+import mahjongtournamentsuite.adminapp.generated.resources.table
 import mahjongtournamentsuite.adminapp.generated.resources.team
 import mahjongtournamentsuite.adminapp.generated.resources.team_n
 import mahjongtournamentsuite.adminapp.generated.resources.this_assignment
@@ -374,16 +380,11 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
 
     val isTeamsTournament = tournaments.firstOrNull { it.id == tournamentId }?.isTeams == true
     val teamNamesById = remember(teams) { teams.associate { it.id to it.name } }
-    val tableNumbersByPlayerId = remember(tables) {
-        buildMap<Int, String> {
-            tables
-                .sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
-                .flatMap { table -> table.playerIds.map { playerId -> playerId to table.tableId } }
-                .groupBy(keySelector = { it.first }, valueTransform = { it.second })
-                .forEach { (playerId, tableIds) ->
-                    put(playerId, tableIds.joinToString(" · "))
-                }
-        }
+    // Each player's table in every round, in round order.
+    val roundTablesByPlayerId = remember(tables) { roundTablesByPlayer(tables) }
+    // The search still finds a player by a table number.
+    val tableNumbersByPlayerId = remember(roundTablesByPlayerId) {
+        roundTablesByPlayerId.mapValues { (_, roundTables) -> roundTables.joinToString(" · ") { it.tableId.toString() } }
     }
     val tournamentCountryCodes = remember(players, playersByEma) {
         players.mapNotNull { slot ->
@@ -1165,7 +1166,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             if (isTeamsTournament) {
                                 TournamentPlayerHeader(stringResource(Res.string.team), Modifier.width(TournamentPlayerTeamColumnWidth))
                             }
-                            TournamentPlayerHeader(stringResource(Res.string.tables), Modifier.width(TournamentPlayerTablesColumnWidth))
                             TournamentPlayerHeader(stringResource(Res.string.account), Modifier.width(TournamentPlayerAccountColumnWidth), TextAlign.Center)
                             Spacer(Modifier.width(TournamentPlayerActionColumnWidth))
                         }
@@ -1180,6 +1180,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             val assigned = slot.assignedEmaId?.let(playersByEma::get)
                             val playerCountry = assigned?.country.orEmpty()
                             val playerName = assigned?.displayName
+                            val roundTables = roundTablesByPlayerId[slot.id].orEmpty()
                             DataTableRow(
                                 // A slot with a player is not clickable. The editor must use the menu and Clear to change it.
                                 onClick = if (slot.isAssigned) null else ({ openAssignment(slot.id) }),
@@ -1222,14 +1223,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                                 AccountStateIcon(slot.hasAccount, Modifier.size(16.dp))
                                             }
                                             Column(Modifier.weight(1f)) {
-                                                // Every table shows: the numbers take as many lines as they need.
-                                                tableNumbersByPlayerId[slot.id]?.let { tables ->
-                                                    Text(
-                                                        text = "${stringResource(Res.string.tables)}: $tables",
-                                                        style = MaterialTheme.typography.bodySmall,
-                                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                                    )
-                                                }
                                                 slot.email?.takeIf { it.isNotBlank() }?.let { email ->
                                                     Text(
                                                         text = email,
@@ -1299,12 +1292,6 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             overflow = TextOverflow.Ellipsis,
                                         )
                                     }
-                                    Text(
-                                        text = tableNumbersByPlayerId[slot.id] ?: "—",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.width(TournamentPlayerTablesColumnWidth),
-                                        textAlign = TextAlign.Center,
-                                    )
                                     Box(
                                         modifier = Modifier.width(TournamentPlayerAccountColumnWidth),
                                         contentAlignment = Alignment.Center,
@@ -1484,6 +1471,17 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     }
                                 }
                             }
+                            // A second line under the player: the table of every round, side by side.
+                            if (roundTables.isNotEmpty()) {
+                                PlayerRoundTablesStrip(
+                                    roundTables = roundTables,
+                                    modifier = Modifier.padding(
+                                        start = if (compact) TournamentPlayerCompactStripStart else TournamentPlayerStripStart,
+                                        end = 12.dp,
+                                        bottom = 10.dp,
+                                    ),
+                                )
+                            }
                             DataTableDivider()
                         }
                     }
@@ -1499,7 +1497,105 @@ private val TournamentPlayerCountryColumnWidth = 64.dp
 private val TournamentPlayerIdColumnWidth = 48.dp
 private val TournamentPlayerEmaColumnWidth = 104.dp
 private val TournamentPlayerTeamColumnWidth = 144.dp
-private val TournamentPlayerTablesColumnWidth = 220.dp
+
+// The strip starts after the ID column (desktop) or after the photo (phone), so it reads as part of the player.
+private val TournamentPlayerStripStart = 12.dp + TournamentPlayerIdColumnWidth + 12.dp
+private val TournamentPlayerCompactStripStart = 12.dp + 44.dp + 12.dp
+private val RoundTableCellWidth = 36.dp
+
+/** One round and the table where a player sits in it. */
+internal data class PlayerRoundTable(val roundId: Int, val tableId: Int)
+
+/** Every player's table per round, in round order. A player has at most one table per round. */
+internal fun roundTablesByPlayer(tables: List<TournamentTable>): Map<Int, List<PlayerRoundTable>> = tables
+    .sortedWith(compareBy(TournamentTable::roundId, TournamentTable::tableId))
+    .flatMap { table -> table.playerIds.map { playerId -> playerId to PlayerRoundTable(table.roundId, table.tableId) } }
+    .groupBy(keySelector = { it.first }, valueTransform = { it.second })
+
+/**
+ * A small two-row table: the round on top and the table below.
+ * It scrolls sideways when the rounds do not fit, with a scrollbar on desktop and web.
+ */
+@Composable
+private fun PlayerRoundTablesStrip(
+    roundTables: List<PlayerRoundTable>,
+    modifier: Modifier = Modifier,
+) {
+    val scrollState = rememberScrollState()
+    val shape = MaterialTheme.shapes.small
+    val borderColor = MaterialTheme.colorScheme.outlineVariant
+    Column(modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier
+                .horizontalScroll(scrollState)
+                .clip(shape)
+                .border(1.dp, borderColor, shape),
+        ) {
+            // The labels stay as the first column so each row says what it holds.
+            RoundTableCell(
+                top = stringResource(Res.string.round),
+                bottom = stringResource(Res.string.table),
+                isLabel = true,
+            )
+            roundTables.forEach { roundTable ->
+                Box(Modifier.width(1.dp).height(RoundTableCellHeight * 2).background(borderColor))
+                RoundTableCell(top = roundTable.roundId.toString(), bottom = roundTable.tableId.toString())
+            }
+        }
+        if (scrollState.maxValue > 0) {
+            PlatformHorizontalScrollbar(
+                scrollState = scrollState,
+                modifier = Modifier.fillMaxWidth().padding(top = 2.dp).height(8.dp),
+            )
+        }
+    }
+}
+
+private val RoundTableCellHeight = 22.dp
+
+@Composable
+private fun RoundTableCell(
+    top: String,
+    bottom: String,
+    isLabel: Boolean = false,
+) {
+    val colors = MaterialTheme.colorScheme
+    Column(
+        modifier = if (isLabel) Modifier.width(IntrinsicSize.Max) else Modifier.widthIn(min = RoundTableCellWidth),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(RoundTableCellHeight)
+                .background(colors.surfaceVariant)
+                .padding(horizontal = 6.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = top,
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(RoundTableCellHeight)
+                .padding(horizontal = 6.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text(
+                text = bottom,
+                style = if (isLabel) MaterialTheme.typography.labelMedium else MaterialTheme.typography.bodyMedium,
+                color = if (isLabel) colors.onSurfaceVariant else colors.onSurface,
+                fontWeight = if (isLabel) null else FontWeight.Medium,
+                maxLines = 1,
+            )
+        }
+    }
+}
 private val TournamentPlayerAccountColumnWidth = 220.dp
 private val TournamentPlayerActionColumnWidth = 112.dp
 private val AssignmentPhotoColumnWidth = 48.dp
