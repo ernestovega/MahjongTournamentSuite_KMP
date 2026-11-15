@@ -14,17 +14,17 @@ applications, like the web site:
 - The code is `androidApp/src/main/.../SuiteRoot.kt`. Both parts show the version of the app, which is the admin version
   (see [versioning.md](versioning.md)).
 
-`playerAndroidApp` (`com.etologic.mahjongtournamentsuite.player`, **MTS Player**) is the old player app. Its last version
-shows a notice at each start: the app has moved, with a button to the page of MTS on Google Play (`MovedAppNotice`).
+`playerAndroidApp` (`com.etologic.mahjongtournamentsuite.player`, **MTS Player**) is the old player app. It is only in
+internal testing, so it gets no notice of the move: it is unpublished once MTS holds both parts.
 
 ### Moving the testers to the one app
 
 1. Run the workflow **Tests and deploy** on `main` with the admin and player versions bumped. It uploads MTS (the
-   merged app) and the last MTS Player (with the notice) to internal testing.
+   merged app) to internal testing.
 2. In Play Console, update the store listing of MTS (`com.etologic.mahjongtournamentsuite`): name, short and full
    description for players and organizers, and screenshots of both parts.
-3. Tell the testers of MTS Player to install MTS. Add them to the internal testing list of MTS if they are not there.
-4. After a few days, unpublish MTS Player in Play Console (**Release > Setup > Advanced settings > App availability >
+3. Add the testers of MTS Player to the internal testing list of MTS if they are not there.
+4. Unpublish MTS Player in Play Console (**Release > Setup > Advanced settings > App availability >
    Unpublish**). Unpublishing keeps the package name reserved; it can never be used by another app.
 5. Firebase: the Android app `...player` can stay in the project for the old installs. App Check with Play Integrity is
    needed only for MTS. Remove the player app and its SHA-1 from the Android API key when nobody uses it any more.

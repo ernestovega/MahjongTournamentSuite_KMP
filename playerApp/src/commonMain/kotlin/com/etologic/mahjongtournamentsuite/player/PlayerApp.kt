@@ -139,8 +139,6 @@ fun PlayerApp(
     appVersion: String = AppVersion.player,
     /** True when the admin app sent the user here to sign in. */
     openSignIn: Boolean = false,
-    /** Set only by the old Android player app: opens the page of the new app. See [MovedAppNotice]. */
-    onInstallSuiteApp: (() -> Unit)? = null,
     /** True in the Android app of the suite, which also holds the admin part. See [PlayerKoin]. */
     isolatedKoin: Boolean = false,
 ) {
@@ -164,7 +162,6 @@ fun PlayerApp(
                     MtsTheme(useDarkTheme = themeController.isDarkTheme) {
                         Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                             PlayerNavigation(openTournamentId, sessionStorage, openSignIn)
-                            onInstallSuiteApp?.let { MovedAppNotice(it) }
                         }
                     }
                 }
