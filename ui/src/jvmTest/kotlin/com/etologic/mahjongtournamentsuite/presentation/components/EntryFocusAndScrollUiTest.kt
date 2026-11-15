@@ -53,7 +53,7 @@ class EntryFocusAndScrollUiTest {
     }
 
     @Test
-    fun theProfileDialogFocusesTheAlias() = runComposeUiTest {
+    fun theProfileDialogFocusesNothingSoTheKeyboardStaysClosed() = runComposeUiTest {
         setContent {
             TestTheme {
                 ProfileDialog(
@@ -68,7 +68,7 @@ class EntryFocusAndScrollUiTest {
         }
         waitForIdle()
 
-        onNode(hasSetTextAction() and hasText("Ada")).assertIsFocused()
+        onNode(hasSetTextAction() and hasText("Ada")).assertIsNotFocused()
     }
 
     // ---------------------------------------------------------------- scroll
