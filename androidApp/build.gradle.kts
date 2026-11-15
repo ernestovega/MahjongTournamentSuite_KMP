@@ -14,7 +14,7 @@ if (file("google-services.json").exists()) {
 }
 
 // Release signing with the upload key of Google Play. The repository is public, so the keystore and its passwords are
-// not in it: they come from `mts.signing.admin.*` in local.properties, or from the variables MTS_ADMIN_SIGNING_*.
+// not in it: they come from `mts.signing.*` in local.properties, or from the variables MTS_SIGNING_*.
 // Without them the release build is not signed. See docs/android-release.md.
 val localProperties = Properties().apply {
     val file = rootProject.file("local.properties")
@@ -22,8 +22,8 @@ val localProperties = Properties().apply {
 }
 
 fun signingValue(name: String): String? {
-    val variable = "MTS_ADMIN_SIGNING_" + name.replace(Regex("([A-Z])"), "_$1").uppercase()
-    return providers.environmentVariable(variable).orNull ?: localProperties.getProperty("mts.signing.admin.$name")
+    val variable = "MTS_SIGNING_" + name.replace(Regex("([A-Z])"), "_$1").uppercase()
+    return providers.environmentVariable(variable).orNull ?: localProperties.getProperty("mts.signing.$name")
 }
 
 android {

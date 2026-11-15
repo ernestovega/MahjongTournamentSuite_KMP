@@ -33,7 +33,7 @@ Create the keystore:
 
 ```bash
 mkdir -p ~/keystores
-keytool -genkeypair -v -keystore ~/keystores/mts-admin-upload.jks -alias upload \
+keytool -genkeypair -v -keystore ~/keystores/mts-upload.jks -alias upload \
   -keyalg RSA -keysize 2048 -validity 10000
 ```
 
@@ -46,18 +46,18 @@ The release build runs R8 (`isMinifyEnabled` and `isShrinkResources`). It remove
 The release build reads the keystore from `local.properties` (or from environment variables, for CI):
 
 ```properties
-mts.signing.admin.storeFile=/Users/<you>/keystores/mts-admin-upload.jks
-mts.signing.admin.storePassword=...
-mts.signing.admin.keyAlias=upload
-mts.signing.admin.keyPassword=...
+mts.signing.storeFile=/Users/<you>/keystores/mts-upload.jks
+mts.signing.storePassword=...
+mts.signing.keyAlias=upload
+mts.signing.keyPassword=...
 ```
 
 | local.properties | Environment variable |
 |---|---|
-| `mts.signing.admin.storeFile` | `MTS_ADMIN_SIGNING_STORE_FILE` |
-| `mts.signing.admin.storePassword` | `MTS_ADMIN_SIGNING_STORE_PASSWORD` |
-| `mts.signing.admin.keyAlias` | `MTS_ADMIN_SIGNING_KEY_ALIAS` |
-| `mts.signing.admin.keyPassword` | `MTS_ADMIN_SIGNING_KEY_PASSWORD` |
+| `mts.signing.storeFile` | `MTS_SIGNING_STORE_FILE` |
+| `mts.signing.storePassword` | `MTS_SIGNING_STORE_PASSWORD` |
+| `mts.signing.keyAlias` | `MTS_SIGNING_KEY_ALIAS` |
+| `mts.signing.keyPassword` | `MTS_SIGNING_KEY_PASSWORD` |
 
 Without these values the release build is not signed,
 and the debug build is not affected.
@@ -106,13 +106,13 @@ Google Play access uses the same service account and Workload Identity Federatio
    secrets**). From the Mac, with the GitHub CLI signed in:
 
    ```bash
-   base64 -i ~/keystores/mts-admin-upload.jks | gh secret set MTS_ADMIN_UPLOAD_KEYSTORE_BASE64 --env production
-   gh secret set MTS_ADMIN_UPLOAD_STORE_PASSWORD --env production   # asks for the value
-   gh secret set MTS_ADMIN_UPLOAD_KEY_PASSWORD --env production
+   base64 -i ~/keystores/mts-upload.jks | gh secret set MTS_UPLOAD_KEYSTORE_BASE64 --env production
+   gh secret set MTS_UPLOAD_STORE_PASSWORD --env production   # asks for the value
+   gh secret set MTS_UPLOAD_KEY_PASSWORD --env production
    ```
 
-   The key alias is `upload`. If the keystore uses another alias, add `MTS_ADMIN_UPLOAD_KEY_ALIAS`.
-   The secrets `MTS_PLAYER_UPLOAD_*` of the old player app are no longer used and can be deleted. Without the secrets the job fails with a message that points here.
+   The key alias is `upload`. If the keystore uses another alias, add `MTS_UPLOAD_KEY_ALIAS`.
+   Without the secrets the job fails with a message that points here.
 
 ## Firebase API key
 
