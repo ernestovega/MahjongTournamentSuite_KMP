@@ -6,9 +6,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.ComposeUiTest
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipeUp
 import com.etologic.mahjongtournamentsuite.player.MyTableButton
 import com.etologic.mahjongtournamentsuite.player.MyTableReminderDialog
 import com.etologic.mahjongtournamentsuite.player.PlayerTab
@@ -132,6 +136,21 @@ class PlayerScreensScreenshotTest {
 
     @Test
     fun statisticsPerson() = playerScreenshots("statistics-person", ready = { waitForText("Skills", substring = true) }) { nav ->
+        StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name))
+    }
+
+    /** The place history of a person with several tournaments: each tournament has a band of its own color. */
+    @Test
+    fun statisticsPersonPlaces() = playerScreenshots(
+        "statistics-person-places",
+        ready = {
+            waitForText("Skills", substring = true)
+            onAllNodesWithText("Place in the last", substring = true, ignoreCase = true).onFirst().performScrollTo()
+            // The chart is under its title. A swipe brings it into view.
+            onAllNodes(isRoot()).onFirst().performTouchInput { swipeUp(startY = centerY + 160f, endY = centerY - 160f) }
+            waitForIdle()
+        },
+    ) { nav ->
         StatisticsScreen(nav, StatisticsRoute(StatisticsScope.PERSON.name))
     }
 }

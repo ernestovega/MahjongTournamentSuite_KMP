@@ -9,8 +9,8 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsHoveredAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -62,10 +61,13 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import coil3.compose.AsyncImage
@@ -155,6 +157,7 @@ import mahjongtournamentsuite.adminapp.generated.resources.substitute
 import mahjongtournamentsuite.adminapp.generated.resources.substitution
 import mahjongtournamentsuite.adminapp.generated.resources.round
 import mahjongtournamentsuite.adminapp.generated.resources.table
+import mahjongtournamentsuite.adminapp.generated.resources.tables
 import mahjongtournamentsuite.adminapp.generated.resources.team
 import mahjongtournamentsuite.adminapp.generated.resources.team_n
 import mahjongtournamentsuite.adminapp.generated.resources.this_assignment
@@ -1192,7 +1195,7 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                     TournamentPlayerPhoto(
                                         photoUrl = assigned?.photoUrl,
                                         playerName = playerName.orEmpty(),
-                                        columnWidth = 44.dp,
+                                        columnWidth = TournamentPlayerCompactLeadingWidth,
                                     )
                                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                                         Text(
@@ -1268,12 +1271,12 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                                             columnWidth = TournamentPlayerPhotoColumnWidth,
                                         )
                                     }
-                                    // The first name is on the first line and the last name on the second line.
+                                    // The whole name on one line. A very long name wraps to a second line.
                                     Text(
                                         if (assigned == null) {
                                             stringResource(Res.string.not_assigned)
                                         } else {
-                                            assigned.firstName.trim() + "\n" + assigned.lastName.trim()
+                                            assigned.firstName.trim() + " " + assigned.lastName.trim()
                                         } + (slot.substitution?.let { " (${it.label()})" } ?: ""),
                                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         textDecoration = if (slot.substitution?.struckThrough == true) TextDecoration.LineThrough else null,
@@ -1475,11 +1478,8 @@ fun PlayersScreen(navController: NavHostController, tournamentId: String) {
                             if (roundTables.isNotEmpty()) {
                                 PlayerRoundTablesStrip(
                                     roundTables = roundTables,
-                                    modifier = Modifier.padding(
-                                        start = if (compact) TournamentPlayerCompactStripStart else TournamentPlayerStripStart,
-                                        end = 12.dp,
-                                        bottom = 10.dp,
-                                    ),
+                                    titleWidth = if (compact) TournamentPlayerCompactLeadingWidth else TournamentPlayerIdColumnWidth,
+                                    modifier = Modifier.padding(bottom = 10.dp),
                                 )
                             }
                             DataTableDivider()
@@ -1498,9 +1498,8 @@ private val TournamentPlayerIdColumnWidth = 48.dp
 private val TournamentPlayerEmaColumnWidth = 104.dp
 private val TournamentPlayerTeamColumnWidth = 144.dp
 
-// The strip starts after the ID column (desktop) or after the photo (phone), so it reads as part of the player.
-private val TournamentPlayerStripStart = 12.dp + TournamentPlayerIdColumnWidth + 12.dp
-private val TournamentPlayerCompactStripStart = 12.dp + 44.dp + 12.dp
+// The photo column of a phone. The tables title below it takes the same width.
+private val TournamentPlayerCompactLeadingWidth = 44.dp
 private val RoundTableCellWidth = 36.dp
 
 /** One round and the table where a player sits in it. */
@@ -1513,55 +1512,113 @@ internal fun roundTablesByPlayer(tables: List<TournamentTable>): Map<Int, List<P
     .groupBy(keySelector = { it.first }, valueTransform = { it.second })
 
 /**
- * A small two-row table: the round on top and the table below.
- * It scrolls sideways when the rounds do not fit, with a scrollbar on desktop and web.
+ * The "Tables" title and a small two-row table: the round on top and the table below.
+ * The table is as wide as the row: the cells share the free width. When the rounds do not fit, the title and the
+ * table scroll sideways from one edge of the row to the other, with a scrollbar on desktop and web.
  */
 @Composable
 private fun PlayerRoundTablesStrip(
     roundTables: List<PlayerRoundTable>,
+    titleWidth: Dp,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
     val shape = MaterialTheme.shapes.small
     val borderColor = MaterialTheme.colorScheme.outlineVariant
-    Column(modifier.fillMaxWidth()) {
-        Row(
-            modifier = Modifier
-                .horizontalScroll(scrollState)
-                .clip(shape)
-                .border(1.dp, borderColor, shape),
-        ) {
-            // The labels stay as the first column so each row says what it holds.
-            RoundTableCell(
-                top = stringResource(Res.string.round),
-                bottom = stringResource(Res.string.table),
-                isLabel = true,
-            )
-            roundTables.forEach { roundTable ->
-                Box(Modifier.width(1.dp).height(RoundTableCellHeight * 2).background(borderColor))
-                RoundTableCell(top = roundTable.roundId.toString(), bottom = roundTable.tableId.toString())
+    val density = LocalDensity.current
+    BoxWithConstraints(modifier.fillMaxWidth().testTag(PlayerRoundTablesTag)) {
+        // Whole pixels, so the cells add up to the row exactly and nothing scrolls by a pixel.
+        val cellWidths = with(density) {
+            val divider = 1.dp.roundToPx()
+            val free = maxWidth.roundToPx() -
+                (RoundTableStripPadding * 2 + titleWidth + RoundTableStripGap + RoundTableLabelWidth).roundToPx() -
+                // The dividers between cells and the 1 dp inside the border on each side.
+                divider * (roundTables.size + 2)
+            val minCell = RoundTableCellWidth.roundToPx()
+            val even = free / roundTables.size
+            if (even < minCell) {
+                List(roundTables.size) { minCell.toDp() }
+            } else {
+                // The pixels left over go to the first cells, one each.
+                val extra = free - even * roundTables.size
+                List(roundTables.size) { index -> (even + if (index < extra) 1 else 0).toDp() }
             }
         }
-        if (scrollState.maxValue > 0) {
-            PlatformHorizontalScrollbar(
-                scrollState = scrollState,
-                modifier = Modifier.fillMaxWidth().padding(top = 2.dp).height(8.dp),
-            )
+        Column(Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .horizontalScroll(scrollState)
+                    .padding(horizontal = RoundTableStripPadding),
+                horizontalArrangement = Arrangement.spacedBy(RoundTableStripGap),
+                verticalAlignment = Alignment.Top,
+            ) {
+                // The title sits under the ID (desktop) or the photo (phone).
+                Box(
+                    modifier = Modifier.width(titleWidth).height(RoundTableCellHeight * 2),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = stringResource(Res.string.tables),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        softWrap = false,
+                    )
+                }
+                Row(
+                    modifier = Modifier
+                        .clip(shape)
+                        .border(1.dp, borderColor, shape)
+                        .padding(1.dp),
+                ) {
+                    // The labels stay as the first column so each row says what it holds.
+                    RoundTableCell(
+                        top = stringResource(Res.string.round),
+                        bottom = stringResource(Res.string.table),
+                        width = RoundTableLabelWidth,
+                        isLabel = true,
+                    )
+                    roundTables.forEachIndexed { index, roundTable ->
+                        Box(Modifier.width(1.dp).height(RoundTableCellHeight * 2).background(borderColor))
+                        RoundTableCell(
+                            top = roundTable.roundId.toString(),
+                            bottom = roundTable.tableId.toString(),
+                            width = cellWidths[index],
+                        )
+                    }
+                }
+            }
+            if (scrollState.maxValue > 0) {
+                PlatformHorizontalScrollbar(
+                    scrollState = scrollState,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = RoundTableStripPadding, end = RoundTableStripPadding, top = 2.dp)
+                        .height(8.dp),
+                )
+            }
         }
     }
 }
 
-private val RoundTableCellHeight = 22.dp
+/** Test tag of each player's round and table strip. */
+internal const val PlayerRoundTablesTag = "playerRoundTables"
+private val RoundTableStripPadding = 12.dp
+private val RoundTableStripGap = 12.dp
+private val RoundTableLabelWidth = 60.dp
+private val RoundTableCellHeight = 28.dp
 
 @Composable
 private fun RoundTableCell(
     top: String,
     bottom: String,
+    width: Dp,
     isLabel: Boolean = false,
 ) {
     val colors = MaterialTheme.colorScheme
     Column(
-        modifier = if (isLabel) Modifier.width(IntrinsicSize.Max) else Modifier.widthIn(min = RoundTableCellWidth),
+        modifier = Modifier.width(width),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Box(
@@ -1621,7 +1678,7 @@ private fun TournamentPlayerHeader(
 private fun TournamentPlayerPhoto(
     photoUrl: String?,
     playerName: String,
-    columnWidth: androidx.compose.ui.unit.Dp,
+    columnWidth: Dp,
 ) {
     Box(
         modifier = Modifier.width(columnWidth).height(TournamentPlayerPhotoSize),
