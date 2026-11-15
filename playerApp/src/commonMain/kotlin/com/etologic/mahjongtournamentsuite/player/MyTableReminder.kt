@@ -138,7 +138,9 @@ class MyTableReminderPresenter(private val tournamentRepository: TournamentRepos
         for (slot in slots) {
             val listed = tournaments[slot.tournamentId]?.takeUnless { it.isCompleted } ?: continue
             // The listed tournament can be a minute old. The clocks come fresh, as on the tournament screen.
-            val clocks = (tournamentRepository.getRoundClocks(listed.id) as? AppResult.Success)?.value?.clocks ?: listed.roundClocks
+            val answer = (tournamentRepository.getRoundClocks(listed.id) as? AppResult.Success)?.value
+            answer?.let { ServerTime.learn(it.serverNowMs) }
+            val clocks = answer?.clocks ?: listed.roundClocks
             val tournament = listed.copy(roundClocks = clocks)
             val roundId = tournament.reminderRound(tournament.currentVenueDateTime()) ?: continue
             val tables = (tournamentRepository.listTournamentTables(tournament.id, roundId) as? AppResult.Success)?.value ?: continue

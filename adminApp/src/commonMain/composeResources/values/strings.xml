@@ -737,8 +737,10 @@
     <string name="timer_started_ago_title">When did the round start?</string>
     <string name="timer_started_ago_message">Minutes since the starting gong. The match time counts from then.</string>
     <string name="timer_reset_confirm_title">Reset the round clock?</string>
-    <string name="timer_reset_confirm_message">This round has saved hands. They stay, but the players cannot add more until you press Play again.</string>
+    <string name="timer_reset_confirm_message">This resets the clock of the round. Saved hands stay, but the players cannot add more until you press Start again. To keep the time played, use “The round started earlier” when you start it.</string>
     <string name="timer_reset_confirm">Reset</string>
+    <string name="timer_tournament_completed">The tournament is completed. Its clocks cannot change.</string>
+    <string name="timer_late_start">The planned start (%1$s) is past and the round has not started. Press Start when the starting gong sounds: until then the players cannot add hands.</string>
     <string name="timer_stop">Stop the round</string>
     <string name="timer_stop_confirm_title">Stop the round?</string>
     <string name="timer_stop_confirm_message">The round ends now, before its time is over, with no extra time. The tables with hands close and the players cannot add more hands.</string>

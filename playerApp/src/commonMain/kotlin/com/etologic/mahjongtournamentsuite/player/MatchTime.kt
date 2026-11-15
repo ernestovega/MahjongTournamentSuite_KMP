@@ -5,7 +5,6 @@ import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.TableHand
 import com.etologic.mahjongtournamentsuite.domain.model.TableState
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
-import kotlin.time.Clock
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.LocalTime
@@ -30,8 +29,8 @@ enum class MatchPhase {
 /** Minutes before the planned start of a round in which the players can set the seats of their table, as on the server. */
 const val SEATING_LEAD_MINUTES = 10
 
-/** The local date and time of the device. */
-internal fun currentLocalDateTime(): LocalDateTime = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault())
+/** The local date and time, by the clock of the server ([ServerTime]), in the zone of the device. */
+internal fun currentLocalDateTime(): LocalDateTime = ServerTime.now().toLocalDateTime(TimeZone.currentSystemDefault())
 
 /** The time zone of the venue. Without a valid one, the zone of the device. */
 internal fun Tournament.venueZone(): TimeZone =
@@ -41,7 +40,7 @@ internal fun Tournament.venueZone(): TimeZone =
  * The current local time at the venue of the tournament. The round times are local times of the venue,
  * so a player in another time zone still sees the right phase. Without a valid time zone, it is the time of the device.
  */
-internal fun Tournament.currentVenueDateTime(): LocalDateTime = Clock.System.now().toLocalDateTime(venueZone())
+internal fun Tournament.currentVenueDateTime(): LocalDateTime = ServerTime.now().toLocalDateTime(venueZone())
 
 /** A local time of the venue as milliseconds since the epoch. */
 internal fun Tournament.epochMsAt(venueTime: LocalDateTime): Long = venueTime.toInstant(venueZone()).toEpochMilliseconds()

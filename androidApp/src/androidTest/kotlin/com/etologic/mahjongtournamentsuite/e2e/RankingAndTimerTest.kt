@@ -87,8 +87,8 @@ class RankingAndTimerTest : AdminE2eTest() {
         listOf("Round 1", "2:00:00", "Start timer", "Reset timer", "The round started earlier", "Start")
             .forEach { c.waitForText(it) }
         c.waitForText("Press Start when the starting gong sounds", substring = true)
-        // The tournament decides the round of its Timer.
-        c.assertNoText("Increase round")
+        // A stopped round lets the administrator pick another round.
+        c.waitForText("Increase round")
     }
 
     @Test

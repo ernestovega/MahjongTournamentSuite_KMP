@@ -2024,9 +2024,9 @@ internal fun MessageDialog(message: UiText?) {
 private fun RoundClockLine(tournament: Tournament, roundId: Int) {
     // Before the gong the place of the time left shows when the round starts.
     val clock = tournament.clockOf(roundId) ?: return RoundStartLine(tournament, roundId)
-    val nowMs by produceState(Clock.System.now().toEpochMilliseconds(), clock) {
+    val nowMs by produceState(ServerTime.nowMs(), clock) {
         while (true) {
-            value = Clock.System.now().toEpochMilliseconds()
+            value = ServerTime.nowMs()
             delay(1_000)
         }
     }

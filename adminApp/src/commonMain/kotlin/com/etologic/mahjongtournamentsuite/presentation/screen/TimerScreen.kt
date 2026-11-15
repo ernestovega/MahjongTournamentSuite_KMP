@@ -22,7 +22,9 @@ import com.etologic.mahjongtournamentsuite.domain.repository.TournamentRepositor
 import kotlin.time.Clock
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
+import mahjongtournamentsuite.adminapp.generated.resources.timer_late_start
 import mahjongtournamentsuite.adminapp.generated.resources.timer_load_failed
+import mahjongtournamentsuite.adminapp.generated.resources.timer_tournament_completed
 import mahjongtournamentsuite.adminapp.generated.resources.timer_offline
 import mahjongtournamentsuite.adminapp.generated.resources.timer_paused
 import mahjongtournamentsuite.adminapp.generated.resources.timer_reset_confirm
@@ -177,7 +179,8 @@ internal fun TimerContent(
     // Stop ends a started round before its time is over. A Timer without a tournament has no round to end.
     val canStop = isStarted && !hasFinished && !state.independent && state.canControl
     // Only a Timer without a tournament picks its round. The Timer of a tournament follows the tournament.
-    val showRoundButtons = state.independent && (!isRunning || hasFinished)
+    // The round changes only while it is stopped, so a running round stays on screen.
+    val showRoundButtons = !isRunning || hasFinished
     // Once the time is over, Pause and the gong have nothing to do. Reset and "Set time" stay, to fix the clock.
     val showControls = !isRunning || hasFinished
     // The first control takes the focus of the gong when the gong is hidden.
@@ -393,11 +396,14 @@ internal fun TimerContent(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
+            val lateStart = state.latePlannedStart(now)
             val status = when {
                 state.loadFailed && state.tournament == null -> stringResource(Res.string.timer_load_failed)
+                state.tournamentCompleted -> stringResource(Res.string.timer_tournament_completed)
                 state.isOffline -> stringResource(Res.string.timer_offline)
                 hasFinished -> stringResource(Res.string.time_is_up)
                 isStarted && !isRunning -> stringResource(Res.string.timer_paused)
+                lateStart != null -> stringResource(Res.string.timer_late_start, lateStart)
                 !isStarted && !state.independent -> stringResource(Res.string.timer_waiting_gong)
                 else -> null
             }
@@ -405,7 +411,7 @@ internal fun TimerContent(
                 Text(
                     text = status,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = if (hasFinished || state.isOffline || state.loadFailed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (hasFinished || state.isOffline || state.loadFailed || lateStart != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
             }
@@ -516,7 +522,7 @@ internal fun TimerContent(
                                 },
                                 next = setTimeFocusRequester,
                             ),
-                            onClick = { scope.launch { controller.reset() } },
+                            onClick = { scope.launch { controller.askReset() } },
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Refresh,

@@ -18,6 +18,11 @@ import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryEvent
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryParam
 import com.etologic.mahjongtournamentsuite.domain.telemetry.TelemetryTimerKind
 import kotlin.time.Clock
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.LocalTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atTime
+import kotlinx.datetime.toInstant
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,7 +47,10 @@ data class RoundTimerState(
     val numRounds: Int get() = if (independent) MAX_INDEPENDENT_ROUNDS else tournament?.numRounds ?: 1
 
     /** Play, Pause and the other buttons work once the tournament loaded, or at once without a tournament. */
-    val canControl: Boolean get() = independent || tournament != null
+    val canControl: Boolean get() = independent || (tournament != null && !tournament.isCompleted)
+
+    /** A completed tournament takes no change to its clocks. */
+    val tournamentCompleted: Boolean get() = !independent && tournament?.isCompleted == true
     val durationMinutes: Int get() = tournament?.matchDurationMinutes ?: DEFAULT_MATCH_DURATION_MINUTES
 
     /** The extra time to finish the hand after the match time, or zero when the match stops at the end. */
@@ -61,7 +69,31 @@ data class RoundTimerState(
         return (clock.remainingMs(durationMinutes, serverNow(deviceNowMs)) + 999) / 1000
     }
 
+    /**
+     * The planned start time (HH:mm) of a round that has not started although its planned start is past, or null.
+     * The Timer warns, so nobody forgets the Play: without it the players cannot add hands.
+     */
+    fun latePlannedStart(deviceNowMs: Long): String? {
+        if (independent || isStarted) return null
+        val tournament = tournament ?: return null
+        val planned = tournament.plannedStartMs(roundId) ?: return null
+        if (serverNow(deviceNowMs) < planned) return null
+        return tournament.roundSchedules.firstOrNull { it.roundId == roundId }?.startTime?.trim()?.ifEmpty { null } ?: "00:00"
+    }
+
     fun totalSeconds(): Long = (clock?.durationMs(durationMinutes) ?: (durationMinutes * 60_000L)) / 1000
+}
+
+/**
+ * The planned start of a round as an instant, as the server reads it: null without a time zone or a date.
+ * A date without a time starts at midnight.
+ */
+internal fun Tournament.plannedStartMs(roundId: Int): Long? {
+    val zone = timeZone?.let { runCatching { TimeZone.of(it) }.getOrNull() } ?: return null
+    val schedule = roundSchedules.firstOrNull { it.roundId == roundId } ?: return null
+    val date = schedule.date?.trim()?.ifEmpty { null }?.let { runCatching { LocalDate.parse(it) }.getOrNull() } ?: return null
+    val time = schedule.startTime?.trim()?.ifEmpty { null }?.let { runCatching { LocalTime.parse(it) }.getOrNull() } ?: LocalTime(0, 0)
+    return date.atTime(time).toInstant(zone).toEpochMilliseconds()
 }
 
 /** The highest round that a Timer without a tournament can show. */
@@ -151,6 +183,14 @@ class RoundTimerController(
 
     /** Stop: the round ends now, before its time is over. The screen asks for a confirmation first. */
     suspend fun stop() = perform(RoundClockAction.Stop)
+
+    /**
+     * The Reset button. The Timer of a tournament always asks first: a reset stops the players until the next Play.
+     * A Timer without a tournament resets at once.
+     */
+    suspend fun askReset() {
+        if (tournamentId == null) reset() else mutableState.update { it.copy(confirmReset = true) }
+    }
 
     fun dismissResetConfirmation() = mutableState.update { it.copy(confirmReset = false) }
 

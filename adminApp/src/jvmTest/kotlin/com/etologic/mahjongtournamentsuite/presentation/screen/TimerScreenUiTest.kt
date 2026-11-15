@@ -12,6 +12,7 @@ import com.etologic.mahjongtournamentsuite.domain.model.AppError
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClock
 import com.etologic.mahjongtournamentsuite.domain.model.RoundClockAction
 import com.etologic.mahjongtournamentsuite.domain.model.Tournament
+import com.etologic.mahjongtournamentsuite.domain.model.TournamentRoundSchedule
 import com.etologic.mahjongtournamentsuite.presentation.theme.MtsTheme
 import com.etologic.mahjongtournamentsuite.presentation.theme.ThemePreference
 import kotlin.test.Test
@@ -230,12 +231,57 @@ class TimerScreenUiTest {
     }
 
     @Test
-    fun theTimerOfATournamentHasNoRoundButtons() = runComposeUiTest {
-        show(server(), round = 2)
-
+    fun theTimerOfATournamentChangesItsRoundOnlyWhileTheRoundIsStopped() = runComposeUiTest {
+        // Round 2 runs: no round buttons, so the running round stays on screen.
+        val controller = show(server(RoundClock(roundId = 2, startedAtMs = now - 10 * min)), round = 2)
         onNodeWithText("Round 2").assertExists()
-        onNodeWithContentDescription("Decrease round").assertDoesNotExist()
         onNodeWithContentDescription("Increase round").assertDoesNotExist()
+
+        // Round 3 has not started: the buttons show, and round 2 shows its own clock again.
+        controller.selectRound(3)
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("Round 3").assertExists()
+        onNodeWithText("2:00:00").assertExists()
+        onNodeWithContentDescription("Decrease round").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("Round 2").assertExists()
+        onNodeWithText("1:50:00").assertExists()
+    }
+
+    @Test
+    fun resettingAnyStartedRoundAsksFirst() = runComposeUiTest {
+        val server = server(RoundClock(roundId = 1, startedAtMs = now - 30 * min, pausedAtMs = now - 5 * min))
+        show(server)
+
+        onNodeWithContentDescription("Reset timer").performClick()
+        mainClock.advanceTimeBy(500)
+        waitForIdle()
+        onNodeWithText("Reset the round clock?").assertExists()
+        assertTrue(server.clockActions.isEmpty())
+    }
+
+    @Test
+    fun aCompletedTournamentSaysSoAndTurnsTheButtonsOff() = runComposeUiTest {
+        val server = server().apply { tournaments = tournaments.map { it.copy(isCompleted = true) } }
+        show(server)
+
+        onNodeWithText("The tournament is completed. Its clocks cannot change.").assertExists()
+        onNodeWithContentDescription("Start timer").assertIsNotEnabled()
+    }
+
+    @Test
+    fun aRoundWhosePlannedStartIsPastWarnsThatNobodyPressedStart() = runComposeUiTest {
+        // The round was planned at 1970-01-12 13:00 UTC; the server time of the test is later.
+        val server = server().apply {
+            tournaments = tournaments.map {
+                it.copy(timeZone = "UTC", roundSchedules = listOf(TournamentRoundSchedule(1, date = "1970-01-12", startTime = "13:00")))
+            }
+        }
+        show(server)
+
+        onNodeWithText("The planned start (13:00) is past", substring = true).assertExists()
     }
 
     @Test

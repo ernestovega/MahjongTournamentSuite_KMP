@@ -107,7 +107,11 @@ class PlayerTournamentPresenter(
 
         // The tournament list can be a minute old. The clocks come fresh, so the hand buttons appear soon after the Play.
         val clocksRequest = async {
-            if (refreshMode == RefreshMode.CACHED) null else tournamentRepository.getRoundClocks(tournamentId) as? AppResult.Success
+            if (refreshMode == RefreshMode.CACHED) {
+                null
+            } else {
+                (tournamentRepository.getRoundClocks(tournamentId) as? AppResult.Success)?.also { ServerTime.learn(it.value.serverNowMs) }
+            }
         }
         val listed = when (val result = tournamentsRequest.await()) {
             is AppResult.Success -> result.value.firstOrNull { it.id == tournamentId }
