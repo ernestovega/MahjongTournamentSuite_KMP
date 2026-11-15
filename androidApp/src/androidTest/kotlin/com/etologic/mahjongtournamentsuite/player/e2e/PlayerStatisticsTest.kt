@@ -37,7 +37,7 @@ class PlayerStatisticsTest : PlayerE2eTest() {
     fun tournamentStatisticsShowRecords() {
         openTournamentStatistics()
         c.scrollListTo("Records")
-        listOf("Highest combination", "Highest table score", "Tables won in a row", "Longest streak").forEach { c.waitForText(it) }
+        listOf("Highest combination", "Highest table score", "Best tables won streak", "Best hands won streak").forEach { c.waitForText(it) }
     }
 
     @Test

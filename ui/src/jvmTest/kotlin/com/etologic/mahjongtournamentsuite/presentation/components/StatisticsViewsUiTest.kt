@@ -91,7 +91,7 @@ class StatisticsViewsUiTest {
         onNodeWithText("Most hands won on a table").assertExists()
         onNodeWithText("Highest penalty got").assertExists()
         onNodeWithText("Best Rivals").assertExists()
-        onNodeWithText("Tables won in a row").assertExists()
+        onNodeWithText("Best tables won streak").assertExists()
         onNodeWithText("avg. place").assertExists()
         onNodeWithText("EMA 12345").assertExists()
         snapshot("statistics-player", onRoot().captureToImage())

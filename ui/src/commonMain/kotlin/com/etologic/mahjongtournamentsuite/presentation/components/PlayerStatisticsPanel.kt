@@ -158,14 +158,15 @@ import mahjongtournamentsuite.ui.generated.resources.skills_empty_title
 import mahjongtournamentsuite.ui.generated.resources.stat_best_hand
 import mahjongtournamentsuite.ui.generated.resources.stat_best_table_score
 import mahjongtournamentsuite.ui.generated.resources.stat_chicken_hands
+import mahjongtournamentsuite.ui.generated.resources.stat_chicken_hands_on_table
 import mahjongtournamentsuite.ui.generated.resources.stat_hands
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_without_dealin
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_on_table
 import mahjongtournamentsuite.ui.generated.resources.stat_hands_won_row
 import mahjongtournamentsuite.ui.generated.resources.stat_highest_hand_score
 import mahjongtournamentsuite.ui.generated.resources.stat_highest_penalty
-import mahjongtournamentsuite.ui.generated.resources.stat_highest_rank
 import mahjongtournamentsuite.ui.generated.resources.stat_highest_table_score
+import mahjongtournamentsuite.ui.generated.resources.stat_most_chicken_hands
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties
 import mahjongtournamentsuite.ui.generated.resources.stat_penalties_info
 import mahjongtournamentsuite.ui.generated.resources.stat_rank
@@ -219,8 +220,6 @@ fun PlayerStatisticsPanel(
     rivalNames: Map<String, String> = emptyMap(),
     /** Opens the statistics of a rival. The key is the EMA number. Without it the rival names are plain text. */
     onOpenRival: ((String) -> Unit)? = null,
-    /** Gives the final places in some tournaments. With it, the records show the highest rank of the [tournaments]. */
-    loadStandings: (suspend (List<String>) -> Map<String, Standing>)? = null,
 ) {
     if (statistics.tablesPlayed == 0) {
         Column(modifier, verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -245,7 +244,7 @@ fun PlayerStatisticsPanel(
                     OverviewCard(statistics, Modifier.fillMaxWidth())
                     PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                     afterPlaces?.invoke(Modifier.fillMaxWidth())
-                    RecordsCard(statistics, tournaments, loadStandings, Modifier.fillMaxWidth())
+                    RecordsCard(statistics, Modifier.fillMaxWidth())
                     RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
                 }
             } else {
@@ -255,7 +254,7 @@ fun PlayerStatisticsPanel(
                 OverviewCard(statistics, Modifier.fillMaxWidth())
                 PlacesCard(statistics, tournaments, Modifier.fillMaxWidth())
                 afterPlaces?.invoke(Modifier.fillMaxWidth())
-                RecordsCard(statistics, tournaments, loadStandings, Modifier.fillMaxWidth())
+                RecordsCard(statistics, Modifier.fillMaxWidth())
                 RivalsCard(statistics, rivalNames, Modifier.fillMaxWidth(), onOpenRival)
             }
             if (statistics.tablesWithHands < statistics.tablesPlayed) {
@@ -410,32 +409,24 @@ internal fun InfoTip(text: String, modifier: Modifier = Modifier) {
 /** A count with its share of the played hands. */
 private fun count(value: Int, of: Int): String = if (of > 0) "$value (${(value * 100.0 / of).roundToInt()}%)" else value.toString()
 
-/** The best values of the player: the highest scores, the most hands at one table, the biggest penalty and the longest runs. */
+/**
+ * The best values of the player: the highest scores, the most hands and chicken hands at one table, the longest runs
+ * and, last, the biggest penalty.
+ */
 @Composable
-private fun RecordsCard(
-    statistics: PlayerStatistics,
-    tournaments: List<Tournament>,
-    loadStandings: (suspend (List<String>) -> Map<String, Standing>)?,
-    modifier: Modifier,
-) {
+private fun RecordsCard(statistics: PlayerStatistics, modifier: Modifier) {
     val streaks = statistics.streaks
-    // The highest rank is the best final place of the player in any of the tournaments. It loads after the card shows.
-    val tournamentIds = remember(tournaments) { tournaments.map { it.id }.filter { it.isNotEmpty() }.distinct() }
-    var standings by remember(tournamentIds) { mutableStateOf<Map<String, Standing>?>(null) }
-    LaunchedEffect(tournamentIds) {
-        if (loadStandings != null && tournamentIds.isNotEmpty()) standings = loadStandings(tournamentIds)
-    }
-    val best = standings?.values?.minWithOrNull(compareBy<Standing> { it.rank }.thenByDescending { it.of })
     StatCard(stringResource(Res.string.stats_records), modifier) {
         StatGrid(Modifier.fillMaxWidth()) {
-            if (loadStandings != null) BigNumber(stringResource(Res.string.stat_highest_rank), best?.rank?.toString() ?: EMPTY, suffix = best?.let { " " + stringResource(Res.string.rank_of, it.of) })
             BigNumber(stringResource(Res.string.stat_highest_table_score), statistics.bestTableScore.text())
             BigNumber(stringResource(Res.string.stat_highest_hand_score), statistics.bestHand.text())
             BigNumber(stringResource(Res.string.stat_hands_won_on_table), statistics.mostHandsWonAtATable.text())
-            BigNumber(stringResource(Res.string.stat_highest_penalty), statistics.highestPenalty.text())
             BigNumber(stringResource(Res.string.stat_tables_won_row), streaks.tableWins.toString())
             BigNumber(stringResource(Res.string.stat_hands_won_row), streaks.handsWon.text())
             BigNumber(stringResource(Res.string.stat_hands_without_dealin), streaks.handsWithoutDealIn.text())
+            BigNumber(stringResource(Res.string.stat_most_chicken_hands), if (statistics.tablesWithHands > 0) statistics.chickenHands.toString() else EMPTY)
+            BigNumber(stringResource(Res.string.stat_chicken_hands_on_table), statistics.mostChickenHandsAtATable.text())
+            BigNumber(stringResource(Res.string.stat_highest_penalty), statistics.highestPenalty.text())
         }
     }
 }
@@ -487,14 +478,18 @@ private fun RivalsCard(
 }
 
 /**
- * The name of a rival, centered, with a row of flames over it like the heat of a dish.
- * [heat] flames burn out of [FLAMES] for the toughest rival. The others have fewer.
+ * The name of a rival, centered, with a row of flames before it like the heat of a dish. The flames share the line of
+ * the name to save height. [heat] flames burn out of [FLAMES] for the toughest rival. The others have fewer.
  * The name is a link when [open] is set.
  */
 @Composable
 private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
     val flame = MaterialTheme.colorScheme.error
-    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
         Row(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             repeat(FLAMES) { index ->
                 Icon(
@@ -507,7 +502,7 @@ private fun RivalHeading(name: String, heat: Int, open: (() -> Unit)?) {
         }
         Text(
             name,
-            if (open != null) Modifier.clickable(onClick = open) else Modifier,
+            Modifier.weight(1f, fill = false).then(if (open != null) Modifier.clickable(onClick = open) else Modifier),
             style = MaterialTheme.typography.titleLarge.inTextFont(),
             fontWeight = FontWeight.Normal,
             textAlign = TextAlign.Center,

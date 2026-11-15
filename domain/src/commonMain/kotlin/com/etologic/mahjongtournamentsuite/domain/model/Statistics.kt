@@ -177,6 +177,9 @@ data class PlayerStatistics(
     /** The most hands that the player won at one table. Null when no table has hands. */
     val mostHandsWonAtATable: Int? get() = handResults.maxOfOrNull { it.handsWon }
 
+    /** The most chicken hands that the player won at one table. Null when no table has hands. */
+    val mostChickenHandsAtATable: Int? get() = handResults.maxOfOrNull { it.chickenHands }
+
     /** The biggest single penalty that the player received. Null when the player received none. */
     val highestPenalty: Int? get() = handResults.maxOfOrNull { it.maxPenalty }?.takeIf { it > 0 }
 

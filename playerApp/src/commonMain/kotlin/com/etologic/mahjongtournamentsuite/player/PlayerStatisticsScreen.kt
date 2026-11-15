@@ -240,7 +240,6 @@ fun StatisticsScreen(navController: NavHostController, route: StatisticsRoute) {
                         data.overall,
                         tournaments = data.tournaments.map { it.first },
                         rivalNames = data.rivalNames,
-                        loadStandings = { ids -> presenter.standings(data.emaId, ids) },
                     )
                 } ?: Text(stringResource(Res.string.stats_unavailable))
 
@@ -348,7 +347,6 @@ fun PersonStatisticsTab(
             loaded.overall,
             tournaments = loaded.tournaments.map { it.first },
             rivalNames = loaded.rivalNames,
-            loadStandings = { ids -> presenter.standings(loaded.emaId, ids) },
         )
     }
 }
@@ -502,7 +500,6 @@ fun MyStatisticsTab(onLoadingChange: (Boolean) -> Unit = {}) {
                     tournaments = data.tournaments.map { it.first },
                     rivalNames = data.rivalNames,
                     onOpenRival = openRival,
-                    loadStandings = { ids -> presenter.standings(data.emaId, ids) },
                 )
             }
         }
@@ -617,7 +614,6 @@ private fun OthersStatistics(
                         tournaments = loaded.tournaments.map { it.first },
                         rivalNames = loaded.rivalNames,
                         onOpenRival = onEmaIdChange,
-                        loadStandings = { ids -> presenter.standings(loaded.emaId, ids) },
                     )
                 }
             }
