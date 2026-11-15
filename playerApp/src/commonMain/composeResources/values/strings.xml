@@ -123,12 +123,10 @@
     <string name="entry_chicken_limit">A chicken hand has 12 points or less.</string>
     <string name="chicken_hand">Chicken hand</string>
     <string name="entry_draw_explanation">No player wins this hand. Every seat scores zero.</string>
-    <string name="entry_extra_time_last">The time is over. This hand is the last hand of the table.</string>
     <string name="entry_last_hand">Last hand of the table</string>
     <string name="entry_back">Back</string>
     <string name="entry_numpad_delete">Delete</string>
     <string name="entry_numpad_clear">Clear</string>
-    <string name="entry_last_hand_short">Last hand</string>
     <string name="entry_review">Review</string>
     <string name="entry_check_hand">Check hand</string>
     <string name="entry_saving_hand">Saving the hand...</string>
@@ -149,8 +147,6 @@
     <string name="entry_share">Share it with the other players</string>
     <string name="entry_wins">wins %1$d</string>
     <string name="entry_from">from</string>
-    <string name="entry_last_hand_info">Mark it when this is the last hand of the table. After you save it, the table is completed.</string>
-    <string name="entry_last_hand_16">Hand 16 is the last hand of the table. After you save it, the table is completed.</string>
     <string name="changed_title">The table changed</string>
     <string name="changed_not_saved">Your hand is not saved. Check the data of the server below.</string>
     <string name="changed_table_now">Table now</string>

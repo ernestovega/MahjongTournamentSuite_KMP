@@ -16,10 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import com.etologic.mahjongtournamentsuite.presentation.components.AppTooltipBox
-import androidx.compose.material.icons.outlined.Info
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.ui.window.DialogProperties
 import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_clear
 import mahjongtournamentsuite.playerapp.generated.resources.entry_numpad_delete
@@ -115,12 +111,8 @@ import mahjongtournamentsuite.playerapp.generated.resources.entry_confirm_save
 import mahjongtournamentsuite.playerapp.generated.resources.entry_draw_explanation
 import mahjongtournamentsuite.playerapp.generated.resources.entry_edit
 import mahjongtournamentsuite.playerapp.generated.resources.entry_extra_time
-import mahjongtournamentsuite.playerapp.generated.resources.entry_extra_time_last
 import mahjongtournamentsuite.playerapp.generated.resources.entry_from
 import mahjongtournamentsuite.playerapp.generated.resources.entry_hand_score
-import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand_short
-import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand_16
-import mahjongtournamentsuite.playerapp.generated.resources.entry_last_hand_info
 import mahjongtournamentsuite.playerapp.generated.resources.entry_loser
 import mahjongtournamentsuite.playerapp.generated.resources.entry_others_each
 import mahjongtournamentsuite.playerapp.generated.resources.entry_others_get
@@ -208,7 +200,6 @@ fun HandEntryPanel(
     var penaltyReview by remember { mutableStateOf(false) }
     var score by remember { mutableStateOf("") }
     var chicken by remember { mutableStateOf(false) }
-    var lastHand by remember { mutableStateOf(false) }
     // When the time is over, the players can record the hand in play. That hand is the last hand of the table.
     val phase = view.matchPhaseOf(table.roundId, now)
     val extraTime = phase == MatchPhase.EXTRA_TIME
@@ -233,14 +224,14 @@ fun HandEntryPanel(
         (selfDraw || (loser != null && loser != winner)) &&
         (!chicken || (!selfDraw && !chickenTooHigh))
     fun proposal() = if (isDraw) {
-        HandProposal(winnerSlotId = null, loserSlotId = null, score = 0, isLastHand = lastHand || extraTime)
+        HandProposal(winnerSlotId = null, loserSlotId = null, score = 0, isLastHand = extraTime)
     } else {
         HandProposal(
             winnerSlotId = winner!!,
             loserSlotId = if (selfDraw) null else loser,
             score = parsed!!,
             isChickenHand = chicken,
-            isLastHand = lastHand || extraTime,
+            isLastHand = extraTime,
         )
     }
 
@@ -253,7 +244,6 @@ fun HandEntryPanel(
         penaltyDrafts.clear()
         score = ""
         chicken = false
-        lastHand = false
         awaitingKey = null
         message = null
         modeName = ""
@@ -532,54 +522,14 @@ fun HandEntryPanel(
                 },
                 text = {
                     Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, lastHand || extraTime)
+                        ReviewHand(review, view, isDraw, selfDraw, winner, loser, parsed ?: 0, chicken, extraTime)
                         if (saving) SavingRow(waitingForTable = awaitingKey != null, text = stringResource(Res.string.entry_saving_hand))
                         message?.let { AppErrorDialog(it, onDismiss = { message = null }) }
                     }
                 },
-                // The last hand is marked with the result in sight, at the bottom left, on the line of the buttons.
+                // Hand 16 and a hand in the extra time end the table on their own. No other hand is the last one.
                 confirmButton = {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                        Box(Modifier.weight(1f)) {
-                            // Hand 16 and a hand in the extra time are always the last one: the box shows it and
-                            // cannot change. The info icon says what the box means.
-                            val forcedLast = extraTime || review.handId >= 16
-                            Row(
-                                Modifier.clickable(enabled = !saving && !forcedLast) {
-                                    lastHand = !lastHand
-                                    requestPreview()
-                                },
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                // The whole row takes the tap, so the box needs no extra touch margin of its own.
-                                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
-                                    Checkbox(
-                                        checked = forcedLast || lastHand,
-                                        enabled = !saving && !forcedLast,
-                                        onCheckedChange = {
-                                            lastHand = it
-                                            requestPreview()
-                                        },
-                                        modifier = Modifier.padding(end = MtsTheme.spacing.sm),
-                                    )
-                                }
-                                Text(
-                                    stringResource(Res.string.entry_last_hand_short),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    maxLines = 2,
-                                )
-                                LastHandInfo(
-                                    stringResource(
-                                        when {
-                                            extraTime -> Res.string.entry_extra_time_last
-                                            review.handId >= 16 -> Res.string.entry_last_hand_16
-                                            else -> Res.string.entry_last_hand_info
-                                        },
-                                    ),
-                                )
-                            }
-                        }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         TextButton(enabled = !saving, onClick = {
                             preview = null
                             message = null
@@ -794,18 +744,6 @@ private const val NUMPAD_DELETE = "DEL"
 
 /** The tag of the numpad of the score, for the tests. */
 const val SCORE_NUMPAD_TAG = "score-numpad"
-
-/** An info icon beside the last-hand box. A touch, a hover or a click shows what the box means. */
-@Composable
-private fun LastHandInfo(text: String) {
-    AppTooltipBox(text) {
-        CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides 0.dp) {
-            IconButton(onClick = { toggleTooltip() }, modifier = Modifier.size(36.dp)) {
-                Icon(Icons.Outlined.Info, contentDescription = text, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-    }
-}
 
 /** The number of the hand in the title of the dialogs, without the wind: "#5". */
 @Composable
@@ -1082,7 +1020,8 @@ private fun ReviewHand(
                 horizontalArrangement = Arrangement.spacedBy(MtsTheme.spacing.sm),
             ) {
                 currentWindOf(preview.seatSlotIds, slot, preview.handId)?.let { WindIcon(it, size = 20.dp) }
-                Text(view.firstNameOf(slot), maxLines = 1)
+                PlayerFlag(view.players[slot]?.country, width = 22.dp)
+                Text(view.firstNameOf(slot), maxLines = 1, overflow = TextOverflow.Ellipsis)
             }
             Text(
                 signedText(change),

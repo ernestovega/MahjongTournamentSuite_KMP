@@ -123,12 +123,10 @@
     <string name="entry_chicken_limit">Una mano de pollo tiene 12 puntos o menos.</string>
     <string name="chicken_hand">Mano de pollo</string>
     <string name="entry_draw_explanation">Ningún jugador gana esta mano. Todos los asientos puntúan cero.</string>
-    <string name="entry_extra_time_last">El tiempo ha terminado. Esta mano es la última de la mesa.</string>
     <string name="entry_last_hand">Última mano de la mesa</string>
     <string name="entry_back">Atrás</string>
     <string name="entry_numpad_delete">Borrar</string>
     <string name="entry_numpad_clear">Limpiar</string>
-    <string name="entry_last_hand_short">Última mano</string>
     <string name="entry_review">Revisar</string>
     <string name="entry_check_hand">Comprobar la mano</string>
     <string name="entry_saving_hand">Guardando la mano...</string>
@@ -149,8 +147,6 @@
     <string name="entry_share">Compartirla con los demás jugadores</string>
     <string name="entry_wins">gana %1$d</string>
     <string name="entry_from">a</string>
-    <string name="entry_last_hand_info">Márcala si esta es la última mano de la mesa. Después de guardarla, la mesa queda completada.</string>
-    <string name="entry_last_hand_16">La mano 16 es la última de la mesa. Después de guardarla, la mesa queda completada.</string>
     <string name="changed_title">La mesa ha cambiado</string>
     <string name="changed_not_saved">Tu mano no se ha guardado. Comprueba abajo los datos del servidor.</string>
     <string name="changed_table_now">Mesa ahora</string>

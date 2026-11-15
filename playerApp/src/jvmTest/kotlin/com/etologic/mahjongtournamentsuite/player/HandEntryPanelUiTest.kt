@@ -151,19 +151,18 @@ class HandEntryPanelUiTest {
     }
 
     @Test
-    fun whileThePlayersPlayTheyCanMarkTheLastHandThemselves() = runComposeUiTest {
+    fun whileThePlayersPlayAHandIsNotTheLastOne() = runComposeUiTest {
         val repository = RecordingHandRepository()
         show(MatchEndMode.FINISH_HAND, "11:00", repository)
 
         onNodeWithText("Add draw").performClick()
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
-        // The last hand is marked in the review. The mark asks the server for the result again.
-        awaitText("Last hand")
-        onNodeWithText("Last hand").performClick()
-        waitUntil(timeoutMillis = 5_000) { repository.previews.size == 2 }
+        // Only hand 16 and a hand in the extra time end the table. The review has no last-hand box.
+        awaitText("Confirm")
+        onNodeWithText("Last hand", substring = true).assertDoesNotExist()
 
-        assertEquals(listOf(false, true), repository.previews.map { it.isLastHand })
+        assertEquals(listOf(false), repository.previews.map { it.isLastHand })
     }
 
     @Test
@@ -175,9 +174,8 @@ class HandEntryPanelUiTest {
         onNodeWithText("Add draw").performClick()
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
-        // The last-hand box is on and locked; its info icon says why.
-        awaitText("Last hand")
-        onNodeWithContentDescription("The time is over. This hand is the last hand of the table.").assertIsDisplayed()
+        // The hand in the extra time ends the table on its own.
+        awaitText("Confirm")
 
         assertEquals(listOf(true), repository.previews.map { it.isLastHand })
     }
