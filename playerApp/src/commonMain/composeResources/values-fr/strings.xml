@@ -88,7 +88,6 @@
     <string name="field_search">Rechercher</string>
     <string name="team_hide_players">Masquer les joueurs</string>
     <string name="team_show_players">Afficher les joueurs</string>
-    <string name="table_done">Terminée</string>
     <string name="table_hand_progress">Main\n%1$d/%2$d</string>
     <string name="stat_hands">Mains</string>
     <string name="table_details">Détails</string>

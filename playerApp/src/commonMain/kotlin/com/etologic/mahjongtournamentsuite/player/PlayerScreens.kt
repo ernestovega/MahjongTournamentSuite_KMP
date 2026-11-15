@@ -210,7 +210,6 @@ import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_all
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_me
 import mahjongtournamentsuite.playerapp.generated.resources.tab_tables_team
 import mahjongtournamentsuite.playerapp.generated.resources.table_details
-import mahjongtournamentsuite.playerapp.generated.resources.table_done
 import mahjongtournamentsuite.playerapp.generated.resources.table_hand_progress
 import mahjongtournamentsuite.playerapp.generated.resources.table_hands_done
 import mahjongtournamentsuite.playerapp.generated.resources.table_n
@@ -1746,9 +1745,9 @@ fun TableScreen(navController: NavHostController, tournamentId: String, roundId:
             TableSeatsView(
                 seats = table.seatsFor(view, withLevelChange = true),
                 handNumber = handNumber,
-                // Before the round starts there is no hand in play, so the circle in the middle is hidden.
+                // Before the round starts and on a finished table there is no hand in play, so the circle in the middle is hidden.
                 centerLabel = when {
-                    complete -> stringResource(Res.string.table_done)
+                    complete -> ""
                     view.matchPhaseOf(roundId, now) == MatchPhase.NOT_STARTED -> ""
                     else -> stringResource(Res.string.table_hand_progress, handNumber, table.hands.size)
                 },
