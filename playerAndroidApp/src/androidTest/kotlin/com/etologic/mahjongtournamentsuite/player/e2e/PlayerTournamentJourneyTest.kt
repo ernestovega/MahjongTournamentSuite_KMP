@@ -57,7 +57,7 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
         c.clickButton("Add draw")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
     }
 
     /** The hand in play shows as "N/16" on the table. */
@@ -98,7 +98,7 @@ class PlayerTournamentJourneyTest : PlayerE2eTest() {
         c.field("Hand score").performTextInput("8")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
         waitForHandInPlay(3)
 
         // The other three phones of the table write hands 3 to 15. This phone follows them.

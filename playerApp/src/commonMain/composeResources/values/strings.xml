@@ -132,7 +132,7 @@
     <string name="entry_review">Review</string>
     <string name="entry_check_hand">Check hand</string>
     <string name="entry_saving_hand">Saving the hand...</string>
-    <string name="entry_confirm_save">Confirm and save</string>
+    <string name="entry_confirm_save">Confirm</string>
     <string name="entry_edit">Edit</string>
     <string name="entry_add_another_penalty">Add another penalty</string>
     <string name="entry_penalty_note">A penalty does not end the hand. Its points count when the hand is saved.</string>
@@ -149,7 +149,8 @@
     <string name="entry_share">Share it with the other players</string>
     <string name="entry_wins">wins %1$d</string>
     <string name="entry_from">from</string>
-    <string name="entry_last_hand_note">This is the last hand. After you save it, the table is completed.</string>
+    <string name="entry_last_hand_info">Mark it when this is the last hand of the table. After you save it, the table is completed.</string>
+    <string name="entry_last_hand_16">Hand 16 is the last hand of the table. After you save it, the table is completed.</string>
     <string name="changed_title">The table changed</string>
     <string name="changed_not_saved">Your hand is not saved. Check the data of the server below.</string>
     <string name="changed_table_now">Table now</string>

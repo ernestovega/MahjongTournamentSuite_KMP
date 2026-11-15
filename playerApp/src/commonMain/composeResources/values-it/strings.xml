@@ -132,7 +132,7 @@
     <string name="entry_review">Controlla</string>
     <string name="entry_check_hand">Controlla la mano</string>
     <string name="entry_saving_hand">Salvataggio della mano...</string>
-    <string name="entry_confirm_save">Conferma e salva</string>
+    <string name="entry_confirm_save">Conferma</string>
     <string name="entry_edit">Modifica</string>
     <string name="entry_add_another_penalty">Aggiungi un'altra penalità</string>
     <string name="entry_penalty_note">Una penalità non termina la mano. I suoi punti contano quando la mano viene salvata.</string>
@@ -149,7 +149,8 @@
     <string name="entry_share">Dividila con gli altri giocatori</string>
     <string name="entry_wins">vince %1$d</string>
     <string name="entry_from">da</string>
-    <string name="entry_last_hand_note">Questa è l'ultima mano. Dopo averla salvata, il tavolo è completato.</string>
+    <string name="entry_last_hand_info">Selezionala se questa è l'ultima mano del tavolo. Dopo averla salvata, il tavolo è completato.</string>
+    <string name="entry_last_hand_16">La mano 16 è l'ultima mano del tavolo. Dopo averla salvata, il tavolo è completato.</string>
     <string name="changed_title">Il tavolo è cambiato</string>
     <string name="changed_not_saved">La tua mano non è salvata. Controlla qui sotto i dati del server.</string>
     <string name="changed_table_now">Tavolo adesso</string>
@@ -186,7 +187,7 @@
     <string name="filter_year">Anno</string>
     <string name="filter_all_years">Tutti</string>
     <string name="filter_clear">Rimuovi filtri</string>
-    <string name="privacy_public_notice">Tornei, risultati e statistiche sono pubblici. Mostrano nome, paese e numero EMA di ogni giocatore, mai email né foto. Se non vuoi comparire, chiedilo all\'organizzazione: verrai mostrato solo come un numero.</string>
+    <string name="privacy_public_notice">Tornei, risultati e statistiche sono pubblici. Mostrano nome, paese e numero EMA di ogni giocatore, mai email né foto. Se non vuoi comparire, chiedilo all'organizzazione: verrai mostrato solo come un numero.</string>
     <string name="filter_status">Stato</string>
     <string name="filter_all_statuses">Tutti</string>
     <string name="sign_in_needed_title">Accedi per vedere i tuoi</string>

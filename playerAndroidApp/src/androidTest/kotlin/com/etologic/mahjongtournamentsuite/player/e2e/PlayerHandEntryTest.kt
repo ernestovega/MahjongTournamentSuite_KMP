@@ -61,7 +61,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.clickButton("Add draw")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.waitForText("Confirm and save")
+        c.waitForText("Confirm")
         c.clickButton("Edit")
         c.waitForText("No player wins this hand. Every seat scores zero.")
     }
@@ -71,7 +71,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         openActivePlayerTable()
         c.clickButton("Add draw")
         c.clickButton("Review")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
         c.waitForText("13/16", substring = true)
     }
 
@@ -86,7 +86,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.field("Hand score").performTextInput("12")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
         c.waitForText("13/16", substring = true)
     }
 
@@ -101,7 +101,7 @@ class PlayerHandEntryTest : PlayerE2eTest() {
         c.field("Hand score").performTextInput("10")
         c.clickButton("Review")
         c.waitForText("Check hand")
-        c.clickButton("Confirm and save")
+        c.clickButton("Confirm")
         c.waitForText("13/16", substring = true)
     }
 

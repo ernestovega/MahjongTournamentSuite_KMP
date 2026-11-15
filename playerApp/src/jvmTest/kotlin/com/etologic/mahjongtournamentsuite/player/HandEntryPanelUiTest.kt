@@ -175,8 +175,9 @@ class HandEntryPanelUiTest {
         onNodeWithText("Add draw").performClick()
         onNodeWithText("Review").performClick()
         waitUntil(timeoutMillis = 5_000) { repository.previews.isNotEmpty() }
-        awaitText("The time is over. This hand is the last hand of the table.")
-        onNodeWithText("Last hand").assertDoesNotExist()
+        // The last-hand box is on and locked; its info icon says why.
+        awaitText("Last hand")
+        onNodeWithContentDescription("The time is over. This hand is the last hand of the table.").assertIsDisplayed()
 
         assertEquals(listOf(true), repository.previews.map { it.isLastHand })
     }

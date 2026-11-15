@@ -70,7 +70,7 @@
     <string name="tab_tables">Tables</string>
     <string name="tab_ranking">Classement</string>
     <string name="tab_info">Infos</string>
-    <string name="tables_not_linked">Votre compte n\'est pas lié à un joueur de ce tournoi. Demandez aux organisateurs de vous ajouter. Toutes les tables sont dans l\'onglet Toutes.</string>
+    <string name="tables_not_linked">Votre compte n'est pas lié à un joueur de ce tournoi. Demandez aux organisateurs de vous ajouter. Toutes les tables sont dans l'onglet Toutes.</string>
     <string name="tables_mine_empty">Les tables du joueur s'affichent ici quand les organisateurs tirent le tour.</string>
     <string name="tables_all_empty">Les tables s'affichent ici quand les organisateurs tirent le premier tour.</string>
     <string name="tables_empty_title">Pas encore de tables</string>
@@ -132,7 +132,7 @@
     <string name="entry_review">Vérifier</string>
     <string name="entry_check_hand">Vérifier la main</string>
     <string name="entry_saving_hand">Enregistrement de la main...</string>
-    <string name="entry_confirm_save">Confirmer et enregistrer</string>
+    <string name="entry_confirm_save">Confirmer</string>
     <string name="entry_edit">Modifier</string>
     <string name="entry_add_another_penalty">Ajouter une autre pénalité</string>
     <string name="entry_penalty_note">Une pénalité ne termine pas la main. Ses points comptent quand la main est enregistrée.</string>
@@ -149,7 +149,8 @@
     <string name="entry_share">Partager avec les autres joueurs</string>
     <string name="entry_wins">gagne %1$d</string>
     <string name="entry_from">de</string>
-    <string name="entry_last_hand_note">C'est la dernière main. Après son enregistrement, la table est terminée.</string>
+    <string name="entry_last_hand_info">Cochez-la si c'est la dernière main de la table. Après son enregistrement, la table est terminée.</string>
+    <string name="entry_last_hand_16">La main 16 est la dernière main de la table. Après son enregistrement, la table est terminée.</string>
     <string name="changed_title">La table a changé</string>
     <string name="changed_not_saved">Votre main n'est pas enregistrée. Vérifiez ci-dessous les données du serveur.</string>
     <string name="changed_table_now">Table maintenant</string>
@@ -190,8 +191,8 @@
     <string name="filter_status">Statut</string>
     <string name="filter_all_statuses">Tous</string>
     <string name="sign_in_needed_title">Connectez-vous pour voir les vôtres</string>
-    <string name="tables_me_sign_in">Connectez-vous pour voir vos tables dans ce tournoi. Toutes les tables sont dans l\'onglet Toutes.</string>
-    <string name="tables_team_sign_in">Connectez-vous pour voir les tables de votre équipe. Toutes les tables sont dans l\'onglet Toutes.</string>
+    <string name="tables_me_sign_in">Connectez-vous pour voir vos tables dans ce tournoi. Toutes les tables sont dans l'onglet Toutes.</string>
+    <string name="tables_team_sign_in">Connectez-vous pour voir les tables de votre équipe. Toutes les tables sont dans l'onglet Toutes.</string>
     <string name="seats_assign">Placer les joueurs</string>
     <string name="seats_change">Changer les places</string>
     <string name="seats_title">Places de la table</string>
